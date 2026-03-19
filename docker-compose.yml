@@ -10,8 +10,6 @@ services:
       - app-storage:/var/www/html/storage
     env_file:
       - .env
-    depends_on:
-      - redis
     networks:
       - voicebot
 
