@@ -19,8 +19,8 @@ services:
       dockerfile: Dockerfile
     container_name: voicebot-nginx
     restart: unless-stopped
-    ports:
-      - "8080:80"
+    expose:
+      - "80"
     volumes:
       - app-storage:/var/www/html/storage:ro
     depends_on:
