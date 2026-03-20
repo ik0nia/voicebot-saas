@@ -7,7 +7,7 @@ services:
     restart: unless-stopped
     volumes:
       - app-storage:/var/www/html/storage
-      - app-public:/var/www/html/public
+      - app-public:/var/www/html/public/build
     env_file:
       - .env
     environment:
@@ -34,10 +34,10 @@ services:
       - "80"
     volumes:
       - app-storage:/var/www/html/storage:ro
-      - app-public:/var/www/html/public:ro
+      - app-public:/var/www/html/public/build
     depends_on:
       app:
-        condition: service_started
+        condition: service_healthy
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.voicebot.rule=Host(`voice.ikonia.cloud`)"
