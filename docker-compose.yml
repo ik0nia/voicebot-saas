@@ -12,6 +12,7 @@ services:
       - .env
     networks:
       - voicebot
+      - coolify
 
   nginx:
     build:
@@ -45,6 +46,7 @@ services:
       - app
     networks:
       - voicebot
+      - coolify
 
   scheduler:
     build:
@@ -62,6 +64,7 @@ services:
       - app
     networks:
       - voicebot
+      - coolify
 
   reverb:
     build:
@@ -77,6 +80,7 @@ services:
       - app
     networks:
       - voicebot
+      - coolify
 
 volumes:
   app-storage:
@@ -84,3 +88,5 @@ volumes:
 networks:
   voicebot:
     driver: bridge
+  coolify:
+    external: true
