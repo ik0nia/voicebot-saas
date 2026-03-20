@@ -16,8 +16,8 @@ services:
 
   nginx:
     build:
-      context: ./docker/nginx
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: docker/nginx/Dockerfile
     container_name: voicebot-nginx
     restart: unless-stopped
     expose:
