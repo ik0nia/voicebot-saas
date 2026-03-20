@@ -6,8 +6,10 @@
 @section('content')
 
     {{-- Section 1: Hero --}}
-    <section class="bg-gradient-to-b from-white to-primary-50 section-padding">
-        <div class="container-custom text-center animate-fade-in">
+    <section class="relative overflow-hidden bg-gradient-to-b from-white to-primary-50 section-padding">
+        <x-hero-texture />
+        <div class="container-custom text-center animate-fade-in relative">
+            <x-hero-ornament />
             <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-slate-900 mb-6">
                 Prețuri <span class="gradient-text">simple, transparente</span>
             </h1>
@@ -16,6 +18,8 @@
             </p>
         </div>
     </section>
+
+    <x-motif-border />
 
     {{-- Section 2: Billing Toggle + Section 3: Pricing Cards --}}
     <section class="section-padding bg-white">
@@ -64,11 +68,11 @@
                         </li>
                         <li class="flex items-start gap-3 text-sm text-slate-700">
                             <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            1 agent vocal
+                            1 agent AI
                         </li>
                         <li class="flex items-start gap-3 text-sm text-slate-700">
                             <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            1 canal (telefon)
+                            2 canale (telefon + chatbot web)
                         </li>
                         <li class="flex items-start gap-3 text-sm text-slate-700">
                             <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
@@ -112,11 +116,15 @@
                         </li>
                         <li class="flex items-start gap-3 text-sm text-slate-700">
                             <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            5 agenți vocali
+                            25 agenți AI
                         </li>
                         <li class="flex items-start gap-3 text-sm text-slate-700">
                             <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            Toate canalele (telefon, WhatsApp, web)
+                            Toate 5 canalele (telefon, WhatsApp, Facebook, Instagram, web)
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-slate-700">
+                            <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                            Bază de cunoștințe partajată între canale
                         </li>
                         <li class="flex items-start gap-3 text-sm text-slate-700">
                             <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
@@ -160,7 +168,7 @@
                         </li>
                         <li class="flex items-start gap-3 text-sm text-slate-700">
                             <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            Agenți nelimitați
+                            Agenți AI nelimitați
                         </li>
                         <li class="flex items-start gap-3 text-sm text-slate-700">
                             <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
@@ -176,7 +184,7 @@
                         </li>
                         <li class="flex items-start gap-3 text-sm text-slate-700">
                             <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            Integrări custom
+                            Toate canalele + integrări custom
                         </li>
                         <li class="flex items-start gap-3 text-sm text-slate-700">
                             <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
@@ -218,16 +226,16 @@
                             <td class="py-3 px-4 text-center text-slate-600">Nelimitate</td>
                         </tr>
                         <tr>
-                            <td class="py-3 px-4 text-slate-700 font-medium">Agenți vocali</td>
+                            <td class="py-3 px-4 text-slate-700 font-medium">Agenți AI</td>
                             <td class="py-3 px-4 text-center text-slate-600">1</td>
-                            <td class="py-3 px-4 text-center text-slate-600 bg-primary-50/50">5</td>
+                            <td class="py-3 px-4 text-center text-slate-600 bg-primary-50/50">25</td>
                             <td class="py-3 px-4 text-center text-slate-600">Nelimitați</td>
                         </tr>
                         <tr>
                             <td class="py-3 px-4 text-slate-700 font-medium">Canale</td>
-                            <td class="py-3 px-4 text-center text-slate-600">Telefon</td>
-                            <td class="py-3 px-4 text-center text-slate-600 bg-primary-50/50">Toate</td>
-                            <td class="py-3 px-4 text-center text-slate-600">Toate + custom</td>
+                            <td class="py-3 px-4 text-center text-slate-600">2 (telefon + web)</td>
+                            <td class="py-3 px-4 text-center text-slate-600 bg-primary-50/50">Toate 5</td>
+                            <td class="py-3 px-4 text-center text-slate-600">Toate 5 + custom</td>
                         </tr>
                         <tr>
                             <td class="py-3 px-4 text-slate-700 font-medium">Transcrieri</td>
@@ -354,6 +362,18 @@
                     <div class="faq-content max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
                         <div class="px-6 pb-5 text-slate-600 text-sm leading-relaxed">
                             Da, poți anula oricând. Nu există contracte pe termen lung sau penalități de anulare.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item border border-slate-200 rounded-xl overflow-hidden">
+                    <button class="faq-toggle w-full flex items-center justify-between px-6 py-5 text-left text-slate-900 font-semibold hover:bg-slate-50 transition-colors">
+                        <span>Ce canale de comunicare sunt incluse?</span>
+                        <svg class="faq-icon w-5 h-5 text-slate-500 shrink-0 ml-4 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                    </button>
+                    <div class="faq-content max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
+                        <div class="px-6 pb-5 text-slate-600 text-sm leading-relaxed">
+                            Sambla suportă 5 canale: Telefon (voce AI), WhatsApp Business, Facebook Messenger, Instagram DM și Web Chatbot. Planul Starter include 2 canale (telefon + chatbot web), iar planurile Profesional și Enterprise includ toate cele 5 canale. Toți agenții partajează aceeași bază de cunoștințe, indiferent de canal.
                         </div>
                     </div>
                 </div>

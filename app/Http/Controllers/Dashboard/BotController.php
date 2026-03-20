@@ -104,4 +104,9 @@ class BotController extends Controller
         $bot->update(['is_active' => !$bot->is_active]);
         return back()->with('success', $bot->is_active ? 'Bot activat.' : 'Bot dezactivat.');
     }
+
+    public function testVocal(Bot $bot)
+    {
+        return view('dashboard.bots.test-vocal', compact('bot'));
+    }
 }

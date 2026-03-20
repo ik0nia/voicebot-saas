@@ -54,7 +54,7 @@
             </div>
 
             <div class="flex flex-col sm:items-end gap-2">
-                @if($tenant->isOnTrial())
+                @if($tenant && $tenant->isOnTrial())
                     @php
                         $trialDaysLeft = (int) now()->diffInDays($tenant->trial_ends_at, false);
                     @endphp
@@ -124,7 +124,7 @@
         <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
             <h3 class="text-base font-semibold text-slate-900 mb-4">Utilizare per bot</h3>
             @php
-                $botUsage = \App\Models\Call::where('tenant_id', $tenant->id)
+                $botUsage = \App\Models\Call::where('tenant_id', $tenant->id ?? 0)
                     ->whereMonth('created_at', now()->month)
                     ->whereYear('created_at', now()->year)
                     ->selectRaw('bot_id, SUM(duration_seconds) as total_seconds')
@@ -384,7 +384,7 @@
     <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h3 class="text-base font-semibold text-slate-900 mb-4">Metodă de plată</h3>
 
-        @if($tenant->pm_last_four)
+        @if($tenant && $tenant->pm_last_four)
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div class="flex items-center gap-4">
                     <div class="flex h-12 w-18 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-3">

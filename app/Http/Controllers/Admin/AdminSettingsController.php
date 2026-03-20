@@ -137,6 +137,55 @@ class AdminSettingsController extends Controller
         return back()->with('success', 'Setările de email au fost actualizate.');
     }
 
+    public function updateWhatsapp(Request $request)
+    {
+        $validated = $request->validate([
+            'whatsapp_provider' => 'required|string|in:twilio_whatsapp,meta_cloud_api',
+            'whatsapp_api_key' => 'required|string',
+            'whatsapp_phone_number_id' => 'nullable|string|max:255',
+            'whatsapp_business_account_id' => 'nullable|string|max:255',
+            'whatsapp_verify_token' => 'nullable|string|max:255',
+        ]);
+
+        foreach ($validated as $key => $value) {
+            PlatformSetting::set($key, $value ?? '', 'string', 'whatsapp');
+        }
+
+        return back()->with('success', 'Setările WhatsApp au fost actualizate.');
+    }
+
+    public function updateFacebook(Request $request)
+    {
+        $validated = $request->validate([
+            'facebook_app_id' => 'nullable|string|max:255',
+            'facebook_app_secret' => 'nullable|string',
+            'facebook_page_access_token' => 'nullable|string',
+            'facebook_verify_token' => 'nullable|string|max:255',
+        ]);
+
+        foreach ($validated as $key => $value) {
+            PlatformSetting::set($key, $value ?? '', 'string', 'facebook');
+        }
+
+        return back()->with('success', 'Setările Facebook au fost actualizate.');
+    }
+
+    public function updateInstagram(Request $request)
+    {
+        $validated = $request->validate([
+            'instagram_app_id' => 'nullable|string|max:255',
+            'instagram_app_secret' => 'nullable|string',
+            'instagram_access_token' => 'nullable|string',
+            'instagram_verify_token' => 'nullable|string|max:255',
+        ]);
+
+        foreach ($validated as $key => $value) {
+            PlatformSetting::set($key, $value ?? '', 'string', 'instagram');
+        }
+
+        return back()->with('success', 'Setările Instagram au fost actualizate.');
+    }
+
     public function updateSecurity(Request $request)
     {
         $validated = $request->validate([

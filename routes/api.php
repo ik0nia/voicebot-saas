@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\ChatbotApiController;
+use App\Http\Controllers\Api\TestVocalController;
 use App\Http\Controllers\Api\V1\AnalyticsApiController;
 use App\Http\Controllers\Api\V1\BotApiController;
 use App\Http\Controllers\Api\V1\CallApiController;
@@ -9,6 +11,13 @@ use Illuminate\Support\Facades\Route;
 Route::get('/health', function () {
     return response()->json(['status' => 'ok', 'timestamp' => now()->toIso8601String()]);
 });
+
+// Test vocal endpoint (uses web session auth via CSRF, no Sanctum needed)
+Route::post('/v1/bots/{bot}/test-vocal', [TestVocalController::class, 'handle']);
+
+// Public chatbot widget API (no auth required, CORS enabled)
+Route::post('/v1/chatbot/{channel}/message', [ChatbotApiController::class, 'message']);
+Route::get('/v1/chatbot/{channel}/config', [ChatbotApiController::class, 'config']);
 
 // API v1 - requires Sanctum auth
 Route::prefix('v1')->middleware('auth:sanctum')->group(function () {

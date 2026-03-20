@@ -194,7 +194,7 @@
             datasets: [{
                 label: 'Apeluri',
                 data: @json($chartData->pluck('calls')),
-                backgroundColor: '#7c3aed',
+                backgroundColor: '#991b1b',
                 borderRadius: 6,
             }]
         },

@@ -1,12 +1,31 @@
 <footer class="bg-slate-900 text-white">
+    {{-- Traditional Romanian border motif at top of footer --}}
+    <div class="w-full overflow-hidden">
+        <svg class="w-full" height="6" viewBox="0 0 1200 6" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <pattern id="footer-motif" x="0" y="0" width="24" height="6" patternUnits="userSpaceOnUse">
+                    <rect x="10" y="0" width="4" height="3" fill="#991b1b"/>
+                    <rect x="8" y="3" width="4" height="3" fill="#b91c1c"/>
+                    <rect x="12" y="3" width="4" height="3" fill="#b91c1c"/>
+                </pattern>
+            </defs>
+            <rect width="1200" height="6" fill="url(#footer-motif)"/>
+        </svg>
+    </div>
+
     <div class="container-custom pt-16 pb-8 lg:pt-20 lg:pb-10">
         {{-- Top section: Logo + Columns --}}
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8">
             {{-- Logo & description --}}
             <div class="lg:col-span-1">
-                <a href="/" class="inline-flex items-center space-x-1 mb-4">
-                    <span class="text-xl font-extrabold text-white">Voice</span>
-                    <span class="text-xl font-extrabold text-primary-400">Bot</span>
+                <a href="/" class="inline-flex items-center gap-2 mb-4">
+                    <svg width="32" height="32" viewBox="0 0 36 36" fill="none" class="shrink-0">
+                        <rect width="36" height="36" rx="8" fill="#991b1b"/>
+                        <path d="M18 6L28 18L18 30L8 18Z" fill="white" fill-opacity="0.15"/>
+                        <path d="M18 10L24 18L18 26L12 18Z" fill="white" fill-opacity="0.3"/>
+                        <path d="M18 14L20.5 18L18 22L15.5 18Z" fill="white"/>
+                    </svg>
+                    <span class="text-xl font-extrabold text-white">Sambla</span>
                 </a>
                 <p class="text-sm text-slate-400 leading-relaxed">
                     Agenți vocali AI care transformă modul în care afacerea ta comunică cu clienții.
@@ -47,11 +66,11 @@
                 <h4 class="text-sm font-semibold text-white uppercase tracking-wider mb-4">Contact</h4>
                 <ul class="space-y-3">
                     <li>
-                        <a href="mailto:contact@voicebot.ro" class="text-sm text-slate-400 hover:text-white transition-colors duration-200 flex items-center gap-2">
+                        <a href="mailto:contact@sambla.ro" class="text-sm text-slate-400 hover:text-white transition-colors duration-200 flex items-center gap-2">
                             <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
                             </svg>
-                            contact@voicebot.ro
+                            contact@sambla.ro
                         </a>
                     </li>
                     <li>

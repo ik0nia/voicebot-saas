@@ -220,7 +220,7 @@
 
                                 {{-- Provider --}}
                                 <td class="px-4 py-3 hidden lg:table-cell">
-                                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $phoneNumber->provider === 'twilio' ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-100 text-slate-600' }}">
+                                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $phoneNumber->provider === 'twilio' ? 'bg-red-50 text-red-800' : 'bg-slate-100 text-slate-600' }}">
                                         {{ ucfirst($phoneNumber->provider ?? 'manual') }}
                                     </span>
                                 </td>

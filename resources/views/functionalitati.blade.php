@@ -6,8 +6,10 @@
 @section('content')
 
 {{-- ==================== HERO ==================== --}}
-<section class="relative bg-gradient-to-b from-white to-primary-50 section-padding pt-32 lg:pt-40">
-    <div class="container-custom text-center">
+<section class="relative overflow-hidden bg-gradient-to-b from-white to-primary-50 section-padding pt-32 lg:pt-40">
+    <x-hero-texture />
+    <div class="container-custom text-center relative">
+        <x-hero-ornament />
         <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 mb-6 leading-tight">
             Funcționalități puternice pentru <span class="gradient-text">comunicare inteligentă</span>
         </h1>
@@ -19,6 +21,8 @@
     <div class="absolute top-20 left-10 w-64 h-64 bg-primary-200/30 rounded-full blur-3xl pointer-events-none"></div>
     <div class="absolute bottom-0 right-10 w-48 h-48 bg-primary-300/20 rounded-full blur-3xl pointer-events-none"></div>
 </section>
+
+<x-motif-border />
 
 {{-- ==================== CATEGORY 1: TELEFONIE (white bg) ==================== --}}
 <section class="bg-white section-padding">
@@ -85,38 +89,38 @@
                         {{-- Top bar --}}
                         <rect x="120" y="28" width="80" height="6" rx="3" fill="#e2e8f0"/>
                         {{-- Status bar --}}
-                        <rect x="48" y="76" width="120" height="8" rx="4" fill="#7c3aed" opacity="0.2"/>
+                        <rect x="48" y="76" width="120" height="8" rx="4" fill="#991b1b" opacity="0.2"/>
                         <rect x="48" y="100" width="80" height="6" rx="3" fill="#e2e8f0"/>
                         {{-- Call card --}}
-                        <rect x="48" y="124" width="224" height="80" rx="12" fill="#7c3aed" opacity="0.08"/>
-                        <circle cx="80" cy="164" r="20" fill="#7c3aed" opacity="0.15"/>
-                        <circle cx="80" cy="164" r="10" fill="#7c3aed" opacity="0.3"/>
-                        <rect x="110" y="150" width="100" height="8" rx="4" fill="#7c3aed" opacity="0.4"/>
-                        <rect x="110" y="168" width="60" height="6" rx="3" fill="#7c3aed" opacity="0.2"/>
+                        <rect x="48" y="124" width="224" height="80" rx="12" fill="#991b1b" opacity="0.08"/>
+                        <circle cx="80" cy="164" r="20" fill="#991b1b" opacity="0.15"/>
+                        <circle cx="80" cy="164" r="10" fill="#991b1b" opacity="0.3"/>
+                        <rect x="110" y="150" width="100" height="8" rx="4" fill="#991b1b" opacity="0.4"/>
+                        <rect x="110" y="168" width="60" height="6" rx="3" fill="#991b1b" opacity="0.2"/>
                         {{-- Waveform --}}
                         <rect x="48" y="224" width="224" height="50" rx="8" fill="#f1f5f9"/>
-                        <rect x="64" y="238" width="4" height="22" rx="2" fill="#7c3aed" opacity="0.5"/>
-                        <rect x="76" y="232" width="4" height="34" rx="2" fill="#7c3aed" opacity="0.7"/>
-                        <rect x="88" y="240" width="4" height="18" rx="2" fill="#7c3aed" opacity="0.4"/>
-                        <rect x="100" y="228" width="4" height="40" rx="2" fill="#7c3aed" opacity="0.8"/>
-                        <rect x="112" y="236" width="4" height="26" rx="2" fill="#7c3aed" opacity="0.6"/>
-                        <rect x="124" y="242" width="4" height="14" rx="2" fill="#7c3aed" opacity="0.3"/>
-                        <rect x="136" y="230" width="4" height="38" rx="2" fill="#7c3aed" opacity="0.7"/>
-                        <rect x="148" y="238" width="4" height="22" rx="2" fill="#7c3aed" opacity="0.5"/>
-                        <rect x="160" y="234" width="4" height="30" rx="2" fill="#7c3aed" opacity="0.6"/>
-                        <rect x="172" y="240" width="4" height="18" rx="2" fill="#7c3aed" opacity="0.4"/>
-                        <rect x="184" y="228" width="4" height="40" rx="2" fill="#7c3aed" opacity="0.9"/>
-                        <rect x="196" y="236" width="4" height="26" rx="2" fill="#7c3aed" opacity="0.5"/>
-                        <rect x="208" y="242" width="4" height="14" rx="2" fill="#7c3aed" opacity="0.3"/>
-                        <rect x="220" y="232" width="4" height="34" rx="2" fill="#7c3aed" opacity="0.7"/>
-                        <rect x="232" y="238" width="4" height="22" rx="2" fill="#7c3aed" opacity="0.5"/>
-                        <rect x="244" y="244" width="4" height="10" rx="2" fill="#7c3aed" opacity="0.2"/>
-                        <rect x="256" y="236" width="4" height="26" rx="2" fill="#7c3aed" opacity="0.6"/>
+                        <rect x="64" y="238" width="4" height="22" rx="2" fill="#991b1b" opacity="0.5"/>
+                        <rect x="76" y="232" width="4" height="34" rx="2" fill="#991b1b" opacity="0.7"/>
+                        <rect x="88" y="240" width="4" height="18" rx="2" fill="#991b1b" opacity="0.4"/>
+                        <rect x="100" y="228" width="4" height="40" rx="2" fill="#991b1b" opacity="0.8"/>
+                        <rect x="112" y="236" width="4" height="26" rx="2" fill="#991b1b" opacity="0.6"/>
+                        <rect x="124" y="242" width="4" height="14" rx="2" fill="#991b1b" opacity="0.3"/>
+                        <rect x="136" y="230" width="4" height="38" rx="2" fill="#991b1b" opacity="0.7"/>
+                        <rect x="148" y="238" width="4" height="22" rx="2" fill="#991b1b" opacity="0.5"/>
+                        <rect x="160" y="234" width="4" height="30" rx="2" fill="#991b1b" opacity="0.6"/>
+                        <rect x="172" y="240" width="4" height="18" rx="2" fill="#991b1b" opacity="0.4"/>
+                        <rect x="184" y="228" width="4" height="40" rx="2" fill="#991b1b" opacity="0.9"/>
+                        <rect x="196" y="236" width="4" height="26" rx="2" fill="#991b1b" opacity="0.5"/>
+                        <rect x="208" y="242" width="4" height="14" rx="2" fill="#991b1b" opacity="0.3"/>
+                        <rect x="220" y="232" width="4" height="34" rx="2" fill="#991b1b" opacity="0.7"/>
+                        <rect x="232" y="238" width="4" height="22" rx="2" fill="#991b1b" opacity="0.5"/>
+                        <rect x="244" y="244" width="4" height="10" rx="2" fill="#991b1b" opacity="0.2"/>
+                        <rect x="256" y="236" width="4" height="26" rx="2" fill="#991b1b" opacity="0.6"/>
                         {{-- Buttons --}}
-                        <rect x="48" y="294" width="104" height="40" rx="10" fill="#7c3aed" opacity="0.12"/>
-                        <rect x="168" y="294" width="104" height="40" rx="10" fill="#7c3aed" opacity="0.12"/>
-                        <rect x="70" y="310" width="60" height="6" rx="3" fill="#7c3aed" opacity="0.4"/>
-                        <rect x="190" y="310" width="60" height="6" rx="3" fill="#7c3aed" opacity="0.4"/>
+                        <rect x="48" y="294" width="104" height="40" rx="10" fill="#991b1b" opacity="0.12"/>
+                        <rect x="168" y="294" width="104" height="40" rx="10" fill="#991b1b" opacity="0.12"/>
+                        <rect x="70" y="310" width="60" height="6" rx="3" fill="#991b1b" opacity="0.4"/>
+                        <rect x="190" y="310" width="60" height="6" rx="3" fill="#991b1b" opacity="0.4"/>
                         {{-- Transcript lines --}}
                         <rect x="48" y="354" width="180" height="6" rx="3" fill="#e2e8f0"/>
                         <rect x="48" y="370" width="140" height="6" rx="3" fill="#e2e8f0"/>
@@ -135,8 +139,140 @@
     </div>
 </section>
 
-{{-- ==================== CATEGORY 2: AI CONVERSATIONAL (primary-50 bg) ==================== --}}
+{{-- ==================== CANALE ADIȚIONALE (primary-50 bg) ==================== --}}
 <section class="bg-primary-50 section-padding">
+    <div class="container-custom">
+        <div class="text-center mb-12 lg:mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Canale de Comunicare</h2>
+            <p class="text-slate-600 max-w-2xl mx-auto text-lg">Un singur agent, o singură bază de cunoștințe, toate canalele. Pe lângă telefonie, Sambla suportă încă 4 canale.</p>
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {{-- WhatsApp --}}
+            <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-lg transition-shadow duration-300">
+                <div class="w-14 h-14 rounded-2xl bg-green-100 flex items-center justify-center mb-5">
+                    <svg class="w-7 h-7 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                    </svg>
+                </div>
+                <h3 class="text-2xl font-bold text-slate-900 mb-3">WhatsApp Business</h3>
+                <ul class="space-y-3">
+                    <li class="flex items-start gap-3">
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        </span>
+                        <span class="text-slate-700 font-medium">Răspunsuri instant 24/7 pe WhatsApp Business</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        </span>
+                        <span class="text-slate-700 font-medium">Suport pentru imagini, documente și locații</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        </span>
+                        <span class="text-slate-700 font-medium">Template-uri de mesaje pre-aprobate</span>
+                    </li>
+                </ul>
+            </div>
+
+            {{-- Facebook Messenger --}}
+            <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-lg transition-shadow duration-300">
+                <div class="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center mb-5">
+                    <svg class="w-7 h-7 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.906 1.453 5.497 3.727 7.193V22l3.454-1.896c.92.256 1.9.396 2.819.396 5.523 0 10-4.145 10-9.257C22 6.145 17.523 2 12 2zm1.002 12.463l-2.542-2.713-4.96 2.713 5.46-5.794 2.604 2.713 4.898-2.713-5.46 5.794z"/>
+                    </svg>
+                </div>
+                <h3 class="text-2xl font-bold text-slate-900 mb-3">Facebook Messenger</h3>
+                <ul class="space-y-3">
+                    <li class="flex items-start gap-3">
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        </span>
+                        <span class="text-slate-700 font-medium">Conectare directă la pagina ta Facebook</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        </span>
+                        <span class="text-slate-700 font-medium">Răspunsuri automate la mesajele clienților</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        </span>
+                        <span class="text-slate-700 font-medium">Butoane interactive și carusele de produse</span>
+                    </li>
+                </ul>
+            </div>
+
+            {{-- Instagram DM --}}
+            <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-lg transition-shadow duration-300">
+                <div class="w-14 h-14 rounded-2xl bg-pink-100 flex items-center justify-center mb-5">
+                    <svg class="w-7 h-7 text-pink-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
+                    </svg>
+                </div>
+                <h3 class="text-2xl font-bold text-slate-900 mb-3">Instagram DM</h3>
+                <ul class="space-y-3">
+                    <li class="flex items-start gap-3">
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-pink-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-pink-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        </span>
+                        <span class="text-slate-700 font-medium">Gestionare automată a mesajelor private</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-pink-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-pink-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        </span>
+                        <span class="text-slate-700 font-medium">Integrare cu conturi business Instagram</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-pink-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-pink-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        </span>
+                        <span class="text-slate-700 font-medium">Răspunsuri la story replies și mențiuni</span>
+                    </li>
+                </ul>
+            </div>
+
+            {{-- Web Chatbot --}}
+            <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-lg transition-shadow duration-300">
+                <div class="w-14 h-14 rounded-2xl bg-primary-100 flex items-center justify-center mb-5">
+                    <svg class="w-7 h-7 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                    </svg>
+                </div>
+                <h3 class="text-2xl font-bold text-slate-900 mb-3">Web Chatbot</h3>
+                <ul class="space-y-3">
+                    <li class="flex items-start gap-3">
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        </span>
+                        <span class="text-slate-700 font-medium">Widget embeddable, instalare în 2 minute</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        </span>
+                        <span class="text-slate-700 font-medium">Personalizare completă (culori, logo, poziție)</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        </span>
+                        <span class="text-slate-700 font-medium">Compatibil cu orice site web (WordPress, Shopify, etc.)</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+{{-- ==================== CATEGORY 2: AI CONVERSATIONAL (white bg) ==================== --}}
+<section class="bg-white section-padding">
     <div class="container-custom">
         <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {{-- Illustration: AI Brain / Conversation Flow (LEFT on desktop) --}}
@@ -144,43 +280,43 @@
                 <div class="relative w-72 md:w-80">
                     <svg viewBox="0 0 320 320" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full">
                         {{-- Central brain circle --}}
-                        <circle cx="160" cy="160" r="60" fill="#7c3aed" opacity="0.08" stroke="#7c3aed" stroke-width="2" stroke-opacity="0.2"/>
-                        <circle cx="160" cy="160" r="40" fill="#7c3aed" opacity="0.12"/>
+                        <circle cx="160" cy="160" r="60" fill="#991b1b" opacity="0.08" stroke="#991b1b" stroke-width="2" stroke-opacity="0.2"/>
+                        <circle cx="160" cy="160" r="40" fill="#991b1b" opacity="0.12"/>
                         {{-- Brain paths --}}
-                        <path d="M145 148 C148 138, 158 135, 160 140 C162 135, 172 138, 175 148" stroke="#7c3aed" stroke-width="2" fill="none" opacity="0.5"/>
-                        <path d="M140 158 C145 152, 155 152, 160 158 C165 152, 175 152, 180 158" stroke="#7c3aed" stroke-width="2" fill="none" opacity="0.5"/>
-                        <path d="M145 168 C150 175, 170 175, 175 168" stroke="#7c3aed" stroke-width="2" fill="none" opacity="0.5"/>
+                        <path d="M145 148 C148 138, 158 135, 160 140 C162 135, 172 138, 175 148" stroke="#991b1b" stroke-width="2" fill="none" opacity="0.5"/>
+                        <path d="M140 158 C145 152, 155 152, 160 158 C165 152, 175 152, 180 158" stroke="#991b1b" stroke-width="2" fill="none" opacity="0.5"/>
+                        <path d="M145 168 C150 175, 170 175, 175 168" stroke="#991b1b" stroke-width="2" fill="none" opacity="0.5"/>
                         {{-- AI text --}}
-                        <text x="160" y="165" text-anchor="middle" fill="#7c3aed" font-size="14" font-weight="700" opacity="0.7">AI</text>
+                        <text x="160" y="165" text-anchor="middle" fill="#991b1b" font-size="14" font-weight="700" opacity="0.7">AI</text>
                         {{-- Conversation nodes --}}
                         {{-- Top node --}}
-                        <rect x="120" y="30" width="80" height="32" rx="16" fill="white" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.3"/>
-                        <rect x="134" y="42" width="52" height="6" rx="3" fill="#7c3aed" opacity="0.3"/>
-                        <line x1="160" y1="62" x2="160" y2="100" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.2" stroke-dasharray="4 4"/>
+                        <rect x="120" y="30" width="80" height="32" rx="16" fill="white" stroke="#991b1b" stroke-width="1.5" stroke-opacity="0.3"/>
+                        <rect x="134" y="42" width="52" height="6" rx="3" fill="#991b1b" opacity="0.3"/>
+                        <line x1="160" y1="62" x2="160" y2="100" stroke="#991b1b" stroke-width="1.5" stroke-opacity="0.2" stroke-dasharray="4 4"/>
                         {{-- Right node --}}
-                        <rect x="240" y="115" width="70" height="32" rx="16" fill="white" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.3"/>
-                        <rect x="254" y="127" width="42" height="6" rx="3" fill="#7c3aed" opacity="0.3"/>
-                        <line x1="220" y1="145" x2="240" y2="136" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.2" stroke-dasharray="4 4"/>
+                        <rect x="240" y="115" width="70" height="32" rx="16" fill="white" stroke="#991b1b" stroke-width="1.5" stroke-opacity="0.3"/>
+                        <rect x="254" y="127" width="42" height="6" rx="3" fill="#991b1b" opacity="0.3"/>
+                        <line x1="220" y1="145" x2="240" y2="136" stroke="#991b1b" stroke-width="1.5" stroke-opacity="0.2" stroke-dasharray="4 4"/>
                         {{-- Bottom-right node --}}
-                        <rect x="225" y="210" width="75" height="32" rx="16" fill="white" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.3"/>
-                        <rect x="239" y="222" width="47" height="6" rx="3" fill="#7c3aed" opacity="0.3"/>
-                        <line x1="205" y1="200" x2="230" y2="216" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.2" stroke-dasharray="4 4"/>
+                        <rect x="225" y="210" width="75" height="32" rx="16" fill="white" stroke="#991b1b" stroke-width="1.5" stroke-opacity="0.3"/>
+                        <rect x="239" y="222" width="47" height="6" rx="3" fill="#991b1b" opacity="0.3"/>
+                        <line x1="205" y1="200" x2="230" y2="216" stroke="#991b1b" stroke-width="1.5" stroke-opacity="0.2" stroke-dasharray="4 4"/>
                         {{-- Bottom node --}}
-                        <rect x="105" y="260" width="110" height="32" rx="16" fill="white" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.3"/>
-                        <rect x="119" y="272" width="82" height="6" rx="3" fill="#7c3aed" opacity="0.3"/>
-                        <line x1="160" y1="220" x2="160" y2="260" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.2" stroke-dasharray="4 4"/>
+                        <rect x="105" y="260" width="110" height="32" rx="16" fill="white" stroke="#991b1b" stroke-width="1.5" stroke-opacity="0.3"/>
+                        <rect x="119" y="272" width="82" height="6" rx="3" fill="#991b1b" opacity="0.3"/>
+                        <line x1="160" y1="220" x2="160" y2="260" stroke="#991b1b" stroke-width="1.5" stroke-opacity="0.2" stroke-dasharray="4 4"/>
                         {{-- Left node --}}
-                        <rect x="10" y="180" width="80" height="32" rx="16" fill="white" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.3"/>
-                        <rect x="24" y="192" width="52" height="6" rx="3" fill="#7c3aed" opacity="0.3"/>
-                        <line x1="100" y1="185" x2="90" y2="192" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.2" stroke-dasharray="4 4"/>
+                        <rect x="10" y="180" width="80" height="32" rx="16" fill="white" stroke="#991b1b" stroke-width="1.5" stroke-opacity="0.3"/>
+                        <rect x="24" y="192" width="52" height="6" rx="3" fill="#991b1b" opacity="0.3"/>
+                        <line x1="100" y1="185" x2="90" y2="192" stroke="#991b1b" stroke-width="1.5" stroke-opacity="0.2" stroke-dasharray="4 4"/>
                         {{-- Top-left node --}}
-                        <rect x="20" y="100" width="68" height="32" rx="16" fill="white" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.3"/>
-                        <rect x="34" y="112" width="40" height="6" rx="3" fill="#7c3aed" opacity="0.3"/>
-                        <line x1="100" y1="140" x2="88" y2="126" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.2" stroke-dasharray="4 4"/>
+                        <rect x="20" y="100" width="68" height="32" rx="16" fill="white" stroke="#991b1b" stroke-width="1.5" stroke-opacity="0.3"/>
+                        <rect x="34" y="112" width="40" height="6" rx="3" fill="#991b1b" opacity="0.3"/>
+                        <line x1="100" y1="140" x2="88" y2="126" stroke="#991b1b" stroke-width="1.5" stroke-opacity="0.2" stroke-dasharray="4 4"/>
                         {{-- Pulse rings --}}
-                        <circle cx="160" cy="160" r="80" stroke="#7c3aed" stroke-width="1" stroke-opacity="0.1" fill="none"/>
-                        <circle cx="160" cy="160" r="110" stroke="#7c3aed" stroke-width="1" stroke-opacity="0.06" fill="none"/>
-                        <circle cx="160" cy="160" r="140" stroke="#7c3aed" stroke-width="1" stroke-opacity="0.03" fill="none"/>
+                        <circle cx="160" cy="160" r="80" stroke="#991b1b" stroke-width="1" stroke-opacity="0.1" fill="none"/>
+                        <circle cx="160" cy="160" r="110" stroke="#991b1b" stroke-width="1" stroke-opacity="0.06" fill="none"/>
+                        <circle cx="160" cy="160" r="140" stroke="#991b1b" stroke-width="1" stroke-opacity="0.03" fill="none"/>
                     </svg>
                     {{-- Floating badge --}}
                     <div class="absolute -bottom-2 -left-2 bg-white text-primary-700 text-xs font-bold px-3 py-1.5 rounded-full shadow-lg border border-primary-100">
@@ -315,23 +451,23 @@
                         {{-- Metric cards --}}
                         <rect x="16" y="48" width="108" height="52" rx="8" fill="white" stroke="#e2e8f0" stroke-width="1"/>
                         <rect x="28" y="58" width="40" height="5" rx="2.5" fill="#94a3b8"/>
-                        <rect x="28" y="72" width="60" height="10" rx="4" fill="#7c3aed" opacity="0.7"/>
+                        <rect x="28" y="72" width="60" height="10" rx="4" fill="#991b1b" opacity="0.7"/>
                         <rect x="28" y="88" width="30" height="4" rx="2" fill="#22c55e" opacity="0.5"/>
                         <rect x="136" y="48" width="108" height="52" rx="8" fill="white" stroke="#e2e8f0" stroke-width="1"/>
                         <rect x="148" y="58" width="44" height="5" rx="2.5" fill="#94a3b8"/>
-                        <rect x="148" y="72" width="50" height="10" rx="4" fill="#7c3aed" opacity="0.7"/>
+                        <rect x="148" y="72" width="50" height="10" rx="4" fill="#991b1b" opacity="0.7"/>
                         <rect x="148" y="88" width="30" height="4" rx="2" fill="#22c55e" opacity="0.5"/>
                         <rect x="256" y="48" width="108" height="52" rx="8" fill="white" stroke="#e2e8f0" stroke-width="1"/>
                         <rect x="268" y="58" width="48" height="5" rx="2.5" fill="#94a3b8"/>
-                        <rect x="268" y="72" width="55" height="10" rx="4" fill="#7c3aed" opacity="0.7"/>
+                        <rect x="268" y="72" width="55" height="10" rx="4" fill="#991b1b" opacity="0.7"/>
                         <rect x="268" y="88" width="30" height="4" rx="2" fill="#ef4444" opacity="0.4"/>
                         {{-- Chart area --}}
                         <rect x="16" y="112" width="228" height="152" rx="8" fill="white" stroke="#e2e8f0" stroke-width="1"/>
                         {{-- Line chart --}}
-                        <polyline points="32,230 60,215 88,225 116,195 144,200 172,175 200,165 228,170" stroke="#7c3aed" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-                        <polyline points="32,240 60,235 88,238 116,228 144,232 172,220 200,215 228,218" stroke="#a855f7" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+                        <polyline points="32,230 60,215 88,225 116,195 144,200 172,175 200,165 228,170" stroke="#991b1b" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                        <polyline points="32,240 60,235 88,238 116,228 144,232 172,220 200,215 228,218" stroke="#b91c1c" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
                         {{-- Chart area fill --}}
-                        <polygon points="32,230 60,215 88,225 116,195 144,200 172,175 200,165 228,170 228,248 32,248" fill="#7c3aed" opacity="0.06"/>
+                        <polygon points="32,230 60,215 88,225 116,195 144,200 172,175 200,165 228,170 228,248 32,248" fill="#991b1b" opacity="0.06"/>
                         {{-- Grid lines --}}
                         <line x1="32" y1="180" x2="228" y2="180" stroke="#e2e8f0" stroke-width="0.5"/>
                         <line x1="32" y1="210" x2="228" y2="210" stroke="#e2e8f0" stroke-width="0.5"/>
@@ -341,11 +477,11 @@
                         {{-- Donut chart --}}
                         <rect x="256" y="112" width="108" height="152" rx="8" fill="white" stroke="#e2e8f0" stroke-width="1"/>
                         <circle cx="310" cy="184" r="36" fill="none" stroke="#e2e8f0" stroke-width="10"/>
-                        <circle cx="310" cy="184" r="36" fill="none" stroke="#7c3aed" stroke-width="10" stroke-dasharray="160 66" stroke-dashoffset="0" opacity="0.8"/>
-                        <circle cx="310" cy="184" r="36" fill="none" stroke="#a855f7" stroke-width="10" stroke-dasharray="45 181" stroke-dashoffset="-160" opacity="0.6"/>
+                        <circle cx="310" cy="184" r="36" fill="none" stroke="#991b1b" stroke-width="10" stroke-dasharray="160 66" stroke-dashoffset="0" opacity="0.8"/>
+                        <circle cx="310" cy="184" r="36" fill="none" stroke="#b91c1c" stroke-width="10" stroke-dasharray="45 181" stroke-dashoffset="-160" opacity="0.6"/>
                         <rect x="270" y="120" width="50" height="6" rx="3" fill="#94a3b8"/>
-                        <rect x="282" y="236" width="56" height="5" rx="2.5" fill="#7c3aed" opacity="0.3"/>
-                        <rect x="290" y="248" width="40" height="5" rx="2.5" fill="#a855f7" opacity="0.3"/>
+                        <rect x="282" y="236" width="56" height="5" rx="2.5" fill="#991b1b" opacity="0.3"/>
+                        <rect x="290" y="248" width="40" height="5" rx="2.5" fill="#b91c1c" opacity="0.3"/>
                     </svg>
                     {{-- Floating badge --}}
                     <div class="absolute -bottom-3 left-4 bg-white text-slate-700 text-xs font-bold px-3 py-1.5 rounded-full shadow-lg border border-slate-200">
@@ -366,61 +502,61 @@
                 <div class="relative w-72 md:w-80">
                     <svg viewBox="0 0 320 320" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full">
                         {{-- Central hub --}}
-                        <circle cx="160" cy="160" r="32" fill="#7c3aed" opacity="0.12" stroke="#7c3aed" stroke-width="2" stroke-opacity="0.3"/>
-                        <text x="160" y="155" text-anchor="middle" fill="#7c3aed" font-size="10" font-weight="700" opacity="0.7">Voice</text>
-                        <text x="160" y="170" text-anchor="middle" fill="#7c3aed" font-size="10" font-weight="700" opacity="0.7">Bot</text>
+                        <circle cx="160" cy="160" r="32" fill="#991b1b" opacity="0.12" stroke="#991b1b" stroke-width="2" stroke-opacity="0.3"/>
+                        <text x="160" y="155" text-anchor="middle" fill="#991b1b" font-size="10" font-weight="700" opacity="0.7">Voice</text>
+                        <text x="160" y="170" text-anchor="middle" fill="#991b1b" font-size="10" font-weight="700" opacity="0.7">Bot</text>
 
                         {{-- Connection lines --}}
-                        <line x1="160" y1="128" x2="160" y2="60" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.2"/>
-                        <line x1="188" y1="140" x2="250" y2="90" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.2"/>
-                        <line x1="192" y1="160" x2="268" y2="160" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.2"/>
-                        <line x1="188" y1="180" x2="250" y2="230" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.2"/>
-                        <line x1="160" y1="192" x2="160" y2="264" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.2"/>
-                        <line x1="132" y1="180" x2="70" y2="230" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.2"/>
-                        <line x1="128" y1="160" x2="52" y2="160" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.2"/>
-                        <line x1="132" y1="140" x2="70" y2="90" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.2"/>
+                        <line x1="160" y1="128" x2="160" y2="60" stroke="#991b1b" stroke-width="1.5" stroke-opacity="0.2"/>
+                        <line x1="188" y1="140" x2="250" y2="90" stroke="#991b1b" stroke-width="1.5" stroke-opacity="0.2"/>
+                        <line x1="192" y1="160" x2="268" y2="160" stroke="#991b1b" stroke-width="1.5" stroke-opacity="0.2"/>
+                        <line x1="188" y1="180" x2="250" y2="230" stroke="#991b1b" stroke-width="1.5" stroke-opacity="0.2"/>
+                        <line x1="160" y1="192" x2="160" y2="264" stroke="#991b1b" stroke-width="1.5" stroke-opacity="0.2"/>
+                        <line x1="132" y1="180" x2="70" y2="230" stroke="#991b1b" stroke-width="1.5" stroke-opacity="0.2"/>
+                        <line x1="128" y1="160" x2="52" y2="160" stroke="#991b1b" stroke-width="1.5" stroke-opacity="0.2"/>
+                        <line x1="132" y1="140" x2="70" y2="90" stroke="#991b1b" stroke-width="1.5" stroke-opacity="0.2"/>
 
                         {{-- Node: CRM (top) --}}
-                        <rect x="128" y="28" width="64" height="32" rx="8" fill="white" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.3"/>
-                        <text x="160" y="49" text-anchor="middle" fill="#7c3aed" font-size="11" font-weight="600" opacity="0.7">CRM</text>
+                        <rect x="128" y="28" width="64" height="32" rx="8" fill="white" stroke="#991b1b" stroke-width="1.5" stroke-opacity="0.3"/>
+                        <text x="160" y="49" text-anchor="middle" fill="#991b1b" font-size="11" font-weight="600" opacity="0.7">CRM</text>
 
                         {{-- Node: Calendar (top-right) --}}
-                        <rect x="236" y="64" width="72" height="32" rx="8" fill="white" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.3"/>
-                        <text x="272" y="85" text-anchor="middle" fill="#7c3aed" font-size="10" font-weight="600" opacity="0.7">Calendar</text>
+                        <rect x="236" y="64" width="72" height="32" rx="8" fill="white" stroke="#991b1b" stroke-width="1.5" stroke-opacity="0.3"/>
+                        <text x="272" y="85" text-anchor="middle" fill="#991b1b" font-size="10" font-weight="600" opacity="0.7">Calendar</text>
 
                         {{-- Node: API (right) --}}
-                        <rect x="256" y="144" width="56" height="32" rx="8" fill="white" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.3"/>
-                        <text x="284" y="165" text-anchor="middle" fill="#7c3aed" font-size="11" font-weight="600" opacity="0.7">API</text>
+                        <rect x="256" y="144" width="56" height="32" rx="8" fill="white" stroke="#991b1b" stroke-width="1.5" stroke-opacity="0.3"/>
+                        <text x="284" y="165" text-anchor="middle" fill="#991b1b" font-size="11" font-weight="600" opacity="0.7">API</text>
 
                         {{-- Node: WhatsApp (bottom-right) --}}
-                        <rect x="230" y="216" width="80" height="32" rx="8" fill="white" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.3"/>
-                        <text x="270" y="237" text-anchor="middle" fill="#7c3aed" font-size="10" font-weight="600" opacity="0.7">WhatsApp</text>
+                        <rect x="230" y="216" width="80" height="32" rx="8" fill="white" stroke="#991b1b" stroke-width="1.5" stroke-opacity="0.3"/>
+                        <text x="270" y="237" text-anchor="middle" fill="#991b1b" font-size="10" font-weight="600" opacity="0.7">WhatsApp</text>
 
                         {{-- Node: Webhook (bottom) --}}
-                        <rect x="120" y="264" width="80" height="32" rx="8" fill="white" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.3"/>
-                        <text x="160" y="285" text-anchor="middle" fill="#7c3aed" font-size="10" font-weight="600" opacity="0.7">Webhook</text>
+                        <rect x="120" y="264" width="80" height="32" rx="8" fill="white" stroke="#991b1b" stroke-width="1.5" stroke-opacity="0.3"/>
+                        <text x="160" y="285" text-anchor="middle" fill="#991b1b" font-size="10" font-weight="600" opacity="0.7">Webhook</text>
 
                         {{-- Node: SMS (bottom-left) --}}
-                        <rect x="24" y="216" width="56" height="32" rx="8" fill="white" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.3"/>
-                        <text x="52" y="237" text-anchor="middle" fill="#7c3aed" font-size="11" font-weight="600" opacity="0.7">SMS</text>
+                        <rect x="24" y="216" width="56" height="32" rx="8" fill="white" stroke="#991b1b" stroke-width="1.5" stroke-opacity="0.3"/>
+                        <text x="52" y="237" text-anchor="middle" fill="#991b1b" font-size="11" font-weight="600" opacity="0.7">SMS</text>
 
                         {{-- Node: SDK (left) --}}
-                        <rect x="12" y="144" width="56" height="32" rx="8" fill="white" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.3"/>
-                        <text x="40" y="165" text-anchor="middle" fill="#7c3aed" font-size="11" font-weight="600" opacity="0.7">SDK</text>
+                        <rect x="12" y="144" width="56" height="32" rx="8" fill="white" stroke="#991b1b" stroke-width="1.5" stroke-opacity="0.3"/>
+                        <text x="40" y="165" text-anchor="middle" fill="#991b1b" font-size="11" font-weight="600" opacity="0.7">SDK</text>
 
                         {{-- Node: Email (top-left) --}}
-                        <rect x="28" y="64" width="64" height="32" rx="8" fill="white" stroke="#7c3aed" stroke-width="1.5" stroke-opacity="0.3"/>
-                        <text x="60" y="85" text-anchor="middle" fill="#7c3aed" font-size="11" font-weight="600" opacity="0.7">Email</text>
+                        <rect x="28" y="64" width="64" height="32" rx="8" fill="white" stroke="#991b1b" stroke-width="1.5" stroke-opacity="0.3"/>
+                        <text x="60" y="85" text-anchor="middle" fill="#991b1b" font-size="11" font-weight="600" opacity="0.7">Email</text>
 
                         {{-- Animated dots on connections --}}
-                        <circle cx="160" cy="94" r="3" fill="#7c3aed" opacity="0.4"/>
-                        <circle cx="219" cy="115" r="3" fill="#7c3aed" opacity="0.4"/>
-                        <circle cx="230" cy="160" r="3" fill="#7c3aed" opacity="0.4"/>
-                        <circle cx="219" cy="205" r="3" fill="#7c3aed" opacity="0.4"/>
-                        <circle cx="160" cy="228" r="3" fill="#7c3aed" opacity="0.4"/>
-                        <circle cx="101" cy="205" r="3" fill="#7c3aed" opacity="0.4"/>
-                        <circle cx="90" cy="160" r="3" fill="#7c3aed" opacity="0.4"/>
-                        <circle cx="101" cy="115" r="3" fill="#7c3aed" opacity="0.4"/>
+                        <circle cx="160" cy="94" r="3" fill="#991b1b" opacity="0.4"/>
+                        <circle cx="219" cy="115" r="3" fill="#991b1b" opacity="0.4"/>
+                        <circle cx="230" cy="160" r="3" fill="#991b1b" opacity="0.4"/>
+                        <circle cx="219" cy="205" r="3" fill="#991b1b" opacity="0.4"/>
+                        <circle cx="160" cy="228" r="3" fill="#991b1b" opacity="0.4"/>
+                        <circle cx="101" cy="205" r="3" fill="#991b1b" opacity="0.4"/>
+                        <circle cx="90" cy="160" r="3" fill="#991b1b" opacity="0.4"/>
+                        <circle cx="101" cy="115" r="3" fill="#991b1b" opacity="0.4"/>
                     </svg>
                 </div>
             </div>
@@ -570,7 +706,7 @@
                 {{-- Code content --}}
                 <div class="bg-slate-950 p-6 overflow-x-auto">
                     <pre class="text-sm leading-relaxed font-mono"><code><span class="text-slate-500">// Exemplu: Inițierea unui apel cu Sambla API</span>
-<span class="text-purple-400">const</span> <span class="text-slate-200">response</span> <span class="text-slate-500">=</span> <span class="text-purple-400">await</span> <span class="text-blue-400">fetch</span><span class="text-slate-400">(</span><span class="text-emerald-400">'https://api.voicebot.ro/v1/calls'</span><span class="text-slate-400">,</span> <span class="text-slate-400">{</span>
+<span class="text-red-400">const</span> <span class="text-slate-200">response</span> <span class="text-slate-500">=</span> <span class="text-red-400">await</span> <span class="text-blue-400">fetch</span><span class="text-slate-400">(</span><span class="text-emerald-400">'https://api.sambla.ro/v1/calls'</span><span class="text-slate-400">,</span> <span class="text-slate-400">{</span>
   <span class="text-slate-200">method</span><span class="text-slate-400">:</span> <span class="text-emerald-400">'POST'</span><span class="text-slate-400">,</span>
   <span class="text-slate-200">headers</span><span class="text-slate-400">:</span> <span class="text-slate-400">{</span>
     <span class="text-emerald-400">'Authorization'</span><span class="text-slate-400">:</span> <span class="text-emerald-400">'Bearer YOUR_API_KEY'</span><span class="text-slate-400">,</span>
@@ -585,7 +721,7 @@
   <span class="text-slate-400">})</span>
 <span class="text-slate-400">});</span>
 
-<span class="text-purple-400">const</span> <span class="text-slate-200">call</span> <span class="text-slate-500">=</span> <span class="text-purple-400">await</span> <span class="text-slate-200">response</span><span class="text-slate-400">.</span><span class="text-blue-400">json</span><span class="text-slate-400">();</span>
+<span class="text-red-400">const</span> <span class="text-slate-200">call</span> <span class="text-slate-500">=</span> <span class="text-red-400">await</span> <span class="text-slate-200">response</span><span class="text-slate-400">.</span><span class="text-blue-400">json</span><span class="text-slate-400">();</span>
 <span class="text-blue-400">console</span><span class="text-slate-400">.</span><span class="text-blue-400">log</span><span class="text-slate-400">(</span><span class="text-emerald-400">`Apel inițiat: <span class="text-yellow-300">${</span><span class="text-slate-200">call.id</span><span class="text-yellow-300">}</span>`</span><span class="text-slate-400">);</span></code></pre>
                 </div>
             </div>

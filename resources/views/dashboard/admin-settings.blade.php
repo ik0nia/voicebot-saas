@@ -57,6 +57,9 @@
                     'twilio' => ['label' => 'Twilio', 'icon' => 'M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z'],
                     'stripe' => ['label' => 'Stripe', 'icon' => 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'],
                     'email' => ['label' => 'Email', 'icon' => 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'],
+                    'whatsapp' => ['label' => 'WhatsApp', 'icon' => 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z'],
+                    'facebook' => ['label' => 'Facebook', 'icon' => 'M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z'],
+                    'instagram' => ['label' => 'Instagram', 'icon' => 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'],
                     'securitate' => ['label' => 'Securitate', 'icon' => 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z'],
                     'tenanti' => ['label' => 'Tenanți', 'icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4'],
                     'planuri' => ['label' => 'Planuri', 'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01'],
@@ -501,7 +504,7 @@
                         <label for="mail_from_address" class="block text-sm font-medium text-slate-700">Adresă expeditor (From)</label>
                         <input type="email" name="mail_from_address" id="mail_from_address"
                                value="{{ old('mail_from_address', $settings['email']['mail_from_address'] ?? '') }}"
-                               placeholder="noreply@voicebot.ro"
+                               placeholder="noreply@sambla.ro"
                                class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors"
                                required>
                     </div>
@@ -521,6 +524,268 @@
                     <button type="submit"
                             class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-colors">
                         Salvează setările Email
+                    </button>
+                </div>
+            </form>
+        </div>
+    @endif
+
+    {{-- ============================================================ --}}
+    {{-- TAB: WhatsApp --}}
+    {{-- ============================================================ --}}
+    @if($tab === 'whatsapp')
+        <div class="bg-white rounded-xl border border-slate-200 p-6">
+            <h2 class="text-lg font-semibold text-slate-900">Configurare WhatsApp</h2>
+            <p class="mt-1 text-sm text-slate-500">Setări pentru integrarea cu WhatsApp Business API.</p>
+
+            <form method="POST" action="{{ url('/dashboard/admin/setari/whatsapp') }}" class="mt-6 space-y-5">
+                @csrf
+                @method('PUT')
+
+                <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                    {{-- Provider --}}
+                    <div>
+                        <label for="whatsapp_provider" class="block text-sm font-medium text-slate-700">Provider</label>
+                        <select name="whatsapp_provider" id="whatsapp_provider"
+                                class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                            @php $currentProvider = old('whatsapp_provider', $settings['whatsapp']['whatsapp_provider'] ?? 'meta_cloud_api'); @endphp
+                            <option value="twilio_whatsapp" {{ $currentProvider === 'twilio_whatsapp' ? 'selected' : '' }}>Twilio WhatsApp</option>
+                            <option value="meta_cloud_api" {{ $currentProvider === 'meta_cloud_api' ? 'selected' : '' }}>Meta Cloud API</option>
+                        </select>
+                    </div>
+
+                    {{-- API Key --}}
+                    <div>
+                        <label for="whatsapp_api_key" class="block text-sm font-medium text-slate-700">API Key</label>
+                        <div class="relative mt-1.5">
+                            <input type="password" name="whatsapp_api_key" id="whatsapp_api_key"
+                                   value="{{ old('whatsapp_api_key', $settings['whatsapp']['whatsapp_api_key'] ?? '') }}"
+                                   class="block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 pr-10 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                            <button type="button" onclick="togglePassword('whatsapp_api_key')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Phone Number ID --}}
+                    <div>
+                        <label for="whatsapp_phone_number_id" class="block text-sm font-medium text-slate-700">Phone Number ID</label>
+                        <input type="text" name="whatsapp_phone_number_id" id="whatsapp_phone_number_id"
+                               value="{{ old('whatsapp_phone_number_id', $settings['whatsapp']['whatsapp_phone_number_id'] ?? '') }}"
+                               placeholder="123456789012345"
+                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                    </div>
+
+                    {{-- Business Account ID --}}
+                    <div>
+                        <label for="whatsapp_business_account_id" class="block text-sm font-medium text-slate-700">Business Account ID</label>
+                        <input type="text" name="whatsapp_business_account_id" id="whatsapp_business_account_id"
+                               value="{{ old('whatsapp_business_account_id', $settings['whatsapp']['whatsapp_business_account_id'] ?? '') }}"
+                               placeholder="123456789012345"
+                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                    </div>
+
+                    {{-- Verify Token --}}
+                    <div>
+                        <label for="whatsapp_verify_token" class="block text-sm font-medium text-slate-700">Verify Token</label>
+                        <input type="text" name="whatsapp_verify_token" id="whatsapp_verify_token"
+                               value="{{ old('whatsapp_verify_token', $settings['whatsapp']['whatsapp_verify_token'] ?? '') }}"
+                               placeholder="Token pentru verificare webhook"
+                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                        <p class="mt-1 text-xs text-slate-500">Token folosit pentru verificarea webhook-ului de către Meta/Twilio.</p>
+                    </div>
+
+                    {{-- Webhook URL (readonly) --}}
+                    <div>
+                        <label for="whatsapp_webhook_url" class="block text-sm font-medium text-slate-700">Webhook URL</label>
+                        <input type="text" id="whatsapp_webhook_url"
+                               value="https://sambla.ro/webhook/whatsapp"
+                               readonly
+                               class="mt-1.5 block w-full rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-500 shadow-sm cursor-not-allowed focus:outline-none transition-colors">
+                        <p class="mt-1 text-xs text-slate-500">URL-ul webhook-ului (auto-generat, nu poate fi modificat).</p>
+                    </div>
+                </div>
+
+                <div class="flex justify-end pt-2">
+                    <button type="submit"
+                            class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-colors">
+                        Salvează setările WhatsApp
+                    </button>
+                </div>
+            </form>
+        </div>
+    @endif
+
+    {{-- ============================================================ --}}
+    {{-- TAB: Facebook --}}
+    {{-- ============================================================ --}}
+    @if($tab === 'facebook')
+        <div class="bg-white rounded-xl border border-slate-200 p-6">
+            <h2 class="text-lg font-semibold text-slate-900">Configurare Facebook</h2>
+            <p class="mt-1 text-sm text-slate-500">Setări pentru integrarea cu Facebook Messenger.</p>
+
+            <form method="POST" action="{{ url('/dashboard/admin/setari/facebook') }}" class="mt-6 space-y-5">
+                @csrf
+                @method('PUT')
+
+                <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                    {{-- App ID --}}
+                    <div>
+                        <label for="facebook_app_id" class="block text-sm font-medium text-slate-700">App ID</label>
+                        <input type="text" name="facebook_app_id" id="facebook_app_id"
+                               value="{{ old('facebook_app_id', $settings['facebook']['facebook_app_id'] ?? '') }}"
+                               placeholder="123456789012345"
+                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                    </div>
+
+                    {{-- App Secret --}}
+                    <div>
+                        <label for="facebook_app_secret" class="block text-sm font-medium text-slate-700">App Secret</label>
+                        <div class="relative mt-1.5">
+                            <input type="password" name="facebook_app_secret" id="facebook_app_secret"
+                                   value="{{ old('facebook_app_secret', $settings['facebook']['facebook_app_secret'] ?? '') }}"
+                                   class="block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 pr-10 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                            <button type="button" onclick="togglePassword('facebook_app_secret')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Page Access Token --}}
+                    <div class="sm:col-span-2">
+                        <label for="facebook_page_access_token" class="block text-sm font-medium text-slate-700">Page Access Token</label>
+                        <div class="relative mt-1.5">
+                            <input type="password" name="facebook_page_access_token" id="facebook_page_access_token"
+                                   value="{{ old('facebook_page_access_token', $settings['facebook']['facebook_page_access_token'] ?? '') }}"
+                                   class="block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 pr-10 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                            <button type="button" onclick="togglePassword('facebook_page_access_token')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            </button>
+                        </div>
+                        <p class="mt-1 text-xs text-slate-500">Token-ul de acces pentru pagina Facebook conectată.</p>
+                    </div>
+
+                    {{-- Verify Token --}}
+                    <div>
+                        <label for="facebook_verify_token" class="block text-sm font-medium text-slate-700">Verify Token</label>
+                        <input type="text" name="facebook_verify_token" id="facebook_verify_token"
+                               value="{{ old('facebook_verify_token', $settings['facebook']['facebook_verify_token'] ?? '') }}"
+                               placeholder="Token pentru verificare webhook"
+                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                        <p class="mt-1 text-xs text-slate-500">Token folosit pentru verificarea webhook-ului de către Facebook.</p>
+                    </div>
+
+                    {{-- Webhook URL (readonly) --}}
+                    <div>
+                        <label for="facebook_webhook_url" class="block text-sm font-medium text-slate-700">Webhook URL</label>
+                        <input type="text" id="facebook_webhook_url"
+                               value="https://sambla.ro/webhook/facebook"
+                               readonly
+                               class="mt-1.5 block w-full rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-500 shadow-sm cursor-not-allowed focus:outline-none transition-colors">
+                        <p class="mt-1 text-xs text-slate-500">URL-ul webhook-ului (auto-generat, nu poate fi modificat).</p>
+                    </div>
+                </div>
+
+                <div class="flex justify-end pt-2">
+                    <button type="submit"
+                            class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-colors">
+                        Salvează setările Facebook
+                    </button>
+                </div>
+            </form>
+        </div>
+    @endif
+
+    {{-- ============================================================ --}}
+    {{-- TAB: Instagram --}}
+    {{-- ============================================================ --}}
+    @if($tab === 'instagram')
+        <div class="bg-white rounded-xl border border-slate-200 p-6">
+            <h2 class="text-lg font-semibold text-slate-900">Configurare Instagram</h2>
+            <p class="mt-1 text-sm text-slate-500">Setări pentru integrarea cu Instagram Messaging API.</p>
+
+            <form method="POST" action="{{ url('/dashboard/admin/setari/instagram') }}" class="mt-6 space-y-5">
+                @csrf
+                @method('PUT')
+
+                <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                    {{-- App ID --}}
+                    <div>
+                        <label for="instagram_app_id" class="block text-sm font-medium text-slate-700">App ID</label>
+                        <input type="text" name="instagram_app_id" id="instagram_app_id"
+                               value="{{ old('instagram_app_id', $settings['instagram']['instagram_app_id'] ?? '') }}"
+                               placeholder="123456789012345"
+                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                        <p class="mt-1 text-xs text-slate-500">De obicei același App ID ca la Facebook.</p>
+                    </div>
+
+                    {{-- App Secret --}}
+                    <div>
+                        <label for="instagram_app_secret" class="block text-sm font-medium text-slate-700">App Secret</label>
+                        <div class="relative mt-1.5">
+                            <input type="password" name="instagram_app_secret" id="instagram_app_secret"
+                                   value="{{ old('instagram_app_secret', $settings['instagram']['instagram_app_secret'] ?? '') }}"
+                                   class="block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 pr-10 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                            <button type="button" onclick="togglePassword('instagram_app_secret')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Access Token --}}
+                    <div class="sm:col-span-2">
+                        <label for="instagram_access_token" class="block text-sm font-medium text-slate-700">Access Token</label>
+                        <div class="relative mt-1.5">
+                            <input type="password" name="instagram_access_token" id="instagram_access_token"
+                                   value="{{ old('instagram_access_token', $settings['instagram']['instagram_access_token'] ?? '') }}"
+                                   class="block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 pr-10 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                            <button type="button" onclick="togglePassword('instagram_access_token')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            </button>
+                        </div>
+                        <p class="mt-1 text-xs text-slate-500">Token-ul de acces pentru Instagram API.</p>
+                    </div>
+
+                    {{-- Verify Token --}}
+                    <div>
+                        <label for="instagram_verify_token" class="block text-sm font-medium text-slate-700">Verify Token</label>
+                        <input type="text" name="instagram_verify_token" id="instagram_verify_token"
+                               value="{{ old('instagram_verify_token', $settings['instagram']['instagram_verify_token'] ?? '') }}"
+                               placeholder="Token pentru verificare webhook"
+                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                        <p class="mt-1 text-xs text-slate-500">Token folosit pentru verificarea webhook-ului de către Instagram.</p>
+                    </div>
+
+                    {{-- Webhook URL (readonly) --}}
+                    <div>
+                        <label for="instagram_webhook_url" class="block text-sm font-medium text-slate-700">Webhook URL</label>
+                        <input type="text" id="instagram_webhook_url"
+                               value="https://sambla.ro/webhook/instagram"
+                               readonly
+                               class="mt-1.5 block w-full rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-500 shadow-sm cursor-not-allowed focus:outline-none transition-colors">
+                        <p class="mt-1 text-xs text-slate-500">URL-ul webhook-ului (auto-generat, nu poate fi modificat).</p>
+                    </div>
+                </div>
+
+                <div class="flex justify-end pt-2">
+                    <button type="submit"
+                            class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-colors">
+                        Salvează setările Instagram
                     </button>
                 </div>
             </form>

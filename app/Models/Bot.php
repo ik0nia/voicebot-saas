@@ -66,6 +66,11 @@ class Bot extends Model
         return $this->hasMany(Channel::class);
     }
 
+    public function conversations(): HasMany
+    {
+        return $this->hasMany(Conversation::class);
+    }
+
     public function phoneNumbers(): HasMany
     {
         return $this->hasMany(PhoneNumber::class);
@@ -100,5 +105,25 @@ class Bot extends Model
     public function incrementCallsCount(): void
     {
         $this->increment('calls_count');
+    }
+
+    public function activeChannels(): HasMany
+    {
+        return $this->channels()->where('is_active', true);
+    }
+
+    public function hasChannel(string $type): bool
+    {
+        return $this->channels()->where('type', $type)->exists();
+    }
+
+    public function getConnectedChannelTypes(): array
+    {
+        return $this->channels()
+            ->where('status', 'connected')
+            ->pluck('type')
+            ->unique()
+            ->values()
+            ->toArray();
     }
 }

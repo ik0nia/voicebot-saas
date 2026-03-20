@@ -8,7 +8,7 @@
         'amber'   => ['bg' => 'bg-amber-50', 'text' => 'text-amber-600'],
         'red'     => ['bg' => 'bg-red-50', 'text' => 'text-red-600'],
         'purple'  => ['bg' => 'bg-red-50', 'text' => 'text-red-800'],
-        'indigo'  => ['bg' => 'bg-indigo-50', 'text' => 'text-indigo-600'],
+        'indigo'  => ['bg' => 'bg-red-50', 'text' => 'text-red-800'],
         'slate'   => ['bg' => 'bg-slate-50', 'text' => 'text-slate-600'],
     ];
     $colors = $colorMap[$color] ?? $colorMap['primary'];

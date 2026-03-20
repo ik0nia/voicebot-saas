@@ -6,8 +6,10 @@
 @section('content')
 
 {{-- Hero Section --}}
-<section class="pt-32 lg:pt-40 pb-16 lg:pb-20 bg-gradient-to-b from-primary-50 to-white">
-    <div class="container-custom text-center">
+<section class="relative overflow-hidden bg-gradient-to-b from-white to-primary-50 section-padding pt-32 lg:pt-40">
+    <x-hero-texture />
+    <div class="container-custom text-center relative">
+        <x-hero-ornament />
         <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 mb-6 animate-fade-in">
             <span class="gradient-text">Blog</span>
         </h1>
@@ -16,6 +18,8 @@
         </p>
     </div>
 </section>
+
+<x-motif-border />
 
 {{-- Article Grid --}}
 <section class="section-padding">

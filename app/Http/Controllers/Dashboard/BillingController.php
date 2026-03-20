@@ -13,6 +13,27 @@ class BillingController extends Controller
     {
         $tenant = auth()->user()->tenant;
 
+        if (!$tenant) {
+            // Super admin without tenant - show empty billing page
+            $plan = 'enterprise';
+            $planLimits = config('plans.enterprise');
+            $minutesUsed = 0;
+            $minutesLimit = $planLimits['minutes'] ?? 999999;
+            $usagePercent = 0;
+            $monthlyCost = 0;
+            $overageMinutes = 0;
+            $overageCost = 0;
+            $usageRecords = collect();
+            $allPlans = config('plans');
+
+            return view('dashboard.billing.index', compact(
+                'tenant', 'plan', 'planLimits',
+                'minutesUsed', 'minutesLimit', 'usagePercent',
+                'monthlyCost', 'overageMinutes', 'overageCost',
+                'usageRecords', 'allPlans'
+            ));
+        }
+
         // Plan info
         $plan = $tenant->plan ?? 'starter';
         $planLimits = config("plans.{$plan}", config('plans.starter'));

@@ -7,12 +7,16 @@ use App\Http\Controllers\Dashboard\BillingController;
 use App\Http\Controllers\Dashboard\BotController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Dashboard\CallController;
+use App\Http\Controllers\Dashboard\ChannelController;
 use App\Http\Controllers\Dashboard\KnowledgeController;
 use App\Http\Controllers\Dashboard\PhoneNumberController;
 use App\Http\Controllers\Dashboard\SettingsController;
 use App\Http\Controllers\Dashboard\TeamController;
 use App\Http\Controllers\Admin\AdminSettingsController;
+use App\Http\Controllers\Webhook\FacebookWebhookController;
+use App\Http\Controllers\Webhook\InstagramWebhookController;
 use App\Http\Controllers\Webhook\TwilioWebhookController;
+use App\Http\Controllers\Webhook\WhatsAppWebhookController;
 use Illuminate\Support\Facades\Route;
 
 // Auth routes
@@ -66,6 +70,7 @@ Route::middleware('auth')->prefix('dashboard/boti')->group(function () {
     Route::put('/{bot}', [BotController::class, 'update'])->name('dashboard.bots.update');
     Route::delete('/{bot}', [BotController::class, 'destroy'])->name('dashboard.bots.destroy');
     Route::patch('/{bot}/toggle', [BotController::class, 'toggleActive'])->name('dashboard.bots.toggle');
+    Route::get('/{bot}/test-vocal', [BotController::class, 'testVocal'])->name('dashboard.bots.testVocal');
 });
 
 // Calls routes (dashboard)
@@ -111,6 +116,15 @@ Route::middleware('auth')->prefix('dashboard/setari')->group(function () {
     Route::delete('/account', [SettingsController::class, 'destroyAccount'])->name('dashboard.settings.destroyAccount');
 });
 
+// Channel management routes (dashboard)
+Route::middleware('auth')->prefix('dashboard/boti/{bot}/canale')->group(function () {
+    Route::get('/', [ChannelController::class, 'index'])->name('dashboard.bots.channels.index');
+    Route::post('/', [ChannelController::class, 'store'])->name('dashboard.bots.channels.store');
+    Route::put('/{channel}', [ChannelController::class, 'update'])->name('dashboard.bots.channels.update');
+    Route::delete('/{channel}', [ChannelController::class, 'destroy'])->name('dashboard.bots.channels.destroy');
+    Route::patch('/{channel}/toggle', [ChannelController::class, 'toggleActive'])->name('dashboard.bots.channels.toggle');
+});
+
 // Knowledge base routes (dashboard)
 Route::middleware('auth')->prefix('dashboard/boti/{bot}')->group(function () {
     Route::get('/knowledge', [KnowledgeController::class, 'index'])->name('dashboard.bots.knowledge.index');
@@ -126,11 +140,38 @@ Route::middleware(['auth', 'super_admin'])->prefix('dashboard/admin/setari')->gr
     Route::put('/twilio', [AdminSettingsController::class, 'updateTwilio'])->name('admin.settings.updateTwilio');
     Route::put('/stripe', [AdminSettingsController::class, 'updateStripe'])->name('admin.settings.updateStripe');
     Route::put('/email', [AdminSettingsController::class, 'updateEmail'])->name('admin.settings.updateEmail');
+    Route::put('/whatsapp', [AdminSettingsController::class, 'updateWhatsapp'])->name('admin.settings.updateWhatsapp');
+    Route::put('/facebook', [AdminSettingsController::class, 'updateFacebook'])->name('admin.settings.updateFacebook');
+    Route::put('/instagram', [AdminSettingsController::class, 'updateInstagram'])->name('admin.settings.updateInstagram');
     Route::put('/securitate', [AdminSettingsController::class, 'updateSecurity'])->name('admin.settings.updateSecurity');
     Route::post('/clear-cache', [AdminSettingsController::class, 'clearCache'])->name('admin.settings.clearCache');
     Route::put('/tenanti/{tenant}', [AdminSettingsController::class, 'updateTenant'])->name('admin.settings.updateTenant');
     Route::patch('/tenanti/{tenant}/toggle', [AdminSettingsController::class, 'toggleTenant'])->name('admin.settings.toggleTenant');
 });
+
+// WhatsApp webhooks
+Route::prefix('webhook/whatsapp')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->group(function () {
+        Route::get('/', [WhatsAppWebhookController::class, 'verify'])->name('webhook.whatsapp.verify');
+        Route::post('/', [WhatsAppWebhookController::class, 'handle'])->name('webhook.whatsapp.handle');
+    });
+
+// Facebook Messenger webhooks
+Route::prefix('webhook/facebook')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->group(function () {
+        Route::get('/', [FacebookWebhookController::class, 'verify'])->name('webhook.facebook.verify');
+        Route::post('/', [FacebookWebhookController::class, 'handle'])->name('webhook.facebook.handle');
+    });
+
+// Instagram DM webhooks
+Route::prefix('webhook/instagram')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->group(function () {
+        Route::get('/', [InstagramWebhookController::class, 'verify'])->name('webhook.instagram.verify');
+        Route::post('/', [InstagramWebhookController::class, 'handle'])->name('webhook.instagram.handle');
+    });
 
 // Twilio webhooks (no CSRF, no auth - signature verified by middleware)
 Route::prefix('webhook/twilio')
