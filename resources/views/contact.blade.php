@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Contact - VoiceBot')
-@section('meta_description', 'Contactează echipa VoiceBot. Suntem aici să te ajutăm cu orice întrebare despre platforma noastră de agenți vocali AI.')
+@section('title', 'Contact - Sambla')
+@section('meta_description', 'Contactează echipa Sambla. Suntem aici să te ajutăm cu orice întrebare despre platforma noastră de agenți vocali AI.')
 
 @section('content')
 

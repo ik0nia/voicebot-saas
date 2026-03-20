@@ -46,14 +46,14 @@
                     <div>
                         <label for="name" class="block text-sm font-medium text-slate-700 mb-1.5">Nume bot <span class="text-red-500">*</span></label>
                         <input type="text" name="name" id="name" value="{{ old('name', $bot->name) }}" required
-                               class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition" />
+                               class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" />
                     </div>
 
                     {{-- Limbă --}}
                     <div>
                         <label for="language" class="block text-sm font-medium text-slate-700 mb-1.5">Limbă <span class="text-red-500">*</span></label>
                         <select name="language" id="language" required
-                                class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition">
+                                class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition">
                             <option value="ro" {{ old('language', $bot->language) === 'ro' ? 'selected' : '' }}>Română</option>
                             <option value="en" {{ old('language', $bot->language) === 'en' ? 'selected' : '' }}>English</option>
                             <option value="de" {{ old('language', $bot->language) === 'de' ? 'selected' : '' }}>Deutsch</option>
@@ -66,7 +66,7 @@
                     <div>
                         <label for="voice" class="block text-sm font-medium text-slate-700 mb-1.5">Voce <span class="text-red-500">*</span></label>
                         <select name="voice" id="voice" required
-                                class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition">
+                                class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition">
                             <option value="alloy" {{ old('voice', $bot->voice) === 'alloy' ? 'selected' : '' }}>Alloy (neutru)</option>
                             <option value="echo" {{ old('voice', $bot->voice) === 'echo' ? 'selected' : '' }}>Echo (masculin)</option>
                             <option value="fable" {{ old('voice', $bot->voice) === 'fable' ? 'selected' : '' }}>Fable (expresiv)</option>
@@ -81,7 +81,7 @@
                         <label class="flex items-center gap-3 cursor-pointer">
                             <input type="hidden" name="is_active" value="0" />
                             <input type="checkbox" name="is_active" value="1" {{ old('is_active', $bot->is_active) ? 'checked' : '' }}
-                                   class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 transition" />
+                                   class="w-5 h-5 rounded border-slate-300 text-red-800 focus:ring-red-700/20 transition" />
                             <div>
                                 <span class="text-sm font-medium text-slate-700">Bot activ</span>
                                 <p class="text-xs text-slate-400">Botul va putea primi și efectua apeluri</p>
@@ -98,7 +98,7 @@
 
                 <textarea name="system_prompt" id="system_prompt" rows="8"
                           placeholder="Descrie cum trebuie să se comporte botul..."
-                          class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-700 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition resize-y">{{ old('system_prompt', $bot->system_prompt) }}</textarea>
+                          class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-700 placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition resize-y">{{ old('system_prompt', $bot->system_prompt) }}</textarea>
             </div>
 
             {{-- Advanced settings --}}
@@ -152,7 +152,7 @@
                         <label for="max_tokens" class="block text-sm font-medium text-slate-700 mb-1.5">Tokeni maximi</label>
                         <input type="number" name="settings[max_tokens]" id="max_tokens" min="64" max="4096"
                                value="{{ old('settings.max_tokens', $settings['max_tokens'] ?? 1024) }}"
-                               class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition" />
+                               class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" />
                         <p class="mt-1 text-xs text-slate-400">Lungimea maximă a răspunsurilor generate (64-4096)</p>
                     </div>
                 </div>
@@ -165,7 +165,7 @@
                     Anulează
                 </a>
                 <button type="submit"
-                        class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors">
+                        class="inline-flex items-center gap-2 rounded-lg bg-red-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 transition-colors">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                     </svg>

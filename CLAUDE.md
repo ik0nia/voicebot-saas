@@ -1,10 +1,10 @@
-# VoiceBot SaaS - Architecture Document
+# Sambla - Architecture Document
 
 ## Overview
 Multi-tenant SaaS platform for AI-powered voice bots. Businesses can create, configure, and deploy conversational voice agents that handle inbound/outbound phone calls using OpenAI's Realtime API and Twilio for telephony.
 
 ## Domain
-- Production: https://voice.ikonia.cloud
+- Production: https://sambla.ro
 - Managed by: Coolify (self-hosted PaaS)
 
 ## Tech Stack

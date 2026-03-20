@@ -19,9 +19,9 @@ class WelcomeNotification extends Notification implements ShouldQueue
     public function toMail($notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Bine ai venit la VoiceBot!')
+            ->subject('Bine ai venit la Sambla!')
             ->greeting('Salut, ' . $notifiable->name . '!')
-            ->line('Mulțumim că ai ales VoiceBot. Suntem încântați să te avem alături.')
+            ->line('Mulțumim că ai ales Sambla. Suntem încântați să te avem alături.')
             ->line('Contul tău a fost creat cu succes și ai 14 zile de probă gratuită.')
             ->line('Iată primii pași:')
             ->line('1. Creează primul tău bot vocal')

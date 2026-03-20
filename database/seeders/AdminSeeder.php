@@ -13,7 +13,7 @@ class AdminSeeder extends Seeder
         $password = Str::password(24);
 
         $admin = User::firstOrCreate(
-            ['email' => 'admin@voice.ikonia.cloud'],
+            ['email' => 'admin@sambla.ro'],
             [
                 'name' => 'Super Admin',
                 'password' => $password,
@@ -27,7 +27,7 @@ class AdminSeeder extends Seeder
             $this->command->info('');
             $this->command->info('========================================');
             $this->command->info('  SUPER ADMIN CREATED');
-            $this->command->info('  Email:    admin@voice.ikonia.cloud');
+            $this->command->info('  Email:    admin@sambla.ro');
             $this->command->info("  Password: {$password}");
             $this->command->info('  SAVE THIS PASSWORD - shown only once!');
             $this->command->info('========================================');

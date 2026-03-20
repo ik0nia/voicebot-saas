@@ -25,7 +25,7 @@ class UsageLimitNotification extends Notification implements ShouldQueue
     public function toMail($notifiable): MailMessage
     {
         $message = (new MailMessage)
-            ->subject("Utilizare {$this->percentage}% — VoiceBot")
+            ->subject("Utilizare {$this->percentage}% — Sambla")
             ->greeting('Salut, ' . $notifiable->name . '!');
 
         if ($this->percentage >= 100) {

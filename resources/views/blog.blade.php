@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Blog - VoiceBot')
-@section('meta_description', 'Citește cele mai noi articole despre inteligență artificială, agenți vocali și comunicare cu clienții pe blogul VoiceBot.')
+@section('title', 'Blog - Sambla')
+@section('meta_description', 'Citește cele mai noi articole despre inteligență artificială, agenți vocali și comunicare cu clienții pe blogul Sambla.')
 
 @section('content')
 
@@ -96,7 +96,7 @@
                         Cum a redus FinanceHub timpul de așteptare cu 75%
                     </h2>
                     <p class="text-slate-600 text-sm leading-relaxed mb-5">
-                        Află cum clientul nostru din domeniul financiar a transformat experiența clienților folosind VoiceBot.
+                        Află cum clientul nostru din domeniul financiar a transformat experiența clienților folosind Sambla.
                     </p>
                     {{-- Meta --}}
                     <div class="flex items-center justify-between text-xs text-slate-500 mb-5 pt-5 border-t border-slate-100">

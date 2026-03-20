@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Despre VoiceBot - Echipa și Misiunea Noastră')
-@section('meta_description', 'Află povestea VoiceBot, misiunea noastră de a democratiza tehnologia vocală AI și echipa din spatele platformei.')
+@section('title', 'Despre Sambla - Echipa și Misiunea Noastră')
+@section('meta_description', 'Află povestea Sambla, misiunea noastră de a democratiza tehnologia vocală AI și echipa din spatele platformei.')
 
 @section('content')
 
@@ -9,7 +9,7 @@
 <section class="pt-32 lg:pt-40 pb-16 lg:pb-20 bg-gradient-to-b from-primary-50 to-white">
     <div class="container-custom text-center">
         <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 mb-6 animate-fade-in">
-            Despre <span class="gradient-text">VoiceBot</span>
+            Despre <span class="gradient-text">Sambla</span>
         </h1>
         <p class="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed animate-fade-in-delay-1">
             Construim viitorul comunicării cu clienții prin inteligență artificială
@@ -119,7 +119,7 @@
 <section class="section-padding">
     <div class="container-custom">
         <h2 class="text-3xl md:text-4xl font-bold text-slate-900 text-center mb-4">Echipa</h2>
-        <p class="text-lg text-slate-600 text-center max-w-2xl mx-auto mb-16">Oamenii pasionați din spatele VoiceBot.</p>
+        <p class="text-lg text-slate-600 text-center max-w-2xl mx-auto mb-16">Oamenii pasionați din spatele Sambla.</p>
         <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {{-- Alexandru Ionescu --}}
             <div class="bg-white rounded-2xl p-8 text-center shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300">

@@ -65,8 +65,8 @@
         {{-- Calls this month --}}
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
             <div class="flex items-center gap-3">
-                <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-50">
-                    <svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-red-50">
+                    <svg class="w-5 h-5 text-red-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                     </svg>
                 </div>
@@ -80,8 +80,8 @@
         {{-- Avg duration --}}
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
             <div class="flex items-center gap-3">
-                <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-purple-50">
-                    <svg class="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-red-50">
+                    <svg class="w-5 h-5 text-red-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </div>
@@ -153,7 +153,7 @@
                                                 $statusClasses = [
                                                     'completed' => 'bg-green-50 text-green-700',
                                                     'failed' => 'bg-red-50 text-red-700',
-                                                    'in_progress' => 'bg-blue-50 text-blue-700',
+                                                    'in_progress' => 'bg-red-50 text-red-800',
                                                     'missed' => 'bg-amber-50 text-amber-700',
                                                 ];
                                                 $statusLabels = [
@@ -252,7 +252,7 @@
                         <ul class="space-y-2">
                             @foreach($bot->channels as $channel)
                                 <li class="flex items-center gap-2 text-sm text-slate-700">
-                                    <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                                    <span class="w-2 h-2 rounded-full bg-red-500"></span>
                                     {{ $channel->name ?? $channel->type }}
                                 </li>
                             @endforeach

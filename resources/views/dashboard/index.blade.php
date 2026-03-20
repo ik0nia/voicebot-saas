@@ -13,7 +13,7 @@
     <div id="onboarding-banner" class="relative overflow-hidden rounded-xl border border-primary-100 bg-gradient-to-br from-primary-50 to-white p-6 shadow-sm">
         <div class="flex items-start justify-between">
             <div class="flex-1">
-                <h2 class="text-xl font-semibold text-slate-900">Bine ai venit! Hai să configurăm VoiceBot-ul tău</h2>
+                <h2 class="text-xl font-semibold text-slate-900">Bine ai venit! Hai să configurăm Sambla-ul tău</h2>
                 <p class="mt-1 text-sm text-slate-500">Urmează pașii de mai jos pentru a începe să primești apeluri.</p>
 
                 <ul class="mt-4 space-y-3">
@@ -224,7 +224,7 @@
                                     <span class="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">Finalizat</span>
                                     @break
                                 @case('in_progress')
-                                    <span class="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700">În desfășurare</span>
+                                    <span class="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-800">În desfășurare</span>
                                     @break
                                 @case('failed')
                                     <span class="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-700">Eșuat</span>
@@ -262,7 +262,7 @@
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25zm.75-12h9v9h-9v-9z" /></svg>
             </div>
             <h4 class="mt-3 text-sm font-semibold text-slate-900">Creează un bot</h4>
-            <p class="mt-1 text-xs text-slate-500">Configurează un nou VoiceBot cu personalitate și instrucțiuni personalizate.</p>
+            <p class="mt-1 text-xs text-slate-500">Configurează un nou Sambla cu personalitate și instrucțiuni personalizate.</p>
         </a>
 
         {{-- Adaugă un număr --}}

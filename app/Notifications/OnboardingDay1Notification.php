@@ -19,7 +19,7 @@ class OnboardingDay1Notification extends Notification implements ShouldQueue
     public function toMail($notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Primii pași cu VoiceBot')
+            ->subject('Primii pași cu Sambla')
             ->greeting('Salut, ' . $notifiable->name . '!')
             ->line('Sperăm că te-ai instalat confortabil pe platformă. Iată câteva sfaturi pentru a începe rapid:')
             ->line('**1. Creează primul tău bot vocal**')

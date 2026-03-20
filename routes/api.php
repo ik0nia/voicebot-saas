@@ -29,7 +29,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
 // API docs placeholder
 Route::get('/docs', function () {
     return response()->json([
-        'name' => 'VoiceBot API',
+        'name' => 'Sambla API',
         'version' => 'v1',
         'base_url' => url('/api/v1'),
         'auth' => 'Bearer token (Sanctum)',

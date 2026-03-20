@@ -87,7 +87,7 @@ class TwilioService
 
         $connect = $response->connect();
         $stream = $connect->stream([
-            'url' => "wss://" . config('app.url_host', 'voice.ikonia.cloud') . "/ws/media-stream",
+            'url' => "wss://" . config('app.url_host', 'sambla.ro') . "/ws/media-stream",
             'track' => 'both_tracks',
         ]);
         $stream->parameter(['name' => 'bot_id', 'value' => $botId]);

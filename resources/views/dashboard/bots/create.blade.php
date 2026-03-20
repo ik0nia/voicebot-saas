@@ -22,8 +22,8 @@
             <div class="flex items-center gap-0">
                 {{-- Step 1 --}}
                 <div id="step-indicator-1" class="flex items-center">
-                    <div class="flex items-center justify-center w-9 h-9 rounded-full bg-blue-600 text-white text-sm font-semibold transition-colors">1</div>
-                    <span class="ml-2 text-sm font-medium text-blue-600 hidden sm:inline">Informații de bază</span>
+                    <div class="flex items-center justify-center w-9 h-9 rounded-full bg-red-800 text-white text-sm font-semibold transition-colors">1</div>
+                    <span class="ml-2 text-sm font-medium text-red-800 hidden sm:inline">Informații de bază</span>
                 </div>
                 <div class="w-10 sm:w-16 h-px bg-slate-300 mx-3"></div>
                 {{-- Step 2 --}}
@@ -65,14 +65,14 @@
                         <label for="name" class="block text-sm font-medium text-slate-700 mb-1.5">Nume bot <span class="text-red-500">*</span></label>
                         <input type="text" name="name" id="name" value="{{ old('name') }}" required
                                placeholder="Ex: Asistent Clinică, Suport Tehnic..."
-                               class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition" />
+                               class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" />
                     </div>
 
                     {{-- Limbă --}}
                     <div>
                         <label for="language" class="block text-sm font-medium text-slate-700 mb-1.5">Limbă <span class="text-red-500">*</span></label>
                         <select name="language" id="language" required
-                                class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition">
+                                class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition">
                             <option value="">Selectează limba...</option>
                             <option value="ro" {{ old('language') === 'ro' ? 'selected' : '' }}>Română</option>
                             <option value="en" {{ old('language') === 'en' ? 'selected' : '' }}>English</option>
@@ -86,7 +86,7 @@
                     <div>
                         <label for="voice" class="block text-sm font-medium text-slate-700 mb-1.5">Voce <span class="text-red-500">*</span></label>
                         <select name="voice" id="voice" required
-                                class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition">
+                                class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition">
                             <option value="">Selectează vocea...</option>
                             <option value="alloy" {{ old('voice') === 'alloy' ? 'selected' : '' }}>Alloy (neutru)</option>
                             <option value="echo" {{ old('voice') === 'echo' ? 'selected' : '' }}>Echo (masculin)</option>
@@ -109,17 +109,17 @@
                     <label class="block text-sm font-medium text-slate-700 mb-2">Șabloane rapide</label>
                     <div class="flex flex-wrap gap-2">
                         <button type="button" onclick="applyTemplate('general')"
-                                class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-colors">
+                                class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-red-50 hover:text-red-800 hover:border-red-200 transition-colors">
                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
                             Asistent general
                         </button>
                         <button type="button" onclick="applyTemplate('programari')"
-                                class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-colors">
+                                class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-red-50 hover:text-red-800 hover:border-red-200 transition-colors">
                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                             Programări
                         </button>
                         <button type="button" onclick="applyTemplate('suport')"
-                                class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-colors">
+                                class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-red-50 hover:text-red-800 hover:border-red-200 transition-colors">
                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                             Suport tehnic
                         </button>
@@ -132,7 +132,7 @@
                     <textarea name="system_prompt" id="system_prompt" rows="8"
                               placeholder="Descrie cum trebuie să se comporte botul..."
                               oninput="updatePreview()"
-                              class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-700 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition resize-y">{{ old('system_prompt') }}</textarea>
+                              class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-700 placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition resize-y">{{ old('system_prompt') }}</textarea>
                 </div>
 
                 {{-- Preview --}}
@@ -158,7 +158,7 @@
                         </div>
                         <input type="range" name="settings[vad_threshold]" id="vad_threshold" min="0" max="1" step="0.05" value="{{ old('settings.vad_threshold', '0.5') }}"
                                oninput="document.getElementById('vad_threshold_value').textContent = this.value"
-                               class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+                               class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-red-800" />
                         <p class="mt-1 text-xs text-slate-400">Sensibilitatea detectării vocii (0 = foarte sensibil, 1 = strict)</p>
                     </div>
 
@@ -170,7 +170,7 @@
                         </div>
                         <input type="range" name="settings[silence_duration_ms]" id="silence_duration" min="200" max="2000" step="50" value="{{ old('settings.silence_duration_ms', '500') }}"
                                oninput="document.getElementById('silence_duration_value').textContent = this.value"
-                               class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+                               class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-red-800" />
                         <p class="mt-1 text-xs text-slate-400">Cât timp de tăcere așteaptă botul înainte să considere că vorbitorul a terminat (200-2000ms)</p>
                     </div>
 
@@ -182,7 +182,7 @@
                         </div>
                         <input type="range" name="settings[temperature]" id="temperature" min="0" max="1" step="0.05" value="{{ old('settings.temperature', '0.7') }}"
                                oninput="document.getElementById('temperature_value').textContent = this.value"
-                               class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+                               class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-red-800" />
                         <p class="mt-1 text-xs text-slate-400">Creativitatea răspunsurilor (0 = precis, 1 = creativ)</p>
                     </div>
 
@@ -190,7 +190,7 @@
                     <div>
                         <label for="max_tokens" class="block text-sm font-medium text-slate-700 mb-1.5">Tokeni maximi</label>
                         <input type="number" name="settings[max_tokens]" id="max_tokens" min="64" max="4096" value="{{ old('settings.max_tokens', '1024') }}"
-                               class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition" />
+                               class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" />
                         <p class="mt-1 text-xs text-slate-400">Lungimea maximă a răspunsurilor generate (64-4096)</p>
                     </div>
                 </div>
@@ -204,11 +204,11 @@
                 </button>
                 <div class="flex-1"></div>
                 <button type="button" id="btn-next" onclick="nextStep()"
-                        class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors">
+                        class="inline-flex items-center gap-2 rounded-lg bg-red-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 transition-colors">
                     Următorul
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
                 </button>
-                <button type="submit" id="btn-submit" class="hidden inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors">
+                <button type="submit" id="btn-submit" class="hidden inline-flex items-center gap-2 rounded-lg bg-red-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 transition-colors">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
                     Creează botul
                 </button>
@@ -241,9 +241,9 @@
                 circle.innerHTML = '<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>';
                 if (label) { label.className = 'ml-2 text-sm font-medium text-green-600 hidden sm:inline'; }
             } else if (i === step) {
-                circle.className = 'flex items-center justify-center w-9 h-9 rounded-full bg-blue-600 text-white text-sm font-semibold transition-colors';
+                circle.className = 'flex items-center justify-center w-9 h-9 rounded-full bg-red-800 text-white text-sm font-semibold transition-colors';
                 circle.textContent = i;
-                if (label) { label.className = 'ml-2 text-sm font-medium text-blue-600 hidden sm:inline'; }
+                if (label) { label.className = 'ml-2 text-sm font-medium text-red-800 hidden sm:inline'; }
             } else {
                 circle.className = 'flex items-center justify-center w-9 h-9 rounded-full bg-slate-200 text-slate-500 text-sm font-semibold transition-colors';
                 circle.textContent = i;

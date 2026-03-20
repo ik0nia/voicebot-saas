@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Prețuri - VoiceBot SaaS')
-@section('meta_description', 'Prețuri simple și transparente pentru VoiceBot SaaS. Alege planul potrivit pentru afacerea ta. Fără costuri ascunse.')
+@section('title', 'Prețuri - Sambla')
+@section('meta_description', 'Prețuri simple și transparente pentru Sambla. Alege planul potrivit pentru afacerea ta. Fără costuri ascunse.')
 
 @section('content')
 

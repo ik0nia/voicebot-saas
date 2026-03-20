@@ -27,13 +27,13 @@ class InvoiceNotification extends Notification implements ShouldQueue
         $formattedAmount = number_format($this->amount, 2, ',', '.') . ' RON';
 
         return (new MailMessage)
-            ->subject("Factură VoiceBot — {$this->period}")
+            ->subject("Factură Sambla — {$this->period}")
             ->greeting('Salut, ' . $notifiable->name . '!')
-            ->line('O nouă factură a fost generată pentru contul tău VoiceBot.')
+            ->line('O nouă factură a fost generată pentru contul tău Sambla.')
             ->line("**Perioada:** {$this->period}")
             ->line("**Sumă:** {$formattedAmount}")
             ->line("**ID factură:** {$this->invoiceId}")
             ->action('Descarcă factura', url("/dashboard/billing/invoices/{$this->invoiceId}"))
-            ->line('Mulțumim că folosești VoiceBot!');
+            ->line('Mulțumim că folosești Sambla!');
     }
 }

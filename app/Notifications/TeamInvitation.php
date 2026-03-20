@@ -25,9 +25,9 @@ class TeamInvitation extends Notification implements ShouldQueue
     public function toMail($notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Invitație VoiceBot — ' . $this->inviter->tenant?->name)
+            ->subject('Invitație Sambla — ' . $this->inviter->tenant?->name)
             ->greeting('Bună, ' . $notifiable->name . '!')
-            ->line($this->inviter->name . ' te-a invitat în echipa ' . ($this->inviter->tenant?->name ?? 'VoiceBot') . '.')
+            ->line($this->inviter->name . ' te-a invitat în echipa ' . ($this->inviter->tenant?->name ?? 'Sambla') . '.')
             ->line('Parola ta temporară: **' . $this->tempPassword . '**')
             ->action('Conectează-te', url('/login'))
             ->line('Te rugăm să îți schimbi parola după prima conectare.');

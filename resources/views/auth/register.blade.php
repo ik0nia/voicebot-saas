@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Înregistrare - VoiceBot SaaS')
+@section('title', 'Înregistrare - Sambla')
 
 @section('content')
 <div class="min-h-[80vh] flex items-center justify-center px-4 py-12 pt-24 lg:pt-28">

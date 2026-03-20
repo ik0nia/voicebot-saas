@@ -96,7 +96,7 @@
 
         {{-- Bottom bar --}}
         <div class="flex flex-col sm:flex-row items-center justify-between gap-2 mt-8 pt-8 border-t border-slate-800">
-            <p class="text-sm text-slate-500">&copy; 2024 VoiceBot SaaS. Toate drepturile rezervate.</p>
+            <p class="text-sm text-slate-500">&copy; 2024 Sambla. Toate drepturile rezervate.</p>
             <p class="text-sm text-slate-500">Făcut cu ❤️ în România</p>
         </div>
     </div>

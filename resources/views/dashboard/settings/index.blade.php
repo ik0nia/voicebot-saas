@@ -56,7 +56,7 @@
                 <a href="{{ url('/dashboard/setari?tab=' . $key) }}"
                    class="whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors
                           {{ $tab === $key
-                              ? 'border-blue-600 text-blue-600'
+                              ? 'border-red-800 text-red-800'
                               : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700' }}">
                     {{ $label }}
                 </a>
@@ -84,7 +84,7 @@
                         <label for="name" class="block text-sm font-medium text-slate-700">Nume</label>
                         <input type="text" name="name" id="name"
                                value="{{ old('name', auth()->user()->name) }}"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors"
+                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 focus:outline-none transition-colors"
                                required>
                         @error('name')
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
@@ -96,7 +96,7 @@
                         <label for="email" class="block text-sm font-medium text-slate-700">Email</label>
                         <input type="email" name="email" id="email"
                                value="{{ old('email', auth()->user()->email) }}"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors"
+                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 focus:outline-none transition-colors"
                                required>
                         @error('email')
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
@@ -109,7 +109,7 @@
                         <input type="text" name="phone" id="phone"
                                value="{{ old('phone', auth()->user()->phone) }}"
                                placeholder="+40 7XX XXX XXX"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors">
+                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 focus:outline-none transition-colors">
                         @error('phone')
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                         @enderror
@@ -119,7 +119,7 @@
                     <div>
                         <label for="timezone" class="block text-sm font-medium text-slate-700">Fus orar</label>
                         <select name="timezone" id="timezone"
-                                class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors">
+                                class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 focus:outline-none transition-colors">
                             @php
                                 $timezones = [
                                     'Europe/Bucharest' => 'Europe/Bucharest (EET/EEST)',
@@ -162,7 +162,7 @@
 
                 <div class="flex justify-end pt-2">
                     <button type="submit"
-                            class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors">
+                            class="inline-flex items-center gap-2 rounded-lg bg-red-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-700/20 transition-colors">
                         Salvează profilul
                     </button>
                 </div>
@@ -183,7 +183,7 @@
                     <div>
                         <label for="current_password" class="block text-sm font-medium text-slate-700">Parola curentă</label>
                         <input type="password" name="current_password" id="current_password"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors"
+                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 focus:outline-none transition-colors"
                                required>
                         @error('current_password')
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
@@ -194,7 +194,7 @@
                     <div>
                         <label for="password" class="block text-sm font-medium text-slate-700">Parolă nouă</label>
                         <input type="password" name="password" id="password"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors"
+                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 focus:outline-none transition-colors"
                                required>
                         @error('password')
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
@@ -205,14 +205,14 @@
                     <div>
                         <label for="password_confirmation" class="block text-sm font-medium text-slate-700">Confirmă parola</label>
                         <input type="password" name="password_confirmation" id="password_confirmation"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors"
+                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 focus:outline-none transition-colors"
                                required>
                     </div>
                 </div>
 
                 <div class="flex justify-end pt-2">
                     <button type="submit"
-                            class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors">
+                            class="inline-flex items-center gap-2 rounded-lg bg-red-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-700/20 transition-colors">
                         Schimbă parola
                     </button>
                 </div>
@@ -240,7 +240,7 @@
                         <label for="company_name" class="block text-sm font-medium text-slate-700">Nume companie</label>
                         <input type="text" name="name" id="company_name"
                                value="{{ old('name', $tenant->name ?? '') }}"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors"
+                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 focus:outline-none transition-colors"
                                required>
                         @error('name')
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
@@ -253,7 +253,7 @@
                         <input type="url" name="settings[website]" id="website"
                                value="{{ old('settings.website', $tenant->settings['website'] ?? '') }}"
                                placeholder="https://exemplu.ro"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors">
+                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 focus:outline-none transition-colors">
                         @error('settings.website')
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                         @enderror
@@ -263,7 +263,7 @@
                     <div>
                         <label for="industry" class="block text-sm font-medium text-slate-700">Industrie</label>
                         <select name="settings[industry]" id="industry"
-                                class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors">
+                                class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 focus:outline-none transition-colors">
                             @php
                                 $industries = [
                                     '' => 'Selectează industria',
@@ -294,15 +294,15 @@
                                 $planLabels = ['starter' => 'Starter', 'pro' => 'Pro', 'enterprise' => 'Enterprise'];
                                 $planColors = [
                                     'starter' => 'bg-slate-100 text-slate-700',
-                                    'pro' => 'bg-blue-100 text-blue-700',
-                                    'enterprise' => 'bg-purple-100 text-purple-700',
+                                    'pro' => 'bg-red-100 text-red-800',
+                                    'enterprise' => 'bg-red-100 text-red-800',
                                 ];
                             @endphp
                             <span class="inline-flex items-center rounded-full px-3 py-1.5 text-sm font-semibold {{ $planColors[$plan] ?? $planColors['starter'] }}">
                                 {{ $planLabels[$plan] ?? 'Starter' }}
                             </span>
                             @if($plan !== 'enterprise')
-                                <a href="/dashboard/facturare" class="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
+                                <a href="/dashboard/facturare" class="text-sm font-medium text-red-800 hover:text-red-900 transition-colors">
                                     Upgrade plan
                                 </a>
                             @endif
@@ -312,7 +312,7 @@
 
                 <div class="flex justify-end pt-2">
                     <button type="submit"
-                            class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors">
+                            class="inline-flex items-center gap-2 rounded-lg bg-red-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-700/20 transition-colors">
                         Salvează compania
                     </button>
                 </div>
@@ -351,7 +351,7 @@
                         <label class="flex items-start gap-4 p-4 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer">
                             <input type="checkbox" name="{{ $key }}" value="1"
                                    {{ (isset($prefs[$key]) ? $prefs[$key] : $notif['default']) ? 'checked' : '' }}
-                                   class="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20">
+                                   class="mt-0.5 h-4 w-4 rounded border-slate-300 text-red-800 focus:ring-red-700/20">
                             <div>
                                 <span class="text-sm font-medium text-slate-900">{{ $notif['label'] }}</span>
                                 <p class="text-sm text-slate-500 mt-0.5">{{ $notif['desc'] }}</p>
@@ -365,7 +365,7 @@
                         Notificările sunt trimise pe email la <span class="font-medium text-slate-700">{{ auth()->user()->email }}</span>
                     </p>
                     <button type="submit"
-                            class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors">
+                            class="inline-flex items-center gap-2 rounded-lg bg-red-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-700/20 transition-colors">
                         Salvează notificările
                     </button>
                 </div>
@@ -382,7 +382,7 @@
         {{-- Info --}}
         <div class="bg-white rounded-xl border border-slate-200 p-6">
             <h2 class="text-lg font-semibold text-slate-900">Chei API</h2>
-            <p class="mt-1 text-sm text-slate-500">Folosește cheile API pentru a accesa VoiceBot API programatic.</p>
+            <p class="mt-1 text-sm text-slate-500">Folosește cheile API pentru a accesa Sambla API programatic.</p>
 
             {{-- Generate New Key --}}
             <form method="POST" action="{{ url('/dashboard/setari/api-keys') }}" class="mt-6">
@@ -392,11 +392,11 @@
                         <label for="key_name" class="sr-only">Nume cheie</label>
                         <input type="text" name="name" id="key_name"
                                placeholder="Nume cheie (ex: Integrare CRM)"
-                               class="block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors"
+                               class="block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 focus:outline-none transition-colors"
                                required>
                     </div>
                     <button type="submit"
-                            class="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors whitespace-nowrap">
+                            class="inline-flex items-center justify-center gap-2 rounded-lg bg-red-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-700/20 transition-colors whitespace-nowrap">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                         </svg>
@@ -463,7 +463,7 @@
 
             <div class="mt-4 rounded-lg bg-slate-900 p-4 overflow-x-auto">
                 <pre class="text-sm text-slate-100 font-mono"><code>curl -H "Authorization: Bearer YOUR_API_KEY" \
-  https://voice.ikonia.cloud/api/v1/bots</code></pre>
+  https://sambla.ro/api/v1/bots</code></pre>
             </div>
         </div>
 
@@ -510,7 +510,7 @@
                         @foreach($webhookEvents as $value => $label)
                             <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 cursor-not-allowed">
                                 <input type="checkbox" name="events[]" value="{{ $value }}" disabled
-                                       class="h-4 w-4 rounded border-slate-300 text-blue-600">
+                                       class="h-4 w-4 rounded border-slate-300 text-red-800">
                                 <span class="text-sm text-slate-700">{{ $label }}</span>
                             </label>
                         @endforeach
@@ -520,7 +520,7 @@
                 {{-- Save Button --}}
                 <div class="flex justify-end pt-2">
                     <button type="button" disabled
-                            class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm cursor-not-allowed">
+                            class="inline-flex items-center gap-2 rounded-lg bg-red-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm cursor-not-allowed">
                         Salvează webhook
                     </button>
                 </div>

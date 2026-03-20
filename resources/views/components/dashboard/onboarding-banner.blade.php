@@ -17,7 +17,7 @@
 
     <div class="flex flex-col lg:flex-row lg:items-start gap-6">
         <div class="flex-1">
-            <h2 class="text-xl font-bold text-slate-900 mb-1">Bine ai venit! Hai să configurăm VoiceBot-ul tău</h2>
+            <h2 class="text-xl font-bold text-slate-900 mb-1">Bine ai venit! Hai să configurăm Sambla-ul tău</h2>
             <p class="text-sm text-slate-500 mb-4">Completează pașii de mai jos pentru a începe să folosești platforma.</p>
 
             {{-- Bară de progres --}}

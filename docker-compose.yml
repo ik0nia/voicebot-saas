@@ -40,7 +40,7 @@ services:
         condition: service_healthy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.voicebot.rule=Host(`voice.ikonia.cloud`)"
+      - "traefik.http.routers.voicebot.rule=Host(`sambla.ro`)"
       - "traefik.http.routers.voicebot.tls=true"
       - "traefik.http.routers.voicebot.tls.certresolver=letsencrypt"
       - "traefik.http.services.voicebot.loadbalancer.server.port=80"

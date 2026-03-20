@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Conectare - VoiceBot SaaS')
+@section('title', 'Conectare - Sambla')
 
 @section('content')
 <div class="min-h-[80vh] flex items-center justify-center px-4 py-12 pt-24 lg:pt-28">
@@ -10,7 +10,7 @@
             {{-- Header --}}
             <div class="text-center mb-8">
                 <h1 class="text-2xl font-bold text-slate-900">Bine ai revenit!</h1>
-                <p class="text-slate-500 mt-2">Conectează-te la contul tău VoiceBot</p>
+                <p class="text-slate-500 mt-2">Conectează-te la contul tău Sambla</p>
             </div>
 
             {{-- Validation Errors --}}

@@ -6,16 +6,12 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class TenantAccess
+class EnsureSuperAdmin
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (!auth()->check()) {
-            return redirect()->route('login');
-        }
-
-        if (!auth()->user()->tenant_id && !auth()->user()->hasRole('super_admin')) {
-            abort(403, 'No tenant assigned.');
+        if (!auth()->check() || !auth()->user()->hasRole('super_admin')) {
+            abort(403, 'Acces interzis.');
         }
 
         return $next($request);

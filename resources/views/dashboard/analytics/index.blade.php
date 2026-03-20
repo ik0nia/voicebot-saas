@@ -24,19 +24,19 @@
     <div class="flex flex-col sm:flex-row sm:items-center gap-3">
         <div class="inline-flex rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
             <a href="/dashboard/analiza?period=today"
-               class="rounded-md px-3.5 py-1.5 text-sm font-medium transition-colors {{ $period === 'today' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
+               class="rounded-md px-3.5 py-1.5 text-sm font-medium transition-colors {{ $period === 'today' ? 'bg-red-800 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
                 Azi
             </a>
             <a href="/dashboard/analiza?period=week"
-               class="rounded-md px-3.5 py-1.5 text-sm font-medium transition-colors {{ $period === 'week' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
+               class="rounded-md px-3.5 py-1.5 text-sm font-medium transition-colors {{ $period === 'week' ? 'bg-red-800 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
                 Săptămâna
             </a>
             <a href="/dashboard/analiza?period=month"
-               class="rounded-md px-3.5 py-1.5 text-sm font-medium transition-colors {{ $period === 'month' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
+               class="rounded-md px-3.5 py-1.5 text-sm font-medium transition-colors {{ $period === 'month' ? 'bg-red-800 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
                 Luna
             </a>
             <button type="button" id="custom-period-btn"
-               class="rounded-md px-3.5 py-1.5 text-sm font-medium transition-colors {{ $period === 'custom' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
+               class="rounded-md px-3.5 py-1.5 text-sm font-medium transition-colors {{ $period === 'custom' ? 'bg-red-800 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
                 Custom
             </button>
         </div>
@@ -46,12 +46,12 @@
               class="{{ $period === 'custom' ? 'flex' : 'hidden' }} items-center gap-2">
             <input type="hidden" name="period" value="custom">
             <input type="date" name="date_from" value="{{ $period === 'custom' ? $dateFrom->toDateString() : now()->subDays(7)->toDateString() }}"
-                   class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                   class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 shadow-sm focus:border-red-700 focus:ring-red-700">
             <span class="text-sm text-slate-400">—</span>
             <input type="date" name="date_to" value="{{ $period === 'custom' ? $dateTo->toDateString() : now()->toDateString() }}"
-                   class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                   class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 shadow-sm focus:border-red-700 focus:ring-red-700">
             <button type="submit"
-                    class="rounded-lg bg-blue-600 px-3.5 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 transition-colors">
+                    class="rounded-lg bg-red-800 px-3.5 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-red-900 transition-colors">
                 Aplică
             </button>
         </form>
@@ -66,7 +66,7 @@
                     <p class="text-sm font-medium text-slate-500">Total apeluri</p>
                     <p class="mt-1 text-3xl font-bold text-slate-900">{{ number_format($totalCalls) }}</p>
                 </div>
-                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 text-red-800">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
                     </svg>

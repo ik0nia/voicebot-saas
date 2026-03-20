@@ -24,7 +24,7 @@ class OnboardingDay7Notification extends Notification implements ShouldQueue
             ->exists();
 
         $message = (new MailMessage)
-            ->subject('Cum merge? — VoiceBot')
+            ->subject('Cum merge? — Sambla')
             ->greeting('Salut, ' . $notifiable->name . '!');
 
         if ($hasCalls) {
@@ -37,7 +37,7 @@ class OnboardingDay7Notification extends Notification implements ShouldQueue
                 ->line('1. Creează un bot (durează sub 2 minute)')
                 ->line('2. Adaugă un număr de telefon')
                 ->line('3. Sună și testează — e gratuit în perioada de probă!')
-                ->line('Mai ai **7 zile** din perioada de probă. Nu rata ocazia de a vedea VoiceBot în acțiune!');
+                ->line('Mai ai **7 zile** din perioada de probă. Nu rata ocazia de a vedea Sambla în acțiune!');
         }
 
         $message->action('Programează un demo', url('/dashboard/demo'))

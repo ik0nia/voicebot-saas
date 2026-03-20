@@ -11,6 +11,7 @@ use App\Http\Controllers\Dashboard\KnowledgeController;
 use App\Http\Controllers\Dashboard\PhoneNumberController;
 use App\Http\Controllers\Dashboard\SettingsController;
 use App\Http\Controllers\Dashboard\TeamController;
+use App\Http\Controllers\Admin\AdminSettingsController;
 use App\Http\Controllers\Webhook\TwilioWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -50,7 +51,7 @@ Route::get('/contact', function () {
 });
 
 // Dashboard home
-Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'tenant'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth'])->name('dashboard');
 
 // Billing routes (dashboard)
 Route::get('/dashboard/facturare', [BillingController::class, 'index'])->middleware('auth')->name('dashboard.billing.index');
@@ -115,6 +116,20 @@ Route::middleware('auth')->prefix('dashboard/boti/{bot}')->group(function () {
     Route::get('/knowledge', [KnowledgeController::class, 'index'])->name('dashboard.bots.knowledge.index');
     Route::post('/knowledge', [KnowledgeController::class, 'store'])->name('dashboard.bots.knowledge.store');
     Route::delete('/knowledge/{title}', [KnowledgeController::class, 'destroy'])->name('dashboard.bots.knowledge.destroy');
+});
+
+// Admin Settings routes (super_admin only)
+Route::middleware(['auth', 'super_admin'])->prefix('dashboard/admin/setari')->group(function () {
+    Route::get('/', [AdminSettingsController::class, 'index'])->name('admin.settings.index');
+    Route::put('/general', [AdminSettingsController::class, 'updateGeneral'])->name('admin.settings.updateGeneral');
+    Route::put('/openai', [AdminSettingsController::class, 'updateOpenai'])->name('admin.settings.updateOpenai');
+    Route::put('/twilio', [AdminSettingsController::class, 'updateTwilio'])->name('admin.settings.updateTwilio');
+    Route::put('/stripe', [AdminSettingsController::class, 'updateStripe'])->name('admin.settings.updateStripe');
+    Route::put('/email', [AdminSettingsController::class, 'updateEmail'])->name('admin.settings.updateEmail');
+    Route::put('/securitate', [AdminSettingsController::class, 'updateSecurity'])->name('admin.settings.updateSecurity');
+    Route::post('/clear-cache', [AdminSettingsController::class, 'clearCache'])->name('admin.settings.clearCache');
+    Route::put('/tenanti/{tenant}', [AdminSettingsController::class, 'updateTenant'])->name('admin.settings.updateTenant');
+    Route::patch('/tenanti/{tenant}/toggle', [AdminSettingsController::class, 'toggleTenant'])->name('admin.settings.toggleTenant');
 });
 
 // Twilio webhooks (no CSRF, no auth - signature verified by middleware)

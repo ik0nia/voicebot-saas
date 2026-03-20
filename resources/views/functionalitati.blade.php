@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Funcționalități - VoiceBot SaaS')
-@section('meta_description', 'Descoperă funcționalitățile VoiceBot: telefonie inteligentă, AI conversațional, analiză în timp real, integrări și API pentru dezvoltatori.')
+@section('title', 'Funcționalități - Sambla')
+@section('meta_description', 'Descoperă funcționalitățile Sambla: telefonie inteligentă, AI conversațional, analiză în timp real, integrări și API pentru dezvoltatori.')
 
 @section('content')
 
@@ -12,7 +12,7 @@
             Funcționalități puternice pentru <span class="gradient-text">comunicare inteligentă</span>
         </h1>
         <p class="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            Descoperă tot ce poate face VoiceBot pentru afacerea ta
+            Descoperă tot ce poate face Sambla pentru afacerea ta
         </p>
     </div>
     {{-- Decorative blobs --}}
@@ -434,7 +434,7 @@
                 </div>
                 <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Integrări & API</h2>
                 <p class="text-slate-600 mb-8 leading-relaxed">
-                    Conectează VoiceBot cu instrumentele pe care le folosești deja. Integrări native cu cele mai populare platforme și un API complet pentru personalizări avansate.
+                    Conectează Sambla cu instrumentele pe care le folosești deja. Integrări native cu cele mai populare platforme și un API complet pentru personalizări avansate.
                 </p>
                 <ul class="space-y-4">
                     <li class="flex items-start gap-3">
@@ -484,7 +484,7 @@
     <div class="container-custom">
         <div class="text-center mb-12 lg:mb-16">
             <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Cum se compară cu un operator uman?</h2>
-            <p class="text-slate-600 max-w-2xl mx-auto">VoiceBot depășește limitele unui call center tradițional pe toate planurile.</p>
+            <p class="text-slate-600 max-w-2xl mx-auto">Sambla depășește limitele unui call center tradițional pe toate planurile.</p>
         </div>
 
         <div class="overflow-x-auto -mx-4 sm:mx-0">
@@ -494,7 +494,7 @@
                         <tr>
                             <th class="text-left py-4 px-4 sm:px-6 text-sm font-semibold text-slate-500 uppercase tracking-wider border-b-2 border-slate-200">Criteriu</th>
                             <th class="text-center py-4 px-4 sm:px-6 text-sm font-semibold text-slate-500 uppercase tracking-wider border-b-2 border-slate-200">Operator Uman</th>
-                            <th class="text-center py-4 px-4 sm:px-6 text-sm font-semibold text-primary-600 uppercase tracking-wider border-b-2 border-primary-200 bg-primary-50/50 rounded-t-xl">VoiceBot AI</th>
+                            <th class="text-center py-4 px-4 sm:px-6 text-sm font-semibold text-primary-600 uppercase tracking-wider border-b-2 border-primary-200 bg-primary-50/50 rounded-t-xl">Sambla AI</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -569,7 +569,7 @@
                 </div>
                 {{-- Code content --}}
                 <div class="bg-slate-950 p-6 overflow-x-auto">
-                    <pre class="text-sm leading-relaxed font-mono"><code><span class="text-slate-500">// Exemplu: Inițierea unui apel cu VoiceBot API</span>
+                    <pre class="text-sm leading-relaxed font-mono"><code><span class="text-slate-500">// Exemplu: Inițierea unui apel cu Sambla API</span>
 <span class="text-purple-400">const</span> <span class="text-slate-200">response</span> <span class="text-slate-500">=</span> <span class="text-purple-400">await</span> <span class="text-blue-400">fetch</span><span class="text-slate-400">(</span><span class="text-emerald-400">'https://api.voicebot.ro/v1/calls'</span><span class="text-slate-400">,</span> <span class="text-slate-400">{</span>
   <span class="text-slate-200">method</span><span class="text-slate-400">:</span> <span class="text-emerald-400">'POST'</span><span class="text-slate-400">,</span>
   <span class="text-slate-200">headers</span><span class="text-slate-400">:</span> <span class="text-slate-400">{</span>
@@ -620,7 +620,7 @@
             Pregătit să automatizezi comunicarea?
         </h2>
         <p class="text-primary-100 text-lg mb-10 max-w-xl mx-auto">
-            Începe gratuit și descoperă cum VoiceBot poate transforma interacțiunile cu clienții tăi.
+            Începe gratuit și descoperă cum Sambla poate transforma interacțiunile cu clienții tăi.
         </p>
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a href="/register" class="inline-flex items-center justify-center px-8 py-3.5 bg-white text-primary-700 font-semibold rounded-xl hover:bg-primary-50 transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-lg">

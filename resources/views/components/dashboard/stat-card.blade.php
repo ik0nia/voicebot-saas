@@ -2,12 +2,12 @@
 
 @php
     $colorMap = [
-        'primary' => ['bg' => 'bg-blue-50', 'text' => 'text-blue-600'],
-        'blue'    => ['bg' => 'bg-blue-50', 'text' => 'text-blue-600'],
+        'primary' => ['bg' => 'bg-red-50', 'text' => 'text-red-800'],
+        'blue'    => ['bg' => 'bg-red-50', 'text' => 'text-red-800'],
         'emerald' => ['bg' => 'bg-emerald-50', 'text' => 'text-emerald-600'],
         'amber'   => ['bg' => 'bg-amber-50', 'text' => 'text-amber-600'],
         'red'     => ['bg' => 'bg-red-50', 'text' => 'text-red-600'],
-        'purple'  => ['bg' => 'bg-purple-50', 'text' => 'text-purple-600'],
+        'purple'  => ['bg' => 'bg-red-50', 'text' => 'text-red-800'],
         'indigo'  => ['bg' => 'bg-indigo-50', 'text' => 'text-indigo-600'],
         'slate'   => ['bg' => 'bg-slate-50', 'text' => 'text-slate-600'],
     ];

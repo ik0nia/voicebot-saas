@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'VoiceBot — Agenți Vocali AI pentru Afacerea Ta')
+@section('title', 'Sambla — Agenți Vocali AI pentru Afacerea Ta')
 @section('meta_description', 'Automatizează apelurile telefonice ale afacerii tale cu inteligență artificială. Răspunsuri instantanee, 24/7, în limba română.')
 
 @section('content')
@@ -34,7 +34,7 @@
                         &lt;200ms Latență
                     </div>
                     <div class="inline-flex items-center gap-2 bg-white rounded-full px-4 py-2 shadow-sm border border-slate-100 text-sm font-medium text-slate-700">
-                        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                        <span class="w-2 h-2 rounded-full bg-red-700"></span>
                         24/7 Disponibil
                     </div>
                 </div>
@@ -251,7 +251,7 @@
 <section id="demo" class="bg-white">
     <div class="container-custom section-padding">
         <div class="text-center mb-12">
-            <h2 class="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">Testează VoiceBot în acțiune</h2>
+            <h2 class="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">Testează Sambla în acțiune</h2>
             <p class="text-lg text-slate-600 max-w-2xl mx-auto">Vezi cum răspunde agentul nostru AI la întrebări reale</p>
         </div>
 
@@ -266,7 +266,7 @@
                         </svg>
                     </div>
                     <div>
-                        <p class="text-white font-semibold text-sm">VoiceBot Asistent</p>
+                        <p class="text-white font-semibold text-sm">Sambla Asistent</p>
                         <p class="text-white/70 text-xs flex items-center gap-1">
                             <span class="w-2 h-2 rounded-full bg-green-400 inline-block"></span>
                             Online
@@ -284,7 +284,7 @@
                             </svg>
                         </div>
                         <div class="bg-white rounded-2xl rounded-tl-md px-4 py-3 max-w-[80%] shadow-sm border border-slate-100">
-                            <p class="text-sm text-slate-700">Bună ziua! Sunt asistentul virtual VoiceBot. Cu ce vă pot ajuta?</p>
+                            <p class="text-sm text-slate-700">Bună ziua! Sunt asistentul virtual Sambla. Cu ce vă pot ajuta?</p>
                         </div>
                     </div>
                 </div>
@@ -325,7 +325,7 @@
     <div class="container-custom section-padding">
         <div class="text-center mb-16">
             <h2 class="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">Ce spun clienții noștri</h2>
-            <p class="text-lg text-slate-600 max-w-2xl mx-auto">Feedback real de la companii care folosesc VoiceBot zilnic</p>
+            <p class="text-lg text-slate-600 max-w-2xl mx-auto">Feedback real de la companii care folosesc Sambla zilnic</p>
         </div>
 
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -343,7 +343,7 @@
                         'name' => 'Andrei Popescu',
                         'role' => 'Director Operațiuni @ FinanceHub',
                         'initials' => 'AP',
-                        'color' => 'bg-blue-500',
+                        'color' => 'bg-red-700',
                         'stars' => 5,
                         'quote' => 'ROI-ul a fost vizibil din prima lună. Echipa de suport se concentrează acum pe cazurile complexe.',
                     ],
@@ -447,13 +447,13 @@
             return 'Desigur! Pute\u021Bi programa o demonstra\u021Bie personalizat\u0103 accesând pagina noastr\u0103 de contact sau sunând la +40 21 XXX XXXX.';
         }
         if (msg.includes('func\u021Bion') || msg.includes('function') || msg.includes('face')) {
-            return 'VoiceBot poate gestiona apeluri inbound \u0219i outbound, poate r\u0103spunde la \u00EEntreb\u0103ri frecvente, programa \u00EEntâlniri \u0219i transfera apeluri c\u0103tre operatori umani când e necesar.';
+            return 'Sambla poate gestiona apeluri inbound \u0219i outbound, poate r\u0103spunde la \u00EEntreb\u0103ri frecvente, programa \u00EEntâlniri \u0219i transfera apeluri c\u0103tre operatori umani când e necesar.';
         }
         if (msg.includes('integr')) {
             return 'Ne integr\u0103m cu Twilio, centralele PBX, CRM-uri populare (Salesforce, HubSpot), Google Calendar \u0219i oferim API REST complet documentat.';
         }
         if (msg.includes('român') || msg.includes('limba')) {
-            return 'Da, VoiceBot func\u021Bioneaz\u0103 nativ \u00EEn limba român\u0103, cu \u00EEn\u021Belegere complet\u0103 a diacriticelor \u0219i expresiilor locale.';
+            return 'Da, Sambla func\u021Bioneaz\u0103 nativ \u00EEn limba român\u0103, cu \u00EEn\u021Belegere complet\u0103 a diacriticelor \u0219i expresiilor locale.';
         }
 
         return 'Mul\u021Bumesc pentru \u00EEntrebare! Un coleg din echipa noastr\u0103 v\u0103 va contacta \u00EEn curând cu mai multe detalii. \u00CEntre timp, pute\u021Bi explora func\u021Bionalit\u0103\u021Bile noastre sau pagina de pre\u021Buri.';

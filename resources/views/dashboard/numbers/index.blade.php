@@ -25,7 +25,7 @@
             <p class="mt-1 text-sm text-slate-500">Gestionează numerele de telefon asociate boților tăi.</p>
         </div>
         <button onclick="document.getElementById('add-number-modal').classList.remove('hidden')"
-                class="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors">
+                class="inline-flex items-center justify-center gap-2 rounded-lg bg-red-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 transition-colors">
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
             </svg>
@@ -86,7 +86,7 @@
                         <label for="number" class="block text-sm font-medium text-slate-700 mb-1">Număr de telefon</label>
                         <input type="text" name="number" id="number" required placeholder="+40721234567"
                                value="{{ old('number') }}"
-                               class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition" />
+                               class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" />
                         @error('number')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -97,14 +97,14 @@
                         <label for="friendly_name" class="block text-sm font-medium text-slate-700 mb-1">Nume prietenos <span class="text-slate-400">(opțional)</span></label>
                         <input type="text" name="friendly_name" id="friendly_name" placeholder="Linia principală"
                                value="{{ old('friendly_name') }}"
-                               class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition" />
+                               class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" />
                     </div>
 
                     {{-- Provider --}}
                     <div>
                         <label for="provider" class="block text-sm font-medium text-slate-700 mb-1">Provider</label>
                         <select name="provider" id="provider"
-                                class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition">
+                                class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition">
                             <option value="twilio" {{ old('provider') === 'twilio' ? 'selected' : '' }}>Twilio</option>
                             <option value="manual" {{ old('provider') === 'manual' ? 'selected' : '' }}>Manual</option>
                         </select>
@@ -114,7 +114,7 @@
                     <div>
                         <label for="bot_id" class="block text-sm font-medium text-slate-700 mb-1">Asociază cu bot <span class="text-slate-400">(opțional)</span></label>
                         <select name="bot_id" id="bot_id"
-                                class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition">
+                                class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition">
                             <option value="">— Fără bot asociat —</option>
                             @foreach($bots as $bot)
                                 <option value="{{ $bot->id }}" {{ old('bot_id') == $bot->id ? 'selected' : '' }}>{{ $bot->name }}</option>
@@ -126,7 +126,7 @@
                     <div>
                         <label for="monthly_cost_cents" class="block text-sm font-medium text-slate-700 mb-1">Cost lunar <span class="text-slate-400">(cenți EUR)</span></label>
                         <input type="number" name="monthly_cost_cents" id="monthly_cost_cents" value="{{ old('monthly_cost_cents', 100) }}" min="0"
-                               class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition" />
+                               class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" />
                         <p class="mt-1 text-xs text-slate-400">100 cenți = 1,00 EUR</p>
                     </div>
 
@@ -137,7 +137,7 @@
                             Anulează
                         </button>
                         <button type="submit"
-                                class="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors">
+                                class="rounded-lg bg-red-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 transition-colors">
                             Adaugă
                         </button>
                     </div>
@@ -188,7 +188,7 @@
                                             @csrf
                                             @method('PUT')
                                             <select name="bot_id"
-                                                    class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition">
+                                                    class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition">
                                                 <option value="">— Fără bot —</option>
                                                 @foreach($bots as $bot)
                                                     <option value="{{ $bot->id }}" {{ $phoneNumber->bot_id == $bot->id ? 'selected' : '' }}>{{ $bot->name }}</option>
@@ -209,7 +209,7 @@
                                     {{-- Display (shown by default) --}}
                                     <div id="display-bot-{{ $phoneNumber->id }}">
                                         @if($phoneNumber->bot)
-                                            <a href="{{ route('dashboard.bots.show', $phoneNumber->bot) }}" class="text-blue-600 hover:text-blue-700 font-medium transition-colors">
+                                            <a href="{{ route('dashboard.bots.show', $phoneNumber->bot) }}" class="text-red-800 hover:text-red-900 font-medium transition-colors">
                                                 {{ $phoneNumber->bot->name }}
                                             </a>
                                         @else
@@ -311,7 +311,7 @@
             <h3 class="text-lg font-semibold text-slate-900 mb-1">Nu ai numere de telefon încă</h3>
             <p class="text-sm text-slate-500 mb-6 text-center max-w-sm">Adaugă primul număr pentru a conecta un bot.</p>
             <button onclick="document.getElementById('add-number-modal').classList.remove('hidden')"
-                    class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors">
+                    class="inline-flex items-center gap-2 rounded-lg bg-red-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 transition-colors">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
@@ -321,13 +321,13 @@
     @endif
 
     {{-- Info box --}}
-    <div class="mt-6 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 flex items-start gap-3">
-        <svg class="w-5 h-5 text-blue-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <div class="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 flex items-start gap-3">
+        <svg class="w-5 h-5 text-red-700 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <p class="text-sm text-blue-700">
+        <p class="text-sm text-red-800">
             Pentru a cumpăra numere automat prin Twilio, configurează credențialele în
-            <a href="/dashboard/setari" class="font-semibold underline hover:text-blue-800 transition-colors">Setări &rarr; Integrări</a>.
+            <a href="/dashboard/setari" class="font-semibold underline hover:text-red-900 transition-colors">Setări &rarr; Integrări</a>.
         </p>
     </div>
 

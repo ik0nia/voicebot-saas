@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>VoiceBot - AI-Powered Voice Agents</title>
+    <title>Sambla - AI-Powered Voice Agents</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -172,7 +172,7 @@
     <footer class="border-t border-slate-700/50 py-10 px-6">
         <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <span class="text-sm font-bold">Voice<span class="text-violet-400">Bot</span></span>
-            <p class="text-sm text-slate-500">&copy; {{ date('Y') }} VoiceBot by Ikonia. Toate drepturile rezervate.</p>
+            <p class="text-sm text-slate-500">&copy; {{ date('Y') }} Sambla by Ikonia. Toate drepturile rezervate.</p>
         </div>
     </footer>
 

@@ -25,7 +25,7 @@
             <p class="mt-1 text-sm text-slate-500">Gestionează asistenții vocali ai organizației tale.</p>
         </div>
         <a href="{{ route('dashboard.bots.create') }}"
-           class="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors">
+           class="inline-flex items-center justify-center gap-2 rounded-lg bg-red-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 transition-colors">
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
             </svg>
@@ -41,10 +41,10 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 <input type="text" name="search" value="{{ request('search') }}" placeholder="Caută după nume..."
-                       class="w-full rounded-lg border border-slate-300 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition" />
+                       class="w-full rounded-lg border border-slate-300 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" />
             </div>
             <select name="status" onchange="this.form.submit()"
-                    class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition">
+                    class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition">
                 <option value="">Toți</option>
                 <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Activi</option>
                 <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactivi</option>
@@ -64,7 +64,7 @@
                         {{-- Top row: name + status --}}
                         <div class="flex items-start justify-between mb-3">
                             <div class="min-w-0 flex-1">
-                                <a href="{{ route('dashboard.bots.show', $bot) }}" class="text-lg font-semibold text-slate-900 hover:text-blue-600 transition-colors truncate block">
+                                <a href="{{ route('dashboard.bots.show', $bot) }}" class="text-lg font-semibold text-slate-900 hover:text-red-800 transition-colors truncate block">
                                     {{ $bot->name }}
                                 </a>
                             </div>
@@ -80,10 +80,10 @@
                                 $langLabels = ['ro' => 'Română', 'en' => 'English', 'de' => 'Deutsch', 'fr' => 'Français', 'es' => 'Español'];
                                 $voiceLabels = ['alloy' => 'Alloy', 'echo' => 'Echo', 'fable' => 'Fable', 'onyx' => 'Onyx', 'nova' => 'Nova', 'shimmer' => 'Shimmer'];
                             @endphp
-                            <span class="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700">
+                            <span class="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-800">
                                 {{ $langLabels[$bot->language] ?? $bot->language }}
                             </span>
-                            <span class="inline-flex items-center rounded-full bg-purple-50 px-2.5 py-0.5 text-xs font-medium text-purple-700">
+                            <span class="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-800">
                                 {{ $voiceLabels[$bot->voice] ?? $bot->voice }}
                             </span>
                         </div>
@@ -163,7 +163,7 @@
             <h3 class="text-lg font-semibold text-slate-900 mb-1">Nu ai niciun bot încă</h3>
             <p class="text-sm text-slate-500 mb-6 text-center max-w-sm">Creează primul tău asistent vocal pentru a începe să automatizezi apelurile telefonice.</p>
             <a href="{{ route('dashboard.bots.create') }}"
-               class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors">
+               class="inline-flex items-center gap-2 rounded-lg bg-red-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 transition-colors">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                 </svg>

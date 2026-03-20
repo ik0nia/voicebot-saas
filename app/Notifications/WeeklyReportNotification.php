@@ -28,7 +28,7 @@ class WeeklyReportNotification extends Notification implements ShouldQueue
         $topBot = $this->stats['top_bot'] ?? 'N/A';
 
         return (new MailMessage)
-            ->subject('Raport săptămânal VoiceBot')
+            ->subject('Raport săptămânal Sambla')
             ->greeting('Salut, ' . $notifiable->name . '!')
             ->line('Iată un rezumat al activității tale din ultima săptămână:')
             ->line("**Total apeluri:** {$totalCalls}")
@@ -36,6 +36,6 @@ class WeeklyReportNotification extends Notification implements ShouldQueue
             ->line("**Rata de succes:** {$successRate}%")
             ->line("**Cel mai activ bot:** {$topBot}")
             ->action('Vezi analytics complet', url('/dashboard/analytics'))
-            ->line('Continuă treaba bună! Echipa VoiceBot.');
+            ->line('Continuă treaba bună! Echipa Sambla.');
     }
 }
