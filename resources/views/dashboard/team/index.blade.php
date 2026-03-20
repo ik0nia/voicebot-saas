@@ -37,7 +37,7 @@
         </div>
         <button onclick="toggleInviteForm()"
                 id="invite-toggle-btn"
-                class="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors">
+                class="inline-flex items-center justify-center gap-2 rounded-lg bg-red-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 transition-colors">
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
             </svg>
@@ -60,7 +60,7 @@
                         <label for="invite-name" class="block text-sm font-medium text-slate-700 mb-1.5">Nume</label>
                         <input type="text" name="name" id="invite-name" value="{{ old('name') }}" required
                                placeholder="ex. Maria Popescu"
-                               class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition" />
+                               class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" />
                         @error('name')
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                         @enderror
@@ -71,7 +71,7 @@
                         <label for="invite-email" class="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
                         <input type="email" name="email" id="invite-email" value="{{ old('email') }}" required
                                placeholder="ex. maria@companie.ro"
-                               class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition" />
+                               class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" />
                         @error('email')
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                         @enderror
@@ -81,7 +81,7 @@
                     <div class="sm:col-span-2">
                         <label for="invite-role" class="block text-sm font-medium text-slate-700 mb-1.5">Rol</label>
                         <select name="role" id="invite-role" required
-                                class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition">
+                                class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition">
                             <option value="tenant_admin" {{ old('role') === 'tenant_admin' ? 'selected' : '' }}>Administrator</option>
                             <option value="tenant_manager" {{ old('role', 'tenant_manager') === 'tenant_manager' ? 'selected' : '' }}>Manager</option>
                             <option value="tenant_viewer" {{ old('role') === 'tenant_viewer' ? 'selected' : '' }}>Vizualizator</option>
@@ -93,7 +93,7 @@
                         {{-- Role descriptions --}}
                         <div class="mt-3 space-y-1.5">
                             <div class="flex items-start gap-2 text-xs text-slate-500">
-                                <span class="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 font-medium text-blue-700 shrink-0">Admin</span>
+                                <span class="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 font-medium text-red-800 shrink-0">Admin</span>
                                 <span>Acces complet la toate funcționalitățile</span>
                             </div>
                             <div class="flex items-start gap-2 text-xs text-slate-500">
@@ -111,7 +111,7 @@
                 {{-- Actions --}}
                 <div class="flex items-center gap-3 mt-6 pt-5 border-t border-slate-200">
                     <button type="submit"
-                            class="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors">
+                            class="inline-flex items-center justify-center gap-2 rounded-lg bg-red-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 transition-colors">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
@@ -149,7 +149,7 @@
                                 'tenant_viewer' => 'Vizualizator',
                             ];
                             $roleBadgeColors = [
-                                'tenant_admin' => 'bg-blue-50 text-blue-700',
+                                'tenant_admin' => 'bg-red-50 text-red-800',
                                 'tenant_manager' => 'bg-sky-50 text-sky-700',
                                 'tenant_viewer' => 'bg-slate-100 text-slate-600',
                             ];
@@ -159,8 +159,8 @@
                             {{-- Membru --}}
                             <td class="px-5 py-4">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                                        <span class="text-xs font-semibold text-blue-700">{{ $initials }}</span>
+                                    <div class="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                                        <span class="text-xs font-semibold text-red-800">{{ $initials }}</span>
                                     </div>
                                     <div class="min-w-0">
                                         <p class="text-sm font-medium text-slate-900 truncate">
@@ -203,7 +203,7 @@
                                             @csrf
                                             @method('PATCH')
                                             <select name="role" onchange="this.form.submit()"
-                                                    class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition">
+                                                    class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition">
                                                 <option value="tenant_admin" {{ $role === 'tenant_admin' ? 'selected' : '' }}>Administrator</option>
                                                 <option value="tenant_manager" {{ $role === 'tenant_manager' ? 'selected' : '' }}>Manager</option>
                                                 <option value="tenant_viewer" {{ $role === 'tenant_viewer' ? 'selected' : '' }}>Vizualizator</option>

@@ -22,7 +22,7 @@
             <div class="flex items-center gap-4">
                 <div class="flex h-14 w-14 items-center justify-center rounded-xl
                     @if($plan === 'enterprise') bg-amber-50 text-amber-600
-                    @elseif($plan === 'professional') bg-blue-50 text-blue-600
+                    @elseif($plan === 'professional') bg-red-50 text-red-800
                     @else bg-slate-100 text-slate-600
                     @endif
                 ">
@@ -35,7 +35,7 @@
                         <h2 class="text-xl font-bold text-slate-900">{{ $planLimits['name'] ?? 'Starter' }}</h2>
                         <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold
                             @if($plan === 'enterprise') bg-amber-100 text-amber-700
-                            @elseif($plan === 'professional') bg-blue-100 text-blue-700
+                            @elseif($plan === 'professional') bg-red-100 text-red-800
                             @else bg-slate-100 text-slate-600
                             @endif
                         ">
@@ -153,7 +153,7 @@
                                 <span class="text-sm text-slate-500">{{ number_format($botMinutes, 1) }} min ({{ $botPercent }}%)</span>
                             </div>
                             <div class="h-2 w-full rounded-full bg-slate-100">
-                                <div class="h-2 rounded-full bg-blue-500 transition-all duration-300" style="width: {{ $botPercent }}%"></div>
+                                <div class="h-2 rounded-full bg-red-700 transition-all duration-300" style="width: {{ $botPercent }}%"></div>
                             </div>
                         </div>
                     @endforeach
@@ -167,7 +167,7 @@
             <div class="space-y-4">
                 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                     <div class="flex items-center gap-3">
-                        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-red-50 text-red-800">
                             <svg class="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" /></svg>
                         </div>
                         <span class="text-sm text-slate-600">Abonament lunar</span>
@@ -210,13 +210,13 @@
                     $isProfessional = $planKey === 'professional';
                 @endphp
                 <div class="relative rounded-xl border bg-white p-6 shadow-sm transition-all
-                    {{ $isCurrent ? 'border-blue-300 ring-2 ring-blue-100' : 'border-slate-200 hover:border-slate-300 hover:shadow-md' }}
+                    {{ $isCurrent ? 'border-red-300 ring-2 ring-red-100' : 'border-slate-200 hover:border-slate-300 hover:shadow-md' }}
                     {{ $isProfessional && !$isCurrent ? 'md:scale-[1.02]' : '' }}
                 ">
                     {{-- Current plan badge --}}
                     @if($isCurrent)
                         <div class="absolute -top-3 left-1/2 -translate-x-1/2">
-                            <span class="inline-flex items-center rounded-full bg-blue-600 px-3 py-1 text-xs font-bold text-white shadow-sm">
+                            <span class="inline-flex items-center rounded-full bg-red-800 px-3 py-1 text-xs font-bold text-white shadow-sm">
                                 Planul curent
                             </span>
                         </div>
@@ -225,7 +225,7 @@
                     {{-- Most popular badge --}}
                     @if($isProfessional && !$isCurrent)
                         <div class="absolute -top-3 left-1/2 -translate-x-1/2">
-                            <span class="inline-flex items-center rounded-full bg-blue-600 px-3 py-1 text-xs font-bold text-white shadow-sm">
+                            <span class="inline-flex items-center rounded-full bg-red-800 px-3 py-1 text-xs font-bold text-white shadow-sm">
                                 Cel mai popular
                             </span>
                         </div>
@@ -248,15 +248,15 @@
                         <div class="mt-5 space-y-2.5 text-sm text-slate-600 border-t border-slate-100 pt-5">
                             @if(!$isEnterprise)
                                 <div class="flex items-center gap-2">
-                                    <svg class="w-4 h-4 text-blue-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    <svg class="w-4 h-4 text-red-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                     <span><strong>{{ number_format($planData['minutes']) }}</strong> minute incluse</span>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <svg class="w-4 h-4 text-blue-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6m-6 4h6" /></svg>
+                                    <svg class="w-4 h-4 text-red-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6m-6 4h6" /></svg>
                                     <span><strong>{{ $planData['bots'] }}</strong> {{ $planData['bots'] == 1 ? 'bot' : 'boți' }}</span>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <svg class="w-4 h-4 text-blue-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    <svg class="w-4 h-4 text-red-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                     <span>Supracost: <strong>{{ $planData['overage_per_minute'] }}€</strong>/min</span>
                                 </div>
                             @endif
@@ -285,7 +285,7 @@
                                     $isUpgrade = $targetOrder > $currentOrder;
                                 @endphp
                                 @if($isUpgrade)
-                                    <button class="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors">
+                                    <button class="w-full rounded-lg bg-red-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 transition-colors">
                                         Upgrade la {{ $planData['name'] }}
                                     </button>
                                 @else
@@ -339,10 +339,10 @@
                                     'sms' => 'SMS',
                                 ];
                                 $typeBadges = [
-                                    'minutes' => 'bg-blue-50 text-blue-700',
+                                    'minutes' => 'bg-red-50 text-red-800',
                                     'overage' => 'bg-red-50 text-red-700',
                                     'subscription' => 'bg-emerald-50 text-emerald-700',
-                                    'sms' => 'bg-purple-50 text-purple-700',
+                                    'sms' => 'bg-red-50 text-red-800',
                                 ];
                                 $unitCost = $record->unit_cost_cents / 100;
                                 $total = ($record->quantity * $record->unit_cost_cents) / 100;
@@ -389,7 +389,7 @@
                 <div class="flex items-center gap-4">
                     <div class="flex h-12 w-18 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-3">
                         @if(strtolower($tenant->pm_type ?? '') === 'visa')
-                            <span class="text-sm font-bold text-blue-700 tracking-wider">VISA</span>
+                            <span class="text-sm font-bold text-red-800 tracking-wider">VISA</span>
                         @elseif(strtolower($tenant->pm_type ?? '') === 'mastercard')
                             <span class="text-sm font-bold text-orange-600 tracking-wider">MC</span>
                         @else
@@ -419,7 +419,7 @@
                         <p class="text-xs text-slate-500 mt-0.5">Adaugă un card pentru a activa abonamentul.</p>
                     </div>
                 </div>
-                <button class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors">
+                <button class="inline-flex items-center gap-2 rounded-lg bg-red-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 transition-colors">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                     Adaugă card
                 </button>
@@ -433,14 +433,14 @@
     </div>
 
     {{-- Alerts / Notifications Info --}}
-    <div class="rounded-xl border border-blue-200 bg-blue-50 p-5">
+    <div class="rounded-xl border border-red-200 bg-red-50 p-5">
         <div class="flex items-start gap-3">
-            <svg class="w-5 h-5 text-blue-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <svg class="w-5 h-5 text-red-700 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
             </svg>
             <div>
-                <p class="text-sm font-semibold text-blue-800">Notificări de utilizare</p>
-                <p class="text-sm text-blue-700 mt-1">Vei primi notificări automate prin email la 80% și 100% din limita de minute. Poți configura notificările suplimentare din <a href="/dashboard/setari" class="font-medium underline hover:no-underline">Setări</a>.</p>
+                <p class="text-sm font-semibold text-red-900">Notificări de utilizare</p>
+                <p class="text-sm text-red-800 mt-1">Vei primi notificări automate prin email la 80% și 100% din limita de minute. Poți configura notificările suplimentare din <a href="/dashboard/setari" class="font-medium underline hover:no-underline">Setări</a>.</p>
             </div>
         </div>
     </div>

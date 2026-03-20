@@ -117,7 +117,7 @@
                         <input type="range" name="settings[vad_threshold]" id="vad_threshold" min="0" max="1" step="0.05"
                                value="{{ old('settings.vad_threshold', $settings['vad_threshold'] ?? 0.5) }}"
                                oninput="document.getElementById('vad_threshold_value').textContent = this.value"
-                               class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+                               class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-red-800" />
                         <p class="mt-1 text-xs text-slate-400">Sensibilitatea detectării vocii (0 = foarte sensibil, 1 = strict)</p>
                     </div>
 
@@ -130,7 +130,7 @@
                         <input type="range" name="settings[silence_duration_ms]" id="silence_duration" min="200" max="2000" step="50"
                                value="{{ old('settings.silence_duration_ms', $settings['silence_duration_ms'] ?? 500) }}"
                                oninput="document.getElementById('silence_duration_value').textContent = this.value"
-                               class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+                               class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-red-800" />
                         <p class="mt-1 text-xs text-slate-400">Cât timp de tăcere așteaptă botul înainte să considere că vorbitorul a terminat (200-2000ms)</p>
                     </div>
 
@@ -143,7 +143,7 @@
                         <input type="range" name="settings[temperature]" id="temperature" min="0" max="1" step="0.05"
                                value="{{ old('settings.temperature', $settings['temperature'] ?? 0.7) }}"
                                oninput="document.getElementById('temperature_value').textContent = this.value"
-                               class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+                               class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-red-800" />
                         <p class="mt-1 text-xs text-slate-400">Creativitatea răspunsurilor (0 = precis, 1 = creativ)</p>
                     </div>
 

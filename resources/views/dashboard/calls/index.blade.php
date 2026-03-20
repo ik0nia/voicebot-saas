@@ -36,12 +36,12 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                     <input type="text" name="search" value="{{ request('search') }}" placeholder="Caută după număr telefon..."
-                           class="w-full rounded-lg border border-slate-300 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition" />
+                           class="w-full rounded-lg border border-slate-300 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" />
                 </div>
 
                 {{-- Bot filter --}}
                 <select name="bot"
-                        class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition min-w-[160px]">
+                        class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition min-w-[160px]">
                     <option value="">Toți boții</option>
                     @foreach($bots as $bot)
                         <option value="{{ $bot->id }}" {{ request('bot') == $bot->id ? 'selected' : '' }}>{{ $bot->name }}</option>
@@ -50,7 +50,7 @@
 
                 {{-- Status filter --}}
                 <select name="status"
-                        class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition min-w-[150px]">
+                        class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition min-w-[150px]">
                     <option value="">Toate statusurile</option>
                     <option value="initiated" {{ request('status') === 'initiated' ? 'selected' : '' }}>Inițiat</option>
                     <option value="ringing" {{ request('status') === 'ringing' ? 'selected' : '' }}>Sună</option>
@@ -64,7 +64,7 @@
 
                 {{-- Direction filter --}}
                 <select name="direction"
-                        class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition min-w-[140px]">
+                        class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition min-w-[140px]">
                     <option value="">Toate direcțiile</option>
                     <option value="inbound" {{ request('direction') === 'inbound' ? 'selected' : '' }}>Inbound</option>
                     <option value="outbound" {{ request('direction') === 'outbound' ? 'selected' : '' }}>Outbound</option>
@@ -72,16 +72,16 @@
 
                 {{-- Date from --}}
                 <input type="date" name="date_from" value="{{ request('date_from') }}" placeholder="De la"
-                       class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition" />
+                       class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" />
 
                 {{-- Date to --}}
                 <input type="date" name="date_to" value="{{ request('date_to') }}" placeholder="Până la"
-                       class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition" />
+                       class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" />
 
                 {{-- Buttons --}}
                 <div class="flex items-center gap-2">
                     <button type="submit"
-                            class="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors">
+                            class="inline-flex items-center justify-center gap-2 rounded-lg bg-red-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 transition-colors">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                         </svg>
@@ -136,14 +136,14 @@
                                 {{-- Direction --}}
                                 <td class="whitespace-nowrap px-5 py-3">
                                     @if($call->direction === 'inbound')
-                                        <span class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700">
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-800">
                                             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                                             </svg>
                                             Inbound
                                         </span>
                                     @elseif($call->direction === 'outbound')
-                                        <span class="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2.5 py-0.5 text-xs font-medium text-purple-700">
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-800">
                                             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
                                             </svg>
@@ -160,7 +160,7 @@
                                         $statusConfig = [
                                             'initiated'   => ['label' => 'Inițiat',       'bg' => 'bg-slate-50',   'text' => 'text-slate-600'],
                                             'ringing'     => ['label' => 'Sună',          'bg' => 'bg-yellow-50',  'text' => 'text-yellow-700'],
-                                            'in_progress' => ['label' => 'În curs',       'bg' => 'bg-blue-50',    'text' => 'text-blue-700'],
+                                            'in_progress' => ['label' => 'În curs',       'bg' => 'bg-red-50',    'text' => 'text-red-800'],
                                             'completed'   => ['label' => 'Completat',     'bg' => 'bg-emerald-50', 'text' => 'text-emerald-700'],
                                             'failed'      => ['label' => 'Eșuat',         'bg' => 'bg-red-50',     'text' => 'text-red-700'],
                                             'busy'        => ['label' => 'Ocupat',        'bg' => 'bg-orange-50',  'text' => 'text-orange-700'],

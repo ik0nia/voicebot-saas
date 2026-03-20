@@ -28,7 +28,7 @@
                 $statusConfig = [
                     'initiated'   => ['label' => 'Inițiat',       'bg' => 'bg-slate-100',   'text' => 'text-slate-700'],
                     'ringing'     => ['label' => 'Sună',          'bg' => 'bg-yellow-100',  'text' => 'text-yellow-800'],
-                    'in_progress' => ['label' => 'În curs',       'bg' => 'bg-blue-100',    'text' => 'text-blue-800'],
+                    'in_progress' => ['label' => 'În curs',       'bg' => 'bg-red-100',    'text' => 'text-red-800'],
                     'completed'   => ['label' => 'Completat',     'bg' => 'bg-emerald-100', 'text' => 'text-emerald-800'],
                     'failed'      => ['label' => 'Eșuat',         'bg' => 'bg-red-100',     'text' => 'text-red-800'],
                     'busy'        => ['label' => 'Ocupat',        'bg' => 'bg-orange-100',  'text' => 'text-orange-800'],
@@ -144,7 +144,7 @@
                             {{-- User message - right aligned --}}
                             <div class="flex justify-end">
                                 <div class="max-w-[80%]">
-                                    <div class="rounded-2xl rounded-tr-sm bg-blue-600 px-4 py-3 text-sm text-white">
+                                    <div class="rounded-2xl rounded-tr-sm bg-red-800 px-4 py-3 text-sm text-white">
                                         {{ $t->content }}
                                     </div>
                                     <p class="mt-1 text-[11px] text-slate-400 text-right mr-1">
@@ -186,7 +186,7 @@
                         @foreach($events as $event)
                             @php
                                 $eventColors = [
-                                    'call.initiated' => ['dot' => 'bg-blue-500',    'text' => 'text-blue-700',   'bg' => 'bg-blue-50'],
+                                    'call.initiated' => ['dot' => 'bg-red-700',    'text' => 'text-red-800',   'bg' => 'bg-red-50'],
                                     'call.ringing'   => ['dot' => 'bg-yellow-500',  'text' => 'text-yellow-700', 'bg' => 'bg-yellow-50'],
                                     'call.answered'  => ['dot' => 'bg-green-500',   'text' => 'text-green-700',  'bg' => 'bg-green-50'],
                                     'call.ended'     => ['dot' => 'bg-slate-500',   'text' => 'text-slate-700',  'bg' => 'bg-slate-50'],
