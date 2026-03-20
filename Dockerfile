@@ -42,7 +42,7 @@ WORKDIR /var/www/html
 
 COPY --from=composer /app/vendor vendor/
 COPY . .
-RUN composer dump-autoload --optimize --no-dev
+RUN composer dump-autoload --optimize --no-dev --ignore-platform-reqs
 
 COPY --from=node /app/public/build public/build/
 
