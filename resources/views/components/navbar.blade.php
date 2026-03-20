@@ -8,12 +8,13 @@
             </a>
 
             {{-- Desktop Navigation --}}
-            <div class="hidden lg:flex items-center space-x-8">
-                <a href="/functionalitati" class="text-sm font-medium text-slate-600 hover:text-primary-600 transition-colors duration-200">Funcționalități</a>
-                <a href="/preturi" class="text-sm font-medium text-slate-600 hover:text-primary-600 transition-colors duration-200">Prețuri</a>
-                <a href="/despre" class="text-sm font-medium text-slate-600 hover:text-primary-600 transition-colors duration-200">Despre</a>
-                <a href="/blog" class="text-sm font-medium text-slate-600 hover:text-primary-600 transition-colors duration-200">Blog</a>
-                <a href="/contact" class="text-sm font-medium text-slate-600 hover:text-primary-600 transition-colors duration-200">Contact</a>
+            <div class="hidden lg:flex items-center space-x-1">
+                <a href="/" class="relative px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 {{ request()->is('/') ? 'text-primary-700 bg-primary-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">Acasă</a>
+                <a href="/functionalitati" class="relative px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 {{ request()->is('functionalitati') ? 'text-primary-700 bg-primary-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">Funcționalități</a>
+                <a href="/preturi" class="relative px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 {{ request()->is('preturi') ? 'text-primary-700 bg-primary-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">Prețuri</a>
+                <a href="/despre" class="relative px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 {{ request()->is('despre') ? 'text-primary-700 bg-primary-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">Despre</a>
+                <a href="/blog" class="relative px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 {{ request()->is('blog') ? 'text-primary-700 bg-primary-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">Blog</a>
+                <a href="/contact" class="relative px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 {{ request()->is('contact') ? 'text-primary-700 bg-primary-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">Contact</a>
             </div>
 
             {{-- Desktop CTA --}}
@@ -41,11 +42,12 @@
     {{-- Mobile Menu --}}
     <div id="mobile-menu" class="hidden lg:hidden border-t border-slate-100 bg-white">
         <div class="container-custom py-4 space-y-1">
-            <a href="/functionalitati" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:text-primary-600 hover:bg-slate-50 transition-colors duration-200">Funcționalități</a>
-            <a href="/preturi" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:text-primary-600 hover:bg-slate-50 transition-colors duration-200">Prețuri</a>
-            <a href="/despre" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:text-primary-600 hover:bg-slate-50 transition-colors duration-200">Despre</a>
-            <a href="/blog" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:text-primary-600 hover:bg-slate-50 transition-colors duration-200">Blog</a>
-            <a href="/contact" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:text-primary-600 hover:bg-slate-50 transition-colors duration-200">Contact</a>
+            <a href="/" class="block px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->is('/') ? 'text-primary-700 bg-primary-50 border border-primary-100' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">Acasă</a>
+            <a href="/functionalitati" class="block px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->is('functionalitati') ? 'text-primary-700 bg-primary-50 border border-primary-100' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">Funcționalități</a>
+            <a href="/preturi" class="block px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->is('preturi') ? 'text-primary-700 bg-primary-50 border border-primary-100' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">Prețuri</a>
+            <a href="/despre" class="block px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->is('despre') ? 'text-primary-700 bg-primary-50 border border-primary-100' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">Despre</a>
+            <a href="/blog" class="block px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->is('blog') ? 'text-primary-700 bg-primary-50 border border-primary-100' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">Blog</a>
+            <a href="/contact" class="block px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->is('contact') ? 'text-primary-700 bg-primary-50 border border-primary-100' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">Contact</a>
             <div class="pt-3">
                 <a href="/register" class="btn-primary text-sm w-full">Începe gratuit</a>
             </div>
