@@ -22,6 +22,7 @@ RUN apk add --no-cache \
     icu-dev \
     linux-headers \
     supervisor \
+    $PHPIZE_DEPS \
     && docker-php-ext-install \
     pdo_pgsql \
     pgsql \
@@ -31,7 +32,8 @@ RUN apk add --no-cache \
     pcntl \
     sockets \
     && pecl install redis \
-    && docker-php-ext-enable redis
+    && docker-php-ext-enable redis \
+    && apk del $PHPIZE_DEPS
 
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
 
