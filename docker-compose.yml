@@ -21,8 +21,10 @@ services:
     labels:
       - "traefik.enable=false"
     networks:
-      - default
-      - coolify
+      default:
+        aliases:
+          - app
+      coolify: {}
 
   nginx:
     build:
@@ -45,8 +47,10 @@ services:
       - "traefik.http.routers.voicebot.tls.certresolver=letsencrypt"
       - "traefik.http.services.voicebot.loadbalancer.server.port=80"
     networks:
-      - default
-      - coolify
+      default:
+        aliases:
+          - nginx
+      coolify: {}
 
   queue:
     build:
@@ -67,8 +71,8 @@ services:
     labels:
       - "traefik.enable=false"
     networks:
-      - default
-      - coolify
+      default: {}
+      coolify: {}
 
   scheduler:
     build:
@@ -89,8 +93,8 @@ services:
     labels:
       - "traefik.enable=false"
     networks:
-      - default
-      - coolify
+      default: {}
+      coolify: {}
 
   reverb:
     build:
@@ -109,8 +113,10 @@ services:
     labels:
       - "traefik.enable=false"
     networks:
-      - default
-      - coolify
+      default:
+        aliases:
+          - reverb
+      coolify: {}
 
 volumes:
   app-storage:
