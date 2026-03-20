@@ -21,12 +21,18 @@ RUN apk add --no-cache \
     sockets \
     && pecl install redis \
     && docker-php-ext-enable redis \
-    && apk del $PHPIZE_DEPS
+    && apk del $PHPIZE_DEPS \
+    && apk add --no-cache fcgi \
+    && echo '#!/bin/sh' > /usr/local/bin/php-fpm-healthcheck \
+    && echo 'SCRIPT_NAME=/ping SCRIPT_FILENAME=/ping REQUEST_METHOD=GET cgi-fcgi -bind -connect 127.0.0.1:9000 || exit 1' >> /usr/local/bin/php-fpm-healthcheck \
+    && chmod +x /usr/local/bin/php-fpm-healthcheck
 
 # Install composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
+RUN echo '[www]' > /usr/local/etc/php-fpm.d/healthcheck.conf \
+    && echo 'ping.path = /ping' >> /usr/local/etc/php-fpm.d/healthcheck.conf
 
 WORKDIR /var/www/html
 
