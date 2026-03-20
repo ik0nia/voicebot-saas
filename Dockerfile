@@ -1,27 +1,15 @@
-# Stage 1: Composer dependencies
-FROM composer:2 AS composer
-WORKDIR /app
-COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --ignore-platform-reqs
-
-# Stage 2: Node.js build
-FROM node:20-alpine AS node
-WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm ci
-COPY resources/ resources/
-COPY vite.config.js postcss.config.js tailwind.config.js ./
-RUN npm run build
-
-# Stage 3: Production
+# Stage 1: Production
 FROM php:8.3-fpm-alpine AS production
 
+# System deps & PHP extensions (rarely changes - cached)
 RUN apk add --no-cache \
     postgresql-dev \
     libzip-dev \
     icu-dev \
     linux-headers \
     supervisor \
+    nodejs \
+    npm \
     $PHPIZE_DEPS \
     && docker-php-ext-install \
     pdo_pgsql \
@@ -35,16 +23,27 @@ RUN apk add --no-cache \
     && docker-php-ext-enable redis \
     && apk del $PHPIZE_DEPS
 
-COPY --from=composer /usr/bin/composer /usr/bin/composer
+# Install composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
 
 WORKDIR /var/www/html
 
-COPY --from=composer /app/vendor vendor/
-COPY . .
-RUN composer dump-autoload --optimize --no-dev --ignore-platform-reqs --no-scripts
+# Layer 1: Composer deps (cached if composer.lock unchanged)
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --ignore-platform-reqs
 
-COPY --from=node /app/public/build public/build/
+# Layer 2: Node deps (cached if package-lock.json unchanged)
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Layer 3: App code (changes every deploy - but fast COPY)
+COPY . .
+
+# Layer 4: Post-install steps (quick, uses cached deps)
+RUN composer dump-autoload --optimize --no-dev --ignore-platform-reqs --no-scripts
+RUN npm run build
 
 RUN chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
