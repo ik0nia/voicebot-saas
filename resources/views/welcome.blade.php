@@ -54,7 +54,7 @@
         <div class="max-w-4xl mx-auto text-center">
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-sm mb-8">
                 <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-dot"></span>
-                Platform Active
+                Platform Active — v1.0
             </div>
             <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight leading-tight mb-6">
                 Build <span class="gradient-text">AI Voice Agents</span> That Convert
