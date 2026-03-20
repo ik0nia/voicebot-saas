@@ -20,7 +20,7 @@ services:
     labels:
       - "traefik.enable=false"
     networks:
-      - voicebot
+      - default
       - coolify
 
   nginx:
@@ -36,8 +36,15 @@ services:
     depends_on:
       app:
         condition: service_started
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.voicebot.rule=Host(`voice.ikonia.cloud`)"
+      - "traefik.http.routers.voicebot.tls=true"
+      - "traefik.http.routers.voicebot.tls.certresolver=letsencrypt"
+      - "traefik.http.services.voicebot.loadbalancer.server.port=80"
     networks:
-      - voicebot
+      - default
+      - coolify
 
   queue:
     build:
@@ -58,7 +65,7 @@ services:
     labels:
       - "traefik.enable=false"
     networks:
-      - voicebot
+      - default
       - coolify
 
   scheduler:
@@ -80,7 +87,7 @@ services:
     labels:
       - "traefik.enable=false"
     networks:
-      - voicebot
+      - default
       - coolify
 
   reverb:
@@ -100,14 +107,13 @@ services:
     labels:
       - "traefik.enable=false"
     networks:
-      - voicebot
+      - default
       - coolify
 
 volumes:
   app-storage:
 
 networks:
-  voicebot:
-    driver: bridge
+  default:
   coolify:
     external: true
