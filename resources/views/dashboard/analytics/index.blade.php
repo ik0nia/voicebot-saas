@@ -126,6 +126,45 @@
         </div>
     </div>
 
+    {{-- Sentiment summary card --}}
+    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-slate-500">Sentiment mediu clienți</p>
+                @if($avgSentiment !== null)
+                    @php
+                        $sentLabel = $avgSentiment > 0.2 ? 'Pozitiv' : ($avgSentiment < -0.2 ? 'Negativ' : 'Neutru');
+                        $sentEmoji = $avgSentiment > 0.2 ? '😊' : ($avgSentiment < -0.2 ? '😟' : '😐');
+                        $sentColor = $avgSentiment > 0.2 ? 'text-emerald-600' : ($avgSentiment < -0.2 ? 'text-red-600' : 'text-slate-700');
+                    @endphp
+                    <p class="mt-1 text-3xl font-bold {{ $sentColor }}">{{ $sentEmoji }} {{ $sentLabel }}</p>
+                    <p class="mt-0.5 text-xs text-slate-400">Scor mediu: {{ number_format($avgSentiment, 2) }}</p>
+                @else
+                    <p class="mt-1 text-3xl font-bold text-slate-400">—</p>
+                    <p class="mt-0.5 text-xs text-slate-400">Nicio analiză disponibilă</p>
+                @endif
+            </div>
+            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.182 15.182a4.5 4.5 0 01-6.364 0M21 12a9 9 0 11-18 0 9 9 0 0118 0zM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75zm-.375 0h.008v.015h-.008V9.75zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75zm-.375 0h.008v.015h-.008V9.75z" />
+                </svg>
+            </div>
+        </div>
+        @if($sentimentDistribution->isNotEmpty())
+            <div class="mt-3 flex items-center gap-3 text-xs text-slate-500">
+                @if($sentimentDistribution->get('positive'))
+                    <span class="flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span> {{ $sentimentDistribution->get('positive') }} pozitive</span>
+                @endif
+                @if($sentimentDistribution->get('neutral'))
+                    <span class="flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-slate-400"></span> {{ $sentimentDistribution->get('neutral') }} neutre</span>
+                @endif
+                @if($sentimentDistribution->get('negative'))
+                    <span class="flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-red-500"></span> {{ $sentimentDistribution->get('negative') }} negative</span>
+                @endif
+            </div>
+        @endif
+    </div>
+
     {{-- Charts section --}}
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {{-- Volume apeluri - Bar chart --}}
@@ -159,6 +198,14 @@
                 <canvas id="topBotsChart"></canvas>
             </div>
         </div>
+
+        {{-- Sentiment distribution - Doughnut chart --}}
+        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 class="text-base font-semibold text-slate-900">Distribuție sentiment</h3>
+            <div class="mt-4 flex items-center justify-center" style="height: 260px;">
+                <canvas id="sentimentChart"></canvas>
+            </div>
+        </div>
     </div>
 
     {{-- Top Bots table --}}
@@ -184,7 +231,7 @@
                         <td class="whitespace-nowrap px-5 py-3 font-medium text-slate-900">{{ $bot->name }}</td>
                         <td class="whitespace-nowrap px-5 py-3 text-slate-600 text-right">{{ number_format($bot->period_calls_count) }}</td>
                         <td class="whitespace-nowrap px-5 py-3 text-slate-600 text-right">
-                            {{ $totalCalls > 0 ? round(($bot->calls_count / $totalCalls) * 100, 1) : 0 }}%
+                            {{ $totalCalls > 0 ? round(($bot->period_calls_count / $totalCalls) * 100, 1) : 0 }}%
                         </td>
                     </tr>
                     @endforeach
@@ -397,7 +444,63 @@ document.addEventListener('DOMContentLoaded', function () {
         },
     });
 
-    // 4. Top Bots Horizontal Bar Chart
+    // 4. Sentiment Distribution Doughnut Chart
+    var sentimentDistribution = @json($sentimentDistribution);
+    var sentimentColorMap = { 'positive': '#10b981', 'neutral': '#94a3b8', 'negative': '#ef4444' };
+    var sentimentLabelMap = { 'positive': 'Pozitiv', 'neutral': 'Neutru', 'negative': 'Negativ' };
+    var sentimentKeys = Object.keys(sentimentDistribution);
+    var sentimentValues = sentimentKeys.map(function (k) { return sentimentDistribution[k]; });
+    var sentimentColors = sentimentKeys.map(function (k) { return sentimentColorMap[k] || '#94a3b8'; });
+    var sentimentLabels = sentimentKeys.map(function (k) { return sentimentLabelMap[k] || k; });
+
+    if (sentimentValues.length > 0) {
+        new Chart(document.getElementById('sentimentChart'), {
+            type: 'doughnut',
+            data: {
+                labels: sentimentLabels,
+                datasets: [{
+                    data: sentimentValues,
+                    backgroundColor: sentimentColors,
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                    hoverOffset: 6,
+                }],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '60%',
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            padding: 16,
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            font: { size: 12 },
+                            color: '#475569',
+                        },
+                    },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        titleFont: { size: 12 },
+                        bodyFont: { size: 12 },
+                        padding: 10,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function (ctx) {
+                                var total = ctx.dataset.data.reduce(function (a, b) { return a + b; }, 0);
+                                var pct = total > 0 ? Math.round((ctx.parsed / total) * 100) : 0;
+                                return ctx.label + ': ' + ctx.parsed + ' (' + pct + '%)';
+                            }
+                        }
+                    }
+                },
+            },
+        });
+    }
+
+    // 5. Top Bots Horizontal Bar Chart
     var botNames = topBots.map(function (b) { return b.name; });
     var botCounts = topBots.map(function (b) { return b.period_calls_count; });
 

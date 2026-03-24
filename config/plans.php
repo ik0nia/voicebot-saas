@@ -8,6 +8,7 @@ return [
         'minutes' => 500,
         'bots' => 1,
         'channels' => 2,
+        'max_products' => 500,
         'overage_per_minute' => 0.15,
         'allowed_channels' => ['voice', 'web_chatbot'],
         'features' => [
@@ -23,6 +24,7 @@ return [
         'minutes' => 2000,
         'bots' => 25,
         'channels' => 999,
+        'max_products' => 5000,
         'overage_per_minute' => 0.10,
         'allowed_channels' => ['voice', 'whatsapp', 'facebook_messenger', 'instagram_dm', 'web_chatbot'],
         'features' => [
@@ -42,6 +44,7 @@ return [
         'minutes' => 999999,
         'bots' => 999,
         'channels' => 999,
+        'max_products' => 50000,
         'overage_per_minute' => 0,
         'allowed_channels' => ['voice', 'whatsapp', 'facebook_messenger', 'instagram_dm', 'web_chatbot'],
         'features' => [

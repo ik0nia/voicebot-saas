@@ -404,6 +404,42 @@
                     </button>
                 </div>
             </form>
+
+            {{-- Newly generated key --}}
+            @if(session('new_api_key'))
+                <div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
+                    <p class="text-sm font-medium text-amber-800 mb-2">Cheia ta API (salvează-o, nu va mai fi afișată):</p>
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="new-api-key" value="{{ session('new_api_key') }}" readonly
+                               class="block w-full rounded-lg border border-amber-300 bg-white px-3.5 py-2.5 text-sm font-mono text-slate-900 shadow-sm focus:outline-none">
+                        <button type="button" onclick="copyApiKey()"
+                                class="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-700 transition-colors whitespace-nowrap">
+                            <svg id="copy-icon" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            <svg id="check-icon" class="w-4 h-4 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span id="copy-text">Copiază</span>
+                        </button>
+                    </div>
+                </div>
+                <script>
+                    function copyApiKey() {
+                        const input = document.getElementById('new-api-key');
+                        navigator.clipboard.writeText(input.value).then(() => {
+                            document.getElementById('copy-icon').classList.add('hidden');
+                            document.getElementById('check-icon').classList.remove('hidden');
+                            document.getElementById('copy-text').textContent = 'Copiat!';
+                            setTimeout(() => {
+                                document.getElementById('copy-icon').classList.remove('hidden');
+                                document.getElementById('check-icon').classList.add('hidden');
+                                document.getElementById('copy-text').textContent = 'Copiază';
+                            }, 3000);
+                        });
+                    }
+                </script>
+            @endif
         </div>
 
         {{-- Existing Tokens --}}

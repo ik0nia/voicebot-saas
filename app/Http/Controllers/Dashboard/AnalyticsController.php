@@ -45,6 +45,18 @@ class AnalyticsController extends Controller
             ->groupBy('status')
             ->pluck('count', 'status');
 
+        // Sentiment distribution
+        $sentimentDistribution = Call::selectRaw('sentiment_label, COUNT(*) as count')
+            ->whereBetween('created_at', [$dateFrom, $dateTo])
+            ->whereNotNull('sentiment_label')
+            ->groupBy('sentiment_label')
+            ->pluck('count', 'sentiment_label');
+
+        $avgSentiment = Call::whereBetween('created_at', [$dateFrom, $dateTo])
+            ->whereNotNull('sentiment_score')
+            ->avg('sentiment_score');
+        $avgSentiment = $avgSentiment !== null ? round($avgSentiment, 2) : null;
+
         // Top bots
         $topBots = Bot::withCount(['calls as period_calls_count' => function($q) use ($dateFrom, $dateTo) {
                 $q->whereBetween('created_at', [$dateFrom, $dateTo]);
@@ -58,7 +70,7 @@ class AnalyticsController extends Controller
         return view('dashboard.analytics.index', compact(
             'period', 'dateFrom', 'dateTo',
             'totalCalls', 'totalMinutes', 'totalCost', 'completionRate', 'avgDuration',
-            'dailyCalls', 'statusDistribution', 'topBots'
+            'dailyCalls', 'statusDistribution', 'sentimentDistribution', 'avgSentiment', 'topBots'
         ));
     }
 
@@ -72,7 +84,7 @@ class AnalyticsController extends Controller
             ->orderBy('created_at')
             ->get();
 
-        $csv = "ID,Bot,Apelant,Direcție,Status,Durată(s),Cost(€),Data\n";
+        $csv = "ID,Bot,Apelant,Direcție,Status,Durată(s),Cost(€),Sentiment,Scor Sentiment,Data\n";
         foreach ($calls as $call) {
             $csv .= implode(',', [
                 $call->id,
@@ -82,6 +94,8 @@ class AnalyticsController extends Controller
                 $call->status,
                 $call->duration_seconds,
                 number_format($call->cost_cents / 100, 2),
+                $call->sentiment_label ?? '-',
+                $call->sentiment_score ?? '-',
                 $call->created_at->format('Y-m-d H:i:s'),
             ]) . "\n";
         }

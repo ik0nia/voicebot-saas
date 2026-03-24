@@ -7,6 +7,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "anthropic-ai/sdk": "^0.8.0",
         "inertiajs/inertia-laravel": "^2.0",
         "laravel/cashier": "^16.5",
         "laravel/framework": "^11.31",
@@ -15,6 +16,7 @@
         "laravel/tinker": "^2.9",
         "openai-php/laravel": "^0.19.1",
         "pgvector/pgvector": "^0.2.2",
+        "phpoffice/phpword": "^1.1",
         "sentry/sentry-laravel": "^4.23",
         "spatie/laravel-permission": "^6.25",
         "twilio/sdk": "^8.11"

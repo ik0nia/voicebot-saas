@@ -70,7 +70,7 @@ class RealtimeClient
         return [
             'type' => 'session.update',
             'session' => [
-                'modalities' => ['text', 'audio'],
+                'modalities' => $options['modalities'] ?? ['text', 'audio'],
                 'instructions' => $options['instructions'] ?? '',
                 'voice' => $options['voice'] ?? 'alloy',
                 'input_audio_format' => 'g711_ulaw',

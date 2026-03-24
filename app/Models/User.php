@@ -70,7 +70,7 @@ class User extends Authenticatable
 
     public function isSuperAdmin(): bool
     {
-        return $this->hasRole('super-admin');
+        return $this->hasRole('super_admin');
     }
 
     public function currentTenant(): ?Tenant

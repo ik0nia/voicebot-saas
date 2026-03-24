@@ -19,6 +19,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'twilio.verify' => \App\Http\Middleware\VerifyTwilioSignature::class,
             'api.rate' => \App\Http\Middleware\ApiRateLimit::class,
             'super_admin' => \App\Http\Middleware\EnsureSuperAdmin::class,
+            'plan.limit' => \App\Http\Middleware\CheckPlanLimits::class,
+            'chatbot.domain' => \App\Http\Middleware\VerifyChatbotDomain::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

@@ -15,9 +15,25 @@ Route::get('/health', function () {
 // Test vocal endpoint (uses web session auth via CSRF, no Sanctum needed)
 Route::post('/v1/bots/{bot}/test-vocal', [TestVocalController::class, 'handle']);
 
-// Public chatbot widget API (no auth required, CORS enabled)
+// OpenAI Realtime voice session (WebRTC)
+Route::post('/v1/bots/{bot}/realtime-session', [\App\Http\Controllers\Api\RealtimeSessionController::class, 'create']);
+Route::post('/v1/bots/{bot}/synthesize', [\App\Http\Controllers\Api\RealtimeSessionController::class, 'synthesize']);
+Route::post('/v1/bots/{bot}/search-products', [\App\Http\Controllers\Api\RealtimeSessionController::class, 'searchProducts']);
+Route::post('/v1/calls/{call}/transcript', [\App\Http\Controllers\Api\RealtimeSessionController::class, 'saveTranscript']);
+Route::post('/v1/calls/{call}/end', [\App\Http\Controllers\Api\RealtimeSessionController::class, 'endCall']);
+
+// Chatbot embed routes (public, no auth)
+Route::get('/v1/chatbot/embed', [\App\Http\Controllers\Api\ChatbotEmbedController::class, 'embedScript'])->name('chatbot.embed');
+Route::get('/v1/chatbot/check-domain', [\App\Http\Controllers\Api\ChatbotEmbedController::class, 'checkDomain'])->name('chatbot.check-domain');
+Route::get('/v1/chatbot/{channel}/frame', [\App\Http\Controllers\Api\ChatbotEmbedController::class, 'frame'])->name('chatbot.frame');
+
+// Public chatbot widget API (no auth required)
 Route::post('/v1/chatbot/{channel}/message', [ChatbotApiController::class, 'message']);
 Route::get('/v1/chatbot/{channel}/config', [ChatbotApiController::class, 'config']);
+Route::get('/v1/chatbot/{channel}/products', [ChatbotApiController::class, 'searchProducts']);
+
+// Plugin update check (public, no auth - called by WordPress updater)
+Route::get('v1/plugin/update-check', [\App\Http\Controllers\Api\V1\PluginUpdateController::class, 'check']);
 
 // API v1 - requires Sanctum auth
 Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
@@ -33,6 +49,15 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     // Analytics
     Route::get('analytics/overview', [AnalyticsApiController::class, 'overview']);
     Route::get('usage', [AnalyticsApiController::class, 'usage']);
+
+    // WooCommerce integration
+    Route::post('integrations/connect', [\App\Http\Controllers\Api\V1\IntegrationApiController::class, 'connect']);
+    Route::post('integrations/disconnect', [\App\Http\Controllers\Api\V1\IntegrationApiController::class, 'disconnect']);
+    Route::post('integrations/sync-products', [\App\Http\Controllers\Api\V1\IntegrationApiController::class, 'syncProducts']);
+    Route::post('integrations/sync-pages', [\App\Http\Controllers\Api\V1\IntegrationApiController::class, 'syncPages']);
+    Route::put('integrations/widget-config', [\App\Http\Controllers\Api\V1\IntegrationApiController::class, 'widgetConfig']);
+    Route::get('integrations/status', [\App\Http\Controllers\Api\V1\IntegrationApiController::class, 'status']);
+    Route::post('integrations/order-lookup', [\App\Http\Controllers\Api\V1\IntegrationApiController::class, 'orderLookup']);
 });
 
 // API docs placeholder

@@ -148,22 +148,21 @@
 @push('scripts')
 <script>
 (function() {
-    // State
     let isInCall = false;
     let isMuted = false;
     let isTextInputVisible = false;
+    let isProcessing = false;
     let callStartTime = null;
     let timerInterval = null;
-    let mediaRecorder = null;
     let audioStream = null;
-    let recordingChunks = [];
-    let messageIndex = 0;
+    let recognition = null;
+    let currentAudio = null;
+    let conversationHistory = [];
 
     const botId = @json($bot->id);
     const botName = @json($bot->name);
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-    // DOM elements
     const callButton = document.getElementById('callButton');
     const callIcon = document.getElementById('callIcon');
     const hangupIcon = document.getElementById('hangupIcon');
@@ -179,293 +178,255 @@
     const muteOffIcon = document.getElementById('muteOffIcon');
     const muteOnIcon = document.getElementById('muteOnIcon');
 
-    // Make functions global for onclick handlers
-    window.toggleCall = toggleCall;
+    // Setup Speech Recognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+        recognition = new SpeechRecognition();
+        recognition.lang = 'ro-RO';
+        recognition.interimResults = true;
+        recognition.continuous = true;
+
+        let interimDiv = null;
+
+        recognition.onresult = function(event) {
+            let interim = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                if (event.results[i].isFinal) {
+                    const text = event.results[i][0].transcript.trim();
+                    if (interimDiv) { interimDiv.remove(); interimDiv = null; }
+                    if (text && !isProcessing) {
+                        addMessage('user', text);
+                        getResponse(text);
+                    }
+                } else {
+                    interim += event.results[i][0].transcript;
+                }
+            }
+            if (interim && isInCall) {
+                if (!interimDiv) {
+                    interimDiv = document.createElement('div');
+                    interimDiv.className = 'flex justify-end';
+                    interimDiv.innerHTML = '<div class="max-w-[80%] rounded-2xl rounded-br-md px-4 py-2.5 bg-red-700/50 text-white/70 text-sm italic"></div>';
+                    transcriptArea.appendChild(interimDiv);
+                }
+                interimDiv.querySelector('div').textContent = interim + '...';
+                transcriptArea.scrollTop = transcriptArea.scrollHeight;
+            }
+        };
+
+        recognition.onerror = function(e) {
+            if (e.error !== 'no-speech' && e.error !== 'aborted') {
+                addMessage('system', 'Eroare recunoaștere vocală: ' + e.error);
+            }
+        };
+
+        recognition.onend = function() {
+            if (isInCall && !isMuted && !isProcessing) {
+                try { recognition.start(); } catch(e) {}
+            }
+        };
+    }
+
+    window.toggleCall = function() { isInCall ? endCall() : startCall(); };
     window.toggleMute = toggleMute;
     window.toggleTextInput = toggleTextInput;
     window.sendTextMessage = sendTextMessage;
 
-    function toggleCall() {
-        if (isInCall) {
-            endCall();
-        } else {
-            startCall();
-        }
-    }
-
     async function startCall() {
-        // Update UI to connecting state
-        callStatus.textContent = 'Se conecteaza...';
-        callButton.className = 'w-16 h-16 rounded-full bg-amber-500 flex items-center justify-center transition-all duration-300 shadow-lg shadow-amber-500/30';
+        callStatus.textContent = 'Se conectează...';
+        callButton.className = 'w-16 h-16 rounded-full bg-amber-500 flex items-center justify-center transition-all duration-300 shadow-lg';
 
         try {
-            // Request microphone permission
             audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-            // Setup MediaRecorder
-            mediaRecorder = new MediaRecorder(audioStream, {
-                mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-                    ? 'audio/webm;codecs=opus'
-                    : 'audio/webm'
-            });
-
-            recordingChunks = [];
-
-            mediaRecorder.ondataavailable = function(event) {
-                if (event.data.size > 0) {
-                    recordingChunks.push(event.data);
-                }
-            };
-
-            mediaRecorder.onstop = function() {
-                if (recordingChunks.length > 0) {
-                    const audioBlob = new Blob(recordingChunks, { type: 'audio/webm' });
-                    sendAudioToBackend(audioBlob);
-                    recordingChunks = [];
-                }
-            };
-
-            // Start recording in 3-second intervals
-            mediaRecorder.start();
-
-            // Transition to "in call" state
             isInCall = true;
+            callStartTime = Date.now();
+            timerInterval = setInterval(updateTimer, 1000);
+            conversationHistory = [];
+
             callButton.className = 'w-16 h-16 rounded-full bg-red-600 hover:bg-red-500 flex items-center justify-center transition-all duration-300 shadow-lg shadow-red-500/30 active:scale-95';
             callIcon.classList.add('hidden');
             hangupIcon.classList.remove('hidden');
-            callButtonLabel.textContent = 'Incheie Apel';
-            callStatus.textContent = 'Apel in curs';
+            callButtonLabel.textContent = 'Încheie Apel';
+            callStatus.textContent = 'Apel activ — vorbește';
             recordingDot.classList.remove('hidden');
             toggleTextBtn.classList.remove('hidden');
             toggleTextBtn.classList.add('flex');
             muteBtn.classList.remove('hidden');
             muteBtn.classList.add('flex');
 
-            // Start timer
-            callStartTime = Date.now();
-            timerInterval = setInterval(updateTimer, 1000);
-
-            // Clear transcript and add greeting
             transcriptArea.innerHTML = '';
-            addMessage('bot', 'Se conecteaza...');
+            addMessage('system', 'Se conectează...');
 
-            // Simulate bot greeting after short delay
-            setTimeout(function() {
-                updateLastBotMessage('Buna ziua! Sunt ' + botName + '. Cu ce va pot ajuta?');
-            }, 1500);
+            // Bot greets vocally first, then starts listening
+            await botGreeting();
 
-            // Set up periodic recording (stop and restart every 5 seconds to send chunks)
-            setupPeriodicRecording();
-
-        } catch (err) {
-            console.error('Microphone access denied:', err);
+            if (recognition) {
+                try { recognition.start(); } catch(e) {}
+                callStatus.textContent = 'Apel activ — vorbește';
+            } else {
+                addMessage('system', 'Browserul nu suportă recunoaștere vocală. Folosește butonul de text.');
+                callStatus.textContent = 'Apel activ — scrie un mesaj';
+            }
+        } catch(err) {
             callStatus.textContent = 'Microfon refuzat';
             callButton.className = 'w-16 h-16 rounded-full bg-green-500 hover:bg-green-400 flex items-center justify-center transition-all duration-300 shadow-lg shadow-green-500/30 active:scale-95';
-            addMessage('system', 'Nu s-a putut accesa microfonul. Verificati permisiunile browserului.');
+            addMessage('system', 'Nu s-a putut accesa microfonul. Folosește câmpul de text.');
         }
-    }
-
-    function setupPeriodicRecording() {
-        // Every 5 seconds, stop and restart recording to process audio chunks
-        if (!isInCall) return;
-        setTimeout(function() {
-            if (isInCall && mediaRecorder && mediaRecorder.state === 'recording') {
-                mediaRecorder.stop();
-                setTimeout(function() {
-                    if (isInCall && audioStream && audioStream.active) {
-                        mediaRecorder.start();
-                        setupPeriodicRecording();
-                    }
-                }, 100);
-            }
-        }, 5000);
     }
 
     function endCall() {
         isInCall = false;
+        if (recognition) { try { recognition.stop(); } catch(e) {} }
+        if (audioStream) { audioStream.getTracks().forEach(function(t) { t.stop(); }); audioStream = null; }
+        if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+        if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
 
-        // Stop recording
-        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-            mediaRecorder.stop();
-        }
-
-        // Stop audio stream
-        if (audioStream) {
-            audioStream.getTracks().forEach(function(track) { track.stop(); });
-            audioStream = null;
-        }
-
-        // Stop timer
-        if (timerInterval) {
-            clearInterval(timerInterval);
-            timerInterval = null;
-        }
-
-        // Update UI
         callButton.className = 'w-16 h-16 rounded-full bg-green-500 hover:bg-green-400 flex items-center justify-center transition-all duration-300 shadow-lg shadow-green-500/30 active:scale-95';
         callIcon.classList.remove('hidden');
         hangupIcon.classList.add('hidden');
         callButtonLabel.textContent = 'Start Apel';
-        callStatus.textContent = 'Apel incheiat';
+        callStatus.textContent = 'Apel încheiat';
         recordingDot.classList.add('hidden');
         toggleTextBtn.classList.add('hidden');
-        toggleTextBtn.classList.remove('flex');
         muteBtn.classList.add('hidden');
-        muteBtn.classList.remove('flex');
         textInputArea.classList.add('hidden');
         isTextInputVisible = false;
-
-        // Reset mute
         isMuted = false;
         muteOffIcon.classList.remove('hidden');
         muteOnIcon.classList.add('hidden');
 
-        // Add end message
-        var duration = callTimer.textContent;
-        addMessage('system', 'Apel incheiat. Durata: ' + duration);
-
-        // Reset timer display
+        addMessage('system', 'Apel încheiat. Durata: ' + callTimer.textContent);
         callTimer.textContent = '00:00';
     }
 
     function toggleMute() {
         isMuted = !isMuted;
-        if (audioStream) {
-            audioStream.getAudioTracks().forEach(function(track) {
-                track.enabled = !isMuted;
-            });
-        }
-        if (isMuted) {
-            muteOffIcon.classList.add('hidden');
-            muteOnIcon.classList.remove('hidden');
-            muteBtn.classList.add('bg-red-500/30');
-            muteBtn.classList.remove('bg-white/10');
-        } else {
-            muteOffIcon.classList.remove('hidden');
-            muteOnIcon.classList.add('hidden');
-            muteBtn.classList.remove('bg-red-500/30');
-            muteBtn.classList.add('bg-white/10');
-        }
+        if (audioStream) { audioStream.getAudioTracks().forEach(function(t) { t.enabled = !isMuted; }); }
+        muteOffIcon.classList.toggle('hidden', isMuted);
+        muteOnIcon.classList.toggle('hidden', !isMuted);
+        if (isMuted && recognition) { try { recognition.stop(); } catch(e) {} }
+        else if (!isMuted && isInCall && recognition) { try { recognition.start(); } catch(e) {} }
     }
 
     function toggleTextInput() {
         isTextInputVisible = !isTextInputVisible;
-        if (isTextInputVisible) {
-            textInputArea.classList.remove('hidden');
-            textMessage.focus();
-        } else {
-            textInputArea.classList.add('hidden');
-        }
+        textInputArea.classList.toggle('hidden', !isTextInputVisible);
+        if (isTextInputVisible) textMessage.focus();
     }
 
     function sendTextMessage() {
-        var message = textMessage.value.trim();
-        if (!message || !isInCall) return;
-
+        var msg = textMessage.value.trim();
+        if (!msg || isProcessing) return;
         textMessage.value = '';
-        addMessage('user', message);
-
-        // Send to backend
-        sendToBackend({ message: message });
+        addMessage('user', msg);
+        getResponse(msg);
     }
 
-    // Allow Enter key to send text
-    document.getElementById('textMessage').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            sendTextMessage();
-        }
+    textMessage.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendTextMessage(); }
     });
 
-    function sendAudioToBackend(audioBlob) {
-        var formData = new FormData();
-        formData.append('audio', audioBlob, 'recording.webm');
-
-        fetch('/api/v1/bots/' + botId + '/test-vocal', {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': csrfToken,
-                'Accept': 'application/json',
-            },
-            body: formData,
-        })
-        .then(function(response) { return response.json(); })
-        .then(function(data) {
-            if (isInCall) {
-                addMessage('user', data.transcript || '[audio]');
+    async function botGreeting() {
+        callStatus.textContent = 'Agentul se pregătește...';
+        try {
+            var res = await fetch('/api/v1/bots/' + botId + '/test-vocal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
+                body: JSON.stringify({ message: '__greeting__', history: [] })
+            });
+            var data = await res.json();
+            if (data.response) {
                 addMessage('bot', data.response);
-                scrollTranscript();
+                conversationHistory.push({ role: 'assistant', content: data.response });
+                callStatus.textContent = 'Vorbește...';
+                if (data.audio) {
+                    await playAudio(data.audio);
+                } else {
+                    await speakBrowser(data.response);
+                }
             }
-        })
-        .catch(function(err) {
-            console.error('Error sending audio:', err);
+        } catch(e) {
+            var fallback = 'Bună ziua! Sunt ' + botName + '. Cu ce vă pot ajuta?';
+            addMessage('bot', fallback);
+            await speakBrowser(fallback);
+        }
+    }
+
+    async function getResponse(userText) {
+        if (isProcessing) return;
+        isProcessing = true;
+        callStatus.textContent = 'Se gândește...';
+        if (recognition && isInCall) { try { recognition.stop(); } catch(e) {} }
+
+        try {
+            var res = await fetch('/api/v1/bots/' + botId + '/test-vocal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
+                body: JSON.stringify({ message: userText, history: conversationHistory.slice(-20) })
+            });
+            var data = await res.json();
+
+            if (data.response) {
+                addMessage('bot', data.response);
+                conversationHistory.push({ role: 'user', content: userText });
+                conversationHistory.push({ role: 'assistant', content: data.response });
+
+                if (data.audio) {
+                    callStatus.textContent = 'Vorbește...';
+                    await playAudio(data.audio);
+                } else {
+                    await speakBrowser(data.response);
+                }
+            }
+        } catch(e) {
+            addMessage('system', 'Eroare la conectare.');
+        }
+
+        isProcessing = false;
+        if (isInCall) {
+            callStatus.textContent = 'Apel activ — vorbește';
+            if (recognition && !isMuted) { try { recognition.start(); } catch(e) {} }
+        }
+    }
+
+    function playAudio(base64Mp3) {
+        return new Promise(function(resolve) {
+            if (currentAudio) { currentAudio.pause(); }
+            currentAudio = new Audio('data:audio/mp3;base64,' + base64Mp3);
+            currentAudio.onended = function() { currentAudio = null; resolve(); };
+            currentAudio.onerror = function() { currentAudio = null; resolve(); };
+            currentAudio.play().catch(function() { resolve(); });
         });
     }
 
-    function sendToBackend(payload) {
-        fetch('/api/v1/bots/' + botId + '/test-vocal', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken,
-                'Accept': 'application/json',
-            },
-            body: JSON.stringify(payload),
-        })
-        .then(function(response) { return response.json(); })
-        .then(function(data) {
-            if (isInCall) {
-                addMessage('bot', data.response);
-                scrollTranscript();
-            }
-        })
-        .catch(function(err) {
-            console.error('Error:', err);
-            if (isInCall) {
-                addMessage('system', 'Eroare de comunicare cu serverul.');
-            }
+    function speakBrowser(text) {
+        return new Promise(function(resolve) {
+            if (!window.speechSynthesis) { resolve(); return; }
+            var u = new SpeechSynthesisUtterance(text);
+            u.lang = 'ro-RO'; u.rate = 1;
+            u.onend = resolve; u.onerror = resolve;
+            window.speechSynthesis.speak(u);
         });
     }
 
     function addMessage(type, text) {
-        messageIndex++;
         var wrapper = document.createElement('div');
         wrapper.className = 'flex ' + (type === 'user' ? 'justify-end' : type === 'system' ? 'justify-center' : 'justify-start');
         wrapper.style.animation = 'fadeInUp 0.3s ease-out';
-
         var bubble = document.createElement('div');
-
-        if (type === 'user') {
-            bubble.className = 'max-w-[80%] rounded-2xl rounded-br-md px-4 py-2.5 bg-red-700 text-white text-sm';
-        } else if (type === 'bot') {
-            bubble.className = 'max-w-[80%] rounded-2xl rounded-bl-md px-4 py-2.5 bg-white/10 text-white/90 text-sm';
-        } else {
-            bubble.className = 'rounded-full px-3 py-1 bg-white/5 text-white/40 text-xs';
-        }
-
+        if (type === 'user') bubble.className = 'max-w-[80%] rounded-2xl rounded-br-md px-4 py-2.5 bg-red-700 text-white text-sm';
+        else if (type === 'bot') bubble.className = 'max-w-[80%] rounded-2xl rounded-bl-md px-4 py-2.5 bg-white/10 text-white/90 text-sm';
+        else bubble.className = 'rounded-full px-3 py-1 bg-white/5 text-white/40 text-xs';
         bubble.textContent = text;
         wrapper.appendChild(bubble);
         transcriptArea.appendChild(wrapper);
-        scrollTranscript();
-    }
-
-    function updateLastBotMessage(text) {
-        var botMessages = transcriptArea.querySelectorAll('.justify-start .rounded-2xl');
-        if (botMessages.length > 0) {
-            botMessages[botMessages.length - 1].textContent = text;
-        }
-    }
-
-    function scrollTranscript() {
         transcriptArea.scrollTop = transcriptArea.scrollHeight;
     }
 
     function updateTimer() {
         if (!callStartTime) return;
         var elapsed = Math.floor((Date.now() - callStartTime) / 1000);
-        var minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
-        var seconds = (elapsed % 60).toString().padStart(2, '0');
-        callTimer.textContent = minutes + ':' + seconds;
+        callTimer.textContent = Math.floor(elapsed / 60).toString().padStart(2, '0') + ':' + (elapsed % 60).toString().padStart(2, '0');
     }
 })();
 </script>
@@ -494,4 +455,3 @@
     }
 </style>
 @endpush
-@endsection

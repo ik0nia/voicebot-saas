@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Direct API + Cards</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; background: #f1f5f9; padding: 20px; max-width: 600px; margin: 0 auto; }
+        h1 { color: #1e293b; font-size: 20px; }
+        #input { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; }
+        #btn { margin-top: 8px; padding: 10px 20px; background: #991b1b; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; }
+        #response { margin-top: 16px; padding: 16px; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; white-space: pre-wrap; font-size: 14px; }
+        #cards { margin-top: 12px; display: flex; gap: 10px; overflow-x: auto; padding: 8px 0; }
+        .card { min-width: 180px; max-width: 180px; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #fff; flex-shrink: 0; }
+        .card img { width: 100%; height: 110px; object-fit: cover; }
+        .card-body { padding: 10px; }
+        .card-name { font-size: 13px; font-weight: 600; color: #1e293b; margin-bottom: 4px; }
+        .card-price { font-size: 14px; font-weight: 700; color: #991b1b; }
+        .card-btn { margin-top: 8px; width: 100%; padding: 8px; border: none; border-radius: 8px; background: #991b1b; color: #fff; font-size: 12px; cursor: pointer; }
+        #debug { margin-top: 12px; padding: 12px; background: #fef3c7; border-radius: 8px; font-family: monospace; font-size: 12px; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>Test API Direct (fara widget)</h1>
+    <input type="text" id="input" placeholder="Scrie un mesaj..." value="aveti parchet vox?">
+    <button id="btn" onclick="send()">Trimite</button>
+    <div id="response">Asteapta...</div>
+    <div id="cards"></div>
+    <div id="debug"></div>
+
+    <script>
+        function send() {
+            var msg = document.getElementById('input').value;
+            document.getElementById('response').textContent = 'Se incarca...';
+            document.getElementById('cards').innerHTML = '';
+            document.getElementById('debug').textContent = '';
+
+            fetch('https://sambla.ro/api/v1/chatbot/4/message', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ message: msg, session_id: 'test-direct-' + Date.now() })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                document.getElementById('response').textContent = data.response || data.reply || 'No response';
+
+                var debugEl = document.getElementById('debug');
+                debugEl.textContent = 'Products in response: ' + (data.products ? data.products.length : 0) + '\n';
+                debugEl.textContent += 'Keys: ' + Object.keys(data).join(', ') + '\n';
+
+                if (data.products && data.products.length > 0) {
+                    debugEl.textContent += '\nProducts:\n';
+                    var cardsEl = document.getElementById('cards');
+                    data.products.forEach(function(p) {
+                        debugEl.textContent += '  - ' + p.name + ' | ' + p.price + ' ' + p.currency + ' | img: ' + (p.image_url ? 'YES' : 'NO') + '\n';
+
+                        var card = document.createElement('div');
+                        card.className = 'card';
+                        card.innerHTML = (p.image_url ? '<img src="' + p.image_url + '">' : '') +
+                            '<div class="card-body">' +
+                            '<div class="card-name">' + p.name + '</div>' +
+                            '<div class="card-price">' + p.price + ' ' + p.currency + '</div>' +
+                            '<button class="card-btn">Adauga in cos</button>' +
+                            '</div>';
+                        cardsEl.appendChild(card);
+                    });
+                } else {
+                    debugEl.textContent += '\nNo products returned by API.';
+                }
+            })
+            .catch(function(err) {
+                document.getElementById('response').textContent = 'ERROR: ' + err.message;
+                document.getElementById('debug').textContent = err.stack;
+            });
+        }
+    </script>
+</body>
+</html>

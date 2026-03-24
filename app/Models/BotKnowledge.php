@@ -16,11 +16,21 @@ class BotKnowledge extends Model
     protected $fillable = [
         'bot_id',
         'type',
+        'source_type',
+        'source_id',
         'title',
         'content',
         'status',
         'chunk_index',
+        'metadata',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'metadata' => 'array',
+        ];
+    }
 
     // Relationships
 

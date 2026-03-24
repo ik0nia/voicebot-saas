@@ -16,6 +16,8 @@ class Tenant extends Model
         'name',
         'slug',
         'plan',
+        'plan_slug',
+        'plan_overrides',
         'settings',
         'trial_ends_at',
         'stripe_id',
@@ -27,6 +29,7 @@ class Tenant extends Model
     {
         return [
             'settings' => 'array',
+            'plan_overrides' => 'array',
             'trial_ends_at' => 'datetime',
         ];
     }
@@ -52,6 +55,11 @@ class Tenant extends Model
         return $this->hasMany(Bot::class);
     }
 
+    public function sites(): HasMany
+    {
+        return $this->hasMany(Site::class);
+    }
+
     public function calls(): HasMany
     {
         return $this->hasMany(Call::class);
@@ -65,6 +73,21 @@ class Tenant extends Model
     public function usageRecords(): HasMany
     {
         return $this->hasMany(UsageRecord::class);
+    }
+
+    public function usageTracking(): HasMany
+    {
+        return $this->hasMany(UsageTracking::class);
+    }
+
+    public function conversations(): HasMany
+    {
+        return $this->hasMany(Conversation::class);
+    }
+
+    public function planLimits(): ?PlanLimit
+    {
+        return PlanLimit::findBySlug($this->plan_slug ?? 'free');
     }
 
     // Methods

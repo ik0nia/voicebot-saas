@@ -94,17 +94,44 @@
             </p>
         </div>
 
-        {{-- Cost --}}
+        {{-- Sentiment --}}
+        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <p class="text-sm font-medium text-slate-500">Sentiment client</p>
+            @if($call->sentiment_label)
+                @php
+                    $sentimentConfig = [
+                        'positive' => ['color' => 'text-emerald-600', 'bg' => 'bg-emerald-50', 'border' => 'border-emerald-200'],
+                        'neutral'  => ['color' => 'text-slate-600',   'bg' => 'bg-slate-50',   'border' => 'border-slate-200'],
+                        'negative' => ['color' => 'text-red-600',     'bg' => 'bg-red-50',     'border' => 'border-red-200'],
+                    ];
+                    $sCfg = $sentimentConfig[$call->sentiment_label] ?? $sentimentConfig['neutral'];
+                @endphp
+                <div class="mt-1 flex items-center gap-2">
+                    <span class="text-2xl">{{ $call->sentimentEmoji() }}</span>
+                    <div>
+                        <p class="text-lg font-semibold {{ $sCfg['color'] }}">{{ $call->sentimentLabelRo() }}</p>
+                        <p class="text-xs text-slate-400">Scor: {{ number_format($call->sentiment_score, 2) }}</p>
+                    </div>
+                </div>
+            @else
+                <p class="mt-1 text-lg font-semibold text-slate-400">—</p>
+                <p class="text-xs text-slate-400">Se analizează...</p>
+            @endif
+        </div>
+
+        {{-- Cost (super_admin only) --}}
+        @if(auth()->user()->isSuperAdmin())
         <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <p class="text-sm font-medium text-slate-500">Cost</p>
             <p class="mt-1 text-lg font-semibold text-slate-900">
-                @if($call->cost !== null)
-                    {{ number_format($call->cost, 4) }} EUR
+                @if($call->cost_cents)
+                    {{ number_format($call->cost_cents / 100, 4) }} EUR
                 @else
                     —
                 @endif
             </p>
         </div>
+        @endif
     </div>
 
     {{-- Transcript --}}

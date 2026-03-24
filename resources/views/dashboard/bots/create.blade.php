@@ -68,6 +68,26 @@
                                class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" />
                     </div>
 
+                    {{-- Site asociat --}}
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Site asociat</label>
+                        @if($sites->isEmpty())
+                            <div class="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                <p class="text-sm text-yellow-800">Nu ai niciun site adaugat. <a href="{{ route('dashboard.sites.create') }}" class="font-semibold underline">Adauga un site</a> mai intai.</p>
+                            </div>
+                        @else
+                            <select name="site_id" class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition">
+                                <option value="">— Fara site asociat —</option>
+                                @foreach($sites as $site)
+                                    <option value="{{ $site->id }}" {{ old('site_id') == $site->id ? 'selected' : '' }}>
+                                        {{ $site->domain }} {{ $site->isVerified() ? '✓' : '(neverificat)' }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <p class="text-xs text-slate-400 mt-1">Chatbot-ul va functiona doar pe acest site</p>
+                        @endif
+                    </div>
+
                     {{-- Limbă --}}
                     <div>
                         <label for="language" class="block text-sm font-medium text-slate-700 mb-1.5">Limbă <span class="text-red-500">*</span></label>
@@ -95,6 +115,7 @@
                             <option value="nova" {{ old('voice') === 'nova' ? 'selected' : '' }}>Nova (feminin)</option>
                             <option value="shimmer" {{ old('voice') === 'shimmer' ? 'selected' : '' }}>Shimmer (cald)</option>
                         </select>
+                        <p class="text-xs text-slate-400 mt-2">Dupa crearea botului, vei putea configura o voce clonata personalizata.</p>
                     </div>
                 </div>
             </div>

@@ -32,6 +32,10 @@
     </main>
 
     @include('components.footer')
+
+    {{-- Chatbot widget: Sambla - Asistent Site (bot 34, channel 2) --}}
+    <script src="{{ rtrim(config('app.url'), '/') }}/api/v1/chatbot/embed" data-channel-id="2" async defer></script>
+
     @stack('scripts')
 </body>
 </html>

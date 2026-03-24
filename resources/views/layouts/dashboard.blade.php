@@ -53,15 +53,73 @@
                     Boți
                 </a>
 
-                {{-- Apeluri --}}
-                <a href="/dashboard/apeluri"
+                {{-- Sites --}}
+                <a href="/dashboard/sites"
                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-                          {{ request()->is('dashboard/apeluri*') ? 'bg-red-50 text-red-800 border-l-[3px] border-red-800 pl-[9px]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
+                          {{ request()->is('dashboard/sites*') ? 'bg-red-50 text-red-800 border-l-[3px] border-red-800 pl-[9px]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
                     <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
                     </svg>
-                    Apeluri
+                    Sites
                 </a>
+
+                {{-- Transcrieri --}}
+                @if(!empty($sidebarTranscriptChannels) && count($sidebarTranscriptChannels) > 0)
+                    @php
+                        $transcriptActive = request()->is('dashboard/apeluri*') || request()->is('dashboard/transcrieri*');
+                    @endphp
+                    <div>
+                        <button onclick="document.getElementById('transcript-submenu').classList.toggle('hidden'); document.getElementById('transcript-chevron').classList.toggle('rotate-180');" type="button"
+                                class="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                                       {{ $transcriptActive ? 'bg-red-50 text-red-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
+                            <span class="flex items-center gap-3">
+                                <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                </svg>
+                                Transcrieri
+                            </span>
+                            <svg id="transcript-chevron" class="w-4 h-4 shrink-0 transition-transform {{ $transcriptActive ? 'rotate-180' : '' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <div id="transcript-submenu" class="ml-5 mt-0.5 space-y-0.5 border-l-2 border-slate-200 pl-3 {{ $transcriptActive ? '' : 'hidden' }}">
+                            @foreach($sidebarTranscriptChannels as $ch)
+                                <a href="{{ $ch['url'] }}"
+                                   class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                                          {{ request()->is($ch['route_match']) ? 'bg-red-50 text-red-800 border-l-[3px] border-red-800 pl-[9px]' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900' }}">
+                                    @if($ch['icon'] === 'phone')
+                                        <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                        </svg>
+                                    @elseif($ch['icon'] === 'globe')
+                                        <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                                        </svg>
+                                    @elseif($ch['icon'] === 'message-circle')
+                                        <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                        </svg>
+                                    @elseif($ch['icon'] === 'facebook')
+                                        <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                                        </svg>
+                                    @elseif($ch['icon'] === 'instagram')
+                                        <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                                            <rect x="2" y="2" width="20" height="20" rx="5" />
+                                            <circle cx="12" cy="12" r="5" />
+                                            <circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none" />
+                                        </svg>
+                                    @else
+                                        <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                        </svg>
+                                    @endif
+                                    {{ $ch['label'] }}
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
 
                 {{-- Analiză --}}
                 <a href="/dashboard/analiza"
@@ -98,23 +156,14 @@
                 <div class="my-3 border-t border-slate-200"></div>
                 <p class="px-3 py-1 text-xs font-semibold text-red-500 uppercase tracking-wider">Admin Platformă</p>
 
-                <a href="/dashboard"
-                   class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-                          {{ request()->is('dashboard') && !request()->is('dashboard/*') ? 'bg-red-50 text-red-600 border-l-[3px] border-red-600 pl-[9px]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
+                <a href="/admin"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-red-800 text-white hover:bg-red-900 transition-colors">
                     <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
                     </svg>
-                    Panou Admin
+                    Admin Panel
                 </a>
 
-                <a href="/dashboard/admin/setari"
-                   class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-                          {{ request()->is('dashboard/admin/setari*') ? 'bg-red-50 text-red-600 border-l-[3px] border-red-600 pl-[9px]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
-                    <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-                    </svg>
-                    Setări Platformă
-                </a>
                 @endif
 
                 {{-- Separator --}}
@@ -262,6 +311,9 @@
             </main>
         </div>
     </div>
+
+    {{-- Chatbot widget: Sambla - Asistent Dashboard (bot 35, channel 3) --}}
+    <script src="{{ rtrim(config('app.url'), '/') }}/api/v1/chatbot/embed" data-channel-id="3" async defer></script>
 
     @stack('scripts')
 

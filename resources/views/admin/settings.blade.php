@@ -1,11 +1,7 @@
-@extends('layouts.dashboard')
+@extends('layouts.admin')
 
 @section('title', 'Setări Platformă')
-@section('breadcrumb')
-<span class="text-slate-400">Admin</span>
-<svg class="w-4 h-4 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-<span class="text-slate-900 font-medium">Setări Platformă</span>
-@endsection
+@section('breadcrumb')<span class="text-slate-900 font-medium">Setări Platformă</span>@endsection
 
 @section('content')
 <div class="space-y-6">
@@ -60,6 +56,7 @@
                     'whatsapp' => ['label' => 'WhatsApp', 'icon' => 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z'],
                     'facebook' => ['label' => 'Facebook', 'icon' => 'M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z'],
                     'instagram' => ['label' => 'Instagram', 'icon' => 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'],
+                    'elevenlabs' => ['label' => 'ElevenLabs', 'icon' => 'M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z'],
                     'securitate' => ['label' => 'Securitate', 'icon' => 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z'],
                     'tenanti' => ['label' => 'Tenanți', 'icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4'],
                     'planuri' => ['label' => 'Planuri', 'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01'],
@@ -67,7 +64,7 @@
                 ];
             @endphp
             @foreach($tabs as $key => $info)
-                <a href="{{ url('/dashboard/admin/setari?tab=' . $key) }}"
+                <a href="{{ url('/admin/setari?tab=' . $key) }}"
                    class="whitespace-nowrap flex items-center gap-1.5 border-b-2 px-4 py-3 text-sm font-medium transition-colors
                           {{ $tab === $key
                               ? 'border-red-600 text-red-600'
@@ -89,7 +86,7 @@
             <h2 class="text-lg font-semibold text-slate-900">Setări Generale</h2>
             <p class="mt-1 text-sm text-slate-500">Configurarea de bază a platformei.</p>
 
-            <form method="POST" action="{{ url('/dashboard/admin/setari/general') }}" class="mt-6 space-y-5">
+            <form method="POST" action="{{ url('/admin/setari/general') }}" class="mt-6 space-y-5">
                 @csrf
                 @method('PUT')
 
@@ -189,7 +186,7 @@
             <h2 class="text-lg font-semibold text-slate-900">Configurare OpenAI</h2>
             <p class="mt-1 text-sm text-slate-500">Cheile API și parametrii pentru OpenAI Realtime API.</p>
 
-            <form method="POST" action="{{ url('/dashboard/admin/setari/openai') }}" class="mt-6 space-y-5">
+            <form method="POST" action="{{ url('/admin/setari/openai') }}" class="mt-6 space-y-5">
                 @csrf
                 @method('PUT')
 
@@ -274,7 +271,7 @@
             <h2 class="text-lg font-semibold text-slate-900">Configurare Twilio</h2>
             <p class="mt-1 text-sm text-slate-500">Credențiale și configurări pentru serviciul de telefonie Twilio.</p>
 
-            <form method="POST" action="{{ url('/dashboard/admin/setari/twilio') }}" class="mt-6 space-y-5">
+            <form method="POST" action="{{ url('/admin/setari/twilio') }}" class="mt-6 space-y-5">
                 @csrf
                 @method('PUT')
 
@@ -337,6 +334,83 @@
     @endif
 
     {{-- ============================================================ --}}
+    {{-- TAB: ElevenLabs --}}
+    {{-- ============================================================ --}}
+    @if($tab === 'elevenlabs')
+        <div class="bg-white rounded-xl border border-slate-200 p-6">
+            <h2 class="text-lg font-semibold text-slate-900">Configurare ElevenLabs</h2>
+            <p class="mt-1 text-sm text-slate-500">Setari pentru clonarea vocii si sinteza vocala cu ElevenLabs.</p>
+
+            <form method="POST" action="{{ url('/admin/setari/elevenlabs') }}" class="mt-6 space-y-5">
+                @csrf
+                @method('PUT')
+
+                <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                    {{-- API Key --}}
+                    <div class="sm:col-span-2">
+                        <label for="elevenlabs_api_key" class="block text-sm font-medium text-slate-700">API Key</label>
+                        <div class="relative mt-1.5">
+                            <input type="password" name="elevenlabs_api_key" id="elevenlabs_api_key"
+                                   value="{{ old('elevenlabs_api_key', $settings['elevenlabs']['elevenlabs_api_key'] ?? '') }}"
+                                   placeholder="xi-..."
+                                   class="block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 pr-10 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors"
+                                   required>
+                            <button type="button" onclick="togglePassword('elevenlabs_api_key')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            </button>
+                        </div>
+                        <p class="mt-1 text-xs text-slate-500">Cheia API de la ElevenLabs. O gasesti in Settings > API Keys.</p>
+                    </div>
+
+                    {{-- Model --}}
+                    <div>
+                        <label for="elevenlabs_model_id" class="block text-sm font-medium text-slate-700">Model TTS</label>
+                        <select name="elevenlabs_model_id" id="elevenlabs_model_id"
+                                class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                            @php $currentModel = old('elevenlabs_model_id', $settings['elevenlabs']['elevenlabs_model_id'] ?? 'eleven_multilingual_v2'); @endphp
+                            <option value="eleven_multilingual_v2" {{ $currentModel === 'eleven_multilingual_v2' ? 'selected' : '' }}>Multilingual v2 (recomandat)</option>
+                            <option value="eleven_turbo_v2_5" {{ $currentModel === 'eleven_turbo_v2_5' ? 'selected' : '' }}>Turbo v2.5 (latenta mica)</option>
+                            <option value="eleven_monolingual_v1" {{ $currentModel === 'eleven_monolingual_v1' ? 'selected' : '' }}>Monolingual v1</option>
+                        </select>
+                    </div>
+
+                    {{-- Stability --}}
+                    <div>
+                        <label for="elevenlabs_stability" class="block text-sm font-medium text-slate-700">Stabilitate</label>
+                        <input type="number" name="elevenlabs_stability" id="elevenlabs_stability"
+                               value="{{ old('elevenlabs_stability', $settings['elevenlabs']['elevenlabs_stability'] ?? '0.5') }}"
+                               min="0" max="1" step="0.05"
+                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors"
+                               required>
+                        <p class="mt-1 text-xs text-slate-500">0 = mai variata, 1 = mai consistenta</p>
+                    </div>
+
+                    {{-- Similarity Boost --}}
+                    <div>
+                        <label for="elevenlabs_similarity_boost" class="block text-sm font-medium text-slate-700">Similarity Boost</label>
+                        <input type="number" name="elevenlabs_similarity_boost" id="elevenlabs_similarity_boost"
+                               value="{{ old('elevenlabs_similarity_boost', $settings['elevenlabs']['elevenlabs_similarity_boost'] ?? '0.75') }}"
+                               min="0" max="1" step="0.05"
+                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors"
+                               required>
+                        <p class="mt-1 text-xs text-slate-500">0 = mai generic, 1 = mai asemanator cu vocea clonata</p>
+                    </div>
+                </div>
+
+                <div class="flex justify-end pt-2">
+                    <button type="submit"
+                            class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-colors">
+                        Salveaza setarile ElevenLabs
+                    </button>
+                </div>
+            </form>
+        </div>
+    @endif
+
+    {{-- ============================================================ --}}
     {{-- TAB: Stripe --}}
     {{-- ============================================================ --}}
     @if($tab === 'stripe')
@@ -344,7 +418,7 @@
             <h2 class="text-lg font-semibold text-slate-900">Configurare Stripe</h2>
             <p class="mt-1 text-sm text-slate-500">Chei API și configurări pentru plățile Stripe.</p>
 
-            <form method="POST" action="{{ url('/dashboard/admin/setari/stripe') }}" class="mt-6 space-y-5">
+            <form method="POST" action="{{ url('/admin/setari/stripe') }}" class="mt-6 space-y-5">
                 @csrf
                 @method('PUT')
 
@@ -427,7 +501,7 @@
             <h2 class="text-lg font-semibold text-slate-900">Configurare Email / SMTP</h2>
             <p class="mt-1 text-sm text-slate-500">Setări pentru trimiterea emailurilor din platformă.</p>
 
-            <form method="POST" action="{{ url('/dashboard/admin/setari/email') }}" class="mt-6 space-y-5">
+            <form method="POST" action="{{ url('/admin/setari/email') }}" class="mt-6 space-y-5">
                 @csrf
                 @method('PUT')
 
@@ -538,7 +612,7 @@
             <h2 class="text-lg font-semibold text-slate-900">Configurare WhatsApp</h2>
             <p class="mt-1 text-sm text-slate-500">Setări pentru integrarea cu WhatsApp Business API.</p>
 
-            <form method="POST" action="{{ url('/dashboard/admin/setari/whatsapp') }}" class="mt-6 space-y-5">
+            <form method="POST" action="{{ url('/admin/setari/whatsapp') }}" class="mt-6 space-y-5">
                 @csrf
                 @method('PUT')
 
@@ -627,7 +701,7 @@
             <h2 class="text-lg font-semibold text-slate-900">Configurare Facebook</h2>
             <p class="mt-1 text-sm text-slate-500">Setări pentru integrarea cu Facebook Messenger.</p>
 
-            <form method="POST" action="{{ url('/dashboard/admin/setari/facebook') }}" class="mt-6 space-y-5">
+            <form method="POST" action="{{ url('/admin/setari/facebook') }}" class="mt-6 space-y-5">
                 @csrf
                 @method('PUT')
 
@@ -713,7 +787,7 @@
             <h2 class="text-lg font-semibold text-slate-900">Configurare Instagram</h2>
             <p class="mt-1 text-sm text-slate-500">Setări pentru integrarea cu Instagram Messaging API.</p>
 
-            <form method="POST" action="{{ url('/dashboard/admin/setari/instagram') }}" class="mt-6 space-y-5">
+            <form method="POST" action="{{ url('/admin/setari/instagram') }}" class="mt-6 space-y-5">
                 @csrf
                 @method('PUT')
 
@@ -800,7 +874,7 @@
             <h2 class="text-lg font-semibold text-slate-900">Setări Securitate</h2>
             <p class="mt-1 text-sm text-slate-500">Parametri de securitate și autentificare.</p>
 
-            <form method="POST" action="{{ url('/dashboard/admin/setari/securitate') }}" class="mt-6 space-y-5">
+            <form method="POST" action="{{ url('/admin/setari/securitate') }}" class="mt-6 space-y-5">
                 @csrf
                 @method('PUT')
 
@@ -909,7 +983,7 @@
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <form method="POST" action="{{ url('/dashboard/admin/setari/tenanti/' . $t->id) }}" class="flex items-center gap-2">
+                                        <form method="POST" action="{{ url('/admin/setari/tenanti/' . $t->id) }}" class="flex items-center gap-2">
                                             @csrf
                                             @method('PUT')
                                             <input type="hidden" name="name" value="{{ $t->name }}">
@@ -932,7 +1006,7 @@
                                         @endif
                                     </td>
                                     <td class="px-6 py-4 text-right">
-                                        <form method="POST" action="{{ url('/dashboard/admin/setari/tenanti/' . $t->id . '/toggle') }}" class="inline">
+                                        <form method="POST" action="{{ url('/admin/setari/tenanti/' . $t->id . '/toggle') }}" class="inline">
                                             @csrf
                                             @method('PATCH')
                                             <button type="submit"
@@ -1078,7 +1152,7 @@
 
             <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {{-- Clear Cache --}}
-                <form method="POST" action="{{ url('/dashboard/admin/setari/clear-cache') }}">
+                <form method="POST" action="{{ url('/admin/setari/clear-cache') }}">
                     @csrf
                     <button type="submit"
                             onclick="return confirm('Ștergi tot cache-ul aplicației?')"

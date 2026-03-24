@@ -5,11 +5,14 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Dashboard\AnalyticsController;
 use App\Http\Controllers\Dashboard\BillingController;
 use App\Http\Controllers\Dashboard\BotController;
+use App\Http\Controllers\Dashboard\ClonedVoiceController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Dashboard\CallController;
 use App\Http\Controllers\Dashboard\ChannelController;
+use App\Http\Controllers\Dashboard\ConversationController;
 use App\Http\Controllers\Dashboard\KnowledgeController;
 use App\Http\Controllers\Dashboard\PhoneNumberController;
+use App\Http\Controllers\Dashboard\SiteController;
 use App\Http\Controllers\Dashboard\SettingsController;
 use App\Http\Controllers\Dashboard\TeamController;
 use App\Http\Controllers\Admin\AdminSettingsController;
@@ -54,6 +57,12 @@ Route::get('/contact', function () {
     return view('contact');
 });
 
+// Chatbot embed routes are in routes/api.php under /chatbot prefix (no auth/session middleware)
+
+// Public demo & test pages (no auth required)
+Route::get('/demo/{slug}', [\App\Http\Controllers\PublicDemoController::class, 'show'])->name('public.demo');
+Route::get('/dashboard/boti/{bot}/test-vocal', [\App\Http\Controllers\PublicDemoController::class, 'testById'])->name('dashboard.bots.testVocal');
+
 // Dashboard home
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth'])->name('dashboard');
 
@@ -70,7 +79,15 @@ Route::middleware('auth')->prefix('dashboard/boti')->group(function () {
     Route::put('/{bot}', [BotController::class, 'update'])->name('dashboard.bots.update');
     Route::delete('/{bot}', [BotController::class, 'destroy'])->name('dashboard.bots.destroy');
     Route::patch('/{bot}/toggle', [BotController::class, 'toggleActive'])->name('dashboard.bots.toggle');
-    Route::get('/{bot}/test-vocal', [BotController::class, 'testVocal'])->name('dashboard.bots.testVocal');
+    Route::patch('/{bot}/update-field', [BotController::class, 'updateField'])->name('dashboard.bots.updateField');
+
+    // Voice cloning
+    Route::get('/{bot}/voice-clone', [ClonedVoiceController::class, 'create'])->name('dashboard.bots.voiceClone.create');
+    Route::post('/{bot}/voice-clone', [ClonedVoiceController::class, 'store'])->name('dashboard.bots.voiceClone.store');
+    Route::post('/{bot}/voice-clone/{clonedVoice}/activate', [ClonedVoiceController::class, 'activate'])->name('dashboard.bots.voiceClone.activate');
+    Route::post('/{bot}/voice-clone/deactivate', [ClonedVoiceController::class, 'deactivate'])->name('dashboard.bots.voiceClone.deactivate');
+    Route::delete('/{bot}/voice-clone/{clonedVoice}', [ClonedVoiceController::class, 'destroy'])->name('dashboard.bots.voiceClone.destroy');
+    Route::get('/{bot}/voice-clone/{clonedVoice}/status', [ClonedVoiceController::class, 'status'])->name('dashboard.bots.voiceClone.status');
 });
 
 // Calls routes (dashboard)
@@ -79,6 +96,13 @@ Route::middleware('auth')->prefix('dashboard/apeluri')->group(function () {
     Route::get('/{call}', [CallController::class, 'show'])->name('dashboard.calls.show');
     Route::delete('/{call}', [CallController::class, 'destroy'])->name('dashboard.calls.destroy');
     Route::get('/{call}/export/{format?}', [CallController::class, 'exportTranscript'])->name('dashboard.calls.export-transcript');
+});
+
+// Conversations routes (dashboard) — text-based channels
+Route::middleware('auth')->prefix('dashboard/transcrieri')->group(function () {
+    Route::get('/conversatie/{conversation}', [ConversationController::class, 'show'])->name('dashboard.conversations.show');
+    Route::delete('/conversatie/{conversation}', [ConversationController::class, 'destroy'])->name('dashboard.conversations.destroy');
+    Route::get('/{channelType}', [ConversationController::class, 'index'])->name('dashboard.conversations.index');
 });
 
 // Analytics routes (dashboard)
@@ -125,28 +149,81 @@ Route::middleware('auth')->prefix('dashboard/boti/{bot}/canale')->group(function
     Route::patch('/{channel}/toggle', [ChannelController::class, 'toggleActive'])->name('dashboard.bots.channels.toggle');
 });
 
+// Site management routes (dashboard)
+Route::middleware('auth')->prefix('dashboard/sites')->group(function () {
+    Route::get('/', [SiteController::class, 'index'])->name('dashboard.sites.index');
+    Route::get('/new', [SiteController::class, 'create'])->name('dashboard.sites.create');
+    Route::post('/', [SiteController::class, 'store'])->name('dashboard.sites.store');
+    Route::get('/{site}', [SiteController::class, 'show'])->name('dashboard.sites.show');
+    Route::put('/{site}', [SiteController::class, 'update'])->name('dashboard.sites.update');
+    Route::delete('/{site}', [SiteController::class, 'destroy'])->name('dashboard.sites.destroy');
+    Route::post('/{site}/verify', [SiteController::class, 'verify'])->name('dashboard.sites.verify');
+});
+
 // Knowledge base routes (dashboard)
 Route::middleware('auth')->prefix('dashboard/boti/{bot}')->group(function () {
     Route::get('/knowledge', [KnowledgeController::class, 'index'])->name('dashboard.bots.knowledge.index');
-    Route::post('/knowledge', [KnowledgeController::class, 'store'])->name('dashboard.bots.knowledge.store');
     Route::delete('/knowledge/{title}', [KnowledgeController::class, 'destroy'])->name('dashboard.bots.knowledge.destroy');
+
+    // Rate-limited mutation routes (10 requests per minute per user)
+    Route::middleware('throttle:10,1')->group(function () {
+        Route::post('/knowledge', [KnowledgeController::class, 'store'])->name('dashboard.bots.knowledge.store');
+
+        // AI Agents
+        Route::post('/knowledge/agent/run', [KnowledgeController::class, 'runAgent'])->name('dashboard.bots.knowledge.agent.run');
+        Route::post('/knowledge/agent/{run}/save', [KnowledgeController::class, 'saveAgentResult'])->name('dashboard.bots.knowledge.agent.save');
+        Route::put('/knowledge/agent/{slug}/customize', [KnowledgeController::class, 'customizeAgent'])->name('dashboard.bots.knowledge.agent.customize');
+
+        // Website Scanner
+        Route::post('/knowledge/scan', [KnowledgeController::class, 'startScan'])->name('dashboard.bots.knowledge.scan.start');
+        Route::post('/knowledge/scan/{scan}/cancel', [KnowledgeController::class, 'cancelScan'])->name('dashboard.bots.knowledge.scan.cancel');
+
+        // Connectors
+        Route::post('/knowledge/connector', [KnowledgeController::class, 'storeConnector'])->name('dashboard.bots.knowledge.connector.store');
+        Route::post('/knowledge/connector/{connector}/test', [KnowledgeController::class, 'testConnector'])->name('dashboard.bots.knowledge.connector.test');
+        Route::post('/knowledge/connector/{connector}/sync', [KnowledgeController::class, 'syncConnector'])->name('dashboard.bots.knowledge.connector.sync');
+        Route::delete('/knowledge/connector/{connector}', [KnowledgeController::class, 'destroyConnector'])->name('dashboard.bots.knowledge.connector.destroy');
+    });
+
+    // Read-only status endpoints (higher limit: 60/min)
+    Route::middleware('throttle:60,1')->group(function () {
+        Route::get('/knowledge/agent/{run}/status', [KnowledgeController::class, 'agentStatus'])->name('dashboard.bots.knowledge.agent.status');
+        Route::get('/knowledge/scan/{scan}/status', [KnowledgeController::class, 'scanStatus'])->name('dashboard.bots.knowledge.scan.status');
+    });
 });
 
-// Admin Settings routes (super_admin only)
-Route::middleware(['auth', 'super_admin'])->prefix('dashboard/admin/setari')->group(function () {
-    Route::get('/', [AdminSettingsController::class, 'index'])->name('admin.settings.index');
-    Route::put('/general', [AdminSettingsController::class, 'updateGeneral'])->name('admin.settings.updateGeneral');
-    Route::put('/openai', [AdminSettingsController::class, 'updateOpenai'])->name('admin.settings.updateOpenai');
-    Route::put('/twilio', [AdminSettingsController::class, 'updateTwilio'])->name('admin.settings.updateTwilio');
-    Route::put('/stripe', [AdminSettingsController::class, 'updateStripe'])->name('admin.settings.updateStripe');
-    Route::put('/email', [AdminSettingsController::class, 'updateEmail'])->name('admin.settings.updateEmail');
-    Route::put('/whatsapp', [AdminSettingsController::class, 'updateWhatsapp'])->name('admin.settings.updateWhatsapp');
-    Route::put('/facebook', [AdminSettingsController::class, 'updateFacebook'])->name('admin.settings.updateFacebook');
-    Route::put('/instagram', [AdminSettingsController::class, 'updateInstagram'])->name('admin.settings.updateInstagram');
-    Route::put('/securitate', [AdminSettingsController::class, 'updateSecurity'])->name('admin.settings.updateSecurity');
-    Route::post('/clear-cache', [AdminSettingsController::class, 'clearCache'])->name('admin.settings.clearCache');
-    Route::put('/tenanti/{tenant}', [AdminSettingsController::class, 'updateTenant'])->name('admin.settings.updateTenant');
-    Route::patch('/tenanti/{tenant}/toggle', [AdminSettingsController::class, 'toggleTenant'])->name('admin.settings.toggleTenant');
+// Admin Dashboard route (super_admin only)
+Route::get('/dashboard/admin', [DashboardController::class, 'admin'])
+    ->middleware(['auth', 'super_admin'])
+    ->name('dashboard.admin');
+
+// Admin Panel (super_admin only)
+Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Admin\AdminDashboardController::class, 'index'])->name('admin.dashboard');
+    Route::get('/boti', [\App\Http\Controllers\Admin\AdminBotController::class, 'index'])->name('admin.bots.index');
+    Route::get('/boti/{botId}', [\App\Http\Controllers\Admin\AdminBotController::class, 'show'])->name('admin.bots.show');
+    Route::get('/apeluri', [\App\Http\Controllers\Admin\AdminCallController::class, 'index'])->name('admin.calls.index');
+    Route::get('/apeluri/{callId}', [\App\Http\Controllers\Admin\AdminCallController::class, 'show'])->name('admin.calls.show');
+    Route::get('/conversatii', [\App\Http\Controllers\Admin\AdminConversationController::class, 'index'])->name('admin.conversations.index');
+    Route::get('/conversatii/{conversationId}', [\App\Http\Controllers\Admin\AdminConversationController::class, 'show'])->name('admin.conversations.show');
+    Route::get('/tenanti', [\App\Http\Controllers\Admin\AdminTenantController::class, 'index'])->name('admin.tenants.index');
+    Route::get('/tenanti/{tenant}', [\App\Http\Controllers\Admin\AdminTenantController::class, 'show'])->name('admin.tenants.show');
+
+    // Admin Settings
+    Route::get('/setari', [AdminSettingsController::class, 'index'])->name('admin.settings.index');
+    Route::put('/setari/general', [AdminSettingsController::class, 'updateGeneral'])->name('admin.settings.updateGeneral');
+    Route::put('/setari/openai', [AdminSettingsController::class, 'updateOpenai'])->name('admin.settings.updateOpenai');
+    Route::put('/setari/twilio', [AdminSettingsController::class, 'updateTwilio'])->name('admin.settings.updateTwilio');
+    Route::put('/setari/stripe', [AdminSettingsController::class, 'updateStripe'])->name('admin.settings.updateStripe');
+    Route::put('/setari/email', [AdminSettingsController::class, 'updateEmail'])->name('admin.settings.updateEmail');
+    Route::put('/setari/whatsapp', [AdminSettingsController::class, 'updateWhatsapp'])->name('admin.settings.updateWhatsapp');
+    Route::put('/setari/facebook', [AdminSettingsController::class, 'updateFacebook'])->name('admin.settings.updateFacebook');
+    Route::put('/setari/instagram', [AdminSettingsController::class, 'updateInstagram'])->name('admin.settings.updateInstagram');
+    Route::put('/setari/elevenlabs', [AdminSettingsController::class, 'updateElevenlabs'])->name('admin.settings.updateElevenlabs');
+    Route::put('/setari/securitate', [AdminSettingsController::class, 'updateSecurity'])->name('admin.settings.updateSecurity');
+    Route::post('/setari/clear-cache', [AdminSettingsController::class, 'clearCache'])->name('admin.settings.clearCache');
+    Route::put('/setari/tenanti/{tenant}', [AdminSettingsController::class, 'updateTenant'])->name('admin.settings.updateTenant');
+    Route::patch('/setari/tenanti/{tenant}/toggle', [AdminSettingsController::class, 'toggleTenant'])->name('admin.settings.toggleTenant');
 });
 
 // WhatsApp webhooks

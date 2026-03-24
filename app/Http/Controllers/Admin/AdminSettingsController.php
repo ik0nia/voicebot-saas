@@ -40,7 +40,7 @@ class AdminSettingsController extends Controller
                 ->get();
         }
 
-        return view('dashboard.admin-settings', compact('tab', 'settings', 'extra'));
+        return view('admin.settings', compact('tab', 'settings', 'extra'));
     }
 
     public function updateGeneral(Request $request)
@@ -184,6 +184,23 @@ class AdminSettingsController extends Controller
         }
 
         return back()->with('success', 'Setările Instagram au fost actualizate.');
+    }
+
+    public function updateElevenlabs(Request $request)
+    {
+        $validated = $request->validate([
+            'elevenlabs_api_key' => 'required|string',
+            'elevenlabs_model_id' => 'required|string|max:255',
+            'elevenlabs_stability' => 'required|numeric|min:0|max:1',
+            'elevenlabs_similarity_boost' => 'required|numeric|min:0|max:1',
+        ]);
+
+        PlatformSetting::set('elevenlabs_api_key', $validated['elevenlabs_api_key'], 'string', 'elevenlabs');
+        PlatformSetting::set('elevenlabs_model_id', $validated['elevenlabs_model_id'], 'string', 'elevenlabs');
+        PlatformSetting::set('elevenlabs_stability', $validated['elevenlabs_stability'], 'float', 'elevenlabs');
+        PlatformSetting::set('elevenlabs_similarity_boost', $validated['elevenlabs_similarity_boost'], 'float', 'elevenlabs');
+
+        return back()->with('success', 'Setarile ElevenLabs au fost actualizate.');
     }
 
     public function updateSecurity(Request $request)

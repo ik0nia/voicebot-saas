@@ -111,6 +111,10 @@
                             <th class="px-5 py-3 font-medium text-slate-500">Direcție</th>
                             <th class="px-5 py-3 font-medium text-slate-500">Status</th>
                             <th class="px-5 py-3 font-medium text-slate-500">Durată</th>
+                            <th class="px-5 py-3 font-medium text-slate-500">Sentiment</th>
+                            @if(auth()->user()->isSuperAdmin())
+                            <th class="px-5 py-3 font-medium text-slate-500">Cost</th>
+                            @endif
                             <th class="px-5 py-3 font-medium text-slate-500">Data</th>
                             <th class="px-5 py-3 font-medium text-slate-500">Acțiuni</th>
                         </tr>
@@ -183,9 +187,35 @@
                                     @endif
                                 </td>
 
+                                {{-- Sentiment --}}
+                                <td class="whitespace-nowrap px-5 py-3 text-center">
+                                    @if($call->sentiment_label)
+                                        <span title="{{ $call->sentimentLabelRo() }} ({{ number_format($call->sentiment_score, 2) }})">
+                                            {{ $call->sentimentEmoji() }}
+                                        </span>
+                                    @else
+                                        <span class="text-slate-300">—</span>
+                                    @endif
+                                </td>
+
+                                @if(auth()->user()->isSuperAdmin())
+                                {{-- Cost --}}
+                                <td class="whitespace-nowrap px-5 py-3 text-slate-600 font-mono text-xs">
+                                    @if($call->cost_cents)
+                                        {{ number_format($call->cost_cents / 100, 2, ',', '.') }}€
+                                    @else
+                                        —
+                                    @endif
+                                </td>
+                                @endif
+
                                 {{-- Date --}}
                                 <td class="whitespace-nowrap px-5 py-3 text-slate-500" title="{{ $call->created_at->format('d.m.Y H:i:s') }}">
-                                    {{ $call->created_at->diffForHumans() }}
+                                    @if($call->created_at->diffInHours(now()) < 24)
+                                        {{ $call->created_at->diffForHumans() }}
+                                    @else
+                                        {{ $call->created_at->format('d.m.Y H:i') }}
+                                    @endif
                                 </td>
 
                                 {{-- Actions --}}

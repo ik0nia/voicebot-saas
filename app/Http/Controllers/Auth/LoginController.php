@@ -30,7 +30,7 @@ class LoginController extends Controller
                 'last_login_at' => now(),
             ]);
 
-            return redirect()->intended('/dashboard');
+            return redirect('/dashboard');
         }
 
         return back()->withErrors([

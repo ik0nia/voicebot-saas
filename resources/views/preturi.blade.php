@@ -120,7 +120,7 @@
                         </li>
                         <li class="flex items-start gap-3 text-sm text-slate-700">
                             <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            Toate 5 canalele (telefon, WhatsApp, Facebook, Instagram, web)
+                            Toate 5 canalele (telefon, web + WhatsApp, Facebook, Instagram in curând)
                         </li>
                         <li class="flex items-start gap-3 text-sm text-slate-700">
                             <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
@@ -373,7 +373,7 @@
                     </button>
                     <div class="faq-content max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
                         <div class="px-6 pb-5 text-slate-600 text-sm leading-relaxed">
-                            Sambla suportă 5 canale: Telefon (voce AI), WhatsApp Business, Facebook Messenger, Instagram DM și Web Chatbot. Planul Starter include 2 canale (telefon + chatbot web), iar planurile Profesional și Enterprise includ toate cele 5 canale. Toți agenții partajează aceeași bază de cunoștințe, indiferent de canal.
+                            Sambla suportă 5 canale: Telefon (voce AI), Web Chatbot, WhatsApp Business, Facebook Messenger și Instagram DM. Momentan sunt disponibile canalele Telefon și Web Chatbot. WhatsApp, Facebook Messenger și Instagram DM sunt în curs de implementare și vor fi disponibile în curând. Toți agenții partajează aceeași bază de cunoștințe, indiferent de canal.
                         </div>
                     </div>
                 </div>

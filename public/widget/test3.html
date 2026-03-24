@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Widget Debug</title>
+</head>
+<body>
+    <h2>Test Widget - verificare card-uri</h2>
+    <p>Deschide chatbot-ul si scrie "aveti parchet?"</p>
+    <p>Apoi deschide F12 → Console si copiaza tot ce apare acolo.</p>
+
+    <script>
+        // Override console to show on page
+        var logDiv = document.createElement('div');
+        logDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#1e293b;color:#4ade80;font-family:monospace;font-size:12px;padding:10px;max-height:200px;overflow:auto;z-index:999999;';
+        document.body.appendChild(logDiv);
+        var origLog = console.log;
+        var origError = console.error;
+        console.log = function() { var msg = Array.from(arguments).join(' '); logDiv.innerHTML += '<div>' + msg + '</div>'; origLog.apply(console, arguments); };
+        console.error = function() { var msg = Array.from(arguments).join(' '); logDiv.innerHTML += '<div style="color:#f87171;">' + msg + '</div>'; origError.apply(console, arguments); };
+    </script>
+
+    <script src="https://sambla.ro/widget/sambla-chat.js"
+        data-channel-id="4"
+        data-color="#991b1b"
+        data-position="bottom-right"
+        data-greeting="Test card-uri - scrie: aveti parchet?"
+        data-bot-name="Alex"
+        data-api-base="https://sambla.ro"
+        async defer></script>
+</body>
+</html>

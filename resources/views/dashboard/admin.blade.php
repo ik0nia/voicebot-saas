@@ -62,8 +62,18 @@
         <p class="text-2xl font-bold text-slate-900 mt-1">{{ $totalNumbers }}</p>
     </div>
     <div class="bg-white rounded-xl border border-slate-200 p-5">
-        <p class="text-sm font-medium text-slate-500">Apeluri azi</p>
-        <p class="text-2xl font-bold text-slate-900 mt-1">{{ $callsToday }}</p>
+        <p class="text-sm font-medium text-slate-500">Conversatii chatbot</p>
+        <p class="text-2xl font-bold text-slate-900 mt-1">{{ $totalConversations }}</p>
+        @if($conversationsToday > 0)
+            <p class="text-xs text-emerald-600 mt-1">+{{ $conversationsToday }} azi</p>
+        @endif
+    </div>
+    <div class="bg-white rounded-xl border border-slate-200 p-5">
+        <p class="text-sm font-medium text-slate-500">Mesaje total</p>
+        <p class="text-2xl font-bold text-slate-900 mt-1">{{ $totalMessages }}</p>
+        @if($messagesToday > 0)
+            <p class="text-xs text-emerald-600 mt-1">+{{ $messagesToday }} azi</p>
+        @endif
     </div>
 </div>
 
@@ -129,6 +139,40 @@
     </div>
 </div>
 
+{{-- Bot Costs Platform-wide --}}
+@if($botCosts->count() > 0)
+<div class="bg-white rounded-xl border border-slate-200 mb-8">
+    <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <h3 class="font-semibold text-slate-900">Costuri per bot (toată platforma)</h3>
+        <span class="text-sm font-medium text-slate-500">Total: {{ number_format($botCosts->sum('calls_sum_cost_cents') / 100, 2) }}€</span>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead>
+                <tr class="text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    <th class="px-6 py-3">Bot</th>
+                    <th class="px-6 py-3">Tenant</th>
+                    <th class="px-6 py-3">Apeluri</th>
+                    <th class="px-6 py-3">Minute</th>
+                    <th class="px-6 py-3">Cost</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                @foreach($botCosts as $bot)
+                <tr class="hover:bg-slate-50">
+                    <td class="px-6 py-3 text-sm font-medium text-slate-900">{{ $bot->name }}</td>
+                    <td class="px-6 py-3 text-sm text-slate-500">{{ $bot->tenant?->name ?? '—' }}</td>
+                    <td class="px-6 py-3 text-sm text-slate-600">{{ $bot->calls_count }}</td>
+                    <td class="px-6 py-3 text-sm text-slate-600">{{ number_format(($bot->calls_sum_duration_seconds ?? 0) / 60, 1) }}</td>
+                    <td class="px-6 py-3 text-sm font-semibold text-slate-900">{{ number_format(($bot->calls_sum_cost_cents ?? 0) / 100, 2) }}€</td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+@endif
+
 {{-- Recent Calls Across All Tenants --}}
 <div class="bg-white rounded-xl border border-slate-200">
     <div class="px-6 py-4 border-b border-slate-100">
@@ -173,6 +217,47 @@
                 @empty
                 <tr>
                     <td colspan="6" class="px-6 py-8 text-center text-sm text-slate-400">Niciun apel pe platformă.</td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{{-- Recent Conversations --}}
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm mt-6">
+    <div class="px-6 py-4 border-b border-slate-200">
+        <h3 class="font-semibold text-slate-900">Ultimele conversatii chatbot (toate platformele)</h3>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="border-b border-slate-100 text-left">
+                    <th class="px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-500">Bot</th>
+                    <th class="px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-500">Tenant</th>
+                    <th class="px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-500">Contact</th>
+                    <th class="px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-500">Mesaje</th>
+                    <th class="px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-500">Status</th>
+                    <th class="px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-500">Data</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                @forelse($recentConversations as $conv)
+                <tr class="hover:bg-slate-50">
+                    <td class="px-6 py-3 font-medium text-slate-700">{{ $conv->bot?->name ?? '—' }}</td>
+                    <td class="px-6 py-3 text-slate-500">{{ $conv->tenant?->name ?? '—' }}</td>
+                    <td class="px-6 py-3 text-slate-600">{{ $conv->contact_name ?: ($conv->contact_identifier ?: '—') }}</td>
+                    <td class="px-6 py-3 font-medium text-slate-700">{{ $conv->messages_count }}</td>
+                    <td class="px-6 py-3">
+                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $conv->status === 'active' ? 'bg-green-50 text-green-700' : 'bg-slate-50 text-slate-600' }}">
+                            {{ $conv->status === 'active' ? 'Activa' : 'Incheiata' }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-3 text-slate-400">{{ $conv->created_at?->diffForHumans() }}</td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="6" class="px-6 py-8 text-center text-sm text-slate-400">Nicio conversatie pe platforma.</td>
                 </tr>
                 @endforelse
             </tbody>

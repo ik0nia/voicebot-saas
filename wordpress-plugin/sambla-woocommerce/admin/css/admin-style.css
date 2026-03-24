@@ -1,0 +1,326 @@
+/* Sambla Admin Settings */
+.sambla-wrap {
+    max-width: 900px;
+    margin: 20px 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+}
+
+.sambla-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.sambla-header__logo {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #991b1b, #b91c1c);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.sambla-header__title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.sambla-header__subtitle {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0;
+}
+
+#sambla-notices .notice {
+    margin: 0 0 16px;
+    border-radius: 8px;
+}
+
+/* Cards */
+.sambla-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.sambla-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+    overflow: hidden;
+}
+
+.sambla-card--full {
+    grid-column: 1 / -1;
+}
+
+.sambla-card__header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sambla-card__icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.sambla-card__icon--green { background: #f0fdf4; color: #16a34a; }
+.sambla-card__icon--blue  { background: #eff6ff; color: #2563eb; }
+.sambla-card__icon--purple { background: #faf5ff; color: #7c3aed; }
+.sambla-card__icon--red   { background: #fef2f2; color: #dc2626; }
+
+.sambla-card__icon svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.sambla-card__title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+}
+
+.sambla-card__body {
+    padding: 20px;
+}
+
+/* Status badges */
+.sambla-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.sambla-status--connected {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #15803d;
+}
+
+.sambla-status--disconnected {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+}
+
+.sambla-status__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.sambla-status--connected .sambla-status__dot { background: #22c55e; }
+.sambla-status--disconnected .sambla-status__dot { background: #ef4444; }
+
+/* Form fields */
+.sambla-field {
+    margin-bottom: 16px;
+}
+
+.sambla-field:last-child {
+    margin-bottom: 0;
+}
+
+.sambla-field__label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 6px;
+}
+
+.sambla-field__input {
+    width: 100%;
+    max-width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #1e293b;
+    background: #fff;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    box-sizing: border-box;
+}
+
+.sambla-field__input:focus {
+    outline: none;
+    border-color: #991b1b;
+    box-shadow: 0 0 0 3px rgba(153, 27, 27, 0.1);
+}
+
+.sambla-field__input--select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 8px center;
+    background-repeat: no-repeat;
+    background-size: 20px;
+    padding-right: 36px;
+}
+
+.sambla-field__input--textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+.sambla-field__hint {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 4px;
+}
+
+.sambla-field__hint a {
+    color: #991b1b;
+    text-decoration: none;
+}
+
+.sambla-field__hint a:hover {
+    text-decoration: underline;
+}
+
+/* Info rows */
+.sambla-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 13px;
+}
+
+.sambla-info:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.sambla-info__label {
+    color: #64748b;
+}
+
+.sambla-info__value {
+    color: #1e293b;
+    font-weight: 500;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+    font-size: 12px;
+}
+
+/* Buttons */
+.sambla-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: none;
+    line-height: 1.4;
+}
+
+.sambla-btn--primary {
+    background: linear-gradient(135deg, #991b1b, #b91c1c);
+    color: #fff;
+    box-shadow: 0 1px 2px rgba(153, 27, 27, 0.2);
+}
+
+.sambla-btn--primary:hover {
+    background: linear-gradient(135deg, #7f1d1d, #991b1b);
+    box-shadow: 0 2px 4px rgba(153, 27, 27, 0.3);
+}
+
+.sambla-btn--secondary {
+    background: #fff;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
+
+.sambla-btn--secondary:hover {
+    background: #f9fafb;
+    border-color: #9ca3af;
+}
+
+.sambla-btn--danger {
+    background: #fff;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+
+.sambla-btn--danger:hover {
+    background: #fef2f2;
+}
+
+.sambla-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Icon upload */
+.sambla-icon-upload {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sambla-icon-preview {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 1px solid #e2e8f0;
+}
+
+/* Sync status */
+#sambla-sync-status {
+    font-size: 13px;
+    color: #64748b;
+}
+
+/* Color picker override */
+.sambla-card .wp-picker-container .wp-color-result {
+    border-radius: 8px;
+}
+
+/* Responsive */
+@media (max-width: 782px) {
+    .sambla-grid {
+        grid-template-columns: 1fr;
+    }
+    .sambla-card--full {
+        grid-column: 1;
+    }
+}

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Traits\BelongsToTenant;
+use App\Models\Channel;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,10 +17,13 @@ class Bot extends Model
 
     protected $fillable = [
         'tenant_id',
+        'site_id',
         'name',
         'slug',
         'system_prompt',
+        'greeting_message',
         'voice',
+        'cloned_voice_id',
         'language',
         'settings',
         'is_active',
@@ -46,14 +50,24 @@ class Bot extends Model
 
     // Relationships
 
+    public function site(): BelongsTo
+    {
+        return $this->belongsTo(Site::class);
+    }
+
+    public function clonedVoice(): BelongsTo
+    {
+        return $this->belongsTo(ClonedVoice::class);
+    }
+
+    public function usesClonedVoice(): bool
+    {
+        return $this->cloned_voice_id !== null && $this->clonedVoice?->isReady();
+    }
+
     public function calls(): HasMany
     {
         return $this->hasMany(Call::class);
-    }
-
-    public function botKnowledge(): HasMany
-    {
-        return $this->hasMany(BotKnowledge::class);
     }
 
     public function knowledge(): HasMany
@@ -76,20 +90,48 @@ class Bot extends Model
         return $this->hasMany(PhoneNumber::class);
     }
 
+    public function websiteScans(): HasMany
+    {
+        return $this->hasMany(WebsiteScan::class);
+    }
+
+    public function knowledgeConnectors(): HasMany
+    {
+        return $this->hasMany(KnowledgeConnector::class);
+    }
+
+    public function agentRuns(): HasMany
+    {
+        return $this->hasMany(KnowledgeAgentRun::class);
+    }
+
     // Methods
 
     public function buildSystemPrompt(): string
     {
-        $knowledge = $this->botKnowledge()
-            ->where('status', 'ready')
-            ->pluck('content')
-            ->implode("\n\n");
+        $base = $this->system_prompt ?? '';
 
-        if (empty($knowledge)) {
-            return $this->system_prompt ?? '';
+        $hasKnowledge = $this->knowledge()->where('status', 'ready')->exists();
+
+        if ($hasKnowledge) {
+            $base .= "\n\n[Ai acces la o baza de cunostinte. Informatiile relevante vor fi furnizate automat pentru fiecare intrebare.]";
         }
 
-        return $this->system_prompt . "\n\n--- Knowledge Base ---\n\n" . $knowledge;
+        return $base;
+    }
+
+    public function getKnowledgeContext(string $query): string
+    {
+        return app(\App\Services\KnowledgeSearchService::class)->buildContext($this->id, $query);
+    }
+
+    public function knowledgeStats(): array
+    {
+        return [
+            'total_documents' => $this->knowledge()->distinct()->count('title'),
+            'total_chunks' => $this->knowledge()->where('status', 'ready')->count(),
+            'has_embeddings' => $this->knowledge()->where('status', 'ready')->whereNotNull('embedding')->exists(),
+        ];
     }
 
     public function isActive(): bool
@@ -105,6 +147,27 @@ class Bot extends Model
     public function incrementCallsCount(): void
     {
         $this->increment('calls_count');
+    }
+
+    /**
+     * Generate the HTML embed code for the web chatbot widget.
+     * The embed will only work on verified domains for this tenant.
+     */
+    public function getEmbedCode(): string
+    {
+        $channel = $this->channels()
+            ->where('type', Channel::TYPE_WEB_CHATBOT)
+            ->where('is_active', true)
+            ->first();
+
+        if (!$channel) {
+            return '';
+        }
+
+        $appUrl = rtrim(config('app.url'), '/');
+        $channelId = e($channel->id);
+
+        return '<script src="' . $appUrl . '/chatbot/embed.js" data-channel-id="' . $channelId . '" async defer></script>';
     }
 
     public function activeChannels(): HasMany

@@ -22,6 +22,7 @@ class Conversation extends Model
         'contact_name',
         'status',
         'messages_count',
+        'cost_cents',
         'metadata',
         'started_at',
         'ended_at',
@@ -34,6 +35,7 @@ class Conversation extends Model
             'started_at' => 'datetime',
             'ended_at' => 'datetime',
             'messages_count' => 'integer',
+            'cost_cents' => 'integer',
         ];
     }
 

@@ -89,7 +89,8 @@ class SettingsController extends Controller
             $request->get('scopes', ['*'])
         );
 
-        return back()->with('success', 'Cheie API creată: ' . $token->plainTextToken);
+        return back()->with('success', 'Cheia API a fost creată. Copiază-o acum — nu va mai fi afișată.')
+                    ->with('new_api_key', $token->plainTextToken);
     }
 
     public function revokeApiKey(Request $request, $tokenId)

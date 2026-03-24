@@ -62,7 +62,7 @@
                 'dot' => 'bg-red-500',
             ],
             'whatsapp' => [
-                'label' => 'WhatsApp',
+                'label' => 'WhatsApp (in curând)',
                 'description' => 'Răspunsuri instant pe WhatsApp Business, 24/7',
                 'bg' => 'bg-green-50',
                 'icon_bg' => 'bg-green-100',
@@ -71,7 +71,7 @@
                 'dot' => 'bg-green-500',
             ],
             'facebook_messenger' => [
-                'label' => 'Facebook Messenger',
+                'label' => 'Facebook Messenger (in curând)',
                 'description' => 'Conectează pagina Facebook și răspunde automat',
                 'bg' => 'bg-blue-50',
                 'icon_bg' => 'bg-blue-100',
@@ -80,7 +80,7 @@
                 'dot' => 'bg-blue-500',
             ],
             'instagram_dm' => [
-                'label' => 'Instagram DM',
+                'label' => 'Instagram DM (in curând)',
                 'description' => 'Gestionează mesajele private Instagram cu AI',
                 'bg' => 'bg-pink-50',
                 'icon_bg' => 'bg-pink-100',

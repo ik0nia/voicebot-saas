@@ -117,57 +117,38 @@
     <div class="container-custom section-padding">
         <div class="text-center mb-16">
             <h2 class="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">Cum funcționează?</h2>
-            <p class="text-lg text-slate-600 max-w-2xl mx-auto">Trei pași simpli pentru a automatiza comunicarea pe toate canalele</p>
+            <p class="text-lg text-slate-600 max-w-2xl mx-auto">De la creare cont până la primul client servit de AI — în 6 pași simpli</p>
         </div>
 
-        <div class="grid md:grid-cols-5 gap-8 items-start max-w-5xl mx-auto">
-            {{-- Step 1 --}}
-            <div class="md:col-span-1 text-center animate-fade-in-delay-1">
-                <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary-100 flex items-center justify-center">
-                    <svg class="w-8 h-8 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
+        {{-- Steps grid --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            @php
+                $steps = [
+                    ['title' => 'Creează cont gratuit', 'desc' => 'Înregistrare în 30 de secunde, fără card de credit. Acces instant la toate instrumentele.', 'time' => '30 sec'],
+                    ['title' => 'Adaugă site-ul tău', 'desc' => 'Introdu domeniul business-ului. Chatbot-ul va funcționa exclusiv pe site-ul tău verificat.', 'time' => '1 min'],
+                    ['title' => 'Configurează agentul AI', 'desc' => 'Alege numele, vocea și personalitatea botului — prietenos, profesionist sau tehnic.', 'time' => '5 min'],
+                    ['title' => 'Construiește Knowledge Base', 'desc' => 'Generează FAQ-uri cu agenți AI, uploadează documente, scanează site-ul sau conectează WordPress.', 'time' => '10 min'],
+                    ['title' => 'Conectează canalele', 'desc' => 'Chatbot web și telefonie disponibile acum. WhatsApp, Facebook, Instagram — în curând.', 'time' => '2 min/canal'],
+                    ['title' => 'Agentul preia conversațiile', 'desc' => 'Gata! AI răspunde 24/7 pe toate canalele. Monitorizezi totul din dashboard în timp real.', 'time' => '24/7'],
+                ];
+            @endphp
+
+            @foreach($steps as $i => $step)
+                <div class="relative bg-white rounded-2xl border border-slate-200 p-6 pt-8 hover:border-red-200 hover:shadow-lg transition-all duration-300">
+                    {{-- Step number --}}
+                    <span class="absolute top-0 left-6 -translate-y-1/2 inline-flex items-center justify-center w-9 h-9 rounded-full bg-red-800 text-white text-sm font-bold shadow">{{ $i + 1 }}</span>
+
+                    <h3 class="text-lg font-bold text-slate-900 mb-2">{{ $step['title'] }}</h3>
+                    <p class="text-sm text-slate-500 leading-relaxed mb-3">{{ $step['desc'] }}</p>
+                    <span class="text-xs font-medium text-red-700">{{ $step['time'] }}</span>
                 </div>
-                <h3 class="text-lg font-bold text-slate-900 mb-2">Configurezi botul</h3>
-                <p class="text-sm text-slate-600">Definești scenariile de conversație, tonul vocii și răspunsurile la întrebări frecvente.</p>
-            </div>
+            @endforeach
+        </div>
 
-            {{-- Arrow 1 --}}
-            <div class="hidden md:flex md:col-span-1 items-center justify-center pt-8">
-                <svg class="w-10 h-10 text-primary-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-                </svg>
-            </div>
-
-            {{-- Step 2 --}}
-            <div class="md:col-span-1 text-center animate-fade-in-delay-2">
-                <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary-100 flex items-center justify-center">
-                    <svg class="w-8 h-8 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                    </svg>
-                </div>
-                <h3 class="text-lg font-bold text-slate-900 mb-2">Îl conectezi la canale</h3>
-                <p class="text-sm text-slate-600">Conectează-l la telefon, WhatsApp, Facebook, Instagram sau chatbot web — toate dintr-un singur loc.</p>
-            </div>
-
-            {{-- Arrow 2 --}}
-            <div class="hidden md:flex md:col-span-1 items-center justify-center pt-8">
-                <svg class="w-10 h-10 text-primary-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-                </svg>
-            </div>
-
-            {{-- Step 3 --}}
-            <div class="md:col-span-1 text-center animate-fade-in-delay-3">
-                <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary-100 flex items-center justify-center">
-                    <svg class="w-8 h-8 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
-                    </svg>
-                </div>
-                <h3 class="text-lg font-bold text-slate-900 mb-2">Agentul răspunde pe toate canalele</h3>
-                <p class="text-sm text-slate-600">Agentul AI preia conversațiile pe orice canal, răspunde natural și transferă când e necesar.</p>
-            </div>
+        {{-- CTA --}}
+        <div class="text-center mt-12">
+            <p class="text-slate-500 text-sm mb-5">Timp total de setup: <strong class="text-slate-900">sub 20 de minute</strong></p>
+            <a href="/register" class="btn-primary">Începe gratuit acum</a>
         </div>
     </div>
 </section>
@@ -224,7 +205,7 @@
                     </svg>
                 </div>
                 <h3 class="text-xl font-bold text-slate-900 mb-2">Multi-canal (5 canale)</h3>
-                <p class="text-slate-600">Telefon, WhatsApp, Facebook Messenger, Instagram DM și Web Chatbot — toate într-un singur loc, o singură bază de cunoștințe.</p>
+                <p class="text-slate-600">Telefon și Web Chatbot disponibile acum. WhatsApp, Facebook Messenger și Instagram DM — în curând. O singură bază de cunoștințe pentru toate.</p>
             </div>
 
             {{-- Feature 5: Scalabil --}}
@@ -275,7 +256,8 @@
             </div>
 
             {{-- Canal 2: WhatsApp --}}
-            <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-lg transition-shadow duration-300 text-center">
+            <div class="relative bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-lg transition-shadow duration-300 text-center opacity-75">
+                <span class="absolute top-3 right-3 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700 border border-amber-200">In curând</span>
                 <div class="w-14 h-14 mx-auto rounded-2xl bg-green-100 flex items-center justify-center mb-4">
                     <svg class="w-7 h-7 text-green-600" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
@@ -286,7 +268,8 @@
             </div>
 
             {{-- Canal 3: Facebook Messenger --}}
-            <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-lg transition-shadow duration-300 text-center">
+            <div class="relative bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-lg transition-shadow duration-300 text-center opacity-75">
+                <span class="absolute top-3 right-3 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700 border border-amber-200">In curând</span>
                 <div class="w-14 h-14 mx-auto rounded-2xl bg-blue-100 flex items-center justify-center mb-4">
                     <svg class="w-7 h-7 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.906 1.453 5.497 3.727 7.193V22l3.454-1.896c.92.256 1.9.396 2.819.396 5.523 0 10-4.145 10-9.257C22 6.145 17.523 2 12 2zm1.002 12.463l-2.542-2.713-4.96 2.713 5.46-5.794 2.604 2.713 4.898-2.713-5.46 5.794z"/>
@@ -297,7 +280,8 @@
             </div>
 
             {{-- Canal 4: Instagram DM --}}
-            <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-lg transition-shadow duration-300 text-center">
+            <div class="relative bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-lg transition-shadow duration-300 text-center opacity-75">
+                <span class="absolute top-3 right-3 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700 border border-amber-200">In curând</span>
                 <div class="w-14 h-14 mx-auto rounded-2xl bg-pink-100 flex items-center justify-center mb-4">
                     <svg class="w-7 h-7 text-pink-600" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
@@ -513,26 +497,25 @@
     const chatForm = document.getElementById('chatForm');
     const chatInput = document.getElementById('chatInput');
 
-    function getResponse(message) {
-        const msg = message.toLowerCase();
+    var channelId = 2; // web_chatbot channel for Sambla - Asistent Site
 
-        if (msg.includes('preț') || msg.includes('cost') || msg.includes('pret')) {
-            return 'Avem trei planuri: Starter (99\u20AC/lun\u0103), Profesional (299\u20AC/lun\u0103) \u0219i Enterprise (pre\u021B personalizat). Dori\u021Bi detalii despre un plan anume?';
-        }
-        if (msg.includes('demo') || msg.includes('test')) {
-            return 'Desigur! Pute\u021Bi programa o demonstra\u021Bie personalizat\u0103 accesând pagina noastr\u0103 de contact sau sunând la +40 21 XXX XXXX.';
-        }
-        if (msg.includes('func\u021Bion') || msg.includes('function') || msg.includes('face')) {
-            return 'Sambla poate gestiona apeluri inbound \u0219i outbound, poate r\u0103spunde la \u00EEntreb\u0103ri frecvente, programa \u00EEntâlniri \u0219i transfera apeluri c\u0103tre operatori umani când e necesar.';
-        }
-        if (msg.includes('integr')) {
-            return 'Ne integr\u0103m cu Twilio, centralele PBX, CRM-uri populare (Salesforce, HubSpot), Google Calendar \u0219i oferim API REST complet documentat.';
-        }
-        if (msg.includes('român') || msg.includes('limba')) {
-            return 'Da, Sambla func\u021Bioneaz\u0103 nativ \u00EEn limba român\u0103, cu \u00EEn\u021Belegere complet\u0103 a diacriticelor \u0219i expresiilor locale.';
-        }
-
-        return 'Mul\u021Bumesc pentru \u00EEntrebare! Un coleg din echipa noastr\u0103 v\u0103 va contacta \u00EEn curând cu mai multe detalii. \u00CEntre timp, pute\u021Bi explora func\u021Bionalit\u0103\u021Bile noastre sau pagina de pre\u021Buri.';
+    function getResponse(message, callback) {
+        // Call the real chatbot API
+        fetch('/api/v1/chatbot/' + channelId + '/message', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ message: message })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            callback(data.reply || data.message || 'Mulțumesc pentru întrebare! Vă pot ajuta cu mai multe detalii.');
+        })
+        .catch(function() {
+            callback('Mulțumesc pentru întrebare! Momentan procesez cererea. Vă rog încercați din nou.');
+        });
     }
 
     function addMessage(text, isUser) {
@@ -602,11 +585,10 @@
 
         showTypingIndicator();
 
-        var response = getResponse(text);
-        setTimeout(function() {
+        getResponse(text, function(response) {
             removeTypingIndicator();
             addMessage(response, false);
-        }, 500);
+        });
     });
 })();
 </script>

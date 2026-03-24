@@ -33,6 +33,8 @@ class Call extends Model
         'status',
         'duration_seconds',
         'cost_cents',
+        'sentiment_score',
+        'sentiment_label',
         'recording_url',
         'metadata',
         'started_at',
@@ -47,6 +49,7 @@ class Call extends Model
             'ended_at' => 'datetime',
             'duration_seconds' => 'integer',
             'cost_cents' => 'integer',
+            'sentiment_score' => 'decimal:3',
         ];
     }
 
@@ -104,6 +107,26 @@ class Call extends Model
             self::STATUS_RINGING,
             self::STATUS_IN_PROGRESS,
         ], true);
+    }
+
+    public function sentimentEmoji(): string
+    {
+        return match ($this->sentiment_label) {
+            'positive' => '😊',
+            'negative' => '😟',
+            'neutral' => '😐',
+            default => '—',
+        };
+    }
+
+    public function sentimentLabelRo(): string
+    {
+        return match ($this->sentiment_label) {
+            'positive' => 'Pozitiv',
+            'negative' => 'Negativ',
+            'neutral' => 'Neutru',
+            default => '—',
+        };
     }
 
     // Scopes
