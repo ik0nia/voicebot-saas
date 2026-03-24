@@ -101,6 +101,14 @@ class OrderLookupService
             '/colet/u',
             '/tracking/i',
             '/aw[b]?\s*\d/i',
+            '/cand.*vine/u',
+            '/cand.*ajunge/u',
+            '/tracking\s*(number|nr)?/i',
+            '/nr\.?\s*de\s*referint/u',
+            '/numar.*comand/u',
+            '/awb/i',
+            '/expedit/u',
+            '/status.*livr/u',
         ];
 
         $isOrderQuery = false;
@@ -126,7 +134,7 @@ class OrderLookupService
         }
 
         // Extract phone (Romanian formats)
-        if (preg_match('/(?:0|\+?40)\s*7\d{2}[\s.-]?\d{3}[\s.-]?\d{3}/', $message, $m)) {
+        if (preg_match('/(?:\+?\d{1,3}[\s.-]?)?\(?\d{2,4}\)?[\s.-]?\d{3,4}[\s.-]?\d{3,4}/', $message, $m)) {
             $params['phone'] = preg_replace('/[\s.-]/', '', $m[0]);
         }
 
@@ -154,7 +162,7 @@ class OrderLookupService
         }
 
         // Extract phone (Romanian formats)
-        if (preg_match('/(?:0|\+?40)\s*7\d{2}[\s.-]?\d{3}[\s.-]?\d{3}/', $message, $m)) {
+        if (preg_match('/(?:\+?\d{1,3}[\s.-]?)?\(?\d{2,4}\)?[\s.-]?\d{3,4}[\s.-]?\d{3,4}/', $message, $m)) {
             $params['phone'] = preg_replace('/[\s.-]/', '', $m[0]);
         }
 
@@ -213,11 +221,11 @@ class OrderLookupService
     private function lookupByPhone(string $baseUrl, array $credentials, string $phone): array
     {
         return Cache::remember('order_lookup_phone_' . md5($phone), now()->addMinutes(10), function () use ($baseUrl, $credentials, $phone) {
-            // WooCommerce doesn't search by phone natively, search by billing phone
             $response = Http::timeout(10)
                 ->withBasicAuth($credentials['consumer_key'], $credentials['consumer_secret'])
                 ->get($baseUrl . '/wp-json/wc/v3/orders', [
-                    'per_page' => 20,
+                    'search' => $phone,
+                    'per_page' => 5,
                     'orderby' => 'date',
                     'order' => 'desc',
                 ]);
@@ -226,12 +234,7 @@ class OrderLookupService
                 return ['found' => false, 'orders' => [], 'message' => 'Nu am putut verifica comenzile.'];
             }
 
-            $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
-            $orders = collect($response->json())->filter(function ($order) use ($cleanPhone) {
-                $billingPhone = preg_replace('/[^0-9]/', '', $order['billing']['phone'] ?? '');
-                return str_contains($billingPhone, $cleanPhone) || str_contains($cleanPhone, $billingPhone);
-            })->take(3)->values()->toArray();
-
+            $orders = $response->json();
             if (empty($orders)) {
                 return ['found' => false, 'orders' => [], 'message' => 'Nu am găsit comenzi pentru acest număr de telefon.'];
             }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Webhook;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\ProcessChannelMessage;
 use App\Models\Channel;
 use App\Services\ChannelMessageService;
 use Illuminate\Http\Request;
@@ -103,11 +104,11 @@ class FacebookWebhookController extends Controller
 
                     $contactName = 'Facebook User ' . substr($senderPsid, -4);
 
-                    $this->messageService->processIncomingMessage(
-                        $channel,
+                    ProcessChannelMessage::dispatch(
+                        $channel->id,
                         $senderPsid,
                         $contactName,
-                        $messageText
+                        $messageText,
                     );
                 }
             }

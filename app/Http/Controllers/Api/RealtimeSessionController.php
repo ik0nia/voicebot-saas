@@ -232,6 +232,22 @@ class RealtimeSessionController extends Controller
 
             $bot->incrementCallsCount();
 
+            // Dynamic greeting based on time of day
+            $timezone = $bot->settings['timezone'] ?? 'Europe/Bucharest';
+            $hour = (int) now($timezone)->format('H');
+            $timeGreeting = match(true) {
+                $hour >= 5 && $hour < 12 => 'Bună dimineața',
+                $hour >= 12 && $hour < 18 => 'Bună ziua',
+                default => 'Bună seara',
+            };
+
+            $greetingMessage = $bot->greeting_message;
+            if ($greetingMessage) {
+                $greetingMessage = preg_replace('/^(Bun[aă]!?|Salut!?|Hello!?|Hei!?)\s*/iu', $timeGreeting . '! ', $greetingMessage);
+            }
+
+            $maxDuration = (int) ($bot->settings['max_call_duration'] ?? 1800);
+
             $responseData = [
                 'token' => $sessionData['client_secret']['value'] ?? null,
                 'call_id' => $call->id,
@@ -239,9 +255,10 @@ class RealtimeSessionController extends Controller
                 'voice' => $voice,
                 'bot_name' => $bot->name,
                 'use_cloned_voice' => $useClonedVoice,
-                'greeting_message' => $bot->greeting_message,
+                'greeting_message' => $greetingMessage,
                 'has_products' => $hasProducts,
-                'max_duration_seconds' => (int) ($bot->settings['max_call_duration'] ?? 1800),
+                'max_duration_seconds' => $maxDuration,
+                'warning_at_seconds' => max(0, $maxDuration - 300),
             ];
 
             if ($useClonedVoice) {

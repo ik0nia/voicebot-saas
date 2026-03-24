@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Webhook;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\ProcessChannelMessage;
 use App\Models\Channel;
 use App\Services\ChannelMessageService;
 use Illuminate\Http\Request;
@@ -103,11 +104,11 @@ class InstagramWebhookController extends Controller
 
                     $contactName = 'Instagram User ' . substr($senderId, -4);
 
-                    $this->messageService->processIncomingMessage(
-                        $channel,
+                    ProcessChannelMessage::dispatch(
+                        $channel->id,
                         $senderId,
                         $contactName,
-                        $messageText
+                        $messageText,
                     );
                 }
             }

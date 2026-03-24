@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Webhook;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\ProcessChannelMessage;
 use App\Models\Channel;
 use App\Services\ChannelMessageService;
 use Illuminate\Http\Request;
@@ -112,11 +113,11 @@ class WhatsAppWebhookController extends Controller
                             continue;
                         }
 
-                        $this->messageService->processIncomingMessage(
-                            $channel,
+                        ProcessChannelMessage::dispatch(
+                            $channel->id,
                             $contactPhone,
                             $contactName,
-                            $messageText
+                            $messageText,
                         );
                     }
                 }

@@ -162,6 +162,7 @@
         let elCurrentResponseId = null;
         var selectedRating = 0;
         var ratedCallId = null;
+        var maxDuration = 1800, warningAt = 1500, warningShown = false;
 
         const botId = @json($bot->id);
         const isDemo = @json(request()->routeIs('public.demo'));
@@ -399,6 +400,9 @@
                 isInCall = true;
                 callStartTime = Date.now();
                 timerInterval = setInterval(updateTimer, 1000);
+                maxDuration = session.max_duration_seconds || 1800;
+                warningAt = session.warning_at_seconds || (maxDuration - 300);
+                warningShown = false;
 
                 callButton.className = 'w-16 h-16 rounded-full bg-red-600 hover:bg-red-500 flex items-center justify-center transition-all duration-300 shadow-lg shadow-red-500/30 active:scale-95';
                 callIcon.classList.add('hidden');
@@ -415,10 +419,29 @@
                 resetSentiment();
                 sentimentIndicator.classList.remove('hidden');
 
-                // Monitor connection state
+                // Monitor connection state with reconnection support
+                var reconnectAttempts = 0;
+                var maxReconnectAttempts = 2;
                 peerConnection.onconnectionstatechange = function() {
-                    if (peerConnection.connectionState === 'disconnected' || peerConnection.connectionState === 'failed') {
+                    var state = peerConnection.connectionState;
+                    if (state === 'disconnected') {
+                        if (reconnectAttempts < maxReconnectAttempts) {
+                            reconnectAttempts++;
+                            callStatus.textContent = 'Reconectare... (' + reconnectAttempts + '/' + maxReconnectAttempts + ')';
+                            updateConnection('connecting');
+                            addMessage('Conexiune întreruptă. Se reîncearcă...', 'system');
+                            peerConnection.restartIce();
+                        } else {
+                            addMessage('Nu s-a putut reconecta. Apelul s-a încheiat.', 'system');
+                            endCall();
+                        }
+                    } else if (state === 'failed') {
+                        addMessage('Conexiunea a eșuat.', 'system');
                         endCall();
+                    } else if (state === 'connected') {
+                        reconnectAttempts = 0;
+                        updateConnection('connected');
+                        callStatus.textContent = 'Conectat — vorbeste liber';
                     }
                 };
 
@@ -971,6 +994,16 @@
             const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
             const s = String(elapsed % 60).padStart(2, '0');
             callTimer.textContent = m + ':' + s;
+
+            // Check duration limits
+            if (!warningShown && elapsed >= warningAt) {
+                warningShown = true;
+                addMessage('Atenție: mai aveți ' + Math.floor((maxDuration - elapsed) / 60) + ' minute rămase.', 'system');
+            }
+            if (elapsed >= maxDuration) {
+                addMessage('Durata maximă a apelului a fost atinsă.', 'system');
+                endCall();
+            }
         }
 
         function updateConnection(state) {

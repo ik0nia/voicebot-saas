@@ -12,6 +12,17 @@ class KnowledgeSearchService
 {
     protected float $similarityThreshold = 0.65;
 
+    private array $synonyms = [
+        'pret' => 'cost tarif',
+        'livrare' => 'transport expediere curier',
+        'garantie' => 'garanție retur schimb',
+        'plata' => 'platesc achit card numerar',
+        'program' => 'orar deschis inchis',
+        'contact' => 'telefon email adresa locatie',
+        'reducere' => 'oferta promotie discount',
+        'stoc' => 'disponibil disponibilitate',
+    ];
+
     /**
      * Hybrid search: vector similarity + full-text search combined via RRF (Reciprocal Rank Fusion).
      */
@@ -28,18 +39,19 @@ class KnowledgeSearchService
             $queryEmbedding = $this->getQueryEmbedding($query, $botId);
 
             if (empty($queryEmbedding)) {
-                Log::warning('KnowledgeSearch: failed to generate embedding', [
+                Log::warning('KnowledgeSearch: failed to generate embedding, falling back to FTS', [
                     'bot_id' => $botId,
                     'query' => mb_substr($query, 0, 100),
                 ]);
-                return [];
+                return $this->searchFtsOnly($botId, $query, $limit);
             }
 
             $embeddingStr = '[' . implode(',', $queryEmbedding) . ']';
 
-            // Build OR-based tsquery for better partial matching
+            // Build OR-based tsquery with synonym expansion for better partial matching
+            $expandedQuery = $this->expandQuery($query);
             $words = array_filter(
-                preg_split('/\s+/', mb_strtolower(trim($query))),
+                preg_split('/\s+/', mb_strtolower(trim($expandedQuery))),
                 fn($w) => mb_strlen($w) > 2
             );
             $tsqueryOr = implode(' | ', array_map(fn($w) => preg_replace('/[^\w]/u', '', $w), $words));
@@ -135,7 +147,7 @@ class KnowledgeSearchService
      * @param int    $limit     Number of results to include (default 5)
      * @param int    $maxChars  Maximum total characters for context (default 4000)
      */
-    public function buildContext(int $botId, string $query, int $limit = 5, int $maxChars = 4000): string
+    public function buildContext(int $botId, string $query, int $limit = 5, int $maxChars = 6000): string
     {
         $results = $this->search($botId, $query, $limit);
 
@@ -165,6 +177,62 @@ class KnowledgeSearchService
     /**
      * Get embedding for a query, with 24h cache based on md5 of the query.
      */
+    private function expandQuery(string $query): string
+    {
+        $words = preg_split('/\s+/', mb_strtolower(trim($query)));
+        $expanded = $words;
+
+        foreach ($words as $word) {
+            if (mb_strlen($word) <= 3) continue;
+            $normalized = str_replace(['ă', 'â', 'î', 'ș', 'ț'], ['a', 'a', 'i', 's', 't'], $word);
+            if (isset($this->synonyms[$normalized])) {
+                $expanded = array_merge($expanded, explode(' ', $this->synonyms[$normalized]));
+            }
+        }
+
+        return implode(' ', array_unique($expanded));
+    }
+
+    protected function searchFtsOnly(int $botId, string $query, int $limit): array
+    {
+        $expandedQuery = $this->expandQuery($query);
+        $words = array_filter(
+            preg_split('/\s+/', mb_strtolower(trim($expandedQuery))),
+            fn($w) => mb_strlen($w) > 2
+        );
+        $tsqueryOr = implode(' | ', array_map(fn($w) => preg_replace('/[^\w]/u', '', $w), $words));
+        if (empty($tsqueryOr)) {
+            return [];
+        }
+
+        try {
+            return array_values(DB::select("
+                SELECT id, title, content, chunk_index,
+                       0::float AS similarity,
+                       (
+                           ts_rank_cd(to_tsvector('simple', title), to_tsquery('simple', :query_or)) * 3.0
+                           + ts_rank_cd(to_tsvector('simple', content), to_tsquery('simple', :query_or2))
+                       ) AS rrf_score
+                FROM bot_knowledge
+                WHERE bot_id = :bot_id
+                  AND status = 'ready'
+                  AND content IS NOT NULL
+                  AND to_tsvector('simple', title || ' ' || content) @@ to_tsquery('simple', :query_or3)
+                ORDER BY rrf_score DESC
+                LIMIT :lim
+            ", [
+                'query_or' => $tsqueryOr,
+                'query_or2' => $tsqueryOr,
+                'bot_id' => $botId,
+                'query_or3' => $tsqueryOr,
+                'lim' => $limit,
+            ]));
+        } catch (\Exception $e) {
+            Log::warning('KnowledgeSearch: FTS fallback failed', ['error' => $e->getMessage()]);
+            return [];
+        }
+    }
+
     /**
      * Invalidate knowledge cache for a specific bot by incrementing its version.
      */
