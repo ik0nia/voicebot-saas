@@ -11,21 +11,27 @@ use Illuminate\Support\Facades\RateLimiter;
 
 class OrderLookupService
 {
-    private const STATUS_MAP = [
-        'pending' => 'În așteptare plată',
-        'processing' => 'Se procesează',
-        'on-hold' => 'În așteptare',
-        'completed' => 'Finalizată',
-        'cancelled' => 'Anulată',
-        'refunded' => 'Rambursată',
-        'failed' => 'Eșuată',
-        'trash' => 'Ștearsă',
+    private const DEFAULT_TIMEOUT = 10;
+    private const CACHE_TTL_MINUTES = 10;
+    private const MAX_DISPLAY_ORDERS = 3;
+
+    /**
+     * Courier tracking URL builders.
+     */
+    private const COURIER_URLS = [
+        'fancourier' => 'https://www.fancourier.ro/awb-tracking/?awb=',
+        'fan' => 'https://www.fancourier.ro/awb-tracking/?awb=',
+        'cargus' => 'https://www.cargus.ro/tracking-online/?t=',
+        'urgent' => 'https://www.cargus.ro/tracking-online/?t=',
+        'dpd' => 'https://tracking.dpd.ro/tracking?reference=',
+        'sameday' => 'https://sameday.ro/#/awb/',
+        'gls' => 'https://gls-group.com/RO/ro/urmarire-colete?match=',
     ];
 
     /**
      * Look up order by number, email, or phone.
      *
-     * @return array{found: bool, orders: array, message: string}
+     * @return array{found: bool, orders: array, message: string, verification_required?: bool}
      */
     public function lookup(int $botId, array $params): array
     {
@@ -36,12 +42,12 @@ class OrderLookupService
             ->first();
 
         if (!$connector || empty($connector->credentials)) {
-            return ['found' => false, 'orders' => [], 'message' => 'Magazinul nu are conectorul configurat pentru verificarea comenzilor.'];
+            return ['found' => false, 'orders' => [], 'message' => trans('orders.connector_not_configured')];
         }
 
         $credentials = $connector->credentials;
         if (empty($credentials['consumer_key']) || empty($credentials['consumer_secret'])) {
-            return ['found' => false, 'orders' => [], 'message' => 'Credențialele WooCommerce nu sunt configurate.'];
+            return ['found' => false, 'orders' => [], 'message' => trans('orders.credentials_missing')];
         }
 
         $baseUrl = rtrim($connector->site_url, '/');
@@ -49,49 +55,46 @@ class OrderLookupService
         try {
             SsrfGuard::validateUrl($baseUrl);
         } catch (\Exception $e) {
-            return ['found' => false, 'orders' => [], 'message' => 'URL invalid.'];
+            return ['found' => false, 'orders' => [], 'message' => trans('orders.invalid_url')];
         }
 
+        // Rate limiting per bot
         $rateLimitKey = 'order_lookup_' . $botId;
         if (RateLimiter::tooManyAttempts($rateLimitKey, 30)) {
-            return ['found' => false, 'orders' => [], 'message' => 'Prea multe verificări de comenzi. Încercați din nou într-un minut.'];
+            return ['found' => false, 'orders' => [], 'message' => trans('orders.rate_limited')];
         }
         RateLimiter::hit($rateLimitKey, 60);
 
+        $timeout = (int) config('sambla.woocommerce.timeout', self::DEFAULT_TIMEOUT);
+
         try {
-            // Search by order number
             if (!empty($params['order_number'])) {
-                return $this->lookupByNumber($baseUrl, $credentials, $params['order_number']);
+                return $this->lookupByNumber($baseUrl, $credentials, $params['order_number'], $timeout);
             }
 
-            // Search by email
             if (!empty($params['email'])) {
-                return $this->lookupByEmail($baseUrl, $credentials, $params['email']);
+                return $this->lookupByEmail($baseUrl, $credentials, $params['email'], $timeout);
             }
 
-            // Search by phone
             if (!empty($params['phone'])) {
-                return $this->lookupByPhone($baseUrl, $credentials, $params['phone']);
+                return $this->lookupByPhone($baseUrl, $credentials, $params['phone'], $timeout);
             }
 
-            return ['found' => false, 'orders' => [], 'message' => 'Aveți nevoie de numărul comenzii, emailul sau telefonul pentru a verifica comanda.'];
+            return ['found' => false, 'orders' => [], 'message' => trans('orders.need_identifier')];
 
         } catch (\Exception $e) {
             Log::error('OrderLookup failed', ['bot_id' => $botId, 'error' => $e->getMessage()]);
-            return ['found' => false, 'orders' => [], 'message' => 'Nu am putut verifica comanda. Încercați din nou sau contactați magazinul.'];
+            return ['found' => false, 'orders' => [], 'message' => trans('orders.lookup_failed')];
         }
     }
 
     /**
      * Detect if a message is about orders and extract params.
-     *
-     * @return array|null  Returns params if order query detected, null otherwise.
      */
     public function detectOrderQuery(string $message): ?array
     {
         $msg = mb_strtolower(trim($message));
 
-        // Check if it's about orders
         $orderPatterns = [
             '/comand[aă]/u',
             '/unde.*comand/u',
@@ -109,6 +112,10 @@ class OrderLookupService
             '/awb/i',
             '/expedit/u',
             '/status.*livr/u',
+            // Extended patterns
+            '/cand.*primesc/u',
+            '/unde.*e.*comanda/u',
+            '/verific.*comand/u',
         ];
 
         $isOrderQuery = false;
@@ -121,67 +128,62 @@ class OrderLookupService
 
         if (!$isOrderQuery) return null;
 
+        return $this->extractIdentifiers($message);
+    }
+
+    /**
+     * Extract order params from message without requiring order keywords.
+     */
+    public function extractOrderParams(string $message): ?array
+    {
+        $params = $this->extractIdentifiers($message);
+        return !empty($params) ? $params : null;
+    }
+
+    /**
+     * Extract order number, email, and phone from text.
+     * Supports E.164 international phone format.
+     */
+    private function extractIdentifiers(string $message): array
+    {
         $params = [];
 
-        // Extract order number (#1234, comanda 1234, nr 1234)
+        // Order number
         if (preg_match('/#?\b(\d{3,8})\b/', $message, $m)) {
             $params['order_number'] = $m[1];
         }
 
-        // Extract email
+        // Email
         if (preg_match('/[\w.+-]+@[\w.-]+\.\w{2,}/', $message, $m)) {
             $params['email'] = $m[0];
         }
 
-        // Extract phone (Romanian formats)
-        if (preg_match('/(?:\+?\d{1,3}[\s.-]?)?\(?\d{2,4}\)?[\s.-]?\d{3,4}[\s.-]?\d{3,4}/', $message, $m)) {
-            $params['phone'] = preg_replace('/[\s.-]/', '', $m[0]);
+        // Phone - E.164 international format support
+        if (preg_match('/\+?\d{1,4}[\s.-]?\(?\d{1,4}\)?[\s.-]?\d{2,4}[\s.-]?\d{2,4}[\s.-]?\d{0,4}/', $message, $m)) {
+            $phone = preg_replace('/[\s.\-\(\)]/', '', $m[0]);
+            if (strlen($phone) >= 8 && strlen($phone) <= 15) {
+                $params['phone'] = $phone;
+            }
         }
 
         return $params;
     }
 
-    /**
-     * Extract order params (number, email, phone) from a message without requiring order keywords.
-     * Used for follow-up messages where the bot already asked for details.
-     *
-     * @return array|null  Returns params if any identifiers found, null otherwise.
-     */
-    public function extractOrderParams(string $message): ?array
+    private function lookupByNumber(string $baseUrl, array $credentials, string $orderNumber, int $timeout): array
     {
-        $params = [];
+        $cacheKey = 'order_num_' . md5($baseUrl . $orderNumber);
 
-        // Extract order number
-        if (preg_match('/#?\b(\d{3,8})\b/', $message, $m)) {
-            $params['order_number'] = $m[1];
-        }
-
-        // Extract email
-        if (preg_match('/[\w.+-]+@[\w.-]+\.\w{2,}/', $message, $m)) {
-            $params['email'] = $m[0];
-        }
-
-        // Extract phone (Romanian formats)
-        if (preg_match('/(?:\+?\d{1,3}[\s.-]?)?\(?\d{2,4}\)?[\s.-]?\d{3,4}[\s.-]?\d{3,4}/', $message, $m)) {
-            $params['phone'] = preg_replace('/[\s.-]/', '', $m[0]);
-        }
-
-        return !empty($params) ? $params : null;
-    }
-
-    private function lookupByNumber(string $baseUrl, array $credentials, string $orderNumber): array
-    {
-        return Cache::remember('order_lookup_num_' . $orderNumber, now()->addMinutes(10), function () use ($baseUrl, $credentials, $orderNumber) {
-            $response = Http::timeout(10)
+        return Cache::remember($cacheKey, now()->addMinutes(self::CACHE_TTL_MINUTES), function () use ($baseUrl, $credentials, $orderNumber, $timeout) {
+            $response = Http::timeout($timeout)
                 ->withBasicAuth($credentials['consumer_key'], $credentials['consumer_secret'])
                 ->get($baseUrl . '/wp-json/wc/v3/orders/' . $orderNumber);
 
             if ($response->status() === 404) {
-                return ['found' => false, 'orders' => [], 'message' => "Nu am găsit comanda #{$orderNumber}."];
+                return ['found' => false, 'orders' => [], 'message' => trans('orders.order_not_found', ['number' => $orderNumber])];
             }
 
             if (!$response->successful()) {
-                return ['found' => false, 'orders' => [], 'message' => 'Nu am putut verifica comanda.'];
+                return ['found' => false, 'orders' => [], 'message' => trans('orders.verify_failed')];
             }
 
             $order = $response->json();
@@ -189,63 +191,91 @@ class OrderLookupService
         });
     }
 
-    private function lookupByEmail(string $baseUrl, array $credentials, string $email): array
+    private function lookupByEmail(string $baseUrl, array $credentials, string $email, int $timeout): array
     {
-        return Cache::remember('order_lookup_email_' . md5($email), now()->addMinutes(10), function () use ($baseUrl, $credentials, $email) {
-            $response = Http::timeout(10)
+        $cacheKey = 'order_email_' . md5($baseUrl . $email);
+
+        return Cache::remember($cacheKey, now()->addMinutes(self::CACHE_TTL_MINUTES), function () use ($baseUrl, $credentials, $email, $timeout) {
+            $response = Http::timeout($timeout)
                 ->withBasicAuth($credentials['consumer_key'], $credentials['consumer_secret'])
                 ->get($baseUrl . '/wp-json/wc/v3/orders', [
                     'search' => $email,
-                    'per_page' => 5,
+                    'per_page' => 10,
                     'orderby' => 'date',
                     'order' => 'desc',
                 ]);
 
             if (!$response->successful()) {
-                return ['found' => false, 'orders' => [], 'message' => 'Nu am putut verifica comenzile.'];
+                return ['found' => false, 'orders' => [], 'message' => trans('orders.verify_failed')];
             }
 
             $orders = $response->json();
             if (empty($orders)) {
-                return ['found' => false, 'orders' => [], 'message' => "Nu am găsit comenzi pentru emailul {$email}."];
+                return ['found' => false, 'orders' => [], 'message' => trans('orders.orders_not_found_email', ['email' => $email])];
             }
 
-            return [
-                'found' => true,
-                'orders' => array_map([$this, 'formatOrder'], array_slice($orders, 0, 3)),
-                'message' => '',
-            ];
+            return $this->paginateResults($orders);
         });
     }
 
-    private function lookupByPhone(string $baseUrl, array $credentials, string $phone): array
+    private function lookupByPhone(string $baseUrl, array $credentials, string $phone, int $timeout): array
     {
-        return Cache::remember('order_lookup_phone_' . md5($phone), now()->addMinutes(10), function () use ($baseUrl, $credentials, $phone) {
-            $response = Http::timeout(10)
+        $cacheKey = 'order_phone_' . md5($baseUrl . $phone);
+
+        return Cache::remember($cacheKey, now()->addMinutes(self::CACHE_TTL_MINUTES), function () use ($baseUrl, $credentials, $phone, $timeout) {
+            // Use WooCommerce search param for scalable lookup
+            $response = Http::timeout($timeout)
                 ->withBasicAuth($credentials['consumer_key'], $credentials['consumer_secret'])
                 ->get($baseUrl . '/wp-json/wc/v3/orders', [
                     'search' => $phone,
-                    'per_page' => 5,
+                    'per_page' => 10,
                     'orderby' => 'date',
                     'order' => 'desc',
                 ]);
 
             if (!$response->successful()) {
-                return ['found' => false, 'orders' => [], 'message' => 'Nu am putut verifica comenzile.'];
+                return ['found' => false, 'orders' => [], 'message' => trans('orders.verify_failed')];
             }
 
             $orders = $response->json();
             if (empty($orders)) {
-                return ['found' => false, 'orders' => [], 'message' => 'Nu am găsit comenzi pentru acest număr de telefon.'];
+                return ['found' => false, 'orders' => [], 'message' => trans('orders.orders_not_found_phone')];
             }
 
-            return ['found' => true, 'orders' => array_map([$this, 'formatOrder'], $orders), 'message' => ''];
+            return $this->paginateResults($orders);
         });
+    }
+
+    /**
+     * Paginate results: show first N, inform about total.
+     */
+    private function paginateResults(array $orders): array
+    {
+        $total = count($orders);
+        $shown = min($total, self::MAX_DISPLAY_ORDERS);
+        $displayOrders = array_map([$this, 'formatOrder'], array_slice($orders, 0, $shown));
+
+        $message = '';
+        if ($total > $shown) {
+            $message = trans('orders.too_many_results', ['count' => $total, 'shown' => $shown]);
+        }
+
+        return [
+            'found' => true,
+            'orders' => $displayOrders,
+            'message' => $message,
+            'total_count' => $total,
+        ];
     }
 
     private function formatOrder(array $order): array
     {
-        $status = self::STATUS_MAP[$order['status'] ?? ''] ?? ($order['status'] ?? 'Necunoscut');
+        $statusRaw = $order['status'] ?? 'unknown';
+        $status = trans("orders.status_{$statusRaw}");
+        // If translation key doesn't exist, use raw status
+        if ($status === "orders.status_{$statusRaw}") {
+            $status = ucfirst($statusRaw);
+        }
 
         $items = collect($order['line_items'] ?? [])->map(fn($item) => [
             'name' => $item['name'],
@@ -254,26 +284,12 @@ class OrderLookupService
         ])->toArray();
 
         $trackingNumber = $order['meta_data'] ? collect($order['meta_data'])->firstWhere('key', '_tracking_number')['value'] ?? null : null;
-        $trackingUrl = null;
-        if ($trackingNumber) {
-            $shippingMethod = mb_strtolower(collect($order['shipping_lines'] ?? [])->pluck('method_title')->implode(' '));
-            if (str_contains($shippingMethod, 'fan') || str_contains($shippingMethod, 'fancourier')) {
-                $trackingUrl = 'https://www.fancourier.ro/awb-tracking/?awb=' . urlencode($trackingNumber);
-            } elseif (str_contains($shippingMethod, 'cargus') || str_contains($shippingMethod, 'urgent')) {
-                $trackingUrl = 'https://www.cargus.ro/tracking-online/?t=' . urlencode($trackingNumber);
-            } elseif (str_contains($shippingMethod, 'dpd')) {
-                $trackingUrl = 'https://tracking.dpd.ro/tracking?reference=' . urlencode($trackingNumber);
-            } elseif (str_contains($shippingMethod, 'sameday')) {
-                $trackingUrl = 'https://sameday.ro/#/awb/' . urlencode($trackingNumber);
-            } elseif (str_contains($shippingMethod, 'gls')) {
-                $trackingUrl = 'https://gls-group.com/RO/ro/urmarire-colete?match=' . urlencode($trackingNumber);
-            }
-        }
+        $trackingUrl = $trackingNumber ? $this->buildTrackingUrl($trackingNumber, $order['shipping_lines'] ?? []) : null;
 
         return [
             'number' => $order['number'] ?? $order['id'],
             'status' => $status,
-            'status_raw' => $order['status'] ?? '',
+            'status_raw' => $statusRaw,
             'date' => isset($order['date_created']) ? date('d.m.Y H:i', strtotime($order['date_created'])) : '',
             'total' => ($order['total'] ?? '0') . ' ' . ($order['currency'] ?? 'RON'),
             'payment_method' => $order['payment_method_title'] ?? '',
@@ -283,5 +299,21 @@ class OrderLookupService
             'items' => $items,
             'customer_name' => trim(($order['billing']['first_name'] ?? '') . ' ' . ($order['billing']['last_name'] ?? '')),
         ];
+    }
+
+    /**
+     * Build tracking URL based on detected courier.
+     */
+    private function buildTrackingUrl(string $trackingNumber, array $shippingLines): ?string
+    {
+        $shippingMethod = mb_strtolower(collect($shippingLines)->pluck('method_title')->implode(' '));
+
+        foreach (self::COURIER_URLS as $keyword => $baseUrl) {
+            if (str_contains($shippingMethod, $keyword)) {
+                return $baseUrl . urlencode($trackingNumber);
+            }
+        }
+
+        return null;
     }
 }
