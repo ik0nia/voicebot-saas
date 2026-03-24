@@ -42,7 +42,9 @@ Route::get('/functionalitati', function () {
 });
 
 Route::get('/preturi', function () {
-    return view('preturi');
+    $webchatPlans = \App\Models\Plan::active()->webchat()->orderBy('sort_order')->get();
+    $voicePlans = \App\Models\Plan::active()->voice()->orderBy('sort_order')->get();
+    return view('preturi', compact('webchatPlans', 'voicePlans'));
 });
 
 Route::get('/despre', function () {
@@ -224,6 +226,9 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
     Route::post('/setari/clear-cache', [AdminSettingsController::class, 'clearCache'])->name('admin.settings.clearCache');
     Route::put('/setari/tenanti/{tenant}', [AdminSettingsController::class, 'updateTenant'])->name('admin.settings.updateTenant');
     Route::patch('/setari/tenanti/{tenant}/toggle', [AdminSettingsController::class, 'toggleTenant'])->name('admin.settings.toggleTenant');
+
+    // Plans CRUD
+    Route::resource('pachete', \App\Http\Controllers\Admin\AdminPlanController::class)->names('admin.plans');
 
     // Model Pricing CRUD
     Route::get('/preturi-modele', [\App\Http\Controllers\Admin\AdminModelPricingController::class, 'index'])->name('admin.model-pricing.index');

@@ -21,9 +21,16 @@
 
     <x-motif-border />
 
-    {{-- Section 2: Billing Toggle + Section 3: Pricing Cards --}}
+    {{-- Section 2: Webchat Packages --}}
     <section class="section-padding bg-white">
         <div class="container-custom">
+
+            <h2 class="text-3xl md:text-4xl font-bold text-slate-900 text-center mb-4 animate-fade-in">
+                Pachete <span class="gradient-text">Webchat</span>
+            </h2>
+            <p class="text-center text-slate-600 mb-12 max-w-2xl mx-auto animate-fade-in">
+                Chatbot AI integrat pe site-ul tău. Răspunde automat clienților 24/7.
+            </p>
 
             {{-- Billing Toggle --}}
             <div class="flex items-center justify-center gap-4 mb-12 animate-slide-up">
@@ -44,255 +51,237 @@
                 </span>
             </div>
 
-            {{-- Pricing Cards --}}
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-center max-w-6xl mx-auto">
-
-                {{-- STARTER --}}
-                <div class="animate-slide-up rounded-2xl border border-slate-200 bg-white p-8 shadow-sm hover:shadow-lg transition-shadow duration-300">
-                    <div class="mb-6">
-                        <h3 class="text-lg font-bold text-slate-900 uppercase tracking-wide">Starter</h3>
-                        <p class="text-sm text-slate-500 mt-1">Perfect pentru afaceri mici</p>
-                    </div>
-                    <div class="mb-8">
-                        <div class="flex items-baseline gap-1">
-                            <span class="text-4xl font-extrabold text-slate-900 pricing-amount" data-monthly="99" data-annual="79">99</span>
-                            <span class="text-lg font-semibold text-slate-600">€</span>
-                            <span class="text-sm text-slate-500">/lună</span>
+            {{-- Webchat Pricing Cards --}}
+            @if($webchatPlans->count())
+                <div class="grid grid-cols-1 md:grid-cols-{{ min($webchatPlans->count(), 3) }} gap-8 items-center max-w-6xl mx-auto">
+                    @foreach($webchatPlans as $plan)
+                        @php
+                            $isPopular = $plan->is_popular;
+                            $features = $plan->features ?? [];
+                            $overage = $plan->overage ?? [];
+                            $overageCostPerMessage = $overage['cost_per_message'] ?? null;
+                            $isEnterprise = $plan->price_monthly === null || $plan->price_monthly == 0 && strtolower($plan->slug ?? $plan->name) === 'enterprise';
+                        @endphp
+                        <div class="animate-slide-up rounded-2xl {{ $isPopular ? 'border-2 border-primary-600 shadow-xl md:scale-105' : 'border border-slate-200 shadow-sm hover:shadow-lg' }} bg-white p-8 transition-shadow duration-300 relative">
+                            @if($isPopular)
+                                <div class="absolute -top-4 left-1/2 -translate-x-1/2">
+                                    <span class="inline-flex items-center rounded-full bg-primary-600 px-4 py-1 text-xs font-bold text-white uppercase tracking-wide shadow-lg">
+                                        Cel mai popular
+                                    </span>
+                                </div>
+                            @endif
+                            <div class="mb-6 {{ $isPopular ? 'mt-2' : '' }}">
+                                <h3 class="text-lg font-bold text-slate-900 uppercase tracking-wide">{{ $plan->name }}</h3>
+                                @if($plan->description)
+                                    <p class="text-sm text-slate-500 mt-1">{{ $plan->description }}</p>
+                                @endif
+                            </div>
+                            <div class="mb-8">
+                                @if($plan->price_monthly !== null && $plan->price_monthly > 0)
+                                    <div class="flex items-baseline gap-1">
+                                        <span class="text-4xl font-extrabold {{ $isPopular ? 'text-primary-700' : 'text-slate-900' }} pricing-amount" data-monthly="{{ number_format($plan->price_monthly, 0) }}" data-annual="{{ number_format($plan->price_yearly, 0) }}">{{ number_format($plan->price_monthly, 0) }}</span>
+                                        <span class="text-lg font-semibold text-slate-600">&euro;</span>
+                                        <span class="text-sm text-slate-500">/lună</span>
+                                    </div>
+                                    <p class="text-xs text-slate-400 mt-1 pricing-note hidden">facturat anual</p>
+                                @else
+                                    <div class="flex items-baseline gap-1">
+                                        <span class="text-4xl font-extrabold text-slate-900">Personalizat</span>
+                                    </div>
+                                @endif
+                            </div>
+                            <ul class="space-y-3 mb-6">
+                                @foreach($features as $feature)
+                                    <li class="flex items-start gap-3 text-sm text-slate-700">
+                                        <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                                        {{ $feature }}
+                                    </li>
+                                @endforeach
+                            </ul>
+                            @if($overageCostPerMessage)
+                                <p class="text-xs text-slate-500 mb-6 border-t border-slate-100 pt-4">
+                                    Credit suplimentar: <span class="font-semibold text-slate-700">&euro;{{ number_format($overageCostPerMessage, 2) }}/mesaj</span>
+                                </p>
+                            @endif
+                            @if($plan->price_monthly !== null && $plan->price_monthly > 0)
+                                <a href="/register" class="{{ $isPopular ? 'btn-primary' : 'btn-secondary' }} block text-center w-full">Începe gratuit</a>
+                            @else
+                                <a href="/contact" class="btn-secondary block text-center w-full">Contactează-ne</a>
+                            @endif
                         </div>
-                        <p class="text-xs text-slate-400 mt-1 pricing-note hidden">facturat anual</p>
-                    </div>
-                    <ul class="space-y-3 mb-8">
-                        <li class="flex items-start gap-3 text-sm text-slate-700">
-                            <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            500 minute incluse
-                        </li>
-                        <li class="flex items-start gap-3 text-sm text-slate-700">
-                            <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            1 agent AI
-                        </li>
-                        <li class="flex items-start gap-3 text-sm text-slate-700">
-                            <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            2 canale (telefon + chatbot web)
-                        </li>
-                        <li class="flex items-start gap-3 text-sm text-slate-700">
-                            <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            Transcrieri automate
-                        </li>
-                        <li class="flex items-start gap-3 text-sm text-slate-700">
-                            <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            Suport email
-                        </li>
-                        <li class="flex items-start gap-3 text-sm text-slate-700">
-                            <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            Rapoarte de bază
-                        </li>
-                    </ul>
-                    <a href="#" class="btn-secondary block text-center w-full">Începe gratuit</a>
+                    @endforeach
                 </div>
-
-                {{-- PROFESIONAL (Most Popular) --}}
-                <div class="animate-slide-up rounded-2xl border-2 border-primary-600 bg-white p-8 shadow-xl md:scale-105 relative">
-                    <div class="absolute -top-4 left-1/2 -translate-x-1/2">
-                        <span class="inline-flex items-center rounded-full bg-primary-600 px-4 py-1 text-xs font-bold text-white uppercase tracking-wide shadow-lg">
-                            Cel mai popular
-                        </span>
-                    </div>
-                    <div class="mb-6 mt-2">
-                        <h3 class="text-lg font-bold text-slate-900 uppercase tracking-wide">Profesional</h3>
-                        <p class="text-sm text-slate-500 mt-1">Pentru echipe în creștere</p>
-                    </div>
-                    <div class="mb-8">
-                        <div class="flex items-baseline gap-1">
-                            <span class="text-4xl font-extrabold text-primary-700 pricing-amount" data-monthly="299" data-annual="239">299</span>
-                            <span class="text-lg font-semibold text-slate-600">€</span>
-                            <span class="text-sm text-slate-500">/lună</span>
-                        </div>
-                        <p class="text-xs text-slate-400 mt-1 pricing-note hidden">facturat anual</p>
-                    </div>
-                    <ul class="space-y-3 mb-8">
-                        <li class="flex items-start gap-3 text-sm text-slate-700">
-                            <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            2.000 minute incluse
-                        </li>
-                        <li class="flex items-start gap-3 text-sm text-slate-700">
-                            <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            25 agenți AI
-                        </li>
-                        <li class="flex items-start gap-3 text-sm text-slate-700">
-                            <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            Toate 5 canalele (telefon, web + WhatsApp, Facebook, Instagram in curând)
-                        </li>
-                        <li class="flex items-start gap-3 text-sm text-slate-700">
-                            <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            Bază de cunoștințe partajată între canale
-                        </li>
-                        <li class="flex items-start gap-3 text-sm text-slate-700">
-                            <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            Analiză de sentiment
-                        </li>
-                        <li class="flex items-start gap-3 text-sm text-slate-700">
-                            <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            Suport prioritar 24/7
-                        </li>
-                        <li class="flex items-start gap-3 text-sm text-slate-700">
-                            <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            Integrări CRM
-                        </li>
-                        <li class="flex items-start gap-3 text-sm text-slate-700">
-                            <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            Dashboard avansat
-                        </li>
-                        <li class="flex items-start gap-3 text-sm text-slate-700">
-                            <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            API access
-                        </li>
-                    </ul>
-                    <a href="#" class="btn-primary block text-center w-full">Începe gratuit</a>
+            @else
+                {{-- Fallback when no plans in DB --}}
+                <div class="text-center py-12">
+                    <p class="text-slate-500 text-lg">Planurile vor fi disponibile în curând. Contactează-ne pentru detalii.</p>
+                    <a href="/contact" class="btn-primary inline-block mt-6">Contactează-ne</a>
                 </div>
-
-                {{-- ENTERPRISE --}}
-                <div class="animate-slide-up rounded-2xl border border-slate-200 bg-white p-8 shadow-sm hover:shadow-lg transition-shadow duration-300">
-                    <div class="mb-6">
-                        <h3 class="text-lg font-bold text-slate-900 uppercase tracking-wide">Enterprise</h3>
-                        <p class="text-sm text-slate-500 mt-1">Pentru organizații mari</p>
-                    </div>
-                    <div class="mb-8">
-                        <div class="flex items-baseline gap-1">
-                            <span class="text-4xl font-extrabold text-slate-900">Personalizat</span>
-                        </div>
-                    </div>
-                    <ul class="space-y-3 mb-8">
-                        <li class="flex items-start gap-3 text-sm text-slate-700">
-                            <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            Minute nelimitate
-                        </li>
-                        <li class="flex items-start gap-3 text-sm text-slate-700">
-                            <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            Agenți AI nelimitați
-                        </li>
-                        <li class="flex items-start gap-3 text-sm text-slate-700">
-                            <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            SLA garantat 99.99%
-                        </li>
-                        <li class="flex items-start gap-3 text-sm text-slate-700">
-                            <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            Manager de cont dedicat
-                        </li>
-                        <li class="flex items-start gap-3 text-sm text-slate-700">
-                            <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            Onboarding personalizat
-                        </li>
-                        <li class="flex items-start gap-3 text-sm text-slate-700">
-                            <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            Toate canalele + integrări custom
-                        </li>
-                        <li class="flex items-start gap-3 text-sm text-slate-700">
-                            <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            Hosting dedicat opțional
-                        </li>
-                        <li class="flex items-start gap-3 text-sm text-slate-700">
-                            <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            Suport telefonic 24/7
-                        </li>
-                    </ul>
-                    <a href="#" class="btn-secondary block text-center w-full">Contactează-ne</a>
-                </div>
-
-            </div>
+            @endif
         </div>
     </section>
 
-    {{-- Section 4: Feature Comparison Table --}}
+    {{-- Section 3: Voice Addon --}}
+    <section class="section-padding bg-gradient-to-b from-slate-900 to-slate-800">
+        <div class="container-custom">
+
+            <h2 class="text-3xl md:text-4xl font-bold text-white text-center mb-4 animate-fade-in">
+                Adaugă funcționalitate <span class="gradient-text">vocală</span>
+            </h2>
+            <p class="text-center text-slate-400 mb-12 max-w-2xl mx-auto animate-fade-in">
+                Extinde chatbot-ul cu voce AI. Gestionează apeluri telefonice automat prin Twilio + OpenAI.
+            </p>
+
+            @if($voicePlans->count())
+                <div class="grid grid-cols-1 md:grid-cols-{{ min($voicePlans->count(), 3) }} gap-8 items-center max-w-6xl mx-auto">
+                    @foreach($voicePlans as $plan)
+                        @php
+                            $features = $plan->features ?? [];
+                            $overage = $plan->overage ?? [];
+                            $overageCostPerMinute = $overage['cost_per_minute'] ?? null;
+                            $limits = $plan->limits ?? [];
+                            $minutesIncluded = $limits['minutes'] ?? $limits['voice_minutes'] ?? null;
+                            $isEnterprise = $plan->price_monthly === null || ($plan->price_monthly == 0 && str_contains(strtolower($plan->name), 'enterprise'));
+                        @endphp
+                        <div class="animate-slide-up rounded-2xl border border-slate-700 bg-slate-800/80 backdrop-blur p-8 shadow-lg hover:shadow-xl hover:border-primary-500/50 transition-all duration-300 relative">
+                            <div class="mb-6">
+                                <h3 class="text-lg font-bold text-white uppercase tracking-wide">{{ $plan->name }}</h3>
+                                @if($plan->description)
+                                    <p class="text-sm text-slate-400 mt-1">{{ $plan->description }}</p>
+                                @endif
+                            </div>
+                            <div class="mb-8">
+                                @if(!$isEnterprise && $plan->price_monthly > 0)
+                                    <div class="flex items-baseline gap-1">
+                                        <span class="text-4xl font-extrabold text-white pricing-amount" data-monthly="{{ number_format($plan->price_monthly, 0) }}" data-annual="{{ number_format($plan->price_yearly, 0) }}">{{ number_format($plan->price_monthly, 0) }}</span>
+                                        <span class="text-lg font-semibold text-slate-400">&euro;</span>
+                                        <span class="text-sm text-slate-500">/lună</span>
+                                    </div>
+                                    <p class="text-xs text-slate-500 mt-1 pricing-note hidden">facturat anual</p>
+                                @else
+                                    <div class="flex items-baseline gap-1">
+                                        <span class="text-4xl font-extrabold text-white">Personalizat</span>
+                                    </div>
+                                @endif
+                            </div>
+                            @if($minutesIncluded)
+                                <p class="text-sm text-primary-400 font-semibold mb-4">
+                                    {{ $minutesIncluded == -1 ? 'Minute nelimitate' : number_format($minutesIncluded) . ' minute incluse' }}
+                                </p>
+                            @endif
+                            <ul class="space-y-3 mb-6">
+                                @foreach($features as $feature)
+                                    <li class="flex items-start gap-3 text-sm text-slate-300">
+                                        <svg class="w-5 h-5 text-primary-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                                        {{ $feature }}
+                                    </li>
+                                @endforeach
+                            </ul>
+                            @if($overageCostPerMinute)
+                                <p class="text-xs text-slate-500 mb-6 border-t border-slate-700 pt-4">
+                                    Credit suplimentar: <span class="font-semibold text-slate-300">&euro;{{ number_format($overageCostPerMinute, 2) }}/minut</span>
+                                </p>
+                            @endif
+                            @if($isEnterprise)
+                                <a href="/contact" class="btn-secondary block text-center w-full">Contactează-ne</a>
+                            @else
+                                <a href="/register" class="btn-primary block text-center w-full">Începe gratuit</a>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                {{-- Fallback when no voice plans in DB --}}
+                <div class="text-center py-12">
+                    <p class="text-slate-400 text-lg">Planurile vocale vor fi disponibile în curând.</p>
+                    <a href="/contact" class="btn-primary inline-block mt-6">Contactează-ne</a>
+                </div>
+            @endif
+        </div>
+    </section>
+
+    {{-- Section 4: Credit suplimentar explainer --}}
     <section class="section-padding bg-slate-50">
         <div class="container-custom">
-            <h2 class="text-3xl md:text-4xl font-bold text-slate-900 text-center mb-12 animate-fade-in">
-                Comparație <span class="gradient-text">detaliată</span>
+            <h2 class="text-3xl md:text-4xl font-bold text-slate-900 text-center mb-4 animate-fade-in">
+                Credit <span class="gradient-text">suplimentar</span>
             </h2>
-            <div class="overflow-x-auto animate-slide-up">
-                <table class="w-full min-w-[640px] text-sm">
-                    <thead>
-                        <tr class="border-b-2 border-slate-200">
-                            <th class="py-4 px-4 text-left font-semibold text-slate-700 w-1/4">Funcționalitate</th>
-                            <th class="py-4 px-4 text-center font-semibold text-slate-700 w-1/4">Starter</th>
-                            <th class="py-4 px-4 text-center font-semibold text-primary-700 w-1/4 bg-primary-50 rounded-t-lg">Profesional</th>
-                            <th class="py-4 px-4 text-center font-semibold text-slate-700 w-1/4">Enterprise</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        <tr>
-                            <td class="py-3 px-4 text-slate-700 font-medium">Minute incluse</td>
-                            <td class="py-3 px-4 text-center text-slate-600">500</td>
-                            <td class="py-3 px-4 text-center text-slate-600 bg-primary-50/50">2.000</td>
-                            <td class="py-3 px-4 text-center text-slate-600">Nelimitate</td>
-                        </tr>
-                        <tr>
-                            <td class="py-3 px-4 text-slate-700 font-medium">Agenți AI</td>
-                            <td class="py-3 px-4 text-center text-slate-600">1</td>
-                            <td class="py-3 px-4 text-center text-slate-600 bg-primary-50/50">25</td>
-                            <td class="py-3 px-4 text-center text-slate-600">Nelimitați</td>
-                        </tr>
-                        <tr>
-                            <td class="py-3 px-4 text-slate-700 font-medium">Canale</td>
-                            <td class="py-3 px-4 text-center text-slate-600">2 (telefon + web)</td>
-                            <td class="py-3 px-4 text-center text-slate-600 bg-primary-50/50">Toate 5</td>
-                            <td class="py-3 px-4 text-center text-slate-600">Toate 5 + custom</td>
-                        </tr>
-                        <tr>
-                            <td class="py-3 px-4 text-slate-700 font-medium">Transcrieri</td>
-                            <td class="py-3 px-4 text-center"><svg class="w-5 h-5 text-green-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg></td>
-                            <td class="py-3 px-4 text-center bg-primary-50/50"><svg class="w-5 h-5 text-green-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg></td>
-                            <td class="py-3 px-4 text-center"><svg class="w-5 h-5 text-green-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg></td>
-                        </tr>
-                        <tr>
-                            <td class="py-3 px-4 text-slate-700 font-medium">Analiză sentiment</td>
-                            <td class="py-3 px-4 text-center"><svg class="w-5 h-5 text-slate-300 mx-auto" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></td>
-                            <td class="py-3 px-4 text-center bg-primary-50/50"><svg class="w-5 h-5 text-green-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg></td>
-                            <td class="py-3 px-4 text-center"><svg class="w-5 h-5 text-green-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg></td>
-                        </tr>
-                        <tr>
-                            <td class="py-3 px-4 text-slate-700 font-medium">Integrări CRM</td>
-                            <td class="py-3 px-4 text-center"><svg class="w-5 h-5 text-slate-300 mx-auto" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></td>
-                            <td class="py-3 px-4 text-center bg-primary-50/50"><svg class="w-5 h-5 text-green-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg></td>
-                            <td class="py-3 px-4 text-center"><svg class="w-5 h-5 text-green-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg></td>
-                        </tr>
-                        <tr>
-                            <td class="py-3 px-4 text-slate-700 font-medium">API Access</td>
-                            <td class="py-3 px-4 text-center"><svg class="w-5 h-5 text-slate-300 mx-auto" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></td>
-                            <td class="py-3 px-4 text-center bg-primary-50/50"><svg class="w-5 h-5 text-green-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg></td>
-                            <td class="py-3 px-4 text-center"><svg class="w-5 h-5 text-green-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg></td>
-                        </tr>
-                        <tr>
-                            <td class="py-3 px-4 text-slate-700 font-medium">Rapoarte avansate</td>
-                            <td class="py-3 px-4 text-center"><svg class="w-5 h-5 text-slate-300 mx-auto" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></td>
-                            <td class="py-3 px-4 text-center bg-primary-50/50"><svg class="w-5 h-5 text-green-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg></td>
-                            <td class="py-3 px-4 text-center"><svg class="w-5 h-5 text-green-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg></td>
-                        </tr>
-                        <tr>
-                            <td class="py-3 px-4 text-slate-700 font-medium">SLA</td>
-                            <td class="py-3 px-4 text-center text-slate-400">&mdash;</td>
-                            <td class="py-3 px-4 text-center text-slate-600 bg-primary-50/50">99.9%</td>
-                            <td class="py-3 px-4 text-center text-slate-600">99.99%</td>
-                        </tr>
-                        <tr>
-                            <td class="py-3 px-4 text-slate-700 font-medium">Suport</td>
-                            <td class="py-3 px-4 text-center text-slate-600">Email</td>
-                            <td class="py-3 px-4 text-center text-slate-600 bg-primary-50/50">Prioritar 24/7</td>
-                            <td class="py-3 px-4 text-center text-slate-600">Dedicat + telefonic</td>
-                        </tr>
-                        <tr>
-                            <td class="py-3 px-4 text-slate-700 font-medium">Onboarding</td>
-                            <td class="py-3 px-4 text-center text-slate-600">Documentație</td>
-                            <td class="py-3 px-4 text-center text-slate-600 bg-primary-50/50">Ghidat</td>
-                            <td class="py-3 px-4 text-center text-slate-600">Personalizat</td>
-                        </tr>
-                        <tr>
-                            <td class="py-3 px-4 text-slate-700 font-medium">Manager dedicat</td>
-                            <td class="py-3 px-4 text-center"><svg class="w-5 h-5 text-slate-300 mx-auto" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></td>
-                            <td class="py-3 px-4 text-center bg-primary-50/50"><svg class="w-5 h-5 text-slate-300 mx-auto" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></td>
-                            <td class="py-3 px-4 text-center"><svg class="w-5 h-5 text-green-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg></td>
-                        </tr>
-                    </tbody>
-                </table>
+            <p class="text-center text-slate-600 mb-12 max-w-2xl mx-auto animate-fade-in">
+                Depășești limita lunară? Nu-ți face griji. Mesajele și minutele suplimentare se taxează automat, la un cost care scade pe planurile superioare.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto animate-slide-up">
+
+                {{-- Messages overage --}}
+                <div class="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 011.037-.443 48.282 48.282 0 005.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" /></svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900">Mesaje text suplimentare</h3>
+                    </div>
+                    @if($webchatPlans->count())
+                        <div class="overflow-hidden rounded-lg border border-slate-200">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200">
+                                        <th class="py-3 px-4 text-left font-semibold text-slate-700">Plan</th>
+                                        <th class="py-3 px-4 text-right font-semibold text-slate-700">Cost/mesaj</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    @foreach($webchatPlans as $plan)
+                                        @php $cpm = $plan->overage['cost_per_message'] ?? null; @endphp
+                                        @if($cpm)
+                                            <tr>
+                                                <td class="py-3 px-4 text-slate-700 font-medium">{{ $plan->name }}</td>
+                                                <td class="py-3 px-4 text-right text-slate-900 font-semibold">&euro;{{ number_format($cpm, 2) }}</td>
+                                            </tr>
+                                        @endif
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <p class="text-sm text-slate-500">Detaliile vor fi disponibile în curând.</p>
+                    @endif
+                </div>
+
+                {{-- Minutes overage --}}
+                <div class="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" /></svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900">Minute voce suplimentare</h3>
+                    </div>
+                    @if($voicePlans->count())
+                        <div class="overflow-hidden rounded-lg border border-slate-200">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200">
+                                        <th class="py-3 px-4 text-left font-semibold text-slate-700">Plan voce</th>
+                                        <th class="py-3 px-4 text-right font-semibold text-slate-700">Cost/minut</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    @foreach($voicePlans as $plan)
+                                        @php $cpm = $plan->overage['cost_per_minute'] ?? null; @endphp
+                                        @if($cpm)
+                                            <tr>
+                                                <td class="py-3 px-4 text-slate-700 font-medium">{{ $plan->name }}</td>
+                                                <td class="py-3 px-4 text-right text-slate-900 font-semibold">&euro;{{ number_format($cpm, 2) }}</td>
+                                            </tr>
+                                        @endif
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <p class="text-sm text-slate-500">Detaliile vor fi disponibile în curând.</p>
+                    @endif
+                </div>
+
             </div>
         </div>
     </section>
@@ -308,24 +297,36 @@
 
                 <div class="faq-item border border-slate-200 rounded-xl overflow-hidden">
                     <button class="faq-toggle w-full flex items-center justify-between px-6 py-5 text-left text-slate-900 font-semibold hover:bg-slate-50 transition-colors">
-                        <span>Pot schimba planul oricând?</span>
+                        <span>Ce se întâmplă când depășesc limita?</span>
                         <svg class="faq-icon w-5 h-5 text-slate-500 shrink-0 ml-4 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                     </button>
                     <div class="faq-content max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
                         <div class="px-6 pb-5 text-slate-600 text-sm leading-relaxed">
-                            Da, poți face upgrade sau downgrade oricând. Diferența de preț se calculează pro-rata.
+                            Se taxează automat la costul suplimentar al planului tău. Nu există întreruperi ale serviciului.
                         </div>
                     </div>
                 </div>
 
                 <div class="faq-item border border-slate-200 rounded-xl overflow-hidden">
                     <button class="faq-toggle w-full flex items-center justify-between px-6 py-5 text-left text-slate-900 font-semibold hover:bg-slate-50 transition-colors">
-                        <span>Ce se întâmplă dacă depășesc minutele incluse?</span>
+                        <span>Pot combina webchat + voce?</span>
                         <svg class="faq-icon w-5 h-5 text-slate-500 shrink-0 ml-4 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                     </button>
                     <div class="faq-content max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
                         <div class="px-6 pb-5 text-slate-600 text-sm leading-relaxed">
-                            Minutele suplimentare se facturează la 0.15€/minut pentru Starter și 0.10€/minut pentru Profesional.
+                            Da! Alege un plan webchat și adaugă un addon de voce. Ambele funcționează împreună, cu aceeași bază de cunoștințe.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item border border-slate-200 rounded-xl overflow-hidden">
+                    <button class="faq-toggle w-full flex items-center justify-between px-6 py-5 text-left text-slate-900 font-semibold hover:bg-slate-50 transition-colors">
+                        <span>Pot schimba planul oricând?</span>
+                        <svg class="faq-icon w-5 h-5 text-slate-500 shrink-0 ml-4 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                    </button>
+                    <div class="faq-content max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
+                        <div class="px-6 pb-5 text-slate-600 text-sm leading-relaxed">
+                            Da, upgrade sau downgrade instant. Diferența de preț se calculează pro-rata.
                         </div>
                     </div>
                 </div>
@@ -350,30 +351,6 @@
                     <div class="faq-content max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
                         <div class="px-6 pb-5 text-slate-600 text-sm leading-relaxed">
                             Facturarea se face lunar sau anual, prin card de credit sau transfer bancar pentru Enterprise.
-                        </div>
-                    </div>
-                </div>
-
-                <div class="faq-item border border-slate-200 rounded-xl overflow-hidden">
-                    <button class="faq-toggle w-full flex items-center justify-between px-6 py-5 text-left text-slate-900 font-semibold hover:bg-slate-50 transition-colors">
-                        <span>Pot anula abonamentul?</span>
-                        <svg class="faq-icon w-5 h-5 text-slate-500 shrink-0 ml-4 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                    </button>
-                    <div class="faq-content max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
-                        <div class="px-6 pb-5 text-slate-600 text-sm leading-relaxed">
-                            Da, poți anula oricând. Nu există contracte pe termen lung sau penalități de anulare.
-                        </div>
-                    </div>
-                </div>
-
-                <div class="faq-item border border-slate-200 rounded-xl overflow-hidden">
-                    <button class="faq-toggle w-full flex items-center justify-between px-6 py-5 text-left text-slate-900 font-semibold hover:bg-slate-50 transition-colors">
-                        <span>Ce canale de comunicare sunt incluse?</span>
-                        <svg class="faq-icon w-5 h-5 text-slate-500 shrink-0 ml-4 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                    </button>
-                    <div class="faq-content max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
-                        <div class="px-6 pb-5 text-slate-600 text-sm leading-relaxed">
-                            Sambla suportă 5 canale: Telefon (voce AI), Web Chatbot, WhatsApp Business, Facebook Messenger și Instagram DM. Momentan sunt disponibile canalele Telefon și Web Chatbot. WhatsApp, Facebook Messenger și Instagram DM sunt în curs de implementare și vor fi disponibile în curând. Toți agenții partajează aceeași bază de cunoștințe, indiferent de canal.
                         </div>
                     </div>
                 </div>
