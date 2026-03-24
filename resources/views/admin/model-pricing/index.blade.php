@@ -174,6 +174,121 @@
         </form>
     </div>
 
+    {{-- Cost Estimator --}}
+    @php
+        // Fetch prices from DB for calculations
+        $prices = \App\Models\ModelPricing::where('is_active', true)->pluck('input_cost', 'model_id')->toArray();
+        $pricesOut = \App\Models\ModelPricing::where('is_active', true)->pluck('output_cost', 'model_id')->toArray();
+
+        // === 1 MINUT VOCE (fără voice cloning) ===
+        // Audio in: 1 min Realtime audio input
+        $voiceAudioIn = ($prices['gpt-4o-realtime-preview-audio'] ?? 0.06);
+        // Audio out: 1 min Realtime audio output
+        $voiceAudioOut = ($pricesOut['gpt-4o-realtime-preview-audio'] ?? 0.24);
+        // Text tokens: ~200 input + 100 output tokens per minute exchange
+        $voiceTextIn = (200 / 1_000_000) * ($prices['gpt-4o-realtime-preview'] ?? 5.00);
+        $voiceTextOut = (100 / 1_000_000) * ($pricesOut['gpt-4o-realtime-preview'] ?? 20.00);
+        // Whisper transcription: 1 min
+        $voiceWhisper = ($prices['whisper-1'] ?? 0.006);
+        // Embedding for knowledge context: ~1 query
+        $voiceEmbed = (500 / 1_000_000) * ($prices['text-embedding-3-small'] ?? 0.02);
+
+        $voiceTotal = $voiceAudioIn + $voiceAudioOut + $voiceTextIn + $voiceTextOut + $voiceWhisper + $voiceEmbed;
+
+        // === 1 MINUT VOCE (cu voice cloning ElevenLabs) ===
+        // Audio in same, but output goes through ElevenLabs instead of OpenAI audio out
+        // ~150 chars output per minute of speech
+        $voiceELCost = (150 / 1000) * ($prices['eleven_multilingual_v2'] ?? 0.30);
+        // Text out instead of audio out (cheaper)
+        $voiceTextOutOnly = (100 / 1_000_000) * ($pricesOut['gpt-4o-realtime-preview'] ?? 20.00);
+        $voiceClonedTotal = $voiceAudioIn + $voiceTextOutOnly + $voiceTextIn + $voiceWhisper + $voiceEmbed + $voiceELCost;
+
+        // === CONVERSAȚIE CHAT MEDIE ===
+        // Asumăm: 8 mesaje (4 user + 4 bot), ~100 words user, ~150 words bot per msg
+        // Tier fast (gpt-4o-mini): 3 mesaje, Tier smart (claude-sonnet): 1 mesaj
+        // Input avg: ~2000 tokens (system + history + knowledge), Output avg: ~200 tokens
+        $chatFastIn = (2000 / 1_000_000) * ($prices['gpt-4o-mini'] ?? 0.15) * 3;
+        $chatFastOut = (200 / 1_000_000) * ($pricesOut['gpt-4o-mini'] ?? 0.60) * 3;
+        $chatSmartIn = (3000 / 1_000_000) * ($prices['claude-sonnet-4-5-20241022'] ?? 3.00) * 1;
+        $chatSmartOut = (300 / 1_000_000) * ($pricesOut['claude-sonnet-4-5-20241022'] ?? 15.00) * 1;
+        // Embeddings: 4 knowledge searches
+        $chatEmbed = (500 / 1_000_000) * ($prices['text-embedding-3-small'] ?? 0.02) * 4;
+
+        $chatTotal = $chatFastIn + $chatFastOut + $chatSmartIn + $chatSmartOut + $chatEmbed;
+    @endphp
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {{-- Voice without cloning --}}
+        <div class="bg-white rounded-xl border border-slate-200 p-5">
+            <div class="flex items-center gap-2 mb-3">
+                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                </div>
+                <h3 class="text-sm font-bold text-slate-900">1 minut voce</h3>
+                <span class="text-xs text-slate-400">(fără clonare)</span>
+            </div>
+            <div class="space-y-1.5 text-xs text-slate-600 mb-3">
+                <div class="flex justify-between"><span>Realtime audio in</span><span class="font-mono">${{ number_format($voiceAudioIn, 4) }}</span></div>
+                <div class="flex justify-between"><span>Realtime audio out</span><span class="font-mono">${{ number_format($voiceAudioOut, 4) }}</span></div>
+                <div class="flex justify-between"><span>Realtime text tokens</span><span class="font-mono">${{ number_format($voiceTextIn + $voiceTextOut, 4) }}</span></div>
+                <div class="flex justify-between"><span>Whisper transcriere</span><span class="font-mono">${{ number_format($voiceWhisper, 4) }}</span></div>
+                <div class="flex justify-between"><span>Embedding (knowledge)</span><span class="font-mono">${{ number_format($voiceEmbed, 4) }}</span></div>
+            </div>
+            <div class="pt-2 border-t border-slate-100 flex justify-between items-baseline">
+                <span class="text-sm font-semibold text-slate-900">Total / minut</span>
+                <span class="text-lg font-bold text-blue-600">${{ number_format($voiceTotal, 3) }}</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-1">Apel 5 min ≈ ${{ number_format($voiceTotal * 5, 2) }} | 10 min ≈ ${{ number_format($voiceTotal * 10, 2) }}</p>
+        </div>
+
+        {{-- Voice with cloning --}}
+        <div class="bg-white rounded-xl border border-slate-200 p-5">
+            <div class="flex items-center gap-2 mb-3">
+                <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+                </div>
+                <h3 class="text-sm font-bold text-slate-900">1 minut voce</h3>
+                <span class="text-xs text-purple-500">(cu clonare ElevenLabs)</span>
+            </div>
+            <div class="space-y-1.5 text-xs text-slate-600 mb-3">
+                <div class="flex justify-between"><span>Realtime audio in</span><span class="font-mono">${{ number_format($voiceAudioIn, 4) }}</span></div>
+                <div class="flex justify-between"><span>Realtime text out</span><span class="font-mono">${{ number_format($voiceTextOutOnly, 4) }}</span></div>
+                <div class="flex justify-between"><span>Realtime text tokens in</span><span class="font-mono">${{ number_format($voiceTextIn, 4) }}</span></div>
+                <div class="flex justify-between"><span>Whisper transcriere</span><span class="font-mono">${{ number_format($voiceWhisper, 4) }}</span></div>
+                <div class="flex justify-between"><span>ElevenLabs TTS (~150 chars)</span><span class="font-mono text-purple-600">${{ number_format($voiceELCost, 4) }}</span></div>
+                <div class="flex justify-between"><span>Embedding (knowledge)</span><span class="font-mono">${{ number_format($voiceEmbed, 4) }}</span></div>
+            </div>
+            <div class="pt-2 border-t border-slate-100 flex justify-between items-baseline">
+                <span class="text-sm font-semibold text-slate-900">Total / minut</span>
+                <span class="text-lg font-bold text-purple-600">${{ number_format($voiceClonedTotal, 3) }}</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-1">Apel 5 min ≈ ${{ number_format($voiceClonedTotal * 5, 2) }} | 10 min ≈ ${{ number_format($voiceClonedTotal * 10, 2) }}</p>
+        </div>
+
+        {{-- Chat conversation --}}
+        <div class="bg-white rounded-xl border border-slate-200 p-5">
+            <div class="flex items-center gap-2 mb-3">
+                <div class="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                </div>
+                <h3 class="text-sm font-bold text-slate-900">Conversație chat medie</h3>
+                <span class="text-xs text-slate-400">(~8 mesaje)</span>
+            </div>
+            <div class="space-y-1.5 text-xs text-slate-600 mb-3">
+                <div class="flex justify-between"><span>3x gpt-4o-mini (fast tier)</span><span class="font-mono">${{ number_format($chatFastIn + $chatFastOut, 4) }}</span></div>
+                <div class="flex justify-between"><span>1x claude-sonnet (smart tier)</span><span class="font-mono">${{ number_format($chatSmartIn + $chatSmartOut, 4) }}</span></div>
+                <div class="flex justify-between"><span>4x embedding (knowledge search)</span><span class="font-mono">${{ number_format($chatEmbed, 4) }}</span></div>
+            </div>
+            <div class="pt-2 border-t border-slate-100 flex justify-between items-baseline">
+                <span class="text-sm font-semibold text-slate-900">Total / conversație</span>
+                <span class="text-lg font-bold text-emerald-600">${{ number_format($chatTotal, 4) }}</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-1">100 conv/zi ≈ ${{ number_format($chatTotal * 100, 2) }} | 1000 conv/zi ≈ ${{ number_format($chatTotal * 1000, 2) }}</p>
+        </div>
+    </div>
+
+    <p class="text-xs text-slate-400 italic">* Estimările se calculează automat din prețurile de mai sus. Modifică prețurile și estimările se actualizează.</p>
+
     {{-- Telemetry Summary --}}
     @php
         $metricsToday = \App\Models\AiApiMetric::whereDate('created_at', today())
