@@ -60,6 +60,22 @@ class ChatCompletionService
             }
         }
 
+        // Skip cache for order lookups (contain dynamic data)
+        $skipCache = false;
+        $lastMessage = end($messages);
+        if ($lastMessage && str_contains($lastMessage['content'] ?? '', 'INFORMAȚII COMANDĂ')) {
+            $skipCache = true;
+        }
+
+        $cacheKey = null;
+        if (!$skipCache) {
+            $cacheKey = 'chat_completion_' . md5(json_encode([$model, $messages, $temperature]));
+            $cached = Cache::get($cacheKey);
+            if ($cached) {
+                return $cached;
+            }
+        }
+
         // Retry with exponential backoff + jitter
         $lastException = null;
         for ($attempt = 1; $attempt <= self::MAX_RETRIES; $attempt++) {
@@ -71,6 +87,10 @@ class ChatCompletionService
 
                 // Success — reset circuit breaker
                 $this->recordSuccess($provider);
+                if ($cacheKey) {
+                    $ttl = str_contains($model, 'mini') ? 5 : 15;
+                    Cache::put($cacheKey, $result, now()->addMinutes($ttl));
+                }
                 return $result;
 
             } catch (\RuntimeException $e) {
@@ -103,6 +123,10 @@ class ChatCompletionService
                 };
 
                 $this->recordSuccess($fallbackProvider);
+                if ($cacheKey) {
+                    $ttl = str_contains($fallbackModel, 'mini') ? 5 : 15;
+                    Cache::put($cacheKey, $result, now()->addMinutes($ttl));
+                }
                 return $result;
 
             } catch (\RuntimeException $e) {

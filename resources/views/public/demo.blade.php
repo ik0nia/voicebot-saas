@@ -120,6 +120,26 @@
         </div>
     </main>
 
+    <div id="ratingModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-xs mx-4">
+            <h3 class="text-lg font-bold text-slate-900 text-center mb-1">Cum a fost apelul?</h3>
+            <p class="text-xs text-slate-400 text-center mb-4">Feedback-ul tău ne ajută să îmbunătățim</p>
+            <div id="ratingStars" class="flex justify-center gap-3 mb-4">
+                <button onclick="setRating(1)" class="rating-star text-3xl text-slate-300 hover:text-amber-400 transition-colors" data-value="1">★</button>
+                <button onclick="setRating(2)" class="rating-star text-3xl text-slate-300 hover:text-amber-400 transition-colors" data-value="2">★</button>
+                <button onclick="setRating(3)" class="rating-star text-3xl text-slate-300 hover:text-amber-400 transition-colors" data-value="3">★</button>
+                <button onclick="setRating(4)" class="rating-star text-3xl text-slate-300 hover:text-amber-400 transition-colors" data-value="4">★</button>
+                <button onclick="setRating(5)" class="rating-star text-3xl text-slate-300 hover:text-amber-400 transition-colors" data-value="5">★</button>
+            </div>
+            <div id="ratingLabels" class="text-center text-sm text-slate-500 mb-3 h-5"></div>
+            <textarea id="ratingComment" class="w-full border border-slate-200 rounded-xl p-3 text-sm resize-none focus:outline-none focus:border-red-700" rows="2" placeholder="Comentariu opțional..."></textarea>
+            <div class="flex gap-2 mt-4">
+                <button onclick="skipRating()" class="flex-1 py-2.5 rounded-xl text-sm font-medium text-slate-500 hover:bg-slate-100 transition-colors">Skip</button>
+                <button id="submitRatingBtn" onclick="submitRating()" disabled class="flex-1 py-2.5 rounded-xl text-sm font-medium bg-red-700 text-white hover:bg-red-600 transition-colors disabled:opacity-40">Trimite</button>
+            </div>
+        </div>
+    </div>
+
     <script>
     (function() {
         // ── State ──
@@ -140,6 +160,8 @@
         let elTextBuffer = '';
         let elSynthesizing = false;
         let elCurrentResponseId = null;
+        var selectedRating = 0;
+        var ratedCallId = null;
 
         const botId = @json($bot->id);
         const isDemo = @json(request()->routeIs('public.demo'));
@@ -167,6 +189,49 @@
                 localStream.getAudioTracks().forEach(t => t.enabled = !isMuted);
             }
         };
+
+        window.setRating = function(value) {
+            selectedRating = value;
+            var stars = document.querySelectorAll('.rating-star');
+            stars.forEach(function(s) {
+                s.style.color = parseInt(s.getAttribute('data-value')) <= value ? '#f59e0b' : '#cbd5e1';
+            });
+            var labels = ['', 'Slab', 'Acceptabil', 'Bun', 'Foarte bun', 'Excelent'];
+            document.getElementById('ratingLabels').textContent = labels[value] || '';
+            document.getElementById('submitRatingBtn').disabled = false;
+        };
+
+        window.skipRating = function() {
+            document.getElementById('ratingModal').classList.add('hidden');
+            selectedRating = 0;
+        };
+
+        window.submitRating = function() {
+            if (!selectedRating || !ratedCallId) return;
+            var comment = document.getElementById('ratingComment').value.trim();
+            fetch('/api/v1/calls/' + ratedCallId + '/rating', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ rating: selectedRating, comment: comment }),
+            }).catch(console.error);
+            document.getElementById('ratingModal').classList.add('hidden');
+            selectedRating = 0;
+            document.getElementById('ratingComment').value = '';
+        };
+
+        function showRatingModal(callIdForRating) {
+            ratedCallId = callIdForRating;
+            selectedRating = 0;
+            document.querySelectorAll('.rating-star').forEach(function(s) { s.style.color = '#cbd5e1'; });
+            document.getElementById('ratingLabels').textContent = '';
+            document.getElementById('ratingComment').value = '';
+            document.getElementById('submitRatingBtn').disabled = true;
+            document.getElementById('ratingModal').classList.remove('hidden');
+        }
 
         // ── Start Call: WebRTC + OpenAI Realtime ──
         async function startCall() {
@@ -384,6 +449,7 @@
             isInCall = false;
 
             const duration = callTimer.textContent;
+            var rateCallId = callId;
 
             // Notify backend with real duration from timer
             var realDuration = callStartTime ? Math.floor((Date.now() - callStartTime) / 1000) : 0;
@@ -403,6 +469,9 @@
             // Show final sentiment in end message
             var finalSentiment = sentimentMessages.length > 0 ? sentimentEmoji.textContent + ' ' + sentimentLabel.textContent : '';
             addMessage('Apel incheiat. Durata: ' + duration + (finalSentiment ? ' — Sentiment: ' + finalSentiment : ''), 'system');
+
+            // Show rating modal after call ends
+            setTimeout(function() { showRatingModal(rateCallId); }, 1500);
         }
 
         function cleanupCall() {

@@ -48,6 +48,21 @@ class WhatsAppWebhookController extends Controller
      */
     public function handle(Request $request)
     {
+        // Verify X-Hub-Signature-256 from Meta
+        $signature = $request->header('X-Hub-Signature-256');
+        if ($signature) {
+            $appSecret = config('services.meta.app_secret', env('META_APP_SECRET'));
+            if ($appSecret) {
+                $expectedSignature = 'sha256=' . hash_hmac('sha256', $request->getContent(), $appSecret);
+                if (!hash_equals($expectedSignature, $signature)) {
+                    Log::warning('WhatsApp webhook signature verification failed', [
+                        'ip' => $request->ip(),
+                    ]);
+                    return response('Invalid signature', 403);
+                }
+            }
+        }
+
         $payload = $request->all();
 
         try {

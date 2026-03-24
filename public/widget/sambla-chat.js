@@ -38,7 +38,8 @@
         botName: scriptTag.getAttribute('data-bot-name') || 'Sambla Bot',
         apiBase: scriptTag.getAttribute('data-api-base') || 'https://sambla.ro',
         lang: scriptTag.getAttribute('data-lang') || 'ro',
-        iconUrl: scriptTag.getAttribute('data-icon-url') || ''
+        iconUrl: scriptTag.getAttribute('data-icon-url') || '',
+        prechat: scriptTag.getAttribute('data-prechat') === 'true'
     };
 
     if (!config.channelId) {
@@ -51,6 +52,7 @@
     var MESSAGES_KEY = 'sambla_chat_messages_' + config.channelId;
     var LAST_ACTIVITY_KEY = 'sambla_chat_activity_' + config.channelId;
     var SESSION_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
+    var PRECHAT_KEY = 'sambla_prechat_' + config.channelId;
 
     function getSessionId() {
         try {
@@ -301,6 +303,17 @@
             }\
             .sambla-new-chat-btn svg { width: 14px; height: 14px; fill: currentColor; }\
             \
+            .sambla-prechat { padding: 20px 16px; display: flex; flex-direction: column; gap: 12px; flex: 1; justify-content: center; }\
+            .sambla-prechat-title { font-size: 15px; font-weight: 600; color: #1e293b; text-align: center; }\
+            .sambla-prechat-field { border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; font-size: 14px; font-family: inherit; outline: none; background: #f8fafc; color: #1e293b; width: 100%; transition: border-color 0.15s; }\
+            .sambla-prechat-field:focus { border-color: ' + config.color + '; background: #fff; }\
+            .sambla-prechat-field::placeholder { color: #94a3b8; }\
+            .sambla-prechat-btn { padding: 10px; border-radius: 10px; border: none; background: ' + config.color + '; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: opacity 0.15s; width: 100%; }\
+            .sambla-prechat-btn:hover { opacity: 0.9; }\
+            .sambla-prechat-btn:disabled { opacity: 0.5; cursor: not-allowed; }\
+            \
+            .sambla-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }\
+            \
             @media (max-width: 440px) {\
                 .sambla-window { width: calc(100vw - 16px); right: 8px; left: 8px; bottom: 80px; height: calc(100vh - 100px); }\
                 .sambla-bubble { bottom: 12px; right: 12px; }\
@@ -331,9 +344,9 @@
                     </div>\
                 </div>\
                 <div class="sambla-powered">Powered by <a href="https://sambla.ro" target="_blank" rel="noopener">Sambla</a></div>\
-                <div class="sambla-messages"></div>\
+                <div class="sambla-messages" role="log" aria-live="polite" aria-label="Mesaje chat"></div>\
                 <div class="sambla-input-area">\
-                    <textarea class="sambla-input" placeholder="Scrie un mesaj..." rows="1"></textarea>\
+                    <textarea class="sambla-input" placeholder="Scrie un mesaj..." rows="1" aria-label="Scrie un mesaj"></textarea>\
                     <button class="sambla-send" aria-label="Trimite">\
                         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">\
                             <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>\
@@ -357,10 +370,14 @@
         var messages = [];
         var isOpen = false;
         var isSending = false;
+        var prechatCompleted = false;
+        try { prechatCompleted = !!localStorage.getItem(PRECHAT_KEY); } catch(e) {}
 
         // Typing indicator element
         var typingEl = document.createElement('div');
         typingEl.className = 'sambla-typing';
+        typingEl.setAttribute('role', 'status');
+        typingEl.setAttribute('aria-label', 'Se scrie un mesaj');
         typingEl.innerHTML = '<span></span><span></span><span></span>';
         messagesContainer.appendChild(typingEl);
 
@@ -471,13 +488,56 @@
             input.focus();
         }
 
+        function showPrechatForm() {
+            var msgArea = root.querySelector('.sambla-messages');
+            var inputArea = root.querySelector('.sambla-input-area');
+            msgArea.style.display = 'none';
+            inputArea.style.display = 'none';
+
+            var form = document.createElement('div');
+            form.className = 'sambla-prechat';
+            form.innerHTML = '<div class="sambla-prechat-title">Înainte de a începe</div>'
+                + '<input class="sambla-prechat-field" id="sambla-pc-name" placeholder="Numele dumneavoastră" required>'
+                + '<input class="sambla-prechat-field" id="sambla-pc-email" type="email" placeholder="Email" required>'
+                + '<input class="sambla-prechat-field" id="sambla-pc-phone" placeholder="Telefon (opțional)">'
+                + '<button class="sambla-prechat-btn" id="sambla-pc-submit">Începe conversația</button>';
+
+            chatWindow.insertBefore(form, msgArea);
+
+            var submitBtn = form.querySelector('#sambla-pc-submit');
+            submitBtn.addEventListener('click', function() {
+                var name = form.querySelector('#sambla-pc-name').value.trim();
+                var email = form.querySelector('#sambla-pc-email').value.trim();
+                var phone = form.querySelector('#sambla-pc-phone').value.trim();
+
+                if (!name) { form.querySelector('#sambla-pc-name').focus(); return; }
+                if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { form.querySelector('#sambla-pc-email').focus(); return; }
+
+                try { localStorage.setItem(PRECHAT_KEY, JSON.stringify({ name: name, email: email, phone: phone })); } catch(e) {}
+                prechatCompleted = true;
+                form.parentNode.removeChild(form);
+                msgArea.style.display = '';
+                inputArea.style.display = '';
+                addMessage(config.greeting, 'bot');
+                input.focus();
+            });
+
+            setTimeout(function() { form.querySelector('#sambla-pc-name').focus(); }, 100);
+        }
+
         function toggleChat() {
             isOpen = !isOpen;
             bubble.classList.toggle('open', isOpen);
             chatWindow.classList.toggle('open', isOpen);
             if (isOpen) {
-                scrollToBottom();
-                setTimeout(function() { input.focus(); }, 100);
+                if (config.prechat && !prechatCompleted) {
+                    showPrechatForm();
+                } else {
+                    scrollToBottom();
+                    setTimeout(function() { input.focus(); }, 100);
+                }
+            } else {
+                bubble.focus();
             }
         }
 
@@ -524,6 +584,15 @@
                 session_id: getSessionId(),
                 session_token: getSessionToken()
             };
+
+            try {
+                var prechatData = JSON.parse(localStorage.getItem(PRECHAT_KEY) || 'null');
+                if (prechatData) {
+                    payload.prechat_name = prechatData.name;
+                    payload.prechat_email = prechatData.email;
+                    payload.prechat_phone = prechatData.phone;
+                }
+            } catch(e) {}
 
             var fetchUrl = config.apiBase + '/api/v1/chatbot/' + config.channelId + '/message';
             var fetchOptions = {
@@ -584,6 +653,13 @@
             this.style.height = Math.min(this.scrollHeight, 80) + 'px';
         });
 
+        // Keyboard navigation
+        chatWindow.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && isOpen) {
+                toggleChat();
+            }
+        });
+
         // Load saved messages or show greeting
         var saved = getSavedMessages();
         var expired = isSessionExpired();
@@ -607,7 +683,7 @@
             if (expired) {
                 showSessionEnded();
             }
-        } else {
+        } else if (!config.prechat || prechatCompleted) {
             // Show greeting
             addMessage(config.greeting, 'bot');
         }
