@@ -37,6 +37,7 @@ class Call extends Model
         'sentiment_label',
         'recording_url',
         'metadata',
+        'summary',
         'started_at',
         'ended_at',
     ];

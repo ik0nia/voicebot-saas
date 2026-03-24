@@ -23,6 +23,8 @@ class Tenant extends Model
         'stripe_id',
         'pm_type',
         'pm_last_four',
+        'webhook_url',
+        'webhook_secret',
     ];
 
     protected function casts(): array

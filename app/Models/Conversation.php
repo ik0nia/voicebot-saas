@@ -24,6 +24,8 @@ class Conversation extends Model
         'messages_count',
         'cost_cents',
         'metadata',
+        'contact_id',
+        'last_activity_at',
         'started_at',
         'ended_at',
     ];
@@ -36,6 +38,7 @@ class Conversation extends Model
             'ended_at' => 'datetime',
             'messages_count' => 'integer',
             'cost_cents' => 'integer',
+            'last_activity_at' => 'datetime',
         ];
     }
 
@@ -49,6 +52,11 @@ class Conversation extends Model
     public function channel(): BelongsTo
     {
         return $this->belongsTo(Channel::class);
+    }
+
+    public function contact(): BelongsTo
+    {
+        return $this->belongsTo(Contact::class);
     }
 
     public function messages(): HasMany

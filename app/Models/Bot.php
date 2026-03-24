@@ -28,6 +28,8 @@ class Bot extends Model
         'settings',
         'is_active',
         'calls_count',
+        'knowledge_search_limit',
+        'max_call_duration_seconds',
     ];
 
     protected function casts(): array
@@ -78,6 +80,11 @@ class Bot extends Model
     public function channels(): HasMany
     {
         return $this->hasMany(Channel::class);
+    }
+
+    public function promptVersions(): HasMany
+    {
+        return $this->hasMany(BotPromptVersion::class);
     }
 
     public function conversations(): HasMany
