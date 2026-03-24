@@ -41,10 +41,19 @@ return [
         'phone_number' => env('TWILIO_PHONE_NUMBER'),
     ],
 
+    'anthropic' => [
+        'api_key' => env('ANTHROPIC_API_KEY'),
+    ],
+
     'openai' => [
         'api_key' => env('OPENAI_API_KEY'),
         'organization' => env('OPENAI_ORGANIZATION'),
         'realtime_model' => env('OPENAI_REALTIME_MODEL', 'gpt-4o-realtime-preview'),
+    ],
+
+    'elevenlabs' => [
+        'api_key' => env('ELEVENLABS_API_KEY'),
+        'model_id' => env('ELEVENLABS_MODEL_ID', 'eleven_multilingual_v2'),
     ],
 
 ];

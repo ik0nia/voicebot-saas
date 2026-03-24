@@ -17,15 +17,28 @@
         return;
     }
 
+    function validateColor(color) {
+        return /^#([0-9A-Fa-f]{3}){1,2}$/.test(color) ? color : '#991b1b';
+    }
+
+    function isValidUrl(url) {
+        if (!url) return false;
+        try {
+            var parsed = new URL(url, window.location.origin);
+            return /^https?:$/.test(parsed.protocol);
+        } catch(e) { return false; }
+    }
+
     // Configuration from data attributes
     var config = {
         channelId: scriptTag.getAttribute('data-channel-id') || '',
-        color: scriptTag.getAttribute('data-color') || '#991b1b',
+        color: validateColor(scriptTag.getAttribute('data-color')),
         position: scriptTag.getAttribute('data-position') || 'bottom-right',
         greeting: scriptTag.getAttribute('data-greeting') || 'Bună! Cu ce te pot ajuta?',
         botName: scriptTag.getAttribute('data-bot-name') || 'Sambla Bot',
         apiBase: scriptTag.getAttribute('data-api-base') || 'https://sambla.ro',
-        lang: scriptTag.getAttribute('data-lang') || 'ro'
+        lang: scriptTag.getAttribute('data-lang') || 'ro',
+        iconUrl: scriptTag.getAttribute('data-icon-url') || ''
     };
 
     if (!config.channelId) {
@@ -236,10 +249,10 @@
         var container = document.createElement('div');
         container.innerHTML = '\
             <button class="sambla-bubble" aria-label="Deschide chat">\
-                <svg class="chat-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">\
+                ' + (config.iconUrl ? '<img class="chat-icon" src="' + config.iconUrl + '" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" alt="Chat">' : '<svg class="chat-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">\
                     <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/>\
                     <path d="M7 9h10v2H7zm0-3h10v2H7zm0 6h7v2H7z"/>\
-                </svg>\
+                </svg>') + '\
                 <svg class="close-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">\
                     <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>\
                 </svg>\
@@ -303,9 +316,13 @@
             return h + ':' + m;
         }
 
-        function addMessage(text, sender, timestamp) {
+        function addMessage(text, sender, timestamp, products) {
             var ts = timestamp || new Date().toISOString();
-            messages.push({ text: text, sender: sender, time: ts });
+            var msgData = { text: text, sender: sender, time: ts };
+            if (products && products.length > 0) {
+                msgData.products = products;
+            }
+            messages.push(msgData);
             saveMessages(messages);
 
             var msgEl = document.createElement('div');
@@ -314,6 +331,12 @@
 
             // Insert before typing indicator
             messagesContainer.insertBefore(msgEl, typingEl);
+
+            // Render product cards if present
+            if (products && products.length > 0) {
+                renderProductCards(products);
+            }
+
             scrollToBottom();
         }
 
@@ -375,10 +398,13 @@
                 if (data.session_id) {
                     setSessionId(data.session_id);
                 }
-                addMessage(data.response || 'Scuze, a apărut o eroare.', 'bot');
+                var responseText = data.response || data.reply || 'Scuze, a apărut o eroare.';
+                var products = (data.products && data.products.length > 0) ? data.products : null;
+                addMessage(responseText, 'bot', null, products);
             })
             .catch(function(err) {
                 hideTyping();
+                if (!isSending) return; // prevent duplicate error messages
                 addMessage('Ne pare rău, a apărut o eroare. Vă rugăm încercați din nou.', 'bot');
                 console.error('[Sambla Chat] Error:', err);
             })
@@ -415,10 +441,42 @@
                 msgEl.className = 'sambla-msg ' + msg.sender;
                 msgEl.innerHTML = escapeHtml(msg.text) + '<div class="time">' + formatTime(msg.time) + '</div>';
                 messagesContainer.insertBefore(msgEl, typingEl);
+                if (msg.products && msg.products.length > 0) {
+                    renderProductCards(msg.products);
+                }
             });
         } else {
             // Show greeting
             addMessage(config.greeting, 'bot');
+        }
+
+        function renderProductCards(products) {
+            if (!messagesContainer || !typingEl) return;
+
+            var wrap = document.createElement('div');
+            wrap.style.cssText = 'display:flex;gap:8px;overflow-x:auto;padding:8px 4px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;width:100%;min-height:200px;flex-shrink:0;';
+
+            products.forEach(function(p) {
+                var card = document.createElement('div');
+                card.style.cssText = 'min-width:160px;width:160px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;background:#fff;scroll-snap-align:start;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.06);';
+                var h = '';
+                if (p.image_url && isValidUrl(p.image_url)) h += '<img src="' + escapeHtml(p.image_url) + '" style="width:100%;height:100px;object-fit:cover;display:block;" loading="lazy">';
+                h += '<div style="padding:8px 10px;">';
+                h += '<div style="font-size:11px;font-weight:600;color:#1e293b;line-height:1.3;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">' + escapeHtml(p.name) + '</div>';
+                if (p.sale_price && p.regular_price) {
+                    h += '<div style="font-size:13px;font-weight:700;color:#dc2626;">' + p.sale_price + ' ' + (p.currency || 'RON') + ' <span style="font-size:10px;color:#94a3b8;text-decoration:line-through;font-weight:400;">' + p.regular_price + '</span></div>';
+                } else {
+                    h += '<div style="font-size:13px;font-weight:700;color:#1e293b;">' + p.price + ' ' + (p.currency || 'RON') + '</div>';
+                }
+                if (p.permalink && isValidUrl(p.permalink)) {
+                    h += '<a href="' + escapeHtml(p.permalink) + '" target="_top" style="display:block;margin-top:6px;width:100%;padding:7px;border:none;border-radius:8px;background:' + config.color + ';color:#fff;font-size:11px;font-weight:600;cursor:pointer;text-align:center;text-decoration:none;">Vezi produs</a>';
+                }
+                h += '</div>';
+                card.innerHTML = h;
+                wrap.appendChild(card);
+            });
+            messagesContainer.insertBefore(wrap, typingEl);
+            setTimeout(function() { messagesContainer.scrollTop = messagesContainer.scrollHeight; }, 100);
         }
 
         // Update bot name from config endpoint
@@ -427,12 +485,6 @@
                 headerName.textContent = data.bot_name;
             }
         });
-    }
-
-    function escapeHtml(str) {
-        var div = document.createElement('div');
-        div.appendChild(document.createTextNode(str));
-        return div.innerHTML;
     }
 
     // Initialize when DOM is ready

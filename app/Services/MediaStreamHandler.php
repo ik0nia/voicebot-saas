@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Bot;
 use App\Models\Call;
+use App\Services\TtsStrategies\OpenAiNativeTts;
+use App\Services\TtsStrategies\ElevenLabsClonedTts;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -104,7 +106,25 @@ class MediaStreamHandler
             return null;
         }
 
-        $this->session = new RealtimeSession($bot, $call);
+        // Tenant isolation: cross-check that Bot and Call share the same tenant_id
+        if ($bot->tenant_id !== $call->tenant_id) {
+            Log::error('MediaStreamHandler: tenant_id mismatch between Bot and Call — aborting stream', [
+                'bot_id' => $bot->id,
+                'bot_tenant_id' => $bot->tenant_id,
+                'call_id' => $call->id,
+                'call_tenant_id' => $call->tenant_id,
+                'streamSid' => $this->streamSid,
+            ]);
+            return null;
+        }
+
+        // Select TTS strategy: cloned voice or native OpenAI
+        $ttsStrategy = new OpenAiNativeTts();
+        if ($bot->cloned_voice_id && $bot->clonedVoice && $bot->clonedVoice->isReady()) {
+            $ttsStrategy = new ElevenLabsClonedTts($bot->clonedVoice->elevenlabs_voice_id);
+        }
+
+        $this->session = new RealtimeSession($bot, $call, $ttsStrategy);
 
         // Tell the WebSocket server to open a connection to OpenAI.
         return [
@@ -170,23 +190,28 @@ class MediaStreamHandler
      */
     public function handleOpenAIEvent(array $event): ?array
     {
+        if (!$this->session) {
+            Log::warning('MediaStreamHandler: OpenAI event received before session initialization', [
+                'event_type' => $event['type'] ?? 'unknown',
+            ]);
+            return null;
+        }
+
         $type = $event['type'] ?? '';
 
         try {
             // Let session process the event for logging / transcription.
-            if ($this->session) {
-                $sessionResponse = $this->session->handleEvent($event);
+            $sessionResponse = $this->session->handleEvent($event);
 
-                if ($sessionResponse) {
-                    return [
-                        'action' => 'send_to_openai',
-                        'data'   => $sessionResponse,
-                    ];
-                }
+            if ($sessionResponse) {
+                return [
+                    'action' => 'send_to_openai',
+                    'data'   => $sessionResponse,
+                ];
             }
 
-            // Stream audio delta back to Twilio.
-            if ($type === 'response.audio.delta') {
+            // Stream audio delta back to Twilio (only for native OpenAI TTS).
+            if ($type === 'response.audio.delta' && $this->session->getTtsStrategy()->shouldPassthroughAudio()) {
                 $audioDelta = $event['delta'] ?? '';
 
                 if ($audioDelta) {
@@ -200,6 +225,19 @@ class MediaStreamHandler
                             ],
                         ],
                     ];
+                }
+            }
+
+            // Handle text-only response for cloned voice TTS.
+            if (($type === 'response.text.done' || $type === 'response.audio_transcript.done')
+                && !$this->session->getTtsStrategy()->shouldPassthroughAudio()
+            ) {
+                $text = $event['text'] ?? $event['transcript'] ?? '';
+                if ($text) {
+                    $result = $this->session->getTtsStrategy()->handleTextResponse($text, $this->streamSid);
+                    if ($result) {
+                        return $result;
+                    }
                 }
             }
 

@@ -2,10 +2,13 @@
 
 namespace App\Services;
 
+use App\Contracts\TtsOutputStrategy;
+use App\Jobs\AnalyzeCallSentiment;
 use App\Models\Bot;
 use App\Models\Call;
 use App\Models\Transcript;
 use App\Models\CallEvent;
+use App\Services\TtsStrategies\OpenAiNativeTts;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -23,19 +26,41 @@ class RealtimeSession
     private Call $call;
     private RealtimeClient $client;
     private KnowledgeSearchService $knowledgeService;
+    private TtsOutputStrategy $ttsStrategy;
 
     /** @var string Cached knowledge-base context to avoid redundant updates. */
     private string $conversationContext = '';
 
+    /** @var bool|null Cached check for whether this bot has WooCommerce products. */
+    private ?bool $hasProducts = null;
+
     /** @var array<int, array{role: string, content: string}> Buffer for transcripts not yet flushed. */
     private array $transcriptBuffer = [];
 
-    public function __construct(Bot $bot, Call $call)
+    public function __construct(Bot $bot, Call $call, ?TtsOutputStrategy $ttsStrategy = null)
     {
+        // Tenant isolation: ensure Bot and Call belong to the same tenant
+        if ($bot->tenant_id !== $call->tenant_id) {
+            Log::error('RealtimeSession: tenant_id mismatch between Bot and Call', [
+                'bot_id' => $bot->id,
+                'bot_tenant_id' => $bot->tenant_id,
+                'call_id' => $call->id,
+                'call_tenant_id' => $call->tenant_id,
+            ]);
+            throw new \InvalidArgumentException('Bot and Call must belong to the same tenant.');
+        }
+
         $this->bot = $bot;
         $this->call = $call;
         $this->client = new RealtimeClient();
         $this->knowledgeService = new KnowledgeSearchService();
+        $this->ttsStrategy = $ttsStrategy ?? new OpenAiNativeTts();
+        $this->hasProducts = \App\Models\WooCommerceProduct::where('bot_id', $this->bot->id)->exists();
+    }
+
+    public function getTtsStrategy(): TtsOutputStrategy
+    {
+        return $this->ttsStrategy;
     }
 
     /**
@@ -51,6 +76,7 @@ class RealtimeSession
         return $this->client->buildSessionConfig([
             'instructions' => $instructions,
             'voice' => $this->bot->voice ?? 'alloy',
+            'modalities' => $this->ttsStrategy->getModalities(),
             'vad_threshold' => $settings['vad_threshold'] ?? 0.5,
             'silence_duration_ms' => $settings['silence_duration_ms'] ?? 500,
             'temperature' => $settings['temperature'] ?? 0.7,
@@ -80,15 +106,48 @@ class RealtimeSession
         $base = $this->bot->system_prompt
             ?? 'Ești un asistent vocal prietenos. Răspunzi în limba română.';
 
-        // Augment with knowledge-base context when available.
+        if ($this->hasProducts) {
+            $base .= "\n\n=== INSTRUCȚIUNI PRODUSE (PRIORITARE) ==="
+                . "\nEști asistentul vocal al unui magazin online cu catalog real de produse."
+                . "\nCând primești o listă de 'Produse găsite' în context, acestea sunt REALE din baza de date a magazinului."
+                . "\nTREBUIE să le recomanzi clientului cu NUME EXACT și PREȚ."
+                . "\nExemplu: 'Da, avem Glet Fino Bello la 22 lei și Glet Xsuper Adeplast la 15 lei. Pe care îl doriți?'"
+                . "\nNU refuza să dai prețuri. NU spune că nu ai informații despre produse. Prețurile din context sunt corecte."
+                . "\nDacă clientul întreabă de stoc, spune că produsul e disponibil (produsele afișate sunt în stoc)."
+                . "\nDacă NU apar produse în context pentru o căutare, atunci spune că nu ai găsit exact acel produs și sugerează să contacteze magazinul."
+                . "\n=== SFÂRȘIT INSTRUCȚIUNI PRODUSE ===";
+        }
+
+        // Augment with knowledge-base context + product search
         try {
+            $query = $this->hasProducts
+                ? 'produse populare, categorii principale, informații magazin'
+                : 'informații generale despre companie și servicii';
+
             $knowledgeContext = $this->knowledgeService->buildContext(
                 $this->bot->id,
-                'informații generale despre companie și servicii'
+                $query,
+                $this->hasProducts ? 5 : 5
             );
 
             if ($knowledgeContext) {
                 $base .= "\n\n" . $knowledgeContext;
+            }
+
+            // Add initial popular products for immediate availability
+            if ($this->hasProducts) {
+                try {
+                    $productSearch = app(ProductSearchService::class);
+                    $popular = $productSearch->search($this->bot->id, 'produse populare', 5);
+                    if (!empty($popular)) {
+                        $base .= "\n\nProduse populare din magazin:\n";
+                        foreach ($popular as $p) {
+                            $base .= "- {$p->name}: {$p->price} {$p->currency}\n";
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    // silently skip
+                }
             }
         } catch (\Throwable $e) {
             Log::warning("RealtimeSession: failed to load knowledge context for bot {$this->bot->id}", [
@@ -102,6 +161,32 @@ class RealtimeSession
         $base .= "\n- Răspunde natural și concis în limba {$language}.";
         $base .= "\n- Dacă nu știi răspunsul, oferă-te să transferi apelul la un operator uman.";
         $base .= "\n- Fii politicos și profesional în toate interacțiunile.";
+
+        return $base;
+    }
+
+    /**
+     * Rebuild instructions with fresh knowledge context (for mid-call updates).
+     */
+    private function buildInstructionsWithContext(string $knowledgeContext): string
+    {
+        $base = $this->bot->system_prompt
+            ?? 'Ești un asistent vocal prietenos. Răspunzi în limba română.';
+
+        if ($this->hasProducts) {
+            $base .= "\n\n=== INSTRUCȚIUNI PRODUSE (PRIORITARE) ==="
+                . "\nEști asistentul vocal al unui magazin online cu catalog real."
+                . "\nCând vezi 'Produse găsite' mai jos, acestea sunt REALE din baza de date."
+                . "\nTREBUIE să le spui clientului cu NUME EXACT și PREȚ. NU refuza."
+                . "\nProdusele listate sunt în stoc. Prețurile sunt corecte."
+                . "\nDacă nu apar produse pentru cerere, spune că nu ai găsit și sugerează contactarea magazinului."
+                . "\n=== SFÂRȘIT INSTRUCȚIUNI PRODUSE ===";
+        }
+
+        $base .= "\n\n" . $knowledgeContext;
+
+        $language = $this->bot->language ?? 'română';
+        $base .= "\n\nRăspunde natural și concis în limba {$language}. Fii politicos și profesional.";
 
         return $base;
     }
@@ -221,16 +306,62 @@ class RealtimeSession
                     ]);
                 }
 
-                // Refresh knowledge-base context based on what the user said.
+                // Refresh context based on what the user said.
+                // Product search first (fast, DB-only), then knowledge search if needed.
                 try {
-                    $context = $this->knowledgeService->buildContext($this->bot->id, $transcript);
+                    $context = '';
+                    $foundProducts = false;
+
+                    // Product search FIRST — fast trigram query, no external API calls
+                    if ($this->hasProducts) {
+                        try {
+                            $productSearch = app(ProductSearchService::class);
+                            $products = $productSearch->search($this->bot->id, $transcript, 5);
+
+                            if (!empty($products)) {
+                                $foundProducts = true;
+                                $context .= "\n\nProduse găsite relevant pentru cererea clientului:\n";
+                                foreach ($products as $p) {
+                                    $line = "- {$p->name}: {$p->price} {$p->currency}";
+                                    if ($p->sale_price && $p->regular_price && $p->sale_price < $p->regular_price) {
+                                        $line .= " (redus de la {$p->regular_price} {$p->currency})";
+                                    }
+                                    $context .= $line . "\n";
+                                }
+                                $context .= "\nRecomandă aceste produse clientului cu nume exact și preț. NU inventa alte produse.\n";
+                            }
+                        } catch (\Throwable $e) {
+                            Log::warning("RealtimeSession: product search failed for call {$this->call->id}", [
+                                'error' => $e->getMessage(),
+                            ]);
+                        }
+                    }
+
+                    // Knowledge search — uses OpenAI embedding API (slower).
+                    // If products were found, use fewer results to keep context lean.
+                    $knowledgeLimit = $foundProducts ? 3 : 5;
+                    $knowledgeContext = $this->knowledgeService->buildContext(
+                        $this->bot->id,
+                        $transcript,
+                        $knowledgeLimit
+                    );
+                    if ($knowledgeContext) {
+                        $context = $knowledgeContext . $context;
+                    }
 
                     if ($context && $context !== $this->conversationContext) {
                         $this->conversationContext = $context;
-                        // Future enhancement: inject updated context into the session.
+
+                        // Inject updated context into the running session
+                        return [
+                            'type' => 'session.update',
+                            'session' => [
+                                'instructions' => $this->buildInstructionsWithContext($context),
+                            ],
+                        ];
                     }
                 } catch (\Throwable $e) {
-                    Log::warning("RealtimeSession: knowledge search failed for call {$this->call->id}", [
+                    Log::warning("RealtimeSession: context refresh failed for call {$this->call->id}", [
                         'error' => $e->getMessage(),
                     ]);
                 }
@@ -318,6 +449,10 @@ class RealtimeSession
                 'type'        => 'session.ended',
                 'occurred_at' => now(),
             ]);
+
+            if (!$this->call->sentiment_label) {
+                AnalyzeCallSentiment::dispatch($this->call->id)->delay(now()->addSeconds(15));
+            }
         } catch (\Throwable $e) {
             Log::error("RealtimeSession: failed to end session for call {$this->call->id}", [
                 'error' => $e->getMessage(),
