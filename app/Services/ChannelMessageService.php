@@ -5,10 +5,18 @@ namespace App\Services;
 use App\Models\Channel;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Models\WooCommerceProduct;
 use Illuminate\Support\Facades\Log;
 
 class ChannelMessageService
 {
+    public function __construct(
+        protected ChatCompletionService $chatCompletionService,
+        protected KnowledgeSearchService $knowledgeSearchService,
+        protected ChatModelRouter $chatModelRouter,
+        protected ProductSearchService $productSearchService,
+        protected OrderLookupService $orderLookupService,
+    ) {}
     /**
      * Process an incoming message from any channel (WhatsApp, Facebook, Instagram, etc.)
      *
@@ -57,23 +65,8 @@ class ChannelMessageService
             'sent_at' => now(),
         ]);
 
-        // Build AI prompt context
-        $systemPrompt = $bot->buildSystemPrompt();
-
-        // Get conversation history (last 10 messages)
-        $history = $conversation->messages()
-            ->orderBy('created_at', 'desc')
-            ->take(10)
-            ->get()
-            ->reverse()
-            ->map(function (Message $msg) {
-                $role = $msg->direction === 'inbound' ? 'User' : 'Assistant';
-                return "{$role}: {$msg->content}";
-            })
-            ->implode("\n");
-
-        // Generate mock AI response (to be replaced with actual AI integration)
-        $response = $this->generateMockResponse($bot->name, $messageText, $systemPrompt);
+        // Generate AI response
+        $response = $this->generateAiResponse($bot, $conversation, $messageText);
 
         // Save outbound message
         $outboundMessage = Message::create([
@@ -106,27 +99,74 @@ class ChannelMessageService
         ];
     }
 
-    /**
-     * Generate a mock AI response (placeholder until real AI integration).
-     */
-    private function generateMockResponse(string $botName, string $messageText, string $systemPrompt): string
+    private function generateAiResponse($bot, Conversation $conversation, string $messageText): string
     {
-        $greeting = "Buna! Sunt {$botName}, asistentul tau virtual.";
+        try {
+            $systemPrompt = $bot->buildSystemPrompt();
 
-        $lowerMessage = mb_strtolower($messageText);
+            // Add knowledge base context
+            $knowledgeContext = $this->knowledgeSearchService->buildContext($bot->id, $messageText);
+            if ($knowledgeContext) {
+                $systemPrompt .= "\n\nRelevant context from knowledge base:\n" . $knowledgeContext;
+            }
 
-        if (str_contains($lowerMessage, 'salut') || str_contains($lowerMessage, 'buna') || str_contains($lowerMessage, 'hello') || str_contains($lowerMessage, 'hi')) {
-            return "{$greeting} Cu ce te pot ajuta astazi?";
+            // Order lookup — detect if message is about orders
+            $orderParams = $this->orderLookupService->detectOrderQuery($messageText);
+            if ($orderParams !== null) {
+                $orderResult = $this->orderLookupService->lookup($bot->id, $orderParams);
+                if ($orderResult['found']) {
+                    $orderContext = "Informații comandă client:\n" . json_encode($orderResult['orders'], JSON_UNESCAPED_UNICODE);
+                    $systemPrompt .= "\n\n" . $orderContext;
+                } elseif (!empty($orderResult['message'])) {
+                    $systemPrompt .= "\n\n" . $orderResult['message'];
+                }
+            }
+
+            // Product search — only if bot has products
+            if (WooCommerceProduct::where('bot_id', $bot->id)->exists()) {
+                $products = $this->productSearchService->search($bot->id, $messageText, 5);
+                if (!empty($products)) {
+                    $productContext = "Produse relevante găsite:\n";
+                    foreach ($products as $p) {
+                        $productContext .= "- {$p->name}: {$p->price} {$p->currency}";
+                        if ($p->sale_price) {
+                            $productContext .= " (reducere de la {$p->regular_price})";
+                        }
+                        $productContext .= "\n";
+                    }
+                    $systemPrompt .= "\n\n" . $productContext;
+                }
+            }
+
+            // Build messages array with conversation history (last 20 messages)
+            $messages = [['role' => 'system', 'content' => $systemPrompt]];
+
+            $history = $conversation->messages()
+                ->orderBy('created_at', 'desc')
+                ->take(20)
+                ->get()
+                ->reverse();
+
+            foreach ($history as $msg) {
+                $messages[] = [
+                    'role' => $msg->direction === 'inbound' ? 'user' : 'assistant',
+                    'content' => $msg->content,
+                ];
+            }
+
+            // Route to appropriate model
+            $modelConfig = $this->chatModelRouter->route($messageText, count($history));
+
+            $result = $this->chatCompletionService->complete($messages, $modelConfig);
+
+            return $result['content'];
+        } catch (\Exception $e) {
+            Log::error('ChannelMessageService: AI response failed, using fallback', [
+                'bot_id' => $bot->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return 'Îmi cer scuze, am întâmpinat o eroare tehnică. Vă rog să încercați din nou.';
         }
-
-        if (str_contains($lowerMessage, 'pret') || str_contains($lowerMessage, 'cost') || str_contains($lowerMessage, 'tarif')) {
-            return "Multumesc pentru interes! Un coleg te va contacta in curand cu detaliile de pret. Pot sa te ajut cu altceva intre timp?";
-        }
-
-        if (str_contains($lowerMessage, 'multumesc') || str_contains($lowerMessage, 'mersi') || str_contains($lowerMessage, 'thanks')) {
-            return "Cu placere! Daca mai ai intrebari, nu ezita sa ma contactezi. O zi frumoasa!";
-        }
-
-        return "{$greeting} Am primit mesajul tau. Un coleg din echipa noastra te va contacta in curand pentru a te ajuta. Multumesc pentru rabdare!";
     }
 }

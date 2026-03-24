@@ -17,7 +17,7 @@ class ProductSearchService
      * 2. Category keyword match (exact word overlap)
      * 3. Combined score, ranked by relevance
      */
-    public function search(int $botId, string $query, int $limit = 4): array
+    public function search(int $botId, string $query, int $limit = 10): array
     {
         $query = trim($query);
         if (mb_strlen($query) < 2) {
@@ -68,7 +68,7 @@ class ProductSearchService
             $bindings = [
                 'bot_id' => $botId,
                 'trgm_query' => $query,
-                'trgm_threshold' => 0.15,
+                'trgm_threshold' => 0.25,
             ];
 
             foreach ($words as $i => $word) {
@@ -146,7 +146,45 @@ class ProductSearchService
                 return true;
             });
 
-            return array_slice(array_values($filtered), 0, $limit);
+            if (!empty($filtered)) {
+                return array_slice(array_values($filtered), 0, $limit);
+            }
+
+            // ILIKE fallback when trigram search returns no results
+            $ilikeConds = [];
+            $ilikeBinds = ['bot_id_fb' => $botId];
+            foreach ($words as $i => $word) {
+                $key = "ilike_{$i}";
+                $ilikeConds[] = "LOWER(name) LIKE :{$key}";
+                $ilikeBinds[$key] = "%{$word}%";
+            }
+            $ilikeWhere = implode(' OR ', $ilikeConds);
+
+            $fallback = DB::select("
+                SELECT id, name, price, regular_price, sale_price, currency,
+                       image_url, short_description, permalink, stock_status, site_url, wc_product_id,
+                       similarity(name, :fb_query) AS trgm_sim
+                FROM woocommerce_products
+                WHERE bot_id = :bot_id_fb
+                  AND stock_status IN ('instock', 'onbackorder')
+                  AND ({$ilikeWhere})
+                ORDER BY similarity(name, :fb_query2) DESC
+                LIMIT :fb_limit
+            ", array_merge($ilikeBinds, [
+                'fb_query' => $query,
+                'fb_query2' => $query,
+                'fb_limit' => $limit,
+            ]));
+
+            if (empty($fallback)) {
+                Log::info('ProductSearch: zero results', [
+                    'bot_id' => $botId,
+                    'query' => $query,
+                    'words' => $words,
+                ]);
+            }
+
+            return array_values($fallback);
 
         } catch (\Exception $e) {
             Log::warning('ProductSearch failed', [

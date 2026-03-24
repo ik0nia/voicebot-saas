@@ -122,6 +122,12 @@ class RealtimeSessionController extends Controller
                     . "\n- NU spune că 'nu poți verifica'. Spune că notezi și rezolvați rapid.";
             }
 
+            // Truncate if instructions exceed token-safe limit (~12K chars ≈ 3K tokens)
+            $maxPromptChars = 12000;
+            if (mb_strlen($botPrompt) > $maxPromptChars) {
+                $botPrompt = mb_substr($botPrompt, 0, $maxPromptChars) . "\n[... catalog trunchiat din cauza limitei de tokens]";
+            }
+
             // General knowledge context
             $searchService = app(\App\Services\KnowledgeSearchService::class);
             $query = $hasProducts
@@ -235,6 +241,7 @@ class RealtimeSessionController extends Controller
                 'use_cloned_voice' => $useClonedVoice,
                 'greeting_message' => $bot->greeting_message,
                 'has_products' => $hasProducts,
+                'max_duration_seconds' => (int) ($bot->settings['max_call_duration'] ?? 1800),
             ];
 
             if ($useClonedVoice) {
@@ -367,7 +374,7 @@ class RealtimeSessionController extends Controller
             if ($call->bot && $call->bot->usesClonedVoice()) {
                 $costPerMinuteCents = 27; // No OpenAI audio output + ElevenLabs TTS
             }
-            $costCents = max(1, (int) ceil($duration / 60) * $costPerMinuteCents);
+            $costCents = max(1, (int) round($duration * $costPerMinuteCents / 60));
 
             $call->update([
                 'status' => Call::STATUS_COMPLETED,

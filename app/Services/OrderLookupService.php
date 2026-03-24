@@ -4,8 +4,10 @@ namespace App\Services;
 
 use App\Models\KnowledgeConnector;
 use App\Services\Security\SsrfGuard;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 
 class OrderLookupService
 {
@@ -49,6 +51,12 @@ class OrderLookupService
         } catch (\Exception $e) {
             return ['found' => false, 'orders' => [], 'message' => 'URL invalid.'];
         }
+
+        $rateLimitKey = 'order_lookup_' . $botId;
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 30)) {
+            return ['found' => false, 'orders' => [], 'message' => 'Prea multe verificări de comenzi. Încercați din nou într-un minut.'];
+        }
+        RateLimiter::hit($rateLimitKey, 60);
 
         try {
             // Search by order number
@@ -155,75 +163,81 @@ class OrderLookupService
 
     private function lookupByNumber(string $baseUrl, array $credentials, string $orderNumber): array
     {
-        $response = Http::timeout(10)
-            ->withBasicAuth($credentials['consumer_key'], $credentials['consumer_secret'])
-            ->get($baseUrl . '/wp-json/wc/v3/orders/' . $orderNumber);
+        return Cache::remember('order_lookup_num_' . $orderNumber, now()->addMinutes(10), function () use ($baseUrl, $credentials, $orderNumber) {
+            $response = Http::timeout(10)
+                ->withBasicAuth($credentials['consumer_key'], $credentials['consumer_secret'])
+                ->get($baseUrl . '/wp-json/wc/v3/orders/' . $orderNumber);
 
-        if ($response->status() === 404) {
-            return ['found' => false, 'orders' => [], 'message' => "Nu am găsit comanda #{$orderNumber}."];
-        }
+            if ($response->status() === 404) {
+                return ['found' => false, 'orders' => [], 'message' => "Nu am găsit comanda #{$orderNumber}."];
+            }
 
-        if (!$response->successful()) {
-            return ['found' => false, 'orders' => [], 'message' => 'Nu am putut verifica comanda.'];
-        }
+            if (!$response->successful()) {
+                return ['found' => false, 'orders' => [], 'message' => 'Nu am putut verifica comanda.'];
+            }
 
-        $order = $response->json();
-        return ['found' => true, 'orders' => [$this->formatOrder($order)], 'message' => ''];
+            $order = $response->json();
+            return ['found' => true, 'orders' => [$this->formatOrder($order)], 'message' => ''];
+        });
     }
 
     private function lookupByEmail(string $baseUrl, array $credentials, string $email): array
     {
-        $response = Http::timeout(10)
-            ->withBasicAuth($credentials['consumer_key'], $credentials['consumer_secret'])
-            ->get($baseUrl . '/wp-json/wc/v3/orders', [
-                'search' => $email,
-                'per_page' => 5,
-                'orderby' => 'date',
-                'order' => 'desc',
-            ]);
+        return Cache::remember('order_lookup_email_' . md5($email), now()->addMinutes(10), function () use ($baseUrl, $credentials, $email) {
+            $response = Http::timeout(10)
+                ->withBasicAuth($credentials['consumer_key'], $credentials['consumer_secret'])
+                ->get($baseUrl . '/wp-json/wc/v3/orders', [
+                    'search' => $email,
+                    'per_page' => 5,
+                    'orderby' => 'date',
+                    'order' => 'desc',
+                ]);
 
-        if (!$response->successful()) {
-            return ['found' => false, 'orders' => [], 'message' => 'Nu am putut verifica comenzile.'];
-        }
+            if (!$response->successful()) {
+                return ['found' => false, 'orders' => [], 'message' => 'Nu am putut verifica comenzile.'];
+            }
 
-        $orders = $response->json();
-        if (empty($orders)) {
-            return ['found' => false, 'orders' => [], 'message' => "Nu am găsit comenzi pentru emailul {$email}."];
-        }
+            $orders = $response->json();
+            if (empty($orders)) {
+                return ['found' => false, 'orders' => [], 'message' => "Nu am găsit comenzi pentru emailul {$email}."];
+            }
 
-        return [
-            'found' => true,
-            'orders' => array_map([$this, 'formatOrder'], array_slice($orders, 0, 3)),
-            'message' => '',
-        ];
+            return [
+                'found' => true,
+                'orders' => array_map([$this, 'formatOrder'], array_slice($orders, 0, 3)),
+                'message' => '',
+            ];
+        });
     }
 
     private function lookupByPhone(string $baseUrl, array $credentials, string $phone): array
     {
-        // WooCommerce doesn't search by phone natively, search by billing phone
-        $response = Http::timeout(10)
-            ->withBasicAuth($credentials['consumer_key'], $credentials['consumer_secret'])
-            ->get($baseUrl . '/wp-json/wc/v3/orders', [
-                'per_page' => 20,
-                'orderby' => 'date',
-                'order' => 'desc',
-            ]);
+        return Cache::remember('order_lookup_phone_' . md5($phone), now()->addMinutes(10), function () use ($baseUrl, $credentials, $phone) {
+            // WooCommerce doesn't search by phone natively, search by billing phone
+            $response = Http::timeout(10)
+                ->withBasicAuth($credentials['consumer_key'], $credentials['consumer_secret'])
+                ->get($baseUrl . '/wp-json/wc/v3/orders', [
+                    'per_page' => 20,
+                    'orderby' => 'date',
+                    'order' => 'desc',
+                ]);
 
-        if (!$response->successful()) {
-            return ['found' => false, 'orders' => [], 'message' => 'Nu am putut verifica comenzile.'];
-        }
+            if (!$response->successful()) {
+                return ['found' => false, 'orders' => [], 'message' => 'Nu am putut verifica comenzile.'];
+            }
 
-        $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
-        $orders = collect($response->json())->filter(function ($order) use ($cleanPhone) {
-            $billingPhone = preg_replace('/[^0-9]/', '', $order['billing']['phone'] ?? '');
-            return str_contains($billingPhone, $cleanPhone) || str_contains($cleanPhone, $billingPhone);
-        })->take(3)->values()->toArray();
+            $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
+            $orders = collect($response->json())->filter(function ($order) use ($cleanPhone) {
+                $billingPhone = preg_replace('/[^0-9]/', '', $order['billing']['phone'] ?? '');
+                return str_contains($billingPhone, $cleanPhone) || str_contains($cleanPhone, $billingPhone);
+            })->take(3)->values()->toArray();
 
-        if (empty($orders)) {
-            return ['found' => false, 'orders' => [], 'message' => 'Nu am găsit comenzi pentru acest număr de telefon.'];
-        }
+            if (empty($orders)) {
+                return ['found' => false, 'orders' => [], 'message' => 'Nu am găsit comenzi pentru acest număr de telefon.'];
+            }
 
-        return ['found' => true, 'orders' => array_map([$this, 'formatOrder'], $orders), 'message' => ''];
+            return ['found' => true, 'orders' => array_map([$this, 'formatOrder'], $orders), 'message' => ''];
+        });
     }
 
     private function formatOrder(array $order): array
@@ -236,6 +250,23 @@ class OrderLookupService
             'total' => $item['total'],
         ])->toArray();
 
+        $trackingNumber = $order['meta_data'] ? collect($order['meta_data'])->firstWhere('key', '_tracking_number')['value'] ?? null : null;
+        $trackingUrl = null;
+        if ($trackingNumber) {
+            $shippingMethod = mb_strtolower(collect($order['shipping_lines'] ?? [])->pluck('method_title')->implode(' '));
+            if (str_contains($shippingMethod, 'fan') || str_contains($shippingMethod, 'fancourier')) {
+                $trackingUrl = 'https://www.fancourier.ro/awb-tracking/?awb=' . urlencode($trackingNumber);
+            } elseif (str_contains($shippingMethod, 'cargus') || str_contains($shippingMethod, 'urgent')) {
+                $trackingUrl = 'https://www.cargus.ro/tracking-online/?t=' . urlencode($trackingNumber);
+            } elseif (str_contains($shippingMethod, 'dpd')) {
+                $trackingUrl = 'https://tracking.dpd.ro/tracking?reference=' . urlencode($trackingNumber);
+            } elseif (str_contains($shippingMethod, 'sameday')) {
+                $trackingUrl = 'https://sameday.ro/#/awb/' . urlencode($trackingNumber);
+            } elseif (str_contains($shippingMethod, 'gls')) {
+                $trackingUrl = 'https://gls-group.com/RO/ro/urmarire-colete?match=' . urlencode($trackingNumber);
+            }
+        }
+
         return [
             'number' => $order['number'] ?? $order['id'],
             'status' => $status,
@@ -244,7 +275,8 @@ class OrderLookupService
             'total' => ($order['total'] ?? '0') . ' ' . ($order['currency'] ?? 'RON'),
             'payment_method' => $order['payment_method_title'] ?? '',
             'shipping_method' => collect($order['shipping_lines'] ?? [])->pluck('method_title')->implode(', ') ?: '-',
-            'tracking' => $order['meta_data'] ? collect($order['meta_data'])->firstWhere('key', '_tracking_number')['value'] ?? null : null,
+            'tracking' => $trackingNumber,
+            'tracking_url' => $trackingUrl,
             'items' => $items,
             'customer_name' => trim(($order['billing']['first_name'] ?? '') . ' ' . ($order['billing']['last_name'] ?? '')),
         ];

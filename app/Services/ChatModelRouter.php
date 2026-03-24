@@ -26,23 +26,33 @@ class ChatModelRouter
     ];
 
     /**
-     * Decide which model tier to use based on query complexity.
+     * Decide which model tier to use based on query complexity and conversation context.
      */
     public function route(string $userMessage, int $historyCount = 0): array
     {
         $message = mb_strtolower(trim($userMessage));
+        $wordCount = str_word_count($message);
 
-        if ($this->isComplex($message)) {
+        // Short continuations (<8 words) in long conversations stay on fast
+        // (e.g., "da", "ok", "si cat costa?", "altceva?")
+        if ($wordCount < 8 && $historyCount > 4) {
+            return $this->models['fast'];
+        }
+
+        if ($this->isComplex($message, $wordCount)) {
+            return $this->models['smart'];
+        }
+
+        // Conversations with >10 messages may need more context understanding
+        if ($historyCount > 10 && $wordCount > 15) {
             return $this->models['smart'];
         }
 
         return $this->models['fast'];
     }
 
-    private function isComplex(string $message): bool
+    private function isComplex(string $message, int $wordCount): bool
     {
-        $wordCount = str_word_count($message);
-
         // Complex indicators: calculations, comparisons, multi-criteria, advice
         $complexPatterns = [
             '/\d+\s*(mp|m2|m²|metri|litri|l|kg|bucati|buc)/',   // quantities / calculations
@@ -53,6 +63,14 @@ class ChatModelRouter
             '/alternativ|inlocui|echivalent/u',                    // alternatives
             '/buget|cost.*total|cat.*cheltuiesc|cat.*costa.*pentru/u', // budget
             '/avantaj|dezavantaj|pro.*contra|merita/u',            // pros/cons
+            // Delivery / timing
+            '/cat.*dureaz|termen.*livr|cand.*ajung|cand.*primesc|timp.*livr/u',
+            // Warranty / legal
+            '/garantie|retur|schimb|reclam|drept.*consum|legal/u',
+            // Custom orders / services
+            '/comanda.*special|personali|la.*comanda|servicii.*domicili|montaj/u',
+            // Multiple question marks = complex inquiry
+            '/\?.*\?/',
         ];
 
         foreach ($complexPatterns as $pattern) {
@@ -62,7 +80,7 @@ class ChatModelRouter
         }
 
         // Long messages with context are likely complex
-        if ($wordCount > 20) {
+        if ($wordCount > 30) {
             return true;
         }
 

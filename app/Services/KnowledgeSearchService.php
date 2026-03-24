@@ -10,7 +10,7 @@ use OpenAI\Laravel\Facades\OpenAI;
 
 class KnowledgeSearchService
 {
-    protected float $similarityThreshold = 0.50;
+    protected float $similarityThreshold = 0.65;
 
     /**
      * Hybrid search: vector similarity + full-text search combined via RRF (Reciprocal Rank Fusion).
@@ -25,7 +25,7 @@ class KnowledgeSearchService
                 return [];
             }
 
-            $queryEmbedding = $this->getQueryEmbedding($query);
+            $queryEmbedding = $this->getQueryEmbedding($query, $botId);
 
             if (empty($queryEmbedding)) {
                 Log::warning('KnowledgeSearch: failed to generate embedding', [
@@ -148,7 +148,7 @@ class KnowledgeSearchService
 
         foreach ($results as $result) {
             $similarity = round($result->similarity * 100);
-            $content = mb_substr($result->content, 0, 800);
+            $content = $result->content;
             $chunk = "--- {$result->title} (relevance: {$similarity}%) ---\n{$content}\n\n";
 
             if ($totalChars + strlen($chunk) > $maxChars) {
@@ -165,9 +165,20 @@ class KnowledgeSearchService
     /**
      * Get embedding for a query, with 24h cache based on md5 of the query.
      */
-    protected function getQueryEmbedding(string $query): array
+    /**
+     * Invalidate knowledge cache for a specific bot by incrementing its version.
+     */
+    public function invalidateCache(int $botId): void
     {
-        $cacheKey = 'query_embedding_' . md5($query);
+        Cache::put("knowledge_version_{$botId}", now()->timestamp, now()->addDays(30));
+
+        Log::info('KnowledgeSearch: cache invalidated', ['bot_id' => $botId]);
+    }
+
+    protected function getQueryEmbedding(string $query, int $botId = 0): array
+    {
+        $version = Cache::get("knowledge_version_{$botId}", 0);
+        $cacheKey = "query_embedding_{$botId}_{$version}_" . md5($query);
 
         try {
             return Cache::remember($cacheKey, now()->addHours(24), function () use ($query) {

@@ -11,6 +11,7 @@ use App\Models\WooCommerceProduct;
 use App\Services\KnowledgeSearchService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
@@ -77,6 +78,7 @@ class ChatbotApiController extends Controller
         // Find or create conversation
         // Only allow resuming an existing session if the client provides a valid HMAC token
         $conversation = null;
+        $sessionExpired = false;
         if ($sessionId && $sessionToken) {
             $expectedToken = hash_hmac('sha256', $sessionId . $channelId, config('app.key'));
             if (hash_equals($expectedToken, $sessionToken)) {
@@ -84,6 +86,21 @@ class ChatbotApiController extends Controller
                     ->where('external_conversation_id', $sessionId)
                     ->where('status', 'active')
                     ->first();
+
+                // Check if session expired (10 minutes of inactivity)
+                if ($conversation) {
+                    $lastMessage = $conversation->messages()->latest('id')->first();
+                    $lastActivity = $lastMessage ? $lastMessage->created_at : $conversation->created_at;
+
+                    if ($lastActivity->diffInMinutes(now()) >= 10) {
+                        $conversation->update([
+                            'status' => 'completed',
+                            'ended_at' => $lastActivity,
+                        ]);
+                        $conversation = null;
+                        $sessionExpired = true;
+                    }
+                }
             }
             // Invalid token: silently fall through to create a new conversation
         }
@@ -150,6 +167,7 @@ class ChatbotApiController extends Controller
                     $orderContext .= "Comanda #{$o['number']} | Status: {$o['status']} | Data: {$o['date']} | Total: {$o['total']}";
                     $orderContext .= " | Plata: {$o['payment_method']} | Livrare: {$o['shipping_method']}";
                     if ($o['tracking']) $orderContext .= " | AWB: {$o['tracking']}";
+                    if (!empty($o['tracking_url'])) $orderContext .= " | Tracking: {$o['tracking_url']}";
                     $orderContext .= " | Produse: " . collect($o['items'])->map(fn($i) => "{$i['name']} x{$i['quantity']}")->implode(', ');
                     $orderContext .= "\n";
                 }
@@ -207,6 +225,7 @@ class ChatbotApiController extends Controller
             'reply' => $botResponse,
             'session_id' => $sessionId,
             'session_token' => $sessionToken,
+            'session_expired' => $sessionExpired,
             'products' => $products,
         ]);
     }
@@ -222,30 +241,39 @@ class ChatbotApiController extends Controller
         ];
 
         try {
-            $systemPrompt = $bot->system_prompt ?? 'Ești un asistent virtual. Răspunde scurt și util.';
+            // Cache static system prompt + product rules per bot (invalidate on bot update)
+            $systemPrompt = Cache::remember("bot_system_prompt_{$bot->id}", now()->addMinutes(10), function () use ($bot) {
+                $prompt = $bot->system_prompt ?? 'Ești un asistent virtual. Răspunde scurt și util.';
 
-            // Search Knowledge Base (more results for product bots)
+                $hasProducts = WooCommerceProduct::where('bot_id', $bot->id)->exists();
+                if ($hasProducts) {
+                    $prompt .= "\n\n"
+                        . "Ești asistentul unui magazin online. REGULI STRICTE:"
+                        . "\n- Produsele se afișează AUTOMAT ca și carduri vizuale sub mesajul tău."
+                        . "\n- NU enumera produse în text. NU scrie nume de produse, prețuri, sau liste numerotate. NICIODATĂ."
+                        . "\n- Răspunde DOAR cu o descriere generală scurtă (1-2 propoziții). Ex: 'Am găsit câteva opțiuni de spumă poliuretanică pentru pistol. Le poți vedea mai jos.'"
+                        . "\n- Alt exemplu bun: 'Da, avem în stoc. Uite ce am găsit:' (cardurile apar automat dedesubt)"
+                        . "\n- Dacă nu găsești ce caută, spune ce ai similar sau sugerează să contacteze magazinul."
+                        . "\n- NU inventa produse, prețuri sau calcule de consum."
+                        . "\n- Fii natural și concis.";
+                }
+
+                return $prompt;
+            });
+
+            // Search Knowledge Base — skip for trivial messages (greetings, thanks, follow-ups)
             $hasProducts = WooCommerceProduct::where('bot_id', $bot->id)->exists();
             $searchLimit = $hasProducts ? 8 : 5;
+            $skipKnowledge = $this->isTrivialMessage($userMessage);
 
             $knowledgeContext = '';
-            try {
-                $searchService = app(KnowledgeSearchService::class);
-                $knowledgeContext = $searchService->buildContext($bot->id, $userMessage, $searchLimit);
-            } catch (\Exception $e) {
-                Log::warning('Knowledge search failed for chatbot', ['bot_id' => $bot->id, 'error' => $e->getMessage()]);
-            }
-
-            if ($hasProducts) {
-                $systemPrompt .= "\n\n"
-                    . "Ești asistentul unui magazin online. REGULI STRICTE:"
-                    . "\n- Produsele se afișează AUTOMAT ca și carduri vizuale sub mesajul tău."
-                    . "\n- NU enumera produse în text. NU scrie nume de produse, prețuri, sau liste numerotate. NICIODATĂ."
-                    . "\n- Răspunde DOAR cu o descriere generală scurtă (1-2 propoziții). Ex: 'Am găsit câteva opțiuni de spumă poliuretanică pentru pistol. Le poți vedea mai jos.'"
-                    . "\n- Alt exemplu bun: 'Da, avem în stoc. Uite ce am găsit:' (cardurile apar automat dedesubt)"
-                    . "\n- Dacă nu găsești ce caută, spune ce ai similar sau sugerează să contacteze magazinul."
-                    . "\n- NU inventa produse, prețuri sau calcule de consum."
-                    . "\n- Fii natural și concis.";
+            if (!$skipKnowledge) {
+                try {
+                    $searchService = app(KnowledgeSearchService::class);
+                    $knowledgeContext = $searchService->buildContext($bot->id, $userMessage, $searchLimit);
+                } catch (\Exception $e) {
+                    Log::warning('Knowledge search failed for chatbot', ['bot_id' => $bot->id, 'error' => $e->getMessage()]);
+                }
             }
 
             if (!empty($knowledgeContext)) {
@@ -293,6 +321,30 @@ class ChatbotApiController extends Controller
             ]);
             return $fallback;
         }
+    }
+
+    /**
+     * Detect trivial messages that don't need knowledge base search.
+     */
+    private function isTrivialMessage(string $message): bool
+    {
+        $msg = mb_strtolower(trim($message));
+        $words = str_word_count($msg);
+
+        if ($words > 5) return false;
+
+        $trivialPatterns = [
+            '/^(salut|buna|hello|hi|hey|hei)\b/u',
+            '/^(multumesc|mersi|merci|thanks)\b/u',
+            '/^(ok|da|nu|bine|perfect|super|exact|corect)\b/u',
+            '/^(pa|la revedere|bye)\b/u',
+        ];
+
+        foreach ($trivialPatterns as $pattern) {
+            if (preg_match($pattern, $msg)) return true;
+        }
+
+        return false;
     }
 
     /**

@@ -47,7 +47,10 @@
     }
 
     var SESSION_KEY = 'sambla_chat_session_' + config.channelId;
+    var SESSION_TOKEN_KEY = 'sambla_chat_token_' + config.channelId;
     var MESSAGES_KEY = 'sambla_chat_messages_' + config.channelId;
+    var LAST_ACTIVITY_KEY = 'sambla_chat_activity_' + config.channelId;
+    var SESSION_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
 
     function getSessionId() {
         try {
@@ -55,8 +58,40 @@
         } catch(e) { return ''; }
     }
 
-    function setSessionId(id) {
-        try { localStorage.setItem(SESSION_KEY, id); } catch(e) {}
+    function getSessionToken() {
+        try {
+            return localStorage.getItem(SESSION_TOKEN_KEY) || '';
+        } catch(e) { return ''; }
+    }
+
+    function setSession(id, token) {
+        try {
+            localStorage.setItem(SESSION_KEY, id);
+            if (token) localStorage.setItem(SESSION_TOKEN_KEY, token);
+            localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
+        } catch(e) {}
+    }
+
+    function getLastActivity() {
+        try {
+            var ts = localStorage.getItem(LAST_ACTIVITY_KEY);
+            return ts ? parseInt(ts, 10) : 0;
+        } catch(e) { return 0; }
+    }
+
+    function isSessionExpired() {
+        var lastActivity = getLastActivity();
+        if (!lastActivity || !getSessionId()) return false;
+        return (Date.now() - lastActivity) > SESSION_TIMEOUT_MS;
+    }
+
+    function clearSession() {
+        try {
+            localStorage.removeItem(SESSION_KEY);
+            localStorage.removeItem(SESSION_TOKEN_KEY);
+            localStorage.removeItem(LAST_ACTIVITY_KEY);
+            localStorage.removeItem(MESSAGES_KEY);
+        } catch(e) {}
     }
 
     function getSavedMessages() {
@@ -240,6 +275,32 @@
             .sambla-send:disabled { opacity: 0.5; cursor: not-allowed; }\
             .sambla-send svg { width: 18px; height: 18px; fill: #fff; }\
             \
+            .sambla-session-ended {\
+                display: flex; flex-direction: column; align-items: center; gap: 8px;\
+                padding: 12px 16px; margin: 4px 0;\
+            }\
+            .sambla-session-divider {\
+                display: flex; align-items: center; gap: 10px; width: 100%;\
+            }\
+            .sambla-session-divider::before, .sambla-session-divider::after {\
+                content: ""; flex: 1; height: 1px; background: #cbd5e1;\
+            }\
+            .sambla-session-divider span {\
+                font-size: 11px; color: #94a3b8; white-space: nowrap;\
+            }\
+            .sambla-new-chat-btn {\
+                display: inline-flex; align-items: center; gap: 6px;\
+                padding: 8px 16px; border-radius: 20px;\
+                background: #fff; color: ' + config.color + ';\
+                border: 1.5px solid ' + config.color + ';\
+                font-size: 13px; font-weight: 600; cursor: pointer;\
+                font-family: inherit; transition: background 0.15s, color 0.15s;\
+            }\
+            .sambla-new-chat-btn:hover {\
+                background: ' + config.color + '; color: #fff;\
+            }\
+            .sambla-new-chat-btn svg { width: 14px; height: 14px; fill: currentColor; }\
+            \
             @media (max-width: 440px) {\
                 .sambla-window { width: calc(100vw - 16px); right: 8px; left: 8px; bottom: 80px; height: calc(100vh - 100px); }\
                 .sambla-bubble { bottom: 12px; right: 12px; }\
@@ -309,6 +370,26 @@
             return div.innerHTML;
         }
 
+        function sanitizePrice(val) {
+            if (!val) return '';
+            var s = String(val);
+            return /^[\d.,\s]+$/.test(s) ? s : '';
+        }
+
+        function sanitizeCurrency(val) {
+            if (!val) return 'RON';
+            var s = String(val);
+            return /^[A-Za-z]{1,5}$/.test(s) ? s : 'RON';
+        }
+
+        function renderMarkdown(escaped) {
+            return escaped
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>')
+                .replace(/`([^`]+)`/g, '<code style="background:#f1f5f9;padding:1px 4px;border-radius:3px;font-size:12px;">$1</code>')
+                .replace(/\n/g, '<br>');
+        }
+
         function formatTime(date) {
             var d = new Date(date);
             var h = d.getHours().toString().padStart(2, '0');
@@ -327,7 +408,11 @@
 
             var msgEl = document.createElement('div');
             msgEl.className = 'sambla-msg ' + sender;
-            msgEl.innerHTML = escapeHtml(text) + '<div class="time">' + formatTime(ts) + '</div>';
+            var msgHtml = escapeHtml(text);
+            if (sender === 'bot') {
+                msgHtml = renderMarkdown(msgHtml);
+            }
+            msgEl.innerHTML = msgHtml + '<div class="time">' + formatTime(ts) + '</div>';
 
             // Insert before typing indicator
             messagesContainer.insertBefore(msgEl, typingEl);
@@ -355,6 +440,37 @@
             typingEl.classList.remove('show');
         }
 
+        function showSessionEnded() {
+            var el = document.createElement('div');
+            el.className = 'sambla-session-ended';
+            el.innerHTML = '\
+                <div class="sambla-session-divider"><span>Conversația s-a încheiat</span></div>\
+                <button class="sambla-new-chat-btn">\
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>\
+                    Conversație nouă\
+                </button>\
+            ';
+            messagesContainer.insertBefore(el, typingEl);
+
+            var btn = el.querySelector('.sambla-new-chat-btn');
+            btn.addEventListener('click', startNewChat);
+            scrollToBottom();
+        }
+
+        function startNewChat() {
+            clearSession();
+            messages = [];
+
+            // Clear all message elements from the container (keep only typingEl)
+            while (messagesContainer.firstChild !== typingEl) {
+                messagesContainer.removeChild(messagesContainer.firstChild);
+            }
+
+            // Show greeting
+            addMessage(config.greeting, 'bot');
+            input.focus();
+        }
+
         function toggleChat() {
             isOpen = !isOpen;
             bubble.classList.toggle('open', isOpen);
@@ -365,9 +481,36 @@
             }
         }
 
+        function fetchWithRetry(url, options, retries) {
+            return fetch(url, options).then(function(r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            }).catch(function(err) {
+                if (retries <= 1) throw err;
+                var delay = (4 - retries) * 1000; // 1s, 2s
+                hideTyping();
+                var retryEl = document.createElement('div');
+                retryEl.className = 'sambla-msg bot';
+                retryEl.style.cssText = 'font-style:italic;opacity:0.7;';
+                retryEl.textContent = 'Se reîncearcă...';
+                messagesContainer.insertBefore(retryEl, typingEl);
+                scrollToBottom();
+                return new Promise(function(resolve) {
+                    setTimeout(function() {
+                        if (retryEl.parentNode) retryEl.parentNode.removeChild(retryEl);
+                        showTyping();
+                        resolve(fetchWithRetry(url, options, retries - 1));
+                    }, delay);
+                });
+            });
+        }
+
         function sendMessage() {
             var text = input.value.trim();
             if (!text || isSending) return;
+
+            // Update activity timestamp
+            try { localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString()); } catch(e) {}
 
             addMessage(text, 'user');
             input.value = '';
@@ -378,25 +521,34 @@
 
             var payload = {
                 message: text,
-                session_id: getSessionId()
+                session_id: getSessionId(),
+                session_token: getSessionToken()
             };
 
-            fetch(config.apiBase + '/api/v1/chatbot/' + config.channelId + '/message', {
+            var fetchUrl = config.apiBase + '/api/v1/chatbot/' + config.channelId + '/message';
+            var fetchOptions = {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
                 },
                 body: JSON.stringify(payload)
-            })
-            .then(function(r) {
-                if (!r.ok) throw new Error('HTTP ' + r.status);
-                return r.json();
-            })
+            };
+
+            fetchWithRetry(fetchUrl, fetchOptions, 3)
             .then(function(data) {
                 hideTyping();
+
+                // If server says old session expired, show separator before the new response
+                if (data.session_expired) {
+                    showSessionEnded();
+                    // Remove the "new chat" button since we're already continuing
+                    var btns = messagesContainer.querySelectorAll('.sambla-new-chat-btn');
+                    btns.forEach(function(b) { b.style.display = 'none'; });
+                }
+
                 if (data.session_id) {
-                    setSessionId(data.session_id);
+                    setSession(data.session_id, data.session_token);
                 }
                 var responseText = data.response || data.reply || 'Scuze, a apărut o eroare.';
                 var products = (data.products && data.products.length > 0) ? data.products : null;
@@ -434,17 +586,27 @@
 
         // Load saved messages or show greeting
         var saved = getSavedMessages();
+        var expired = isSessionExpired();
+
         if (saved.length > 0) {
+            // Show previous messages (grayed out if expired)
             saved.forEach(function(msg) {
                 messages.push(msg);
                 var msgEl = document.createElement('div');
                 msgEl.className = 'sambla-msg ' + msg.sender;
-                msgEl.innerHTML = escapeHtml(msg.text) + '<div class="time">' + formatTime(msg.time) + '</div>';
+                var savedHtml = escapeHtml(msg.text);
+                if (msg.sender === 'bot') savedHtml = renderMarkdown(savedHtml);
+                msgEl.innerHTML = savedHtml + '<div class="time">' + formatTime(msg.time) + '</div>';
+                if (expired) msgEl.style.opacity = '0.5';
                 messagesContainer.insertBefore(msgEl, typingEl);
                 if (msg.products && msg.products.length > 0) {
                     renderProductCards(msg.products);
                 }
             });
+
+            if (expired) {
+                showSessionEnded();
+            }
         } else {
             // Show greeting
             addMessage(config.greeting, 'bot');
@@ -463,10 +625,11 @@
                 if (p.image_url && isValidUrl(p.image_url)) h += '<img src="' + escapeHtml(p.image_url) + '" style="width:100%;height:100px;object-fit:cover;display:block;" loading="lazy">';
                 h += '<div style="padding:8px 10px;">';
                 h += '<div style="font-size:11px;font-weight:600;color:#1e293b;line-height:1.3;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">' + escapeHtml(p.name) + '</div>';
-                if (p.sale_price && p.regular_price) {
-                    h += '<div style="font-size:13px;font-weight:700;color:#dc2626;">' + p.sale_price + ' ' + (p.currency || 'RON') + ' <span style="font-size:10px;color:#94a3b8;text-decoration:line-through;font-weight:400;">' + p.regular_price + '</span></div>';
-                } else {
-                    h += '<div style="font-size:13px;font-weight:700;color:#1e293b;">' + p.price + ' ' + (p.currency || 'RON') + '</div>';
+                var safeCurrency = sanitizeCurrency(p.currency);
+                if (sanitizePrice(p.sale_price) && sanitizePrice(p.regular_price)) {
+                    h += '<div style="font-size:13px;font-weight:700;color:#dc2626;">' + sanitizePrice(p.sale_price) + ' ' + safeCurrency + ' <span style="font-size:10px;color:#94a3b8;text-decoration:line-through;font-weight:400;">' + sanitizePrice(p.regular_price) + '</span></div>';
+                } else if (sanitizePrice(p.price)) {
+                    h += '<div style="font-size:13px;font-weight:700;color:#1e293b;">' + sanitizePrice(p.price) + ' ' + safeCurrency + '</div>';
                 }
                 if (p.permalink && isValidUrl(p.permalink)) {
                     h += '<a href="' + escapeHtml(p.permalink) + '" target="_top" style="display:block;margin-top:6px;width:100%;padding:7px;border:none;border-radius:8px;background:' + config.color + ';color:#fff;font-size:11px;font-weight:600;cursor:pointer;text-align:center;text-decoration:none;">Vezi produs</a>';

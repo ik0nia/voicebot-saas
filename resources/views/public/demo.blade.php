@@ -62,7 +62,7 @@
 
                     {{-- Bot info --}}
                     <div class="text-center px-6 pt-2 pb-4">
-                        <div class="mx-auto w-16 h-16 rounded-full bg-gradient-to-br from-red-700 to-red-900 flex items-center justify-center mb-3 relative">
+                        <div id="botAvatar" class="mx-auto w-16 h-16 rounded-full bg-gradient-to-br from-red-700 to-red-900 flex items-center justify-center mb-3 relative">
                             <svg class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6m-6 4h6" />
                             </svg>
@@ -359,7 +359,19 @@
 
             } catch(err) {
                 console.error('Call start error:', err);
-                callStatus.textContent = 'Eroare: ' + err.message;
+                var errorMsg = 'Eroare: ' + err.message;
+                if (err.name === 'NotAllowedError') {
+                    errorMsg = 'Accesul la microfon a fost refuzat. Verificati permisiunile browserului.';
+                } else if (err.name === 'NotFoundError') {
+                    errorMsg = 'Nu s-a detectat niciun microfon. Conectati un dispozitiv audio.';
+                } else if (err.name === 'NotReadableError') {
+                    errorMsg = 'Microfonul este folosit de alta aplicatie.';
+                }
+                if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+                    errorMsg += ' (HTTPS necesar pentru microfon)';
+                }
+                callStatus.textContent = errorMsg;
+                addMessage(errorMsg, 'system');
                 callButton.className = 'w-16 h-16 rounded-full bg-green-500 hover:bg-green-400 flex items-center justify-center transition-all duration-300 shadow-lg shadow-green-500/30 active:scale-95';
                 updateConnection('disconnected');
                 cleanupCall();
@@ -593,6 +605,7 @@
 
                     case 'response.audio_transcript.delta':
                     case 'response.text.delta':
+                        document.getElementById('botAvatar').classList.remove('thinking-active');
                         // Stream text to ElevenLabs word by word
                         if (useClonedVoice && msg.delta) {
                             elSendText(msg.delta);
@@ -644,13 +657,16 @@
 
                     case 'input_audio_buffer.speech_stopped':
                         callStatus.textContent = 'Se gandeste...';
+                        document.getElementById('botAvatar').classList.add('thinking-active');
                         break;
 
                     case 'response.audio.delta':
                         if (!useClonedVoice) callStatus.textContent = 'Vorbeste...';
+                        document.getElementById('botAvatar').classList.remove('thinking-active');
                         break;
 
                     case 'response.done':
+                        document.getElementById('botAvatar').classList.remove('thinking-active');
                         if (isInCall) {
                             callStatus.textContent = 'Conectat — vorbeste liber';
                         }
@@ -668,6 +684,67 @@
                 }
             } catch(e) {
                 // Ignore parse errors for binary frames
+            }
+        }
+
+        // ── Handle function calls from OpenAI Realtime ──
+        function handleFunctionCall(msg) {
+            try {
+                var args = JSON.parse(msg.arguments || '{}');
+            } catch(e) {
+                args = {};
+            }
+
+            if (msg.name === 'search_products' && activeBotId) {
+                addMessage('Se caută produse...', 'system');
+
+                fetch('/api/v1/bots/' + activeBotId + '/search-products', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ query: args.query || '' }),
+                })
+                .then(function(r) {
+                    if (!r.ok) throw new Error('Search failed: ' + r.status);
+                    return r.json();
+                })
+                .then(function(data) {
+                    sendDataChannelMsg({
+                        type: 'conversation.item.create',
+                        item: {
+                            type: 'function_call_output',
+                            call_id: msg.call_id,
+                            output: JSON.stringify(data),
+                        }
+                    });
+                    sendDataChannelMsg({ type: 'response.create' });
+                })
+                .catch(function(err) {
+                    console.error('Product search error:', err);
+                    sendDataChannelMsg({
+                        type: 'conversation.item.create',
+                        item: {
+                            type: 'function_call_output',
+                            call_id: msg.call_id,
+                            output: JSON.stringify({ products: [], message: 'Eroare la căutarea produselor.' }),
+                        }
+                    });
+                    sendDataChannelMsg({ type: 'response.create' });
+                });
+            } else {
+                // Unknown function — send error back
+                sendDataChannelMsg({
+                    type: 'conversation.item.create',
+                    item: {
+                        type: 'function_call_output',
+                        call_id: msg.call_id,
+                        output: JSON.stringify({ error: 'Unknown function: ' + msg.name }),
+                    }
+                });
+                sendDataChannelMsg({ type: 'response.create' });
             }
         }
 
@@ -851,6 +928,11 @@
         #transcriptArea::-webkit-scrollbar { width: 4px; }
         #transcriptArea::-webkit-scrollbar-track { background: transparent; }
         #transcriptArea::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+        @keyframes thinking-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(185, 28, 28, 0.4); }
+            50% { box-shadow: 0 0 20px 10px rgba(185, 28, 28, 0.2); }
+        }
+        .thinking-active { animation: thinking-pulse 1.5s ease-in-out infinite; }
     </style>
 </body>
 </html>

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use OpenAI\Laravel\Facades\OpenAI;
 
@@ -19,8 +20,16 @@ class ChatCompletionService
         'claude-sonnet-4-5-20241022' => ['input' => 3.00,  'output' => 15.00],
     ];
 
+    private const TIMEOUTS = [
+        'openai' => 30,
+        'anthropic' => 60,
+    ];
+
+    private const MAX_RETRIES = 3;
+
     /**
      * Send a chat completion request to any supported provider.
+     * Includes retry with exponential backoff and circuit breaker.
      *
      * @return array{content: string, model: string, provider: string, input_tokens: int, output_tokens: int, cost_cents: float}
      */
@@ -41,14 +50,74 @@ class ChatCompletionService
             $model = 'gpt-4o';
         }
 
-        return match ($provider) {
-            'anthropic' => $this->callAnthropic($messages, $model, $maxTokens, $temperature),
-            default     => $this->callOpenAI($messages, $model, $maxTokens, $temperature),
-        };
+        // Circuit breaker: check if provider is marked as down
+        if ($this->isCircuitOpen($provider)) {
+            $fallbackProvider = $provider === 'anthropic' ? 'openai' : 'anthropic';
+            if (!$this->isCircuitOpen($fallbackProvider)) {
+                Log::warning("ChatCompletionService: circuit open for {$provider}, falling back to {$fallbackProvider}");
+                $provider = $fallbackProvider;
+                $model = $fallbackProvider === 'openai' ? 'gpt-4o' : 'claude-sonnet-4-5-20241022';
+            }
+        }
+
+        // Retry with exponential backoff + jitter
+        $lastException = null;
+        for ($attempt = 1; $attempt <= self::MAX_RETRIES; $attempt++) {
+            try {
+                $result = match ($provider) {
+                    'anthropic' => $this->callAnthropic($messages, $model, $maxTokens, $temperature),
+                    default     => $this->callOpenAI($messages, $model, $maxTokens, $temperature),
+                };
+
+                // Success — reset circuit breaker
+                $this->recordSuccess($provider);
+                return $result;
+
+            } catch (\RuntimeException $e) {
+                $lastException = $e;
+                $this->recordFailure($provider);
+
+                if ($attempt < self::MAX_RETRIES) {
+                    $delay = (int) (pow(2, $attempt - 1) * 1000 + random_int(100, 500)); // 1-1.5s, 2-2.5s
+                    Log::warning("ChatCompletionService: retry {$attempt}/" . self::MAX_RETRIES, [
+                        'provider' => $provider,
+                        'model' => $model,
+                        'delay_ms' => $delay,
+                        'error' => $e->getMessage(),
+                    ]);
+                    usleep($delay * 1000);
+                }
+            }
+        }
+
+        // All retries failed — try cross-provider fallback
+        $fallbackProvider = $provider === 'anthropic' ? 'openai' : 'anthropic';
+        if (!$this->isCircuitOpen($fallbackProvider)) {
+            try {
+                $fallbackModel = $fallbackProvider === 'openai' ? 'gpt-4o' : 'claude-sonnet-4-5-20241022';
+                Log::warning("ChatCompletionService: all retries failed for {$provider}, attempting {$fallbackProvider}");
+
+                $result = match ($fallbackProvider) {
+                    'anthropic' => $this->callAnthropic($messages, $fallbackModel, $maxTokens, $temperature),
+                    default     => $this->callOpenAI($messages, $fallbackModel, $maxTokens, $temperature),
+                };
+
+                $this->recordSuccess($fallbackProvider);
+                return $result;
+
+            } catch (\RuntimeException $e) {
+                $this->recordFailure($fallbackProvider);
+                // Fall through to throw original exception
+            }
+        }
+
+        throw $lastException;
     }
 
     private function callOpenAI(array $messages, string $model, int $maxTokens, float $temperature): array
     {
+        $timeout = self::TIMEOUTS['openai'];
+
         try {
             $response = OpenAI::chat()->create([
                 'model' => $model,
@@ -82,6 +151,10 @@ class ChatCompletionService
     {
         $apiKey = config('services.anthropic.api_key', env('ANTHROPIC_API_KEY'));
 
+        if (empty($apiKey)) {
+            throw new \RuntimeException('Anthropic API key not configured');
+        }
+
         // Convert OpenAI message format to Anthropic format
         $system = '';
         $anthropicMessages = [];
@@ -100,6 +173,7 @@ class ChatCompletionService
         try {
             $client = \Anthropic::factory()
                 ->withApiKey($apiKey)
+                ->withHttpHeader('timeout', (string) self::TIMEOUTS['anthropic'])
                 ->make();
 
             $response = $client->messages()->create([
@@ -129,6 +203,37 @@ class ChatCompletionService
             'output_tokens' => $outputTokens,
             'cost_cents' => $this->calculateCost($model, $inputTokens, $outputTokens),
         ];
+    }
+
+    /**
+     * Circuit breaker: check if provider has >80% failure rate in last 5 minutes.
+     */
+    private function isCircuitOpen(string $provider): bool
+    {
+        $failures = (int) Cache::get("circuit_{$provider}_failures", 0);
+        $successes = (int) Cache::get("circuit_{$provider}_successes", 0);
+        $total = $failures + $successes;
+
+        // Need at least 5 requests to trip the circuit
+        if ($total < 5) {
+            return false;
+        }
+
+        return ($failures / $total) > 0.8;
+    }
+
+    private function recordFailure(string $provider): void
+    {
+        $key = "circuit_{$provider}_failures";
+        Cache::increment($key);
+        Cache::put($key, (int) Cache::get($key, 0), now()->addMinutes(5));
+    }
+
+    private function recordSuccess(string $provider): void
+    {
+        $key = "circuit_{$provider}_successes";
+        Cache::increment($key);
+        Cache::put($key, (int) Cache::get($key, 0), now()->addMinutes(5));
     }
 
     /**
