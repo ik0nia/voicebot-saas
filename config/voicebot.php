@@ -6,7 +6,10 @@ return [
     'stale_session_minutes' => 30,
 
     'cost' => [
-        'openai_realtime_per_minute' => (float) env('VOICEBOT_COST_PER_MINUTE', 0.06),
+        // Real measured costs (March 2026: $13.45 OpenAI / 94.3 min)
+        'openai_realtime_per_minute' => (float) env('VOICEBOT_OPENAI_COST_PER_MINUTE', 0.14),
+        // Real measured: $5.52 ElevenLabs / 43.2 min cloned
+        'elevenlabs_per_minute' => (float) env('VOICEBOT_ELEVENLABS_COST_PER_MINUTE', 0.13),
     ],
 
     'token_limit' => [

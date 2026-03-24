@@ -386,15 +386,23 @@ class RealtimeSessionController extends Controller
 
             $duration = $frontendDuration > 0 ? $frontendDuration : $serverDuration;
 
-            // Per-second cost calculation (more precise than per-minute ceil)
-            // Without cloned voice: OpenAI audio in ($0.06) + audio out ($0.24) = ~$0.20/min = $0.00333/sec
-            // With cloned voice: OpenAI audio in ($0.06) + text out ($0.01) + ElevenLabs ($0.20) = ~$0.27/min = $0.0045/sec
-            $costPerSecondCents = config('voicebot.cost.openai_realtime_per_minute', 0.20) * 100 / 60;
+            // Per-second cost calculation based on real OpenAI billing data:
+            // Real measured: $13.45 for 94.3 minutes = $0.14/min OpenAI
+            // ElevenLabs: $5.52 for 43.2 min cloned = $0.128/min ElevenLabs
+            //
+            // Native voice (OpenAI only):  ~$0.14/min
+            // Cloned voice (OpenAI + EL):  ~$0.14 + $0.13 = ~$0.27/min
+            $openaiCostPerMinute = config('voicebot.cost.openai_realtime_per_minute', 0.14);
+            $elevenlabsCostPerMinute = config('voicebot.cost.elevenlabs_per_minute', 0.13);
+
             $call->load('bot.clonedVoice');
+            $costPerMinuteDollars = $openaiCostPerMinute;
             if ($call->bot && $call->bot->usesClonedVoice()) {
-                $costPerSecondCents = 0.27 * 100 / 60;
+                $costPerMinuteDollars += $elevenlabsCostPerMinute;
             }
-            $costCents = max(1, (int) round($duration * $costPerSecondCents));
+
+            // Convert: $/min → cents/sec
+            $costCents = max(1, (int) round($duration * $costPerMinuteDollars * 100 / 60));
 
             $call->update([
                 'status' => Call::STATUS_COMPLETED,

@@ -34,12 +34,14 @@ class CleanupStaleSessions extends Command
             $duration = min($duration, $minutes * 60);
 
             // Cost estimate: same logic as RealtimeSessionController::endCall
-            $costPerMinuteCents = 20;
+            $openaiPerMin = config('voicebot.cost.openai_realtime_per_minute', 0.14);
+            $elPerMin = config('voicebot.cost.elevenlabs_per_minute', 0.13);
             $call->load('bot.clonedVoice');
+            $costPerMinDollars = $openaiPerMin;
             if ($call->bot && $call->bot->usesClonedVoice()) {
-                $costPerMinuteCents = 27;
+                $costPerMinDollars += $elPerMin;
             }
-            $costCents = max(1, (int) round($duration * $costPerMinuteCents / 60));
+            $costCents = max(1, (int) round($duration * $costPerMinDollars * 100 / 60));
 
             $call->update([
                 'status' => 'abandoned',
