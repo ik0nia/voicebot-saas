@@ -8,6 +8,12 @@
         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium {{ $bot->is_active ? 'bg-green-50 text-green-700' : 'bg-slate-100 text-slate-500' }}">{{ $bot->is_active ? 'Activ' : 'Inactiv' }}</span>
     </div>
     <p class="text-sm text-slate-500">Tenant: <span class="font-medium text-slate-700">{{ $bot->tenant?->name ?? '-' }}</span> | Limba: {{ strtoupper($bot->language) }} | Voce: {{ $bot->voice }}</p>
+    <div class="mt-3">
+        <a href="{{ route('admin.prompt-versions.index', $bot->id) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-700 text-sm font-medium rounded-lg hover:bg-red-100 transition-colors">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            Prompt Versions (A/B)
+        </a>
+    </div>
 </div>
 
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">

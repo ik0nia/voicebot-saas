@@ -285,6 +285,24 @@
                                class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" />
                         <p class="mt-1 text-xs text-slate-400">Lungimea maximă a răspunsurilor generate (64-4096)</p>
                     </div>
+
+                    {{-- Knowledge Search Limit --}}
+                    <div>
+                        <label for="knowledge_search_limit" class="block text-sm font-medium text-slate-700 mb-1.5">Număr maxim rezultate knowledge base</label>
+                        <input type="number" name="knowledge_search_limit" id="knowledge_search_limit" min="1" max="20"
+                               value="{{ old('knowledge_search_limit', $bot->knowledge_search_limit ?? 5) }}"
+                               class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" />
+                        <p class="mt-1 text-xs text-slate-400">Câte rezultate din knowledge base sunt incluse în context (1-20)</p>
+                    </div>
+
+                    {{-- Max Call Duration --}}
+                    <div>
+                        <label for="max_call_duration_minutes" class="block text-sm font-medium text-slate-700 mb-1.5">Durata maximă apel (minute)</label>
+                        <input type="number" name="max_call_duration_minutes" id="max_call_duration_minutes" min="5" max="60"
+                               value="{{ old('max_call_duration_minutes', intval(($bot->max_call_duration_seconds ?? 1800) / 60)) }}"
+                               class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" />
+                        <p class="mt-1 text-xs text-slate-400">Durata maximă permisă pentru un apel (5-60 minute)</p>
+                    </div>
                 </div>
             </div>
 

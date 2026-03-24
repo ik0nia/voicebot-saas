@@ -224,6 +224,18 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
     Route::post('/setari/clear-cache', [AdminSettingsController::class, 'clearCache'])->name('admin.settings.clearCache');
     Route::put('/setari/tenanti/{tenant}', [AdminSettingsController::class, 'updateTenant'])->name('admin.settings.updateTenant');
     Route::patch('/setari/tenanti/{tenant}/toggle', [AdminSettingsController::class, 'toggleTenant'])->name('admin.settings.toggleTenant');
+
+    // Model Pricing CRUD
+    Route::get('/preturi-modele', [\App\Http\Controllers\Admin\AdminModelPricingController::class, 'index'])->name('admin.model-pricing.index');
+    Route::post('/preturi-modele', [\App\Http\Controllers\Admin\AdminModelPricingController::class, 'store'])->name('admin.model-pricing.store');
+    Route::put('/preturi-modele/{pricing}', [\App\Http\Controllers\Admin\AdminModelPricingController::class, 'update'])->name('admin.model-pricing.update');
+    Route::delete('/preturi-modele/{pricing}', [\App\Http\Controllers\Admin\AdminModelPricingController::class, 'destroy'])->name('admin.model-pricing.destroy');
+
+    // Prompt Versions (A/B Testing)
+    Route::get('/boti/{botId}/prompt-versions', [\App\Http\Controllers\Admin\AdminPromptVersionController::class, 'index'])->name('admin.prompt-versions.index');
+    Route::post('/boti/{botId}/prompt-versions', [\App\Http\Controllers\Admin\AdminPromptVersionController::class, 'store'])->name('admin.prompt-versions.store');
+    Route::put('/prompt-versions/{version}', [\App\Http\Controllers\Admin\AdminPromptVersionController::class, 'update'])->name('admin.prompt-versions.update');
+    Route::delete('/prompt-versions/{version}', [\App\Http\Controllers\Admin\AdminPromptVersionController::class, 'destroy'])->name('admin.prompt-versions.destroy');
 });
 
 // WhatsApp webhooks

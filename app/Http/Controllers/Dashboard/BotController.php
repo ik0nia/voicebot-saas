@@ -179,7 +179,15 @@ class BotController extends Controller
             'greeting_message' => 'nullable|string|max:500',
             'settings' => 'nullable|array',
             'is_active' => 'boolean',
+            'knowledge_search_limit' => 'nullable|integer|min:1|max:20',
+            'max_call_duration_minutes' => 'nullable|integer|min:5|max:60',
         ]);
+
+        // Convert minutes to seconds for max_call_duration
+        if (isset($validated['max_call_duration_minutes'])) {
+            $validated['max_call_duration_seconds'] = $validated['max_call_duration_minutes'] * 60;
+        }
+        unset($validated['max_call_duration_minutes']);
 
         // Verify site belongs to current tenant
         if (!empty($validated['site_id'])) {
