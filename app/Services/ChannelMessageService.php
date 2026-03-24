@@ -154,10 +154,16 @@ class ChannelMessageService
                 ];
             }
 
-            // Route to appropriate model
-            $modelConfig = $this->chatModelRouter->route($messageText, count($history));
+            // Route to appropriate model with cost-awareness
+            $conversationCost = $conversation->cost_cents ?? 0;
+            $modelConfig = $this->chatModelRouter->route($messageText, count($history), $conversationCost);
 
-            $result = $this->chatCompletionService->complete($messages, $modelConfig);
+            $result = $this->chatCompletionService->complete($messages, $modelConfig, $bot->id, $bot->tenant_id);
+
+            // Track cost on conversation
+            if (($result['cost_cents'] ?? 0) > 0) {
+                $conversation->increment('cost_cents', (int) round($result['cost_cents']));
+            }
 
             return $result['content'];
         } catch (\Exception $e) {

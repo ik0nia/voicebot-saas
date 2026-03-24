@@ -231,7 +231,8 @@ Route::prefix('webhook/whatsapp')
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
     ->group(function () {
         Route::get('/', [WhatsAppWebhookController::class, 'verify'])->name('webhook.whatsapp.verify');
-        Route::post('/', [WhatsAppWebhookController::class, 'handle'])->name('webhook.whatsapp.handle');
+        Route::post('/', [WhatsAppWebhookController::class, 'handle'])->name('webhook.whatsapp.handle')
+            ->middleware(\App\Http\Middleware\VerifyMetaWebhookSignature::class);
     });
 
 // Facebook Messenger webhooks
@@ -239,7 +240,8 @@ Route::prefix('webhook/facebook')
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
     ->group(function () {
         Route::get('/', [FacebookWebhookController::class, 'verify'])->name('webhook.facebook.verify');
-        Route::post('/', [FacebookWebhookController::class, 'handle'])->name('webhook.facebook.handle');
+        Route::post('/', [FacebookWebhookController::class, 'handle'])->name('webhook.facebook.handle')
+            ->middleware(\App\Http\Middleware\VerifyMetaWebhookSignature::class);
     });
 
 // Instagram DM webhooks
@@ -247,7 +249,8 @@ Route::prefix('webhook/instagram')
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
     ->group(function () {
         Route::get('/', [InstagramWebhookController::class, 'verify'])->name('webhook.instagram.verify');
-        Route::post('/', [InstagramWebhookController::class, 'handle'])->name('webhook.instagram.handle');
+        Route::post('/', [InstagramWebhookController::class, 'handle'])->name('webhook.instagram.handle')
+            ->middleware(\App\Http\Middleware\VerifyMetaWebhookSignature::class);
     });
 
 // Twilio webhooks (no CSRF, no auth - signature verified by middleware)

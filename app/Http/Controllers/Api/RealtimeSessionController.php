@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\AnalyzeCallSentiment;
+use App\Jobs\GenerateCallSummary;
+use App\Jobs\SendCallEndedWebhook;
 use App\Models\Bot;
 use App\Models\Call;
 use App\Models\PlatformSetting;
@@ -29,8 +31,8 @@ class RealtimeSessionController extends Controller
             return response()->json(['error' => 'OpenAI API key not configured'], 500);
         }
 
-        // Build voice mapping (OpenAI Realtime valid: alloy, ash, ballad, coral, echo, sage, shimmer, verse, marin, cedar)
-        $voiceMap = [
+        // Configurable voice mapping from config/voicebot.php or DB
+        $defaultVoiceMap = [
             'masculin' => 'ash',
             'feminin' => 'coral',
             'nova' => 'coral',
@@ -47,6 +49,7 @@ class RealtimeSessionController extends Controller
             'marin' => 'marin',
             'cedar' => 'cedar',
         ];
+        $voiceMap = config('voicebot.voice_map', $defaultVoiceMap);
         $voice = $voiceMap[$bot->voice ?? 'feminin'] ?? 'coral';
 
         // Check for cloned voice
@@ -383,15 +386,15 @@ class RealtimeSessionController extends Controller
 
             $duration = $frontendDuration > 0 ? $frontendDuration : $serverDuration;
 
-            // Cost estimate per minute:
-            // Without cloned voice: OpenAI audio in ($0.06) + audio out ($0.24) = ~$0.20/min avg
-            // With cloned voice: OpenAI audio in ($0.06) + text out ($0.01) + ElevenLabs ($0.20) = ~$0.27/min avg
-            $costPerMinuteCents = 20;
+            // Per-second cost calculation (more precise than per-minute ceil)
+            // Without cloned voice: OpenAI audio in ($0.06) + audio out ($0.24) = ~$0.20/min = $0.00333/sec
+            // With cloned voice: OpenAI audio in ($0.06) + text out ($0.01) + ElevenLabs ($0.20) = ~$0.27/min = $0.0045/sec
+            $costPerSecondCents = config('voicebot.cost.openai_realtime_per_minute', 0.20) * 100 / 60;
             $call->load('bot.clonedVoice');
             if ($call->bot && $call->bot->usesClonedVoice()) {
-                $costPerMinuteCents = 27; // No OpenAI audio output + ElevenLabs TTS
+                $costPerSecondCents = 0.27 * 100 / 60;
             }
-            $costCents = max(1, (int) round($duration * $costPerMinuteCents / 60));
+            $costCents = max(1, (int) round($duration * $costPerSecondCents));
 
             $call->update([
                 'status' => Call::STATUS_COMPLETED,
@@ -401,6 +404,16 @@ class RealtimeSessionController extends Controller
             ]);
 
             AnalyzeCallSentiment::dispatch($call->id)->delay(now()->addSeconds(15));
+
+            // Generate call summary via GPT-4o-mini
+            GenerateCallSummary::dispatch($call->id)->delay(now()->addSeconds(20));
+
+            // Notify tenant webhook if configured
+            $tenant = $call->bot?->tenant;
+            if ($tenant && !empty($tenant->webhook_url)) {
+                SendCallEndedWebhook::dispatch($call->id, $tenant->webhook_url, $tenant->webhook_secret)
+                    ->delay(now()->addSeconds(25));
+            }
         }
 
         return response()->json(['ok' => true, 'duration' => $call->duration_seconds]);

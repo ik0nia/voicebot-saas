@@ -8,14 +8,20 @@ use App\Models\Channel;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\WooCommerceProduct;
+use App\Services\ChatbotRequestLogger;
+use App\Services\ChatCompletionService;
+use App\Services\ChatModelRouter;
+use App\Services\IntentDetectionService;
 use App\Services\KnowledgeSearchService;
+use App\Services\ProductContextService;
+use App\Services\TokenCounterService;
+use App\Models\BotPromptVersion;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
-use OpenAI\Laravel\Facades\OpenAI;
 
 class ChatbotApiController extends Controller
 {
@@ -240,10 +246,20 @@ class ChatbotApiController extends Controller
             'model' => null, 'provider' => null, 'input_tokens' => 0, 'output_tokens' => 0, 'cost_cents' => 0,
         ];
 
+        $logger = app(ChatbotRequestLogger::class)->start();
+        $logger->set('bot_id', $bot->id);
+        $logger->set('conversation_id', $conversation->id);
+
         try {
-            // Cache static system prompt + product rules per bot (invalidate on bot update)
-            $systemPrompt = Cache::remember("bot_system_prompt_{$bot->id}", now()->addMinutes(10), function () use ($bot) {
-                $prompt = $bot->system_prompt ?? 'Ești un asistent virtual. Răspunde scurt și util.';
+            $intentService = app(IntentDetectionService::class);
+            $tokenCounter = app(TokenCounterService::class);
+
+            // Use prompt versioning (A/B testing) if available
+            $promptVersion = BotPromptVersion::selectForBot($bot->id);
+
+            // Cache static system prompt + product rules per bot
+            $systemPrompt = Cache::remember("bot_system_prompt_{$bot->id}", now()->addMinutes(10), function () use ($bot, $promptVersion) {
+                $prompt = $promptVersion?->system_prompt ?? $bot->system_prompt ?? 'Ești un asistent virtual. Răspunde scurt și util.';
 
                 $hasProducts = WooCommerceProduct::where('bot_id', $bot->id)->exists();
                 if ($hasProducts) {
@@ -261,16 +277,22 @@ class ChatbotApiController extends Controller
                 return $prompt;
             });
 
-            // Search Knowledge Base — skip for trivial messages (greetings, thanks, follow-ups)
+            // Intent detection — replaces fragile str_contains checks
+            $intents = $intentService->detect($userMessage);
+            $skipKnowledge = $intentService->shouldSkipKnowledge($userMessage);
+            $logger->set('intents', $intents);
+            $logger->set('skip_knowledge', $skipKnowledge);
+
+            // Search Knowledge Base — skip for trivial messages
             $hasProducts = WooCommerceProduct::where('bot_id', $bot->id)->exists();
-            $searchLimit = $hasProducts ? 8 : 5;
-            $skipKnowledge = $this->isTrivialMessage($userMessage);
+            $searchLimit = $bot->knowledge_search_limit ?? ($hasProducts ? 8 : 5);
 
             $knowledgeContext = '';
             if (!$skipKnowledge) {
                 try {
                     $searchService = app(KnowledgeSearchService::class);
                     $knowledgeContext = $searchService->buildContext($bot->id, $userMessage, $searchLimit);
+                    $logger->set('knowledge_chars', mb_strlen($knowledgeContext));
                 } catch (\Exception $e) {
                     Log::warning('Knowledge search failed for chatbot', ['bot_id' => $bot->id, 'error' => $e->getMessage()]);
                 }
@@ -288,14 +310,14 @@ class ChatbotApiController extends Controller
                 ['role' => 'system', 'content' => $systemPrompt],
             ];
 
-            // Conversation history (last 10 messages, chronological)
+            // Conversation history — limited by tokens, not message count
             $history = Message::where('conversation_id', $conversation->id)
                 ->orderByDesc('id')
-                ->limit(11)
+                ->limit(20)
                 ->get()
                 ->reverse()
                 ->values()
-                ->slice(0, -1); // skip current user message (already saved)
+                ->slice(0, -1);
 
             foreach ($history as $msg) {
                 $messages[] = [
@@ -306,45 +328,58 @@ class ChatbotApiController extends Controller
 
             $messages[] = ['role' => 'user', 'content' => $userMessage];
 
-            // Route to model based on complexity
-            $router = app(\App\Services\ChatModelRouter::class);
-            $modelConfig = $router->route($userMessage, $history->count());
+            // Truncate history to fit within 95% of context window
+            $router = app(ChatModelRouter::class);
+            $modelConfig = $router->route(
+                $userMessage,
+                $history->count(),
+                $conversation->cost_cents ?? 0,
+            );
 
-            // Call AI via multi-provider service
-            $chatService = app(\App\Services\ChatCompletionService::class);
-            return $chatService->complete($messages, $modelConfig);
+            $maxTokens = \App\Models\ModelPricing::getMaxTokens($modelConfig['model']);
+            $messages = $tokenCounter->truncateHistory($messages, (int) ($maxTokens * 0.95));
+            $logger->set('estimated_tokens', $tokenCounter->estimateMessages($messages));
+            $logger->set('model', $modelConfig['model']);
+            $logger->set('prompt_version', $promptVersion?->version);
+
+            // Call AI — with cascading fallback
+            $chatService = app(ChatCompletionService::class);
+            try {
+                $result = $chatService->complete($messages, $modelConfig, $bot->id, $bot->tenant_id);
+            } catch (\Exception $e) {
+                // Cascading fallback: retry without knowledge context
+                Log::warning('Chatbot: retrying without knowledge', ['bot_id' => $bot->id]);
+                $fallbackMessages = array_filter($messages, fn($m) => ($m['role'] ?? '') !== 'system');
+                $basePrompt = $bot->system_prompt ?? 'Ești un asistent virtual. Răspunde scurt și util.';
+                array_unshift($fallbackMessages, ['role' => 'system', 'content' => $basePrompt . $extraContext]);
+                try {
+                    $result = $chatService->complete($fallbackMessages, $modelConfig, $bot->id, $bot->tenant_id);
+                } catch (\Exception $e2) {
+                    // Final fallback: short history only
+                    $shortMessages = [
+                        ['role' => 'system', 'content' => $basePrompt],
+                        ['role' => 'user', 'content' => $userMessage],
+                    ];
+                    $result = $chatService->complete($shortMessages, $modelConfig, $bot->id, $bot->tenant_id);
+                }
+            }
+
+            $logger->set('input_tokens', $result['input_tokens'] ?? 0);
+            $logger->set('output_tokens', $result['output_tokens'] ?? 0);
+            $logger->set('cost_cents', $result['cost_cents'] ?? 0);
+            $logger->log();
+
+            return $result;
 
         } catch (\Exception $e) {
             Log::error('Chatbot AI response failed', [
                 'bot_id' => $bot->id,
                 'error' => $e->getMessage(),
             ]);
+            $logger->set('error', $e->getMessage());
+            $logger->log('error');
             return $fallback;
         }
-    }
-
-    /**
-     * Detect trivial messages that don't need knowledge base search.
-     */
-    private function isTrivialMessage(string $message): bool
-    {
-        $msg = mb_strtolower(trim($message));
-        $words = str_word_count($msg);
-
-        if ($words > 5) return false;
-
-        $trivialPatterns = [
-            '/^(salut|buna|hello|hi|hey|hei)\b/u',
-            '/^(multumesc|mersi|merci|thanks)\b/u',
-            '/^(ok|da|nu|bine|perfect|super|exact|corect)\b/u',
-            '/^(pa|la revedere|bye)\b/u',
-        ];
-
-        foreach ($trivialPatterns as $pattern) {
-            if (preg_match($pattern, $msg)) return true;
-        }
-
-        return false;
     }
 
     /**
