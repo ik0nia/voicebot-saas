@@ -207,16 +207,37 @@
               AND channel_id IS NOT NULL
         ", [now()->subDays(7)]);
 
-        // Real voice stats: average call from calls table
-        $realVoiceStats = \Illuminate\Support\Facades\DB::selectOne("
+        // Real voice stats: SEPARATE native vs cloned
+        // Native = bots WITHOUT cloned_voice_id
+        $realNativeStats = \Illuminate\Support\Facades\DB::selectOne("
             SELECT
-                AVG(duration_seconds) as avg_duration,
-                AVG(cost_cents) as avg_cost_cents,
+                AVG(c.duration_seconds) as avg_duration,
+                AVG(c.cost_cents) as avg_cost_cents,
+                SUM(c.duration_seconds) as total_seconds,
+                SUM(c.cost_cents) as total_cost_cents,
                 COUNT(*) as total_calls
-            FROM calls
-            WHERE created_at >= ?
-              AND status IN ('completed', 'abandoned')
-              AND duration_seconds > 0
+            FROM calls c
+            JOIN bots b ON b.id = c.bot_id
+            WHERE c.created_at >= ?
+              AND c.status IN ('completed', 'abandoned')
+              AND c.duration_seconds > 0
+              AND b.cloned_voice_id IS NULL
+        ", [now()->subDays(7)]);
+
+        // Cloned = bots WITH cloned_voice_id
+        $realClonedStats = \Illuminate\Support\Facades\DB::selectOne("
+            SELECT
+                AVG(c.duration_seconds) as avg_duration,
+                AVG(c.cost_cents) as avg_cost_cents,
+                SUM(c.duration_seconds) as total_seconds,
+                SUM(c.cost_cents) as total_cost_cents,
+                COUNT(*) as total_calls
+            FROM calls c
+            JOIN bots b ON b.id = c.bot_id
+            WHERE c.created_at >= ?
+              AND c.status IN ('completed', 'abandoned')
+              AND c.duration_seconds > 0
+              AND b.cloned_voice_id IS NOT NULL
         ", [now()->subDays(7)]);
 
         // Helper to get price from DB
@@ -224,16 +245,16 @@
             return $prices->has($modelId) ? $prices[$modelId]->{$field} : 0;
         };
 
-        // === VOCE FĂRĂ CLONARE ===
-        if ($realVoiceStats && $realVoiceStats->total_calls > 0) {
-            // REAL: use actual average cost per minute from DB
-            $avgCallDuration = max(1, $realVoiceStats->avg_duration);
-            $voiceTotal = ($realVoiceStats->avg_cost_cents / 100) / ($avgCallDuration / 60);
+        // === VOCE FĂRĂ CLONARE (native) ===
+        if ($realNativeStats && $realNativeStats->total_calls > 0) {
+            $avgDur = max(1, $realNativeStats->avg_duration);
+            $voiceTotal = ($realNativeStats->avg_cost_cents / 100) / ($avgDur / 60);
             $voiceSource = 'real';
-            $voiceCalls = $realVoiceStats->total_calls;
-            $voiceAvgDuration = round($avgCallDuration / 60, 1);
+            $voiceCalls = $realNativeStats->total_calls;
+            $voiceAvgDuration = round($avgDur / 60, 1);
+            $voiceTotalSpend = $realNativeStats->total_cost_cents / 100;
+            $voiceTotalMinutes = $realNativeStats->total_seconds / 60;
         } else {
-            // ESTIMATED: calculate from pricing table
             $voiceAudioIn = $getPrice('gpt-4o-realtime-preview-audio', 'input_cost');
             $voiceAudioOut = $getPrice('gpt-4o-realtime-preview-audio', 'output_cost');
             $voiceTextIn = (200 / 1_000_000) * $getPrice('gpt-4o-realtime-preview', 'input_cost');
@@ -244,13 +265,36 @@
             $voiceSource = 'estimated';
             $voiceCalls = 0;
             $voiceAvgDuration = 0;
+            $voiceTotalSpend = 0;
+            $voiceTotalMinutes = 0;
         }
 
-        // Cloned voice: estimate ElevenLabs surcharge per minute
-        $voiceELCost = (150 / 1000) * $getPrice('eleven_multilingual_v2', 'input_cost');
-        // Cloned replaces audio out ($0.24) with text out + ElevenLabs
-        $voiceClonedSurcharge = $voiceELCost - $getPrice('gpt-4o-realtime-preview-audio', 'output_cost');
-        $voiceClonedTotal = $voiceTotal + max(0, $voiceClonedSurcharge);
+        // === VOCE CU CLONARE (ElevenLabs) ===
+        if ($realClonedStats && $realClonedStats->total_calls > 0) {
+            $avgDurCloned = max(1, $realClonedStats->avg_duration);
+            $voiceClonedTotal = ($realClonedStats->avg_cost_cents / 100) / ($avgDurCloned / 60);
+            $voiceClonedSource = 'real';
+            $voiceClonedCalls = $realClonedStats->total_calls;
+            $voiceClonedAvgDuration = round($avgDurCloned / 60, 1);
+            $voiceClonedTotalSpend = $realClonedStats->total_cost_cents / 100;
+            $voiceClonedTotalMinutes = $realClonedStats->total_seconds / 60;
+        } else {
+            // Estimated: OpenAI (no audio out) + ElevenLabs TTS
+            $voiceClonedOpenAI = $getPrice('gpt-4o-realtime-preview-audio', 'input_cost')
+                + (200 / 1_000_000) * $getPrice('gpt-4o-realtime-preview', 'input_cost')
+                + (100 / 1_000_000) * $getPrice('gpt-4o-realtime-preview', 'output_cost')
+                + $getPrice('whisper-1', 'input_cost')
+                + (500 / 1_000_000) * $getPrice('text-embedding-3-small', 'input_cost');
+            $voiceELCost = (150 / 1000) * $getPrice('eleven_multilingual_v2', 'input_cost');
+            $voiceClonedTotal = $voiceClonedOpenAI + $voiceELCost;
+            $voiceClonedSource = 'estimated';
+            $voiceClonedCalls = 0;
+            $voiceClonedAvgDuration = 0;
+            $voiceClonedTotalSpend = 0;
+            $voiceClonedTotalMinutes = 0;
+        }
+
+        $voiceClonedDiff = $voiceClonedTotal - $voiceTotal;
 
         // === CONVERSAȚIE CHAT ===
         if ($realChatStats && $realChatStats->total_conversations > 5) {
@@ -288,8 +332,8 @@
             </div>
             @if($voiceSource === 'real')
                 <div class="mb-3 px-2 py-1.5 rounded-md bg-blue-50 border border-blue-200">
-                    <p class="text-xs text-blue-700 font-medium">Calculat din date reale ({{ $voiceCalls }} apeluri, ultimele 7 zile)</p>
-                    <p class="text-xs text-blue-500">Durata medie: {{ $voiceAvgDuration }} min</p>
+                    <p class="text-xs text-blue-700 font-medium">Calculat din date reale ({{ $voiceCalls }} apeluri native, ultimele 7 zile)</p>
+                    <p class="text-xs text-blue-500">Durata medie: {{ $voiceAvgDuration }} min | Total: {{ number_format($voiceTotalMinutes, 1) }} min cheltuite</p>
                 </div>
             @else
                 <div class="mb-3 px-2 py-1.5 rounded-md bg-amber-50 border border-amber-200">
@@ -317,9 +361,19 @@
                 <h3 class="text-sm font-bold text-slate-900">1 minut voce</h3>
                 <span class="text-xs text-purple-500">(cu ElevenLabs)</span>
             </div>
-            <div class="mb-3 px-2 py-1.5 rounded-md bg-purple-50 border border-purple-200">
-                <p class="text-xs text-purple-700">+${{ number_format($voiceELCost, 3) }}/min cost ElevenLabs TTS</p>
-            </div>
+            @if($voiceClonedSource === 'real')
+                <div class="mb-3 px-2 py-1.5 rounded-md bg-purple-50 border border-purple-200">
+                    <p class="text-xs text-purple-700 font-medium">Calculat din date reale ({{ $voiceClonedCalls }} apeluri clonate, ultimele 7 zile)</p>
+                    <p class="text-xs text-purple-500">Durata medie: {{ $voiceClonedAvgDuration }} min | Total: {{ number_format($voiceClonedTotalMinutes, 1) }} min cheltuite</p>
+                    @if($voiceClonedDiff > 0)
+                        <p class="text-xs text-purple-600 font-medium mt-1">+${{ number_format($voiceClonedDiff, 3) }}/min față de voce nativă (OpenAI + ElevenLabs TTS)</p>
+                    @endif
+                </div>
+            @else
+                <div class="mb-3 px-2 py-1.5 rounded-md bg-amber-50 border border-amber-200">
+                    <p class="text-xs text-amber-700">Estimat din prețuri (include OpenAI + ElevenLabs TTS)</p>
+                </div>
+            @endif
             <div class="pt-2 border-t border-slate-100 flex justify-between items-baseline">
                 <span class="text-sm font-semibold text-slate-900">Cost / minut</span>
                 <span class="text-lg font-bold text-purple-600">${{ number_format($voiceClonedTotal, 3) }}</span>
