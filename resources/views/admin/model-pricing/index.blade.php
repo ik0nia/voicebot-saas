@@ -15,7 +15,7 @@
             </div>
             <div>
                 <h1 class="text-xl font-bold text-slate-900">Prețuri Modele AI</h1>
-                <p class="text-sm text-slate-500">Cost per 1M tokens — folosit pentru calculul costurilor în timp real</p>
+                <p class="text-sm text-slate-500">Costuri per model — tokens, minute, caractere</p>
             </div>
         </div>
     </div>
@@ -34,40 +34,68 @@
         </div>
     @endif
 
-    {{-- Existing Models --}}
+    @php
+        $unitLabels = \App\Models\ModelPricing::UNIT_LABELS;
+        $providerColors = [
+            'openai' => 'bg-green-100 text-green-700',
+            'anthropic' => 'bg-orange-100 text-orange-700',
+            'elevenlabs' => 'bg-purple-100 text-purple-700',
+        ];
+        $unitColors = [
+            '1M_tokens' => 'bg-blue-100 text-blue-700',
+            'minute' => 'bg-amber-100 text-amber-700',
+            '1K_chars' => 'bg-pink-100 text-pink-700',
+        ];
+    @endphp
+
+    {{-- Models Table --}}
     <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <table class="min-w-full divide-y divide-slate-200">
             <thead class="bg-slate-50">
                 <tr>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Model</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Provider</th>
-                    <th class="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase">Input $/1M</th>
-                    <th class="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase">Output $/1M</th>
+                    <th class="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase">Unitate</th>
+                    <th class="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase">Cost Input</th>
+                    <th class="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase">Cost Output</th>
                     <th class="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase">Context Max</th>
-                    <th class="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase">Status</th>
+                    <th class="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase">Activ</th>
                     <th class="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase">Acțiuni</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
                 @forelse($pricing as $model)
-                <tr>
+                <tr class="{{ !$model->is_active ? 'opacity-50' : '' }}">
                     <form method="POST" action="{{ route('admin.model-pricing.update', $model) }}">
                         @csrf @method('PUT')
                         <td class="px-4 py-3">
                             <span class="font-mono text-sm font-medium text-slate-900">{{ $model->model_id }}</span>
                         </td>
                         <td class="px-4 py-3">
-                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ $model->provider === 'openai' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700' }}">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ $providerColors[$model->provider] ?? 'bg-slate-100 text-slate-700' }}">
                                 {{ ucfirst($model->provider) }}
                             </span>
                         </td>
-                        <td class="px-4 py-3 text-right">
-                            <input type="number" step="0.0001" name="input_cost_per_million" value="{{ $model->input_cost_per_million }}"
-                                   class="w-24 text-right text-sm border border-slate-300 rounded-md px-2 py-1 focus:ring-red-500 focus:border-red-500">
+                        <td class="px-4 py-3 text-center">
+                            <select name="pricing_unit" class="text-xs border border-slate-300 rounded-md px-2 py-1 focus:ring-red-500 focus:border-red-500">
+                                @foreach($unitLabels as $key => $label)
+                                    <option value="{{ $key }}" {{ $model->pricing_unit === $key ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
                         </td>
                         <td class="px-4 py-3 text-right">
-                            <input type="number" step="0.0001" name="output_cost_per_million" value="{{ $model->output_cost_per_million }}"
-                                   class="w-24 text-right text-sm border border-slate-300 rounded-md px-2 py-1 focus:ring-red-500 focus:border-red-500">
+                            <div class="flex items-center justify-end gap-1">
+                                <span class="text-slate-400 text-xs">$</span>
+                                <input type="number" step="0.0001" name="input_cost" value="{{ $model->input_cost }}"
+                                       class="w-24 text-right text-sm border border-slate-300 rounded-md px-2 py-1 focus:ring-red-500 focus:border-red-500">
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-right">
+                            <div class="flex items-center justify-end gap-1">
+                                <span class="text-slate-400 text-xs">$</span>
+                                <input type="number" step="0.0001" name="output_cost" value="{{ $model->output_cost }}"
+                                       class="w-24 text-right text-sm border border-slate-300 rounded-md px-2 py-1 focus:ring-red-500 focus:border-red-500">
+                            </div>
                         </td>
                         <td class="px-4 py-3 text-right">
                             <input type="number" name="max_context_tokens" value="{{ $model->max_context_tokens }}"
@@ -76,8 +104,7 @@
                         <td class="px-4 py-3 text-center">
                             <label class="relative inline-flex items-center cursor-pointer">
                                 <input type="hidden" name="is_active" value="0">
-                                <input type="checkbox" name="is_active" value="1" {{ $model->is_active ? 'checked' : '' }}
-                                       class="sr-only peer">
+                                <input type="checkbox" name="is_active" value="1" {{ $model->is_active ? 'checked' : '' }} class="sr-only peer">
                                 <div class="w-9 h-5 bg-slate-200 peer-focus:ring-2 peer-focus:ring-red-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-600"></div>
                             </label>
                         </td>
@@ -93,7 +120,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" class="px-4 py-8 text-center text-slate-500">Nu există modele configurate. Adaugă primul model mai jos.</td>
+                    <td colspan="8" class="px-4 py-8 text-center text-slate-500">Nu există modele configurate.</td>
                 </tr>
                 @endforelse
             </tbody>
@@ -115,20 +142,29 @@
                 <select name="provider" class="text-sm border border-slate-300 rounded-md px-3 py-2 focus:ring-red-500 focus:border-red-500">
                     <option value="openai">OpenAI</option>
                     <option value="anthropic">Anthropic</option>
+                    <option value="elevenlabs">ElevenLabs</option>
                 </select>
             </div>
             <div>
-                <label class="block text-xs text-slate-500 mb-1">Input $/1M</label>
-                <input type="number" step="0.0001" name="input_cost_per_million" placeholder="0.15" required
+                <label class="block text-xs text-slate-500 mb-1">Unitate preț</label>
+                <select name="pricing_unit" class="text-sm border border-slate-300 rounded-md px-3 py-2 focus:ring-red-500 focus:border-red-500">
+                    @foreach($unitLabels as $key => $label)
+                        <option value="{{ $key }}">{{ $label }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs text-slate-500 mb-1">Cost Input ($)</label>
+                <input type="number" step="0.0001" name="input_cost" placeholder="0.15" required
                        class="w-24 text-sm border border-slate-300 rounded-md px-3 py-2 focus:ring-red-500 focus:border-red-500">
             </div>
             <div>
-                <label class="block text-xs text-slate-500 mb-1">Output $/1M</label>
-                <input type="number" step="0.0001" name="output_cost_per_million" placeholder="0.60" required
+                <label class="block text-xs text-slate-500 mb-1">Cost Output ($)</label>
+                <input type="number" step="0.0001" name="output_cost" placeholder="0.60" required
                        class="w-24 text-sm border border-slate-300 rounded-md px-3 py-2 focus:ring-red-500 focus:border-red-500">
             </div>
             <div>
-                <label class="block text-xs text-slate-500 mb-1">Context Tokens</label>
+                <label class="block text-xs text-slate-500 mb-1">Context Max</label>
                 <input type="number" name="max_context_tokens" placeholder="128000" required
                        class="w-28 text-sm border border-slate-300 rounded-md px-3 py-2 focus:ring-red-500 focus:border-red-500">
             </div>
@@ -166,7 +202,7 @@
                 <tr>
                     <td class="px-4 py-2 text-sm font-mono">{{ $m->model }}</td>
                     <td class="px-4 py-2 text-sm text-right">{{ number_format($m->calls) }}</td>
-                    <td class="px-4 py-2 text-sm text-right font-medium">${{ number_format($m->total_cost / 100, 2) }}</td>
+                    <td class="px-4 py-2 text-sm text-right font-medium">${{ number_format(($m->total_cost ?? 0) / 100, 2) }}</td>
                     <td class="px-4 py-2 text-sm text-right">{{ number_format($m->avg_response) }}ms</td>
                     <td class="px-4 py-2 text-sm text-right {{ $m->errors > 0 ? 'text-red-600 font-medium' : 'text-slate-400' }}">{{ $m->errors }}</td>
                 </tr>

@@ -12,17 +12,27 @@ class ModelPricing extends Model
     protected $fillable = [
         'model_id',
         'provider',
-        'input_cost_per_million',
-        'output_cost_per_million',
+        'pricing_unit',
+        'input_cost',
+        'output_cost',
         'max_context_tokens',
         'is_active',
     ];
 
     protected $casts = [
-        'input_cost_per_million' => 'float',
-        'output_cost_per_million' => 'float',
+        'input_cost' => 'float',
+        'output_cost' => 'float',
         'max_context_tokens' => 'integer',
         'is_active' => 'boolean',
+    ];
+
+    /**
+     * Human-readable pricing unit labels.
+     */
+    public const UNIT_LABELS = [
+        '1M_tokens' => '$/1M tokens',
+        'minute' => '$/minut',
+        '1K_chars' => '$/1K caractere',
     ];
 
     /**
@@ -36,8 +46,9 @@ class ModelPricing extends Model
                 return null;
             }
             return [
-                'input' => $pricing->input_cost_per_million,
-                'output' => $pricing->output_cost_per_million,
+                'input' => $pricing->input_cost,
+                'output' => $pricing->output_cost,
+                'unit' => $pricing->pricing_unit,
                 'max_context_tokens' => $pricing->max_context_tokens,
             ];
         });
@@ -50,5 +61,13 @@ class ModelPricing extends Model
     {
         $pricing = static::getPricing($modelId);
         return $pricing['max_context_tokens'] ?? 128000;
+    }
+
+    /**
+     * Get the unit label for display.
+     */
+    public function getUnitLabelAttribute(): string
+    {
+        return self::UNIT_LABELS[$this->pricing_unit] ?? $this->pricing_unit;
     }
 }

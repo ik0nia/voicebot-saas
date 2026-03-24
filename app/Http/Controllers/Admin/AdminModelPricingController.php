@@ -20,14 +20,15 @@ class AdminModelPricingController extends Controller
     {
         $validated = $request->validate([
             'model_id' => 'required|string|max:100|unique:model_pricing,model_id',
-            'provider' => 'required|string|in:openai,anthropic',
-            'input_cost_per_million' => 'required|numeric|min:0',
-            'output_cost_per_million' => 'required|numeric|min:0',
-            'max_context_tokens' => 'required|integer|min:1000',
+            'provider' => 'required|string|in:openai,anthropic,elevenlabs',
+            'pricing_unit' => 'required|string|in:1M_tokens,minute,1K_chars',
+            'input_cost' => 'required|numeric|min:0',
+            'output_cost' => 'required|numeric|min:0',
+            'max_context_tokens' => 'required|integer|min:0',
         ]);
 
         ModelPricing::create($validated);
-        Cache::flush(); // Clear pricing caches
+        Cache::flush();
 
         return back()->with('success', 'Model adăugat cu succes.');
     }
@@ -35,9 +36,10 @@ class AdminModelPricingController extends Controller
     public function update(Request $request, ModelPricing $pricing)
     {
         $validated = $request->validate([
-            'input_cost_per_million' => 'required|numeric|min:0',
-            'output_cost_per_million' => 'required|numeric|min:0',
-            'max_context_tokens' => 'required|integer|min:1000',
+            'pricing_unit' => 'sometimes|string|in:1M_tokens,minute,1K_chars',
+            'input_cost' => 'required|numeric|min:0',
+            'output_cost' => 'required|numeric|min:0',
+            'max_context_tokens' => 'required|integer|min:0',
             'is_active' => 'boolean',
         ]);
 
