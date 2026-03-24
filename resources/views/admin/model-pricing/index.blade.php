@@ -174,47 +174,106 @@
         </form>
     </div>
 
-    {{-- Cost Estimator --}}
+    {{-- Cost Estimator — calculated from real usage data when available --}}
     @php
-        // Fetch prices from DB for calculations
-        $prices = \App\Models\ModelPricing::where('is_active', true)->pluck('input_cost', 'model_id')->toArray();
-        $pricesOut = \App\Models\ModelPricing::where('is_active', true)->pluck('output_cost', 'model_id')->toArray();
+        $prices = \App\Models\ModelPricing::where('is_active', true)->get()->keyBy('model_id');
 
-        // === 1 MINUT VOCE (fără voice cloning) ===
-        // Audio in: 1 min Realtime audio input
-        $voiceAudioIn = ($prices['gpt-4o-realtime-preview-audio'] ?? 0.06);
-        // Audio out: 1 min Realtime audio output
-        $voiceAudioOut = ($pricesOut['gpt-4o-realtime-preview-audio'] ?? 0.24);
-        // Text tokens: ~200 input + 100 output tokens per minute exchange
-        $voiceTextIn = (200 / 1_000_000) * ($prices['gpt-4o-realtime-preview'] ?? 5.00);
-        $voiceTextOut = (100 / 1_000_000) * ($pricesOut['gpt-4o-realtime-preview'] ?? 20.00);
-        // Whisper transcription: 1 min
-        $voiceWhisper = ($prices['whisper-1'] ?? 0.006);
-        // Embedding for knowledge context: ~1 query
-        $voiceEmbed = (500 / 1_000_000) * ($prices['text-embedding-3-small'] ?? 0.02);
+        // Try to get REAL averages from ai_api_metrics (last 7 days)
+        $realMetrics = \App\Models\AiApiMetric::where('created_at', '>=', now()->subDays(7))
+            ->where('status', 'success')
+            ->selectRaw("
+                model,
+                COUNT(*) as total_calls,
+                AVG(input_tokens) as avg_input_tokens,
+                AVG(output_tokens) as avg_output_tokens,
+                AVG(cost_cents) as avg_cost_cents,
+                AVG(response_time_ms) as avg_response_ms
+            ")
+            ->groupBy('model')
+            ->get()
+            ->keyBy('model');
 
-        $voiceTotal = $voiceAudioIn + $voiceAudioOut + $voiceTextIn + $voiceTextOut + $voiceWhisper + $voiceEmbed;
+        $hasRealData = $realMetrics->isNotEmpty();
 
-        // === 1 MINUT VOCE (cu voice cloning ElevenLabs) ===
-        // Audio in same, but output goes through ElevenLabs instead of OpenAI audio out
-        // ~150 chars output per minute of speech
-        $voiceELCost = (150 / 1000) * ($prices['eleven_multilingual_v2'] ?? 0.30);
-        // Text out instead of audio out (cheaper)
-        $voiceTextOutOnly = (100 / 1_000_000) * ($pricesOut['gpt-4o-realtime-preview'] ?? 20.00);
-        $voiceClonedTotal = $voiceAudioIn + $voiceTextOutOnly + $voiceTextIn + $voiceWhisper + $voiceEmbed + $voiceELCost;
+        // Real chat stats: average conversation from conversations table
+        $realChatStats = \Illuminate\Support\Facades\DB::selectOne("
+            SELECT
+                AVG(messages_count) as avg_messages,
+                AVG(cost_cents) as avg_cost_cents,
+                COUNT(*) as total_conversations
+            FROM conversations
+            WHERE created_at >= ?
+              AND messages_count > 0
+              AND channel_id IS NOT NULL
+        ", [now()->subDays(7)]);
 
-        // === CONVERSAȚIE CHAT MEDIE ===
-        // Asumăm: 8 mesaje (4 user + 4 bot), ~100 words user, ~150 words bot per msg
-        // Tier fast (gpt-4o-mini): 3 mesaje, Tier smart (claude-sonnet): 1 mesaj
-        // Input avg: ~2000 tokens (system + history + knowledge), Output avg: ~200 tokens
-        $chatFastIn = (2000 / 1_000_000) * ($prices['gpt-4o-mini'] ?? 0.15) * 3;
-        $chatFastOut = (200 / 1_000_000) * ($pricesOut['gpt-4o-mini'] ?? 0.60) * 3;
-        $chatSmartIn = (3000 / 1_000_000) * ($prices['claude-sonnet-4-5-20241022'] ?? 3.00) * 1;
-        $chatSmartOut = (300 / 1_000_000) * ($pricesOut['claude-sonnet-4-5-20241022'] ?? 15.00) * 1;
-        // Embeddings: 4 knowledge searches
-        $chatEmbed = (500 / 1_000_000) * ($prices['text-embedding-3-small'] ?? 0.02) * 4;
+        // Real voice stats: average call from calls table
+        $realVoiceStats = \Illuminate\Support\Facades\DB::selectOne("
+            SELECT
+                AVG(duration_seconds) as avg_duration,
+                AVG(cost_cents) as avg_cost_cents,
+                COUNT(*) as total_calls
+            FROM calls
+            WHERE created_at >= ?
+              AND status IN ('completed', 'abandoned')
+              AND duration_seconds > 0
+        ", [now()->subDays(7)]);
 
-        $chatTotal = $chatFastIn + $chatFastOut + $chatSmartIn + $chatSmartOut + $chatEmbed;
+        // Helper to get price from DB
+        $getPrice = function(string $modelId, string $field = 'input_cost') use ($prices) {
+            return $prices->has($modelId) ? $prices[$modelId]->{$field} : 0;
+        };
+
+        // === VOCE FĂRĂ CLONARE ===
+        if ($realVoiceStats && $realVoiceStats->total_calls > 0) {
+            // REAL: use actual average cost per minute from DB
+            $avgCallDuration = max(1, $realVoiceStats->avg_duration);
+            $voiceTotal = ($realVoiceStats->avg_cost_cents / 100) / ($avgCallDuration / 60);
+            $voiceSource = 'real';
+            $voiceCalls = $realVoiceStats->total_calls;
+            $voiceAvgDuration = round($avgCallDuration / 60, 1);
+        } else {
+            // ESTIMATED: calculate from pricing table
+            $voiceAudioIn = $getPrice('gpt-4o-realtime-preview-audio', 'input_cost');
+            $voiceAudioOut = $getPrice('gpt-4o-realtime-preview-audio', 'output_cost');
+            $voiceTextIn = (200 / 1_000_000) * $getPrice('gpt-4o-realtime-preview', 'input_cost');
+            $voiceTextOut = (100 / 1_000_000) * $getPrice('gpt-4o-realtime-preview', 'output_cost');
+            $voiceWhisper = $getPrice('whisper-1', 'input_cost');
+            $voiceEmbed = (500 / 1_000_000) * $getPrice('text-embedding-3-small', 'input_cost');
+            $voiceTotal = $voiceAudioIn + $voiceAudioOut + $voiceTextIn + $voiceTextOut + $voiceWhisper + $voiceEmbed;
+            $voiceSource = 'estimated';
+            $voiceCalls = 0;
+            $voiceAvgDuration = 0;
+        }
+
+        // Cloned voice: estimate ElevenLabs surcharge per minute
+        $voiceELCost = (150 / 1000) * $getPrice('eleven_multilingual_v2', 'input_cost');
+        // Cloned replaces audio out ($0.24) with text out + ElevenLabs
+        $voiceClonedSurcharge = $voiceELCost - $getPrice('gpt-4o-realtime-preview-audio', 'output_cost');
+        $voiceClonedTotal = $voiceTotal + max(0, $voiceClonedSurcharge);
+
+        // === CONVERSAȚIE CHAT ===
+        if ($realChatStats && $realChatStats->total_conversations > 5) {
+            // REAL: use actual average cost per conversation
+            $chatTotal = ($realChatStats->avg_cost_cents ?? 0) / 100;
+            $chatSource = 'real';
+            $chatCount = $realChatStats->total_conversations;
+            $chatAvgMsgs = round($realChatStats->avg_messages, 1);
+        } else {
+            // ESTIMATED: 8 messages (3x fast + 1x smart + 4x embeddings)
+            $chatFastIn = (2000 / 1_000_000) * $getPrice('gpt-4o-mini', 'input_cost') * 3;
+            $chatFastOut = (200 / 1_000_000) * $getPrice('gpt-4o-mini', 'output_cost') * 3;
+            $chatSmartIn = (3000 / 1_000_000) * $getPrice('claude-sonnet-4-5-20241022', 'input_cost') * 1;
+            $chatSmartOut = (300 / 1_000_000) * $getPrice('claude-sonnet-4-5-20241022', 'output_cost') * 1;
+            $chatEmbed = (500 / 1_000_000) * $getPrice('text-embedding-3-small', 'input_cost') * 4;
+            $chatTotal = $chatFastIn + $chatFastOut + $chatSmartIn + $chatSmartOut + $chatEmbed;
+            $chatSource = 'estimated';
+            $chatCount = 0;
+            $chatAvgMsgs = 8;
+        }
+
+        // Per-model real usage breakdown for chat
+        $chatModelBreakdown = $realMetrics->filter(fn($m) => in_array($m->model, ['gpt-4o-mini', 'gpt-4o', 'claude-sonnet-4-5-20241022', 'claude-haiku-4-5-20251001']));
     @endphp
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -227,18 +286,26 @@
                 <h3 class="text-sm font-bold text-slate-900">1 minut voce</h3>
                 <span class="text-xs text-slate-400">(fără clonare)</span>
             </div>
-            <div class="space-y-1.5 text-xs text-slate-600 mb-3">
-                <div class="flex justify-between"><span>Realtime audio in</span><span class="font-mono">${{ number_format($voiceAudioIn, 4) }}</span></div>
-                <div class="flex justify-between"><span>Realtime audio out</span><span class="font-mono">${{ number_format($voiceAudioOut, 4) }}</span></div>
-                <div class="flex justify-between"><span>Realtime text tokens</span><span class="font-mono">${{ number_format($voiceTextIn + $voiceTextOut, 4) }}</span></div>
-                <div class="flex justify-between"><span>Whisper transcriere</span><span class="font-mono">${{ number_format($voiceWhisper, 4) }}</span></div>
-                <div class="flex justify-between"><span>Embedding (knowledge)</span><span class="font-mono">${{ number_format($voiceEmbed, 4) }}</span></div>
-            </div>
+            @if($voiceSource === 'real')
+                <div class="mb-3 px-2 py-1.5 rounded-md bg-blue-50 border border-blue-200">
+                    <p class="text-xs text-blue-700 font-medium">Calculat din date reale ({{ $voiceCalls }} apeluri, ultimele 7 zile)</p>
+                    <p class="text-xs text-blue-500">Durata medie: {{ $voiceAvgDuration }} min</p>
+                </div>
+            @else
+                <div class="mb-3 px-2 py-1.5 rounded-md bg-amber-50 border border-amber-200">
+                    <p class="text-xs text-amber-700">Estimat din prețuri (fără date reale încă)</p>
+                </div>
+            @endif
             <div class="pt-2 border-t border-slate-100 flex justify-between items-baseline">
-                <span class="text-sm font-semibold text-slate-900">Total / minut</span>
+                <span class="text-sm font-semibold text-slate-900">Cost / minut</span>
                 <span class="text-lg font-bold text-blue-600">${{ number_format($voiceTotal, 3) }}</span>
             </div>
-            <p class="text-xs text-slate-400 mt-1">Apel 5 min ≈ ${{ number_format($voiceTotal * 5, 2) }} | 10 min ≈ ${{ number_format($voiceTotal * 10, 2) }}</p>
+            <div class="mt-2 space-y-1 text-xs text-slate-500">
+                <div class="flex justify-between"><span>Apel 3 min</span><span class="font-mono font-medium text-slate-700">${{ number_format($voiceTotal * 3, 2) }}</span></div>
+                <div class="flex justify-between"><span>Apel 5 min</span><span class="font-mono font-medium text-slate-700">${{ number_format($voiceTotal * 5, 2) }}</span></div>
+                <div class="flex justify-between"><span>Apel 10 min</span><span class="font-mono font-medium text-slate-700">${{ number_format($voiceTotal * 10, 2) }}</span></div>
+                <div class="flex justify-between border-t border-slate-100 pt-1"><span>100 apeluri/lună (5 min)</span><span class="font-mono font-semibold text-slate-900">${{ number_format($voiceTotal * 5 * 100, 0) }}</span></div>
+            </div>
         </div>
 
         {{-- Voice with cloning --}}
@@ -248,21 +315,21 @@
                     <svg class="w-4 h-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
                 </div>
                 <h3 class="text-sm font-bold text-slate-900">1 minut voce</h3>
-                <span class="text-xs text-purple-500">(cu clonare ElevenLabs)</span>
+                <span class="text-xs text-purple-500">(cu ElevenLabs)</span>
             </div>
-            <div class="space-y-1.5 text-xs text-slate-600 mb-3">
-                <div class="flex justify-between"><span>Realtime audio in</span><span class="font-mono">${{ number_format($voiceAudioIn, 4) }}</span></div>
-                <div class="flex justify-between"><span>Realtime text out</span><span class="font-mono">${{ number_format($voiceTextOutOnly, 4) }}</span></div>
-                <div class="flex justify-between"><span>Realtime text tokens in</span><span class="font-mono">${{ number_format($voiceTextIn, 4) }}</span></div>
-                <div class="flex justify-between"><span>Whisper transcriere</span><span class="font-mono">${{ number_format($voiceWhisper, 4) }}</span></div>
-                <div class="flex justify-between"><span>ElevenLabs TTS (~150 chars)</span><span class="font-mono text-purple-600">${{ number_format($voiceELCost, 4) }}</span></div>
-                <div class="flex justify-between"><span>Embedding (knowledge)</span><span class="font-mono">${{ number_format($voiceEmbed, 4) }}</span></div>
+            <div class="mb-3 px-2 py-1.5 rounded-md bg-purple-50 border border-purple-200">
+                <p class="text-xs text-purple-700">+${{ number_format($voiceELCost, 3) }}/min cost ElevenLabs TTS</p>
             </div>
             <div class="pt-2 border-t border-slate-100 flex justify-between items-baseline">
-                <span class="text-sm font-semibold text-slate-900">Total / minut</span>
+                <span class="text-sm font-semibold text-slate-900">Cost / minut</span>
                 <span class="text-lg font-bold text-purple-600">${{ number_format($voiceClonedTotal, 3) }}</span>
             </div>
-            <p class="text-xs text-slate-400 mt-1">Apel 5 min ≈ ${{ number_format($voiceClonedTotal * 5, 2) }} | 10 min ≈ ${{ number_format($voiceClonedTotal * 10, 2) }}</p>
+            <div class="mt-2 space-y-1 text-xs text-slate-500">
+                <div class="flex justify-between"><span>Apel 3 min</span><span class="font-mono font-medium text-slate-700">${{ number_format($voiceClonedTotal * 3, 2) }}</span></div>
+                <div class="flex justify-between"><span>Apel 5 min</span><span class="font-mono font-medium text-slate-700">${{ number_format($voiceClonedTotal * 5, 2) }}</span></div>
+                <div class="flex justify-between"><span>Apel 10 min</span><span class="font-mono font-medium text-slate-700">${{ number_format($voiceClonedTotal * 10, 2) }}</span></div>
+                <div class="flex justify-between border-t border-slate-100 pt-1"><span>100 apeluri/lună (5 min)</span><span class="font-mono font-semibold text-slate-900">${{ number_format($voiceClonedTotal * 5 * 100, 0) }}</span></div>
+            </div>
         </div>
 
         {{-- Chat conversation --}}
@@ -271,23 +338,47 @@
                 <div class="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
                     <svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
                 </div>
-                <h3 class="text-sm font-bold text-slate-900">Conversație chat medie</h3>
-                <span class="text-xs text-slate-400">(~8 mesaje)</span>
+                <h3 class="text-sm font-bold text-slate-900">Conversație chat</h3>
             </div>
-            <div class="space-y-1.5 text-xs text-slate-600 mb-3">
-                <div class="flex justify-between"><span>3x gpt-4o-mini (fast tier)</span><span class="font-mono">${{ number_format($chatFastIn + $chatFastOut, 4) }}</span></div>
-                <div class="flex justify-between"><span>1x claude-sonnet (smart tier)</span><span class="font-mono">${{ number_format($chatSmartIn + $chatSmartOut, 4) }}</span></div>
-                <div class="flex justify-between"><span>4x embedding (knowledge search)</span><span class="font-mono">${{ number_format($chatEmbed, 4) }}</span></div>
-            </div>
+            @if($chatSource === 'real')
+                <div class="mb-3 px-2 py-1.5 rounded-md bg-emerald-50 border border-emerald-200">
+                    <p class="text-xs text-emerald-700 font-medium">Calculat din date reale ({{ $chatCount }} conversații, ultimele 7 zile)</p>
+                    <p class="text-xs text-emerald-500">Media: {{ $chatAvgMsgs }} mesaje/conversație</p>
+                </div>
+            @else
+                <div class="mb-3 px-2 py-1.5 rounded-md bg-amber-50 border border-amber-200">
+                    <p class="text-xs text-amber-700">Estimat (~{{ $chatAvgMsgs }} mesaje, fără date reale încă)</p>
+                </div>
+            @endif
+            @if($chatModelBreakdown->isNotEmpty())
+                <div class="space-y-1.5 text-xs text-slate-600 mb-3">
+                    @foreach($chatModelBreakdown as $m)
+                    <div class="flex justify-between">
+                        <span>{{ $m->model }} <span class="text-slate-400">({{ number_format($m->total_calls) }}x)</span></span>
+                        <span class="font-mono">avg ${{ number_format($m->avg_cost_cents / 100, 4) }}</span>
+                    </div>
+                    @endforeach
+                </div>
+            @endif
             <div class="pt-2 border-t border-slate-100 flex justify-between items-baseline">
-                <span class="text-sm font-semibold text-slate-900">Total / conversație</span>
+                <span class="text-sm font-semibold text-slate-900">Cost / conversație</span>
                 <span class="text-lg font-bold text-emerald-600">${{ number_format($chatTotal, 4) }}</span>
             </div>
-            <p class="text-xs text-slate-400 mt-1">100 conv/zi ≈ ${{ number_format($chatTotal * 100, 2) }} | 1000 conv/zi ≈ ${{ number_format($chatTotal * 1000, 2) }}</p>
+            <div class="mt-2 space-y-1 text-xs text-slate-500">
+                <div class="flex justify-between"><span>50 conv/zi</span><span class="font-mono font-medium text-slate-700">${{ number_format($chatTotal * 50, 2) }}/zi</span></div>
+                <div class="flex justify-between"><span>200 conv/zi</span><span class="font-mono font-medium text-slate-700">${{ number_format($chatTotal * 200, 2) }}/zi</span></div>
+                <div class="flex justify-between border-t border-slate-100 pt-1"><span>1000 conv/lună</span><span class="font-mono font-semibold text-slate-900">${{ number_format($chatTotal * 1000, 2) }}</span></div>
+            </div>
         </div>
     </div>
 
-    <p class="text-xs text-slate-400 italic">* Estimările se calculează automat din prețurile de mai sus. Modifică prețurile și estimările se actualizează.</p>
+    <p class="text-xs text-slate-400 italic">
+        @if($hasRealData || ($realChatStats && $realChatStats->total_conversations > 5) || ($realVoiceStats && $realVoiceStats->total_calls > 0))
+            * Cardurile cu badge <span class="text-emerald-600 font-medium">verde</span> se calculează din date reale (ultimele 7 zile). Cele cu badge <span class="text-amber-600 font-medium">galben</span> sunt estimări din prețuri. Pe măsură ce se acumulează date, estimările se înlocuiesc automat cu valori reale.
+        @else
+            * Estimările se calculează din prețurile de mai sus. Odată ce platforma acumulează date (apeluri, conversații), valorile se vor calcula automat din costuri reale.
+        @endif
+    </p>
 
     {{-- Telemetry Summary --}}
     @php
