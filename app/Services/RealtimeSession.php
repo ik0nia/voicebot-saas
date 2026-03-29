@@ -179,14 +179,21 @@ class RealtimeSession
             . "\n'Doriți să vă ajutăm cu o comandă sau o ofertă personalizată?'"
             . "\nSau: 'Vreți să vă pun în legătură cu un coleg care să vă ajute mai departe?'"
             . "\n"
-            . "\nDacă clientul răspunde DA, SIGUR, VREAU, OK, BINE, DA VREU, sau orice confirmare (chiar și scurtă):"
-            . "\n1. Cere-i NATURAL numele: 'Cum vă numiți, vă rog?'"
-            . "\n2. După ce primești numele, cere telefonul: 'Și un număr de telefon la care să vă contacteze colegul meu?'"
-            . "\n3. Întreabă când preferă să fie sunat: 'Când vă este mai convenabil? Dimineața, după-amiaza, sau seara?'"
-            . "\n4. Confirmă: 'Perfect, [nume]. Un coleg vă va contacta [dimineața/după-amiaza/seara]. Mulțumim!'"
+            . "\nDacă clientul răspunde DA, SIGUR, VREAU, OK, BINE, sau orice confirmare:"
+            . "\nTREBUIE să colectezi OBLIGATORIU aceste date, în ordine:"
+            . "\n1. NUMELE: 'Cum vă numiți, vă rog?' — Dacă nu răspunde cu un nume clar, întreabă din nou: 'Îmi puteți spune numele complet?'"
+            . "\n2. TELEFONUL: 'Și un număr de telefon la care să vă contacteze colegul meu?' — Dacă nu dictează cifre, insistă politicos: 'Am nevoie de un număr de telefon ca să putem reveni.'"
+            . "\n3. INTERVAL ORAR: 'Când vă este mai convenabil să vă sunăm? Dimineața, după-amiaza, sau seara?'"
+            . "\n4. CONFIRMARE FINALĂ: Repetă datele: 'Deci [nume], la numărul [telefon], vă contactăm [interval]. E corect?'"
+            . "\n"
+            . "\n⚠️ REGULI STRICTE:"
+            . "\n- NU confirma că ai notat PÂNĂ nu ai cel puțin NUMELE și TELEFONUL."
+            . "\n- Dacă clientul a dat telefonul dar nu și numele, întreabă: 'Și cum vă numiți, vă rog?'"
+            . "\n- Dacă clientul a dat numele dar nu și telefonul, întreabă: 'La ce număr de telefon vă pot contacta?'"
+            . "\n- Dacă clientul refuză să dea datele, respectă decizia. Dar oferă alternativa email."
+            . "\n- NU spune 'Am notat' sau 'Un coleg vă va contacta' până nu ai NUME + TELEFON confirmate."
             . "\n"
             . "\nNU aștepta ca clientul să ceară singur. TU trebuie să propui."
-            . "\nDacă clientul spune NU sau refuză, respectă decizia și continuă conversația normal."
             . "\nNU cere datele în primele 2 replici — lasă-l mai întâi să pună întrebări."
             . "\n=== SFÂRȘIT CAPTARE DATE ===";
 
@@ -222,12 +229,12 @@ class RealtimeSession
         // V2: Lead capture vocal
         $base .= "\n\n=== CAPTARE DATE CLIENT ==="
             . "\nDupă 2-3 întrebări, PROPUNE PROACTIV: 'Doriți să vă ajutăm cu o comandă sau o ofertă?'"
-            . "\nDacă clientul confirmă (DA, SIGUR, OK, VREAU, BINE, orice confirmare):"
-            . "\n1. Cere numele: 'Cum vă numiți, vă rog?'"
-            . "\n2. Cere telefonul: 'Și un număr de telefon?'"
-            . "\n3. Confirmă: 'Perfect, [nume]. Un coleg vă va contacta.'"
-            . "\nTU propui, nu aștepți ca clientul să ceară."
-            . "\nDacă refuză, continuă normal."
+            . "\nDacă clientul confirmă (DA, SIGUR, OK, orice confirmare):"
+            . "\n1. Cere NUMELE: 'Cum vă numiți, vă rog?'"
+            . "\n2. Cere TELEFONUL: 'Și un număr de telefon?'"
+            . "\n3. Cere INTERVALUL: 'Dimineața, după-amiaza, sau seara?'"
+            . "\n4. CONFIRMĂ cu datele: 'Deci [nume], la [telefon], vă sunăm [interval]. E corect?'"
+            . "\n⚠️ NU confirma până nu ai NUME + TELEFON. Dacă lipsește unul, insistă politicos."
             . "\n=== SFÂRȘIT CAPTARE DATE ===";
 
         // Apply centralized guardrails (voice mode)
@@ -512,14 +519,24 @@ class RealtimeSession
 
             // Extract phone number from user speech
             $phone = null;
-            // Romanian phone patterns: 07xx xxx xxx, +40 7xx xxx xxx, 0722.123.456
-            if (preg_match('/\b(07[0-9]{2}[\s.-]?[0-9]{3}[\s.-]?[0-9]{3})\b/', $userText, $m)) {
-                $phone = preg_replace('/[\s.-]/', '', $m[1]);
-            } elseif (preg_match('/\b(\+?40\s?7[0-9]{2}[\s.-]?[0-9]{3}[\s.-]?[0-9]{3})\b/', $userText, $m)) {
-                $phone = preg_replace('/[\s.-]/', '', $m[1]);
+
+            // Step 1: Strip all spaces/dots/dashes from user text to find digit sequences
+            // This handles "0 7 4 2 4 9 0 5 8 4" and "07 42 490 584" and "0742-490-584"
+            $digitsOnly = preg_replace('/[^\d]/', '', $userText);
+
+            // Find 10-digit Romanian phone number starting with 07
+            if (preg_match('/(07\d{8})/', $digitsOnly, $m)) {
+                $phone = $m[1];
             }
-            // Also check if user spelled out digits: "zero șapte doi doi..."
-            // This is harder — skip for now, rely on actual digit sequences
+            // Find with country code +40 / 40
+            elseif (preg_match('/(40\s?7\d{8})/', $digitsOnly, $m)) {
+                $phone = '0' . substr(preg_replace('/\D/', '', $m[1]), 2);
+            }
+
+            // Step 2: Also try original text with flexible spacing (07xx xxx xxx pattern)
+            if (!$phone && preg_match('/0\s*7[\s.-]?\d[\s.-]?\d[\s.-]?\d[\s.-]?\d[\s.-]?\d[\s.-]?\d[\s.-]?\d[\s.-]?\d/', $userText, $m)) {
+                $phone = preg_replace('/[\s.-]/', '', $m[0]);
+            }
 
             // Extract name — look for assistant confirmation like "Perfect, Ion" or "Am notat, Popescu"
             $name = null;
