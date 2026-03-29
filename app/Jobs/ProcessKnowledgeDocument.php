@@ -57,13 +57,47 @@ class ProcessKnowledgeDocument implements ShouldQueue
                 config('knowledge.chunking.upload', 512)
             );
             $overlap = max(32, (int) ($chunkSize * 0.125)); // ~12.5% overlap
-            $chunks = $this->chunkText($text, $chunkSize, $overlap);
+            $rawChunks = $this->chunkText($text, $chunkSize, $overlap);
+
+            // Filter out garbage chunks (too short, whitespace-only, etc.)
+            // Lower thresholds for FAQ source type to preserve short answers
+            $isFaq = $this->knowledge->source_type === 'faq';
+            $minChars = $isFaq ? 20 : 50;
+            $minWords = $isFaq ? 3 : 5;
+
+            $chunks = [];
+            $skipped = 0;
+            foreach ($rawChunks as $chunk) {
+                $trimmed = trim($chunk);
+                $wordCount = str_word_count($trimmed);
+
+                if (mb_strlen($trimmed) < $minChars || $wordCount < $minWords) {
+                    $skipped++;
+                    continue;
+                }
+                $chunks[] = $trimmed;
+            }
+
+            if ($skipped > 0) {
+                Log::info('ProcessKnowledgeDocument: skipped low-quality chunks', [
+                    'knowledge_id' => $this->knowledge->id,
+                    'skipped' => $skipped,
+                    'kept' => count($chunks),
+                ]);
+            }
+
+            // If all chunks were filtered out, keep the original text as a single chunk
+            if (empty($chunks)) {
+                $chunks = [trim($text)];
+            }
 
             // Generate ALL embeddings BEFORE the transaction
             $embeddings = $this->generateEmbeddingsBatch($chunks);
 
             // Atomic: delete old chunks + create new chunks inside transaction
-            DB::transaction(function () use ($chunks, $embeddings) {
+            $embeddingModel = $this->getEmbeddingModel();
+
+            DB::transaction(function () use ($chunks, $embeddings, $embeddingModel) {
                 // Delete old chunks with same title (re-processing) using lockForUpdate
                 BotKnowledge::where('bot_id', $this->knowledge->bot_id)
                     ->where('title', $this->knowledge->title)
@@ -80,6 +114,7 @@ class ProcessKnowledgeDocument implements ShouldQueue
                             'content' => $chunk,
                             'chunk_index' => 0,
                             'status' => 'ready',
+                            'embedding_model' => $embeddingModel,
                         ]);
                         // Set embedding via raw query for pgvector
                         DB::statement(
@@ -96,6 +131,7 @@ class ProcessKnowledgeDocument implements ShouldQueue
                             'content' => $chunk,
                             'chunk_index' => $index,
                             'status' => 'ready',
+                            'embedding_model' => $embeddingModel,
                             'metadata' => $this->knowledge->metadata,
                         ]);
                         DB::statement(
@@ -119,6 +155,9 @@ class ProcessKnowledgeDocument implements ShouldQueue
                 'chunks_created' => $chunksCreated,
                 'elapsed_seconds' => $elapsedSeconds,
             ]);
+
+            // Invalidate RAG search cache so new knowledge is immediately available
+            app(\App\Services\KnowledgeSearchService::class)->invalidateCache($this->knowledge->bot_id);
 
             event(new KnowledgeDocumentProcessed($this->knowledge, $chunksCreated));
         } catch (\Exception $e) {
@@ -379,7 +418,7 @@ class ProcessKnowledgeDocument implements ShouldQueue
             // If a single paragraph is larger than maxTokens, split it by words
             if ($paraTokens > $maxTokens) {
                 foreach ($words as $word) {
-                    $wordTokens = max(1, (int) (strlen($word) / 4));
+                    $wordTokens = max(1, app(\App\Services\TokenizerService::class)->count($word));
                     if ($currentLength + $wordTokens > $maxTokens && !empty($currentWords)) {
                         $chunks[] = implode(' ', $currentWords);
 
@@ -406,15 +445,14 @@ class ProcessKnowledgeDocument implements ShouldQueue
     }
 
     /**
-     * Estimate token count for an array of words (rough: 1 token ~ 4 chars).
+     * Count tokens for an array of words using tiktoken.
      */
     private function estimateTokens(array $words): int
     {
-        $tokens = 0;
-        foreach ($words as $word) {
-            $tokens += max(1, (int) (strlen($word) / 4));
+        if (empty($words)) {
+            return 0;
         }
-        return $tokens;
+        return app(\App\Services\TokenizerService::class)->countWords($words);
     }
 
     /**
@@ -424,10 +462,11 @@ class ProcessKnowledgeDocument implements ShouldQueue
     {
         $result = [];
         $tokens = 0;
+        $tokenizer = app(\App\Services\TokenizerService::class);
 
         // Walk backwards through words collecting up to overlapTokens
         for ($i = count($words) - 1; $i >= 0; $i--) {
-            $wordTokens = max(1, (int) (strlen($words[$i]) / 4));
+            $wordTokens = max(1, $tokenizer->count($words[$i]));
             if ($tokens + $wordTokens > $overlapTokens) {
                 break;
             }
@@ -445,13 +484,19 @@ class ProcessKnowledgeDocument implements ShouldQueue
      * @return array Array of embedding vectors
      * @throws \RuntimeException On count mismatch or API failure
      */
+    private function getEmbeddingModel(): string
+    {
+        return config('knowledge.embedding_model', 'text-embedding-3-small');
+    }
+
     private function generateEmbeddingsBatch(array $chunks): array
     {
         $results = [];
+        $model = $this->getEmbeddingModel();
 
         foreach (array_chunk($chunks, 100) as $batch) {
             $response = OpenAI::embeddings()->create([
-                'model' => 'text-embedding-3-small',
+                'model' => $model,
                 'input' => $batch,
             ]);
 

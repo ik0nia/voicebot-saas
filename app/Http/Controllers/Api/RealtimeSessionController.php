@@ -127,7 +127,7 @@ class RealtimeSessionController extends Controller
             $query = $hasProducts
                 ? 'informații magazin, livrare, plată, contact, program'
                 : 'informații generale despre companie și servicii';
-            $knowledgeContext = $searchService->buildContext($bot->id, $query, 3, 3000);
+            $knowledgeContext = $searchService->buildContext($bot->id, $query, 2, 2000);
 
             if ($knowledgeContext) {
                 $botPrompt .= "\n\n" . $knowledgeContext;
@@ -213,6 +213,9 @@ class RealtimeSessionController extends Controller
             $sessionData = $response->json();
 
             // Create a Call record for logging
+            // Generate HMAC signature for this call — required for transcript/end endpoints
+            $callHmacSecret = bin2hex(random_bytes(16));
+
             $call = Call::create([
                 'tenant_id' => $bot->tenant_id,
                 'bot_id' => $bot->id,
@@ -224,6 +227,7 @@ class RealtimeSessionController extends Controller
                     'source' => $request->has('demo') ? 'demo' : 'test-vocal',
                     'session_id' => $sessionData['id'] ?? null,
                     'user_agent' => $request->userAgent(),
+                    'hmac_secret' => $callHmacSecret,
                 ],
             ]);
 
@@ -245,9 +249,13 @@ class RealtimeSessionController extends Controller
 
             $maxDuration = (int) ($bot->settings['max_call_duration'] ?? 1800);
 
+            // HMAC token the frontend must send with transcript/end requests
+            $callToken = hash_hmac('sha256', (string) $call->id, $callHmacSecret);
+
             $responseData = [
                 'token' => $sessionData['client_secret']['value'] ?? null,
                 'call_id' => $call->id,
+                'call_token' => $callToken,
                 'bot_id' => $bot->id,
                 'voice' => $voice,
                 'bot_name' => $bot->name,
@@ -272,11 +280,39 @@ class RealtimeSessionController extends Controller
     }
 
     /**
+     * Verify HMAC call_token for transcript/end endpoints.
+     * Falls back to accepting requests without token for backward compatibility
+     * with calls created before this security patch (they lack hmac_secret).
+     */
+    private function verifyCallToken(Request $request, Call $call): bool
+    {
+        $callToken = $request->header('X-Call-Token') ?? $request->input('call_token');
+        $hmacSecret = $call->metadata['hmac_secret'] ?? null;
+
+        // Calls created before security patch don't have hmac_secret — allow (backward compat)
+        if ($hmacSecret === null) {
+            return true;
+        }
+
+        if (empty($callToken)) {
+            return false;
+        }
+
+        $expected = hash_hmac('sha256', (string) $call->id, $hmacSecret);
+        return hash_equals($expected, $callToken);
+    }
+
+    /**
      * Save a transcript line (called from frontend during/after call).
      */
     public function saveTranscript(Request $request, Call $call): JsonResponse
     {
         $call = Call::withoutGlobalScopes()->findOrFail($call->id);
+
+        if (!$this->verifyCallToken($request, $call)) {
+            Log::warning('saveTranscript: invalid call_token', ['call_id' => $call->id, 'ip' => $request->ip()]);
+            return response()->json(['error' => 'Invalid call token'], 403);
+        }
 
         $request->validate([
             'role' => 'required|in:user,assistant',
@@ -370,6 +406,11 @@ class RealtimeSessionController extends Controller
     public function endCall(Request $request, Call $call): JsonResponse
     {
         $call = Call::withoutGlobalScopes()->findOrFail($call->id);
+
+        if (!$this->verifyCallToken($request, $call)) {
+            Log::warning('endCall: invalid call_token', ['call_id' => $call->id, 'ip' => $request->ip()]);
+            return response()->json(['error' => 'Invalid call token'], 403);
+        }
 
         if ($call->status === Call::STATUS_IN_PROGRESS) {
             // Prefer frontend-reported duration (accurate timer), fallback to server calculation

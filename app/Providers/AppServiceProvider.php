@@ -29,6 +29,9 @@ class AppServiceProvider extends ServiceProvider
                 ->withApiKey($apiKey)
                 ->make();
         });
+
+        // TokenizerService — singleton to avoid re-loading encoding on every call
+        $this->app->singleton(\App\Services\TokenizerService::class);
     }
 
     /**

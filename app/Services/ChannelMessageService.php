@@ -166,21 +166,15 @@ class ChannelMessageService
             // Apply centralized anti-hallucination guardrails
             $systemPrompt = PromptGuardrails::apply($systemPrompt);
 
-            // Build messages array with conversation history (last 20 messages)
-            $messages = [['role' => 'system', 'content' => $systemPrompt]];
+            // Build messages with automatic summarization for long conversations
+            $summaryService = app(ConversationSummaryService::class);
+            $messages = $summaryService->buildMessages($systemPrompt, $conversation, $messageText);
 
             $history = $conversation->messages()
                 ->orderBy('created_at', 'desc')
                 ->take(20)
                 ->get()
                 ->reverse();
-
-            foreach ($history as $msg) {
-                $messages[] = [
-                    'role' => $msg->direction === 'inbound' ? 'user' : 'assistant',
-                    'content' => $msg->content,
-                ];
-            }
 
             // Route to appropriate model with cost-awareness
             $conversationCost = $conversation->cost_cents ?? 0;

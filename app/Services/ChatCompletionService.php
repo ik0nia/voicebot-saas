@@ -34,10 +34,7 @@ class ChatCompletionService
 
     private const MAX_RETRIES = 3;
 
-    /**
-     * Approximate characters per token for estimation.
-     */
-    private const CHARS_PER_TOKEN = 4;
+    private ?TokenizerService $tokenizer = null;
 
     public function __construct(
         private readonly ?\Anthropic\Contracts\ClientContract $anthropicClient = null,
@@ -46,14 +43,27 @@ class ChatCompletionService
     /**
      * Send a chat completion request with retry, circuit breaker, telemetry, and token validation.
      *
+     * @param array $options Optional: ['tools' => [...], 'tool_choice' => 'auto']
      * @return array{content: string, model: string, provider: string, input_tokens: int, output_tokens: int, cost_cents: float}
      */
-    public function complete(array $messages, array $modelConfig, ?int $botId = null, ?int $tenantId = null): array
+    public function complete(array $messages, array $modelConfig, ?int $botId = null, ?int $tenantId = null, array $options = []): array
     {
         $provider = $modelConfig['provider'] ?? 'openai';
         $model = $modelConfig['model'];
         $maxTokens = $modelConfig['max_tokens'] ?? 500;
         $temperature = $modelConfig['temperature'] ?? 0.6;
+
+        // Cost control — enforce per-request limits
+        $costControl = app(CostControlService::class);
+        if (!$costControl->canCallLLM()) {
+            Log::warning('ChatCompletionService: LLM call limit reached for this request');
+            throw new ApiServiceException('Too many LLM calls in a single request', $provider, $model);
+        }
+
+        // Tenant daily cost check
+        if ($tenantId && !$costControl->checkTenantDailyLimit($tenantId)) {
+            throw new ApiServiceException('Daily cost limit reached for this tenant', $provider, $model);
+        }
 
         // Token count validation pre-API
         $estimatedTokens = $this->estimateTokenCount($messages);
@@ -85,16 +95,18 @@ class ChatCompletionService
             }
         }
 
-        // Response cache
+        // Response cache — uses normalized query for better hit rate
         $skipCache = false;
         $lastMessage = end($messages);
-        if ($lastMessage && str_contains($lastMessage['content'] ?? '', 'INFORMAȚII COMANDĂ')) {
+        $lastContent = $lastMessage['content'] ?? '';
+        if (str_contains($lastContent, 'INFORMAȚII COMANDĂ') || str_contains($lastContent, 'tool_call_id')) {
             $skipCache = true;
         }
 
         $cacheKey = null;
-        if (!$skipCache) {
-            $cacheKey = 'chat_completion_' . md5(json_encode([$model, $messages, $temperature]));
+        if (!$skipCache && $botId) {
+            $normalizer = app(QueryNormalizerService::class);
+            $cacheKey = $normalizer->cacheKey($botId, $lastContent);
             $cached = Cache::get($cacheKey);
             if ($cached) {
                 return $cached;
@@ -108,18 +120,28 @@ class ChatCompletionService
             try {
                 $result = match ($provider) {
                     'anthropic' => $this->callAnthropic($messages, $model, $maxTokens, $temperature),
-                    default     => $this->callOpenAI($messages, $model, $maxTokens, $temperature),
+                    default     => $this->callOpenAI($messages, $model, $maxTokens, $temperature, $options),
                 };
 
+                // Handle tool_calls — execute tools and continue conversation
+                if (!empty($result['tool_calls']) && $botId) {
+                    $result = $this->handleToolCalls($result, $messages, $model, $maxTokens, $temperature, $botId, $options);
+                }
+
                 $responseTimeMs = (int) ((microtime(true) - $startTime) * 1000);
+
+                // Cost tracking
+                $costControl->recordLLMCall($result['input_tokens'], $result['output_tokens'], $result['cost_cents']);
+                if ($tenantId) {
+                    $costControl->recordTenantCost($tenantId, $result['cost_cents']);
+                }
 
                 // Telemetry
                 $this->recordMetric($provider, $model, $result['input_tokens'], $result['output_tokens'], $result['cost_cents'], $responseTimeMs, 'success', null, $botId, $tenantId);
 
                 $this->recordSuccess($provider);
                 if ($cacheKey) {
-                    $ttl = str_contains($model, 'mini') ? 5 : 15;
-                    Cache::put($cacheKey, $result, now()->addMinutes($ttl));
+                    Cache::put($cacheKey, $result, now()->addMinutes(3));
                 }
                 return $result;
 
@@ -163,7 +185,7 @@ class ChatCompletionService
                 $this->recordSuccess($fallbackProvider);
 
                 if ($cacheKey) {
-                    Cache::put($cacheKey, $result, now()->addMinutes(5));
+                    Cache::put($cacheKey, $result, now()->addMinutes(3));
                 }
                 return $result;
 
@@ -263,27 +285,53 @@ class ChatCompletionService
     }
 
     /**
-     * Estimate token count from messages array.
+     * Count tokens from messages array using tiktoken.
      */
     public function estimateTokenCount(array $messages): int
     {
-        $totalChars = 0;
-        foreach ($messages as $msg) {
-            $totalChars += mb_strlen($msg['content'] ?? '');
-            $totalChars += 4; // role overhead
-        }
-        return (int) ceil($totalChars / self::CHARS_PER_TOKEN);
+        return $this->getTokenizer()->countMessages($messages);
     }
 
-    private function callOpenAI(array $messages, string $model, int $maxTokens, float $temperature): array
+    private function getTokenizer(): TokenizerService
+    {
+        if ($this->tokenizer === null) {
+            $this->tokenizer = app(TokenizerService::class);
+        }
+        return $this->tokenizer;
+    }
+
+    private function callOpenAI(array $messages, string $model, int $maxTokens, float $temperature, array $options = []): array
     {
         try {
-            $response = OpenAI::chat()->create([
+            $payload = [
                 'model' => $model,
                 'messages' => $messages,
                 'max_tokens' => $maxTokens,
                 'temperature' => $temperature,
-            ]);
+            ];
+
+            // Pass tools if provided — with strict guardrails
+            if (!empty($options['tools'])) {
+                $payload['tools'] = $options['tools'];
+                $payload['tool_choice'] = $options['tool_choice'] ?? 'auto';
+
+                // Inject tool-use guardrails into the system message
+                $toolGuardrail = "\n\nREGULI TOOL-URI:"
+                    . "\n- Folosește un tool DOAR dacă informația NU există deja în context."
+                    . "\n- Dacă contextul conține deja răspunsul, NU apela niciun tool."
+                    . "\n- Maximum 1 tool per răspuns."
+                    . "\n- Preferă contextul existent față de apelarea unui tool.";
+
+                foreach ($payload['messages'] as &$msg) {
+                    if (($msg['role'] ?? '') === 'system') {
+                        $msg['content'] .= $toolGuardrail;
+                        break;
+                    }
+                }
+                unset($msg);
+            }
+
+            $response = OpenAI::chat()->create($payload);
         } catch (\OpenAI\Exceptions\ErrorException $e) {
             throw $this->classifyException($e, 'openai', $model);
         } catch (\Throwable $e) {
@@ -294,6 +342,18 @@ class ChatCompletionService
         $inputTokens = $response->usage?->promptTokens ?? 0;
         $outputTokens = $response->usage?->completionTokens ?? 0;
 
+        // Capture tool_calls if present
+        $toolCalls = [];
+        if (isset($response->choices[0]?->message?->toolCalls)) {
+            foreach ($response->choices[0]->message->toolCalls as $tc) {
+                $toolCalls[] = [
+                    'id' => $tc->id,
+                    'name' => $tc->function->name,
+                    'arguments' => json_decode($tc->function->arguments, true) ?? [],
+                ];
+            }
+        }
+
         return [
             'content' => $content,
             'model' => $model,
@@ -301,6 +361,7 @@ class ChatCompletionService
             'input_tokens' => $inputTokens,
             'output_tokens' => $outputTokens,
             'cost_cents' => $this->calculateCost($model, $inputTokens, $outputTokens),
+            'tool_calls' => $toolCalls,
         ];
     }
 
@@ -434,6 +495,71 @@ class ChatCompletionService
             ]);
         } catch (\Exception $e) {
             Log::warning('ChatCompletionService: failed to record metric', ['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Execute tool calls and get the final response from the LLM.
+     * Max 1 round of tool calls to prevent infinite loops.
+     */
+    private function handleToolCalls(array $result, array $messages, string $model, int $maxTokens, float $temperature, int $botId, array $options): array
+    {
+        $toolRegistry = app(ToolRegistry::class);
+
+        // Limit to 1 tool call max — take only the first one
+        $toolCalls = array_slice($result['tool_calls'], 0, 1);
+
+        // Build the assistant message with tool_calls (OpenAI format)
+        $assistantMessage = ['role' => 'assistant', 'content' => $result['content'] ?? null, 'tool_calls' => []];
+        foreach ($toolCalls as $tc) {
+            $assistantMessage['tool_calls'][] = [
+                'id' => $tc['id'],
+                'type' => 'function',
+                'function' => [
+                    'name' => $tc['name'],
+                    'arguments' => json_encode($tc['arguments']),
+                ],
+            ];
+        }
+        $messages[] = $assistantMessage;
+
+        // Execute tool and add result
+        foreach ($toolCalls as $tc) {
+            $startTime = microtime(true);
+            $toolResult = $toolRegistry->execute($tc['name'], $botId, $tc['arguments']);
+            $durationMs = (int) ((microtime(true) - $startTime) * 1000);
+            $hasError = isset($toolResult['error']);
+
+            $messages[] = [
+                'role' => 'tool',
+                'tool_call_id' => $tc['id'],
+                'content' => json_encode($toolResult, JSON_UNESCAPED_UNICODE),
+            ];
+
+            Log::info('ChatCompletionService: tool executed', [
+                'tool' => $tc['name'],
+                'bot_id' => $botId,
+                'args' => $tc['arguments'],
+                'duration_ms' => $durationMs,
+                'success' => !$hasError,
+            ]);
+        }
+
+        // Second LLM call with tool results — no tools this time to prevent loops
+        try {
+            $finalResult = $this->callOpenAI($messages, $model, $maxTokens, $temperature);
+            // Merge token counts
+            $finalResult['input_tokens'] += $result['input_tokens'];
+            $finalResult['output_tokens'] += $result['output_tokens'];
+            $finalResult['cost_cents'] += $result['cost_cents'];
+            return $finalResult;
+        } catch (\Throwable $e) {
+            Log::warning('ChatCompletionService: tool follow-up call failed', ['error' => $e->getMessage()]);
+            // Return the original content if available, otherwise rethrow
+            if (!empty($result['content'])) {
+                return $result;
+            }
+            throw $e;
         }
     }
 

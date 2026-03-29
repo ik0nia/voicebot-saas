@@ -21,6 +21,7 @@ class BotKnowledge extends Model
         'title',
         'content',
         'status',
+        'embedding_model',
         'chunk_index',
         'metadata',
     ];

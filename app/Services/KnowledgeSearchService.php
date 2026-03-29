@@ -36,7 +36,15 @@ class KnowledgeSearchService
                 return [];
             }
 
-            $threshold = config('knowledge.similarity_threshold', 0.68);
+            // Cache search results for 5 minutes to avoid repeated embedding + DB queries
+            $version = Cache::get("knowledge_version_{$botId}", 0);
+            $cacheKey = "rag_search_{$botId}_{$version}_" . md5($query . $limit . json_encode($filters));
+            $cached = Cache::get($cacheKey);
+            if ($cached !== null) {
+                return $cached;
+            }
+
+            $threshold = config('knowledge.similarity_threshold', 0.62);
             $ftsWeight = config('knowledge.fts_weight', 1.5);
 
             $queryEmbedding = $this->getQueryEmbedding($query, $botId);
@@ -168,6 +176,46 @@ class KnowledgeSearchService
                 }
             }
 
+            // Business-aware re-scoring: boost results by business relevance
+            foreach ($deduplicated as &$row) {
+                $businessScore = 0;
+
+                // Boost recent content (created in last 30 days)
+                if (isset($row->created_at) && strtotime($row->created_at) > strtotime('-30 days')) {
+                    $businessScore += 0.05;
+                }
+
+                // Boost FAQ-type content (short, high-value answers)
+                if (($row->source_type ?? '') === 'faq') {
+                    $businessScore += 0.08;
+                }
+
+                // Boost manual/upload content (curated by human, higher quality)
+                if (in_array($row->source_type ?? '', ['upload', 'manual'])) {
+                    $businessScore += 0.03;
+                }
+
+                // Boost high-relevance title matches (title already weighted 3x in FTS, add small extra)
+                $queryWords = preg_split('/\s+/', mb_strtolower($query));
+                $titleLower = mb_strtolower($row->title ?? '');
+                $titleMatches = 0;
+                foreach ($queryWords as $w) {
+                    if (mb_strlen($w) > 2 && str_contains($titleLower, $w)) {
+                        $titleMatches++;
+                    }
+                }
+                if ($titleMatches >= 2) {
+                    $businessScore += 0.04;
+                }
+
+                $row->business_score = $businessScore;
+                $row->final_score = ($row->rrf_score ?? 0) + $businessScore;
+            }
+            unset($row);
+
+            // Re-sort by final_score
+            usort($deduplicated, fn($a, $b) => ($b->final_score ?? 0) <=> ($a->final_score ?? 0));
+
             // Optional LLM reranking on deduplicated candidates
             $reranked = false;
             if (config('knowledge.reranking.enabled', false) && count($deduplicated) > $limit) {
@@ -178,7 +226,20 @@ class KnowledgeSearchService
                 }
             }
 
-            $finalResults = array_slice($deduplicated, 0, $limit);
+            $finalResults = array_values(array_slice($deduplicated, 0, $limit));
+
+            // Quality gate: if the best result is poor quality, return nothing
+            // Better no context than misleading context
+            if (!empty($finalResults)) {
+                $topSimilarity = max(array_column($finalResults, 'similarity'));
+                $topRrf = max(array_column($finalResults, 'rrf_score'));
+                if ($topSimilarity < 0.50 && $topRrf < 0.025) {
+                    $finalResults = [];
+                }
+            }
+
+            // Cache results for 5 minutes
+            Cache::put($cacheKey, $finalResults, now()->addMinutes(5));
 
             // Structured RAG quality logging
             $this->logSearchMetrics($botId, $query, $results, $finalResults, [
@@ -436,11 +497,15 @@ class KnowledgeSearchService
     /**
      * Invalidate knowledge cache for a specific bot.
      */
+    /**
+     * Invalidate all search caches for a bot.
+     * Bumps the version key so all rag_search_{botId}_{version}_* keys become stale.
+     */
     public function invalidateCache(int $botId): void
     {
-        Cache::put("knowledge_version_{$botId}", now()->timestamp, now()->addDays(30));
-        Cache::forget("knowledge_search_{$botId}");
-        Log::info('KnowledgeSearch: cache invalidated', ['bot_id' => $botId]);
+        $newVersion = now()->timestamp;
+        Cache::put("knowledge_version_{$botId}", $newVersion, now()->addDays(30));
+        Log::info('KnowledgeSearch: cache invalidated', ['bot_id' => $botId, 'version' => $newVersion]);
     }
 
     /**
@@ -449,7 +514,7 @@ class KnowledgeSearchService
     public function validateDocumentTokens(string $content): bool
     {
         $maxTokens = config('knowledge.max_document_tokens', 100000);
-        $estimatedTokens = (int) ceil(mb_strlen($content) / 4);
+        $estimatedTokens = app(TokenizerService::class)->count($content);
 
         if ($estimatedTokens > $maxTokens) {
             Log::warning('KnowledgeSearch: document exceeds token limit', [

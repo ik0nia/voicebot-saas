@@ -12,6 +12,7 @@ class ReindexKnowledge extends Command
         {--bot= : Reindex only for a specific bot ID}
         {--source-type= : Reindex only a specific source type (url, text, pdf, etc.)}
         {--force : Re-process even if status is already ready}
+        {--model-mismatch : Reindex only chunks whose embedding_model differs from current config}
         {--dry-run : Show what would be reindexed without processing}
         {--batch=50 : Number of documents to dispatch per batch}';
 
@@ -30,7 +31,16 @@ class ReindexKnowledge extends Command
             $query->where('source_type', $sourceType);
         }
 
-        if (!$this->option('force')) {
+        if ($this->option('model-mismatch')) {
+            // Reindex chunks embedded with a different model than currently configured
+            $currentModel = config('knowledge.embedding_model', 'text-embedding-3-small');
+            $query->where('status', 'ready')
+                ->where(function ($q) use ($currentModel) {
+                    $q->where('embedding_model', '!=', $currentModel)
+                        ->orWhereNull('embedding_model');
+                });
+            $this->info("Filtering for embedding model mismatch (current: {$currentModel})");
+        } elseif (!$this->option('force')) {
             // Only reindex failed or pending documents by default
             $query->whereIn('status', ['pending', 'failed']);
         }

@@ -22,6 +22,8 @@ class PromptBuilder
     private string $knowledgeContext = '';
     private string $productContext = '';
     private string $extraContext = '';
+    private string $summaryContext = '';
+    private string $confidence = 'high';
     private bool $isVoice = false;
     private Bot $bot;
 
@@ -56,6 +58,15 @@ class PromptBuilder
     }
 
     /**
+     * Set pre-built knowledge context directly.
+     */
+    public function withKnowledgeContext(string $context): self
+    {
+        $this->knowledgeContext = $context;
+        return $this;
+    }
+
+    /**
      * Add product search context if bot has products.
      */
     public function withProducts(string $query, int $limit = 5): self
@@ -74,6 +85,7 @@ class PromptBuilder
                 if ($p->sale_price && $p->regular_price && $p->sale_price < $p->regular_price) {
                     $this->productContext .= " (reducere de la {$p->regular_price})";
                 }
+                $this->productContext .= " | Stoc: " . ($p->stock_status === 'instock' ? 'Da' : 'Pe comandă');
                 $this->productContext .= "\n";
             }
         }
@@ -82,11 +94,30 @@ class PromptBuilder
     }
 
     /**
-     * Add arbitrary extra context (order info, product count, etc.).
+     * Add conversation summary context.
+     */
+    public function withSummary(string $summary): self
+    {
+        $this->summaryContext = $summary;
+        return $this;
+    }
+
+    /**
+     * Add arbitrary extra context (order info, policy, etc.).
      */
     public function withExtra(string $context): self
     {
         $this->extraContext .= $context;
+        return $this;
+    }
+
+    /**
+     * Set the confidence level (from ConfidenceService).
+     * Affects prompt instructions for low/medium confidence.
+     */
+    public function withConfidence(string $level): self
+    {
+        $this->confidence = $level;
         return $this;
     }
 
@@ -100,28 +131,127 @@ class PromptBuilder
     }
 
     /**
-     * Assemble the final prompt string.
-     * Order: base → knowledge → products → extra → guardrails
+     * Assemble the final prompt string with context budget enforcement.
+     * Priority order: products > knowledge > summary > extra
+     * Guardrails always last (highest priority for LLM).
      */
     public function build(): string
     {
+        $channel = $this->isVoice ? 'voice' : 'chat';
+
+        // Apply budget to variable-length context blocks
+        $budgetService = app(ContextBudgetService::class);
+        $blocks = $budgetService->fit([
+            'products'  => $this->productContext,
+            'knowledge' => $this->knowledgeContext,
+            'summary'   => $this->summaryContext,
+            'history'   => '', // history is managed separately by ConversationSummaryService
+        ], $channel);
+
         $prompt = $this->base;
 
-        if (!empty($this->knowledgeContext)) {
-            $prompt .= "\n\n" . $this->knowledgeContext;
+        // Log context token distribution for debugging
+        $tokenizer = app(TokenizerService::class);
+        $contextTokens = [
+            'products' => !empty($blocks['products']) ? $tokenizer->count($blocks['products']) : 0,
+            'knowledge' => !empty($blocks['knowledge']) ? $tokenizer->count($blocks['knowledge']) : 0,
+            'summary' => !empty($blocks['summary']) ? $tokenizer->count($blocks['summary']) : 0,
+            'history' => 0,
+        ];
+
+        try {
+            app(DecisionLoggerService::class)->logContextTokens($contextTokens);
+        } catch (\Throwable $e) {
+            // DecisionLogger may not be initialized (e.g., during eval)
         }
 
-        if (!empty($this->productContext)) {
-            $prompt .= "\n\n" . $this->productContext;
+        if (!empty($blocks['products'])) {
+            $prompt .= "\n\n" . $blocks['products'];
+        }
+
+        if (!empty($blocks['knowledge'])) {
+            $prompt .= "\n\n" . $blocks['knowledge'];
+        }
+
+        if (!empty($blocks['summary'])) {
+            $prompt .= "\n\nRezumatul conversației anterioare:\n" . $blocks['summary'];
         }
 
         if (!empty($this->extraContext)) {
             $prompt .= "\n\n" . $this->extraContext;
         }
 
+        // Response quality instructions (before guardrails, after context)
+        $prompt .= self::responseQualityInstructions($this->isVoice);
+
+        // Confidence-based prompt modifier
+        if ($this->confidence !== 'high') {
+            $confidenceService = app(ConfidenceService::class);
+            $prompt .= $confidenceService->getPromptModifier($this->confidence);
+        }
+
+        // Fallback behavior instructions
+        $hasContext = !empty($blocks['products']) || !empty($blocks['knowledge']);
+        if (!$hasContext) {
+            $prompt .= self::fallbackInstructions($this->bot);
+        }
+
         // Guardrails always last (highest priority for LLM)
         $prompt = PromptGuardrails::apply($prompt, $this->isVoice);
 
         return $prompt;
+    }
+
+    /**
+     * Context-aware fallback instructions when no relevant data was found.
+     */
+    private static function fallbackInstructions(Bot $bot): string
+    {
+        $hasProducts = WooCommerceProduct::where('bot_id', $bot->id)->exists();
+
+        $base = "\n\nCÂND NU AI INFORMAȚII SUFICIENTE:";
+        $base .= "\n- NU spune doar 'Nu știu' sau 'Nu am informații'.";
+        $base .= "\n- Explică pe scurt ce ai verificat și de ce nu ai găsit.";
+
+        if ($hasProducts) {
+            // E-commerce bot
+            $base .= "\n- Sugerează produse similare sau categorii relevante.";
+            $base .= "\n- Întreabă ce anume caută clientul mai specific (brand, dimensiune, buget).";
+            $base .= "\n- Propune: 'Pot căuta și alte variante dacă îmi spui mai multe detalii.'";
+        } else {
+            // Service/general bot
+            $base .= "\n- Sugerează contactul direct: telefon, email, sau programare.";
+            $base .= "\n- Întreabă o întrebare de clarificare specifică.";
+            $base .= "\n- Propune: 'Un coleg te poate ajuta cu mai multe detalii. Vrei să te pun în legătură?'";
+        }
+
+        return $base;
+    }
+
+    /**
+     * Professional response formatting instructions.
+     */
+    private static function responseQualityInstructions(bool $isVoice): string
+    {
+        if ($isVoice) {
+            return implode("\n", [
+                '',
+                'STIL RĂSPUNS:',
+                '- Maxim 2 propoziții scurte și directe.',
+                '- NU enumera liste. Dacă sunt mai multe opțiuni, menționează cea mai relevantă și întreabă dacă vrea altele.',
+                '- Dacă întrebarea e complexă, pune o întrebare de clarificare în loc să dai un răspuns lung.',
+                '- Termină cu o întrebare scurtă care ghidează conversația.',
+            ]);
+        }
+
+        return implode("\n", [
+            '',
+            'STIL RĂSPUNS:',
+            '- Răspunsuri clare, structurate și concise.',
+            '- Când recomanzi produse, evidențiază beneficiile specifice, nu descrieri generice.',
+            '- Dacă nu ești sigur ce caută clientul, pune o întrebare de clarificare.',
+            '- Ghidează clientul către pasul următor (comandă, contact, vizită magazin).',
+            '- NU repeta informații deja afișate în carduri de produse.',
+        ]);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Bot;
+use App\Models\BotKnowledge;
 use App\Models\Channel;
 use App\Models\Conversation;
 use App\Models\Message;
@@ -455,27 +456,11 @@ class ChatbotApiController extends Controller
             // Apply centralized anti-hallucination guardrails (ALWAYS LAST — highest priority)
             $systemPrompt = PromptGuardrails::apply($systemPrompt);
 
-            $messages = [
-                ['role' => 'system', 'content' => $systemPrompt],
-            ];
+            // Build messages with automatic summarization for long conversations
+            $summaryService = app(\App\Services\ConversationSummaryService::class);
+            $messages = $summaryService->buildMessages($systemPrompt, $conversation, $userMessage);
 
-            // Conversation history — limited by tokens, not message count
-            $history = Message::where('conversation_id', $conversation->id)
-                ->orderByDesc('id')
-                ->limit(20)
-                ->get()
-                ->reverse()
-                ->values()
-                ->slice(0, -1);
-
-            foreach ($history as $msg) {
-                $messages[] = [
-                    'role' => $msg->direction === 'inbound' ? 'user' : 'assistant',
-                    'content' => $msg->content,
-                ];
-            }
-
-            $messages[] = ['role' => 'user', 'content' => $userMessage];
+            $history = Message::where('conversation_id', $conversation->id)->orderByDesc('id')->limit(20)->get();
 
             // Truncate history to fit within 95% of context window
             $router = app(ChatModelRouter::class);
@@ -491,10 +476,21 @@ class ChatbotApiController extends Controller
             $logger->set('model', $modelConfig['model']);
             $logger->set('prompt_version', $promptVersion?->version);
 
+            // Build tool definitions for function calling (feature flag: bot.settings.v2_tool_calling)
+            // Disabled by default — enable per bot after testing to avoid response quality regression
+            $toolOptions = [];
+            if (!empty($bot->settings['v2_tool_calling'])) {
+                $toolRegistry = app(\App\Services\ToolRegistry::class);
+                $toolDefs = $toolRegistry->getToolDefinitions($bot->id);
+                if (!empty($toolDefs)) {
+                    $toolOptions = ['tools' => $toolDefs, 'tool_choice' => 'auto'];
+                }
+            }
+
             // Call AI — with cascading fallback
             $chatService = app(ChatCompletionService::class);
             try {
-                $result = $chatService->complete($messages, $modelConfig, $bot->id, $bot->tenant_id);
+                $result = $chatService->complete($messages, $modelConfig, $bot->id, $bot->tenant_id, $toolOptions);
             } catch (\Exception $e) {
                 // Cascading fallback: retry without knowledge context
                 Log::warning('Chatbot: fallback level 1 — retrying without knowledge', [

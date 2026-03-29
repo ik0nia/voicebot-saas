@@ -37,10 +37,12 @@ class PromptGuardrails
         return implode("\n", [
             '',
             'REGULI SUPLIMENTARE VOCALE:',
-            '- Răspunde SCURT: maxim 1-2 propoziții simple și directe.',
-            '- NU enumera liste lungi. Dacă sunt multe opțiuni, menționează 2-3 și întreabă dacă vrea mai multe.',
+            '- Răspunde SCURT: maxim 2 propoziții simple și directe.',
+            '- NU enumera liste sau opțiuni. Menționează doar cea mai relevantă opțiune.',
             '- Când spui prețuri, pronunță-le în cuvinte: "douăzeci și cinci de lei", nu "25 RON".',
+            '- Dacă întrebarea e complexă, pune o întrebare de clarificare ÎN LOC de un răspuns lung.',
             '- Dacă mesajul transcris nu are sens (erori de transcriere), cere politicos reformularea.',
+            '- Termină ÎNTOTDEAUNA cu o întrebare scurtă care ghidează conversația.',
         ]);
     }
 

@@ -30,11 +30,75 @@ class IntentOrchestratorService
     ) {}
 
     /**
+     * Decide which data sources to use based on detected intents.
+     * Avoids unnecessary RAG/product calls for trivial or clear-intent messages.
+     *
+     * @return array{use_rag: bool, use_products: bool, use_tools: bool, rag_limit: int}
+     */
+    public function decideDataSources(array $intents, ?string $queryComplexity = null): array
+    {
+        $decision = [
+            'use_rag' => false,
+            'use_products' => false,
+            'use_tools' => false,
+            'rag_limit' => 3,
+            'complexity' => $queryComplexity ?? 'medium',
+        ];
+
+        // Greeting/thanks — no data sources needed
+        $intentNames = array_map(fn($i) => $i->name, $intents);
+        if (in_array('greeting', $intentNames) || in_array('thanks', $intentNames)) {
+            return $decision;
+        }
+
+        // Handoff — no data sources, just handoff context
+        if (in_array('handoff_intent', $intentNames)) {
+            return $decision;
+        }
+
+        // Simple queries (from QueryComplexityService) — skip RAG
+        if ($queryComplexity === 'simple') {
+            return $decision;
+        }
+
+        foreach ($intents as $intent) {
+            if (in_array($intent->name, ['product_search', 'category_recommendation'])) {
+                $decision['use_products'] = true;
+                if ($intent->confidence < 0.7) {
+                    $decision['use_rag'] = true;
+                    $decision['rag_limit'] = 2;
+                }
+            }
+
+            if ($intent->name === 'knowledge_query') {
+                $decision['use_rag'] = true;
+                // Complex queries get more chunks
+                $decision['rag_limit'] = match ($queryComplexity) {
+                    'complex' => 5,
+                    'simple' => 0,
+                    default => $intent->confidence >= 0.7 ? 4 : 2,
+                };
+            }
+
+            if ($intent->name === 'order_lookup') {
+                $decision['use_tools'] = true;
+            }
+        }
+
+        return $decision;
+    }
+
+    /**
      * Analyze message and build orchestration plan with all detected intents.
      */
     public function plan(string $message, Conversation $conversation, Bot $bot): OrchestratorPlan
     {
         $intents = $this->detectAllIntents($message);
+
+        // Decision logging
+        $decisionLogger = app(DecisionLoggerService::class);
+        $decisionLogger->startRequest($bot->id, $message);
+        $decisionLogger->logIntents($intents);
 
         // Track detected intents
         foreach ($intents as $intent) {
@@ -64,7 +128,29 @@ class IntentOrchestratorService
     {
         $result = new OrchestratorResult();
 
+        // Query complexity drives orchestration decisions
+        $complexityService = app(QueryComplexityService::class);
+        $complexity = $complexityService->classify($userMessage);
+        $dataSources = $this->decideDataSources($plan->intents, $complexity);
+
+        // Log data source decisions
+        $decisionLogger = app(DecisionLoggerService::class);
+        $decisionLogger->logDataSources($dataSources);
+
         foreach ($plan->pipelines as $pipeline) {
+            // Skip pipelines not needed by decision logic
+            $skip = match ($pipeline->name) {
+                'knowledge' => !$dataSources['use_rag'],
+                'product_search', 'recommendation' => !$dataSources['use_products'],
+                default => false,
+            };
+
+            if ($skip) {
+                $pipeline->durationMs = 0;
+                $result->intentsExecuted[] = array_merge($pipeline->toArray(), ['skipped' => true]);
+                continue;
+            }
+
             $start = microtime(true);
 
             try {
@@ -72,7 +158,7 @@ class IntentOrchestratorService
                     'order_lookup' => $this->executeOrderLookup($bot->id, $pipeline, $result, $userMessage),
                     'product_search' => $this->executeProductSearch($bot->id, $pipeline, $result),
                     'recommendation' => $this->executeRecommendation($bot->id, $pipeline, $result),
-                    'knowledge' => $this->executeKnowledge($bot->id, $pipeline, $result),
+                    'knowledge' => $this->executeKnowledge($bot->id, $pipeline, $result, $dataSources['rag_limit']),
                     default => null,
                 };
             } catch (\Throwable $e) {
@@ -273,10 +359,9 @@ class IntentOrchestratorService
         $task->resultsCount = count($result->products);
     }
 
-    private function executeKnowledge(int $botId, PipelineTask $task, OrchestratorResult $result): void
+    private function executeKnowledge(int $botId, PipelineTask $task, OrchestratorResult $result, int $limit = 5): void
     {
-        // Skip if greeting/thanks (no knowledge needed)
-        $context = $this->knowledge->buildContext($botId, $task->params['query'] ?? '', 5);
+        $context = $this->knowledge->buildContext($botId, $task->params['query'] ?? '', $limit);
         if ($context) {
             $result->knowledgeContext = $context;
         }
