@@ -52,6 +52,7 @@ class CallbackController extends Controller
         ]);
 
         // Create or find lead
+        // Create or update lead with pipeline stage
         $lead = Lead::updateOrCreate(
             ['tenant_id' => $bot->tenant_id, 'phone' => $validated['phone']],
             [
@@ -60,15 +61,22 @@ class CallbackController extends Controller
                 'email' => $validated['email'] ?? null,
                 'conversation_id' => $validated['conversation_id'] ?? null,
                 'session_id' => $validated['session_id'] ?? null,
-                'status' => 'qualified',
                 'qualification_score' => 60,
                 'capture_source' => $validated['source'] ?? 'service_page',
                 'capture_reason' => 'callback_request',
+                'source_page_url' => $validated['source_page_url'] ?? null,
                 'gdpr_consent' => true,
             ]
         );
 
-        // Create callback request
+        // Advance lead to 'scheduled' in pipeline
+        $lead->scheduleCallback(
+            $validated['service_type'] ?? null,
+            $validated['preferred_date'] ?? null,
+            $validated['preferred_time_slot'] ?? null
+        );
+
+        // Also create callback_request record (activity log)
         $callback = CallbackRequest::create([
             'tenant_id' => $bot->tenant_id,
             'bot_id' => $bot->id,
