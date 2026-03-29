@@ -4,8 +4,9 @@ namespace App\Services\Connectors;
 
 use App\Models\BotKnowledge;
 use App\Models\KnowledgeConnector;
-use App\Jobs\ProcessKnowledgeDocument;
+use App\Jobs\ProcessKnowledgeBatch;
 use App\Services\Security\SsrfGuard;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -31,9 +32,28 @@ class WooCommerceConnectorService
         }
     }
 
+    /**
+     * Sync products from WooCommerce.
+     *
+     * ARCHITECTURE: This method ONLY creates/updates BotKnowledge records with status=pending.
+     * It does NOT dispatch individual embedding jobs. Embedding processing is handled by:
+     * - `knowledge:process` cron command (runs every minute)
+     * - ProcessKnowledgeBatch job (controlled batching on 'knowledge' queue)
+     *
+     * This prevents queue explosion when syncing thousands of products.
+     */
     public function sync(KnowledgeConnector $connector): int
     {
         SsrfGuard::validateUrl($connector->site_url);
+
+        // SYNC LOCK: prevent concurrent syncs for same connector
+        $lockKey = "wc_sync_lock_{$connector->id}";
+        $lock = Cache::lock($lockKey, 1800); // 30 min max
+
+        if (!$lock->get()) {
+            Log::warning('WooCommerce sync: already in progress', ['connector_id' => $connector->id]);
+            throw new \RuntimeException('Sincronizarea este deja în curs. Vă rugăm așteptați.');
+        }
 
         $connector->update(['status' => 'syncing']);
         $imported = 0;
@@ -69,7 +89,8 @@ class WooCommerceConnectorService
                     $syncedProductIds[] = $wcProductId;
 
                     // Idempotent: update existing or create new
-                    $knowledge = BotKnowledge::updateOrCreate(
+                    // Status is set to 'pending' — embedding will be processed by knowledge:process cron
+                    BotKnowledge::updateOrCreate(
                         [
                             'bot_id' => $connector->bot_id,
                             'source_type' => 'connector',
@@ -89,7 +110,7 @@ class WooCommerceConnectorService
                         ]
                     );
 
-                    ProcessKnowledgeDocument::dispatch($knowledge);
+                    // NO dispatch here! Batched processing via knowledge:process cron.
                     $imported++;
                 }
 
@@ -99,40 +120,58 @@ class WooCommerceConnectorService
 
             // Clean up products that no longer exist in WooCommerce
             if (!empty($syncedProductIds)) {
-                $stale = BotKnowledge::where('bot_id', $connector->bot_id)
+                $deleted = BotKnowledge::where('bot_id', $connector->bot_id)
                     ->where('source_type', 'connector')
                     ->where('source_id', $connector->id)
+                    ->whereNotNull('metadata')
                     ->get()
                     ->filter(function ($k) use ($syncedProductIds) {
                         $wcId = $k->metadata['wc_product_id'] ?? null;
                         return $wcId && !in_array($wcId, $syncedProductIds);
                     });
 
-                if ($stale->count() > 0) {
-                    BotKnowledge::whereIn('id', $stale->pluck('id'))->delete();
+                if ($deleted->count() > 0) {
+                    BotKnowledge::whereIn('id', $deleted->pluck('id'))->delete();
                     Log::info('WooCommerce sync: removed stale products', [
                         'connector_id' => $connector->id,
-                        'removed' => $stale->count(),
+                        'removed' => $deleted->count(),
                     ]);
                 }
             }
+
+            // Initialize sync progress for UI
+            Cache::put("knowledge_sync_progress_{$connector->bot_id}", [
+                'processed' => 0,
+                'total' => $imported,
+                'pending' => $imported,
+                'ready' => 0,
+                'started_at' => now()->toIso8601String(),
+                'completed' => false,
+            ], now()->addHours(2));
 
             $connector->update([
                 'status' => 'connected',
                 'last_synced_at' => now(),
                 'sync_settings' => array_merge($connector->sync_settings ?? [], [
                     'last_sync_count' => $imported,
-                    'total_products' => BotKnowledge::where('bot_id', $connector->bot_id)
-                        ->where('source_type', 'connector')
-                        ->where('source_id', $connector->id)
-                        ->where('status', 'ready')
-                        ->count(),
+                    'total_products' => $imported,
                 ]),
+            ]);
+
+            // Dispatch first batch immediately (rest handled by cron)
+            ProcessKnowledgeBatch::dispatch($connector->bot_id, 50);
+
+            Log::info('WooCommerce sync: completed, first batch dispatched', [
+                'connector_id' => $connector->id,
+                'bot_id' => $connector->bot_id,
+                'imported' => $imported,
             ]);
 
         } catch (\Exception $e) {
             $connector->update(['status' => 'error']);
             throw $e;
+        } finally {
+            $lock->release();
         }
 
         return $imported;

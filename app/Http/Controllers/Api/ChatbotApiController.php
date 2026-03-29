@@ -13,9 +13,14 @@ use App\Services\ChatCompletionService;
 use App\Services\ChatModelRouter;
 use App\Services\IntentDetectionService;
 use App\Services\KnowledgeSearchService;
+use App\Services\PlanLimitService;
+use App\Services\ConversationEventService;
+use App\Services\EventTaxonomy;
 use App\Services\ProductContextService;
+use App\Services\PromptGuardrails;
 use App\Services\TokenCounterService;
 use App\Models\BotPromptVersion;
+use App\Models\Tenant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -81,6 +86,18 @@ class ChatbotApiController extends Controller
             return response()->json(['error' => 'Bot inactiv.'], 403);
         }
 
+        // Check message limit
+        $tenant = Tenant::find($bot->tenant_id);
+        if ($tenant) {
+            $limitCheck = app(PlanLimitService::class)->canSendMessage($tenant);
+            if (!$limitCheck->allowed) {
+                return response()->json([
+                    'error' => 'Limita de mesaje a fost atinsă. Contactați administratorul pentru upgrade.',
+                    'limit_reached' => true,
+                ], 429);
+            }
+        }
+
         // Find or create conversation
         // Only allow resuming an existing session if the client provides a valid HMAC token
         $conversation = null;
@@ -99,10 +116,17 @@ class ChatbotApiController extends Controller
                     $lastActivity = $lastMessage ? $lastMessage->created_at : $conversation->created_at;
 
                     if ($lastActivity->diffInMinutes(now()) >= 10) {
+                        // V2: Track session_ended + derive outcomes for the expired session
+                        $expiredConvId = $conversation->id;
                         $conversation->update([
                             'status' => 'completed',
                             'ended_at' => $lastActivity,
                         ]);
+
+                        // Dispatch outcome derivation for the completed session
+                        \App\Jobs\DeriveConversationOutcomes::dispatch($expiredConvId)
+                            ->delay(now()->addSeconds(5));
+
                         $conversation = null;
                         $sessionExpired = true;
                     }
@@ -120,6 +144,7 @@ class ChatbotApiController extends Controller
                 'channel_id' => $channel->id,
                 'external_conversation_id' => $sessionId,
                 'contact_identifier' => $request->ip(),
+                'visitor_id' => $request->input('visitor_id'),
                 'status' => 'active',
                 'metadata' => [
                     'user_agent' => $request->userAgent(),
@@ -127,6 +152,16 @@ class ChatbotApiController extends Controller
                 ],
                 'started_at' => now(),
             ]);
+
+            // V2: Track session start
+            $eventService = app(ConversationEventService::class);
+            $eventCtx = $eventService->buildContext($bot->tenant_id, $bot->id, $channel->id, $conversation->id, $sessionId);
+            $eventService->track(EventTaxonomy::SESSION_STARTED, [
+                'visitor_id' => $request->input('visitor_id'),
+                'user_agent' => $request->userAgent(),
+            ], array_merge($eventCtx, [
+                'idempotency_key' => $eventService->idempotencyKey((string) $conversation->id, 'session_started'),
+            ]));
         }
 
         // Save user message
@@ -140,70 +175,120 @@ class ChatbotApiController extends Controller
 
         $conversation->increment('messages_count');
 
-        // Check if this is an order query
-        $orderLookup = app(\App\Services\OrderLookupService::class);
-        $orderParams = $orderLookup->detectOrderQuery($userMessage);
-        $orderContext = '';
+        // =====================================================================
+        // INTENT DETECTION & PIPELINE EXECUTION
+        // Feature flag: bot.settings.v2_orchestrator (default: false)
+        // When ON:  multi-intent orchestrator handles all pipelines
+        // When OFF: legacy first-match-wins pipeline (unchanged behavior)
+        // =====================================================================
+        $useOrchestrator = !empty($bot->settings['v2_orchestrator']);
+        $products = [];
+        $extraContext = '';
+        $detectedIntents = null;
+        $pipelinesExecuted = null;
 
-        // If not detected as order query, check if recent conversation was about orders
-        // and the user is now providing order details (number, email, phone)
-        if ($orderParams === null) {
-            $recentBotMessage = Message::where('conversation_id', $conversation->id)
-                ->where('direction', 'outbound')
-                ->orderByDesc('id')
-                ->value('content');
+        if ($useOrchestrator) {
+            try {
+                $orchestrator = app(\App\Services\IntentOrchestratorService::class);
+                $plan = $orchestrator->plan($userMessage, $conversation, $bot);
+                $orchestratorResult = $orchestrator->execute($plan, $bot, $userMessage, $conversation);
 
-            if ($recentBotMessage && (
-                str_contains($recentBotMessage, 'numărul comenzii') ||
-                str_contains($recentBotMessage, 'numarul comenzii') ||
-                str_contains($recentBotMessage, 'număr de comandă') ||
-                str_contains($recentBotMessage, 'emailul') ||
-                str_contains($recentBotMessage, 'telefonul')
-            )) {
-                // Bot just asked for order details — extract params from the follow-up
-                $orderParams = $orderLookup->extractOrderParams($userMessage);
+                $products = $orchestratorResult->products;
+                $extraContext = $orchestratorResult->getMergedContext();
+                $detectedIntents = array_map(fn($i) => $i->toArray(), $plan->intents);
+                $pipelinesExecuted = $orchestratorResult->intentsExecuted;
+            } catch (\Throwable $e) {
+                // Orchestrator failed — fall back to legacy pipeline
+                Log::warning('Orchestrator failed, falling back to legacy', [
+                    'bot_id' => $bot->id, 'error' => $e->getMessage(),
+                ]);
+                $useOrchestrator = false; // trigger legacy below
             }
         }
 
-        if ($orderParams !== null) {
-            $orderResult = $orderLookup->lookup($bot->id, $orderParams);
-            if ($orderResult['found']) {
-                $orderContext = "\n\n[INFORMAȚII COMANDĂ - răspunde pe baza acestor date]\n";
-                foreach ($orderResult['orders'] as $o) {
-                    $orderContext .= "Comanda #{$o['number']} | Status: {$o['status']} | Data: {$o['date']} | Total: {$o['total']}";
-                    $orderContext .= " | Plata: {$o['payment_method']} | Livrare: {$o['shipping_method']}";
-                    if ($o['tracking']) $orderContext .= " | AWB: {$o['tracking']}";
-                    if (!empty($o['tracking_url'])) $orderContext .= " | Tracking: {$o['tracking_url']}";
-                    $orderContext .= " | Produse: " . collect($o['items'])->map(fn($i) => "{$i['name']} x{$i['quantity']}")->implode(', ');
-                    $orderContext .= "\n";
-                }
-            } elseif (empty($orderParams['order_number']) && empty($orderParams['email']) && empty($orderParams['phone'])) {
-                $orderContext = "\n\n[Clientul întreabă de o comandă dar nu a dat numărul. Cere-i numărul comenzii, emailul sau telefonul.]";
-            } else {
-                $orderContext = "\n\n[{$orderResult['message']}]";
-            }
-        }
+        if (!$useOrchestrator) {
+            // ── Legacy pipeline (unchanged) ──
+            $orderLookup = app(\App\Services\OrderLookupService::class);
+            $orderParams = $orderLookup->detectOrderQuery($userMessage);
+            $orderContext = '';
 
-        // Search products FIRST (skip if order query) so AI knows what was found
-        $products = $orderParams !== null ? [] : $this->searchProductCards($bot->id, $userMessage);
+            if ($orderParams === null) {
+                $recentBotMessage = Message::where('conversation_id', $conversation->id)
+                    ->where('direction', 'outbound')
+                    ->orderByDesc('id')
+                    ->value('content');
 
-        // Tell AI how many products were found so it doesn't lie
-        $productContext = '';
-        if ($orderParams === null) {
-            if (!empty($products)) {
-                $productContext = "\n\n[Am găsit " . count($products) . " produse relevante care se afișează automat ca carduri sub mesajul tău. NU le enumera în text.]";
-            } else {
-                $hasProducts = WooCommerceProduct::where('bot_id', $bot->id)->exists();
-                if ($hasProducts) {
-                    $productContext = "\n\n[NU am găsit produse relevante pentru această căutare. NU spune că ai găsit produse. Dacă clientul caută un produs specific, sugerează-i să reformuleze sau să contacteze magazinul.]";
+                if ($recentBotMessage && (
+                    str_contains($recentBotMessage, 'numărul comenzii') ||
+                    str_contains($recentBotMessage, 'numarul comenzii') ||
+                    str_contains($recentBotMessage, 'număr de comandă') ||
+                    str_contains($recentBotMessage, 'emailul') ||
+                    str_contains($recentBotMessage, 'telefonul')
+                )) {
+                    $orderParams = $orderLookup->extractOrderParams($userMessage);
                 }
             }
+
+            if ($orderParams !== null) {
+                $orderResult = $orderLookup->lookup($bot->id, $orderParams);
+                if ($orderResult['found']) {
+                    $orderContext = "\n\n[INFORMAȚII COMANDĂ - răspunde pe baza acestor date]\n";
+                    foreach ($orderResult['orders'] as $o) {
+                        $orderContext .= "Comanda #{$o['number']} | Status: {$o['status']} | Data: {$o['date']} | Total: {$o['total']}";
+                        $orderContext .= " | Plata: {$o['payment_method']} | Livrare: {$o['shipping_method']}";
+                        if ($o['tracking']) $orderContext .= " | AWB: {$o['tracking']}";
+                        if (!empty($o['tracking_url'])) $orderContext .= " | Tracking: {$o['tracking_url']}";
+                        $orderContext .= " | Produse: " . collect($o['items'])->map(fn($i) => "{$i['name']} x{$i['quantity']}")->implode(', ');
+                        $orderContext .= "\n";
+                    }
+                } elseif (empty($orderParams['order_number']) && empty($orderParams['email']) && empty($orderParams['phone'])) {
+                    $orderContext = "\n\n[Clientul întreabă de o comandă dar nu a dat numărul. Cere-i numărul comenzii, emailul sau telefonul.]";
+                } else {
+                    $orderContext = "\n\n[{$orderResult['message']}]";
+                }
+            }
+
+            $intentService = app(IntentDetectionService::class);
+            $intents = $intentService->detect($userMessage);
+            $isRecommendation = $intents['is_category_recommendation'] ?? false;
+            $productContext = '';
+
+            if ($orderParams !== null) {
+                // Order query — skip product search
+            } elseif ($isRecommendation) {
+                $recommendationService = app(\App\Services\RecommendationService::class);
+                $concept = $intentService->extractRecommendationConcept($userMessage);
+                if ($concept && $recommendationService->hasConcept($concept)) {
+                    $recommendation = $recommendationService->recommend($bot->id, $concept, 2);
+                    $products = array_map(fn($r) => app(\App\Services\ProductSearchService::class)->toCardArray($r), $recommendation['products']);
+                    if (!empty($products)) {
+                        $subQueryList = implode(', ', $recommendation['sub_queries']);
+                        $productContext = "\n\n[Clientul a cerut recomandări pentru \"{$concept}\". Am găsit " . count($products) . " produse din categoriile: {$subQueryList}. Produsele se afișează ca carduri.]";
+                    } else {
+                        $productContext = "\n\n[Nu am găsit produse pentru \"{$concept}\". Sugerează contactarea magazinului.]";
+                    }
+                } else {
+                    $productContext = "\n\n[Clientul cere recomandări generale. Întreabă ce anume dorește să facă.]";
+                }
+            } else {
+                $products = $this->searchProductCards($bot->id, $userMessage);
+                if (!empty($products)) {
+                    $productContext = "\n\n[Am găsit " . count($products) . " produse relevante ca carduri. NU le enumera în text.]";
+                } else {
+                    $hasProducts = WooCommerceProduct::where('bot_id', $bot->id)->exists();
+                    if ($hasProducts) {
+                        $productContext = "\n\n[NU am găsit produse relevante. NU spune că ai găsit produse.]";
+                    }
+                }
+            }
+
+            $extraContext = $orderContext . $productContext;
         }
 
         // Generate AI response with cost tracking
-        $aiResult = $this->generateAIResponse($bot, $conversation, $userMessage, $orderContext . $productContext);
+        $aiResult = $this->generateAIResponse($bot, $conversation, $userMessage, $extraContext, $channel);
 
-        // Save bot response with AI metadata + product cards
+        // Save bot response with AI metadata + product cards + V2 intent data
         Message::create([
             'conversation_id' => $conversation->id,
             'direction' => 'outbound',
@@ -215,14 +300,56 @@ class ChatbotApiController extends Controller
             'output_tokens' => $aiResult['output_tokens'] ?? 0,
             'cost_cents' => $aiResult['cost_cents'] ?? 0,
             'metadata' => !empty($products) ? ['products' => $products] : null,
+            'detected_intents' => $detectedIntents,
+            'pipelines_executed' => $pipelinesExecuted,
             'sent_at' => now(),
         ]);
 
         $conversation->increment('messages_count');
         if (($aiResult['cost_cents'] ?? 0) > 0) {
-            $conversation->increment('cost_cents', (int) round($aiResult['cost_cents']));
+            $conversation->increment('cost_cents', round($aiResult['cost_cents'], 4));
         }
         $channel->update(['last_activity_at' => now()]);
+
+        // Track message usage (1 per interaction = user question + bot answer)
+        if ($tenant) {
+            app(PlanLimitService::class)->recordMessage($tenant);
+        }
+
+        // V2: Track analytics events (reuse $eventService if already instantiated above)
+        if (!isset($eventService)) {
+            $eventService = app(ConversationEventService::class);
+        }
+        $eventCtx = $eventService->buildContext($bot->tenant_id, $bot->id, $channel->id, $conversation->id, $sessionId);
+        $msgIdx = (string) $conversation->messages_count;
+
+        $eventService->track(EventTaxonomy::MESSAGE_SENT, [
+            'message_length' => mb_strlen($userMessage),
+        ], array_merge($eventCtx, [
+            'idempotency_key' => $eventService->idempotencyKey((string) $conversation->id, 'msg_sent', $msgIdx),
+        ]));
+
+        $eventService->track(EventTaxonomy::MESSAGE_REPLIED, [
+            'model' => $aiResult['model'] ?? null,
+            'provider' => $aiResult['provider'] ?? null,
+            'input_tokens' => $aiResult['input_tokens'] ?? 0,
+            'output_tokens' => $aiResult['output_tokens'] ?? 0,
+            'cost_cents' => $aiResult['cost_cents'] ?? 0,
+            'has_products' => !empty($products),
+            'products_count' => count($products),
+        ], array_merge($eventCtx, [
+            'idempotency_key' => $eventService->idempotencyKey((string) $conversation->id, 'msg_replied', $msgIdx),
+        ]));
+
+        if (!empty($products)) {
+            $eventService->track(EventTaxonomy::PRODUCTS_RETURNED, [
+                'count' => count($products),
+                'product_ids' => array_column($products, 'id'),
+                'query' => mb_substr($userMessage, 0, 200),
+            ], array_merge($eventCtx, [
+                'idempotency_key' => $eventService->idempotencyKey((string) $conversation->id, 'products_returned', $msgIdx),
+            ]));
+        }
 
         $botResponse = $aiResult['content'];
 
@@ -233,13 +360,14 @@ class ChatbotApiController extends Controller
             'session_token' => $sessionToken,
             'session_expired' => $sessionExpired,
             'products' => $products,
+            'conversation_id' => $conversation->id,
         ]);
     }
 
     /**
      * @return array{content: string, model: string, provider: string, input_tokens: int, output_tokens: int, cost_cents: float}
      */
-    private function generateAIResponse(Bot $bot, Conversation $conversation, string $userMessage, string $extraContext = ''): array
+    private function generateAIResponse(Bot $bot, Conversation $conversation, string $userMessage, string $extraContext = '', ?Channel $channel = null): array
     {
         $fallback = [
             'content' => 'Momentan nu pot procesa cererea. Te rog încearcă din nou sau contactează-ne direct.',
@@ -306,6 +434,27 @@ class ChatbotApiController extends Controller
                 $systemPrompt .= $extraContext;
             }
 
+            // V2: Inject conversation policy instructions (feature flag: bot.settings.v2_policies)
+            if (!empty($bot->settings['v2_policies'])) {
+                try {
+                    $policyService = app(\App\Services\ConversationPolicyService::class);
+                    $policy = $policyService->getPolicy($bot, $channel ?? null);
+                    $policyInstructions = $policyService->toPromptInstructions($policy);
+                    if (!empty($policyInstructions)) {
+                        $systemPrompt .= "\n\n" . $policyInstructions;
+                        $logger->set('policy_applied', true);
+                        $logger->set('policy_tone', $policy['tone'] ?? 'default');
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('ConversationPolicy injection failed, skipping', [
+                        'bot_id' => $bot->id, 'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            // Apply centralized anti-hallucination guardrails (ALWAYS LAST — highest priority)
+            $systemPrompt = PromptGuardrails::apply($systemPrompt);
+
             $messages = [
                 ['role' => 'system', 'content' => $systemPrompt],
             ];
@@ -348,16 +497,33 @@ class ChatbotApiController extends Controller
                 $result = $chatService->complete($messages, $modelConfig, $bot->id, $bot->tenant_id);
             } catch (\Exception $e) {
                 // Cascading fallback: retry without knowledge context
-                Log::warning('Chatbot: retrying without knowledge', ['bot_id' => $bot->id]);
+                Log::warning('Chatbot: fallback level 1 — retrying without knowledge', [
+                    'bot_id' => $bot->id,
+                    'error' => $e->getMessage(),
+                    'knowledge_chars' => mb_strlen($knowledgeContext),
+                ]);
+                $logger->set('fallback_level', 1);
+                $logger->set('fallback_reason', $e->getMessage());
+
                 $fallbackMessages = array_filter($messages, fn($m) => ($m['role'] ?? '') !== 'system');
                 $basePrompt = $bot->system_prompt ?? 'Ești un asistent virtual. Răspunde scurt și util.';
-                array_unshift($fallbackMessages, ['role' => 'system', 'content' => $basePrompt . $extraContext]);
+                $basePrompt = PromptGuardrails::apply($basePrompt . $extraContext);
+                array_unshift($fallbackMessages, ['role' => 'system', 'content' => $basePrompt]);
                 try {
                     $result = $chatService->complete($fallbackMessages, $modelConfig, $bot->id, $bot->tenant_id);
                 } catch (\Exception $e2) {
                     // Final fallback: short history only
+                    Log::warning('Chatbot: fallback level 2 — minimal prompt', [
+                        'bot_id' => $bot->id,
+                        'error' => $e2->getMessage(),
+                    ]);
+                    $logger->set('fallback_level', 2);
+
+                    $minimalPrompt = PromptGuardrails::apply(
+                        $bot->system_prompt ?? 'Ești un asistent virtual. Răspunde scurt și util.'
+                    );
                     $shortMessages = [
-                        ['role' => 'system', 'content' => $basePrompt],
+                        ['role' => 'system', 'content' => $minimalPrompt],
                         ['role' => 'user', 'content' => $userMessage],
                     ];
                     $result = $chatService->complete($shortMessages, $modelConfig, $bot->id, $bot->tenant_id);

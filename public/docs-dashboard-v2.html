@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sambla v2 — Dashboard, Admin, Leads & Opportunities, Planuri</title>
+<style>
+:root{--bg:#0f172a;--s1:#1e293b;--s2:#334155;--bd:#475569;--t1:#e2e8f0;--t2:#94a3b8;--ac:#38bdf8;--gr:#4ade80;--yw:#fbbf24;--rd:#f87171;--pr:#a78bfa;--or:#fb923c;--pk:#f472b6}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Inter',-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--t1);line-height:1.7;font-size:14px}.c{max-width:1200px;margin:0 auto;padding:2rem}h1{font-size:1.6rem;color:var(--ac);margin-bottom:.3rem}h2{font-size:1.3rem;color:var(--ac);margin:2rem 0 .6rem;padding-bottom:.3rem;border-bottom:1px solid var(--bd)}h3{font-size:1rem;color:var(--gr);margin:1.3rem 0 .4rem}h4{font-size:.9rem;color:var(--yw);margin:.8rem 0 .3rem}p,li{color:var(--t2);margin-bottom:.3rem;font-size:.85rem}strong{color:var(--t1)}code{background:var(--s2);padding:.1rem .3rem;border-radius:3px;font-size:.8em;color:var(--or)}pre{background:var(--s1);border:1px solid var(--bd);border-radius:6px;padding:.7rem;overflow-x:auto;margin:.5rem 0;font-size:.73rem;line-height:1.4;color:var(--t1);white-space:pre-wrap}table{width:100%;border-collapse:collapse;margin:.5rem 0;font-size:.78rem}th{background:var(--s2);color:var(--ac);text-align:left;padding:.35rem .5rem;border:1px solid var(--bd)}td{padding:.3rem .5rem;border:1px solid var(--bd);color:var(--t2);vertical-align:top}ul,ol{padding-left:1.2rem}.tg{display:inline-block;padding:.1rem .3rem;border-radius:3px;font-size:.65rem;font-weight:600}.tg-g{background:rgba(74,222,128,.15);color:var(--gr)}.tg-y{background:rgba(251,191,36,.15);color:var(--yw)}.tg-r{background:rgba(248,113,113,.15);color:var(--rd)}.tg-b{background:rgba(56,189,248,.15);color:var(--ac)}.tg-p{background:rgba(167,139,250,.15);color:var(--pr)}.b{background:var(--s1);border:1px solid var(--bd);border-radius:6px;padding:.7rem;margin:.5rem 0}.sub{color:var(--t2);font-size:.9rem;margin-bottom:1.5rem}hr{border:none;border-top:1px solid var(--bd);margin:1.2rem 0}
+@media print{body{background:#fff;color:#111;font-size:10px}h1,h2,h3,h4{color:#111}pre,.b{border-color:#ccc;background:#f5f5f5}table{font-size:8px}}
+</style>
+</head>
+<body>
+<div class="c">
+
+<h1>Sambla v2 — Dashboard, Admin, Leads & Opportunities</h1>
+<p class="sub">Blueprint complet: restructurare dashboard tenant, admin intern, planuri/limitări, leads vs opportunities, analytics conversie, billing. Generat 29 martie 2026.</p>
+
+<!-- ================================================================ -->
+<h2>1. GAP ANALYSIS — CE EXISTĂ vs CE LIPSEȘTE</h2>
+<!-- ================================================================ -->
+
+<table>
+<tr><th>Componentă</th><th>Există</th><th>Lipsește</th></tr>
+<tr><td>Dashboard tenant</td><td>Statistici bază: apeluri, cost, boți</td><td>Funnel conversie, produse, click/ATC, opportunities, warnings, setup checklist</td></tr>
+<tr><td>Leads</td><td>Tabel `leads` (creat V2), model Lead</td><td>Pagini UI, list/detail, export, note interne, timeline</td></tr>
+<tr><td>Opportunities</td><td>❌ Nu există</td><td>Concept complet: model, scoring, UI, diferențiere de leads</td></tr>
+<tr><td>Admin dashboard</td><td>Metrici platformă, costuri, apeluri</td><td>Usage per tenant, limite atinse, conversii, override-uri, opportunities globale</td></tr>
+<tr><td>Planuri</td><td>PlanLimit (4 planuri) + Plan (pricing page)</td><td>Plan `growth`, UI override per tenant, control granular voice/knowledge</td></tr>
+<tr><td>Override-uri</td><td>`plan_overrides` JSON pe Tenant</td><td>UI admin pentru override, istoric override-uri, override temporar</td></tr>
+<tr><td>Billing/Company</td><td>Stripe Cashier, basic fields</td><td>CIF/VAT, adresă completă, persoană contact, verificare completitudine</td></tr>
+<tr><td>Analytics conversie</td><td>BotAnalyticsController (API)</td><td>Funnel vizual, atribuire, revenue, drop-off, top produse</td></tr>
+<tr><td>Commerce tracking</td><td>chat_events + purchase_attributions</td><td>Dashboard vizual, separare directă/influențată/organică, lead→purchase tracking</td></tr>
+</table>
+
+<!-- ================================================================ -->
+<h2>2. CONCEPTUL LEAD vs OPPORTUNITY</h2>
+<!-- ================================================================ -->
+
+<div class="b">
+<h4>Definiții clare:</h4>
+<table>
+<tr><th></th><th>Lead</th><th>Opportunity</th></tr>
+<tr><td><strong>Definiție</strong></td><td>Conversație cu DATE DE CONTACT (email / telefon / nume)</td><td>Conversație cu INTENȚIE dar FĂRĂ date de contact</td></tr>
+<tr><td><strong>Exemplu</strong></td><td>"ion@email.com vrea ofertă pentru polistiren"</td><td>User a văzut 5 produse, a dat click pe 3, dar a plecat fără contact</td></tr>
+<tr><td><strong>Sursă</strong></td><td>Tabel `leads` (cu email/phone/name)</td><td>Derivat din `conversations` + `chat_events` + `conversation_outcomes`</td></tr>
+<tr><td><strong>Scop</strong></td><td>Follow-up, CRM, conversie</td><td>Optimizare: de ce nu a lăsat date? ce lipsea?</td></tr>
+<tr><td><strong>Acțiune</strong></td><td>Contactare, ofertă</td><td>Îmbunătățire lead capture, UX, produse</td></tr>
+</table>
+</div>
+
+<h3>2.1 Schema DB — Opportunities (NOU)</h3>
+<pre>
+-- Opportunities sunt derivate din conversații, NU un tabel separat.
+-- Se calculează dinamic sau se stochează ca outcome_type în conversation_outcomes.
+
+-- Adăugăm coloane pe conversations:
+ALTER TABLE conversations ADD COLUMN opportunity_score SMALLINT DEFAULT 0;
+ALTER TABLE conversations ADD COLUMN is_opportunity BOOLEAN DEFAULT FALSE;
+ALTER TABLE conversations ADD COLUMN opportunity_reasons JSONB;
+
+-- Index:
+CREATE INDEX idx_conversations_opportunity ON conversations (tenant_id, is_opportunity, created_at)
+    WHERE is_opportunity = TRUE;
+</pre>
+
+<p><strong>De ce nu tabel separat:</strong> O opportunity ESTE o conversație. Adăugăm metadata pe conversație, nu duplicăm date.</p>
+
+<h3>2.2 Când devine o conversație opportunity?</h3>
+<pre>
+Reguli (evaluate de OutcomeEngine sau DeriveConversationOutcomes job):
+
+1. products_returned > 0 (user a văzut produse)              +20
+2. product_click > 0 (user a dat click pe produs)             +25
+3. add_to_cart_success > 0 (user a adăugat în coș)            +35
+4. messages_count >= 3 (conversație substanțială)             +10
+5. duration >= 2 minute                                       +10
+6. intent = product_search sau recommendation                  +15
+7. NU are lead asociat (leads.conversation_id = NULL)          obligatoriu
+
+Threshold: opportunity_score >= 30
+
+Dacă NU are lead = opportunity.
+Dacă ARE lead = nu mai e opportunity, e lead.
+</pre>
+
+<!-- ================================================================ -->
+<h2>3. DASHBOARD TENANT — STRUCTURA COMPLETĂ</h2>
+<!-- ================================================================ -->
+
+<h3>3.1 Overview (pagina principală)</h3>
+
+<h4>Card-uri KPI (rând 1):</h4>
+<table>
+<tr><th>Card</th><th>Valoare</th><th>Sursă</th></tr>
+<tr><td>🗣️ Sesiuni</td><td>Număr sesiuni active perioadă</td><td>chat_events WHERE event_name='session_started'</td></tr>
+<tr><td>💬 Conversații</td><td>Conversații totale</td><td>conversations COUNT</td></tr>
+<tr><td>🛒 Add to Cart</td><td>Produse adăugate</td><td>chat_events WHERE event_name='add_to_cart_success'</td></tr>
+<tr><td>💰 Venit atribuit</td><td>Revenue din purchase attribution</td><td>purchase_attributions SUM(order_total_cents)</td></tr>
+<tr><td>📋 Leads</td><td>Leads cu contact</td><td>leads COUNT WHERE email IS NOT NULL OR phone IS NOT NULL</td></tr>
+<tr><td>👁️ Opportunities</td><td>Conversații cu intenție fără contact</td><td>conversations WHERE is_opportunity=true</td></tr>
+</table>
+
+<h4>Card-uri KPI (rând 2):</h4>
+<table>
+<tr><th>Card</th><th>Valoare</th><th>Sursă</th></tr>
+<tr><td>📱 Voice</td><td>Minute folosite / limit</td><td>usage_tracking WHERE feature='voice_minutes'</td></tr>
+<tr><td>📨 Mesaje</td><td>Mesaje trimise / limit</td><td>usage_tracking WHERE feature='messages'</td></tr>
+<tr><td>📊 Rată conversie</td><td>Leads / Sesiuni × 100</td><td>Calculat</td></tr>
+<tr><td>⚠️ Warnings</td><td>Număr probleme active</td><td>Calculat (vezi 3.3)</td></tr>
+</table>
+
+<h4>Funnel conversie (chart vizual):</h4>
+<pre>
+Conversații → Produse afișate → Click-uri → Add to Cart → Checkout → Purchase
+    1000    →      650       →    180    →     45      →    30    →    22
+
+Și paralel:
+Conversații → Opportunities → Leads → Conversii
+    1000    →     320       →  85   →    22
+</pre>
+
+<h4>Grafic evoluție (linie, ultimele 30 zile):</h4>
+<ul>
+<li>Sesiuni / zi</li>
+<li>Leads / zi</li>
+<li>Revenue / zi</li>
+</ul>
+
+<h3>3.2 Usage vs Limits (secțiune dedicată)</h3>
+<pre>
+Mesaje:        ████████████████░░░░  850 / 1,000 (85%)    ⚠️ Aproape de limită
+Voice:         ████████░░░░░░░░░░░░  42 / 100 min (42%)
+Boți:          ████░░░░░░░░░░░░░░░░  2 / 10
+Knowledge:     ██████████░░░░░░░░░░  500 / 1,000 KB
+Scan pagini:   ██░░░░░░░░░░░░░░░░░░  45 / 500
+Conectori:     ██░░░░░░░░░░░░░░░░░░  1 / 10
+</pre>
+
+<h3>3.3 Warnings / Probleme</h3>
+<table>
+<tr><th>Warning</th><th>Condiție</th><th>Mesaj</th></tr>
+<tr><td>🔴 Limită mesaje</td><td>usage >= 90% din limit</td><td>"Ați folosit 90% din mesaje. Upgrade plan."</td></tr>
+<tr><td>🔴 Limită voice</td><td>voice_minutes >= 90%</td><td>"Minutele voice sunt aproape epuizate."</td></tr>
+<tr><td>🟡 WooCommerce</td><td>No connector OR last_sync > 7 days</td><td>"WooCommerce nu e conectat / nu s-a sincronizat."</td></tr>
+<tr><td>🟡 Knowledge slab</td><td>knowledge_chunks < 5</td><td>"Baza de cunoștințe are puține informații."</td></tr>
+<tr><td>🟡 Fără produse</td><td>WooCommerce products = 0</td><td>"Nu sunt produse sincronizate."</td></tr>
+<tr><td>🟡 Date companie</td><td>Missing CIF/address/email</td><td>"Completează datele companiei pentru facturare."</td></tr>
+<tr><td>🟢 Voice dezactivat</td><td>No voice channel active</td><td>"Activează vocea pentru conversații telefonice."</td></tr>
+</table>
+
+<h3>3.4 Setup Checklist</h3>
+<pre>
+✅ Cont creat
+✅ Primul bot configurat
+⬜ WooCommerce conectat
+⬜ Produse sincronizate (0 produse)
+✅ Knowledge base (15 documente)
+⬜ Voce configurată
+⬜ Policy conversație setată
+⬜ Date companie complete
+⬜ Plan activat (free → upgrade)
+</pre>
+
+<!-- ================================================================ -->
+<h2>4. LEADS — PAGINI UI</h2>
+<!-- ================================================================ -->
+
+<h3>4.1 Lista Leads</h3>
+<p>Rută: <code>GET /dashboard/leads</code></p>
+<table>
+<tr><th>Coloană</th><th>Sursă</th><th>Sortabil</th></tr>
+<tr><td>Nume</td><td>leads.name</td><td>Da</td></tr>
+<tr><td>Email</td><td>leads.email</td><td>Da</td></tr>
+<tr><td>Telefon</td><td>leads.phone</td><td>Nu</td></tr>
+<tr><td>Scor</td><td>leads.qualification_score</td><td>Da</td></tr>
+<tr><td>Status</td><td>leads.status (new/partial/qualified/sent_to_crm/converted)</td><td>Da</td></tr>
+<tr><td>Bot</td><td>bot.name</td><td>Da</td></tr>
+<tr><td>Produse</td><td>leads.products_shown (count)</td><td>Nu</td></tr>
+<tr><td>Data</td><td>leads.created_at</td><td>Da</td></tr>
+</table>
+
+<p>Filtre: status, bot, perioadă, scor minim</p>
+<p>Acțiuni: Export CSV, Trimite la CRM (webhook), Marchează convertit</p>
+
+<h3>4.2 Detaliu Lead</h3>
+<p>Rută: <code>GET /dashboard/leads/{lead}</code></p>
+<ul>
+<li><strong>Date contact:</strong> nume, email, telefon, companie, proiect</li>
+<li><strong>Scor + motiv capture:</strong> "Scor 75 — user a cerut ofertă + a vizualizat 5 produse"</li>
+<li><strong>Produse vizualizate:</strong> lista cu link-uri</li>
+<li><strong>Conversația completă:</strong> mesaje user + bot inline</li>
+<li><strong>Timeline:</strong> session_started → product_click → lead_prompt_shown → lead_completed</li>
+<li><strong>Note interne:</strong> câmp editabil pentru echipa de vânzări</li>
+<li><strong>Acțiuni:</strong> Schimbă status, Trimite la CRM, Marchează convertit, Adaugă notă</li>
+</ul>
+
+<!-- ================================================================ -->
+<h2>5. OPPORTUNITIES — PAGINI UI</h2>
+<!-- ================================================================ -->
+
+<h3>5.1 Lista Opportunities</h3>
+<p>Rută: <code>GET /dashboard/opportunities</code></p>
+<table>
+<tr><th>Coloană</th><th>Sursă</th><th>Sortabil</th></tr>
+<tr><td>ID Conversație</td><td>conversations.id</td><td>Da</td></tr>
+<tr><td>Scor interes</td><td>conversations.opportunity_score</td><td>Da</td></tr>
+<tr><td>Produse vizualizate</td><td>chat_events COUNT WHERE product_impression</td><td>Da</td></tr>
+<tr><td>Click-uri</td><td>chat_events COUNT WHERE product_click</td><td>Da</td></tr>
+<tr><td>Add to Cart</td><td>chat_events COUNT WHERE add_to_cart_success</td><td>Da</td></tr>
+<tr><td>Intent principal</td><td>conversations.primary_intent</td><td>Da</td></tr>
+<tr><td>Mesaje</td><td>conversations.messages_count</td><td>Da</td></tr>
+<tr><td>Bot</td><td>bot.name</td><td>Da</td></tr>
+<tr><td>Data</td><td>conversations.created_at</td><td>Da</td></tr>
+</table>
+
+<p>Filtre: bot, perioadă, scor minim, cu/fără ATC</p>
+
+<h3>5.2 Detaliu Opportunity</h3>
+<p>Rută: <code>GET /dashboard/opportunities/{conversation}</code></p>
+<ul>
+<li><strong>Scor interes:</strong> 65/100 — motive: product_click ×3, messages ≥5, duration 4min</li>
+<li><strong>Produse vizualizate:</strong> cu click/impression/ATC per produs</li>
+<li><strong>Conversația completă:</strong> mesaje inline</li>
+<li><strong>Drop-off point:</strong> ultimul mesaj + ce a făcut înainte de a pleca</li>
+<li><strong>Outcomes:</strong> abandoned_after_products / abandoned_after_lead_prompt</li>
+<li><strong>Insight:</strong> "User a văzut 5 adezivi, a dat click pe CM11, dar nu a lăsat date. Lead prompt a fost arătat dar refuzat."</li>
+</ul>
+
+<!-- ================================================================ -->
+<h2>6. ADMIN INTERN — STRUCTURA COMPLETĂ</h2>
+<!-- ================================================================ -->
+
+<h3>6.1 Admin Dashboard</h3>
+<table>
+<tr><th>Secțiune</th><th>Conținut</th></tr>
+<tr><td>KPI platformă</td><td>Total tenanți, boți activi, conversații/zi, revenue total, leads total, opportunities total</td></tr>
+<tr><td>Usage per tenant</td><td>Tabel: tenant, plan, mesaje (used/limit), voice (used/limit), boți, warnings</td></tr>
+<tr><td>Limite atinse</td><td>Lista tenanți cu usage ≥ 90% pe orice limită</td></tr>
+<tr><td>Conversii platformă</td><td>Funnel agregat: sesiuni → leads → purchases</td></tr>
+<tr><td>Revenue atribuit</td><td>Total revenue din purchase_attributions, per tenant</td></tr>
+</table>
+
+<h3>6.2 Admin Tenant Detail — Override-uri</h3>
+<p>Rută: <code>GET /admin/tenanti/{tenant}</code></p>
+
+<h4>Secțiune Override Plan:</h4>
+<pre>
+Plan actual: pro (€79/lună)
+
+Override-uri active:
+┌─────────────────────────┬──────────┬──────────┬─────────────┐
+│ Limită                  │ Plan     │ Override │ Efectiv     │
+├─────────────────────────┼──────────┼──────────┼─────────────┤
+│ Max boți                │ 10       │ 15       │ 15          │
+│ Max mesaje/lună         │ 5,000    │ 10,000   │ 10,000      │
+│ Voice minute/lună       │ 0        │ 100      │ 100 (gratis)│
+│ Max knowledge KB        │ 1,000    │ -        │ 1,000       │
+│ Max scan pagini/lună    │ 500      │ -        │ 500         │
+│ Max conectori           │ 10       │ -        │ 10          │
+│ Custom prompts          │ ✓        │ -        │ ✓           │
+│ API access              │ ✗        │ ✓        │ ✓           │
+└─────────────────────────┴──────────┴──────────┴─────────────┘
+
+[Adaugă Override]  [Resetează toate]
+</pre>
+
+<h4>Acțiuni admin per tenant:</h4>
+<ul>
+<li>Schimbă plan: dropdown cu toate planurile</li>
+<li>Override orice limită: input numeric + save</li>
+<li>Activează/dezactivează voice gratis</li>
+<li>Activează/dezactivează crawling</li>
+<li>Override temporar: data expirare</li>
+<li>Downgrade manual</li>
+<li>Resetează usage luna curentă</li>
+</ul>
+
+<h3>6.3 Admin Plan Management</h3>
+<p>Planurile recomandate (4 nivele):</p>
+
+<table>
+<tr><th></th><th>Free</th><th>Starter</th><th>Growth</th><th>Premium</th></tr>
+<tr><td><strong>Preț</strong></td><td>€0</td><td>€29/lună</td><td>€79/lună</td><td>€199/lună</td></tr>
+<tr><td>Boți</td><td>1</td><td>3</td><td>10</td><td>50</td></tr>
+<tr><td>Mesaje/lună</td><td>100</td><td>1,000</td><td>5,000</td><td>20,000</td></tr>
+<tr><td>Voice minute</td><td>0</td><td>0</td><td>50</td><td>200</td></tr>
+<tr><td>Knowledge KB</td><td>50</td><td>200</td><td>1,000</td><td>5,000</td></tr>
+<tr><td>Scan pagini/lună</td><td>20</td><td>100</td><td>500</td><td>2,000</td></tr>
+<tr><td>Conectori</td><td>0</td><td>2</td><td>10</td><td>50</td></tr>
+<tr><td>Produse max</td><td>100</td><td>1,000</td><td>10,000</td><td>100,000</td></tr>
+<tr><td>Agenți AI</td><td>3</td><td>10</td><td>20</td><td>Toți</td></tr>
+<tr><td>Agent runs/lună</td><td>10</td><td>50</td><td>200</td><td>1,000</td></tr>
+<tr><td>Custom prompts</td><td>✗</td><td>✓</td><td>✓</td><td>✓</td></tr>
+<tr><td>Website scanner</td><td>✗</td><td>✓</td><td>✓</td><td>✓</td></tr>
+<tr><td>API access</td><td>✗</td><td>✗</td><td>✓</td><td>✓</td></tr>
+<tr><td>Voice</td><td>✗</td><td>✗</td><td>✓</td><td>✓</td></tr>
+<tr><td>Lead capture</td><td>✗</td><td>✓</td><td>✓</td><td>✓</td></tr>
+<tr><td>Commerce tracking</td><td>✗</td><td>✗</td><td>✓</td><td>✓</td></tr>
+<tr><td>Priority support</td><td>✗</td><td>✗</td><td>✗</td><td>✓</td></tr>
+</table>
+
+<!-- ================================================================ -->
+<h2>7. COMPANY DATA / BILLING</h2>
+<!-- ================================================================ -->
+
+<h3>7.1 Câmpuri necesare (noi pe tabela tenants)</h3>
+<pre>
+ALTER TABLE tenants ADD COLUMN company_name VARCHAR(255);
+ALTER TABLE tenants ADD COLUMN company_cif VARCHAR(50);        -- CIF / VAT number
+ALTER TABLE tenants ADD COLUMN company_reg_number VARCHAR(50); -- J40/1234/2020
+ALTER TABLE tenants ADD COLUMN company_address TEXT;
+ALTER TABLE tenants ADD COLUMN company_city VARCHAR(100);
+ALTER TABLE tenants ADD COLUMN company_county VARCHAR(100);
+ALTER TABLE tenants ADD COLUMN company_country VARCHAR(100) DEFAULT 'România';
+ALTER TABLE tenants ADD COLUMN company_zip VARCHAR(20);
+ALTER TABLE tenants ADD COLUMN company_email VARCHAR(255);
+ALTER TABLE tenants ADD COLUMN company_phone VARCHAR(50);
+ALTER TABLE tenants ADD COLUMN company_contact_person VARCHAR(255);
+ALTER TABLE tenants ADD COLUMN company_bank VARCHAR(255);
+ALTER TABLE tenants ADD COLUMN company_iban VARCHAR(50);
+ALTER TABLE tenants ADD COLUMN billing_complete BOOLEAN DEFAULT FALSE;
+</pre>
+
+<h3>7.2 Verificare completitudine</h3>
+<pre>
+billing_complete = TRUE dacă:
+  company_name IS NOT NULL
+  AND company_cif IS NOT NULL
+  AND company_address IS NOT NULL
+  AND company_city IS NOT NULL
+  AND company_email IS NOT NULL
+</pre>
+
+<!-- ================================================================ -->
+<h2>8. ANALYTICS CONVERSIE — STRUCTURA</h2>
+<!-- ================================================================ -->
+
+<h3>8.1 Commerce Funnel Dashboard</h3>
+<pre>
+┌─────────────────────────────────────────────────────────────────────┐
+│  FUNNEL CONVERSIE PRODUSE                                          │
+│                                                                     │
+│  Conversații    ████████████████████████████████  1,000  (100%)     │
+│  Produse afișate ██████████████████████████       650   (65%)      │
+│  Click-uri       ████████████                     180   (18%)      │
+│  Add to Cart     ████                              45   (4.5%)    │
+│  Checkout        ███                               30   (3.0%)    │
+│  Purchase        ██                                22   (2.2%)    │
+│                                                                     │
+│  Venit total atribuit: 12,450 RON                                  │
+└─────────────────────────────────────────────────────────────────────┘
+</pre>
+
+<h3>8.2 Attribution Breakdown</h3>
+<table>
+<tr><th>Tip conversie</th><th>Definiție</th><th>Cum se calculează</th></tr>
+<tr><td><span class="tg tg-g">Directă din bot</span></td><td>User a dat ATC din widget chatbot</td><td>purchase_attributions WHERE mode='strict'</td></tr>
+<tr><td><span class="tg tg-y">Influențată de bot</span></td><td>User a interacționat cu botul, apoi a cumpărat separat</td><td>purchase_attributions WHERE mode='probable'</td></tr>
+<tr><td><span class="tg tg-p">Asistată</span></td><td>Produsul a fost arătat în chat, user a cumpărat mai târziu</td><td>purchase_attributions WHERE mode='assisted'</td></tr>
+<tr><td><span class="tg tg-b">Organică</span></td><td>Fără interacțiune bot</td><td>WooCommerce orders fără attribution match</td></tr>
+</table>
+
+<h3>8.3 Lead vs Purchase Flow</h3>
+<pre>
+Leads generate:       85
+  └─ Leads convertite:  22  (26%)
+  └─ Leads active:      45  (53%)
+  └─ Leads expirate:    18  (21%)
+
+Opportunities:        320
+  └─ Convertite în lead: 40 (12.5%)
+  └─ Convertite direct:  15 (4.7%)
+  └─ Abandonate:        265 (82.8%)
+</pre>
+
+<h3>8.4 Top Produse</h3>
+<table>
+<tr><th>Produs</th><th>Afișări</th><th>Click-uri</th><th>ATC</th><th>Cumpărate</th><th>CTR</th><th>ATC Rate</th></tr>
+<tr><td>Adeziv CM11</td><td>320</td><td>85</td><td>22</td><td>15</td><td>26.6%</td><td>25.9%</td></tr>
+<tr><td>Glet Fino</td><td>280</td><td>45</td><td>12</td><td>8</td><td>16.1%</td><td>26.7%</td></tr>
+<tr><td>Polistiren 10cm</td><td>150</td><td>30</td><td>8</td><td>3</td><td>20.0%</td><td>26.7%</td></tr>
+</table>
+
+<h3>8.5 Timp mediu chat → purchase</h3>
+<pre>
+Directe (din widget):     2 minute (median)
+Influențate:             4.5 ore (median)
+Asistate:                18 ore (median)
+</pre>
+
+<!-- ================================================================ -->
+<h2>9. ENDPOINT-URI API NECESARE</h2>
+<!-- ================================================================ -->
+
+<h3>9.1 Dashboard Tenant (noi)</h3>
+<table>
+<tr><th>Metodă</th><th>Rută</th><th>Controller</th><th>Scop</th></tr>
+<tr><td>GET</td><td>/dashboard</td><td>DashboardController@index</td><td>Overview cu KPIs + funnel + warnings</td></tr>
+<tr><td>GET</td><td>/dashboard/leads</td><td>LeadController@index</td><td>Lista leads</td></tr>
+<tr><td>GET</td><td>/dashboard/leads/{lead}</td><td>LeadController@show</td><td>Detaliu lead + conversație</td></tr>
+<tr><td>POST</td><td>/dashboard/leads/{lead}/status</td><td>LeadController@updateStatus</td><td>Schimbă status lead</td></tr>
+<tr><td>POST</td><td>/dashboard/leads/{lead}/notes</td><td>LeadController@addNote</td><td>Adaugă notă internă</td></tr>
+<tr><td>GET</td><td>/dashboard/leads/export</td><td>LeadController@export</td><td>Export CSV</td></tr>
+<tr><td>GET</td><td>/dashboard/opportunities</td><td>OpportunityController@index</td><td>Lista opportunities</td></tr>
+<tr><td>GET</td><td>/dashboard/opportunities/{conv}</td><td>OpportunityController@show</td><td>Detaliu opportunity</td></tr>
+<tr><td>GET</td><td>/dashboard/conversii</td><td>CommerceAnalyticsController@index</td><td>Funnel + attribution + revenue</td></tr>
+</table>
+
+<h3>9.2 Admin (noi/modificate)</h3>
+<table>
+<tr><th>Metodă</th><th>Rută</th><th>Scop</th></tr>
+<tr><td>GET</td><td>/admin</td><td>Dashboard platformă cu usage per tenant</td></tr>
+<tr><td>GET</td><td>/admin/tenanti/{tenant}</td><td>Detaliu tenant cu override-uri</td></tr>
+<tr><td>POST</td><td>/admin/tenanti/{tenant}/override</td><td>Setează override limită</td></tr>
+<tr><td>POST</td><td>/admin/tenanti/{tenant}/plan</td><td>Schimbă plan tenant</td></tr>
+<tr><td>POST</td><td>/admin/tenanti/{tenant}/voice-override</td><td>Activează/dezactivează voice manual</td></tr>
+<tr><td>DELETE</td><td>/admin/tenanti/{tenant}/override/{key}</td><td>Șterge override specific</td></tr>
+</table>
+
+<!-- ================================================================ -->
+<h2>10. PAGINI UI COMPLETE</h2>
+<!-- ================================================================ -->
+
+<h3>10.1 Pagini noi necesare</h3>
+<table>
+<tr><th>View</th><th>Rută</th><th>Status</th></tr>
+<tr><td>dashboard/leads/index.blade.php</td><td>/dashboard/leads</td><td><span class="tg tg-r">NOU</span></td></tr>
+<tr><td>dashboard/leads/show.blade.php</td><td>/dashboard/leads/{id}</td><td><span class="tg tg-r">NOU</span></td></tr>
+<tr><td>dashboard/opportunities/index.blade.php</td><td>/dashboard/opportunities</td><td><span class="tg tg-r">NOU</span></td></tr>
+<tr><td>dashboard/opportunities/show.blade.php</td><td>/dashboard/opportunities/{id}</td><td><span class="tg tg-r">NOU</span></td></tr>
+<tr><td>dashboard/commerce/index.blade.php</td><td>/dashboard/conversii</td><td><span class="tg tg-r">NOU</span></td></tr>
+<tr><td>dashboard/settings/company.blade.php</td><td>/dashboard/setari#companie</td><td><span class="tg tg-y">EXTINS</span></td></tr>
+<tr><td>admin/tenants/show.blade.php</td><td>/admin/tenanti/{id}</td><td><span class="tg tg-y">EXTINS</span> — adaugat override-uri</td></tr>
+<tr><td>dashboard/index.blade.php</td><td>/dashboard</td><td><span class="tg tg-y">RESCRIS</span> — V2 KPIs + funnel + warnings</td></tr>
+</table>
+
+<h3>10.2 Pagini existente modificate</h3>
+<table>
+<tr><th>View</th><th>Modificare</th></tr>
+<tr><td>layouts/dashboard.blade.php</td><td>Adaugă navigare: Leads, Opportunities, Conversii</td></tr>
+<tr><td>dashboard/billing/index.blade.php</td><td>Adaugă secțiune date companie + verificare completitudine</td></tr>
+<tr><td>admin/dashboard.blade.php</td><td>Adaugă usage per tenant + limite atinse + revenue</td></tr>
+<tr><td>admin/tenants/show.blade.php</td><td>Adaugă secțiune override-uri + schimbare plan</td></tr>
+</table>
+
+<!-- ================================================================ -->
+<h2>11. DB — MIGRĂRI NECESARE</h2>
+<!-- ================================================================ -->
+
+<pre>
+// database/migrations/2026_03_30_000002_add_opportunities_and_company.php
+
+Schema::table('conversations', function (Blueprint $table) {
+    $table->smallInteger('opportunity_score')->default(0)->after('lead_score');
+    $table->boolean('is_opportunity')->default(false)->after('opportunity_score');
+    $table->jsonb('opportunity_reasons')->nullable()->after('is_opportunity');
+});
+
+Schema::table('tenants', function (Blueprint $table) {
+    $table->string('company_name', 255)->nullable();
+    $table->string('company_cif', 50)->nullable();
+    $table->string('company_reg_number', 50)->nullable();
+    $table->text('company_address')->nullable();
+    $table->string('company_city', 100)->nullable();
+    $table->string('company_county', 100)->nullable();
+    $table->string('company_country', 100)->default('România');
+    $table->string('company_zip', 20)->nullable();
+    $table->string('company_email', 255)->nullable();
+    $table->string('company_phone', 50)->nullable();
+    $table->string('company_contact_person', 255)->nullable();
+    $table->string('company_bank', 255)->nullable();
+    $table->string('company_iban', 50)->nullable();
+    $table->boolean('billing_complete')->default(false);
+});
+
+// Add max_products limit to plan_limits
+Schema::table('plan_limits', function (Blueprint $table) {
+    $table->unsignedInteger('max_products')->default(1000)->after('max_upload_size_kb');
+});
+
+// Index
+DB::statement("CREATE INDEX idx_conv_opportunity ON conversations (tenant_id, is_opportunity, created_at) WHERE is_opportunity = TRUE");
+DB::statement("CREATE INDEX idx_leads_tenant_status ON leads (tenant_id, status, created_at)");
+</pre>
+
+<!-- ================================================================ -->
+<h2>12. WORKFLOW COMPLET</h2>
+<!-- ================================================================ -->
+
+<pre>
+USER INTERACȚIONEAZĂ CU CHATBOT
+    │
+    ├─ Conversație → chat_events (impression, click, ATC)
+    │
+    ├─ Lead prompt arătat?
+    │   ├─ DA → user completează → Lead creat (status: new/qualified)
+    │   └─ NU / refuzat → conversație se termină
+    │
+    ├─ session_ended trigger
+    │   └─ DeriveConversationOutcomes job
+    │       ├─ Calculează outcomes (product_discovered, add_to_cart, etc.)
+    │       ├─ Calculează opportunity_score
+    │       │   ├─ Score >= 30 ȘI fără lead → is_opportunity = TRUE
+    │       │   └─ Are lead → is_opportunity = FALSE
+    │       └─ Salvează pe conversation
+    │
+    ├─ Purchase webhook (WooCommerce)
+    │   └─ AttributionService
+    │       ├─ Match strict / probable / assisted
+    │       └─ PurchaseAttribution creat + revenue tracked
+    │
+    └─ Dashboard afișează:
+        ├─ KPIs: sesiuni, leads, opportunities, revenue
+        ├─ Funnel: conversations → products → clicks → ATC → purchase
+        ├─ Leads tab: cu date contact, scor, status
+        ├─ Opportunities tab: fără contact, cu intent, drop-off point
+        └─ Commerce tab: attribution breakdown, top produse, timp mediu
+</pre>
+
+<!-- ================================================================ -->
+<h2>13. CE LIPSEȘTE ÎN SISTEM (audit final)</h2>
+<!-- ================================================================ -->
+
+<table>
+<tr><th>#</th><th>Lipsă</th><th>Prioritate</th><th>Efort</th></tr>
+<tr><td>1</td><td>Migrare company fields pe tenants</td><td><span class="tg tg-r">CRITIC</span></td><td>30 min</td></tr>
+<tr><td>2</td><td>Migrare opportunity_score pe conversations</td><td><span class="tg tg-r">CRITIC</span></td><td>30 min</td></tr>
+<tr><td>3</td><td>OutcomeEngine: calculare opportunity_score + is_opportunity</td><td><span class="tg tg-r">CRITIC</span></td><td>1h</td></tr>
+<tr><td>4</td><td>LeadController + views (list, detail, export)</td><td><span class="tg tg-r">CRITIC</span></td><td>4h</td></tr>
+<tr><td>5</td><td>OpportunityController + views</td><td><span class="tg tg-r">CRITIC</span></td><td>3h</td></tr>
+<tr><td>6</td><td>Dashboard V2 (rescris cu funnel, KPIs, warnings)</td><td><span class="tg tg-r">CRITIC</span></td><td>6h</td></tr>
+<tr><td>7</td><td>Admin tenant override UI</td><td><span class="tg tg-y">IMPORTANT</span></td><td>4h</td></tr>
+<tr><td>8</td><td>CommerceAnalyticsController + view</td><td><span class="tg tg-y">IMPORTANT</span></td><td>4h</td></tr>
+<tr><td>9</td><td>Company data form + billing completeness</td><td><span class="tg tg-y">IMPORTANT</span></td><td>2h</td></tr>
+<tr><td>10</td><td>Plan growth în seeder</td><td><span class="tg tg-g">UȘOR</span></td><td>30 min</td></tr>
+<tr><td>11</td><td>max_products pe plan_limits</td><td><span class="tg tg-g">UȘOR</span></td><td>15 min</td></tr>
+<tr><td>12</td><td>Navigare sidebar: Leads, Opportunities, Conversii</td><td><span class="tg tg-g">UȘOR</span></td><td>30 min</td></tr>
+<tr><td>13</td><td>Lead export CSV</td><td><span class="tg tg-g">UȘOR</span></td><td>1h</td></tr>
+<tr><td>14</td><td>Lead note interne (adaugă câmp notes pe leads)</td><td><span class="tg tg-g">UȘOR</span></td><td>30 min</td></tr>
+<tr><td>15</td><td>Admin: liste limite atinse per tenant</td><td><span class="tg tg-y">IMPORTANT</span></td><td>2h</td></tr>
+</table>
+
+<!-- ================================================================ -->
+<h2>14. PLAN IMPLEMENTARE</h2>
+<!-- ================================================================ -->
+
+<h3>Faza 1 — Fundament (2 zile)</h3>
+<ol>
+<li>Migrare: company fields + opportunity_score + max_products</li>
+<li>OutcomeEngine: adaugă calculare opportunity_score + is_opportunity</li>
+<li>Update Tenant model: fillable company fields + billing_complete accessor</li>
+<li>Update PlanLimitsSeeder: plan growth + max_products</li>
+<li>Navigare sidebar: adaugă Leads, Opportunities, Conversii</li>
+</ol>
+
+<h3>Faza 2 — Leads & Opportunities UI (3 zile)</h3>
+<ol>
+<li>LeadController cu index, show, updateStatus, addNote, export</li>
+<li>Views: leads/index, leads/show</li>
+<li>OpportunityController cu index, show</li>
+<li>Views: opportunities/index, opportunities/show</li>
+</ol>
+
+<h3>Faza 3 — Dashboard V2 + Commerce (3 zile)</h3>
+<ol>
+<li>DashboardController rewrite: KPIs din chat_events + leads + opportunities + attributions</li>
+<li>Funnel chart component</li>
+<li>Warnings system</li>
+<li>Setup checklist</li>
+<li>CommerceAnalyticsController + view</li>
+</ol>
+
+<h3>Faza 4 — Admin + Billing (2 zile)</h3>
+<ol>
+<li>Admin tenant detail: override-uri UI</li>
+<li>Admin override API endpoints</li>
+<li>Company data form în Settings</li>
+<li>Billing completeness check</li>
+<li>Admin dashboard: usage per tenant + limite atinse</li>
+</ol>
+
+<hr>
+<p style="text-align:center;color:var(--t2);font-size:.75rem;margin-top:1rem">
+Sambla v2 Dashboard Blueprint — 29 martie 2026<br>
+8 pagini noi + 4 pagini modificate + 1 migrare + 3 controllere noi + 15 endpoint-uri
+</p>
+
+</div>
+</body>
+</html>

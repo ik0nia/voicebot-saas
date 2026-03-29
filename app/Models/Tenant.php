@@ -25,6 +25,20 @@ class Tenant extends Model
         'pm_last_four',
         'webhook_url',
         'webhook_secret',
+        'company_name',
+        'company_cif',
+        'company_reg_number',
+        'company_address',
+        'company_city',
+        'company_county',
+        'company_country',
+        'company_zip',
+        'company_email',
+        'company_phone',
+        'company_contact_person',
+        'company_bank',
+        'company_iban',
+        'billing_complete',
     ];
 
     protected function casts(): array

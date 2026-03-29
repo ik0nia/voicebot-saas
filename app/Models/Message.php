@@ -25,12 +25,18 @@ class Message extends Model
         'sent_at',
         'delivered_at',
         'read_at',
+        'detected_intents',
+        'pipelines_executed',
+        'knowledge_chunks_used',
     ];
 
     protected function casts(): array
     {
         return [
             'metadata' => 'array',
+            'detected_intents' => 'array',
+            'pipelines_executed' => 'array',
+            'knowledge_chunks_used' => 'array',
             'sent_at' => 'datetime',
             'delivered_at' => 'datetime',
             'read_at' => 'datetime',

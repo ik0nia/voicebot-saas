@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sambla — Documentație Completă Algoritm Chat & Voice</title>
+<style>
+:root{--bg:#0f172a;--s1:#1e293b;--s2:#334155;--bd:#475569;--t1:#e2e8f0;--t2:#94a3b8;--ac:#38bdf8;--gr:#4ade80;--yw:#fbbf24;--rd:#f87171;--pr:#a78bfa;--or:#fb923c}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--t1);line-height:1.75;font-size:15px}
+.c{max-width:1100px;margin:0 auto;padding:2rem}
+h1{font-size:1.8rem;color:var(--ac);margin-bottom:.3rem}
+h2{font-size:1.4rem;color:var(--ac);margin:2.5rem 0 .8rem;padding-bottom:.4rem;border-bottom:1px solid var(--bd)}
+h3{font-size:1.1rem;color:var(--gr);margin:1.8rem 0 .6rem}
+h4{font-size:.95rem;color:var(--yw);margin:1.2rem 0 .4rem}
+p,li{color:var(--t2);margin-bottom:.4rem}
+strong{color:var(--t1)}
+code{background:var(--s2);padding:.1rem .35rem;border-radius:3px;font-size:.85em;color:var(--or)}
+pre{background:var(--s1);border:1px solid var(--bd);border-radius:6px;padding:1rem;overflow-x:auto;margin:.8rem 0;font-size:.8rem;line-height:1.45;color:var(--t1);white-space:pre-wrap;word-wrap:break-word}
+.b{background:var(--s1);border:1px solid var(--bd);border-radius:6px;padding:1rem;margin:.8rem 0}
+table{width:100%;border-collapse:collapse;margin:.8rem 0;font-size:.85rem}
+th{background:var(--s2);color:var(--ac);text-align:left;padding:.5rem .6rem;border:1px solid var(--bd)}
+td{padding:.4rem .6rem;border:1px solid var(--bd);color:var(--t2);vertical-align:top}
+.tg{display:inline-block;padding:.1rem .4rem;border-radius:3px;font-size:.7rem;font-weight:600}
+.tg-g{background:rgba(74,222,128,.15);color:var(--gr)}.tg-y{background:rgba(251,191,36,.15);color:var(--yw)}.tg-r{background:rgba(248,113,113,.15);color:var(--rd)}.tg-b{background:rgba(56,189,248,.15);color:var(--ac)}.tg-p{background:rgba(167,139,250,.15);color:var(--pr)}
+ul{padding-left:1.3rem}
+.sub{color:var(--t2);font-size:.95rem;margin-bottom:1.5rem}
+hr{border:none;border-top:1px solid var(--bd);margin:1.5rem 0}
+.fl{font-family:monospace;white-space:pre;font-size:.78rem;line-height:1.35;color:var(--gr)}
+.ex{background:rgba(56,189,248,.08);border-left:3px solid var(--ac);padding:.6rem .8rem;margin:.6rem 0;font-size:.85rem}
+.warn{background:rgba(251,191,36,.08);border-left:3px solid var(--yw);padding:.6rem .8rem;margin:.6rem 0;font-size:.85rem}
+.imp{background:rgba(248,113,113,.08);border-left:3px solid var(--rd);padding:.6rem .8rem;margin:.6rem 0;font-size:.85rem}
+@media print{body{background:#fff;color:#111;font-size:11px}h1,h2,h3,h4{color:#111}pre,.b{border-color:#ccc;background:#f5f5f5}.ex,.warn,.imp{background:#f9f9f9}table{font-size:9px}code{background:#eee;color:#333}.tg{border:1px solid #ccc}}
+</style>
+</head>
+<body>
+<div class="c">
+
+<h1>Sambla — Documentație Completă: Algoritm Chat & Voice</h1>
+<p class="sub">Fiecare decizie, fiecare API call, fiecare condiție — documentat din codul sursă. 29 martie 2026.</p>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>PARTEA I — CHAT WIDGET (Web)</h2>
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<h3>1.1 Entry Point</h3>
+<p><code>POST /api/chatbot/{channelId}/message</code> → <code>ChatbotApiController::message()</code></p>
+<p>Payload: <code>{ message: string, session_id?: string, session_token?: string }</code></p>
+
+<h3>1.2 Validare & Securitate (înainte de orice logică)</h3>
+<table>
+<tr><th>Check</th><th>Condiție</th><th>Acțiune dacă fail</th><th>Cod sursă</th></tr>
+<tr><td>Canal valid</td><td><code>Channel::where('id', channelId)->where('is_active', true)</code></td><td>404</td><td>linia 54-61</td></tr>
+<tr><td>Rate limit</td><td><code>RateLimiter::tooManyAttempts(IP:channelId, 30)</code> per 60s</td><td>429</td><td>linia 74-78</td></tr>
+<tr><td>Bot activ</td><td><code>$bot->is_active</code></td><td>403</td><td>linia 82-84</td></tr>
+<tr><td>Plan limit</td><td><code>PlanLimitService::canSendMessage($tenant)</code></td><td>429 + <code>limit_reached: true</code></td><td>linia 88-96</td></tr>
+</table>
+
+<h3>1.3 Sesiune (Session Management)</h3>
+
+<h4>Reluare sesiune existentă</h4>
+<p>Dacă clientul trimite <code>session_id</code> + <code>session_token</code>:</p>
+<ol>
+<li>Calculează <code>expected_token = HMAC-SHA256(session_id + channelId, APP_KEY)</code></li>
+<li>Compară cu <code>hash_equals(expected, received)</code> — previne session hijacking</li>
+<li>Caută conversația activă pe canal + session_id</li>
+<li>Verifică expirare: dacă ultimul mesaj e mai vechi de <strong>10 minute</strong> → marchează conversația ca <code>completed</code>, creează una nouă</li>
+</ol>
+
+<h4>Sesiune nouă</h4>
+<p>UUID v4 generat → HMAC token calculat → <code>Conversation::create()</code> cu tenant_id, bot_id, channel_id, IP, user_agent, origin header.</p>
+
+<h3>1.4 Salvare mesaj user</h3>
+<p><code>Message::create({conversation_id, direction: 'inbound', content, sent_at})</code> → increment <code>conversation.messages_count</code>.</p>
+
+<hr>
+
+<h3>1.5 DECIZIA CRITICĂ: Ce tip de query este?</h3>
+
+<p>Aici algoritmul decide ce pipeline de search să folosească. Ordinea de verificare:</p>
+
+<h4>Pas 1: Este o întrebare despre comandă?</h4>
+<p>Serviciu: <code>OrderLookupService::detectOrderQuery()</code></p>
+<p>Regex patterns verificate (toate pe mesajul lowercase):</p>
+<pre>/comand[aă]/   /livr[aă]r/   /colet/   /tracking/   /awb/   /cand.*vine/   /status.*comand/</pre>
+<p>Dacă DA → apelează <code>OrderLookupService::lookup()</code> care face <strong>HTTP request la WooCommerce REST API</strong>:</p>
+<pre>GET {site_url}/wp-json/wc/v3/orders/{order_number}
+Authorization: Basic {consumer_key:consumer_secret}
+</pre>
+<p>Cache: 10 minute. Rate limit: 30 req/60s per bot. Suportă lookup pe: order number, email, phone.</p>
+
+<div class="ex">
+<strong>Context generat pentru AI:</strong> <code>[INFORMAȚII COMANDĂ - răspunde pe baza acestor date] Comanda #1234 | Status: processing | Data: 2026-03-20 | Total: 450 RON | Plata: card | Livrare: FanCourier | AWB: 12345678 | Produse: Glet Fino x2, Adeziv CM11 x1</code>
+</div>
+
+<h4>Dacă NU e comandă, dar bot-ul tocmai a cerut detalii:</h4>
+<p>Verifică dacă ultimul mesaj outbound conține "numărul comenzii" / "emailul" / "telefonul". Dacă da → extrage parametri cu <code>extractOrderParams()</code> (regex pe numere 3-8 cifre, email, telefon).</p>
+
+<h4>Pas 2: Este o recomandare de categorie?</h4>
+<p>Serviciu: <code>IntentDetectionService::detect()</code> → verifică <code>is_category_recommendation</code></p>
+<p>Condiție: NU trebuie să fie deja product_search (are <code>/caut/</code>, <code>/pret/</code>, etc.) ȘI trebuie să match-uie:</p>
+<pre>/ce\s+(imi|îmi)\s+(recoman|trebui|sugere)/     "ce imi recomanzi"
+/ce\s+(produse|materiale)\s+(am|aveti)/          "ce produse aveti"
+/ce\s+(am|as)\s+nevoie/                          "ce am nevoie"
+/vreau\s+sa\s+(renovez|zugrav|vopsesc|montez)/   "vreau sa renovez"
+/cum\s+sa\s+(zugrav|montez|repar|izol)/          "cum sa zugravesc"
+/ce\s+materiale/                                 "ce materiale"
+/lista.*materiale/                               "lista de materiale"</pre>
+
+<p>Dacă DA → <code>extractRecommendationConcept()</code> extrage conceptul (ex: "zugravit", "baie") → <code>RecommendationService::recommend()</code></p>
+
+<h4>RecommendationService — cum funcționează</h4>
+<p>Menține un map static de ~30 concepte → sub-queries:</p>
+<pre>"zugravit"  → ["vopsea lavabila", "amorsa", "glet", "trafalet", "banda mascare"]
+"baie"      → ["silicon sanitar", "adeziv gresie", "faianta", "gresie", "chit rosturi"]
+"termoizolatie" → ["polistiren", "vata minerala", "adeziv polistiren", "plasa fibra sticla"]
+"instalatii sanitare" → ["teava ppr", "robinet", "racord", "silicon sanitar"]</pre>
+<p>Matching: exact match, apoi prefix match pe primele 4 caractere.</p>
+<p>Execuție: pentru fiecare sub-query, apelează <code>ProductSearchService::search(botId, subQuery, limit=2)</code>. Agregă rezultatele, deduplică pe product ID.</p>
+
+<div class="ex">
+<strong>Context generat pentru AI:</strong> <code>[Clientul a cerut recomandări pentru "zugravit". Am găsit 10 produse relevante din categoriile: vopsea lavabila, amorsa, glet, trafalet, banda mascare. Produsele se afișează ca carduri. Explică pe scurt DE CE are nevoie de aceste tipuri de produse.]</code>
+</div>
+
+<h4>Pas 3: Product search direct (default)</h4>
+<p>Dacă nu e nici order, nici recommendation → <code>ProductSearchService::search(botId, userMessage, 4)</code></p>
+<p><strong>Acesta este algoritmul cel mai complex — detaliat complet în Partea III.</strong></p>
+
+<div class="ex">
+<strong>Context generat pentru AI (dacă s-au găsit produse):</strong> <code>[Am găsit 4 produse relevante care se afișează automat ca carduri sub mesajul tău. NU le enumera în text.]</code>
+</div>
+<div class="warn">
+<strong>Context generat (dacă NU s-au găsit):</strong> <code>[NU am găsit produse relevante. NU spune că ai găsit produse. Sugerează-i să reformuleze sau să contacteze magazinul.]</code>
+</div>
+
+<hr>
+
+<h3>1.6 Generarea Răspunsului AI</h3>
+<p>Metodă: <code>generateAIResponse(bot, conversation, userMessage, extraContext)</code></p>
+
+<h4>Pas 1: Prompt versioning (A/B testing)</h4>
+<p><code>BotPromptVersion::selectForBot(botId)</code> — dacă există versiuni active, face weighted random selection pe câmpul <code>weight</code>. Dacă nu → folosește <code>bot.system_prompt</code>.</p>
+
+<h4>Pas 2: System prompt (cached 10 minute per bot)</h4>
+<p>Cache key: <code>bot_system_prompt_{botId}</code></p>
+<p>Conținut:</p>
+<ol>
+<li><strong>Base prompt</strong>: din BotPromptVersion sau <code>bot.system_prompt</code> sau default "Ești un asistent virtual. Răspunde scurt și util."</li>
+<li><strong>Product rules</strong> (doar dacă <code>WooCommerceProduct::where('bot_id', botId)->exists()</code>):
+<pre>"Ești asistentul unui magazin online. REGULI STRICTE:
+- Produsele se afișează AUTOMAT ca și carduri vizuale sub mesajul tău.
+- NU enumera produse în text. NU scrie nume de produse, prețuri, sau liste.
+- Răspunde DOAR cu o descriere generală scurtă (1-2 propoziții).
+- NU inventa produse, prețuri sau calcule de consum."</pre>
+</li>
+</ol>
+
+<h4>Pas 3: Intent detection — skip knowledge?</h4>
+<p><code>IntentDetectionService::shouldSkipKnowledge()</code> returnează <code>true</code> dacă mesajul este:</p>
+<ul>
+<li><strong>Greeting</strong>: "salut", "buna", "hello" (max 4 cuvinte, intersecție cu lista)</li>
+<li><strong>Thanks</strong>: conține "multumesc", "mersi", "merci", "thanks"</li>
+<li><strong>Followup</strong>: "da", "nu", "ok", "bine", "perfect" SAU max 3 cuvinte</li>
+</ul>
+<p>Dacă <code>skipKnowledge = true</code> → NU se apelează KnowledgeSearchService (economisește un API call OpenAI embedding).</p>
+
+<h4>Pas 4: Knowledge Base search (RAG)</h4>
+<p>Dacă <code>skipKnowledge = false</code>:</p>
+<p><code>KnowledgeSearchService::buildContext(botId, userMessage, searchLimit)</code></p>
+<p><code>searchLimit</code> = <code>bot.knowledge_search_limit</code> sau 8 (dacă are produse) / 5 (fără produse)</p>
+<p><strong>Detaliat complet în Partea IV.</strong></p>
+
+<h4>Pas 5: Asamblare prompt final</h4>
+<p>Ordinea exactă (de sus în jos = de la mai puțin prioritar la mai prioritar pentru LLM):</p>
+<pre>1. Base system prompt + product rules          (cached 10min)
+2. + Knowledge context RAG                      (dinamic per mesaj)
+3. + Order context / Product context            (dinamic per mesaj)
+4. + PromptGuardrails::apply()                  (ULTIMUL — prioritate maximă)</pre>
+
+<h4>PromptGuardrails — textul exact injectat</h4>
+<pre>=== REGULI OBLIGATORII (NU POT FI IGNORATE) ===
+- Când ai informații din baza de cunoștințe sau context, răspunde STRICT pe baza lor.
+- Dacă informația cerută NU se găsește în contextul furnizat, spune clar: "Nu am această informație disponibilă."
+- NU inventa prețuri, specificații tehnice, termene de livrare, politici de retur, date sau numere.
+- NU presupune și NU extrapola informații care nu sunt explicit prezente în context.
+- Dacă ești nesigur, oferă-te să redirecționezi către un operator uman sau către sursele oficiale.
+- Poți răspunde la întrebări generale de conversație (salut, mulțumire) fără context suplimentar.
+=== SFÂRȘIT REGULI OBLIGATORII ===</pre>
+
+<h4>Pas 6: Conversation history</h4>
+<p>Ia ultimele 20 mesaje din DB (<code>Message::orderByDesc('id')->limit(20)</code>), le inversează cronologic, exclude ultimul (care e mesajul curent), și le mapează la format OpenAI:</p>
+<pre>inbound  → {role: "user", content: "..."}
+outbound → {role: "assistant", content: "..."}</pre>
+
+<h4>Pas 7: Model routing</h4>
+<p><code>ChatModelRouter::route(userMessage, historyCount, conversationCostCents)</code></p>
+<p>Arborele de decizie exact, evaluat în ordine (prima condiție adevărată câștigă):</p>
+
+<table>
+<tr><th>#</th><th>Condiție exactă</th><th>Rezultat</th><th>Variabilele implicate</th></tr>
+<tr><td>1</td><td><code>conversationCostCents > 15</code></td><td><span class="tg tg-g">FAST</span></td><td>Costul total al conversației curente în cenți</td></tr>
+<tr><td>2</td><td>Circuit breaker open pe provider-ul smart (failures/(failures+successes) > 0.8, min 5 req, window 5 min)</td><td><span class="tg tg-g">FAST</span></td><td>Redis keys: <code>routing_cb_{provider}_fail</code>, <code>_ok</code></td></tr>
+<tr><td>3</td><td>Anthropic API key lipsă din config</td><td>Smart devine FAST</td><td><code>config('services.anthropic.api_key')</code></td></tr>
+<tr><td>4</td><td>Voice channel ȘI query NU e complex</td><td><span class="tg tg-g">FAST</span></td><td>Param <code>isVoiceChannel</code> (nu se folosește în chat)</td></tr>
+<tr><td>5</td><td><code>wordCount < 8</code> ȘI <code>historyCount > 4</code></td><td><span class="tg tg-g">FAST</span></td><td>Mesaj scurt în conversație lungă = continuare simplă</td></tr>
+<tr><td>6</td><td><code>wordCount > 30</code> SAU regex patterns match</td><td><span class="tg tg-y">SMART</span></td><td>Patterns din <code>config('routing.patterns.ro')</code></td></tr>
+<tr><td>7</td><td><code>historyCount > 10</code> ȘI <code>wordCount > 15</code></td><td><span class="tg tg-y">SMART</span></td><td>Conversație lungă + mesaj substanțial</td></tr>
+<tr><td>8</td><td>Default</td><td><span class="tg tg-g">FAST</span></td><td>—</td></tr>
+</table>
+
+<p>Tier-urile sunt definite în <code>config/routing.php</code>:</p>
+<pre>fast:  {provider: "openai",    model: "gpt-4o-mini",            max_tokens: 500, temperature: 0.6}
+smart: {provider: "anthropic",  model: "claude-sonnet-4-5-20241022", max_tokens: 800, temperature: 0.5}</pre>
+
+<h4>Pas 8: Token truncation</h4>
+<p><code>TokenCounterService::truncateHistory(messages, maxTokens * 0.95)</code></p>
+<p>Estimare: <code>strlen(content) / 4 + 4</code> tokens per mesaj. Păstrează system messages + cele mai recente mesaje care încap. Cele vechi se șterg.</p>
+
+<h4>Pas 9: API Call — ChatCompletionService::complete()</h4>
+
+<p>Cel mai complex serviciu. Iată flow-ul exact:</p>
+
+<table>
+<tr><th>Pas</th><th>Ce face</th><th>Condiție / Detalii</th></tr>
+<tr><td>9a</td><td><strong>Token pre-validation</strong></td><td><code>estimatedTokens > maxContextTokens * 0.95</code> → throw <code>TokenLimitExceededException</code></td></tr>
+<tr><td>9b</td><td><strong>Provider key check</strong></td><td>Dacă provider=anthropic dar key lipsă → fallback la openai/gpt-4o</td></tr>
+<tr><td>9c</td><td><strong>Circuit breaker</strong></td><td>Dacă circuit open pe provider → swap la alt provider (openai↔anthropic)</td></tr>
+<tr><td>9d</td><td><strong>Response cache check</strong></td><td>Key: <code>MD5(model + messages + temperature)</code>. TTL: 5 min (mini) / 15 min (altele). Skip dacă mesajul conține "INFORMAȚII COMANDĂ"</td></tr>
+<tr><td>9e</td><td><strong>API call cu retry</strong></td><td>Max 3 încercări. Backoff: <code>2^(attempt-1) * 1000 + random(100,500)</code> ms. NU retry pe <code>ApiAuthenticationException</code></td></tr>
+<tr><td>9f</td><td><strong>Cross-provider fallback</strong></td><td>Dacă toate retry-urile fail → încearcă provider-ul opus (openai→anthropic sau invers)</td></tr>
+<tr><td>9g</td><td><strong>Telemetry</strong></td><td><code>AiApiMetric::create({provider, model, input_tokens, output_tokens, cost_cents, response_time_ms, status, error_type, bot_id, tenant_id})</code></td></tr>
+<tr><td>9h</td><td><strong>Cost calculation</strong></td><td><code>(tokens / 1_000_000) * price_per_million * 100</code> → cenți. Pricing din <code>ModelPricing</code> DB (cache 1h) sau fallback hardcodat</td></tr>
+</table>
+
+<h4>API-uri externe apelate:</h4>
+<table>
+<tr><th>Provider</th><th>Endpoint</th><th>Timeout</th><th>Pricing fallback ($/1M tokens)</th></tr>
+<tr><td>OpenAI</td><td><code>OpenAI::chat()->create({model, messages, max_tokens, temperature})</code></td><td>30s</td><td>gpt-4o-mini: $0.15/$0.60 | gpt-4o: $2.50/$10.00</td></tr>
+<tr><td>Anthropic</td><td><code>$client->messages()->create({model, system, messages, max_tokens, temperature})</code></td><td>60s</td><td>claude-haiku: $0.80/$4.00 | claude-sonnet: $3.00/$15.00</td></tr>
+</table>
+
+<div class="imp">
+<strong>Diferență critică Anthropic:</strong> System messages sunt extrase din array-ul de mesaje și trimise ca parametru <code>system</code> separat (Anthropic API nu acceptă role=system în messages array). Mesajele system se merge-uiesc cu newline.
+</div>
+
+<h4>Pas 10: Cascading fallback (dacă API call eșuează)</h4>
+<pre>Try Level 0: system_prompt + knowledge + order/product context + history
+│   FAIL → Log warning "fallback level 1"
+│
+├─ Try Level 1: base_system_prompt + order/product context + history (fără knowledge)
+│   FAIL → Log warning "fallback level 2"
+│
+├─ Try Level 2: base_system_prompt + user_message ONLY (fără history)
+│   FAIL →
+│
+└─ Return static: "Momentan nu pot procesa cererea. Te rog încearcă din nou."</pre>
+<p>La fiecare nivel, <code>PromptGuardrails::apply()</code> se re-aplică pe noul prompt.</p>
+
+<h3>1.7 Salvare răspuns & tracking</h3>
+<ol>
+<li>Salvare <code>Message</code> outbound cu: <code>ai_model, ai_provider, input_tokens, output_tokens, cost_cents</code>, metadata cu product cards</li>
+<li>Increment <code>conversation.messages_count</code> și <code>conversation.cost_cents</code></li>
+<li>Update <code>channel.last_activity_at</code></li>
+<li><code>PlanLimitService::recordMessage($tenant)</code> — incrementează contorul lunar</li>
+</ol>
+
+<h3>1.8 Response JSON</h3>
+<pre>{
+  "response": "Am găsit câteva opțiuni de adeziv...",
+  "reply": "Am găsit câteva opțiuni de adeziv...",   // duplicate for compatibility
+  "session_id": "uuid-v4",
+  "session_token": "hmac-sha256-hash",
+  "session_expired": false,
+  "products": [
+    {"id": 123, "name": "Adeziv CM11", "price": "18.50", "currency": "RON", "image_url": "...", "permalink": "...", "add_to_cart_url": "..."}
+  ]
+}</pre>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>PARTEA II — VOICE</h2>
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<h3>2.1 Inițializare sesiune voice</h3>
+<p><code>POST /api/v1/bots/{bot}/realtime-session</code> → <code>RealtimeSessionController::create()</code></p>
+
+<h4>Validări pre-sesiune:</h4>
+<ol>
+<li><code>PlanLimitService::canStartVoiceCall($tenant)</code> — verifică minute voice rămase</li>
+<li>API key OpenAI validă (nu goală, nu <code>sk-your</code>)</li>
+</ol>
+
+<h4>Voice mapping:</h4>
+<p>Bot-ul are câmpul <code>voice</code> (ex: "feminin", "coral", "ash"). Se mapează la OpenAI voice name:</p>
+<pre>masculin → ash | feminin → coral | nova → coral | alloy → alloy | echo → echo | shimmer → shimmer</pre>
+
+<h4>Cloned voice detection:</h4>
+<p>Verifică <code>$bot->usesClonedVoice()</code> — dacă da, se folosește ElevenLabs TTS în loc de OpenAI native audio.</p>
+
+<h4>Construirea instructions (system prompt voice):</h4>
+<ol>
+<li><strong>Base prompt:</strong> <code>bot.system_prompt</code></li>
+<li><strong>Product info</strong> (dacă are WooCommerce):
+  <ul>
+  <li>Total produse, categorii (LIKE pluck + flatten + unique)</li>
+  <li>Top 10 produse populare: <code>ORDER BY sales_count DESC LIMIT 10</code></li>
+  <li>Reguli: "folosește tool-ul search_products", "prețurile sunt REALE", "interpretează erori de transcriere"</li>
+  </ul>
+</li>
+<li><strong>Knowledge context:</strong> <code>KnowledgeSearchService::buildContext(botId, query, limit=3, maxChars=3000)</code>
+  <ul><li>Query fix: "informații magazin, livrare, plată, contact, program" (dacă are produse) sau "informații generale despre companie și servicii"</li></ul>
+</li>
+<li><strong>PromptGuardrails::apply(isVoice: true)</strong> — adaugă și reguli vocale:
+<pre>REGULI SUPLIMENTARE VOCALE:
+- Răspunde SCURT: maxim 1-2 propoziții simple și directe.
+- NU enumera liste lungi. Menționează 2-3 și întreabă dacă vrea mai multe.
+- Când spui prețuri, pronunță-le în cuvinte: "douăzeci și cinci de lei", nu "25 RON".
+- Dacă mesajul transcris nu are sens, cere politicos reformularea.</pre>
+</li>
+<li><strong>Voice-specific rules</strong> (hardcodate în controller):
+<pre>- Vorbește NATURAL ca un vânzător experimentat
+- EXCLUSIV limba română
+- Răspunde SCURT — maxim 1-2 propoziții
+- Ton PROFESIONAL dar cald
+- INTERZIS: 'hmm', 'păi', 'deci', 'aș putea', 'cred că'
+- Termină cu întrebare scurtă
+- Interpretează transcription errors ('CRSID' = 'Ceresit')
+- Ignoră mesaje false gen 'subscribe', 'mulțumim pentru vizionare'</pre>
+</li>
+</ol>
+
+<h4>API call extern — OpenAI Realtime Sessions:</h4>
+<pre>POST https://api.openai.com/v1/realtime/sessions
+Authorization: Bearer {OPENAI_API_KEY}
+Content-Type: application/json
+
+{
+  "model": "gpt-4o-realtime-preview",
+  "voice": "coral",
+  "modalities": ["text", "audio"],
+  "instructions": "... (tot ce s-a asamblat mai sus) ...",
+  "input_audio_transcription": {"model": "whisper-1", "language": "ro"},
+  "turn_detection": {
+    "type": "server_vad",
+    "threshold": 0.5,
+    "prefix_padding_ms": 200,
+    "silence_duration_ms": 500
+  },
+  "tools": [                          // DOAR dacă bot are produse
+    {
+      "type": "function",
+      "name": "search_products",
+      "description": "Caută produse în catalogul magazinului...",
+      "parameters": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}
+    }
+  ],
+  "tool_choice": "auto"
+}
+</pre>
+<p>Timeout: 15s. Response: ephemeral client_secret token (valid ~60s).</p>
+
+<h4>Post-sesiune:</h4>
+<ol>
+<li><code>Call::create({tenant_id, bot_id, caller_number: 'web-test', direction: 'inbound', status: 'in_progress', started_at: now()})</code></li>
+<li>Increment <code>bot.calls_count</code></li>
+<li>Greeting dinamic: ora < 12 → "Bună dimineața", ora < 18 → "Bună ziua", altfel → "Bună seara"</li>
+</ol>
+
+<h4>Response JSON:</h4>
+<pre>{
+  "token": "ephemeral-client-secret-from-openai",
+  "call_id": 42,
+  "bot_id": 67,
+  "voice": "coral",
+  "bot_name": "Malinco AI",
+  "use_cloned_voice": false,
+  "greeting_message": "Bună ziua! Cu ce vă pot ajuta?",
+  "has_products": true,
+  "max_duration_seconds": 1800,
+  "warning_at_seconds": 1500
+}</pre>
+<p>Clientul (browser JS) se conectează apoi la WebSocket: <code>wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview</code></p>
+
+<h3>2.2 Mid-call context update</h3>
+<p>Serviciu: <code>RealtimeSession::handleConversationEvent()</code></p>
+<p>Trigger: event OpenAI <code>conversation.item.input_audio_transcription.completed</code> (Whisper a transcris vocea userului)</p>
+
+<h4>Flow exact:</h4>
+<ol>
+<li><strong>Salvare transcript:</strong> <code>Transcript::create({call_id, role: 'user', content: transcript, timestamp_ms})</code></li>
+<li><strong>Product search</strong> (DOAR dacă bot are produse):
+  <ul>
+  <li><code>ProductSearchService::search(botId, transcript, 5)</code> — DB query, fără API externe</li>
+  <li>Dacă găsit: construiește text "Produse găsite relevant pentru cererea clientului: - Glet Fino: 52 RON..."</li>
+  </ul>
+</li>
+<li><strong>Knowledge search</strong>:
+  <ul>
+  <li><code>KnowledgeSearchService::buildContext(botId, transcript, knowledgeLimit)</code></li>
+  <li><code>knowledgeLimit</code> = 3 dacă products found, 5 dacă nu — păstrează context mic</li>
+  <li>Apel API extern: <strong>OpenAI Embeddings API</strong> (<code>text-embedding-3-small</code>) pentru query embedding. Cached 24h.</li>
+  </ul>
+</li>
+<li><strong>Context changed?</strong> Compară noul context cu cel precedent (<code>$this->conversationContext</code>).
+  <ul>
+  <li>Dacă IDENTIC → skip (evită session.update redundant)</li>
+  <li>Dacă DIFERIT → trimite <code>session.update</code> cu instructions noi reconstruite</li>
+  </ul>
+</li>
+</ol>
+
+<div class="imp">
+<strong>Diferența critică chat vs voice:</strong> La chat, contextul se construiește O DATĂ per mesaj. La voice, se reconstruiește la FIECARE replică a userului, cu session.update live.
+</div>
+
+<h3>2.3 End call & cost</h3>
+<p><code>RealtimeSessionController::endCall()</code></p>
+<pre>Cost native voice:  ceil(duration_seconds × 0.14 × 100 / 60) cenți  (~$0.14/min)
+Cost cloned voice:  ceil(duration_seconds × 0.27 × 100 / 60) cenți  (~$0.27/min = OpenAI + ElevenLabs)
+Minimum: 1 cent per call</pre>
+<p>Post-call jobs (dispatch cu delay): <code>AnalyzeCallSentiment</code> (15s), <code>GenerateCallSummary</code> (20s), <code>SendCallEndedWebhook</code> (25s).</p>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>PARTEA III — PRODUCT SEARCH (detaliu complet)</h2>
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<p>Serviciu: <code>ProductSearchService::search()</code>. Zero API-uri externe. Doar PostgreSQL queries.</p>
+
+<h3>3.1 Normalizare query</h3>
+<p>Input: <code>"Ma intereseaza polistiren de 10cm"</code></p>
+<ol>
+<li><strong>Remove diacritics:</strong> ă→a, î→i, ș→s, ț→t → <code>"ma intereseaza polistiren de 10cm"</code></li>
+<li><strong>Lowercase</strong></li>
+<li><strong>Split compounds:</strong> <code>10cm</code> → <code>10 cm</code> (regex: <code>/(\d+)(cm|mm|m|kg|ml|l|mp|g)/</code>)</li>
+<li><strong>Normalize dimensions:</strong> <code>60 x 60</code> → <code>60x60</code></li>
+<li><strong>Collapse whitespace</strong></li>
+</ol>
+<p>Output: <code>"ma intereseaza polistiren de 10 cm"</code></p>
+
+<h3>3.2 Token extraction</h3>
+<p>Tokenizare pe spațiu → stopword removal (100+ cuvinte) → filter: len > 2 SAU conține cifre SAU len=2 alfanumeric</p>
+<p>"ma" → stopword ❌ | "intereseaza" → stopword ❌ | "polistiren" → ✅ | "de" → stopword ❌ | "10" → ✅ (cifră) | "cm" → ✅ (2 chars alfanumeric)</p>
+<p>Output: <code>["polistiren", "10", "cm"]</code></p>
+
+<h3>3.3 Token classification</h3>
+<p>Iterare prin tokens în ordine:</p>
+
+<table>
+<tr><th>Token</th><th>Test</th><th>Clasificare</th></tr>
+<tr><td>polistiren</td><td>Nu e numeric, nu e unit, len ≥ 3, <code>productType == null</code></td><td><strong>product_type = "polistiren"</strong></td></tr>
+<tr><td>10</td><td><code>/^\d+$/</code> match. Next token = "cm" (unit) → pereche</td><td><strong>dimensions = [{value:"10", unit:"cm"}]</strong></td></tr>
+<tr><td>cm</td><td><code>in_array($units)</code>. Prev token = "10" (numeric) → consumed</td><td>Consumed by dimension</td></tr>
+</table>
+
+<div class="ex">
+<strong>Excepție "CM 11":</strong> "cm" e unit, dar next token e "11" (numeric) ȘI prev token NU e numeric → detectat ca product code prefix. Devine <code>product_type = "cm"</code>, nu dimension.
+</div>
+
+<h3>3.4 SQL Candidate Retrieval</h3>
+<p>Un singur query PostgreSQL care caută în 5 câmpuri simultan:</p>
+
+<h4>Pentru fiecare token se generează:</h4>
+<ul>
+<li><strong>Name match</strong> (2 variante): <code>LOWER(name) LIKE '%polistiren%'</code> + varianta fără diacritice</li>
+<li><strong>Category match</strong>: <code>LOWER(categories::text) LIKE '%polistiren%'</code></li>
+<li><strong>Attribute match</strong>: <code>LOWER(COALESCE(attributes::text, '')) LIKE '%polistiren%'</code></li>
+<li><strong>Description match</strong>: <code>LOWER(COALESCE(short_description, '')) LIKE '%polistiren%'</code></li>
+</ul>
+
+<h4>Stemming românesc pe name pattern:</h4>
+<p><code>buildNamePattern("suruburi")</code> → stemRomanian("suruburi") = "surub" → pattern = <code>%surub%</code></p>
+<p>Sufixe verificate (în ordine, longest first): <code>urilor, urile, ilor, elor, uri, ele, ile, ari, eri, iri, ati, eti, iti, ul, le, ii, i, e, a</code></p>
+<p>Condiție: stem.length ≥ 3 și word.length > suffix.length + 2</p>
+
+<h4>Product type priority în SQL:</h4>
+<p>Dacă <code>productType</code> setat, se generează un CASE suplimentar: <code>CASE WHEN LOWER(name) LIKE '%polistiren%' THEN 1 ELSE 0 END AS type_in_name</code></p>
+<p>Și se include PRIMUL în ORDER BY: <code>ORDER BY type_in_name DESC, name_match DESC, full_match DESC, trigram DESC</code></p>
+
+<h4>WHERE clause:</h4>
+<pre>WHERE bot_id = :bot_id
+  AND stock_status IN ('instock', 'onbackorder')
+  AND (
+    (LOWER(name) LIKE '%polistiren%' OR ...) -- name match any token
+    OR (LOWER(categories::text) LIKE '%polistiren%' OR ...) -- category match
+    OR (LOWER(attributes::text) LIKE '%polistiren%' OR ...) -- attribute match
+    OR similarity(name, 'polistiren 10 cm') >= 0.3 -- trigram fallback
+  )</pre>
+
+<h4>LIMIT: <code>max(limit * 5, 50)</code></h4>
+<p>Se iau mai mulți candidați decât necesari — semantic filter-ul va reduce.</p>
+
+<h3>3.5 Semantic Filter (per candidat)</h3>
+<p>Fiecare candidat trece prin 4 reguli. Score-ul se acumulează.</p>
+
+<h4>Rule A — Product Type Gating (OBLIGATORIU)</h4>
+<p>Dacă <code>productType</code> setat (ex: "adeziv"):</p>
+<ol>
+<li>Generează variante: [productType, stemRomanian(productType)] → ex: ["adeziv", "adeziv"] (fără stemming dacă e scurt)</li>
+<li>Verifică fiecare variantă în:
+  <ul>
+  <li><strong>Name</strong> (cu și fără diacritice): str_contains("adeziv cm 11 5kg", "adeziv") → <span class="tg tg-g">+5 points</span></li>
+  <li><strong>Identity attributes</strong> (Tip produs, Brand, Utilizare, Material, Culoare — 20+ chei): ex: <code>{"Tip produs": ["Adeziv"]}</code> → <span class="tg tg-g">+4 points</span></li>
+  <li><strong>Category</strong>: str_contains("Siliconi și adezivi", "adeziv") → <span class="tg tg-g">+3 points</span></li>
+  </ul>
+</li>
+<li>Dacă NU găsit nicăieri → <span class="tg tg-r">EXCLUDE</span> (nu continuă la alte reguli)</li>
+</ol>
+
+<div class="imp"><strong>Efect:</strong> "Cifră 8 cu Adeziv" conține "adeziv" în name → primește +5. Dar dacă query era "adeziv gresie", Rule C va da bonus doar dacă "gresie" e în atribute. Cifra nu va avea "gresie" → score mai mic → apare mai jos.</div>
+
+<h4>Rule B — Dimension Match</h4>
+<p>Dacă query are dimensiuni (ex: value="10", unit="cm"):</p>
+<ol>
+<li>Verifică dacă "10" apare în name (str_contains)</li>
+<li>Verifică dacă "10" apare în dimension attributes (grosime, lungime, diametru, etc. — 15+ chei). Dacă unit specificat, verifică și match-ul unitului în atribut sau în key name.</li>
+<li>Match → <span class="tg tg-g">+3 per dimensiune</span></li>
+<li>Niciun match → <span class="tg tg-r">-3 penalizare</span> (dar NU exclude)</li>
+</ol>
+
+<h4>Rule C — Context/Usage Match</h4>
+<p>Pentru fiecare context word (ex: "gresie", "exterior"):</p>
+<ul>
+<li>În name → <span class="tg tg-g">+2</span></li>
+<li>În attributes/description → <span class="tg tg-g">+1</span></li>
+<li>În category → <span class="tg tg-g">+1</span></li>
+<li>Absent → <strong>0</strong> (nicio penalizare — e preferință, nu cerință)</li>
+</ul>
+
+<h4>Rule D — Usage Compatibility</h4>
+<p>Extrage valori din atributele: <code>utilizare, aplicare, destinatie, uz</code></p>
+<ul>
+<li>Context word găsit în usage values → <span class="tg tg-g">+2</span></li>
+<li>Query cere "exterior" dar produs are doar "interior" → <span class="tg tg-r">-3</span></li>
+<li>Query cere "interior" dar produs are "exterior" → <span class="tg tg-y">-1</span> (mild, exteriorul merge și la interior)</li>
+<li>Fără info usage → <strong>0</strong></li>
+</ul>
+
+<h4>Base scoring:</h4>
+<ul>
+<li>Trigram similarity × 2, max 1.0 → contribuție maximă +1</li>
+<li>Toate tokenurile match-uite (full_words_matched == totalTokens) → <span class="tg tg-g">+2</span></li>
+<li>Partial coverage (>0 dar nu all) → <span class="tg tg-g">+(matched/total × 1.5)</span></li>
+</ul>
+
+<h3>3.6 Confidence Gate</h3>
+<p><code>min_confidence_score = 5</code> (din config)</p>
+<p>Orice candidat cu <code>score &lt; 5</code> → filtrat. Dacă 0 candidați trec:</p>
+<ul>
+<li>Dacă ≤ 2 tokens → încearcă <strong>spelling correction</strong> (Levenshtein ≤ 1 pe primary word, apoi re-search)</li>
+<li>Dacă > 2 tokens → return <code>[]</code> (0 rezultate)</li>
+</ul>
+<p><strong>NICIODATĂ best-sellers random.</strong></p>
+
+<h3>3.7 Exemplu complet traced</h3>
+<div class="b">
+<strong>Query: "adeziv gresie exterior"</strong><br><br>
+<strong>Normalizare:</strong> "adeziv gresie exterior" (fără schimbări)<br>
+<strong>Tokens:</strong> ["adeziv", "gresie", "exterior"]<br>
+<strong>product_type:</strong> "adeziv" | <strong>context:</strong> ["gresie", "exterior"] | <strong>dimensions:</strong> []<br><br>
+
+<strong>SQL:</strong> caută unde name/categories/attributes conțin "adeziv" OR "gresie" OR "exterior" OR trigram ≥ 0.3. ORDER BY type_in_name DESC. LIMIT 50.<br><br>
+
+<strong>Candidat: "Adeziv CM 11 5KG"</strong><br>
+• Rule A: "adeziv" în name → +5<br>
+• Rule B: no dimensions → skip<br>
+• Rule C: "gresie" în attributes <code>{"Utilizare": ["gresie"]}</code>? DA → +1 | "exterior" în attrs? NU → 0<br>
+• Rule D: usage "gresie" match → +2<br>
+• Base: partial_coverage(2/3) = +1.0, trigram(0.21) = +0.42<br>
+• <strong>Total: 9.42 ✅</strong><br><br>
+
+<strong>Candidat: "Cifră 8 cu Adeziv 45MM"</strong><br>
+• Rule A: "adeziv" în name → +5<br>
+• Rule C: "gresie" nicăieri → 0 | "exterior" nicăieri → 0<br>
+• Rule D: no usage attrs → 0<br>
+• Base: partial_coverage(1/3) = +0.5, trigram(0.08) = +0.16<br>
+• <strong>Total: 5.66</strong> → trece pragul 5 dar va fi JOS în ranking<br><br>
+
+<strong>Candidat: "Parchet Stejar 8MM"</strong><br>
+• Rule A: "adeziv" NU e în name, NU e în identity attrs, NU e în category → <span class="tg tg-r">EXCLUDE</span><br>
+• <strong>Nu ajunge niciodată în rezultate.</strong>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>PARTEA IV — KNOWLEDGE BASE RAG (detaliu complet)</h2>
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<p>Serviciu: <code>KnowledgeSearchService</code>. API extern: <strong>OpenAI Embeddings</strong>.</p>
+
+<h3>4.1 Query expansion (sinonime)</h3>
+<p>Dacă <code>KNOWLEDGE_QUERY_EXPANSION=true</code>:</p>
+<p>Optional LLM rewrite (<code>KNOWLEDGE_LLM_QUERY_REWRITE=true</code>): apel GPT-4o-mini cu prompt "Rescrie query-ul pentru search vectorial, max 15 cuvinte". Cost: ~$0.0005/query.</p>
+<p>Dacă LLM rewrite disabled sau fail → dicționar static din <code>config('knowledge.synonyms')</code>:</p>
+<pre>"pret" → "cost tarif pret"  |  "livrare" → "transport expediere curier livrare"
+"garantie" → "garantie retur schimb"  |  "plata" → "platesc achit card numerar"
+"contact" → "telefon email adresa locatie"  |  "instalare" → "montaj montare instalare aplicare"</pre>
+<p>Matching: normalize diacritics pe query word → lookup exact în dicționar → merge synonyms.</p>
+
+<h3>4.2 Query embedding</h3>
+<p><strong>API call extern:</strong></p>
+<pre>OpenAI::embeddings()->create({
+  model: "text-embedding-3-small",
+  input: "adeziv gresie exterior cost tarif"  // expanded query
+})
+→ vector de 1536 dimensiuni</pre>
+<p>Cache: <code>query_embedding_{botId}_{version}_{md5(query)}</code> — TTL 24h. Dacă API fail → returnează cached dacă există, altfel FTS-only fallback.</p>
+
+<h3>4.3 Hybrid search (SQL cu CTE-uri)</h3>
+
+<h4>CTE 1: vector_search</h4>
+<pre>SELECT id, title, content, chunk_index, source_type,
+       1 - (embedding <=> :query_embedding) AS similarity,  -- cosine distance
+       ROW_NUMBER() OVER (ORDER BY embedding <=> :query_embedding) AS rank_v
+FROM bot_knowledge
+WHERE bot_id = :bot_id AND status = 'ready' AND embedding IS NOT NULL
+ORDER BY embedding <=> :query_embedding
+LIMIT 20  -- candidateLimit</pre>
+<p>Index folosit: <code>bot_knowledge_embedding_hnsw_idx</code> (HNSW, m=16, ef_construction=64)</p>
+
+<h4>CTE 2: fts_search</h4>
+<pre>SELECT id, title, content, chunk_index, source_type,
+       ts_rank_cd(to_tsvector('romanian', title), to_tsquery('romanian', :query)) * 3.0
+       + ts_rank_cd(to_tsvector('romanian', content), to_tsquery('romanian', :query)) AS fts_rank,
+       ROW_NUMBER() OVER (...) AS rank_f
+FROM bot_knowledge
+WHERE bot_id = :bot_id AND status = 'ready'
+  AND to_tsvector('romanian', title || ' ' || content) @@ to_tsquery('romanian', :query)</pre>
+<p>Config FTS: <code>romanian</code> — stemming nativ PostgreSQL (produsele→prod, livrarea→livr). Title match ponderat 3x.</p>
+<p>Index folosit: <code>bot_knowledge_fts_gin_idx</code> (GIN pe tsvector, partial WHERE status='ready')</p>
+
+<h4>Merge: Reciprocal Rank Fusion</h4>
+<pre>RRF_score = 1/(60 + rank_vector) + 1.5/(60 + rank_fts)    -- fts_weight = 1.5</pre>
+<p>FULL OUTER JOIN pe ID → se combină rezultatele din ambele surse.</p>
+
+<h4>Post-processing:</h4>
+<ol>
+<li><strong>Quality filter:</strong> similarity ≥ 0.68 OR rrf_score > 1/61</li>
+<li><strong>Dedup:</strong> max 3 chunks per document (title). Configurabil: <code>KNOWLEDGE_MAX_CHUNKS_PER_DOC=3</code></li>
+<li><strong>Optional LLM reranking</strong> (<code>KNOWLEDGE_RERANKING=true</code>): trimite top candidați la GPT-4o-mini cu prompt "Return indices of most relevant passages". Cost: ~$0.002/query</li>
+<li><strong>Content dedup:</strong> elimină chunks cu >80% word overlap (array_intersect pe primele 100 cuvinte unice)</li>
+<li><strong>Group & sort:</strong> grupează pe document, sortează intern pe chunk_index</li>
+<li><strong>Budget:</strong> concatenează chunks până la max 6000 chars (configurabil)</li>
+</ol>
+
+<h4>Format output context:</h4>
+<pre>Informații relevante din baza de cunoștințe:
+
+--- Politica de livrare [connector] (relevance: 85%) ---
+Livrarea se face în 24-48 ore lucrătoare prin curier...
+
+--- Informații contact [url] (relevance: 72%) ---
+Program: Luni-Vineri 08:00-17:00...</pre>
+
+<h3>4.4 RAG Logging</h3>
+<p>Fiecare search loghează structurat:</p>
+<pre>{bot_id, query, chunk_ids: [12,34,56], scores: [{id:12, title:"...", similarity:0.85, rrf:0.034}],
+ metrics: {total_candidates: 20, after_filter: 8, after_dedup: 5, returned: 3,
+           top_score: 0.85, top_rrf: 0.034, used_reranking: false, fts_config: "romanian"}}</pre>
+<p>Event: <code>KnowledgeSearchCompleted::dispatch()</code> pentru hooks externe.</p>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>PARTEA V — TOATE API-URILE EXTERNE APELATE</h2>
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<table>
+<tr><th>API</th><th>Când se apelează</th><th>Endpoint</th><th>Cost aprox.</th><th>Cache</th></tr>
+<tr><td><strong>OpenAI Chat</strong></td><td>Chat: generare răspuns</td><td><code>chat.completions.create</code></td><td>$0.15-10/1M tokens</td><td>5-15 min</td></tr>
+<tr><td><strong>Anthropic Messages</strong></td><td>Chat: fallback sau smart tier</td><td><code>messages.create</code></td><td>$0.80-15/1M tokens</td><td>5-15 min</td></tr>
+<tr><td><strong>OpenAI Embeddings</strong></td><td>RAG: query embedding</td><td><code>embeddings.create</code> (text-embedding-3-small)</td><td>$0.02/1M tokens</td><td>24h</td></tr>
+<tr><td><strong>OpenAI Realtime</strong></td><td>Voice: sesiune</td><td><code>POST /v1/realtime/sessions</code></td><td>$0.14/min audio</td><td>—</td></tr>
+<tr><td><strong>ElevenLabs TTS</strong></td><td>Voice: cloned voice synthesis</td><td><code>POST /v1/text-to-speech/{voice_id}</code></td><td>$0.13/min</td><td>—</td></tr>
+<tr><td><strong>WooCommerce REST</strong></td><td>Order lookup</td><td><code>GET /wp-json/wc/v3/orders</code></td><td>Gratuit</td><td>10 min</td></tr>
+<tr><td><strong>WooCommerce REST</strong></td><td>Product sync</td><td><code>GET /wp-json/wc/v3/products</code></td><td>Gratuit</td><td>—</td></tr>
+<tr><td><strong>PostgreSQL</strong></td><td>Product search, knowledge search</td><td>DB queries (trigram, pgvector, FTS)</td><td>Gratuit</td><td>Cache local 12h produse</td></tr>
+</table>
+
+<h4>Ce NU apelează API extern:</h4>
+<ul>
+<li>Product search — 100% PostgreSQL (trigram + LIKE + atribute JSON)</li>
+<li>Intent detection — 100% regex local</li>
+<li>Recommendation service — 100% local (map + product search)</li>
+<li>Stopword removal, stemming, normalizare — 100% PHP local</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>PARTEA VI — DIAGRAMA COMPLETĂ DE DECIZIE</h2>
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<pre class="fl" style="font-size:.7rem">
+USER MESSAGE ARRIVES
+│
+├─ Validare (canal, rate limit, plan limit, bot activ)
+│
+├─ Session (HMAC verify → resume sau create → 10min expiry)
+│
+├─ Save user message to DB
+│
+├─── INTENT DETECTION ──────────────────────────────────────────────────────────
+│    │
+│    ├─ /comand[aă]/ ? ──YES──► ORDER FLOW
+│    │                         ├─ detectOrderQuery() → extract params
+│    │                         ├─ WooCommerce REST API call (cached 10min)
+│    │                         └─ Generate order context string
+│    │
+│    ├─ /ce.*recoman/ ? ──YES──► RECOMMENDATION FLOW
+│    │                          ├─ extractRecommendationConcept()
+│    │                          ├─ Map concept → sub-queries (local)
+│    │                          ├─ ProductSearchService × N (DB only)
+│    │                          └─ Aggregate + dedup products
+│    │
+│    ├─ (default) ────────────► PRODUCT SEARCH FLOW
+│    │                          ├─ normalizeQuery + removeDiacritics
+│    │                          ├─ extractTokens + stopword removal
+│    │                          ├─ parseQueryIntent (classify tokens)
+│    │                          ├─ SQL candidate retrieval (PostgreSQL)
+│    │                          ├─ semanticFilter (4 rules per candidate)
+│    │                          ├─ Confidence gate (score ≥ 5)
+│    │                          └─ Spelling correction fallback if 0
+│    │
+│    └─ /salut|mersi/ ? ──YES──► SKIP KNOWLEDGE (no embedding API call)
+│
+├─── AI RESPONSE GENERATION ────────────────────────────────────────────────────
+│    │
+│    ├─ BotPromptVersion::selectForBot() (A/B testing, weighted random)
+│    │
+│    ├─ System prompt assembly:
+│    │   1. base prompt (from version or bot.system_prompt)
+│    │   2. + product display rules (if has WooCommerce)
+│    │   3. + KnowledgeSearchService::buildContext()  ◄── OpenAI Embeddings API
+│    │   │     ├─ expandQuery (synonyms from config)
+│    │   │     ├─ getQueryEmbedding() → OpenAI text-embedding-3-small (cached 24h)
+│    │   │     ├─ SQL: vector_search CTE (pgvector HNSW)
+│    │   │     ├─ SQL: fts_search CTE (PostgreSQL romanian FTS, GIN index)
+│    │   │     ├─ Merge: RRF scoring
+│    │   │     ├─ Dedup: max 3 chunks/doc, content overlap &lt;80%
+│    │   │     └─ Optional: LLM reranking (GPT-4o-mini)
+│    │   4. + order/product/recommendation context
+│    │   5. + PromptGuardrails::apply() (anti-hallucination, LAST)
+│    │
+│    ├─ Conversation history (max 20 msgs, truncated to 95% context window)
+│    │
+│    ├─ ChatModelRouter::route()
+│    │   ├─ cost > 15¢ ? → fast (gpt-4o-mini)
+│    │   ├─ circuit open? → fast
+│    │   ├─ words &lt; 8 && history > 4 ? → fast
+│    │   ├─ words > 30 || complex pattern? → smart (claude-sonnet)
+│    │   ├─ history > 10 && words > 15 ? → smart
+│    │   └─ default → fast
+│    │
+│    ├─ ChatCompletionService::complete()  ◄── OpenAI/Anthropic Chat API
+│    │   ├─ Token pre-validation (&lt;95% context)
+│    │   ├─ Response cache check (MD5, 5-15min TTL)
+│    │   ├─ Retry loop (3x, exponential backoff 1s/2s/4s + jitter)
+│    │   ├─ Cross-provider fallback (openai ↔ anthropic)
+│    │   ├─ Circuit breaker recording
+│    │   └─ Cost calc + telemetry (AiApiMetric)
+│    │
+│    └─ FALLBACK CASCADE:
+│        Level 0: full prompt ──FAIL──► Level 1: without knowledge ──FAIL──► Level 2: minimal ──FAIL──► static response
+│
+├─ Save AI response to DB (with model, tokens, cost metadata)
+├─ Increment conversation cost
+├─ Record message usage (PlanLimitService)
+│
+▼
+JSON RESPONSE { response, session_id, session_token, products[] }
+</pre>
+
+<hr>
+<p style="text-align:center;color:var(--t2);font-size:.8rem;margin-top:1.5rem">Generat din codul sursă — Sambla v2.0 — 29 martie 2026</p>
+
+</div>
+</body>
+</html>

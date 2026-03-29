@@ -11,7 +11,7 @@ class QueueAutoScale extends Command
         {--max-workers=6 : Maximum number of workers to run}
         {--scale-threshold=100 : Start scaling when queue exceeds this}
         {--jobs-per-worker=200 : Jobs per additional worker}
-        {--queue=high,default : Queue names to process}';
+        {--queue=high,default,knowledge : Queue names to process}';
 
     protected $description = 'Auto-scale queue workers based on queue depth';
 
@@ -75,10 +75,15 @@ class QueueAutoScale extends Command
 
     private function startWorker(string $queue): void
     {
+        // Knowledge queue needs more memory and longer timeout for embeddings
+        $hasKnowledge = str_contains($queue, 'knowledge');
+        $memory = $hasKnowledge ? 512 : 128;
+        $timeout = $hasKnowledge ? 600 : 3600;
+
         $cmd = 'nohup php ' . base_path('artisan')
             . ' queue:work redis'
             . ' --queue=' . $queue
-            . ' --sleep=1 --tries=3 --max-time=3600 --memory=128'
+            . " --sleep=3 --tries=3 --max-time=3600 --memory={$memory} --timeout={$timeout}"
             . ' > /dev/null 2>&1 &';
         exec($cmd);
     }

@@ -66,7 +66,8 @@ class ChatCompletionService
         }
 
         // Fallback to OpenAI if Anthropic key not set
-        if ($provider === 'anthropic' && empty(config('services.anthropic.api_key', env('ANTHROPIC_API_KEY')))) {
+        $anthropicKey = \App\Models\PlatformSetting::get('anthropic_api_key') ?: config('services.anthropic.api_key', env('ANTHROPIC_API_KEY'));
+        if ($provider === 'anthropic' && empty($anthropicKey)) {
             Log::warning('ChatCompletionService: Anthropic API key not configured, falling back to OpenAI', [
                 'requested_model' => $model, 'fallback_model' => 'gpt-4o',
             ]);
@@ -352,7 +353,7 @@ class ChatCompletionService
             return $this->anthropicClient;
         }
 
-        $apiKey = config('services.anthropic.api_key', env('ANTHROPIC_API_KEY'));
+        $apiKey = \App\Models\PlatformSetting::get('anthropic_api_key') ?: config('services.anthropic.api_key', env('ANTHROPIC_API_KEY'));
         if (empty($apiKey)) {
             throw new ApiAuthenticationException('Anthropic API key not configured', 'anthropic', '');
         }
@@ -415,7 +416,7 @@ class ChatCompletionService
      */
     private function recordMetric(
         string $provider, string $model, int $inputTokens, int $outputTokens,
-        int $costCents, int $responseTimeMs, string $status, ?string $errorType,
+        float $costCents, int $responseTimeMs, string $status, ?string $errorType,
         ?int $botId, ?int $tenantId,
     ): void {
         try {
@@ -439,7 +440,12 @@ class ChatCompletionService
     /**
      * Calculate cost in cents using DB pricing or fallback.
      */
-    private function calculateCost(string $model, int $inputTokens, int $outputTokens): int
+    /**
+     * Calculate cost in cents with 4 decimal precision.
+     * Returns float, NOT int — individual messages with cheap models cost fractions of a cent.
+     * Example: GPT-4o-mini, 500 in + 200 out = 0.0195 cents (would be 0 as int).
+     */
+    private function calculateCost(string $model, int $inputTokens, int $outputTokens): float
     {
         $pricing = ModelPricing::getPricing($model);
         if (!$pricing) {
@@ -447,9 +453,10 @@ class ChatCompletionService
             $pricing = ['input' => $fallback['input'], 'output' => $fallback['output']];
         }
 
+        // Pricing is in $/1M tokens. Convert to cents.
         $inputCost = ($inputTokens / 1_000_000) * $pricing['input'] * 100;
         $outputCost = ($outputTokens / 1_000_000) * $pricing['output'] * 100;
 
-        return (int) round($inputCost + $outputCost);
+        return round($inputCost + $outputCost, 4);
     }
 }

@@ -22,16 +22,17 @@ class ProcessKnowledgeDocument implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
+    public int $timeout = 300; // 5 minutes max per document
     public array $backoff = [30, 120, 300];
 
     public function __construct(public BotKnowledge $knowledge)
     {
-        $this->onQueue('default');
+        $this->onQueue('knowledge');
     }
 
     public function middleware(): array
     {
-        return [new OpenAiRateLimiter(maxPerMinute: 500)];
+        return [new OpenAiRateLimiter(maxPerMinute: 200)];
     }
 
     public function handle(): void
@@ -49,7 +50,14 @@ class ProcessKnowledgeDocument implements ShouldQueue
 
         try {
             $text = $this->extractText();
-            $chunks = $this->chunkText($text, 512, 64);
+
+            // Use source-type-specific chunk size from config/knowledge.php
+            $chunkSize = config(
+                "knowledge.chunking.{$this->knowledge->source_type}",
+                config('knowledge.chunking.upload', 512)
+            );
+            $overlap = max(32, (int) ($chunkSize * 0.125)); // ~12.5% overlap
+            $chunks = $this->chunkText($text, $chunkSize, $overlap);
 
             // Generate ALL embeddings BEFORE the transaction
             $embeddings = $this->generateEmbeddingsBatch($chunks);
@@ -165,10 +173,50 @@ class ProcessKnowledgeDocument implements ShouldQueue
 
         $response = Http::timeout(30)->get($url);
         $html = $response->body();
-        // Strip HTML tags, keep text
-        $text = strip_tags($html);
-        $text = preg_replace('/\s+/', ' ', $text);
-        return trim($text);
+
+        return $this->htmlToText($html);
+    }
+
+    /**
+     * Convert HTML to clean Markdown-like text preserving structure.
+     * Falls back to strip_tags if conversion fails.
+     */
+    private function htmlToText(string $html): string
+    {
+        try {
+            // Remove script, style, nav, footer, header elements before conversion
+            $html = preg_replace('/<(script|style|nav|footer|header|aside|noscript)\b[^>]*>.*?<\/\1>/si', '', $html);
+
+            // Extract <main> or <article> or <body> content if present
+            if (preg_match('/<(main|article)[^>]*>(.*)<\/\1>/si', $html, $match)) {
+                $html = $match[2];
+            } elseif (preg_match('/<body[^>]*>(.*)<\/body>/si', $html, $match)) {
+                $html = $match[1];
+            }
+
+            $converter = new \League\HTMLToMarkdown\HtmlConverter([
+                'strip_tags' => true,
+                'remove_nodes' => 'script style nav footer header aside',
+                'hard_break' => true,
+            ]);
+
+            $text = $converter->convert($html);
+
+            // Clean up excessive whitespace while preserving paragraph structure
+            $text = preg_replace('/\n{3,}/', "\n\n", $text);
+            $text = preg_replace('/[ \t]+/', ' ', $text);
+
+            return trim($text);
+        } catch (\Throwable $e) {
+            Log::warning('HTML to Markdown conversion failed, falling back to strip_tags', [
+                'error' => $e->getMessage(),
+            ]);
+
+            // Fallback: strip tags but preserve some structure
+            $text = strip_tags($html);
+            $text = preg_replace('/\s+/', ' ', $text);
+            return trim($text);
+        }
     }
 
     private function extractPdfText(string $path): string

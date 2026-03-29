@@ -3,71 +3,36 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
-use App\Models\UsageRecord;
-use App\Models\Call;
-use Illuminate\Http\Request;
+use App\Models\Plan;
+use App\Services\PlanLimitService;
 
 class BillingController extends Controller
 {
+    public function __construct(
+        private PlanLimitService $planLimitService,
+    ) {}
+
     public function index()
     {
         $tenant = auth()->user()->tenant;
 
         if (!$tenant) {
-            // Super admin without tenant - show empty billing page
-            $plan = 'enterprise';
-            $planLimits = config('plans.enterprise');
-            $minutesUsed = 0;
-            $minutesLimit = $planLimits['minutes'] ?? 999999;
-            $usagePercent = 0;
-            $monthlyCost = 0;
-            $overageMinutes = 0;
-            $overageCost = 0;
-            $usageRecords = collect();
-            $allPlans = config('plans');
-
-            return view('dashboard.billing.index', compact(
-                'tenant', 'plan', 'planLimits',
-                'minutesUsed', 'minutesLimit', 'usagePercent',
-                'monthlyCost', 'overageMinutes', 'overageCost',
-                'usageRecords', 'allPlans'
-            ));
+            return view('dashboard.billing.index', [
+                'tenant' => null,
+                'usage' => null,
+                'webchatPlans' => collect(),
+                'voicePlans' => collect(),
+            ]);
         }
 
-        // Plan info
-        $plan = $tenant->plan ?? 'starter';
-        $planLimits = config("plans.{$plan}", config('plans.starter'));
+        $usage = $this->planLimitService->getUsageSummary($tenant);
 
-        // Monthly usage
-        $minutesUsed = round(
-            Call::where('tenant_id', $tenant->id)
-                ->whereMonth('created_at', now()->month)
-                ->whereYear('created_at', now()->year)
-                ->sum('duration_seconds') / 60,
-            1
-        );
-        $minutesLimit = $planLimits['minutes'] ?? 500;
-        $usagePercent = $minutesLimit > 0 ? min(100, round(($minutesUsed / $minutesLimit) * 100)) : 0;
-
-        // Monthly cost
-        $monthlyCost = $planLimits['price_monthly'] ?? 99;
-        $overageMinutes = max(0, $minutesUsed - $minutesLimit);
-        $overageCost = $overageMinutes * ($planLimits['overage_per_minute'] ?? 0.15);
-
-        // Usage history
-        $usageRecords = UsageRecord::where('tenant_id', $tenant->id)
-            ->latest('recorded_at')
-            ->take(20)
-            ->get();
-
-        // Plans for upgrade
-        $allPlans = config('plans');
+        // Plans for upgrade comparison
+        $webchatPlans = Plan::active()->webchat()->orderBy('sort_order')->get();
+        $voicePlans = Plan::active()->voice()->orderBy('sort_order')->get();
 
         return view('dashboard.billing.index', compact(
-            'tenant', 'plan', 'planLimits',
-            'minutesUsed', 'minutesLimit', 'usagePercent',
-            'monthlyCost', 'overageMinutes', 'overageCost',
-            'usageRecords', 'allPlans'
+            'tenant', 'usage', 'webchatPlans', 'voicePlans'
         ));
     }
 }

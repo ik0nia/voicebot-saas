@@ -32,12 +32,32 @@ class PlanLimitService
                 ?? PlanLimit::getFreePlan();
 
             // Aplică override-uri individuale (ex: enterprise cu limite custom)
+            // Override-urile pot fi pe câmpuri directe SAU pe limits JSON
             if ($tenant->plan_overrides) {
+                $limits = $plan->limits ?? [];
+                $features = $plan->features ?? [];
+
                 foreach ($tenant->plan_overrides as $key => $value) {
                     if ($plan->isFillable($key)) {
+                        // Direct model attribute (e.g., max_upload_size_kb)
                         $plan->setAttribute($key, $value);
+                    } elseif (array_key_exists($key, $limits)) {
+                        // Existing limit key (e.g., max_bots, max_messages_per_month)
+                        $limits[$key] = $value;
+                    } elseif (str_starts_with($key, 'max_') || str_ends_with($key, '_per_month')) {
+                        // New limit key (e.g., voice_minutes_per_month added via override)
+                        $limits[$key] = $value;
+                    } elseif (is_bool($value) || in_array($value, ['true', 'false', '0', '1'], true)) {
+                        // Feature flag override
+                        $features[$key] = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+                    } else {
+                        // Default: treat as limit
+                        $limits[$key] = $value;
                     }
                 }
+
+                $plan->limits = $limits;
+                $plan->features = $features;
             }
 
             return $plan;
@@ -272,6 +292,56 @@ class PlanLimitService
         return LimitCheckResult::allowed();
     }
 
+    /**
+     * Poate trimite un mesaj? (limita lunară de mesaje)
+     */
+    public function canSendMessage(Tenant $tenant): LimitCheckResult
+    {
+        $plan = $this->getPlanForTenant($tenant);
+        $maxMessages = $plan->getLimit('messages_per_month', 100);
+        $currentMessages = UsageTracking::getCurrentValue($tenant->id, UsageTracking::FEATURE_MESSAGES);
+
+        if ($currentMessages >= $maxMessages) {
+            return LimitCheckResult::denied(
+                "Ai atins limita de {$this->formatNumber($maxMessages)} mesaje pe planul {$plan->name}. Fă upgrade pentru mai multe mesaje.",
+                ['limit_key' => 'messages_per_month', 'limit' => $maxMessages, 'current' => $currentMessages]
+            );
+        }
+
+        return LimitCheckResult::allowed();
+    }
+
+    /**
+     * Poate iniția un apel vocal? (limita lunară de minute)
+     */
+    public function canStartVoiceCall(Tenant $tenant): LimitCheckResult
+    {
+        $plan = $this->getPlanForTenant($tenant);
+        $maxMinutes = $plan->getLimit('voice_minutes_per_month', 0);
+
+        if ($maxMinutes === 0) {
+            return LimitCheckResult::denied(
+                "Planul {$plan->name} nu include minute vocale. Adaugă un addon de voce pentru a folosi apelurile.",
+                ['limit_key' => 'voice_minutes_per_month', 'limit' => 0, 'current' => 0]
+            );
+        }
+
+        if ($maxMinutes === -1) {
+            return LimitCheckResult::allowed(); // unlimited
+        }
+
+        $currentMinutes = UsageTracking::getCurrentValue($tenant->id, UsageTracking::FEATURE_VOICE_MINUTES);
+
+        if ($currentMinutes >= $maxMinutes) {
+            return LimitCheckResult::denied(
+                "Ai consumat toate cele {$maxMinutes} minute vocale pe planul {$plan->name}. Fă upgrade sau așteaptă resetarea lunară.",
+                ['limit_key' => 'voice_minutes_per_month', 'limit' => $maxMinutes, 'current' => $currentMinutes]
+            );
+        }
+
+        return LimitCheckResult::allowed();
+    }
+
     // ═══════════════════════════════════════════════════════════════
     //  ÎNREGISTRARE CONSUM
     // ═══════════════════════════════════════════════════════════════
@@ -300,6 +370,22 @@ class PlanLimitService
         UsageTracking::incrementUsage($tenant->id, now()->format('Y-m'), UsageTracking::FEATURE_PAGES_SCANNED, $pages);
     }
 
+    /**
+     * Înregistrează mesaje consumate.
+     */
+    public function recordMessage(Tenant $tenant, int $count = 1): void
+    {
+        UsageTracking::incrementUsage($tenant->id, now()->format('Y-m'), UsageTracking::FEATURE_MESSAGES, $count);
+    }
+
+    /**
+     * Înregistrează minute vocale consumate.
+     */
+    public function recordVoiceMinutes(Tenant $tenant, int $minutes): void
+    {
+        UsageTracking::incrementUsage($tenant->id, now()->format('Y-m'), UsageTracking::FEATURE_VOICE_MINUTES, $minutes);
+    }
+
     // ═══════════════════════════════════════════════════════════════
     //  DASHBOARD USAGE SUMMARY
     // ═══════════════════════════════════════════════════════════════
@@ -315,6 +401,8 @@ class PlanLimitService
         $agentRuns = UsageTracking::getCurrentValue($tenant->id, UsageTracking::FEATURE_AGENT_RUNS);
         $tokensUsed = UsageTracking::getCurrentValue($tenant->id, UsageTracking::FEATURE_TOKENS_USED);
         $pagesScanned = UsageTracking::getCurrentValue($tenant->id, UsageTracking::FEATURE_PAGES_SCANNED);
+        $messagesUsed = UsageTracking::getCurrentValue($tenant->id, UsageTracking::FEATURE_MESSAGES);
+        $voiceMinutesUsed = UsageTracking::getCurrentValue($tenant->id, UsageTracking::FEATURE_VOICE_MINUTES);
 
         $maxBots = $plan->getLimit('max_bots', 1);
         $maxSites = $plan->getMaxSites();
@@ -322,10 +410,18 @@ class PlanLimitService
         $maxTokens = $plan->getLimit('max_tokens_per_month', 100_000);
         $maxPages = $plan->getLimit('max_scan_pages_per_month', 20);
         $maxConnectors = $plan->getLimit('max_connectors', 0);
+        $maxMessages = $plan->getLimit('messages_per_month', 100);
+        $maxVoiceMinutes = $plan->getLimit('voice_minutes_per_month', 0);
 
         $botsCount = $tenant->bots()->count();
         $sitesCount = $tenant->sites()->count();
         $connectorsCount = KnowledgeConnector::whereIn('bot_id', $tenant->bots()->pluck('id'))->count();
+
+        // Overage costs
+        $overageCostPerMessage = $plan->getLimit('overage_cost_per_message', 0);
+        $overageCostPerBot = $plan->getLimit('overage_cost_per_bot', 0);
+        $overageMessages = max(0, $messagesUsed - $maxMessages);
+        $overageMessagesCost = $overageMessages * $overageCostPerMessage;
 
         return [
             'plan' => [
@@ -334,10 +430,25 @@ class PlanLimitService
                 'price_monthly' => $plan->price_monthly,
             ],
             'period' => $period,
+            'messages' => [
+                'used' => $messagesUsed,
+                'limit' => $maxMessages,
+                'percent' => $this->percent($messagesUsed, $maxMessages),
+                'overage' => $overageMessages,
+                'overage_cost' => round($overageMessagesCost, 2),
+                'overage_unit_cost' => $overageCostPerMessage,
+            ],
             'bots' => [
                 'used' => $botsCount,
                 'limit' => $maxBots,
                 'percent' => $this->percent($botsCount, $maxBots),
+                'overage_unit_cost' => $overageCostPerBot,
+            ],
+            'voice_minutes' => [
+                'used' => $voiceMinutesUsed,
+                'limit' => $maxVoiceMinutes,
+                'percent' => $maxVoiceMinutes > 0 ? $this->percent($voiceMinutesUsed, $maxVoiceMinutes) : 0,
+                'has_voice' => $maxVoiceMinutes !== 0,
             ],
             'sites' => [
                 'used' => $sitesCount,

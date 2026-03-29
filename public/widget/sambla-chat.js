@@ -163,12 +163,19 @@
         try { return localStorage.getItem(SESSION_TOKEN_KEY) || ''; } catch(e) { return ''; }
     }
 
-    function setSession(id, token) {
+    var CONVERSATION_ID_KEY = 'sambla_conv_id_' + config.channelId;
+
+    function setSession(id, token, conversationId) {
         try {
             localStorage.setItem(SESSION_KEY, id);
             if (token) localStorage.setItem(SESSION_TOKEN_KEY, token);
+            if (conversationId) localStorage.setItem(CONVERSATION_ID_KEY, conversationId);
             localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
         } catch(e) {}
+    }
+
+    function getConversationId() {
+        try { return localStorage.getItem(CONVERSATION_ID_KEY) || undefined; } catch(e) { return undefined; }
     }
 
     function getLastActivity() {
@@ -857,18 +864,99 @@
         }
 
         // =====================================================================
-        // 5. Analytics events - widget_opened, message_sent, message_received, error
+        // 5. Analytics events - V2: batch tracking to SaaS events endpoint
         // =====================================================================
+        var _eventQueue = [];
+        var _eventFlushTimer = null;
+
         function trackEvent(eventName, data) {
             try {
+                // Legacy hooks (backward compatible)
                 if (window.samblaAnalytics && typeof window.samblaAnalytics === 'function') {
                     window.samblaAnalytics(eventName, data);
                 }
                 document.dispatchEvent(new CustomEvent('sambla-chat', {
                     detail: { event: eventName, channelId: config.channelId, timestamp: new Date().toISOString(), data: data || {} }
                 }));
+
+                // V2: Queue for batch send to SaaS
+                var productId = (data && data.product_id) ? data.product_id : undefined;
+                // Attach page context to every event
+                var props = data || {};
+                try {
+                    if (window.top && window.top.location) {
+                        props.page_url = window.top.location.href;
+                        props.page_title = window.top.document.title;
+                    } else {
+                        props.page_url = window.location.href;
+                    }
+                } catch(ex) {
+                    // cross-origin iframe — use referrer
+                    props.page_url = document.referrer || window.location.href;
+                }
+                _eventQueue.push({
+                    event_name: eventName,
+                    properties: props,
+                    session_id: getSessionId(),
+                    visitor_id: _getVisitorId(),
+                    conversation_id: getConversationId(),
+                    idempotency_key: getSessionId() + ':' + eventName + ':' + (productId || '') + ':' + Math.floor(Date.now() / 60000),
+                    occurred_at: new Date().toISOString()
+                });
+
+                // Flush immediately for critical commerce events
+                var critical = ['add_to_cart_click','add_to_cart_success','add_to_cart_failure','product_click','session_ended'];
+                if (critical.indexOf(eventName) !== -1) {
+                    _flushEvents();
+                } else if (!_eventFlushTimer) {
+                    _eventFlushTimer = setTimeout(_flushEvents, 5000);
+                }
             } catch(e) {}
         }
+
+        function _flushEvents() {
+            clearTimeout(_eventFlushTimer);
+            _eventFlushTimer = null;
+            if (_eventQueue.length === 0) return;
+            var batch = _eventQueue.splice(0, 50);
+            try {
+                fetch(config.apiBase + '/api/v1/chatbot/' + config.channelId + '/events', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ events: batch }),
+                    keepalive: true
+                }).catch(function() {
+                    // Re-queue on failure (will retry on next flush)
+                    _eventQueue = batch.concat(_eventQueue);
+                });
+            } catch(e) {
+                _eventQueue = batch.concat(_eventQueue);
+            }
+        }
+
+        function _getVisitorId() {
+            var key = 'sambla_visitor_id';
+            var vid = null;
+            try { vid = localStorage.getItem(key); } catch(e) {}
+            if (!vid) {
+                vid = 'v_' + Math.random().toString(36).substr(2, 12) + '_' + Date.now().toString(36);
+                try { localStorage.setItem(key, vid); } catch(e) {}
+            }
+            return vid;
+        }
+
+        // Track session_ended + flush on page unload
+        window.addEventListener('beforeunload', function() {
+            if (getSessionId()) {
+                trackEvent('session_ended', {
+                    duration_seconds: Math.floor((Date.now() - (_sessionStartTime || Date.now())) / 1000),
+                    messages_count: _messageCount || 0
+                });
+            }
+            if (_eventQueue.length > 0) { _flushEvents(); }
+        });
+        var _sessionStartTime = Date.now();
+        var _messageCount = 0;
 
         function showTyping() {
             typingEl.classList.add('show');
@@ -1141,6 +1229,7 @@
             try { localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString()); } catch(e) {}
 
             addMessage(text, 'user', null, null, 'sent');
+            _messageCount++;
             trackEvent('message_sent', { length: text.length });
             isSending = true;
             sendBtn.disabled = true;
@@ -1186,7 +1275,7 @@
                 }
 
                 if (data.session_id) {
-                    setSession(data.session_id, data.session_token);
+                    setSession(data.session_id, data.session_token, data.conversation_id);
                 }
                 var responseText = data.response || data.reply || t('errorMessage');
                 var products = (data.products && data.products.length > 0) ? data.products : null;
@@ -1207,66 +1296,60 @@
         }
 
         // =====================================================================
-        // 12. Product cards expandable - Click = modal with details
+        // 12. Product cards — V2: modal REMOVED, click opens product permalink
         // =====================================================================
+        // showProductModal is kept as no-op for backward compatibility
+        // (in case any external code references it). It now just opens the permalink.
         function showProductModal(product) {
-            var overlay = document.createElement('div');
-            overlay.className = 'sambla-product-modal-overlay';
-            overlay.setAttribute('role', 'dialog');
-            overlay.setAttribute('aria-modal', 'true');
-            overlay.setAttribute('aria-label', stripAllHtml(product.name || ''));
-
-            var modal = document.createElement('div');
-            modal.className = 'sambla-product-modal';
-
-            var h = '';
-            if (product.image_url && isValidUrl(product.image_url)) {
-                h += '<img src="' + sanitizeHtml(product.image_url) + '" alt="' + sanitizeHtml(product.name || '') + '" loading="lazy">';
-            }
-            h += '<div class="sambla-product-modal-body">';
-            h += '<div class="sambla-product-modal-name">' + sanitizeHtml(product.name || '') + '</div>';
-            if (product.description) {
-                h += '<div class="sambla-product-modal-desc">' + sanitizeHtml(product.description).substring(0, 500) + '</div>';
-            }
-            var safeCurrency = sanitizeCurrency(product.currency);
-            if (sanitizePrice(product.sale_price) && sanitizePrice(product.regular_price)) {
-                h += '<div class="sambla-product-modal-price" style="color:#dc2626;">' + sanitizePrice(product.sale_price) + ' ' + safeCurrency
-                    + ' <span style="font-size:14px;color:#94a3b8;text-decoration:line-through;font-weight:400;">' + sanitizePrice(product.regular_price) + ' ' + safeCurrency + '</span></div>';
-            } else if (sanitizePrice(product.price)) {
-                h += '<div class="sambla-product-modal-price" style="color:#1e293b;">' + sanitizePrice(product.price) + ' ' + safeCurrency + '</div>';
-            }
-            h += '<div class="sambla-product-modal-actions">';
             if (product.permalink && isValidUrl(product.permalink)) {
-                h += '<a class="sambla-product-modal-link" href="' + sanitizeHtml(product.permalink) + '" target="_top">' + t('viewProduct') + '</a>';
+                trackEvent('product_click', { product_id: product.id, product_name: (product.name || '').substring(0, 80) });
+                window.open(sanitizeUrl(product.permalink), '_blank', 'noopener');
             }
-            h += '<button class="sambla-product-modal-close">' + t('close') + '</button>';
-            h += '</div></div>';
-
-            modal.innerHTML = h;
-            overlay.appendChild(modal);
-            chatWindow.appendChild(overlay);
-
-            // Close handlers
-            var closeBtn = modal.querySelector('.sambla-product-modal-close');
-            closeBtn.addEventListener('click', function() {
-                overlay.parentNode.removeChild(overlay);
-            });
-            overlay.addEventListener('click', function(e) {
-                if (e.target === overlay) {
-                    overlay.parentNode.removeChild(overlay);
-                }
-            });
-            overlay.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    overlay.parentNode.removeChild(overlay);
-                }
-            });
-
-            // Focus the close button
-            setTimeout(function() { closeBtn.focus(); }, 50);
-
-            trackEvent('product_modal_opened', { name: (product.name || '').substring(0, 50) });
         }
+
+        // ─── V2: Store capabilities (queried once on init) ───
+        var _storeCapabilities = null;
+
+        function _queryCapabilities() {
+            // Query storefront capabilities via companion plugin postMessage bridge
+            window.addEventListener('message', function handler(e) {
+                if (e.data && e.data.type === 'sambla_store_capabilities_result') {
+                    _storeCapabilities = e.data.data || {};
+                    window.removeEventListener('message', handler);
+                }
+            });
+            // Also query SaaS capabilities
+            fetch(config.apiBase + '/api/v1/chatbot/' + config.channelId + '/capabilities')
+                .then(function(r) { return r.json(); })
+                .then(function(caps) {
+                    if (!_storeCapabilities) _storeCapabilities = {};
+                    _storeCapabilities.saas_cart_enabled = caps.cart_enabled;
+                    _storeCapabilities.has_products = caps.has_products;
+                })
+                .catch(function() {});
+            // Ask storefront plugin for local capabilities
+            if (window.parent !== window) {
+                window.parent.postMessage({ type: 'sambla_store_capabilities' }, '*');
+            }
+        }
+        _queryCapabilities();
+
+        function _isCartEnabled() {
+            if (!_storeCapabilities) return false;
+            return !!(_storeCapabilities.cart_enabled || _storeCapabilities.saas_cart_enabled);
+        }
+
+        // ─── V2: Cart result listener (from companion plugin via postMessage) ───
+        var _cartCallbacks = {};
+        window.addEventListener('message', function(e) {
+            if (e.data && e.data.type === 'sambla_cart_result') {
+                var reqId = e.data.request_id;
+                if (reqId && _cartCallbacks[reqId]) {
+                    _cartCallbacks[reqId](e.data);
+                    delete _cartCallbacks[reqId];
+                }
+            }
+        });
 
         function renderProductCards(products) {
             if (!messagesContainer || !typingEl) return;
@@ -1276,9 +1359,15 @@
             wrap.setAttribute('role', 'list');
             wrap.setAttribute('aria-label', 'Products');
 
-            products.forEach(function(p) {
+            products.forEach(function(p, index) {
+                // ── Track impression ──
+                trackEvent('product_impression', {
+                    product_id: p.id, product_name: (p.name || '').substring(0, 80),
+                    price: p.price, position: index
+                });
+
                 var card = document.createElement('div');
-                card.style.cssText = 'min-width:160px;width:160px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;background:#fff;scroll-snap-align:start;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.06);cursor:pointer;transition:box-shadow 0.15s,transform 0.15s;';
+                card.style.cssText = 'min-width:160px;width:160px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;background:#fff;scroll-snap-align:start;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.06);cursor:pointer;transition:box-shadow 0.15s,transform 0.15s;display:flex;flex-direction:column;';
                 card.setAttribute('role', 'listitem');
                 card.setAttribute('tabindex', '0');
                 card.setAttribute('aria-label', stripAllHtml(p.name || ''));
@@ -1287,35 +1376,158 @@
                 if (p.image_url && isValidUrl(p.image_url)) {
                     h += '<img src="' + sanitizeHtml(p.image_url) + '" style="width:100%;height:100px;object-fit:cover;display:block;" loading="lazy" alt="' + sanitizeHtml(p.name || '') + '">';
                 }
-                h += '<div style="padding:8px 10px;">';
+                h += '<div style="padding:8px 10px;flex:1;display:flex;flex-direction:column;">';
                 h += '<div style="font-size:11px;font-weight:600;color:#1e293b;line-height:1.3;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">' + sanitizeHtml(p.name) + '</div>';
+
                 var safeCurrency = sanitizeCurrency(p.currency);
                 if (sanitizePrice(p.sale_price) && sanitizePrice(p.regular_price)) {
                     h += '<div style="font-size:13px;font-weight:700;color:#dc2626;">' + sanitizePrice(p.sale_price) + ' ' + safeCurrency + ' <span style="font-size:10px;color:#94a3b8;text-decoration:line-through;font-weight:400;">' + sanitizePrice(p.regular_price) + '</span></div>';
                 } else if (sanitizePrice(p.price)) {
                     h += '<div style="font-size:13px;font-weight:700;color:#1e293b;">' + sanitizePrice(p.price) + ' ' + safeCurrency + '</div>';
                 }
+
+                // Stock indicator
+                if (p.stock_status === 'outofstock') {
+                    h += '<div style="font-size:9px;color:#dc2626;margin-top:2px;">Indisponibil</div>';
+                }
+
+                h += '<div style="flex:1;"></div>'; // spacer
+
+                // ATC button placeholder (populated below if cart enabled)
+                h += '<div class="sambla-atc-slot" style="margin-top:6px;"></div>';
                 h += '</div>';
                 card.innerHTML = h;
 
-                // Click to open modal
-                card.addEventListener('click', function() { showProductModal(p); });
+                // ── Click card → open product permalink (NOT modal) ──
+                card.addEventListener('click', function(e) {
+                    // Don't navigate if clicking the ATC button
+                    if (e.target.closest && e.target.closest('.sambla-atc-btn')) return;
+                    if (e.target.classList && e.target.classList.contains('sambla-atc-btn')) return;
+
+                    trackEvent('product_click', {
+                        product_id: p.id, product_name: (p.name || '').substring(0, 80), price: p.price
+                    });
+
+                    if (p.permalink && isValidUrl(p.permalink)) {
+                        window.open(sanitizeUrl(p.permalink), '_blank', 'noopener');
+                    }
+                });
                 card.addEventListener('keydown', function(e) {
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
-                        showProductModal(p);
+                        card.click();
                     }
                 });
 
-                // Hover effect
+                // Hover
                 card.addEventListener('mouseenter', function() { card.style.boxShadow = '0 4px 12px rgba(0,0,0,0.12)'; card.style.transform = 'translateY(-2px)'; });
                 card.addEventListener('mouseleave', function() { card.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)'; card.style.transform = 'none'; });
+
+                // ── ATC button (only if cart enabled and product in stock) ──
+                if (_isCartEnabled() && p.stock_status !== 'outofstock') {
+                    var atcSlot = card.querySelector('.sambla-atc-slot');
+                    if (atcSlot) {
+                        var btn = document.createElement('button');
+                        btn.className = 'sambla-atc-btn';
+                        btn.style.cssText = 'width:100%;padding:5px 0;border:none;border-radius:6px;background:#16a34a;color:#fff;font-size:11px;font-weight:600;cursor:pointer;transition:background 0.15s;';
+                        btn.textContent = '\uD83D\uDED2 Adaugă în coș';
+                        btn.addEventListener('mouseenter', function() { btn.style.background = '#15803d'; });
+                        btn.addEventListener('mouseleave', function() { btn.style.background = '#16a34a'; });
+
+                        btn.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            _handleAddToCart(p, btn);
+                        });
+
+                        atcSlot.appendChild(btn);
+                    }
+                }
 
                 wrap.appendChild(card);
             });
 
             messagesContainer.insertBefore(wrap, typingEl);
             setTimeout(function() { messagesContainer.scrollTop = messagesContainer.scrollHeight; }, 100);
+        }
+
+        // ─── V2: Add to cart handler ───
+        function _handleAddToCart(product, btn) {
+            trackEvent('add_to_cart_click', { product_id: product.id, product_name: (product.name || '').substring(0, 80) });
+
+            var origText = btn.textContent;
+            btn.textContent = '\u23F3 Se adaugă...';
+            btn.disabled = true;
+            btn.style.background = '#94a3b8';
+
+            var requestId = 'atc_' + Date.now() + '_' + product.id;
+
+            // Register callback for result from companion plugin
+            _cartCallbacks[requestId] = function(result) {
+                if (result.success) {
+                    trackEvent('add_to_cart_success', { product_id: product.id, cart_count: (result.data || {}).cart_count });
+                    btn.textContent = '\u2713 Adăugat!';
+                    btn.style.background = '#16a34a';
+                } else {
+                    var error = (result.data || {}).error || 'add_failed';
+                    trackEvent('add_to_cart_failure', { product_id: product.id, reason: error });
+
+                    if (error === 'variation_required') {
+                        trackEvent('variation_required_redirect', { product_id: product.id });
+                        btn.textContent = '\u2192 Vezi opțiuni';
+                        btn.style.background = '#3b82f6';
+                        setTimeout(function() {
+                            if (product.permalink) window.open(sanitizeUrl(product.permalink), '_blank', 'noopener');
+                        }, 300);
+                    } else if (error === 'out_of_stock') {
+                        btn.textContent = 'Stoc epuizat';
+                        btn.style.background = '#dc2626';
+                    } else {
+                        btn.textContent = (result.data || {}).message || 'Eroare';
+                        btn.style.background = '#dc2626';
+                    }
+                }
+
+                // Reset button after 3s
+                setTimeout(function() {
+                    btn.textContent = origText;
+                    btn.disabled = false;
+                    btn.style.background = '#16a34a';
+                }, 3000);
+            };
+
+            // Send to companion plugin via postMessage
+            var msg = {
+                type: 'sambla_add_to_cart',
+                request_id: requestId,
+                product_id: product.id,
+                quantity: 1,
+                session_id: getSessionId(),
+                bot_id: undefined, // will be resolved by plugin from config
+                visitor_id: _getVisitorId()
+            };
+
+            if (window.parent !== window) {
+                // Widget in iframe — post to parent (storefront)
+                window.parent.postMessage(msg, '*');
+            } else {
+                // Widget injected directly — post to self (sambla-cart.js listens on same window)
+                window.postMessage(msg, '*');
+            }
+
+            // Timeout fallback: if no response from plugin within 8s, redirect to product page
+            setTimeout(function() {
+                if (_cartCallbacks[requestId]) {
+                    delete _cartCallbacks[requestId];
+                    trackEvent('add_to_cart_failure', { product_id: product.id, reason: 'timeout' });
+                    trackEvent('redirected_to_product_page', { product_id: product.id, reason: 'cart_timeout' });
+                    btn.textContent = '\u2192 Vezi produs';
+                    btn.style.background = '#3b82f6';
+                    btn.disabled = false;
+                    btn.addEventListener('click', function() {
+                        if (product.permalink) window.open(sanitizeUrl(product.permalink), '_blank', 'noopener');
+                    }, { once: true });
+                }
+            }, 8000);
         }
 
         // Event listeners

@@ -30,6 +30,8 @@ class UsageTracking extends Model
     public const FEATURE_AGENT_RUNS = 'agent_runs';
     public const FEATURE_TOKENS_USED = 'tokens_used';
     public const FEATURE_PAGES_SCANNED = 'pages_scanned';
+    public const FEATURE_MESSAGES = 'messages';
+    public const FEATURE_VOICE_MINUTES = 'voice_minutes';
 
     // ═══════════════════════════════════════════════════════════════
     //  Static helpers

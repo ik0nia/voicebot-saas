@@ -42,8 +42,13 @@ Route::get('/functionalitati', function () {
 });
 
 Route::get('/preturi', function () {
-    $webchatPlans = \App\Models\Plan::active()->webchat()->orderBy('sort_order')->get();
-    $voicePlans = \App\Models\Plan::active()->voice()->orderBy('sort_order')->get();
+    try {
+        $webchatPlans = \App\Models\Plan::active()->webchat()->orderBy('sort_order')->get();
+        $voicePlans = \App\Models\Plan::active()->voice()->orderBy('sort_order')->get();
+    } catch (\Exception $e) {
+        $webchatPlans = collect();
+        $voicePlans = collect();
+    }
     return view('preturi', compact('webchatPlans', 'voicePlans'));
 });
 
@@ -162,6 +167,23 @@ Route::middleware('auth')->prefix('dashboard/sites')->group(function () {
     Route::post('/{site}/verify', [SiteController::class, 'verify'])->name('dashboard.sites.verify');
 });
 
+// V2: Leads, Opportunities, Commerce Analytics (dashboard)
+Route::middleware('auth')->prefix('dashboard')->group(function () {
+    // Leads
+    Route::get('/leads', [\App\Http\Controllers\Dashboard\LeadController::class, 'index'])->name('dashboard.leads.index');
+    Route::get('/leads/export', [\App\Http\Controllers\Dashboard\LeadController::class, 'export'])->name('dashboard.leads.export');
+    Route::get('/leads/{lead}', [\App\Http\Controllers\Dashboard\LeadController::class, 'show'])->name('dashboard.leads.show');
+    Route::post('/leads/{lead}/status', [\App\Http\Controllers\Dashboard\LeadController::class, 'updateStatus'])->name('dashboard.leads.status');
+    Route::post('/leads/{lead}/notes', [\App\Http\Controllers\Dashboard\LeadController::class, 'addNote'])->name('dashboard.leads.notes');
+
+    // Opportunities
+    Route::get('/opportunities', [\App\Http\Controllers\Dashboard\OpportunityController::class, 'index'])->name('dashboard.opportunities.index');
+    Route::get('/opportunities/{conversation}', [\App\Http\Controllers\Dashboard\OpportunityController::class, 'show'])->name('dashboard.opportunities.show');
+
+    // Commerce Analytics
+    Route::get('/conversii', [\App\Http\Controllers\Dashboard\CommerceAnalyticsController::class, 'index'])->name('dashboard.commerce.index');
+});
+
 // Knowledge base routes (dashboard)
 Route::middleware('auth')->prefix('dashboard/boti/{bot}')->group(function () {
     Route::get('/knowledge', [KnowledgeController::class, 'index'])->name('dashboard.bots.knowledge.index');
@@ -184,6 +206,7 @@ Route::middleware('auth')->prefix('dashboard/boti/{bot}')->group(function () {
         Route::post('/knowledge/connector', [KnowledgeController::class, 'storeConnector'])->name('dashboard.bots.knowledge.connector.store');
         Route::post('/knowledge/connector/{connector}/test', [KnowledgeController::class, 'testConnector'])->name('dashboard.bots.knowledge.connector.test');
         Route::post('/knowledge/connector/{connector}/sync', [KnowledgeController::class, 'syncConnector'])->name('dashboard.bots.knowledge.connector.sync');
+        Route::get('/knowledge/sync-progress', [KnowledgeController::class, 'syncProgress'])->name('dashboard.bots.knowledge.sync-progress');
         Route::delete('/knowledge/connector/{connector}', [KnowledgeController::class, 'destroyConnector'])->name('dashboard.bots.knowledge.connector.destroy');
     });
 
@@ -210,6 +233,9 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
     Route::get('/conversatii/{conversationId}', [\App\Http\Controllers\Admin\AdminConversationController::class, 'show'])->name('admin.conversations.show');
     Route::get('/tenanti', [\App\Http\Controllers\Admin\AdminTenantController::class, 'index'])->name('admin.tenants.index');
     Route::get('/tenanti/{tenant}', [\App\Http\Controllers\Admin\AdminTenantController::class, 'show'])->name('admin.tenants.show');
+    Route::post('/tenanti/{tenant}/override', [\App\Http\Controllers\Admin\AdminTenantController::class, 'override'])->name('admin.tenants.override');
+    Route::delete('/tenanti/{tenant}/override/{key}', [\App\Http\Controllers\Admin\AdminTenantController::class, 'removeOverride'])->name('admin.tenants.removeOverride');
+    Route::post('/tenanti/{tenant}/plan', [\App\Http\Controllers\Admin\AdminTenantController::class, 'changePlan'])->name('admin.tenants.changePlan');
 
     // Admin Settings
     Route::get('/setari', [AdminSettingsController::class, 'index'])->name('admin.settings.index');
@@ -222,6 +248,8 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
     Route::put('/setari/facebook', [AdminSettingsController::class, 'updateFacebook'])->name('admin.settings.updateFacebook');
     Route::put('/setari/instagram', [AdminSettingsController::class, 'updateInstagram'])->name('admin.settings.updateInstagram');
     Route::put('/setari/elevenlabs', [AdminSettingsController::class, 'updateElevenlabs'])->name('admin.settings.updateElevenlabs');
+    Route::put('/setari/anthropic', [AdminSettingsController::class, 'updateAnthropic'])->name('admin.settings.updateAnthropic');
+    Route::put('/setari/sentry', [AdminSettingsController::class, 'updateSentry'])->name('admin.settings.updateSentry');
     Route::put('/setari/securitate', [AdminSettingsController::class, 'updateSecurity'])->name('admin.settings.updateSecurity');
     Route::post('/setari/clear-cache', [AdminSettingsController::class, 'clearCache'])->name('admin.settings.clearCache');
     Route::put('/setari/tenanti/{tenant}', [AdminSettingsController::class, 'updateTenant'])->name('admin.settings.updateTenant');

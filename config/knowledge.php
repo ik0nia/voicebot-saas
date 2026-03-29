@@ -10,6 +10,25 @@ return [
     'query_expansion' => [
         'enabled' => (bool) env('KNOWLEDGE_QUERY_EXPANSION', true),
         'max_variants' => 3,
+        'llm_rewrite' => (bool) env('KNOWLEDGE_LLM_QUERY_REWRITE', false),
+        'llm_rewrite_model' => env('KNOWLEDGE_LLM_REWRITE_MODEL', 'gpt-4o-mini'),
+    ],
+
+    // Romanian synonym dictionary for FTS expansion
+    'synonyms' => [
+        'pret' => 'cost tarif pret',
+        'livrare' => 'transport expediere curier livrare',
+        'garantie' => 'garantie retur schimb',
+        'plata' => 'platesc achit card numerar plata',
+        'program' => 'orar deschis inchis program',
+        'contact' => 'telefon email adresa locatie contact',
+        'reducere' => 'oferta promotie discount reducere',
+        'stoc' => 'disponibil disponibilitate stoc',
+        'retur' => 'returnare schimb garantie retur',
+        'dimensiune' => 'marime dimensiune grosime latime lungime',
+        'culoare' => 'culoare nuanta finisaj',
+        'instalare' => 'montaj montare instalare aplicare',
+        'greutate' => 'greutate masa kilogram',
     ],
 
     'reranking' => [
@@ -26,6 +45,8 @@ return [
         'connector' => 512,
         'agent' => 512,
     ],
+
+    'max_chunks_per_document' => (int) env('KNOWLEDGE_MAX_CHUNKS_PER_DOC', 3),
 
     'max_document_tokens' => (int) env('KNOWLEDGE_MAX_DOC_TOKENS', 100000),
 ];

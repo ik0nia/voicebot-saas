@@ -5,11 +5,16 @@ namespace App\Http\Controllers\Dashboard;
 use App\Http\Controllers\Controller;
 use App\Models\Bot;
 use App\Models\KnowledgeConnector;
+use App\Services\PlanLimitService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class BotController extends Controller
 {
+    public function __construct(
+        private PlanLimitService $planLimitService,
+    ) {}
+
     public function index(Request $request)
     {
         $user = auth()->user();
@@ -49,6 +54,13 @@ class BotController extends Controller
                 ->with('info', 'Adaugă mai întâi un site pentru a putea crea un bot.');
         }
 
+        // Check bot creation limit
+        $limitCheck = $this->planLimitService->canCreateBot($tenant);
+        if (!$limitCheck->allowed) {
+            return redirect()->route('dashboard.bots.index')
+                ->with('error', $limitCheck->message);
+        }
+
         $sites = $tenant->sites()->where('status', 'active')->get();
 
         return view('dashboard.bots.create', compact('sites'));
@@ -56,6 +68,12 @@ class BotController extends Controller
 
     public function store(Request $request)
     {
+        $tenant = auth()->user()->tenant;
+        $limitCheck = $this->planLimitService->canCreateBot($tenant);
+        if (!$limitCheck->allowed) {
+            return back()->with('error', $limitCheck->message)->withInput();
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'site_id' => 'nullable|exists:sites,id',

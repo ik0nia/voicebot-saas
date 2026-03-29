@@ -203,6 +203,63 @@ class AdminSettingsController extends Controller
         return back()->with('success', 'Setarile ElevenLabs au fost actualizate.');
     }
 
+    public function updateAnthropic(Request $request)
+    {
+        $validated = $request->validate([
+            'anthropic_api_key' => 'required|string',
+        ]);
+
+        PlatformSetting::set('anthropic_api_key', $validated['anthropic_api_key'], 'string', 'anthropic');
+
+        // Also sync to .env for config() access
+        $this->updateEnvKey('ANTHROPIC_API_KEY', $validated['anthropic_api_key']);
+
+        return back()->with('success', 'Setările Anthropic au fost actualizate.');
+    }
+
+    public function updateSentry(Request $request)
+    {
+        $validated = $request->validate([
+            'sentry_dsn' => 'nullable|string|max:500',
+        ]);
+
+        PlatformSetting::set('sentry_dsn', $validated['sentry_dsn'] ?? '', 'string', 'sentry');
+
+        // Sync to .env
+        $this->updateEnvKey('SENTRY_LARAVEL_DSN', $validated['sentry_dsn'] ?? '');
+
+        return back()->with('success', 'Setările Sentry au fost actualizate.');
+    }
+
+    /**
+     * Sync a key to .env if writable, otherwise just log.
+     * Platform settings (DB) is the primary source — .env is optional sync.
+     */
+    private function updateEnvKey(string $key, string $value): void
+    {
+        $envPath = base_path('.env');
+
+        try {
+            if (!is_writable($envPath)) {
+                \Log::info("Cannot sync {$key} to .env (not writable). Value saved in platform_settings only.");
+                return;
+            }
+
+            $content = file_get_contents($envPath);
+
+            if (str_contains($content, "{$key}=")) {
+                $content = preg_replace("/^{$key}=.*/m", "{$key}={$value}", $content);
+            } else {
+                $content .= "\n{$key}={$value}";
+            }
+
+            file_put_contents($envPath, $content);
+            Artisan::call('config:clear');
+        } catch (\Throwable $e) {
+            \Log::warning("Failed to sync {$key} to .env: {$e->getMessage()}. Value saved in platform_settings.");
+        }
+    }
+
     public function updateSecurity(Request $request)
     {
         $validated = $request->validate([

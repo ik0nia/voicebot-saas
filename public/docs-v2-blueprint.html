@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sambla v2.0 — Full Implementation Blueprint</title>
+<style>
+:root{--bg:#0f172a;--s1:#1e293b;--s2:#334155;--bd:#475569;--t1:#e2e8f0;--t2:#94a3b8;--ac:#38bdf8;--gr:#4ade80;--yw:#fbbf24;--rd:#f87171;--pr:#a78bfa;--or:#fb923c;--pk:#f472b6}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--t1);line-height:1.7;font-size:14px}
+.c{max-width:1200px;margin:0 auto;padding:2rem}
+h1{font-size:1.7rem;color:var(--ac);margin-bottom:.3rem}
+h2{font-size:1.35rem;color:var(--ac);margin:2.5rem 0 .7rem;padding-bottom:.3rem;border-bottom:1px solid var(--bd)}
+h3{font-size:1.05rem;color:var(--gr);margin:1.5rem 0 .5rem}
+h4{font-size:.9rem;color:var(--yw);margin:1rem 0 .4rem}
+h5{font-size:.85rem;color:var(--or);margin:.8rem 0 .3rem}
+p,li{color:var(--t2);margin-bottom:.35rem;font-size:.88rem}
+strong{color:var(--t1)}
+code{background:var(--s2);padding:.1rem .3rem;border-radius:3px;font-size:.8em;color:var(--or)}
+pre{background:var(--s1);border:1px solid var(--bd);border-radius:6px;padding:.8rem;overflow-x:auto;margin:.6rem 0;font-size:.75rem;line-height:1.4;color:var(--t1);white-space:pre-wrap}
+table{width:100%;border-collapse:collapse;margin:.6rem 0;font-size:.8rem}
+th{background:var(--s2);color:var(--ac);text-align:left;padding:.4rem .5rem;border:1px solid var(--bd)}
+td{padding:.35rem .5rem;border:1px solid var(--bd);color:var(--t2);vertical-align:top}
+ul,ol{padding-left:1.2rem}
+.tg{display:inline-block;padding:.1rem .35rem;border-radius:3px;font-size:.65rem;font-weight:600}
+.tg-g{background:rgba(74,222,128,.15);color:var(--gr)}.tg-y{background:rgba(251,191,36,.15);color:var(--yw)}.tg-r{background:rgba(248,113,113,.15);color:var(--rd)}.tg-b{background:rgba(56,189,248,.15);color:var(--ac)}.tg-p{background:rgba(167,139,250,.15);color:var(--pr)}
+.b{background:var(--s1);border:1px solid var(--bd);border-radius:6px;padding:.8rem;margin:.6rem 0}
+.sub{color:var(--t2);font-size:.9rem;margin-bottom:1.5rem}
+hr{border:none;border-top:1px solid var(--bd);margin:1.5rem 0}
+.ex{background:rgba(56,189,248,.06);border-left:3px solid var(--ac);padding:.5rem .7rem;margin:.5rem 0;font-size:.82rem}
+.warn{background:rgba(251,191,36,.06);border-left:3px solid var(--yw);padding:.5rem .7rem;margin:.5rem 0;font-size:.82rem}
+.imp{background:rgba(248,113,113,.06);border-left:3px solid var(--rd);padding:.5rem .7rem;margin:.5rem 0;font-size:.82rem}
+@media print{body{background:#fff;color:#111;font-size:10px}h1,h2,h3,h4,h5{color:#111}pre,.b{border-color:#ccc;background:#f5f5f5}table{font-size:8px}code{background:#eee;color:#333}}
+</style>
+</head>
+<body>
+<div class="c">
+
+<h1>Sambla v2.0 — Full Implementation Blueprint</h1>
+<p class="sub">Production-grade upgrade: multi-intent orchestration, conversion tracking, lead capture, WooCommerce deep integration, tenant customization, analytics engine. Generated 29 March 2026.</p>
+
+<!-- ================================================================ -->
+<h2>1. Executive Summary</h2>
+<!-- ================================================================ -->
+
+<p>This blueprint transforms Sambla from a <strong>chat responder</strong> into a <strong>measurable sales assistant and lead-generation engine</strong>. The upgrade adds 12 major modules while preserving the existing architecture (47 tables, 29 models, multi-tenant isolation).</p>
+
+<p><strong>Key additions:</strong> multi-intent orchestration, product card UX with add-to-cart, WooCommerce checkout attribution, conversation outcome engine, intelligent lead capture, tenant conversation policies, advanced recommendations, RAG retrieval memory, complexity-based model routing, human handoff, full analytics/attribution, and admin insights.</p>
+
+<p><strong>Approach:</strong> Incremental — no destructive rewrites. New tables/services alongside existing ones. Feature-flagged rollout per tenant.</p>
+
+<!-- ================================================================ -->
+<h2>2. Target Architecture</h2>
+<!-- ================================================================ -->
+
+<pre>
+┌─────────────────────────────────────────────────────────────────────┐
+│                        WIDGET / VOICE CLIENT                         │
+│  Events: impression, click, add_to_cart, lead_submit, session_*     │
+└──────────────┬──────────────────────────────────────┬────────────────┘
+               │ POST /api/chatbot/{ch}/message       │ POST /api/v1/events
+               ▼                                      ▼
+┌──────────────────────────────┐    ┌─────────────────────────────────┐
+│   ChatbotApiController       │    │   EventTrackingController       │
+│   RealtimeSessionController  │    │   (new - client-side events)    │
+└──────────┬───────────────────┘    └──────────┬──────────────────────┘
+           │                                   │
+           ▼                                   ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│                    INTENT ORCHESTRATOR (new)                          │
+│  IntentOrchestratorService                                           │
+│  ├─ IntentDetectionService (upgraded: multi-intent, scoring)         │
+│  ├─ OrderLookupPipeline                                              │
+│  ├─ ProductSearchPipeline (existing ProductSearchService)            │
+│  ├─ RecommendationPipeline (upgraded: consultative planner)          │
+│  ├─ KnowledgePipeline (existing KnowledgeSearchService + memory)     │
+│  ├─ LeadCapturePipeline (new)                                        │
+│  └─ HandoffPipeline (new)                                            │
+└──────────┬───────────────────────────────────────────────────────────┘
+           │
+           ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│                    PROMPT ASSEMBLY                                    │
+│  ConversationPolicyService (new - tenant style/rules)                │
+│  PromptGuardrails (existing)                                         │
+│  PromptBuilder (existing)                                            │
+└──────────┬───────────────────────────────────────────────────────────┘
+           │
+           ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│  ComplexityScoringService (new) → ChatModelRouter → ChatCompletion   │
+└──────────┬───────────────────────────────────────────────────────────┘
+           │
+           ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│                    OUTCOME + ANALYTICS ENGINE                         │
+│  ConversationEventService → raw events (chat_events table)           │
+│  OutcomeEngine (job) → derived outcomes (conversation_outcomes)       │
+│  AttributionService → purchase_attributions                          │
+│  InsightGeneratorJob → tenant insights                               │
+└──────────────────────────────────────────────────────────────────────┘
+</pre>
+
+<!-- ================================================================ -->
+<h2>3. Gap Analysis</h2>
+<!-- ================================================================ -->
+
+<table>
+<tr><th>Capability</th><th>Current State</th><th>Target State</th><th>Gap</th></tr>
+<tr><td>Intent detection</td><td>First-match-wins (order OR recommendation OR product)</td><td>Multi-intent scoring with orchestration plan</td><td><span class="tg tg-r">Major</span></td></tr>
+<tr><td>Product cards</td><td>Click opens modal in widget. No add-to-cart in chat.</td><td>Click opens permalink. Add-to-cart button. Full analytics.</td><td><span class="tg tg-r">Major</span></td></tr>
+<tr><td>WooCommerce</td><td>Product sync + order lookup. No cart/checkout.</td><td>Cart integration, checkout attribution, purchase tracking.</td><td><span class="tg tg-r">Major</span></td></tr>
+<tr><td>Analytics</td><td>SearchAnalytics + AiApiMetric (basic)</td><td>Full event taxonomy, outcomes, attribution, dashboards</td><td><span class="tg tg-r">Major</span></td></tr>
+<tr><td>Lead capture</td><td>None</td><td>Intelligent, progressive, tenant-configurable</td><td><span class="tg tg-r">New</span></td></tr>
+<tr><td>Tenant style</td><td>Only system_prompt per bot</td><td>Full conversation policy (tone, CTA, rules, snippets)</td><td><span class="tg tg-y">Medium</span></td></tr>
+<tr><td>Recommendations</td><td>Static concept→subquery map</td><td>Consultative planner with clarifications and bundles</td><td><span class="tg tg-y">Medium</span></td></tr>
+<tr><td>RAG</td><td>Per-message retrieval, no conversation memory</td><td>Conversation-aware query rewriting, source tracking</td><td><span class="tg tg-y">Medium</span></td></tr>
+<tr><td>Model routing</td><td>Word count + cost + circuit breaker</td><td>Complexity scoring (intent count, ambiguity, emotion)</td><td><span class="tg tg-g">Minor</span></td></tr>
+<tr><td>Human handoff</td><td>None</td><td>Structured handoff with summary + CRM webhook</td><td><span class="tg tg-r">New</span></td></tr>
+<tr><td>Outcome engine</td><td>None</td><td>Event → outcome derivation with attribution</td><td><span class="tg tg-r">New</span></td></tr>
+<tr><td>Admin insights</td><td>Basic call analytics</td><td>Actionable insights per tenant</td><td><span class="tg tg-r">New</span></td></tr>
+</table>
+
+<!-- ================================================================ -->
+<h2>4. Database Schema Changes</h2>
+<!-- ================================================================ -->
+
+<h3>4.1 New Tables</h3>
+
+<h4>chat_events — Raw event tracking</h4>
+<pre>
+Schema::create('chat_events', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('tenant_id')->constrained()->index();
+    $table->foreignId('bot_id')->nullable()->constrained()->index();
+    $table->foreignId('channel_id')->nullable()->constrained();
+    $table->foreignId('conversation_id')->nullable()->constrained();
+    $table->string('session_id', 100)->nullable()->index();
+    $table->string('visitor_id', 100)->nullable()->index();  // browser fingerprint
+    $table->string('event_name', 80)->index();               // taxonomy key
+    $table->string('event_source', 20)->default('widget');    // widget|backend|webhook|woocommerce|voice
+    $table->jsonb('properties')->nullable();                  // event-specific data
+    $table->string('idempotency_key', 100)->nullable()->unique(); // prevent duplicates
+    $table->unsignedBigInteger('product_id')->nullable();     // wc_product_id if applicable
+    $table->string('wc_order_id', 50)->nullable();
+    $table->timestamp('occurred_at')->useCurrent();
+    $table->timestamps();
+
+    $table->index(['tenant_id', 'event_name', 'occurred_at']);
+    $table->index(['conversation_id', 'event_name']);
+    $table->index(['bot_id', 'event_name', 'occurred_at']);
+});
+</pre>
+
+<h4>conversation_outcomes — Derived business outcomes</h4>
+<pre>
+Schema::create('conversation_outcomes', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('tenant_id')->constrained()->index();
+    $table->foreignId('bot_id')->constrained()->index();
+    $table->foreignId('conversation_id')->constrained()->index();
+    $table->string('session_id', 100)->nullable();
+    $table->string('outcome_type', 50)->index();  // product_discovered, add_to_cart, lead_captured, etc.
+    $table->string('confidence', 20)->default('confirmed'); // confirmed|probable|assisted
+    $table->string('attribution_reason', 255)->nullable();
+    $table->jsonb('metadata')->nullable();          // outcome-specific data
+    $table->decimal('revenue_cents', 10, 0)->nullable();
+    $table->unsignedBigInteger('product_id')->nullable();
+    $table->string('wc_order_id', 50)->nullable();
+    $table->timestamps();
+
+    $table->unique(['conversation_id', 'outcome_type', 'product_id'], 'conv_outcome_product_unique');
+});
+</pre>
+
+<h4>leads — Lead capture</h4>
+<pre>
+Schema::create('leads', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('tenant_id')->constrained()->index();
+    $table->foreignId('bot_id')->constrained()->index();
+    $table->foreignId('conversation_id')->nullable()->constrained();
+    $table->foreignId('contact_id')->nullable()->constrained();
+    $table->string('session_id', 100)->nullable();
+    $table->string('status', 30)->default('new')->index();  // new|partial|qualified|sent_to_crm|converted|dismissed
+    $table->string('name', 255)->nullable();
+    $table->string('email', 255)->nullable();
+    $table->string('phone', 50)->nullable();
+    $table->string('company', 255)->nullable();
+    $table->string('project_type', 100)->nullable();
+    $table->string('budget_range', 50)->nullable();
+    $table->string('preferred_contact', 30)->nullable();   // email|phone|whatsapp
+    $table->text('notes')->nullable();
+    $table->unsignedSmallInteger('qualification_score')->default(0);
+    $table->string('capture_source', 50)->nullable();       // chat|voice|whatsapp
+    $table->string('capture_reason', 255)->nullable();      // why lead was triggered
+    $table->boolean('gdpr_consent')->default(false);
+    $table->jsonb('custom_fields')->nullable();              // tenant-defined fields
+    $table->jsonb('products_shown')->nullable();             // products user was interested in
+    $table->timestamp('sent_to_crm_at')->nullable();
+    $table->timestamps();
+
+    $table->index(['tenant_id', 'status']);
+    $table->index(['tenant_id', 'created_at']);
+});
+</pre>
+
+<h4>conversation_policies — Tenant conversation style & rules</h4>
+<pre>
+Schema::create('conversation_policies', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('tenant_id')->constrained()->index();
+    $table->foreignId('bot_id')->nullable()->constrained();  // null = tenant default
+    $table->string('tone', 30)->default('professional');     // professional|warm|premium|friendly|consultative
+    $table->string('verbosity', 20)->default('concise');     // concise|moderate|detailed
+    $table->boolean('emoji_allowed')->default(false);
+    $table->string('cta_aggressiveness', 20)->default('moderate');  // soft|moderate|aggressive
+    $table->string('lead_aggressiveness', 20)->default('soft');
+    $table->text('fallback_message')->nullable();
+    $table->text('escalation_message')->nullable();
+    $table->jsonb('prohibited_phrases')->nullable();
+    $table->jsonb('required_phrases')->nullable();
+    $table->jsonb('brand_vocabulary')->nullable();
+    $table->text('custom_greeting')->nullable();
+    $table->text('custom_handoff_message')->nullable();
+    $table->text('custom_lead_prompt')->nullable();
+    $table->text('custom_out_of_stock')->nullable();
+    $table->jsonb('business_rules')->nullable();             // structured rules array
+    $table->jsonb('snippets')->nullable();                   // delivery, returns, promo, etc.
+    $table->boolean('is_active')->default(true);
+    $table->timestamps();
+
+    $table->unique(['tenant_id', 'bot_id']);
+});
+</pre>
+
+<h4>purchase_attributions — Purchase → conversation link</h4>
+<pre>
+Schema::create('purchase_attributions', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('tenant_id')->constrained()->index();
+    $table->foreignId('bot_id')->constrained();
+    $table->foreignId('conversation_id')->nullable()->constrained();
+    $table->string('session_id', 100)->nullable();
+    $table->string('wc_order_id', 50)->index();
+    $table->decimal('order_total_cents', 10, 0);
+    $table->string('attribution_mode', 20);  // strict|probable|assisted
+    $table->string('attribution_reason', 255);
+    $table->unsignedInteger('attribution_window_hours');
+    $table->jsonb('products_in_order')->nullable();
+    $table->jsonb('products_shown_in_chat')->nullable();
+    $table->timestamps();
+
+    $table->unique(['wc_order_id', 'conversation_id']);
+});
+</pre>
+
+<h4>handoff_requests — Human handoff queue</h4>
+<pre>
+Schema::create('handoff_requests', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('tenant_id')->constrained()->index();
+    $table->foreignId('bot_id')->constrained();
+    $table->foreignId('conversation_id')->constrained();
+    $table->foreignId('lead_id')->nullable()->constrained();
+    $table->string('status', 30)->default('pending');  // pending|sent|resolved|declined
+    $table->string('trigger_reason', 100);              // user_requested|unresolved|high_value|complaint|low_confidence
+    $table->text('conversation_summary')->nullable();
+    $table->jsonb('detected_intents')->nullable();
+    $table->jsonb('products_shown')->nullable();
+    $table->jsonb('lead_data')->nullable();
+    $table->text('unresolved_issue')->nullable();
+    $table->text('recommended_action')->nullable();
+    $table->string('delivery_method', 30)->nullable();  // email|webhook|dashboard|whatsapp
+    $table->timestamp('sent_at')->nullable();
+    $table->timestamp('resolved_at')->nullable();
+    $table->timestamps();
+
+    $table->index(['tenant_id', 'status']);
+});
+</pre>
+
+<h4>tenant_insights — Generated insights for tenants</h4>
+<pre>
+Schema::create('tenant_insights', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('tenant_id')->constrained()->index();
+    $table->foreignId('bot_id')->nullable()->constrained();
+    $table->string('insight_type', 50)->index();
+    $table->string('severity', 20)->default('info');  // info|suggestion|warning|critical
+    $table->string('title', 255);
+    $table->text('description');
+    $table->jsonb('data')->nullable();
+    $table->jsonb('action_items')->nullable();
+    $table->boolean('is_dismissed')->default(false);
+    $table->date('valid_from');
+    $table->date('valid_until')->nullable();
+    $table->timestamps();
+});
+</pre>
+
+<h3>4.2 Altered Tables</h3>
+
+<pre>
+// conversations — add visitor tracking
+Schema::table('conversations', function (Blueprint $table) {
+    $table->string('visitor_id', 100)->nullable()->after('contact_name');
+    $table->jsonb('outcomes_summary')->nullable()->after('metadata');
+    $table->string('primary_intent', 50)->nullable()->after('outcomes_summary');
+    $table->unsignedSmallInteger('lead_score')->default(0)->after('primary_intent');
+});
+
+// messages — add intent tracking per message
+Schema::table('messages', function (Blueprint $table) {
+    $table->jsonb('detected_intents')->nullable()->after('metadata');
+    $table->jsonb('pipelines_executed')->nullable()->after('detected_intents');
+    $table->jsonb('knowledge_chunks_used')->nullable()->after('pipelines_executed');
+});
+
+// bots — add policy reference and capabilities
+Schema::table('bots', function (Blueprint $table) {
+    $table->jsonb('woocommerce_capabilities')->nullable()->after('settings');
+    // { products_enabled, order_lookup_enabled, cart_enabled, checkout_tracking_enabled, purchase_attribution_enabled }
+});
+</pre>
+
+<!-- ================================================================ -->
+<h2>5. New/Changed Backend Services</h2>
+<!-- ================================================================ -->
+
+<h3>5.1 IntentOrchestratorService (NEW — core)</h3>
+<pre>
+class IntentOrchestratorService
+{
+    /**
+     * Analyze message and return orchestration plan with multiple intents.
+     *
+     * @return OrchestratorPlan {intents: DetectedIntent[], pipelines: PipelineTask[], context: array}
+     */
+    public function plan(string $message, Conversation $conversation, Bot $bot): OrchestratorPlan;
+
+    /**
+     * Execute orchestration plan and merge results.
+     *
+     * @return OrchestratorResult {productContext, orderContext, knowledgeContext, leadContext, handoffContext, products[]}
+     */
+    public function execute(OrchestratorPlan $plan, int $botId): OrchestratorResult;
+}
+
+// DetectedIntent DTO
+class DetectedIntent
+{
+    public string $name;           // order_lookup, product_search, category_recommendation, knowledge_query, lead_intent, quote_intent, handoff_intent, greeting, thanks
+    public float $confidence;      // 0.0–1.0
+    public array $entities;        // extracted: order_number, product_name, category, etc.
+    public int $priority;          // execution order
+}
+
+// OrchestratorPlan DTO
+class OrchestratorPlan
+{
+    public array $intents;         // DetectedIntent[]
+    public array $pipelines;       // PipelineTask[] — ordered execution
+    public bool $needsClarification;
+    public ?string $clarificationQuestion;
+    public float $complexityScore;
+}
+</pre>
+
+<p><strong>Key difference from current:</strong> Current <code>IntentDetectionService</code> returns booleans (is_order_query, is_product_search, etc.) and controller uses first-match-wins. New orchestrator returns ALL matched intents with scores and composes execution plan.</p>
+
+<h3>5.2 ConversationEventService (NEW)</h3>
+<pre>
+class ConversationEventService
+{
+    /**
+     * Track a raw event. Handles idempotency via idempotency_key.
+     */
+    public function track(string $eventName, array $properties = [], ?array $context = null): ChatEvent;
+
+    /**
+     * Bulk track from widget (batch endpoint).
+     */
+    public function trackBatch(array $events, int $tenantId): int;
+
+    // Context is auto-populated: tenant_id, bot_id, channel_id, conversation_id, session_id, visitor_id
+}
+</pre>
+
+<h3>5.3 OutcomeEngine (NEW)</h3>
+<pre>
+class OutcomeEngine
+{
+    /**
+     * Derive business outcomes from raw events for a conversation.
+     * Called as job after conversation ends or on key events.
+     */
+    public function deriveOutcomes(Conversation $conversation): array;
+
+    /**
+     * Rules:
+     * - product_impression events + product_click → product_discovered
+     * - add_to_cart_success → add_to_cart
+     * - checkout_started event (from WooCommerce webhook) → checkout_started
+     * - purchase webhook + attribution window match → purchase_completed
+     * - lead_completed event → lead_captured
+     * - handoff_sent event → human_handoff_requested
+     * - session_ended without product_click after products_returned → abandoned_after_products
+     */
+}
+</pre>
+
+<h3>5.4 LeadOpportunityScorer (NEW)</h3>
+<pre>
+class LeadOpportunityScorer
+{
+    /**
+     * Score the current conversation for lead capture opportunity.
+     * Returns 0-100 score + recommended trigger reason.
+     *
+     * Signals scored:
+     * - Has buying intent but not ready (+20)
+     * - Asked for quote/callback/consultation (+30)
+     * - High-value product interaction (+15)
+     * - Multiple product comparisons (+10)
+     * - Dead-end search but still engaged (+15)
+     * - Requested human handoff (+25)
+     * - Project-scale inquiry (+20)
+     * - Already provided partial contact info (+10)
+     *
+     * Negative signals:
+     * - Just browsing / greeting only (-30)
+     * - Already completed purchase (-50)
+     * - Very short conversation (-20)
+     */
+    public function score(Conversation $conversation, array $intents, array $events): LeadScore;
+}
+
+class LeadCaptureFlowService
+{
+    /**
+     * Determine if and how to capture lead based on score + policy.
+     * Returns null if not appropriate, or a LeadPrompt to inject into AI context.
+     */
+    public function evaluate(LeadScore $score, ConversationPolicy $policy): ?LeadPrompt;
+
+    /**
+     * Process submitted lead data (from widget form or AI-extracted).
+     */
+    public function capture(int $conversationId, array $fields): Lead;
+}
+</pre>
+
+<h3>5.5 ConversationPolicyService (NEW)</h3>
+<pre>
+class ConversationPolicyService
+{
+    /**
+     * Get merged policy for a bot (platform defaults → tenant → bot → channel).
+     */
+    public function getPolicy(Bot $bot, ?Channel $channel = null): ConversationPolicy;
+
+    /**
+     * Generate prompt instructions from policy.
+     * Injected into system prompt alongside PromptGuardrails.
+     */
+    public function toPromptInstructions(ConversationPolicy $policy): string;
+
+    /**
+     * Get snippet by key (delivery, returns, promo, etc.)
+     */
+    public function getSnippet(ConversationPolicy $policy, string $key): ?string;
+}
+
+// ConversationPolicy DTO — merged result
+class ConversationPolicy
+{
+    public string $tone;                    // professional|warm|premium|friendly|consultative
+    public string $verbosity;              // concise|moderate|detailed
+    public bool $emojiAllowed;
+    public string $ctaAggressiveness;      // soft|moderate|aggressive
+    public string $leadAggressiveness;     // soft|moderate|aggressive
+    public ?string $fallbackMessage;
+    public ?string $escalationMessage;
+    public array $prohibitedPhrases;
+    public array $requiredPhrases;
+    public array $brandVocabulary;
+    public ?string $customGreeting;
+    public ?string $customLeadPrompt;
+    public ?string $customOutOfStock;
+    public array $businessRules;           // structured rules
+    public array $snippets;                // key → text
+}
+</pre>
+
+<h3>5.6 ComplexityScoringService (NEW)</h3>
+<pre>
+class ComplexityScoringService
+{
+    /**
+     * Score message complexity to determine model tier.
+     * Replaces simple word-count logic in ChatModelRouter.
+     *
+     * Factors:
+     * - intent_count: more intents → higher complexity
+     * - ambiguity: multiple possible interpretations
+     * - follow_up_dependency: references previous messages
+     * - comparison_request: "care e mai bun" type queries
+     * - calculation_needed: quantities, prices, areas
+     * - policy_lookup: delivery, returns, warranty
+     * - emotional_cues: frustration, urgency, complaint
+     * - lead_opportunity: high-value interaction
+     * - input_quality: typos, noisy transcription
+     * - orchestration_needed: products + knowledge simultaneously
+     *
+     * Returns 0-100 score.
+     * < 30 → fast model
+     * 30-70 → fast or smart (cost-aware)
+     * > 70 → smart model
+     */
+    public function score(string $message, array $intents, Conversation $conversation): int;
+}
+</pre>
+
+<h3>5.7 HandoffService (NEW)</h3>
+<pre>
+class HandoffService
+{
+    /**
+     * Check if handoff should be offered.
+     */
+    public function shouldOffer(Conversation $conversation, array $intents, array $events): bool;
+
+    /**
+     * Create handoff request with structured summary.
+     */
+    public function createHandoff(Conversation $conversation, string $triggerReason): HandoffRequest;
+
+    /**
+     * Send handoff via configured method (email, webhook, dashboard queue).
+     */
+    public function deliver(HandoffRequest $handoff): bool;
+}
+</pre>
+
+<h3>5.8 WooCommerceCartService (NEW)</h3>
+<pre>
+class WooCommerceCartService
+{
+    /**
+     * Add product to cart via WooCommerce REST API or JS bridge.
+     */
+    public function addToCart(int $botId, int $wcProductId, int $quantity = 1): CartResult;
+
+    /**
+     * Check if product can be added to cart (simple, in stock, etc.)
+     */
+    public function canAddToCart(int $botId, object $product): CartCapability;
+
+    /**
+     * Handle purchase webhook from WooCommerce.
+     * Matches order to recent bot sessions for attribution.
+     */
+    public function handlePurchaseWebhook(int $botId, array $orderData): ?PurchaseAttribution;
+}
+
+class CartResult
+{
+    public bool $success;
+    public ?string $error;           // out_of_stock|variation_required|integration_error|product_unavailable
+    public ?string $cartUrl;
+    public ?int $cartCount;
+}
+</pre>
+
+<h3>5.9 AttributionService (NEW)</h3>
+<pre>
+class AttributionService
+{
+    /**
+     * Attempt to attribute a WooCommerce order to a bot conversation.
+     *
+     * Attribution modes:
+     * - strict: order placed during active session
+     * - probable: order placed within attribution window AND products overlap
+     * - assisted: order placed within window, products shown but not all purchased
+     *
+     * Default window: 24 hours (tenant-configurable).
+     */
+    public function attributeOrder(string $wcOrderId, int $botId, array $orderProducts): ?PurchaseAttribution;
+}
+</pre>
+
+<h3>5.10 InsightGeneratorJob (NEW)</h3>
+<pre>
+class InsightGeneratorJob implements ShouldQueue
+{
+    /**
+     * Generate actionable insights per tenant.
+     * Runs daily or on-demand.
+     *
+     * Rules:
+     * - "kb_gap": many queries hit 0 knowledge results → suggest adding content
+     * - "product_gap": searches return 0 products often → suggest adding products/attributes
+     * - "high_ctr_low_atc": products shown often but rarely added to cart → UX issue
+     * - "lead_capture_sweet_spot": identify when lead capture converts best
+     * - "unresolved_intents": common intents with no resolution → training needed
+     * - "prompt_performance": A/B test results if multiple prompt versions
+     * - "attribute_gap": products missing key attributes → suggest enrichment
+     */
+    public function handle(): void;
+}
+</pre>
+
+<!-- ================================================================ -->
+<h2>6. API & Controller Changes</h2>
+<!-- ================================================================ -->
+
+<h3>6.1 New Endpoints</h3>
+
+<table>
+<tr><th>Method</th><th>Endpoint</th><th>Purpose</th><th>Auth</th></tr>
+<tr><td>POST</td><td><code>/api/chatbot/{ch}/events</code></td><td>Batch track widget events</td><td>Channel token</td></tr>
+<tr><td>POST</td><td><code>/api/chatbot/{ch}/add-to-cart</code></td><td>Add product to WooCommerce cart</td><td>Channel token</td></tr>
+<tr><td>POST</td><td><code>/api/chatbot/{ch}/lead</code></td><td>Submit lead capture data</td><td>Channel token</td></tr>
+<tr><td>POST</td><td><code>/api/v1/webhooks/woocommerce/{bot}/order</code></td><td>WooCommerce order webhook (purchase attribution)</td><td>Webhook secret</td></tr>
+<tr><td>GET</td><td><code>/dashboard/boti/{bot}/analytics</code></td><td>Bot-level analytics dashboard</td><td>Auth</td></tr>
+<tr><td>GET</td><td><code>/dashboard/boti/{bot}/leads</code></td><td>Lead management</td><td>Auth</td></tr>
+<tr><td>GET</td><td><code>/dashboard/boti/{bot}/handoffs</code></td><td>Handoff queue</td><td>Auth</td></tr>
+<tr><td>GET</td><td><code>/dashboard/boti/{bot}/insights</code></td><td>Insights dashboard</td><td>Auth</td></tr>
+<tr><td>GET/POST</td><td><code>/dashboard/boti/{bot}/policy</code></td><td>Conversation policy editor</td><td>Auth</td></tr>
+<tr><td>GET</td><td><code>/api/chatbot/{ch}/capabilities</code></td><td>Widget queries bot capabilities (cart, lead, etc.)</td><td>Public</td></tr>
+</table>
+
+<h3>6.2 ChatbotApiController Changes</h3>
+
+<pre>
+// BEFORE (current): first-match pipeline in message()
+if ($orderParams !== null) { ... }
+elseif ($isRecommendation) { ... }
+else { $products = $this->searchProductCards(...); }
+
+// AFTER: orchestrated multi-intent
+$orchestrator = app(IntentOrchestratorService::class);
+$plan = $orchestrator->plan($userMessage, $conversation, $bot);
+$result = $orchestrator->execute($plan, $bot->id);
+
+// Result contains all contexts merged:
+$productContext = $result->productContext;
+$orderContext = $result->orderContext;
+$leadContext = $result->leadContext;
+$products = $result->products;
+
+// Track intents on message
+$messageRecord->update([
+    'detected_intents' => $plan->intents,
+    'pipelines_executed' => $plan->pipelines,
+]);
+</pre>
+
+<!-- ================================================================ -->
+<h2>7. Widget/Frontend Specification</h2>
+<!-- ================================================================ -->
+
+<h3>7.1 Product Card UX — Required Changes to sambla-chat.js</h3>
+
+<h4>Current behavior (REMOVE):</h4>
+<ul>
+<li>Product card click → <code>showProductModal()</code> → modal inside widget</li>
+</ul>
+
+<h4>New behavior (IMPLEMENT):</h4>
+<pre>
+// Product card click → open product page directly
+card.addEventListener('click', (e) => {
+    if (e.target.closest('.atc-btn')) return; // don't navigate on add-to-cart click
+    this.trackEvent('product_click', { product_id, product_name, price });
+    window.open(product.permalink, '_blank');
+});
+
+// Add-to-cart button (shown only if capabilities.cart_enabled)
+const atcBtn = document.createElement('button');
+atcBtn.className = 'atc-btn';
+atcBtn.textContent = '🛒 Adaugă';
+atcBtn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    this.trackEvent('add_to_cart_click', { product_id, product_name, price });
+    atcBtn.textContent = '⏳';
+    atcBtn.disabled = true;
+
+    try {
+        const res = await fetch(`${apiBase}/api/chatbot/${channelId}/add-to-cart`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ product_id, quantity: 1, session_id })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            this.trackEvent('add_to_cart_success', { product_id });
+            atcBtn.textContent = '✓ Adăugat';
+            atcBtn.classList.add('success');
+        } else {
+            this.trackEvent('add_to_cart_failure', { product_id, reason: data.error });
+            if (data.error === 'variation_required') {
+                this.trackEvent('variation_required_redirect', { product_id });
+                window.open(product.permalink, '_blank');
+                atcBtn.textContent = '→ Vezi produs';
+            } else {
+                atcBtn.textContent = data.error_message || 'Eroare';
+            }
+        }
+    } catch (err) {
+        atcBtn.textContent = 'Eroare rețea';
+    }
+
+    setTimeout(() => { atcBtn.textContent = '🛒 Adaugă'; atcBtn.disabled = false; }, 3000);
+});
+</pre>
+
+<h4>Product impression tracking:</h4>
+<pre>
+// When product cards are rendered
+renderProductCards(products) {
+    products.forEach(product => {
+        this.trackEvent('product_impression', {
+            product_id: product.id,
+            product_name: product.name,
+            price: product.price,
+            position: index
+        });
+    });
+}
+</pre>
+
+<h3>7.2 Widget Capabilities Query</h3>
+<pre>
+// On widget init, query capabilities
+const caps = await fetch(`${apiBase}/api/chatbot/${channelId}/capabilities`).then(r => r.json());
+// { cart_enabled: true, lead_enabled: true, handoff_enabled: true, voice_enabled: false }
+this.capabilities = caps;
+</pre>
+
+<h3>7.3 Lead Capture Form (Widget)</h3>
+<pre>
+// When AI response contains [LEAD_PROMPT], show inline form
+if (response.lead_prompt) {
+    const form = this.renderLeadForm(response.lead_prompt.fields, response.lead_prompt.message);
+    // Fields: [{key: 'email', label: 'Email', required: true}, {key: 'phone', label: 'Telefon', required: false}]
+    // On submit:
+    this.trackEvent('lead_field_submitted', { fields: submittedFields });
+    await fetch(`${apiBase}/api/chatbot/${channelId}/lead`, {
+        method: 'POST',
+        body: JSON.stringify({ ...fields, session_id, consent: true })
+    });
+    this.trackEvent('lead_completed', { source: 'chat_form' });
+}
+</pre>
+
+<!-- ================================================================ -->
+<h2>8. WooCommerce Add-to-Cart & Attribution</h2>
+<!-- ================================================================ -->
+
+<h3>8.1 Add-to-Cart Flow</h3>
+<pre>
+POST /api/chatbot/{channelId}/add-to-cart
+{
+    "product_id": 123,        // WooCommerce product ID
+    "quantity": 1,
+    "session_id": "uuid",
+    "variation_id": null       // for variable products
+}
+
+// Backend: WooCommerceCartService::addToCart()
+// 1. Validate product exists for this bot
+// 2. Check product type:
+//    - simple: add directly via WooCommerce REST API or sambla-cart.js postMessage
+//    - variable without variation_id: return {success: false, error: 'variation_required'}
+//    - out of stock: return {success: false, error: 'out_of_stock'}
+// 3. Track event: add_to_cart_success or add_to_cart_failure
+// 4. Return cart state
+</pre>
+
+<h3>8.2 Purchase Attribution Flow</h3>
+<pre>
+// WordPress plugin sends webhook on order completion:
+POST /api/v1/webhooks/woocommerce/{bot}/order
+{
+    "order_id": "5678",
+    "total": 450.00,
+    "currency": "RON",
+    "items": [{"product_id": 123, "name": "Adeziv CM11", "quantity": 2}],
+    "customer_email": "client@email.com",
+    "webhook_secret": "..."
+}
+
+// Backend: AttributionService::attributeOrder()
+// 1. Verify webhook secret
+// 2. Find recent conversations for this bot where:
+//    - products from order were shown (product_impression/product_click events)
+//    - within attribution window (default 24h, tenant-configurable)
+// 3. Score attribution:
+//    - strict: order during active session → 100% confidence
+//    - probable: order within 1h AND product_click matched → 80%
+//    - assisted: order within 24h AND product_impression matched → 50%
+// 4. Create PurchaseAttribution record
+// 5. Update ConversationOutcome with revenue
+</pre>
+
+<!-- ================================================================ -->
+<h2>9. Lead Capture Architecture</h2>
+<!-- ================================================================ -->
+
+<h3>9.1 Lead State Machine</h3>
+<pre>
+[no_lead] → (score ≥ threshold) → [opportunity_detected]
+    → (prompt shown) → [prompt_shown]
+        → (user accepts) → [collecting]
+            → (partial data) → [partial]
+            → (all required fields) → [qualified]
+                → (sent to CRM/email) → [sent_to_crm]
+                → (purchase detected) → [converted]
+        → (user dismisses) → [dismissed]
+    → (no prompt needed) → [no_lead]
+</pre>
+
+<h3>9.2 Lead Trigger Decision Tree</h3>
+<pre>
+LeadOpportunityScorer::score():
+
+  +30  user explicitly asks for quote/callback/consultation
+  +25  human handoff requested
+  +20  high-value products shown (price > tenant threshold)
+  +20  project-scale inquiry ("renovare", "construcție")
+  +15  multiple product comparisons in session
+  +15  dead-end search but still engaged (>5 messages, 0 cart)
+  +10  already provided partial contact info
+  +10  asked about unavailable product alternatives
+   -30  just greeting / thanks
+   -50  already completed purchase in session
+   -20  very short conversation (<3 messages)
+   -10  conversation policy has lead_aggressiveness=none
+
+  threshold = 40 (configurable per tenant)
+</pre>
+
+<h3>9.3 Progressive Lead Collection</h3>
+<p>Policy-driven. Example prompts injected into AI context:</p>
+<pre>
+// lead_aggressiveness = "soft"
+"[LEAD_HINT: Dacă este natural, poți oferi să salvezi selecția pe email. Nu insista. Exemplu: 'Pot să-ți trimit selecția pe email dacă vrei.']"
+
+// lead_aggressiveness = "moderate"
+"[LEAD_PROMPT: Clientul pare interesat. Sugerează-i politicos să lase un email sau telefon pentru a fi contactat cu o ofertă personalizată. Nu cere mai mult de un câmp odată.]"
+
+// lead_aggressiveness = "aggressive" (opt-in by tenant)
+"[LEAD_PROMPT: Solicită emailul clientului pentru a-i trimite oferta. Menționează că poate primi și reduceri exclusive.]"
+</pre>
+
+<!-- ================================================================ -->
+<h2>10. Outcome Engine Rules</h2>
+<!-- ================================================================ -->
+
+<table>
+<tr><th>Outcome Type</th><th>Derived From Events</th><th>Confidence</th></tr>
+<tr><td>product_discovered</td><td>product_impression + product_click in same session</td><td>confirmed</td></tr>
+<tr><td>add_to_cart</td><td>add_to_cart_success event</td><td>confirmed</td></tr>
+<tr><td>checkout_started</td><td>WooCommerce webhook: order status=pending</td><td>confirmed</td></tr>
+<tr><td>purchase_completed</td><td>WooCommerce webhook: order status=completed/processing + attribution match</td><td>varies (strict/probable/assisted)</td></tr>
+<tr><td>lead_captured</td><td>lead_completed event</td><td>confirmed</td></tr>
+<tr><td>quote_requested</td><td>intent=quote detected + lead or handoff created</td><td>confirmed</td></tr>
+<tr><td>human_handoff_requested</td><td>handoff_sent event</td><td>confirmed</td></tr>
+<tr><td>order_resolved</td><td>order_lookup + bot gave tracking/status</td><td>probable</td></tr>
+<tr><td>faq_resolved</td><td>knowledge_used + no further questions on topic</td><td>probable</td></tr>
+<tr><td>unresolved</td><td>session_ended + last intent had no resolution</td><td>probable</td></tr>
+<tr><td>abandoned_after_products</td><td>products_returned + no product_click + session_ended</td><td>confirmed</td></tr>
+<tr><td>abandoned_after_lead_prompt</td><td>lead_prompt_shown + lead_prompt_dismissed + session_ended</td><td>confirmed</td></tr>
+</table>
+
+<!-- ================================================================ -->
+<h2>11. Analytics Event Model</h2>
+<!-- ================================================================ -->
+
+<h3>11.1 Event Taxonomy</h3>
+<table>
+<tr><th>Event Name</th><th>Source</th><th>Properties</th></tr>
+<tr><td>session_started</td><td>backend</td><td>visitor_id, user_agent, origin</td></tr>
+<tr><td>session_resumed</td><td>backend</td><td>previous_session_id</td></tr>
+<tr><td>message_sent</td><td>backend</td><td>message_length, has_products_context</td></tr>
+<tr><td>message_replied</td><td>backend</td><td>model, provider, tokens, cost_cents, fallback_level</td></tr>
+<tr><td>intent_detected</td><td>backend</td><td>intent_name, confidence, entities</td></tr>
+<tr><td>pipeline_executed</td><td>backend</td><td>pipeline_name, duration_ms, results_count</td></tr>
+<tr><td>products_returned</td><td>backend</td><td>query, count, product_ids, search_type (direct|recommendation)</td></tr>
+<tr><td>product_impression</td><td>widget</td><td>product_id, product_name, price, position</td></tr>
+<tr><td>product_click</td><td>widget</td><td>product_id, product_name, price</td></tr>
+<tr><td>add_to_cart_click</td><td>widget</td><td>product_id, quantity</td></tr>
+<tr><td>add_to_cart_success</td><td>backend</td><td>product_id, cart_count</td></tr>
+<tr><td>add_to_cart_failure</td><td>backend</td><td>product_id, reason</td></tr>
+<tr><td>variation_required_redirect</td><td>widget</td><td>product_id</td></tr>
+<tr><td>checkout_started</td><td>webhook</td><td>wc_order_id, total</td></tr>
+<tr><td>purchase_completed</td><td>webhook</td><td>wc_order_id, total, items_count</td></tr>
+<tr><td>lead_prompt_shown</td><td>backend</td><td>trigger_reason, score</td></tr>
+<tr><td>lead_prompt_accepted</td><td>widget</td><td>—</td></tr>
+<tr><td>lead_prompt_dismissed</td><td>widget</td><td>—</td></tr>
+<tr><td>lead_field_submitted</td><td>widget</td><td>field_name</td></tr>
+<tr><td>lead_completed</td><td>backend</td><td>fields_count, qualification_score</td></tr>
+<tr><td>handoff_offered</td><td>backend</td><td>trigger_reason</td></tr>
+<tr><td>handoff_accepted</td><td>widget</td><td>—</td></tr>
+<tr><td>handoff_sent</td><td>backend</td><td>delivery_method</td></tr>
+<tr><td>fallback_triggered</td><td>backend</td><td>level, reason</td></tr>
+<tr><td>no_results</td><td>backend</td><td>query, search_type</td></tr>
+<tr><td>clarification_asked</td><td>backend</td><td>original_intent, question</td></tr>
+<tr><td>session_ended</td><td>widget</td><td>duration_seconds, messages_count</td></tr>
+</table>
+
+<h3>11.2 Anti-Duplication Strategy</h3>
+<ul>
+<li><strong>Widget events:</strong> idempotency_key = <code>{session_id}:{event_name}:{product_id}:{timestamp_minute}</code></li>
+<li><strong>Backend events:</strong> idempotency_key = <code>{conversation_id}:{event_name}:{message_id}</code></li>
+<li><strong>Webhook events:</strong> idempotency_key = <code>{wc_order_id}:{event_name}</code></li>
+<li>Database: <code>UNIQUE(idempotency_key)</code> on chat_events — insert fails silently on duplicate</li>
+</ul>
+
+<!-- ================================================================ -->
+<h2>12. Tenant Conversation Policy</h2>
+<!-- ================================================================ -->
+
+<h3>12.1 Policy → Prompt Integration</h3>
+<pre>
+ConversationPolicyService::toPromptInstructions($policy):
+
+"=== STILUL CONVERSAȚIEI ===
+- Ton: {$policy->tone}. {'Folosește un limbaj cald și prietenos.' | 'Fii profesional și concis.' | ...}
+- {'Poți folosi emoji-uri ocazional.' | 'NU folosi emoji-uri.'}
+- {'Răspunde concis, maxim 2-3 propoziții.' | 'Poți oferi explicații detaliate.'}
+{foreach $policy->prohibitedPhrases as $phrase}
+- NU spune niciodată: '{$phrase}'
+{endforeach}
+{foreach $policy->requiredPhrases as $phrase}
+- Menționează întotdeauna: '{$phrase}'
+{endforeach}
+{foreach $policy->businessRules as $rule}
+- REGULĂ: {$rule}
+{endforeach}
+=== SFÂRȘIT STIL ==="
+</pre>
+
+<h3>12.2 Merge Precedence</h3>
+<pre>
+Platform defaults → Tenant policy (conversation_policies WHERE bot_id IS NULL)
+                  → Bot policy (conversation_policies WHERE bot_id = X)
+                  → Channel config overrides (channels.config JSON)
+</pre>
+
+<!-- ================================================================ -->
+<h2>13. RAG/Retrieval Upgrades</h2>
+<!-- ================================================================ -->
+
+<h3>13.1 Conversation-Aware Query Rewriting</h3>
+<pre>
+// Before KnowledgeSearchService::search(), build retrieval query from conversation context
+class RetrievalQueryBuilder
+{
+    /**
+     * Rewrite user query considering previous turns.
+     *
+     * Example:
+     *   Turn 1: "care e costul livrării?" → retrieval: "cost livrare"
+     *   Turn 2: "dar în Cluj?" → retrieval: "cost livrare Cluj" (inherited context)
+     *
+     * Implementation:
+     * - Keep last 3 user messages as context
+     * - If current message is short (<5 words) and has pronouns/references → merge with previous
+     * - If current message is standalone → use as-is
+     */
+    public function buildRetrievalQuery(string $currentMessage, array $recentMessages): string;
+}
+</pre>
+
+<h3>13.2 Source Tracking</h3>
+<pre>
+// In message metadata, store which knowledge chunks influenced the response
+$message->update([
+    'knowledge_chunks_used' => [
+        ['id' => 42, 'title' => 'Politica de livrare', 'source_type' => 'connector', 'similarity' => 0.85],
+        ['id' => 78, 'title' => 'Contact', 'source_type' => 'url', 'similarity' => 0.72],
+    ]
+]);
+</pre>
+
+<!-- ================================================================ -->
+<h2>14. Model Routing Upgrades</h2>
+<!-- ================================================================ -->
+
+<pre>
+// ChatModelRouter::route() updated to use ComplexityScoringService
+
+public function route(string $message, int $historyCount, int $costCents,
+                       array $intents = [], ?Conversation $conversation = null): array
+{
+    // 1. Cost gate (unchanged)
+    if ($costCents > $budget) return $fast;
+
+    // 2. Circuit breaker (unchanged)
+
+    // 3. NEW: Complexity scoring
+    $complexity = app(ComplexityScoringService::class)
+        ->score($message, $intents, $conversation);
+
+    if ($complexity >= 70) return $smart;     // Always smart for high complexity
+    if ($complexity <= 25) return $fast;       // Always fast for trivial
+
+    // 4. Cost-aware middle ground (30-69)
+    if ($costCents < $budget * 0.5) return $smart;  // Budget allows smart
+    return $fast;                                     // Conserve budget
+}
+</pre>
+
+<!-- ================================================================ -->
+<h2>15. Human Handoff Design</h2>
+<!-- ================================================================ -->
+
+<pre>
+// Handoff triggers (evaluated after each message):
+1. User says "vreau sa vorbesc cu cineva" → intent=handoff, confidence=0.95
+2. Same unresolved intent after 3+ attempts → auto-trigger
+3. LeadOpportunityScorer >= 80 AND products_shown > 3 → high-value handoff
+4. Sentiment analysis detects frustration/complaint → priority handoff
+5. Bot confidence too low (ComplexityScore > 90) → escalation handoff
+
+// Handoff summary (auto-generated):
+{
+    "conversation_id": 456,
+    "customer_info": {"name": "Ion", "email": "ion@email.com"},
+    "summary": "Clientul caută adeziv pentru gresie exterior. A vizualizat 3 produse (CM11, Baumacol, FlexTreme). Întreabă despre livrare în Brașov. Nu a adăugat în coș.",
+    "intents_detected": ["product_search", "delivery_question"],
+    "products_shown": [{"name": "Adeziv CM11", "price": "18.50"}],
+    "lead_data": {"email": "ion@email.com", "project": "renovare baie"},
+    "unresolved": "Informații despre livrare în Brașov nu au fost găsite în baza de cunoștințe.",
+    "recommended_action": "Contactare client cu info livrare + ofertă adezivi"
+}
+</pre>
+
+<!-- ================================================================ -->
+<h2>16. Admin Insights Design</h2>
+<!-- ================================================================ -->
+
+<table>
+<tr><th>Insight Type</th><th>Rule</th><th>Severity</th></tr>
+<tr><td>kb_gap</td><td>Top 5 queries cu 0 knowledge results (>10 occurrences/week)</td><td>warning</td></tr>
+<tr><td>product_gap</td><td>Top searches cu 0 products (>5/week)</td><td>warning</td></tr>
+<tr><td>high_ctr_low_atc</td><td>Products cu CTR > 20% dar ATC < 2%</td><td>suggestion</td></tr>
+<tr><td>lead_sweet_spot</td><td>Lead capture rate by trigger point</td><td>info</td></tr>
+<tr><td>unresolved_intents</td><td>Intents cu resolution rate < 50%</td><td>warning</td></tr>
+<tr><td>attribute_gap</td><td>Products shown but never matched by attributes</td><td>suggestion</td></tr>
+<tr><td>prompt_performance</td><td>A/B test winner (>95% confidence)</td><td>info</td></tr>
+<tr><td>voice_issues</td><td>Voice sessions with >3 failed transcriptions</td><td>warning</td></tr>
+</table>
+
+<!-- ================================================================ -->
+<h2>17. Security/Privacy</h2>
+<!-- ================================================================ -->
+
+<ul>
+<li><strong>GDPR:</strong> Lead capture requires explicit consent checkbox. Leads must be exportable/deletable per tenant.</li>
+<li><strong>Tenant isolation:</strong> All new tables have tenant_id with global scopes. chat_events queries always filter by tenant.</li>
+<li><strong>Webhook security:</strong> WooCommerce webhooks validated via HMAC secret. Rate limited.</li>
+<li><strong>PII in events:</strong> chat_events.properties MUST NOT store raw user messages. Only structured data (product_id, intent_name, etc.)</li>
+<li><strong>Add-to-cart:</strong> CSRF handled via session_id validation. Products validated against bot's catalog.</li>
+<li><strong>Attribution:</strong> No cross-tenant attribution possible. All queries scoped to tenant_id.</li>
+</ul>
+
+<!-- ================================================================ -->
+<h2>18. Testing Strategy</h2>
+<!-- ================================================================ -->
+
+<table>
+<tr><th>Module</th><th>Test Type</th><th>Key Scenarios</th></tr>
+<tr><td>IntentOrchestrator</td><td>Unit</td><td>Multi-intent detection, priority ordering, entity extraction</td></tr>
+<tr><td>LeadOpportunityScorer</td><td>Unit</td><td>Score calculation, threshold gating, negative signals</td></tr>
+<tr><td>OutcomeEngine</td><td>Unit</td><td>Event → outcome derivation, dedup, attribution modes</td></tr>
+<tr><td>ConversationPolicyService</td><td>Unit</td><td>Merge precedence, prompt generation, snippet lookup</td></tr>
+<tr><td>WooCommerceCartService</td><td>Integration</td><td>Add-to-cart simple/variable, error handling, webhook processing</td></tr>
+<tr><td>AttributionService</td><td>Integration</td><td>Strict/probable/assisted modes, window expiry, product matching</td></tr>
+<tr><td>ChatbotApiController</td><td>Feature</td><td>Full message flow with multi-intent, lead capture, product cards</td></tr>
+<tr><td>Event tracking</td><td>API</td><td>Batch events, idempotency, tenant isolation</td></tr>
+<tr><td>Widget</td><td>E2E</td><td>Product card click opens permalink, ATC flow, lead form</td></tr>
+</table>
+
+<!-- ================================================================ -->
+<h2>19. Phased Rollout Plan</h2>
+<!-- ================================================================ -->
+
+<h3>Phase 1 — Foundation (Week 1-2) <span class="tg tg-g">Quick Wins</span></h3>
+<ol>
+<li>Database migrations: chat_events, conversation_outcomes, leads, conversation_policies</li>
+<li>ConversationEventService + event tracking endpoint</li>
+<li>Widget: product card click → permalink (remove modal). Track impressions/clicks.</li>
+<li>ConversationPolicyService + basic policy editor in dashboard</li>
+<li>Feature flags per tenant: <code>bot.settings.features.v2_events</code>, <code>v2_product_cards</code></li>
+</ol>
+
+<h3>Phase 2 — Core Architecture (Week 3-5) <span class="tg tg-y">Core</span></h3>
+<ol>
+<li>IntentOrchestratorService → multi-intent detection + execution</li>
+<li>WooCommerceCartService → add-to-cart endpoint + widget button</li>
+<li>LeadOpportunityScorer + LeadCaptureFlowService + leads table</li>
+<li>OutcomeEngine job + conversation_outcomes table</li>
+<li>ComplexityScoringService → model routing upgrade</li>
+<li>RetrievalQueryBuilder → conversation-aware RAG</li>
+<li>HandoffService + handoff_requests table</li>
+</ol>
+
+<h3>Phase 3 — Premium (Week 6-8) <span class="tg tg-p">Advanced</span></h3>
+<ol>
+<li>Purchase attribution: webhook + AttributionService + purchase_attributions table</li>
+<li>Advanced recommendation planner (consultative mode)</li>
+<li>InsightGeneratorJob + tenant_insights table + dashboard cards</li>
+<li>Full analytics dashboard per bot (conversion funnel, attribution, leads, outcomes)</li>
+<li>CRM webhook export for leads</li>
+<li>Admin insights dashboard</li>
+</ol>
+
+<!-- ================================================================ -->
+<h2>20. Acceptance Criteria</h2>
+<!-- ================================================================ -->
+
+<table>
+<tr><th>Module</th><th>Criteria</th></tr>
+<tr><td>Multi-intent</td><td>"Vreau adeziv pentru baie și unde e comanda 1234" → both product results AND order info in same response</td></tr>
+<tr><td>Product cards</td><td>Clicking card opens product page in new tab. No modal. Add-to-cart works for simple products.</td></tr>
+<tr><td>Add-to-cart</td><td>Simple product ATC → success state in widget. Variable product → redirect to product page. Out of stock → clear error.</td></tr>
+<tr><td>Analytics</td><td>Events tracked end-to-end: impression → click → ATC → purchase. Dashboard shows conversion funnel.</td></tr>
+<tr><td>Lead capture</td><td>Lead prompt appears only after sufficient engagement. Not on first message. Partial leads stored.</td></tr>
+<tr><td>Tenant policy</td><td>Changing tone from "professional" to "warm" visibly changes bot response style within 1 message.</td></tr>
+<tr><td>Attribution</td><td>WooCommerce order placed within 24h of chat session → attributed to bot with correct mode.</td></tr>
+<tr><td>Handoff</td><td>User says "vreau operator" → structured summary generated → email/webhook sent within 30s.</td></tr>
+<tr><td>Insights</td><td>"Many searches for X return 0 results" insight generated when >10 failed searches/week.</td></tr>
+<tr><td>RAG memory</td><td>User asks "dar în Cluj?" after delivery question → retrieval query includes "livrare Cluj".</td></tr>
+</table>
+
+<!-- ================================================================ -->
+<h2>21. Code Skeleton — Main Module Outlines</h2>
+<!-- ================================================================ -->
+
+<h3>21.1 Migration: chat_events + conversation_outcomes</h3>
+<pre>
+// database/migrations/2026_03_30_000001_create_v2_analytics_tables.php
+return new class extends Migration {
+    public function up(): void {
+        Schema::create('chat_events', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('tenant_id')->constrained();
+            $table->foreignId('bot_id')->nullable()->constrained();
+            $table->foreignId('channel_id')->nullable()->constrained();
+            $table->foreignId('conversation_id')->nullable()->constrained();
+            $table->string('session_id', 100)->nullable();
+            $table->string('visitor_id', 100)->nullable();
+            $table->string('event_name', 80);
+            $table->string('event_source', 20)->default('widget');
+            $table->jsonb('properties')->nullable();
+            $table->string('idempotency_key', 100)->nullable()->unique();
+            $table->unsignedBigInteger('product_id')->nullable();
+            $table->string('wc_order_id', 50)->nullable();
+            $table->timestamp('occurred_at')->useCurrent();
+            $table->timestamps();
+            $table->index(['tenant_id', 'event_name', 'occurred_at']);
+            $table->index(['conversation_id', 'event_name']);
+            $table->index(['bot_id', 'event_name', 'occurred_at']);
+        });
+
+        Schema::create('conversation_outcomes', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('tenant_id')->constrained();
+            $table->foreignId('bot_id')->constrained();
+            $table->foreignId('conversation_id')->constrained();
+            $table->string('session_id', 100)->nullable();
+            $table->string('outcome_type', 50);
+            $table->string('confidence', 20)->default('confirmed');
+            $table->string('attribution_reason', 255)->nullable();
+            $table->jsonb('metadata')->nullable();
+            $table->decimal('revenue_cents', 10, 0)->nullable();
+            $table->unsignedBigInteger('product_id')->nullable();
+            $table->string('wc_order_id', 50)->nullable();
+            $table->timestamps();
+            $table->unique(['conversation_id', 'outcome_type', 'product_id'], 'conv_outcome_unique');
+        });
+    }
+};
+</pre>
+
+<h3>21.2 IntentOrchestratorService Skeleton</h3>
+<pre>
+// app/Services/IntentOrchestratorService.php
+class IntentOrchestratorService
+{
+    public function __construct(
+        private IntentDetectionService $intentDetector,
+        private ProductSearchService $productSearch,
+        private RecommendationService $recommendations,
+        private KnowledgeSearchService $knowledge,
+        private OrderLookupService $orderLookup,
+        private LeadOpportunityScorer $leadScorer,
+        private HandoffService $handoff,
+        private ConversationEventService $events,
+    ) {}
+
+    public function plan(string $message, Conversation $conversation, Bot $bot): OrchestratorPlan
+    {
+        // 1. Detect ALL intents with scores
+        $intents = $this->intentDetector->detectAll($message);
+        // Returns: [{name: 'product_search', confidence: 0.9, entities: {query: 'adeziv gresie'}},
+        //           {name: 'order_lookup', confidence: 0.85, entities: {order_number: '1234'}}]
+
+        // 2. Score lead opportunity
+        $events = $this->events->getSessionEvents($conversation->id);
+        $leadScore = $this->leadScorer->score($conversation, $intents, $events);
+        if ($leadScore->value >= $leadScore->threshold) {
+            $intents[] = new DetectedIntent('lead_opportunity', $leadScore->value / 100, [], 99);
+        }
+
+        // 3. Check handoff triggers
+        if ($this->handoff->shouldOffer($conversation, $intents, $events)) {
+            $intents[] = new DetectedIntent('handoff', 0.9, [], 100);
+        }
+
+        // 4. Sort by priority, build execution plan
+        usort($intents, fn($a, $b) => $a->priority <=> $b->priority);
+
+        // 5. Calculate complexity
+        $complexity = app(ComplexityScoringService::class)->score($message, $intents, $conversation);
+
+        return new OrchestratorPlan(
+            intents: $intents,
+            pipelines: $this->buildPipelines($intents),
+            needsClarification: false,
+            clarificationQuestion: null,
+            complexityScore: $complexity,
+        );
+    }
+
+    public function execute(OrchestratorPlan $plan, int $botId): OrchestratorResult
+    {
+        $result = new OrchestratorResult();
+
+        foreach ($plan->pipelines as $pipeline) {
+            match ($pipeline->name) {
+                'order_lookup' => $result->orderContext = $this->executeOrderLookup($botId, $pipeline),
+                'product_search' => $this->executeProductSearch($botId, $pipeline, $result),
+                'recommendation' => $this->executeRecommendation($botId, $pipeline, $result),
+                'knowledge' => $result->knowledgeContext = $this->executeKnowledge($botId, $pipeline),
+                'lead_capture' => $result->leadContext = $this->executeLeadCapture($pipeline),
+                'handoff' => $result->handoffContext = $this->executeHandoff($pipeline),
+            };
+
+            // Track pipeline execution
+            $this->events->track('pipeline_executed', [
+                'pipeline' => $pipeline->name,
+                'duration_ms' => $pipeline->durationMs,
+                'results_count' => $pipeline->resultsCount,
+            ]);
+        }
+
+        return $result;
+    }
+}
+</pre>
+
+<h3>21.3 ConversationEventService Skeleton</h3>
+<pre>
+// app/Services/ConversationEventService.php
+class ConversationEventService
+{
+    public function track(string $eventName, array $properties = [], ?array $context = null): ?ChatEvent
+    {
+        $ctx = $context ?? $this->getCurrentContext();
+
+        return ChatEvent::create([
+            'tenant_id' => $ctx['tenant_id'],
+            'bot_id' => $ctx['bot_id'] ?? null,
+            'channel_id' => $ctx['channel_id'] ?? null,
+            'conversation_id' => $ctx['conversation_id'] ?? null,
+            'session_id' => $ctx['session_id'] ?? null,
+            'visitor_id' => $ctx['visitor_id'] ?? null,
+            'event_name' => $eventName,
+            'event_source' => $ctx['event_source'] ?? 'backend',
+            'properties' => $properties,
+            'idempotency_key' => $ctx['idempotency_key'] ?? null,
+            'product_id' => $properties['product_id'] ?? null,
+            'wc_order_id' => $properties['wc_order_id'] ?? null,
+            'occurred_at' => now(),
+        ]);
+    }
+
+    public function trackBatch(array $events, int $tenantId): int
+    {
+        $inserted = 0;
+        foreach ($events as $event) {
+            try {
+                $this->track($event['event_name'], $event['properties'] ?? [], [
+                    'tenant_id' => $tenantId,
+                    'bot_id' => $event['bot_id'] ?? null,
+                    'conversation_id' => $event['conversation_id'] ?? null,
+                    'session_id' => $event['session_id'] ?? null,
+                    'visitor_id' => $event['visitor_id'] ?? null,
+                    'event_source' => 'widget',
+                    'idempotency_key' => $event['idempotency_key'] ?? null,
+                ]);
+                $inserted++;
+            } catch (\Illuminate\Database\UniqueConstraintViolationException) {
+                // Duplicate — silently skip
+            }
+        }
+        return $inserted;
+    }
+}
+</pre>
+
+<h3>21.4 Widget Event Tracking (JavaScript)</h3>
+<pre>
+// In sambla-chat.js — event batch sender
+class EventTracker {
+    constructor(apiBase, channelId) {
+        this.queue = [];
+        this.apiBase = apiBase;
+        this.channelId = channelId;
+        this.flushInterval = setInterval(() => this.flush(), 5000);
+    }
+
+    track(eventName, properties = {}) {
+        this.queue.push({
+            event_name: eventName,
+            properties,
+            session_id: this.sessionId,
+            visitor_id: this.visitorId,
+            bot_id: this.botId,
+            conversation_id: this.conversationId,
+            idempotency_key: `${this.sessionId}:${eventName}:${properties.product_id || ''}:${Math.floor(Date.now()/60000)}`,
+            occurred_at: new Date().toISOString(),
+        });
+
+        // Flush immediately for critical events
+        if (['add_to_cart_click', 'lead_completed', 'session_ended'].includes(eventName)) {
+            this.flush();
+        }
+    }
+
+    async flush() {
+        if (this.queue.length === 0) return;
+        const events = [...this.queue];
+        this.queue = [];
+
+        try {
+            await fetch(`${this.apiBase}/api/chatbot/${this.channelId}/events`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ events }),
+                keepalive: true, // survives page navigation
+            });
+        } catch (e) {
+            this.queue.unshift(...events); // retry on next flush
+        }
+    }
+}
+</pre>
+
+<h3>21.5 ConversationPolicy DTO + Service</h3>
+<pre>
+// app/Services/ConversationPolicyService.php
+class ConversationPolicyService
+{
+    private const DEFAULTS = [
+        'tone' => 'professional',
+        'verbosity' => 'concise',
+        'emoji_allowed' => false,
+        'cta_aggressiveness' => 'moderate',
+        'lead_aggressiveness' => 'soft',
+        'prohibited_phrases' => [],
+        'required_phrases' => [],
+        'brand_vocabulary' => [],
+        'business_rules' => [],
+        'snippets' => [],
+    ];
+
+    public function getPolicy(Bot $bot, ?Channel $channel = null): ConversationPolicy
+    {
+        // 1. Platform defaults
+        $merged = self::DEFAULTS;
+
+        // 2. Tenant-level policy
+        $tenantPolicy = \App\Models\ConversationPolicy::where('tenant_id', $bot->tenant_id)
+            ->whereNull('bot_id')->first();
+        if ($tenantPolicy) $merged = $this->merge($merged, $tenantPolicy->toArray());
+
+        // 3. Bot-level override
+        $botPolicy = \App\Models\ConversationPolicy::where('tenant_id', $bot->tenant_id)
+            ->where('bot_id', $bot->id)->first();
+        if ($botPolicy) $merged = $this->merge($merged, $botPolicy->toArray());
+
+        // 4. Channel config overrides
+        if ($channel && !empty($channel->config['policy_overrides'])) {
+            $merged = $this->merge($merged, $channel->config['policy_overrides']);
+        }
+
+        return ConversationPolicy::fromArray($merged);
+    }
+
+    public function toPromptInstructions(ConversationPolicy $policy): string
+    {
+        $lines = ["=== STILUL CONVERSAȚIEI ==="];
+
+        $toneMap = [
+            'professional' => 'Fii profesional, concis și obiectiv.',
+            'warm' => 'Fii cald, empatic și prietenos. Arată că îți pasă.',
+            'premium' => 'Folosește un limbaj elegant și rafinat. Tratează clientul ca pe un VIP.',
+            'friendly' => 'Fii prietenos și casual, ca un coleg de încredere.',
+            'consultative' => 'Fii un consultant expert. Oferă sfaturi fundamentate.',
+            'technical' => 'Fii precis tehnic. Folosește terminologie de specialitate.',
+        ];
+        $lines[] = "- Ton: " . ($toneMap[$policy->tone] ?? $toneMap['professional']);
+
+        if ($policy->emojiAllowed) $lines[] = "- Poți folosi emoji-uri ocazional pentru a fi mai prietenos.";
+        else $lines[] = "- NU folosi emoji-uri.";
+
+        $verbosityMap = [
+            'concise' => '- Răspunde concis: maxim 2-3 propoziții per mesaj.',
+            'moderate' => '- Răspunde moderat: 3-5 propoziții, cu detalii relevante.',
+            'detailed' => '- Poți oferi răspunsuri detaliate când situația o cere.',
+        ];
+        $lines[] = $verbosityMap[$policy->verbosity] ?? $verbosityMap['concise'];
+
+        foreach ($policy->prohibitedPhrases as $phrase) {
+            $lines[] = "- NU spune niciodată: \"{$phrase}\"";
+        }
+        foreach ($policy->requiredPhrases as $phrase) {
+            $lines[] = "- Menționează când e relevant: \"{$phrase}\"";
+        }
+        foreach ($policy->businessRules as $rule) {
+            $lines[] = "- REGULĂ DE BUSINESS: {$rule}";
+        }
+
+        $lines[] = "=== SFÂRȘIT STIL ===";
+        return implode("\n", $lines);
+    }
+}
+</pre>
+
+<hr>
+<p style="text-align:center;color:var(--t2);font-size:.78rem;margin-top:1.5rem">
+Sambla v2.0 Implementation Blueprint — 29 March 2026<br>
+47 existing tables + 6 new tables + 3 altered tables<br>
+10 new services + 4 new jobs + 8 new API endpoints<br>
+Phased rollout: 8 weeks, feature-flagged per tenant
+</p>
+
+</div>
+</body>
+</html>

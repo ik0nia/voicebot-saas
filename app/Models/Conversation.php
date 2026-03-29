@@ -20,6 +20,7 @@ class Conversation extends Model
         'external_conversation_id',
         'contact_identifier',
         'contact_name',
+        'visitor_id',
         'status',
         'messages_count',
         'cost_cents',
@@ -28,12 +29,21 @@ class Conversation extends Model
         'last_activity_at',
         'started_at',
         'ended_at',
+        'outcomes_summary',
+        'primary_intent',
+        'lead_score',
+        'opportunity_score',
+        'is_opportunity',
+        'opportunity_reasons',
     ];
 
     protected function casts(): array
     {
         return [
             'metadata' => 'array',
+            'outcomes_summary' => 'array',
+            'opportunity_reasons' => 'array',
+            'is_opportunity' => 'boolean',
             'started_at' => 'datetime',
             'ended_at' => 'datetime',
             'messages_count' => 'integer',

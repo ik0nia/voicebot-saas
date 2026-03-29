@@ -61,6 +61,61 @@ class AdminTenantController extends Controller
             ->withSum('messages as real_cost_cents', 'cost_cents')
             ->latest()->take(10)->get();
 
-        return view('admin.tenants.show', compact('tenant', 'bots', 'recentCalls', 'users', 'conversations'));
+        $usage = app(\App\Services\PlanLimitService::class)->getUsageSummary($tenant);
+        $planLimits = \App\Models\PlanLimit::findBySlug($tenant->plan_slug ?? 'free');
+        $allPlans = \App\Models\PlanLimit::where('is_active', true)->orderBy('sort_order')->get();
+        $leads = \App\Models\Lead::where('tenant_id', $tenant->id)->count();
+        $opportunities = Conversation::withoutGlobalScopes()->where('tenant_id', $tenant->id)->where('is_opportunity', true)->count();
+        $revenue = \App\Models\PurchaseAttribution::where('tenant_id', $tenant->id)->sum('order_total_cents');
+
+        return view('admin.tenants.show', compact(
+            'tenant', 'bots', 'recentCalls', 'users', 'conversations',
+            'usage', 'planLimits', 'allPlans', 'leads', 'opportunities', 'revenue'
+        ));
+    }
+
+    /**
+     * Update tenant plan override.
+     */
+    public function override(Request $request, Tenant $tenant)
+    {
+        $validated = $request->validate([
+            'key' => 'required|string|max:50',
+            'value' => 'required',
+        ]);
+
+        $overrides = $tenant->plan_overrides ?? [];
+        $overrides[$validated['key']] = $validated['value'];
+        $tenant->update(['plan_overrides' => $overrides]);
+
+        // Clear cache
+        \Illuminate\Support\Facades\Cache::forget("tenant_{$tenant->id}_plan");
+
+        return back()->with('success', "Override '{$validated['key']}' setat la '{$validated['value']}'.");
+    }
+
+    /**
+     * Remove a specific override.
+     */
+    public function removeOverride(Request $request, Tenant $tenant, string $key)
+    {
+        $overrides = $tenant->plan_overrides ?? [];
+        unset($overrides[$key]);
+        $tenant->update(['plan_overrides' => empty($overrides) ? null : $overrides]);
+        \Illuminate\Support\Facades\Cache::forget("tenant_{$tenant->id}_plan");
+
+        return back()->with('success', "Override '{$key}' eliminat.");
+    }
+
+    /**
+     * Change tenant plan.
+     */
+    public function changePlan(Request $request, Tenant $tenant)
+    {
+        $validated = $request->validate(['plan_slug' => 'required|string|exists:plan_limits,slug']);
+        $tenant->update(['plan_slug' => $validated['plan_slug']]);
+        \Illuminate\Support\Facades\Cache::forget("tenant_{$tenant->id}_plan");
+
+        return back()->with('success', "Plan schimbat la '{$validated['plan_slug']}'.");
     }
 }

@@ -29,6 +29,7 @@ return new class extends Migration
             $table->string('slug')->unique();
             $table->string('name');
             $table->decimal('price_monthly', 8, 2)->default(0);
+            $table->decimal('price_annual', 8, 2)->default(0);
             $table->json('limits');                    // {"max_bots":1, "max_knowledge_kb":50, ...}
             $table->json('features');                  // {"custom_prompts":true, "website_scanner":true, ...}
             $table->json('allowed_agents')->nullable();   // ["product-specialist","faq-generator",...] sau null = all

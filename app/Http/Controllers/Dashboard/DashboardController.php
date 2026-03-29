@@ -10,6 +10,7 @@ use App\Models\Message;
 use App\Models\PhoneNumber;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Services\PlanLimitService;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -152,11 +153,21 @@ class DashboardController extends Controller
         ];
         $onboardingComplete = !in_array(false, $onboarding);
 
+        // Plan usage summary
+        $planUsage = $tenant ? app(PlanLimitService::class)->getUsageSummary($tenant) : null;
+
+        // Voice active check — true only if plan includes voice minutes > 0
+        $hasVoice = false;
+        if ($planUsage) {
+            $voiceLimit = $planUsage['voice_minutes']['limit'] ?? 0;
+            $hasVoice = $voiceLimit > 0 || $voiceLimit === -1; // -1 = unlimited
+        }
+
         return view('dashboard.index', compact(
             'callsToday', 'minutesToday', 'activeBots', 'successRate',
             'conversationsToday', 'messagesToday', 'totalConversations', 'totalMessages',
             'chartData', 'recentCalls', 'recentConversations', 'onboarding', 'onboardingComplete',
-            'botCosts', 'totalCostCents'
+            'botCosts', 'totalCostCents', 'planUsage', 'hasVoice'
         ));
     }
 }

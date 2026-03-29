@@ -9,8 +9,10 @@ use App\Jobs\SendCallEndedWebhook;
 use App\Models\Bot;
 use App\Models\Call;
 use App\Models\PlatformSetting;
+use App\Models\Tenant;
 use App\Models\Transcript;
 use App\Services\ElevenLabsService;
+use App\Services\PlanLimitService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -24,6 +26,18 @@ class RealtimeSessionController extends Controller
     public function create(Request $request, Bot $bot): JsonResponse
     {
         $bot = Bot::withoutGlobalScopes()->findOrFail($bot->id);
+
+        // Check voice minute limits
+        $tenant = Tenant::find($bot->tenant_id);
+        if ($tenant) {
+            $limitCheck = app(PlanLimitService::class)->canStartVoiceCall($tenant);
+            if (!$limitCheck->allowed) {
+                return response()->json([
+                    'error' => $limitCheck->message,
+                    'limit_reached' => true,
+                ], 429);
+            }
+        }
 
         $apiKey = PlatformSetting::get('openai_api_key', config('services.openai.api_key', ''));
 
@@ -64,13 +78,13 @@ class RealtimeSessionController extends Controller
         // Build system instructions with knowledge context
         $botPrompt = $bot->system_prompt ?? 'Ești un asistent AI util.';
 
-        // Inject knowledge base context + product catalog
+        // Inject knowledge base context + lightweight product info (NOT full catalog)
         $hasProducts = \App\Models\WooCommerceProduct::where('bot_id', $bot->id)->exists();
         try {
             if ($hasProducts) {
                 $totalProducts = \App\Models\WooCommerceProduct::where('bot_id', $bot->id)->count();
 
-                // Get ALL categories
+                // Get category summary (names only, no products)
                 $categories = \App\Models\WooCommerceProduct::where('bot_id', $bot->id)
                     ->whereNotNull('categories')
                     ->pluck('categories')
@@ -80,63 +94,40 @@ class RealtimeSessionController extends Controller
                     ->values()
                     ->implode(', ');
 
-                // Get products from ALL categories (5 per category, up to 25 categories)
-                $majorCategories = \App\Models\WooCommerceProduct::where('bot_id', $bot->id)
-                    ->whereNotNull('categories')
-                    ->pluck('categories')
-                    ->flatten()
-                    ->countBy()
-                    ->sortDesc()
-                    ->take(25)
-                    ->keys();
+                // Only top 10 popular products for initial context (not full catalog)
+                // The search_products tool handles specific queries dynamically
+                $topProducts = \App\Models\WooCommerceProduct::where('bot_id', $bot->id)
+                    ->whereIn('stock_status', ['instock', 'onbackorder'])
+                    ->orderByDesc('sales_count')
+                    ->take(10)
+                    ->get(['name', 'price', 'currency']);
 
-                $catalog = '';
-                foreach ($majorCategories as $cat) {
-                    $products = \App\Models\WooCommerceProduct::where('bot_id', $bot->id)
-                        ->whereJsonContains('categories', $cat)
-                        ->whereIn('stock_status', ['instock', 'onbackorder'])
-                        ->orderBy('price', 'desc')
-                        ->take(5)
-                        ->get(['name', 'price', 'currency', 'sku']);
-                    if ($products->isEmpty()) continue;
-                    $catalog .= "\n[{$cat}]\n";
-                    foreach ($products as $p) {
-                        $catalog .= "  - {$p->name}: {$p->price} {$p->currency}" . ($p->sku ? " (cod: {$p->sku})" : '') . "\n";
-                    }
+                $productList = '';
+                foreach ($topProducts as $p) {
+                    $productList .= "  - {$p->name}: {$p->price} {$p->currency}\n";
                 }
 
-                $botPrompt .= "\n\n=== INSTRUCȚIUNI PRODUSE (OBLIGATORIU) ==="
-                    . "\nEști asistentul vocal al unui magazin de materiale de construcții și amenajări."
-                    . "\nMagazinul are {$totalProducts} produse. Categorii: {$categories}."
-                    . "\n\nCATALOG PRODUSE CU PREȚURI REALE:{$catalog}"
-                    . "\n\nREGULI STRICTE:"
-                    . "\n- Prețurile din catalogul de mai sus sunt REALE și CORECTE. TREBUIE să le spui clientului."
-                    . "\n- Când clientul întreabă de un produs, CAUTĂ în catalogul de mai sus și dă-i NUMELE EXACT și PREȚUL."
-                    . "\n- Exemplu BUN: 'Da, avem Glet Fino Bello la cincizeci și doi de lei sacul de douăzeci și doi de kilograme.'"
-                    . "\n- Exemplu RĂU: 'Nu am informații despre acest produs' (INTERZIS dacă produsul e în catalog)"
-                    . "\n- Dacă produsul NU este în catalog, spune: 'Nu am acest produs în lista mea, dar s-ar putea să îl avem. Vă recomand să verificați pe site-ul nostru sau să sunați la magazin.'"
-                    . "\n- NU spune NICIODATĂ 'nu am acces', 'nu pot verifica', 'nu am informații'. Ai catalogul complet mai sus."
-                    . "\n- Transcrierea vocii poate conține erori (ex: 'CRSID' = 'Ceresit', 'baumeito' = 'Baumit'). Interpretează sensul."
-                    . "\n- Dacă clientul cere un BRAND (ex: VOX, Austrotherm, Baumit), caută în catalog produse de la acel brand."
+                $botPrompt .= "\n\n=== INSTRUCȚIUNI PRODUSE ==="
+                    . "\nEști asistentul vocal al unui magazin cu {$totalProducts} produse."
+                    . "\nCategorii disponibile: {$categories}."
+                    . "\n\nCELE MAI POPULARE PRODUSE:\n{$productList}"
+                    . "\nREGULI:"
+                    . "\n- Când clientul întreabă de un produs specific, folosește tool-ul search_products pentru a căuta în catalog."
+                    . "\n- Produsele returnate de search_products sunt REALE cu prețuri CORECTE. Spune-le clientului."
+                    . "\n- Dacă produsul nu e găsit, sugerează să contacteze magazinul sau să verifice pe site."
+                    . "\n- Transcrierea vocii poate conține erori (ex: 'CRSID' = 'Ceresit'). Interpretează sensul."
                     . "\n=== SFÂRȘIT INSTRUCȚIUNI PRODUSE ==="
                     . "\n\nCOMENZI:"
-                    . "\n- Dacă clientul întreabă de o comandă, cere-i numărul comenzii și emailul cu care a comandat."
-                    . "\n- Notează datele și spune-i: 'Am notat. Un coleg vă va contacta în cel mai scurt timp cu detalii despre comandă.'"
-                    . "\n- NU spune că 'nu poți verifica'. Spune că notezi și rezolvați rapid.";
+                    . "\n- Dacă clientul întreabă de o comandă, cere-i numărul comenzii și emailul."
+                    . "\n- Notează datele și spune: 'Am notat. Un coleg vă va contacta cu detalii.'";
             }
 
-            // Truncate if instructions exceed token-safe limit (~12K chars ≈ 3K tokens)
-            $maxPromptChars = 12000;
-            if (mb_strlen($botPrompt) > $maxPromptChars) {
-                $botPrompt = mb_substr($botPrompt, 0, $maxPromptChars) . "\n[... catalog trunchiat din cauza limitei de tokens]";
-            }
-
-            // General knowledge context
+            // General knowledge context — focused query for initial session
             $searchService = app(\App\Services\KnowledgeSearchService::class);
             $query = $hasProducts
-                ? 'informații magazin, livrare, plată, contact'
+                ? 'informații magazin, livrare, plată, contact, program'
                 : 'informații generale despre companie și servicii';
-            $knowledgeContext = $searchService->buildContext($bot->id, $query, 5);
+            $knowledgeContext = $searchService->buildContext($bot->id, $query, 3, 3000);
 
             if ($knowledgeContext) {
                 $botPrompt .= "\n\n" . $knowledgeContext;
@@ -144,6 +135,9 @@ class RealtimeSessionController extends Controller
         } catch (\Throwable $e) {
             Log::warning('Failed to load knowledge for voice bot', ['bot_id' => $bot->id, 'error' => $e->getMessage()]);
         }
+
+        // Apply centralized guardrails (voice mode)
+        $botPrompt = \App\Services\PromptGuardrails::apply($botPrompt, isVoice: true);
 
         // Add voice-specific instructions
         $instructions = $botPrompt . "\n\n" .
@@ -410,6 +404,13 @@ class RealtimeSessionController extends Controller
                 'duration_seconds' => $duration,
                 'cost_cents' => $costCents,
             ]);
+
+            // Record voice minutes usage
+            $callTenant = Tenant::find($call->tenant_id);
+            if ($callTenant && $duration > 0) {
+                $minutesUsed = (int) ceil($duration / 60); // round up to nearest minute
+                app(PlanLimitService::class)->recordVoiceMinutes($callTenant, $minutesUsed);
+            }
 
             AnalyzeCallSentiment::dispatch($call->id)->delay(now()->addSeconds(15));
 

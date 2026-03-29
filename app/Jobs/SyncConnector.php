@@ -17,11 +17,11 @@ class SyncConnector implements ShouldQueue
 
     public int $tries = 2;
     public int $backoff = 60;
-    public int $timeout = 300;
+    public int $timeout = 1800; // 30 min — large WooCommerce catalogs need time
 
     public function __construct(public KnowledgeConnector $connector)
     {
-        $this->onQueue('default');
+        $this->onQueue('knowledge');
     }
 
     public function handle(): void

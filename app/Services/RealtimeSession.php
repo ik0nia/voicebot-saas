@@ -127,7 +127,8 @@ class RealtimeSession
             $knowledgeContext = $this->knowledgeService->buildContext(
                 $this->bot->id,
                 $query,
-                $this->hasProducts ? 5 : 5
+                3, // Keep init context lean; mid-call updates fetch more
+                3000 // Max 3000 chars for initial voice prompt
             );
 
             if ($knowledgeContext) {
@@ -162,6 +163,9 @@ class RealtimeSession
         $base .= "\n- Dacă nu știi răspunsul, oferă-te să transferi apelul la un operator uman.";
         $base .= "\n- Fii politicos și profesional în toate interacțiunile.";
 
+        // Apply centralized guardrails (voice mode)
+        $base = PromptGuardrails::apply($base, isVoice: true);
+
         return $base;
     }
 
@@ -187,6 +191,9 @@ class RealtimeSession
 
         $language = $this->bot->language ?? 'română';
         $base .= "\n\nRăspunde natural și concis în limba {$language}. Fii politicos și profesional.";
+
+        // Apply centralized guardrails (voice mode)
+        $base = PromptGuardrails::apply($base, isVoice: true);
 
         return $base;
     }

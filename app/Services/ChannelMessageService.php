@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Channel;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Models\Tenant;
 use App\Models\WooCommerceProduct;
 use Illuminate\Support\Facades\Log;
 
@@ -29,6 +30,19 @@ class ChannelMessageService
     public function processIncomingMessage(Channel $channel, string $contactId, string $contactName, string $messageText): array
     {
         $bot = $channel->bot;
+
+        // Check message limit
+        $tenant = Tenant::find($bot->tenant_id);
+        if ($tenant) {
+            $limitCheck = app(PlanLimitService::class)->canSendMessage($tenant);
+            if (!$limitCheck->allowed) {
+                return [
+                    'response' => 'Ne pare rău, limita de mesaje a fost atinsă. Contactați-ne direct pentru asistență.',
+                    'conversation' => null,
+                    'limit_reached' => true,
+                ];
+            }
+        }
 
         // Find or create conversation
         $conversation = Conversation::firstOrCreate(
@@ -87,6 +101,11 @@ class ChannelMessageService
             'last_activity_at' => now(),
         ]);
 
+        // Track message usage
+        if ($tenant) {
+            app(PlanLimitService::class)->recordMessage($tenant);
+        }
+
         Log::info("Processed incoming message on channel [{$channel->type}]", [
             'channel_id' => $channel->id,
             'conversation_id' => $conversation->id,
@@ -104,10 +123,16 @@ class ChannelMessageService
         try {
             $systemPrompt = $bot->buildSystemPrompt();
 
-            // Add knowledge base context
-            $knowledgeContext = $this->knowledgeSearchService->buildContext($bot->id, $messageText);
-            if ($knowledgeContext) {
-                $systemPrompt .= "\n\nRelevant context from knowledge base:\n" . $knowledgeContext;
+            // Intent detection — skip knowledge for trivial messages (aligned with ChatbotApiController)
+            $intentService = app(IntentDetectionService::class);
+            $skipKnowledge = $intentService->shouldSkipKnowledge($messageText);
+
+            // Add knowledge base context (skip for greetings, smalltalk)
+            if (!$skipKnowledge) {
+                $knowledgeContext = $this->knowledgeSearchService->buildContext($bot->id, $messageText);
+                if ($knowledgeContext) {
+                    $systemPrompt .= "\n\n" . $knowledgeContext;
+                }
             }
 
             // Order lookup — detect if message is about orders
@@ -138,6 +163,9 @@ class ChannelMessageService
                 }
             }
 
+            // Apply centralized anti-hallucination guardrails
+            $systemPrompt = PromptGuardrails::apply($systemPrompt);
+
             // Build messages array with conversation history (last 20 messages)
             $messages = [['role' => 'system', 'content' => $systemPrompt]];
 
@@ -158,7 +186,27 @@ class ChannelMessageService
             $conversationCost = $conversation->cost_cents ?? 0;
             $modelConfig = $this->chatModelRouter->route($messageText, count($history), $conversationCost);
 
-            $result = $this->chatCompletionService->complete($messages, $modelConfig, $bot->id, $bot->tenant_id);
+            // Truncate history to fit within context window (aligned with ChatbotApiController)
+            $tokenCounter = app(TokenCounterService::class);
+            $maxTokens = \App\Models\ModelPricing::getMaxTokens($modelConfig['model']);
+            $messages = $tokenCounter->truncateHistory($messages, (int) ($maxTokens * 0.95));
+
+            // Call AI with cascading fallback
+            try {
+                $result = $this->chatCompletionService->complete($messages, $modelConfig, $bot->id, $bot->tenant_id);
+            } catch (\Exception $e) {
+                // Fallback: retry without knowledge
+                Log::warning('ChannelMessage: fallback — retrying without knowledge', [
+                    'bot_id' => $bot->id,
+                    'error' => $e->getMessage(),
+                ]);
+                $basePrompt = PromptGuardrails::apply($bot->buildSystemPrompt());
+                $shortMessages = [
+                    ['role' => 'system', 'content' => $basePrompt],
+                    ['role' => 'user', 'content' => $messageText],
+                ];
+                $result = $this->chatCompletionService->complete($shortMessages, $modelConfig, $bot->id, $bot->tenant_id);
+            }
 
             // Track cost on conversation
             if (($result['cost_cents'] ?? 0) > 0) {

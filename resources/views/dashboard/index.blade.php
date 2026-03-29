@@ -50,7 +50,8 @@
                         @endif
                     </li>
 
-                    {{-- 3. Adaugă un număr de telefon --}}
+                    @if($hasVoice)
+                    {{-- 3. Adaugă un număr de telefon (doar dacă vocea e activă) --}}
                     <li class="flex items-center gap-3">
                         @if($onboarding['phone_number'])
                         <span class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
@@ -63,7 +64,7 @@
                         @endif
                     </li>
 
-                    {{-- 4. Testează botul --}}
+                    {{-- 4. Testează botul (doar dacă vocea e activă) --}}
                     <li class="flex items-center gap-3">
                         @if($onboarding['test_call'])
                         <span class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
@@ -75,6 +76,7 @@
                         <span class="text-sm text-slate-500">Testează botul</span>
                         @endif
                     </li>
+                    @endif
 
                     {{-- 5. Invită un coleg --}}
                     <li class="flex items-center gap-3">
@@ -167,6 +169,7 @@
             </div>
         </div>
 
+        @if($hasVoice)
         {{-- 4. Apeluri azi --}}
         <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex items-center justify-between">
@@ -192,10 +195,70 @@
                 </div>
             </div>
         </div>
+        @endif
     </div>
 
-    {{-- Bot Costs --}}
-    @if($botCosts->count() > 0)
+    {{-- Plan Usage Summary --}}
+    @if($planUsage)
+    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+                <h3 class="text-base font-semibold text-slate-900">Utilizare plan</h3>
+                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800">{{ $planUsage['plan']['name'] }}</span>
+            </div>
+            <a href="{{ route('dashboard.billing.index') }}" class="text-xs font-medium text-red-700 hover:underline">Detalii &rarr;</a>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {{-- Messages --}}
+            <div>
+                <div class="flex items-center justify-between text-xs mb-1">
+                    <span class="text-slate-600 font-medium">Mesaje</span>
+                    <span class="{{ $planUsage['messages']['percent'] >= 90 ? 'text-red-600 font-semibold' : 'text-slate-500' }}">
+                        {{ number_format($planUsage['messages']['used']) }}/{{ number_format($planUsage['messages']['limit']) }}
+                    </span>
+                </div>
+                <div class="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                    <div class="h-2 rounded-full transition-all {{ $planUsage['messages']['percent'] >= 90 ? 'bg-red-500' : ($planUsage['messages']['percent'] >= 70 ? 'bg-yellow-500' : 'bg-emerald-500') }}"
+                         style="width: {{ min($planUsage['messages']['percent'], 100) }}%"></div>
+                </div>
+                @if($planUsage['messages']['overage'] > 0)
+                    <p class="text-xs text-red-600 mt-1">+{{ $planUsage['messages']['overage'] }} extra</p>
+                @endif
+            </div>
+            {{-- Bots --}}
+            <div>
+                <div class="flex items-center justify-between text-xs mb-1">
+                    <span class="text-slate-600 font-medium">Chatboți</span>
+                    <span class="{{ $planUsage['bots']['percent'] >= 100 ? 'text-red-600 font-semibold' : 'text-slate-500' }}">
+                        {{ $planUsage['bots']['used'] }}/{{ $planUsage['bots']['limit'] }}
+                    </span>
+                </div>
+                <div class="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                    <div class="h-2 rounded-full transition-all {{ $planUsage['bots']['percent'] >= 100 ? 'bg-red-500' : 'bg-blue-500' }}"
+                         style="width: {{ min($planUsage['bots']['percent'], 100) }}%"></div>
+                </div>
+            </div>
+            {{-- Voice — afișat doar dacă planul include voce --}}
+            @if($hasVoice)
+            <div>
+                <div class="flex items-center justify-between text-xs mb-1">
+                    <span class="text-slate-600 font-medium">Minute voce</span>
+                    <span class="{{ $planUsage['voice_minutes']['percent'] >= 90 ? 'text-red-600 font-semibold' : 'text-slate-500' }}">
+                        {{ number_format($planUsage['voice_minutes']['used']) }}/{{ $planUsage['voice_minutes']['limit'] == -1 ? '∞' : number_format($planUsage['voice_minutes']['limit']) }}
+                    </span>
+                </div>
+                <div class="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                    <div class="h-2 rounded-full transition-all bg-purple-500"
+                         style="width: {{ min($planUsage['voice_minutes']['percent'], 100) }}%"></div>
+                </div>
+            </div>
+            @endif
+        </div>
+    </div>
+    @endif
+
+    {{-- Bot Costs — doar dacă vocea e activă --}}
+    @if($hasVoice && $botCosts->count() > 0)
     <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
         <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
             <h3 class="text-base font-semibold text-slate-900">Costuri per bot</h3>
@@ -226,7 +289,8 @@
     </div>
     @endif
 
-    {{-- Charts Row --}}
+    @if($hasVoice)
+    {{-- Charts Row — doar dacă vocea e activă --}}
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {{-- Calls Bar Chart --}}
         <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -244,8 +308,10 @@
             </div>
         </div>
     </div>
+    @endif
 
-    {{-- Recent Calls Table --}}
+    @if($hasVoice)
+    {{-- Recent Calls Table — doar dacă vocea e activă --}}
     <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
         <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
             <h3 class="text-base font-semibold text-slate-900">Ultimele apeluri</h3>
@@ -321,6 +387,7 @@
         </div>
         @endif
     </div>
+    @endif
 
     {{-- Recent Conversations --}}
     <div class="rounded-xl border border-slate-200 bg-white shadow-sm">

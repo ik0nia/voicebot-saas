@@ -24,3 +24,4 @@ yarn-error.log
 .env.coolify
 .env.local
 docker-compose.override.yml
+.claude/

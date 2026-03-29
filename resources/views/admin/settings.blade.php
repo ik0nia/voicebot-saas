@@ -261,6 +261,65 @@
                 </div>
             </form>
         </div>
+
+        {{-- Anthropic (Claude) --}}
+        <div class="bg-white rounded-xl border border-slate-200 p-6 mt-6">
+            <h2 class="text-lg font-semibold text-slate-900">Configurare Anthropic (Claude)</h2>
+            <p class="mt-1 text-sm text-slate-500">API key pentru Claude — folosit ca smart tier și fallback. Opțional dar recomandat.</p>
+
+            <form method="POST" action="{{ url('/admin/setari/anthropic') }}" class="mt-6 space-y-5">
+                @csrf
+                @method('PUT')
+
+                <div>
+                    <label for="anthropic_api_key" class="block text-sm font-medium text-slate-700">Anthropic API Key</label>
+                    <div class="relative mt-1.5">
+                        <input type="password" name="anthropic_api_key" id="anthropic_api_key"
+                               value="{{ old('anthropic_api_key', $settings['anthropic']['anthropic_api_key'] ?? '') }}"
+                               placeholder="sk-ant-..."
+                               class="block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 pr-10 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                        <button type="button" onclick="togglePassword('anthropic_api_key')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="mt-1 text-xs text-slate-500">De la <a href="https://console.anthropic.com/settings/keys" target="_blank" class="text-blue-600 hover:underline">console.anthropic.com</a>. Începe cu "sk-ant-".</p>
+                </div>
+
+                <div class="flex justify-end pt-2">
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 transition-colors">
+                        Salvează Anthropic
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        {{-- Sentry --}}
+        <div class="bg-white rounded-xl border border-slate-200 p-6 mt-6">
+            <h2 class="text-lg font-semibold text-slate-900">Sentry — Error Tracking</h2>
+            <p class="mt-1 text-sm text-slate-500">DSN pentru monitorizare erori în producție. Opțional.</p>
+
+            <form method="POST" action="{{ url('/admin/setari/sentry') }}" class="mt-6 space-y-5">
+                @csrf
+                @method('PUT')
+
+                <div>
+                    <label for="sentry_dsn" class="block text-sm font-medium text-slate-700">Sentry DSN</label>
+                    <input type="text" name="sentry_dsn" id="sentry_dsn"
+                           value="{{ old('sentry_dsn', $settings['sentry']['sentry_dsn'] ?? '') }}"
+                           placeholder="https://xxx@xxx.ingest.sentry.io/xxx"
+                           class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                </div>
+
+                <div class="flex justify-end pt-2">
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 transition-colors">
+                        Salvează Sentry
+                    </button>
+                </div>
+            </form>
+        </div>
     @endif
 
     {{-- ============================================================ --}}

@@ -16,6 +16,7 @@ class IntentDetectionService
         return [
             'is_order_query' => $this->isOrderQuery($msg),
             'is_product_search' => $this->isProductSearch($msg),
+            'is_category_recommendation' => $this->isCategoryRecommendation($msg),
             'is_greeting' => $this->isGreeting($msg),
             'is_followup' => $this->isFollowup($msg),
             'is_complaint' => $this->isComplaint($msg),
@@ -62,6 +63,66 @@ class IntentDetectionService
         $followups = ['da', 'nu', 'ok', 'bine', 'multumesc', 'mersi', 'inteleg', 'am inteles', 'perfect', 'super', 'sigur'];
         $trimmed = trim($msg, ' !.,?');
         return in_array($trimmed, $followups) || str_word_count($msg) <= 3;
+    }
+
+    /**
+     * Detect recommendation/category queries — user asks WHAT they need, not for a specific product.
+     * Examples: "ce imi recomanzi pentru zugravit", "ce imi trebuie pentru baie", "vreau sa renovez"
+     */
+    private function isCategoryRecommendation(string $msg): bool
+    {
+        // Already a specific product search → not a recommendation
+        if ($this->isProductSearch($msg)) return false;
+
+        $patterns = [
+            '/ce\s+(imi|îmi|ne)\s+(recoman|trebui|sugere)/u',
+            '/ce\s+(produse|materiale|articole)\s+(am|aveti|aveți|imi|îmi)/u',
+            '/ce\s+(am|as)\s+nevoie/u',
+            '/recoman.*pentru/u',
+            '/trebui.*pentru/u',
+            '/vreau\s+sa\s+(renovez|zugrav|vopsesc|placari|fac|montez|repar|izol)/u',
+            '/cum\s+sa\s+(zugrav|vopsesc|placari|fac|montez|repar|izol)/u',
+            '/ce\s+materiale/u',
+            '/lista.*materiale/u',
+            '/ce.*necesit/u',
+        ];
+
+        foreach ($patterns as $p) {
+            if (preg_match($p, $msg)) return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Extract the activity/concept from a recommendation query.
+     * Returns null if not a recommendation query.
+     */
+    public function extractRecommendationConcept(string $message): ?string
+    {
+        $msg = mb_strtolower(trim($message));
+        $msg = str_replace(
+            ['ă', 'â', 'î', 'ș', 'ț'],
+            ['a', 'a', 'i', 's', 't'],
+            $msg
+        );
+
+        // "pentru X" pattern — extract X
+        if (preg_match('/pentru\s+(.+?)(?:\?|$|\.)/u', $msg, $m)) {
+            return trim($m[1]);
+        }
+
+        // "sa renovez/zugravesc/etc." pattern — extract activity
+        if (preg_match('/sa\s+(renovez|zugrav\w*|vopsesc|montez|repar\w*|izol\w*|placari\w*|fac\w*)/u', $msg, $m)) {
+            return trim($m[1]);
+        }
+
+        // Generic "recomanzi X" / "trebuie X"
+        if (preg_match('/(?:recoman\w*|trebui\w*|necesit\w*)\s+(.+?)(?:\?|$|\.)/u', $msg, $m)) {
+            return trim($m[1]);
+        }
+
+        return null;
     }
 
     private function isComplaint(string $msg): bool

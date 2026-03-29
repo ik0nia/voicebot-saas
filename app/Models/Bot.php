@@ -26,6 +26,7 @@ class Bot extends Model
         'cloned_voice_id',
         'language',
         'settings',
+        'woocommerce_capabilities',
         'is_active',
         'calls_count',
         'knowledge_search_limit',
@@ -36,6 +37,7 @@ class Bot extends Model
     {
         return [
             'settings' => 'array',
+            'woocommerce_capabilities' => 'array',
             'is_active' => 'boolean',
             'calls_count' => 'integer',
         ];

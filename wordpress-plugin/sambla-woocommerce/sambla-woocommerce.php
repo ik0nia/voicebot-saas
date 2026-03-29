@@ -3,7 +3,7 @@
  * Plugin Name: Sambla AI Chat for WooCommerce
  * Plugin URI: https://sambla.ro
  * Description: Adaugă un chatbot AI inteligent pe magazinul tău WooCommerce. Chatbot-ul cunoaște produsele tale și poate recomanda clienților.
- * Version: 1.3.0
+ * Version: 2.0.0
  * Author: Sambla
  * Author URI: https://sambla.ro
  * License: GPL v2 or later
@@ -15,7 +15,7 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('SAMBLA_VERSION', '1.3.0');
+define('SAMBLA_VERSION', '2.0.0');
 define('SAMBLA_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SAMBLA_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('SAMBLA_API_BASE', 'https://sambla.ro');

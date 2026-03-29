@@ -429,11 +429,59 @@ class KnowledgeController extends Controller
             abort(403);
         }
 
+        // Anti-spam: check if sync already in progress
+        $lockKey = "wc_sync_lock_{$connector->id}";
+        if (\Illuminate\Support\Facades\Cache::has($lockKey)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sincronizarea este deja în curs. Așteptați finalizarea.',
+            ], 409);
+        }
+
         SyncConnector::dispatch($connector);
 
         return response()->json([
             'success' => true,
-            'message' => 'Sincronizarea a început. Conținutul va fi importat în fundal.',
+            'message' => 'Sincronizarea a început. Produsele vor fi procesate treptat în fundal.',
+        ]);
+    }
+
+    /**
+     * Get knowledge processing progress for a bot.
+     */
+    public function syncProgress(Bot $bot)
+    {
+        $progress = \Illuminate\Support\Facades\Cache::get("knowledge_sync_progress_{$bot->id}", null);
+
+        if (!$progress) {
+            // Calculate from DB
+            $stats = \App\Models\BotKnowledge::where('bot_id', $bot->id)
+                ->selectRaw("
+                    count(*) as total,
+                    sum(case when status = 'pending' then 1 else 0 end) as pending,
+                    sum(case when status = 'processing' then 1 else 0 end) as processing,
+                    sum(case when status = 'ready' then 1 else 0 end) as ready,
+                    sum(case when status = 'failed' then 1 else 0 end) as failed
+                ")
+                ->first();
+
+            $progress = [
+                'total' => $stats->total,
+                'pending' => $stats->pending,
+                'processing' => $stats->processing,
+                'ready' => $stats->ready,
+                'failed' => $stats->failed,
+                'completed' => $stats->pending == 0 && $stats->processing == 0,
+            ];
+        }
+
+        $pct = ($progress['total'] ?? 0) > 0
+            ? round((($progress['ready'] ?? 0) / $progress['total']) * 100)
+            : 0;
+
+        return response()->json([
+            'progress' => $progress,
+            'percentage' => $pct,
         ]);
     }
 

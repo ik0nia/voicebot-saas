@@ -32,6 +32,14 @@ Route::post('/v1/chatbot/{channel}/message', [ChatbotApiController::class, 'mess
 Route::get('/v1/chatbot/{channel}/config', [ChatbotApiController::class, 'config']);
 Route::get('/v1/chatbot/{channel}/products', [ChatbotApiController::class, 'searchProducts']);
 
+// V2 Analytics, Capabilities & Lead capture (public, widget-facing)
+Route::post('/v1/chatbot/{channel}/events', [\App\Http\Controllers\Api\EventTrackingController::class, 'trackBatch']);
+Route::get('/v1/chatbot/{channel}/capabilities', [\App\Http\Controllers\Api\EventTrackingController::class, 'capabilities']);
+Route::post('/v1/chatbot/{channel}/lead', [\App\Http\Controllers\Api\EventTrackingController::class, 'captureLead']);
+
+// V2 Purchase webhook from WordPress companion plugin (signed, no auth)
+Route::post('/v1/webhooks/woocommerce/{bot}/purchase', [\App\Http\Controllers\Api\PurchaseWebhookController::class, 'handle']);
+
 // Plugin update check (public, no auth - called by WordPress updater)
 Route::get('v1/plugin/update-check', [\App\Http\Controllers\Api\V1\PluginUpdateController::class, 'check']);
 
@@ -48,6 +56,9 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
 
     // Analytics
     Route::get('analytics/overview', [AnalyticsApiController::class, 'overview']);
+
+    // V2: Bot analytics (conversion funnel, attribution, outcomes)
+    Route::get('bots/{bot}/analytics', [\App\Http\Controllers\Api\BotAnalyticsController::class, 'overview']);
     Route::get('usage', [AnalyticsApiController::class, 'usage']);
 
     // WooCommerce integration

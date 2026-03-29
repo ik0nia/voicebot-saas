@@ -6,14 +6,14 @@
 @section('content')
 
     {{-- Section 1: Hero --}}
-    <section class="relative overflow-hidden bg-gradient-to-b from-white to-primary-50 section-padding">
+    <section class="relative overflow-hidden bg-gradient-to-b from-slate-50 to-primary-50 section-padding">
         <x-hero-texture />
         <div class="container-custom text-center animate-fade-in relative">
             <x-hero-ornament />
             <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-slate-900 mb-6">
                 Prețuri <span class="gradient-text">simple, transparente</span>
             </h1>
-            <p class="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto">
+            <p class="text-lg md:text-xl text-slate-700 max-w-2xl mx-auto">
                 Alege planul potrivit pentru afacerea ta. Fără costuri ascunse.
             </p>
         </div>
@@ -22,19 +22,19 @@
     <x-motif-border />
 
     {{-- Section 2: Webchat Packages --}}
-    <section class="section-padding bg-white">
+    <section class="section-padding bg-slate-50">
         <div class="container-custom">
 
             <h2 class="text-3xl md:text-4xl font-bold text-slate-900 text-center mb-4 animate-fade-in">
                 Pachete <span class="gradient-text">Webchat</span>
             </h2>
-            <p class="text-center text-slate-600 mb-12 max-w-2xl mx-auto animate-fade-in">
+            <p class="text-center text-slate-700 mb-12 max-w-2xl mx-auto animate-fade-in">
                 Chatbot AI integrat pe site-ul tău. Răspunde automat clienților 24/7.
             </p>
 
             {{-- Billing Toggle --}}
             <div class="flex items-center justify-center gap-4 mb-12 animate-slide-up">
-                <span id="label-monthly" class="text-sm font-semibold text-slate-900">Lunar</span>
+                <span id="label-monthly" class="text-sm font-bold text-slate-900">Lunar</span>
                 <button
                     id="billing-toggle"
                     type="button"
@@ -60,9 +60,10 @@
                             $features = $plan->features ?? [];
                             $overage = $plan->overage ?? [];
                             $overageCostPerMessage = $overage['cost_per_message'] ?? null;
+                            $overageCostPerBot = $overage['cost_per_extra_bot'] ?? null;
                             $isEnterprise = $plan->price_monthly === null || $plan->price_monthly == 0 && strtolower($plan->slug ?? $plan->name) === 'enterprise';
                         @endphp
-                        <div class="animate-slide-up rounded-2xl {{ $isPopular ? 'border-2 border-primary-600 shadow-xl md:scale-105' : 'border border-slate-200 shadow-sm hover:shadow-lg' }} bg-white p-8 transition-shadow duration-300 relative">
+                        <div class="animate-slide-up rounded-2xl {{ $isPopular ? 'border-2 border-primary-600 shadow-xl md:scale-105' : 'border border-slate-200 shadow-md hover:shadow-lg' }} bg-white p-8 transition-shadow duration-300 relative">
                             @if($isPopular)
                                 <div class="absolute -top-4 left-1/2 -translate-x-1/2">
                                     <span class="inline-flex items-center rounded-full bg-primary-600 px-4 py-1 text-xs font-bold text-white uppercase tracking-wide shadow-lg">
@@ -73,17 +74,17 @@
                             <div class="mb-6 {{ $isPopular ? 'mt-2' : '' }}">
                                 <h3 class="text-lg font-bold text-slate-900 uppercase tracking-wide">{{ $plan->name }}</h3>
                                 @if($plan->description)
-                                    <p class="text-sm text-slate-500 mt-1">{{ $plan->description }}</p>
+                                    <p class="text-sm text-slate-600 mt-1">{{ $plan->description }}</p>
                                 @endif
                             </div>
                             <div class="mb-8">
                                 @if($plan->price_monthly !== null && $plan->price_monthly > 0)
                                     <div class="flex items-baseline gap-1">
                                         <span class="text-4xl font-extrabold {{ $isPopular ? 'text-primary-700' : 'text-slate-900' }} pricing-amount" data-monthly="{{ number_format($plan->price_monthly, 0) }}" data-annual="{{ number_format($plan->price_yearly, 0) }}">{{ number_format($plan->price_monthly, 0) }}</span>
-                                        <span class="text-lg font-semibold text-slate-600">&euro;</span>
-                                        <span class="text-sm text-slate-500">/lună</span>
+                                        <span class="text-lg font-semibold text-slate-700">&euro;</span>
+                                        <span class="text-sm text-slate-600">/lună</span>
                                     </div>
-                                    <p class="text-xs text-slate-400 mt-1 pricing-note hidden">facturat anual</p>
+                                    <p class="text-xs text-slate-500 mt-1 pricing-note hidden">facturat anual</p>
                                 @else
                                     <div class="flex items-baseline gap-1">
                                         <span class="text-4xl font-extrabold text-slate-900">Personalizat</span>
@@ -92,16 +93,21 @@
                             </div>
                             <ul class="space-y-3 mb-6">
                                 @foreach($features as $feature)
-                                    <li class="flex items-start gap-3 text-sm text-slate-700">
+                                    <li class="flex items-start gap-3 text-sm text-slate-800">
                                         <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                                         {{ $feature }}
                                     </li>
                                 @endforeach
                             </ul>
-                            @if($overageCostPerMessage)
-                                <p class="text-xs text-slate-500 mb-6 border-t border-slate-100 pt-4">
-                                    Credit suplimentar: <span class="font-semibold text-slate-700">&euro;{{ number_format($overageCostPerMessage, 2) }}/mesaj</span>
-                                </p>
+                            @if($overageCostPerMessage || $overageCostPerBot)
+                                <div class="text-xs text-slate-600 mb-6 border-t border-slate-200 pt-4 space-y-1">
+                                    @if($overageCostPerMessage)
+                                        <p>Mesaj suplimentar: <span class="font-semibold text-slate-900">&euro;{{ number_format($overageCostPerMessage, 2) }}/mesaj</span></p>
+                                    @endif
+                                    @if($overageCostPerBot)
+                                        <p>Bot suplimentar: <span class="font-semibold text-slate-900">&euro;{{ number_format($overageCostPerBot, 0) }}/lună</span></p>
+                                    @endif
+                                </div>
                             @endif
                             @if($plan->price_monthly !== null && $plan->price_monthly > 0)
                                 <a href="/register" class="{{ $isPopular ? 'btn-primary' : 'btn-secondary' }} block text-center w-full">Începe gratuit</a>
@@ -128,7 +134,7 @@
             <h2 class="text-3xl md:text-4xl font-bold text-white text-center mb-4 animate-fade-in">
                 Adaugă funcționalitate <span class="gradient-text">vocală</span>
             </h2>
-            <p class="text-center text-slate-400 mb-12 max-w-2xl mx-auto animate-fade-in">
+            <p class="text-center text-slate-300 mb-12 max-w-2xl mx-auto animate-fade-in">
                 Extinde chatbot-ul cu voce AI. Gestionează apeluri telefonice automat prin Twilio + OpenAI.
             </p>
 
@@ -147,17 +153,17 @@
                             <div class="mb-6">
                                 <h3 class="text-lg font-bold text-white uppercase tracking-wide">{{ $plan->name }}</h3>
                                 @if($plan->description)
-                                    <p class="text-sm text-slate-400 mt-1">{{ $plan->description }}</p>
+                                    <p class="text-sm text-slate-300 mt-1">{{ $plan->description }}</p>
                                 @endif
                             </div>
                             <div class="mb-8">
                                 @if(!$isEnterprise && $plan->price_monthly > 0)
                                     <div class="flex items-baseline gap-1">
                                         <span class="text-4xl font-extrabold text-white pricing-amount" data-monthly="{{ number_format($plan->price_monthly, 0) }}" data-annual="{{ number_format($plan->price_yearly, 0) }}">{{ number_format($plan->price_monthly, 0) }}</span>
-                                        <span class="text-lg font-semibold text-slate-400">&euro;</span>
-                                        <span class="text-sm text-slate-500">/lună</span>
+                                        <span class="text-lg font-semibold text-slate-300">&euro;</span>
+                                        <span class="text-sm text-slate-400">/lună</span>
                                     </div>
-                                    <p class="text-xs text-slate-500 mt-1 pricing-note hidden">facturat anual</p>
+                                    <p class="text-xs text-slate-400 mt-1 pricing-note hidden">facturat anual</p>
                                 @else
                                     <div class="flex items-baseline gap-1">
                                         <span class="text-4xl font-extrabold text-white">Personalizat</span>
@@ -178,8 +184,8 @@
                                 @endforeach
                             </ul>
                             @if($overageCostPerMinute)
-                                <p class="text-xs text-slate-500 mb-6 border-t border-slate-700 pt-4">
-                                    Credit suplimentar: <span class="font-semibold text-slate-300">&euro;{{ number_format($overageCostPerMinute, 2) }}/minut</span>
+                                <p class="text-xs text-slate-400 mb-6 border-t border-slate-600 pt-4">
+                                    Credit suplimentar: <span class="font-semibold text-white">&euro;{{ number_format($overageCostPerMinute, 2) }}/minut</span>
                                 </p>
                             @endif
                             @if($isEnterprise)
@@ -206,11 +212,11 @@
             <h2 class="text-3xl md:text-4xl font-bold text-slate-900 text-center mb-4 animate-fade-in">
                 Credit <span class="gradient-text">suplimentar</span>
             </h2>
-            <p class="text-center text-slate-600 mb-12 max-w-2xl mx-auto animate-fade-in">
+            <p class="text-center text-slate-700 mb-12 max-w-2xl mx-auto animate-fade-in">
                 Depășești limita lunară? Nu-ți face griji. Mesajele și minutele suplimentare se taxează automat, la un cost care scade pe planurile superioare.
             </p>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto animate-slide-up">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto animate-slide-up">
 
                 {{-- Messages overage --}}
                 <div class="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
@@ -218,7 +224,7 @@
                         <div class="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center">
                             <svg class="w-5 h-5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 011.037-.443 48.282 48.282 0 005.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" /></svg>
                         </div>
-                        <h3 class="text-lg font-bold text-slate-900">Mesaje text suplimentare</h3>
+                        <h3 class="text-lg font-bold text-slate-900">Mesaje suplimentare</h3>
                     </div>
                     @if($webchatPlans->count())
                         <div class="overflow-hidden rounded-lg border border-slate-200">
@@ -236,6 +242,41 @@
                                             <tr>
                                                 <td class="py-3 px-4 text-slate-700 font-medium">{{ $plan->name }}</td>
                                                 <td class="py-3 px-4 text-right text-slate-900 font-semibold">&euro;{{ number_format($cpm, 2) }}</td>
+                                            </tr>
+                                        @endif
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <p class="text-sm text-slate-500">Detaliile vor fi disponibile în curând.</p>
+                    @endif
+                </div>
+
+                {{-- Extra bots --}}
+                <div class="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" /></svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900">Chatboți suplimentari</h3>
+                    </div>
+                    @if($webchatPlans->count())
+                        <div class="overflow-hidden rounded-lg border border-slate-200">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200">
+                                        <th class="py-3 px-4 text-left font-semibold text-slate-700">Plan</th>
+                                        <th class="py-3 px-4 text-right font-semibold text-slate-700">Cost/bot/lună</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    @foreach($webchatPlans as $plan)
+                                        @php $cpb = $plan->overage['cost_per_extra_bot'] ?? null; @endphp
+                                        @if($cpb)
+                                            <tr>
+                                                <td class="py-3 px-4 text-slate-700 font-medium">{{ $plan->name }}</td>
+                                                <td class="py-3 px-4 text-right text-slate-900 font-semibold">&euro;{{ number_format($cpb, 0) }}</td>
                                             </tr>
                                         @endif
                                     @endforeach
@@ -287,7 +328,7 @@
     </section>
 
     {{-- Section 5: FAQ --}}
-    <section class="section-padding bg-white">
+    <section class="section-padding bg-slate-50">
         <div class="container-custom max-w-3xl">
             <h2 class="text-3xl md:text-4xl font-bold text-slate-900 text-center mb-12 animate-fade-in">
                 Întrebări <span class="gradient-text">frecvente</span>
@@ -295,73 +336,73 @@
 
             <div class="space-y-4 animate-slide-up" id="faq-accordion">
 
-                <div class="faq-item border border-slate-200 rounded-xl overflow-hidden">
-                    <button class="faq-toggle w-full flex items-center justify-between px-6 py-5 text-left text-slate-900 font-semibold hover:bg-slate-50 transition-colors">
+                <div class="faq-item border border-slate-200 rounded-xl overflow-hidden bg-white">
+                    <button class="faq-toggle w-full flex items-center justify-between px-6 py-5 text-left text-slate-900 font-semibold hover:bg-slate-100 transition-colors">
                         <span>Ce se întâmplă când depășesc limita?</span>
                         <svg class="faq-icon w-5 h-5 text-slate-500 shrink-0 ml-4 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                     </button>
                     <div class="faq-content max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
-                        <div class="px-6 pb-5 text-slate-600 text-sm leading-relaxed">
+                        <div class="px-6 pb-5 text-slate-700 text-sm leading-relaxed">
                             Se taxează automat la costul suplimentar al planului tău. Nu există întreruperi ale serviciului.
                         </div>
                     </div>
                 </div>
 
-                <div class="faq-item border border-slate-200 rounded-xl overflow-hidden">
-                    <button class="faq-toggle w-full flex items-center justify-between px-6 py-5 text-left text-slate-900 font-semibold hover:bg-slate-50 transition-colors">
+                <div class="faq-item border border-slate-200 rounded-xl overflow-hidden bg-white">
+                    <button class="faq-toggle w-full flex items-center justify-between px-6 py-5 text-left text-slate-900 font-semibold hover:bg-slate-100 transition-colors">
                         <span>Pot combina webchat + voce?</span>
                         <svg class="faq-icon w-5 h-5 text-slate-500 shrink-0 ml-4 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                     </button>
                     <div class="faq-content max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
-                        <div class="px-6 pb-5 text-slate-600 text-sm leading-relaxed">
+                        <div class="px-6 pb-5 text-slate-700 text-sm leading-relaxed">
                             Da! Alege un plan webchat și adaugă un addon de voce. Ambele funcționează împreună, cu aceeași bază de cunoștințe.
                         </div>
                     </div>
                 </div>
 
-                <div class="faq-item border border-slate-200 rounded-xl overflow-hidden">
-                    <button class="faq-toggle w-full flex items-center justify-between px-6 py-5 text-left text-slate-900 font-semibold hover:bg-slate-50 transition-colors">
+                <div class="faq-item border border-slate-200 rounded-xl overflow-hidden bg-white">
+                    <button class="faq-toggle w-full flex items-center justify-between px-6 py-5 text-left text-slate-900 font-semibold hover:bg-slate-100 transition-colors">
                         <span>Pot schimba planul oricând?</span>
                         <svg class="faq-icon w-5 h-5 text-slate-500 shrink-0 ml-4 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                     </button>
                     <div class="faq-content max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
-                        <div class="px-6 pb-5 text-slate-600 text-sm leading-relaxed">
+                        <div class="px-6 pb-5 text-slate-700 text-sm leading-relaxed">
                             Da, upgrade sau downgrade instant. Diferența de preț se calculează pro-rata.
                         </div>
                     </div>
                 </div>
 
-                <div class="faq-item border border-slate-200 rounded-xl overflow-hidden">
-                    <button class="faq-toggle w-full flex items-center justify-between px-6 py-5 text-left text-slate-900 font-semibold hover:bg-slate-50 transition-colors">
+                <div class="faq-item border border-slate-200 rounded-xl overflow-hidden bg-white">
+                    <button class="faq-toggle w-full flex items-center justify-between px-6 py-5 text-left text-slate-900 font-semibold hover:bg-slate-100 transition-colors">
                         <span>Oferiți perioadă de probă gratuită?</span>
                         <svg class="faq-icon w-5 h-5 text-slate-500 shrink-0 ml-4 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                     </button>
                     <div class="faq-content max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
-                        <div class="px-6 pb-5 text-slate-600 text-sm leading-relaxed">
+                        <div class="px-6 pb-5 text-slate-700 text-sm leading-relaxed">
                             Da, toate planurile includ 14 zile de probă gratuită, fără card de credit.
                         </div>
                     </div>
                 </div>
 
-                <div class="faq-item border border-slate-200 rounded-xl overflow-hidden">
-                    <button class="faq-toggle w-full flex items-center justify-between px-6 py-5 text-left text-slate-900 font-semibold hover:bg-slate-50 transition-colors">
+                <div class="faq-item border border-slate-200 rounded-xl overflow-hidden bg-white">
+                    <button class="faq-toggle w-full flex items-center justify-between px-6 py-5 text-left text-slate-900 font-semibold hover:bg-slate-100 transition-colors">
                         <span>Cum funcționează facturarea?</span>
                         <svg class="faq-icon w-5 h-5 text-slate-500 shrink-0 ml-4 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                     </button>
                     <div class="faq-content max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
-                        <div class="px-6 pb-5 text-slate-600 text-sm leading-relaxed">
+                        <div class="px-6 pb-5 text-slate-700 text-sm leading-relaxed">
                             Facturarea se face lunar sau anual, prin card de credit sau transfer bancar pentru Enterprise.
                         </div>
                     </div>
                 </div>
 
-                <div class="faq-item border border-slate-200 rounded-xl overflow-hidden">
-                    <button class="faq-toggle w-full flex items-center justify-between px-6 py-5 text-left text-slate-900 font-semibold hover:bg-slate-50 transition-colors">
+                <div class="faq-item border border-slate-200 rounded-xl overflow-hidden bg-white">
+                    <button class="faq-toggle w-full flex items-center justify-between px-6 py-5 text-left text-slate-900 font-semibold hover:bg-slate-100 transition-colors">
                         <span>Oferiți discount pentru ONG-uri?</span>
                         <svg class="faq-icon w-5 h-5 text-slate-500 shrink-0 ml-4 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                     </button>
                     <div class="faq-content max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
-                        <div class="px-6 pb-5 text-slate-600 text-sm leading-relaxed">
+                        <div class="px-6 pb-5 text-slate-700 text-sm leading-relaxed">
                             Da, oferim 30% discount pentru organizații non-profit și instituții de învățământ.
                         </div>
                     </div>
@@ -372,16 +413,16 @@
     </section>
 
     {{-- Section 6: Contact CTA --}}
-    <section class="section-padding bg-primary-50">
+    <section class="section-padding bg-gradient-to-b from-primary-100 to-primary-50">
         <div class="container-custom text-center max-w-2xl animate-fade-in">
             <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
                 Nu ești sigur ce plan ți se potrivește?
             </h2>
-            <p class="text-lg text-slate-600 mb-8">
+            <p class="text-lg text-slate-700 mb-8">
                 Hai să discutăm. Echipa noastră te poate ajuta să alegi soluția optimă.
             </p>
-            <a href="#" class="btn-primary inline-block">Programează o consultație gratuită</a>
-            <p class="text-sm text-slate-500 mt-4">Răspundem în maxim 2 ore</p>
+            <a href="/contact" class="btn-primary inline-block">Programează o consultație gratuită</a>
+            <p class="text-sm text-slate-600 mt-4">Răspundem în maxim 2 ore</p>
         </div>
     </section>
 
