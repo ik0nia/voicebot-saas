@@ -70,10 +70,10 @@
             </div>
         </div>
 
-        {{-- Conversation --}}
+        {{-- Conversation (chat) --}}
         @if($lead->conversation)
         <div class="bg-white rounded-xl border border-slate-200 p-5">
-            <h3 class="font-semibold text-slate-900 mb-3">Conversație</h3>
+            <h3 class="font-semibold text-slate-900 mb-3">💬 Conversație Chat</h3>
             <div class="space-y-3 max-h-96 overflow-y-auto">
                 @foreach($lead->conversation->messages as $msg)
                 <div class="{{ $msg->direction === 'inbound' ? 'text-right' : 'text-left' }}">
@@ -85,6 +85,29 @@
                 @endforeach
             </div>
         </div>
+        @endif
+
+        {{-- Voice transcript (when lead came from voice call) --}}
+        @if($lead->capture_source === 'voice' && $lead->custom_fields && isset($lead->custom_fields['call_id']))
+            @php $callTranscripts = \App\Models\Transcript::where('call_id', $lead->custom_fields['call_id'])->orderBy('timestamp_ms')->get(); @endphp
+            @if($callTranscripts->isNotEmpty())
+            <div class="bg-white rounded-xl border border-slate-200 p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-semibold text-slate-900">🎙️ Transcript Apel Vocal</h3>
+                    <a href="{{ route('dashboard.calls.show', $lead->custom_fields['call_id']) }}" class="text-xs text-blue-600 hover:underline">Vezi apelul complet →</a>
+                </div>
+                <div class="space-y-3 max-h-96 overflow-y-auto">
+                    @foreach($callTranscripts as $t)
+                    <div class="{{ $t->role === 'user' ? 'text-right' : 'text-left' }}">
+                        <div class="inline-block max-w-[80%] px-3 py-2 rounded-lg text-sm {{ $t->role === 'user' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-900' }}">
+                            {{ $t->content }}
+                        </div>
+                        <div class="text-xs text-slate-400 mt-0.5">{{ $t->role === 'user' ? '👤 Client' : '🤖 Bot' }}</div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
         @endif
     </div>
 </div>

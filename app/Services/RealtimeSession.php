@@ -6,6 +6,7 @@ use App\Contracts\TtsOutputStrategy;
 use App\Jobs\AnalyzeCallSentiment;
 use App\Models\Bot;
 use App\Models\Call;
+use App\Models\Lead;
 use App\Models\Transcript;
 use App\Models\CallEvent;
 use App\Services\TtsStrategies\OpenAiNativeTts;
@@ -163,6 +164,32 @@ class RealtimeSession
         $base .= "\n- Dacă nu știi răspunsul, oferă-te să transferi apelul la un operator uman.";
         $base .= "\n- Fii politicos și profesional în toate interacțiunile.";
 
+        // V2: Order lookup instructions
+        $base .= "\n\n=== COMENZI ==="
+            . "\nDacă clientul întreabă de o comandă (unde e comanda, status comandă, când ajunge, AWB, colet):"
+            . "\n- Cere-i numărul comenzii: 'Puteți să îmi spuneți numărul comenzii?'"
+            . "\n- Sau emailul: 'Cu ce adresă de email ați comandat?'"
+            . "\n- Când primești informațiile despre comandă în context, spune-i clientului statusul clar."
+            . "\n- Dacă comanda e livrată/expediată și ai AWB, menționează-l."
+            . "\n=== SFÂRȘIT COMENZI ===";
+
+        // V2: Lead capture vocal
+        $base .= "\n\n=== CAPTARE DATE CLIENT (FOARTE IMPORTANT) ==="
+            . "\nDupă ce ai răspuns la 2-3 întrebări ale clientului despre produse sau servicii, TREBUIE să îl întrebi PROACTIV:"
+            . "\n'Doriți să vă ajutăm cu o comandă sau o ofertă personalizată?'"
+            . "\nSau: 'Vreți să vă pun în legătură cu un coleg care să vă ajute mai departe?'"
+            . "\n"
+            . "\nDacă clientul răspunde DA, SIGUR, VREAU, OK, BINE, DA VREU, sau orice confirmare (chiar și scurtă):"
+            . "\n1. Cere-i NATURAL numele: 'Cum vă numiți, vă rog?'"
+            . "\n2. După ce primești numele, cere telefonul: 'Și un număr de telefon la care să vă contacteze colegul meu?'"
+            . "\n3. Întreabă când preferă să fie sunat: 'Când vă este mai convenabil? Dimineața, după-amiaza, sau seara?'"
+            . "\n4. Confirmă: 'Perfect, [nume]. Un coleg vă va contacta [dimineața/după-amiaza/seara]. Mulțumim!'"
+            . "\n"
+            . "\nNU aștepta ca clientul să ceară singur. TU trebuie să propui."
+            . "\nDacă clientul spune NU sau refuză, respectă decizia și continuă conversația normal."
+            . "\nNU cere datele în primele 2 replici — lasă-l mai întâi să pună întrebări."
+            . "\n=== SFÂRȘIT CAPTARE DATE ===";
+
         // Apply centralized guardrails (voice mode)
         $base = PromptGuardrails::apply($base, isVoice: true);
 
@@ -191,6 +218,17 @@ class RealtimeSession
 
         $language = $this->bot->language ?? 'română';
         $base .= "\n\nRăspunde natural și concis în limba {$language}. Fii politicos și profesional.";
+
+        // V2: Lead capture vocal
+        $base .= "\n\n=== CAPTARE DATE CLIENT ==="
+            . "\nDupă 2-3 întrebări, PROPUNE PROACTIV: 'Doriți să vă ajutăm cu o comandă sau o ofertă?'"
+            . "\nDacă clientul confirmă (DA, SIGUR, OK, VREAU, BINE, orice confirmare):"
+            . "\n1. Cere numele: 'Cum vă numiți, vă rog?'"
+            . "\n2. Cere telefonul: 'Și un număr de telefon?'"
+            . "\n3. Confirmă: 'Perfect, [nume]. Un coleg vă va contacta.'"
+            . "\nTU propui, nu aștepți ca clientul să ceară."
+            . "\nDacă refuză, continuă normal."
+            . "\n=== SFÂRȘIT CAPTARE DATE ===";
 
         // Apply centralized guardrails (voice mode)
         $base = PromptGuardrails::apply($base, isVoice: true);
@@ -344,6 +382,32 @@ class RealtimeSession
                         }
                     }
 
+                    // V2: Order lookup — check if user is asking about an order
+                    try {
+                        $orderLookup = app(OrderLookupService::class);
+                        $orderParams = $orderLookup->detectOrderQuery($transcript);
+                        if ($orderParams) {
+                            $orderResult = $orderLookup->lookup($this->bot->id, $orderParams);
+                            if ($orderResult['found']) {
+                                $context .= "\n\n[INFORMAȚII COMANDĂ - răspunde clientului pe baza acestor date]\n";
+                                foreach ($orderResult['orders'] as $o) {
+                                    $context .= "Comanda #{$o['number']} | Status: {$o['status']} | Data: {$o['date']} | Total: {$o['total']}";
+                                    if (!empty($o['shipping_method'])) $context .= " | Livrare: {$o['shipping_method']}";
+                                    if (!empty($o['tracking'])) $context .= " | AWB: {$o['tracking']}";
+                                    if (!empty($o['tracking_url'])) $context .= " | Tracking: {$o['tracking_url']}";
+                                    $context .= " | Produse: " . collect($o['items'])->map(fn($i) => "{$i['name']} x{$i['quantity']}")->implode(', ');
+                                    $context .= "\n";
+                                }
+                            } elseif (empty($orderParams['order_number']) && empty($orderParams['email']) && empty($orderParams['phone'])) {
+                                $context .= "\n\n[Clientul întreabă de o comandă. Cere-i numărul comenzii sau emailul cu care a comandat.]\n";
+                            } else {
+                                $context .= "\n\n[{$orderResult['message']}]\n";
+                            }
+                        }
+                    } catch (\Throwable $e) {
+                        Log::debug("RealtimeSession: order lookup failed for call {$this->call->id}", ['error' => $e->getMessage()]);
+                    }
+
                     // Knowledge search — uses OpenAI embedding API (slower).
                     // If products were found, use fewer results to keep context lean.
                     $knowledgeLimit = $foundProducts ? 3 : 5;
@@ -413,9 +477,118 @@ class RealtimeSession
                 ],
                 'occurred_at' => now(),
             ]);
+
+            // V2: Try to extract lead data from conversation transcripts
+            $this->tryExtractVoiceLead();
         }
 
         return null;
+    }
+
+    /**
+     * V2: Detect and extract lead data (name + phone) from voice transcripts.
+     * Runs after each assistant response to check if contact data was exchanged.
+     */
+    private function tryExtractVoiceLead(): void
+    {
+        try {
+            // Check if we already have a lead for this call
+            $existingLead = Lead::where('tenant_id', $this->call->tenant_id)
+                ->where('capture_source', 'voice')
+                ->whereJsonContains('custom_fields->call_id', $this->call->id)
+                ->first();
+            if ($existingLead) return; // Already captured
+
+            // Get all transcripts for this call
+            $transcripts = Transcript::where('call_id', $this->call->id)
+                ->orderBy('timestamp_ms')
+                ->get();
+
+            if ($transcripts->count() < 4) return; // Too early — need at least a few exchanges
+
+            // Combine all user transcripts to search for contact data
+            $userText = $transcripts->where('role', 'user')->pluck('content')->implode(' ');
+            $assistantText = $transcripts->where('role', 'assistant')->pluck('content')->implode(' ');
+
+            // Extract phone number from user speech
+            $phone = null;
+            // Romanian phone patterns: 07xx xxx xxx, +40 7xx xxx xxx, 0722.123.456
+            if (preg_match('/\b(07[0-9]{2}[\s.-]?[0-9]{3}[\s.-]?[0-9]{3})\b/', $userText, $m)) {
+                $phone = preg_replace('/[\s.-]/', '', $m[1]);
+            } elseif (preg_match('/\b(\+?40\s?7[0-9]{2}[\s.-]?[0-9]{3}[\s.-]?[0-9]{3})\b/', $userText, $m)) {
+                $phone = preg_replace('/[\s.-]/', '', $m[1]);
+            }
+            // Also check if user spelled out digits: "zero șapte doi doi..."
+            // This is harder — skip for now, rely on actual digit sequences
+
+            // Extract name — look for assistant confirmation like "Perfect, Ion" or "Am notat, Popescu"
+            $name = null;
+            if (preg_match('/(?:perfect|am notat|mulțumesc|multumesc|bine|în regulă)[,.\s]+([A-ZĂÂÎȘȚ][a-zăâîșț]+(?:\s+[A-ZĂÂÎȘȚ][a-zăâîșț]+)?)/u', $assistantText, $m)) {
+                $name = trim($m[1]);
+            }
+            // Also check user saying "Mă numesc X" or "Sunt X" or "Numele meu e X"
+            if (!$name && preg_match('/(?:mă numesc|sunt|numele meu e|ma numesc)\s+([A-ZĂÂÎȘȚ][a-zăâîșț]+(?:\s+[A-ZĂÂÎȘȚ][a-zăâîșț]+)?)/ui', $userText, $m)) {
+                $name = trim($m[1]);
+            }
+
+            // Only create lead if we have at least phone OR name
+            if (!$phone && !$name) return;
+
+            // Check for buying intent — includes direct intent AND confirmation after bot asked
+            $buyingSignals = preg_match('/\b(comand|cumpăr|cumpar|vreau|doresc|interesat|intereseaz|ofert[aă]|livrare|livr[aă]m)\b/ui', $userText);
+
+            // Also check if bot asked and user confirmed (da, sigur, ok, bine, etc.)
+            $botAskedForHelp = preg_match('/\b(doriți|vreți|ajut[aă]m|comandă|ofertă)\b/ui', $assistantText);
+            $userConfirmed = preg_match('/\b(da|sigur|vreau|ok|bine|desigur|fire[sș]te|normal|da vreau|da va rog)\b/ui', $userText);
+
+            if (!$buyingSignals && !($botAskedForHelp && $userConfirmed) && !$phone) return;
+
+            // Get products discussed
+            $productsShown = [];
+            foreach ($transcripts->where('role', 'assistant') as $t) {
+                if (preg_match_all('/(\d+(?:[.,]\d+)?)\s*(?:lei|RON)/i', $t->content, $priceMatches)) {
+                    // Has prices mentioned — products were discussed
+                }
+            }
+
+            $lead = Lead::create([
+                'tenant_id' => $this->call->tenant_id,
+                'bot_id' => $this->call->bot_id,
+                'session_id' => $this->call->metadata['session_id'] ?? null,
+                'name' => $name,
+                'phone' => $phone,
+                'status' => $phone ? 'qualified' : 'partial',
+                'qualification_score' => ($phone ? 40 : 0) + ($name ? 20 : 0) + ($buyingSignals ? 20 : 0),
+                'capture_source' => 'voice',
+                'capture_reason' => 'voice_buying_intent',
+                'custom_fields' => [
+                    'call_id' => $this->call->id,
+                    'call_duration' => $this->call->duration_seconds,
+                ],
+            ]);
+
+            Log::info("RealtimeSession: voice lead captured for call {$this->call->id}", [
+                'lead_id' => $lead->id,
+                'name' => $name,
+                'phone' => $phone ? '***' . substr($phone, -4) : null,
+            ]);
+
+            // Track event
+            app(ConversationEventService::class)->track(
+                EventTaxonomy::LEAD_COMPLETED,
+                ['lead_id' => $lead->id, 'source' => 'voice', 'has_phone' => (bool) $phone, 'has_name' => (bool) $name],
+                [
+                    'tenant_id' => $this->call->tenant_id,
+                    'bot_id' => $this->call->bot_id,
+                    'event_source' => EventTaxonomy::SOURCE_VOICE,
+                    'idempotency_key' => "voice_lead:{$this->call->id}",
+                ]
+            );
+        } catch (\Throwable $e) {
+            Log::debug("RealtimeSession: voice lead extraction failed for call {$this->call->id}", [
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

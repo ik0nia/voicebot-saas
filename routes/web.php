@@ -169,6 +169,11 @@ Route::middleware('auth')->prefix('dashboard/sites')->group(function () {
 
 // V2: Leads, Opportunities, Commerce Analytics (dashboard)
 Route::middleware('auth')->prefix('dashboard')->group(function () {
+    // Callbacks
+    Route::get('/callbacks', [\App\Http\Controllers\Dashboard\CallbackController::class, 'index'])->name('dashboard.callbacks.index');
+    Route::get('/callbacks/{callback}', [\App\Http\Controllers\Dashboard\CallbackController::class, 'show'])->name('dashboard.callbacks.show');
+    Route::post('/callbacks/{callback}/status', [\App\Http\Controllers\Dashboard\CallbackController::class, 'updateStatus'])->name('dashboard.callbacks.updateStatus');
+
     // Leads
     Route::get('/leads', [\App\Http\Controllers\Dashboard\LeadController::class, 'index'])->name('dashboard.leads.index');
     Route::get('/leads/export', [\App\Http\Controllers\Dashboard\LeadController::class, 'export'])->name('dashboard.leads.export');
