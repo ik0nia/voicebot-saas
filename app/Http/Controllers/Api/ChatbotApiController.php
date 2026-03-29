@@ -208,54 +208,76 @@ class ChatbotApiController extends Controller
         }
 
         if (!$useOrchestrator) {
-            // ── Legacy pipeline (unchanged) ──
-            $orderLookup = app(\App\Services\OrderLookupService::class);
-            $orderParams = $orderLookup->detectOrderQuery($userMessage);
-            $orderContext = '';
-
-            if ($orderParams === null) {
-                $recentBotMessage = Message::where('conversation_id', $conversation->id)
-                    ->where('direction', 'outbound')
-                    ->orderByDesc('id')
-                    ->value('content');
-
-                if ($recentBotMessage && (
-                    str_contains($recentBotMessage, 'numărul comenzii') ||
-                    str_contains($recentBotMessage, 'numarul comenzii') ||
-                    str_contains($recentBotMessage, 'număr de comandă') ||
-                    str_contains($recentBotMessage, 'emailul') ||
-                    str_contains($recentBotMessage, 'telefonul')
-                )) {
-                    $orderParams = $orderLookup->extractOrderParams($userMessage);
-                }
-            }
-
-            if ($orderParams !== null) {
-                $orderResult = $orderLookup->lookup($bot->id, $orderParams);
-                if ($orderResult['found']) {
-                    $orderContext = "\n\n[INFORMAȚII COMANDĂ - răspunde pe baza acestor date]\n";
-                    foreach ($orderResult['orders'] as $o) {
-                        $orderContext .= "Comanda #{$o['number']} | Status: {$o['status']} | Data: {$o['date']} | Total: {$o['total']}";
-                        $orderContext .= " | Plata: {$o['payment_method']} | Livrare: {$o['shipping_method']}";
-                        if ($o['tracking']) $orderContext .= " | AWB: {$o['tracking']}";
-                        if (!empty($o['tracking_url'])) $orderContext .= " | Tracking: {$o['tracking_url']}";
-                        $orderContext .= " | Produse: " . collect($o['items'])->map(fn($i) => "{$i['name']} x{$i['quantity']}")->implode(', ');
-                        $orderContext .= "\n";
-                    }
-                } elseif (empty($orderParams['order_number']) && empty($orderParams['email']) && empty($orderParams['phone'])) {
-                    $orderContext = "\n\n[Clientul întreabă de o comandă dar nu a dat numărul. Cere-i numărul comenzii, emailul sau telefonul.]";
-                } else {
-                    $orderContext = "\n\n[{$orderResult['message']}]";
-                }
-            }
-
+            // ── Legacy pipeline ──
             $intentService = app(IntentDetectionService::class);
             $intents = $intentService->detect($userMessage);
-            $isRecommendation = $intents['is_category_recommendation'] ?? false;
+
+            $orderContext = '';
             $productContext = '';
 
-            if ($orderParams !== null) {
-                // Order query — skip product search
+            // NEW ORDER INTENT — completely separate from order lookup
+            if ($intents['is_new_order_intent'] ?? false) {
+                $lastProduct = ($conversation->metadata ?? [])['last_product_context'] ?? null;
+                $orderContext = "\n\n[INTENȚIE: COMANDĂ NOUĂ — Clientul vrea să PLASEZE o comandă."
+                    . "\nNU cere număr de comandă. NU cere email pentru verificare. Ajută-l să comande.";
+                if ($lastProduct) {
+                    $orderContext .= "\nProdusul discutat anterior: {$lastProduct['name']} — {$lastProduct['price']} {$lastProduct['currency']}."
+                        . "\nFolosește ACEST produs ca referință implicită.";
+                }
+                $orderContext .= "]";
+
+                // Also search products for context
+                $products = $this->searchProductCards($bot->id, $userMessage);
+                if (!empty($products)) {
+                    $productContext = "\n\n[" . count($products) . " produse relevante afișate ca carduri.]";
+                }
+            }
+            // EXISTING ORDER LOOKUP — support flow
+            elseif ($intents['is_order_query'] ?? false) {
+                $orderLookup = app(\App\Services\OrderLookupService::class);
+                $orderParams = $orderLookup->detectOrderQuery($userMessage);
+
+                if ($orderParams === null) {
+                    $recentBotMessage = Message::where('conversation_id', $conversation->id)
+                        ->where('direction', 'outbound')
+                        ->orderByDesc('id')
+                        ->value('content');
+
+                    if ($recentBotMessage && (
+                        str_contains($recentBotMessage, 'numărul comenzii') ||
+                        str_contains($recentBotMessage, 'numarul comenzii') ||
+                        str_contains($recentBotMessage, 'număr de comandă') ||
+                        str_contains($recentBotMessage, 'emailul') ||
+                        str_contains($recentBotMessage, 'telefonul')
+                    )) {
+                        $orderParams = $orderLookup->extractOrderParams($userMessage);
+                    }
+                }
+
+                if ($orderParams !== null) {
+                    $orderResult = $orderLookup->lookup($bot->id, $orderParams);
+                    if ($orderResult['found']) {
+                        $orderContext = "\n\n[INFORMAȚII COMANDĂ - răspunde pe baza acestor date]\n";
+                        foreach ($orderResult['orders'] as $o) {
+                            $orderContext .= "Comanda #{$o['number']} | Status: {$o['status']} | Data: {$o['date']} | Total: {$o['total']}";
+                            $orderContext .= " | Plata: {$o['payment_method']} | Livrare: {$o['shipping_method']}";
+                            if ($o['tracking']) $orderContext .= " | AWB: {$o['tracking']}";
+                            if (!empty($o['tracking_url'])) $orderContext .= " | Tracking: {$o['tracking_url']}";
+                            $orderContext .= " | Produse: " . collect($o['items'])->map(fn($i) => "{$i['name']} x{$i['quantity']}")->implode(', ');
+                            $orderContext .= "\n";
+                        }
+                    } elseif (empty($orderParams['order_number']) && empty($orderParams['email']) && empty($orderParams['phone'])) {
+                        $orderContext = "\n\n[Clientul întreabă de o comandă dar nu a dat numărul. Cere-i numărul comenzii, emailul sau telefonul.]";
+                    } else {
+                        $orderContext = "\n\n[{$orderResult['message']}]";
+                    }
+                }
+            }
+
+            $isRecommendation = $intents['is_category_recommendation'] ?? false;
+
+            if (($intents['is_order_query'] ?? false) || ($intents['is_new_order_intent'] ?? false)) {
+                // Order-related — skip product search (already handled above for new_order)
             } elseif ($isRecommendation) {
                 $recommendationService = app(\App\Services\RecommendationService::class);
                 $concept = $intentService->extractRecommendationConcept($userMessage);
@@ -350,6 +372,19 @@ class ChatbotApiController extends Controller
             ], array_merge($eventCtx, [
                 'idempotency_key' => $eventService->idempotencyKey((string) $conversation->id, 'products_returned', $msgIdx),
             ]));
+
+            // Save last discussed product for reference in future messages ("pe ăla vreau să îl comand")
+            $firstProduct = $products[0] ?? null;
+            if ($firstProduct) {
+                $meta = $conversation->metadata ?? [];
+                $meta['last_product_context'] = [
+                    'id' => $firstProduct['id'] ?? null,
+                    'name' => $firstProduct['name'] ?? '',
+                    'price' => $firstProduct['price'] ?? '',
+                    'currency' => $firstProduct['currency'] ?? 'RON',
+                ];
+                $conversation->update(['metadata' => $meta]);
+            }
         }
 
         $botResponse = $aiResult['content'];
@@ -434,6 +469,19 @@ class ChatbotApiController extends Controller
             if (!empty($extraContext)) {
                 $systemPrompt .= $extraContext;
             }
+
+            // Inject last product context for memory ("pe ăla vreau să îl comand")
+            $lastProduct = ($conversation->metadata ?? [])['last_product_context'] ?? null;
+            if ($lastProduct) {
+                $systemPrompt .= "\n\nPRODUS DISCUTAT ANTERIOR: {$lastProduct['name']} — {$lastProduct['price']} {$lastProduct['currency']}"
+                    . "\nDacă clientul face referire la \"ăla\", \"acela\", \"produsul\", sau vrea să comande fără a specifica — folosește ACEST produs.";
+            }
+
+            // Order intent rules
+            $systemPrompt .= "\n\nREGULI COMENZI:"
+                . "\n- Dacă clientul vrea să PLASEZE o comandă nouă: ajută-l. NU cere număr de comandă. NU cere email pentru verificare."
+                . "\n- Dacă clientul vrea să VERIFICE o comandă existentă: cere-i numărul comenzii sau emailul."
+                . "\n- \"Vreau să comand\" = comandă NOUĂ. \"Unde e comanda mea\" = verificare EXISTENTĂ.";
 
             // V2: Inject conversation policy instructions (feature flag: bot.settings.v2_policies)
             if (!empty($bot->settings['v2_policies'])) {

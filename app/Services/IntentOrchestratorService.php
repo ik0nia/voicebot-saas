@@ -80,8 +80,13 @@ class IntentOrchestratorService
                 };
             }
 
-            if ($intent->name === 'order_lookup') {
+            if ($intent->name === 'existing_order_lookup') {
                 $decision['use_tools'] = true;
+            }
+
+            if ($intent->name === 'new_order_intent') {
+                // New order needs product context, NOT order lookup
+                $decision['use_products'] = true;
             }
         }
 
@@ -142,6 +147,7 @@ class IntentOrchestratorService
             $skip = match ($pipeline->name) {
                 'knowledge' => !$dataSources['use_rag'],
                 'product_search', 'recommendation' => !$dataSources['use_products'],
+                'new_order', 'order_lookup' => false, // Never skip order-related pipelines
                 default => false,
             };
 
@@ -156,6 +162,7 @@ class IntentOrchestratorService
             try {
                 match ($pipeline->name) {
                     'order_lookup' => $this->executeOrderLookup($bot->id, $pipeline, $result, $userMessage),
+                    'new_order' => $this->executeNewOrder($pipeline, $result, $conversation),
                     'product_search' => $this->executeProductSearch($bot->id, $pipeline, $result),
                     'recommendation' => $this->executeRecommendation($bot->id, $pipeline, $result),
                     'knowledge' => $this->executeKnowledge($bot->id, $pipeline, $result, $dataSources['rag_limit']),
@@ -245,44 +252,56 @@ class IntentOrchestratorService
         $msg = mb_strtolower(trim($message));
         $intents = [];
 
-        // Order lookup (high priority)
-        $oldIntents = $this->intentDetector->detect($message);
-        if ($oldIntents['is_order_query'] ?? false) {
-            $intents[] = new DetectedIntent('order_lookup', 0.9, [], 10);
+        $detected = $this->intentDetector->detect($message);
+
+        // Greeting / thanks — early return, skip everything else
+        if ($detected['is_greeting'] ?? false) {
+            return [new DetectedIntent('greeting', 0.95, [], 1)];
+        }
+        if ($detected['is_thanks'] ?? false) {
+            return [new DetectedIntent('thanks', 0.95, [], 1)];
+        }
+
+        // NEW ORDER intent (purchase flow) — high priority, must NOT trigger order lookup
+        if ($detected['is_new_order_intent'] ?? false) {
+            $intents[] = new DetectedIntent('new_order_intent', 0.9, ['query' => $message], 5);
+            // Also search products so we have context for the order
+            $intents[] = new DetectedIntent('product_search', 0.8, ['query' => $message], 20);
+        }
+
+        // EXISTING order lookup (support flow) — only if NOT new order
+        if (($detected['is_order_query'] ?? false) && !($detected['is_new_order_intent'] ?? false)) {
+            $intents[] = new DetectedIntent('existing_order_lookup', 0.9, [], 10);
         }
 
         // Product search — score based on specificity
-        if (!($oldIntents['is_greeting'] ?? false) && !($oldIntents['is_thanks'] ?? false)) {
+        if (!($detected['is_greeting'] ?? false) && !($detected['is_thanks'] ?? false) && !($detected['is_new_order_intent'] ?? false)) {
             $words = preg_split('/\s+/', $msg);
-            $hasProductSignal = count($words) >= 2 && !($oldIntents['is_category_recommendation'] ?? false);
+            $hasProductSignal = count($words) >= 2 && !($detected['is_category_recommendation'] ?? false);
             if ($hasProductSignal) {
-                $intents[] = new DetectedIntent('product_search', 0.7, ['query' => $message], 20);
+                // Don't add duplicate product_search if already added via new_order
+                $hasProductIntent = !empty(array_filter($intents, fn($i) => $i->name === 'product_search'));
+                if (!$hasProductIntent) {
+                    $intents[] = new DetectedIntent('product_search', 0.7, ['query' => $message], 20);
+                }
             }
         }
 
         // Category recommendation
-        if ($oldIntents['is_category_recommendation'] ?? false) {
+        if ($detected['is_category_recommendation'] ?? false) {
             $concept = $this->intentDetector->extractRecommendationConcept($message);
             $intents[] = new DetectedIntent('category_recommendation', 0.85, ['concept' => $concept], 20);
         }
 
-        // Knowledge query — almost always (unless greeting/thanks)
-        if (!($oldIntents['is_greeting'] ?? false) && !($oldIntents['is_thanks'] ?? false) &&
-            !($oldIntents['is_followup'] ?? false)) {
+        // Knowledge query — almost always (unless greeting/thanks/followup)
+        if (!($detected['is_greeting'] ?? false) && !($detected['is_thanks'] ?? false) &&
+            !($detected['is_followup'] ?? false)) {
             $intents[] = new DetectedIntent('knowledge_query', 0.5, ['query' => $message], 30);
         }
 
         // Handoff intent
         if (preg_match('/\b(operator|om|persoana|agent|ajutor real|vorbi cu cineva)\b/u', $msg)) {
             $intents[] = new DetectedIntent('handoff_intent', 0.9, [], 5);
-        }
-
-        // Greeting / thanks — low priority, skip other pipelines
-        if ($oldIntents['is_greeting'] ?? false) {
-            return [new DetectedIntent('greeting', 0.95, [], 1)];
-        }
-        if ($oldIntents['is_thanks'] ?? false) {
-            return [new DetectedIntent('thanks', 0.95, [], 1)];
         }
 
         // Sort by priority
@@ -298,7 +317,8 @@ class IntentOrchestratorService
 
         foreach ($intents as $intent) {
             match ($intent->name) {
-                'order_lookup' => $pipelines[] = new PipelineTask('order_lookup', $intent, $intent->entities),
+                'existing_order_lookup' => $pipelines[] = new PipelineTask('order_lookup', $intent, $intent->entities),
+                'new_order_intent' => $pipelines[] = new PipelineTask('new_order', $intent, $intent->entities),
                 'product_search' => (function() use (&$pipelines, &$hasProductPipeline, $intent) {
                     if (!$hasProductPipeline) {
                         $pipelines[] = new PipelineTask('product_search', $intent, $intent->entities);
@@ -317,6 +337,41 @@ class IntentOrchestratorService
         }
 
         return $pipelines;
+    }
+
+    /**
+     * Handle new order intent — inject purchase guidance context.
+     * Uses last_product_context from conversation if user references a previous product.
+     */
+    private function executeNewOrder(PipelineTask $task, OrchestratorResult $result, ?Conversation $conversation): void
+    {
+        $lastProduct = null;
+        if ($conversation) {
+            $meta = $conversation->metadata ?? [];
+            $lastProduct = $meta['last_product_context'] ?? null;
+        }
+
+        $orderGuide = "\n\n[INTENȚIE: COMANDĂ NOUĂ — Clientul vrea să PLASEZE o comandă."
+            . "\nREGULI STRICTE:"
+            . "\n- NU cere număr de comandă existentă."
+            . "\n- NU cere email pentru verificare comandă."
+            . "\n- NU trata ca suport/verificare."
+            . "\n- Ajută clientul să finalizeze comanda.";
+
+        if ($lastProduct) {
+            $orderGuide .= "\n\nProdusul discutat anterior: {$lastProduct['name']}"
+                . " — {$lastProduct['price']} {$lastProduct['currency']}"
+                . "\nFolosește ACEST produs ca referință implicită.";
+        }
+
+        $orderGuide .= "\n\nGhidare:"
+            . "\n- Confirmă produsul dorit (sau folosește cel discutat)."
+            . "\n- Întreabă cantitatea dacă nu e specificată."
+            . "\n- Oferă link-ul de comandă sau explică procesul de comandă."
+            . "\n- Dacă botul e e-commerce, sugerează: 'Poți comanda direct de pe site.' + link]";
+
+        $result->orderContext = $orderGuide;
+        $task->resultsCount = 1;
     }
 
     private function executeOrderLookup(int $botId, PipelineTask $task, OrchestratorResult $result, string $userMessage = ''): void

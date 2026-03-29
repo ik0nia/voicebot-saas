@@ -135,15 +135,27 @@ class ChannelMessageService
                 }
             }
 
-            // Order lookup — detect if message is about orders
-            $orderParams = $this->orderLookupService->detectOrderQuery($messageText);
-            if ($orderParams !== null) {
-                $orderResult = $this->orderLookupService->lookup($bot->id, $orderParams);
-                if ($orderResult['found']) {
-                    $orderContext = "Informații comandă client:\n" . json_encode($orderResult['orders'], JSON_UNESCAPED_UNICODE);
-                    $systemPrompt .= "\n\n" . $orderContext;
-                } elseif (!empty($orderResult['message'])) {
-                    $systemPrompt .= "\n\n" . $orderResult['message'];
+            // Intent detection for order separation
+            $intents = $intentService->detect($messageText);
+
+            // NEW ORDER vs EXISTING ORDER — separate handling
+            if ($intents['is_new_order_intent'] ?? false) {
+                $lastProduct = ($conversation->metadata ?? [])['last_product_context'] ?? null;
+                $orderGuide = "\n\n[COMANDĂ NOUĂ — Ajută clientul să comande. NU cere număr de comandă. NU cere email pentru verificare.";
+                if ($lastProduct) {
+                    $orderGuide .= "\nProdus discutat: {$lastProduct['name']} — {$lastProduct['price']} {$lastProduct['currency']}.";
+                }
+                $orderGuide .= "]";
+                $systemPrompt .= $orderGuide;
+            } elseif ($intents['is_order_query'] ?? false) {
+                $orderParams = $this->orderLookupService->detectOrderQuery($messageText);
+                if ($orderParams !== null) {
+                    $orderResult = $this->orderLookupService->lookup($bot->id, $orderParams);
+                    if ($orderResult['found']) {
+                        $systemPrompt .= "\n\nInformații comandă client:\n" . json_encode($orderResult['orders'], JSON_UNESCAPED_UNICODE);
+                    } elseif (!empty($orderResult['message'])) {
+                        $systemPrompt .= "\n\n" . $orderResult['message'];
+                    }
                 }
             }
 
@@ -160,8 +172,31 @@ class ChannelMessageService
                         $productContext .= "\n";
                     }
                     $systemPrompt .= "\n\n" . $productContext;
+
+                    // Save last product for memory
+                    $first = $products[0];
+                    $meta = $conversation->metadata ?? [];
+                    $meta['last_product_context'] = [
+                        'id' => $first->id ?? null,
+                        'name' => $first->name ?? '',
+                        'price' => $first->price ?? '',
+                        'currency' => $first->currency ?? 'RON',
+                    ];
+                    $conversation->update(['metadata' => $meta]);
                 }
             }
+
+            // Inject last product context for references
+            $lastProduct = ($conversation->metadata ?? [])['last_product_context'] ?? null;
+            if ($lastProduct) {
+                $systemPrompt .= "\n\nPRODUS DISCUTAT ANTERIOR: {$lastProduct['name']} — {$lastProduct['price']} {$lastProduct['currency']}"
+                    . "\nDacă clientul face referire la \"ăla\", \"acela\", \"produsul\" — folosește ACEST produs.";
+            }
+
+            // Order intent rules
+            $systemPrompt .= "\n\nREGULI COMENZI:"
+                . "\n- \"Vreau să comand\" = comandă NOUĂ. NU cere număr de comandă."
+                . "\n- \"Unde e comanda mea\" = verificare EXISTENTĂ. Cere numărul comenzii.";
 
             // Apply centralized anti-hallucination guardrails
             $systemPrompt = PromptGuardrails::apply($systemPrompt);

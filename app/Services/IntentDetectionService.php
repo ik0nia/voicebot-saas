@@ -14,7 +14,8 @@ class IntentDetectionService
         $msg = mb_strtolower(trim($message));
 
         return [
-            'is_order_query' => $this->isOrderQuery($msg),
+            'is_order_query' => $this->isExistingOrderQuery($msg),
+            'is_new_order_intent' => $this->isNewOrderIntent($msg),
             'is_product_search' => $this->isProductSearch($msg),
             'is_category_recommendation' => $this->isCategoryRecommendation($msg),
             'is_greeting' => $this->isGreeting($msg),
@@ -33,9 +34,62 @@ class IntentDetectionService
         return $intents['is_greeting'] || $intents['is_thanks'] || $intents['is_followup'];
     }
 
-    private function isOrderQuery(string $msg): bool
+    /**
+     * Detect intent to CHECK an EXISTING order (support flow).
+     * Triggers: order number request, tracking, delivery status.
+     * Does NOT match "vreau să comand" (that's new_order_intent).
+     */
+    private function isExistingOrderQuery(string $msg): bool
     {
-        $patterns = ['/comand[aă]/u', '/livr[aă]r/u', '/colet/u', '/tracking/i', '/awb/i', '/cand.*vine/u', '/status.*comand/u'];
+        // First, exclude new order intent — it takes priority
+        if ($this->isNewOrderIntent($msg)) {
+            return false;
+        }
+
+        $patterns = [
+            '/unde.*comand/u',              // "unde e comanda mea"
+            '/status.*comand/u',            // "statusul comenzii"
+            '/verific.*comand/u',           // "verifică comanda"
+            '/nu.*primit.*comand/u',        // "nu am primit comanda"
+            '/colet/u',                     // "coletul meu"
+            '/tracking/i',                  // "tracking"
+            '/awb/i',                       // "AWB"
+            '/cand.*vine/u',               // "când vine"
+            '/cand.*ajunge/u',             // "când ajunge"
+            '/livr[aă]r.*comand/u',        // "livrarea comenzii"
+            '/status.*comenz/u',           // "statusul comenzii"
+            '/comanda.*\d{3,}/u',          // "comanda 12345" (cu număr)
+            '/comand[aă].*#/u',            // "comanda #123"
+        ];
+
+        foreach ($patterns as $p) {
+            if (preg_match($p, $msg)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Detect intent to PLACE a NEW order (purchase flow).
+     * Triggers: "vreau să comand", "cum cumpăr", "plasez comandă".
+     * Must NOT trigger order lookup or ask for order number/email.
+     */
+    private function isNewOrderIntent(string $msg): bool
+    {
+        $patterns = [
+            '/vreau\s+s[aă]\s+(comand|cumpar|cumpar|plasez|fac\s+o\s+comand)/u',
+            '/a[sșş]\s+(dori|vrea)\s+s[aăâ]\s+(comand|cump[aă]r)/u',
+            '/cum\s+(pot|sa|să)\s+(comand|cumpar|cumpar|plasez)/u',
+            '/vreau\s+s[aă]\s+(il|o|le|îl|îi)\s+(comand|cumpar)/u',
+            '/doresc\s+s[aă]\s+(comand|cumpar)/u',
+            '/pot\s+s[aă]\s+(comand|cumpar)/u',
+            '/[iî]l\s+comand/u',            // "îl comand"
+            '/[iî]l\s+cump[aă]r/u',         // "îl cumpăr"
+            '/[iî]l\s+vreau/u',             // "îl vreau"
+            '/pe\s+[aă](la|sta)\s+(vreau|comand|cumpar)/u',  // "pe ăla vreau"
+            '/comand\s+produsul/u',          // "comand produsul"
+            '/adaug[aă]?\s+(in|în)\s+co[sș]/u', // "adaugă în coș"
+        ];
+
         foreach ($patterns as $p) {
             if (preg_match($p, $msg)) return true;
         }
@@ -44,7 +98,10 @@ class IntentDetectionService
 
     private function isProductSearch(string $msg): bool
     {
-        $patterns = ['/cat.*cost/u', '/pret/u', '/caut/u', '/vreau.*sa.*cumpar/u', '/aveti/u', '/stoc/u'];
+        // "vreau sa cumpar" is new_order, not product search
+        if ($this->isNewOrderIntent($msg)) return false;
+
+        $patterns = ['/cat.*cost/u', '/pret/u', '/caut/u', '/aveti/u', '/stoc/u'];
         foreach ($patterns as $p) {
             if (preg_match($p, $msg)) return true;
         }

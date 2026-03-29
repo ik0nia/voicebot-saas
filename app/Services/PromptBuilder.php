@@ -23,6 +23,7 @@ class PromptBuilder
     private string $productContext = '';
     private string $extraContext = '';
     private string $summaryContext = '';
+    private ?array $lastProductContext = null;
     private string $confidence = 'high';
     private bool $isVoice = false;
     private Bot $bot;
@@ -112,6 +113,16 @@ class PromptBuilder
     }
 
     /**
+     * Set the last discussed product for contextual reference.
+     * When user says "pe ăla vreau" or "îl comand", this product is used.
+     */
+    public function withLastProduct(?array $product): self
+    {
+        $this->lastProductContext = $product;
+        return $this;
+    }
+
+    /**
      * Set the confidence level (from ConfidenceService).
      * Affects prompt instructions for low/medium confidence.
      */
@@ -180,6 +191,24 @@ class PromptBuilder
         if (!empty($this->extraContext)) {
             $prompt .= "\n\n" . $this->extraContext;
         }
+
+        // Inject last product memory for contextual references
+        if ($this->lastProductContext) {
+            $p = $this->lastProductContext;
+            $prompt .= "\n\nPRODUS DISCUTAT ANTERIOR: {$p['name']} — {$p['price']} {$p['currency']}"
+                . "\nDacă clientul face referire la \"ăla\", \"acela\", \"produsul\", sau vrea să comande fără a specifica — folosește ACEST produs.";
+        }
+
+        // Order intent handling rules
+        $prompt .= implode("\n", [
+            '',
+            '',
+            'REGULI COMENZI:',
+            '- Dacă clientul vrea să PLASEZE o comandă nouă: ajută-l să comande. NU cere număr de comandă. NU cere email pentru verificare.',
+            '- Dacă clientul vrea să VERIFICE o comandă existentă: cere-i numărul comenzii sau emailul.',
+            '- "Vreau să comand" = comandă NOUĂ. "Unde e comanda mea" = verificare comandă EXISTENTĂ.',
+            '- Dacă există un produs discutat anterior, folosește-l ca referință implicită pentru comanda nouă.',
+        ]);
 
         // Response quality instructions (before guardrails, after context)
         $prompt .= self::responseQualityInstructions($this->isVoice);
