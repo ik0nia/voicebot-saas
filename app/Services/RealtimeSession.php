@@ -175,9 +175,12 @@ class RealtimeSession
 
         // V2: Lead capture vocal
         $base .= "\n\n=== CAPTARE DATE CLIENT (FOARTE IMPORTANT) ==="
-            . "\nDupă ce ai răspuns la 2-3 întrebări ale clientului despre produse sau servicii, TREBUIE să îl întrebi PROACTIV:"
-            . "\n'Doriți să vă ajutăm cu o comandă sau o ofertă personalizată?'"
-            . "\nSau: 'Vreți să vă pun în legătură cu un coleg care să vă ajute mai departe?'"
+            . "\nCÂND să propui: DOAR după ce ai oferit informații utile clientului (prețuri, disponibilitate, recomandări)."
+            . "\nNU propune la primele replici. Lasă clientul să primească valoare mai întâi."
+            . "\nPropune NATURAL, ca o continuare a conversației, de exemplu:"
+            . "\n- După ce ai dat prețuri: 'Dacă doriți, pot să las un coleg să vă contacteze cu o ofertă completă.'"
+            . "\n- După ce ai recomandat produse: 'Vreți să vă ajutăm să finalizați comanda?'"
+            . "\n- După ce ai răspuns la întrebări tehnice: 'Pot să vă pun în legătură cu un specialist pentru detalii?'"
             . "\n"
             . "\nDacă clientul răspunde DA, SIGUR, VREAU, OK, BINE, sau orice confirmare:"
             . "\nTREBUIE să colectezi OBLIGATORIU aceste date, în ordine:"
@@ -194,7 +197,8 @@ class RealtimeSession
             . "\n- NU spune 'Am notat' sau 'Un coleg vă va contacta' până nu ai NUME + TELEFON confirmate."
             . "\n"
             . "\nNU aștepta ca clientul să ceară singur. TU trebuie să propui."
-            . "\nNU cere datele în primele 2 replici — lasă-l mai întâi să pună întrebări."
+            . "\nNU cere datele în primele replici — lasă clientul să primească informații utile mai întâi."
+            . "\nPropune doar DUPĂ ce ai oferit prețuri, recomandări sau informații tehnice relevante."
             . "\n=== SFÂRȘIT CAPTARE DATE ===";
 
         // Apply centralized guardrails (voice mode)
@@ -560,12 +564,31 @@ class RealtimeSession
 
             if (!$buyingSignals && !($botAskedForHelp && $userConfirmed) && !$phone) return;
 
-            // Get products discussed
-            $productsShown = [];
-            foreach ($transcripts->where('role', 'assistant') as $t) {
-                if (preg_match_all('/(\d+(?:[.,]\d+)?)\s*(?:lei|RON)/i', $t->content, $priceMatches)) {
-                    // Has prices mentioned — products were discussed
+            // Extract products discussed — match product names from assistant transcripts against DB
+            $productsOfInterest = [];
+            try {
+                $productSearch = app(ProductSearchService::class);
+                // Search for products mentioned in conversation using key phrases from user
+                $userPhrases = array_filter(
+                    preg_split('/[.!?,]+/', $userText),
+                    fn($p) => mb_strlen(trim($p)) > 5
+                );
+                $seenIds = [];
+                foreach (array_slice($userPhrases, 0, 5) as $phrase) {
+                    $found = $productSearch->search($this->bot->id, trim($phrase), 2);
+                    foreach ($found as $p) {
+                        if (isset($seenIds[$p->id])) continue;
+                        $seenIds[$p->id] = true;
+                        $productsOfInterest[] = [
+                            'id' => $p->wc_product_id ?? $p->id,
+                            'name' => $p->name,
+                            'price' => $p->price,
+                            'currency' => $p->currency ?? 'RON',
+                        ];
+                    }
                 }
+            } catch (\Throwable $e) {
+                // Silent — products are optional on lead
             }
 
             $lead = Lead::create([
@@ -578,6 +601,7 @@ class RealtimeSession
                 'qualification_score' => ($phone ? 40 : 0) + ($name ? 20 : 0) + ($buyingSignals ? 20 : 0),
                 'capture_source' => 'voice',
                 'capture_reason' => 'voice_buying_intent',
+                'products_shown' => !empty($productsOfInterest) ? $productsOfInterest : null,
                 'custom_fields' => [
                     'call_id' => $this->call->id,
                     'call_duration' => $this->call->duration_seconds,
