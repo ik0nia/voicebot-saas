@@ -1,0 +1,15 @@
+<svg width="420" height="120" viewBox="0 0 420 120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradIconDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#991b1b"/>
+      <stop offset="100%" stop-color="#dc2626"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(10,10)">
+    <rect x="0" y="0" width="80" height="80" rx="20" fill="url(#gradIconDark)"/>
+    <rect x="18" y="28" width="44" height="24" rx="12" fill="white"/>
+    <circle cx="32" cy="40" r="4" fill="#991b1b"/>
+    <circle cx="48" cy="40" r="4" fill="#991b1b"/>
+  </g>
+  <text x="110" y="72" font-family="Inter, Arial, sans-serif" font-size="54" font-weight="700" fill="#ffffff">Sambla</text>
+</svg>
