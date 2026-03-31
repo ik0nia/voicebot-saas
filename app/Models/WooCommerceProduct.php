@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class WooCommerceProduct extends Model
 {
@@ -47,6 +48,16 @@ class WooCommerceProduct extends Model
     public function knowledge(): BelongsTo
     {
         return $this->belongsTo(BotKnowledge::class, 'knowledge_id');
+    }
+
+    public function wooCategories(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            WooCommerceCategory::class,
+            'woocommerce_product_category',
+            'product_id',
+            'category_id'
+        );
     }
 
     public function getAddToCartUrl(): string

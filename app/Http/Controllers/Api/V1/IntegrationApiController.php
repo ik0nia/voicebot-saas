@@ -9,6 +9,7 @@ use App\Models\BotKnowledge;
 use App\Models\Channel;
 use App\Models\KnowledgeConnector;
 use App\Models\Site;
+use App\Models\WooCommerceCategory;
 use App\Models\WooCommerceProduct;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -169,6 +170,8 @@ class IntegrationApiController extends Controller
             'products.*.stock_status' => 'nullable|string|in:instock,outofstock,onbackorder',
             'products.*.image_url' => 'nullable|url|max:2000',
             'products.*.categories' => 'nullable|array',
+            'products.*.category_ids' => 'nullable|array',
+            'products.*.category_ids.*' => 'integer',
             'products.*.attributes' => 'nullable|array',
             'products.*.permalink' => 'required|url|max:2000',
             'site_url' => 'required|url|max:500',
@@ -237,6 +240,15 @@ class IntegrationApiController extends Controller
 
             $product->update(['knowledge_id' => $knowledge->id]);
 
+            // Link product to categories via pivot table
+            $wcCatIds = $productData['category_ids'] ?? [];
+            if (!empty($wcCatIds)) {
+                $categoryIds = WooCommerceCategory::where('bot_id', $bot->id)
+                    ->whereIn('wc_category_id', $wcCatIds)
+                    ->pluck('id');
+                $product->wooCategories()->sync($categoryIds);
+            }
+
             // Dispatch embedding job
             ProcessKnowledgeDocument::dispatch($knowledge);
             $synced++;
@@ -270,6 +282,76 @@ class IntegrationApiController extends Controller
             'synced' => $synced,
             'deleted' => $deleted,
             'total_products' => WooCommerceProduct::where('bot_id', $bot->id)->count(),
+        ]);
+    }
+
+    /**
+     * Sync product categories from WooCommerce (full hierarchy).
+     */
+    public function syncCategories(Request $request): JsonResponse
+    {
+        $request->validate([
+            'categories' => 'required|array',
+            'categories.*.wc_category_id' => 'required|integer',
+            'categories.*.parent_id' => 'required|integer',
+            'categories.*.name' => 'required|string|max:255',
+            'categories.*.slug' => 'nullable|string|max:255',
+            'categories.*.description' => 'nullable|string|max:5000',
+            'categories.*.image_url' => 'nullable|string|max:2000',
+            'categories.*.product_count' => 'nullable|integer|min:0',
+            'categories.*.position' => 'nullable|integer|min:0',
+            'site_url' => 'required|url|max:500',
+        ]);
+
+        $tenant = $request->user()->tenant;
+
+        $connector = KnowledgeConnector::withoutGlobalScopes()
+            ->whereHas('bot', fn($q) => $q->where('tenant_id', $tenant->id))
+            ->where('type', 'woocommerce')
+            ->where('status', 'connected')
+            ->first();
+
+        if (!$connector) {
+            return response()->json(['error' => 'No active WooCommerce connector found.'], 404);
+        }
+
+        $bot = $connector->bot;
+        $synced = 0;
+        $syncedWcIds = [];
+
+        foreach ($request->input('categories', []) as $catData) {
+            WooCommerceCategory::updateOrCreate(
+                ['bot_id' => $bot->id, 'wc_category_id' => $catData['wc_category_id']],
+                [
+                    'wc_parent_id' => $catData['parent_id'],
+                    'name' => $catData['name'],
+                    'slug' => $catData['slug'] ?? null,
+                    'description' => $catData['description'] ?? null,
+                    'image_url' => $catData['image_url'] ?? null,
+                    'product_count' => $catData['product_count'] ?? 0,
+                    'position' => $catData['position'] ?? 0,
+                ]
+            );
+
+            $syncedWcIds[] = $catData['wc_category_id'];
+            $synced++;
+        }
+
+        // Remove categories that no longer exist in WooCommerce
+        if (!empty($syncedWcIds)) {
+            WooCommerceCategory::where('bot_id', $bot->id)
+                ->whereNotIn('wc_category_id', $syncedWcIds)
+                ->delete();
+        }
+
+        // Invalidate category cache
+        \Illuminate\Support\Facades\Cache::forget("category_browse:{$bot->id}");
+        \Illuminate\Support\Facades\Cache::forget("category_browse_grouped:{$bot->id}");
+
+        return response()->json([
+            'success' => true,
+            'synced' => $synced,
+            'total_categories' => WooCommerceCategory::where('bot_id', $bot->id)->count(),
         ]);
     }
 

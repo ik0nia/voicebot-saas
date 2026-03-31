@@ -17,6 +17,7 @@ class IntentDetectionService
             'is_order_query' => $this->isExistingOrderQuery($msg),
             'is_new_order_intent' => $this->isNewOrderIntent($msg),
             'is_product_search' => $this->isProductSearch($msg),
+            'is_category_browse' => $this->isCategoryBrowse($msg),
             'is_category_recommendation' => $this->isCategoryRecommendation($msg),
             'is_greeting' => $this->isGreeting($msg),
             'is_followup' => $this->isFollowup($msg),
@@ -60,6 +61,11 @@ class IntentDetectionService
             '/status.*comenz/u',           // "statusul comenzii"
             '/comanda.*\d{3,}/u',          // "comanda 12345" (cu număr)
             '/comand[aă].*#/u',            // "comanda #123"
+            '/informa[tț]ii.*comand/u',    // "informații despre comanda mea"
+            '/detalii.*comand/u',          // "detalii despre comandă"
+            '/comanda\s+mea/u',            // "comanda mea"
+            '/ce.*s-?a\s+[iî]nt[aâ]mpl.*comand/u', // "ce se întâmplă cu comanda"
+            '/am\s+(o\s+)?comand[aă]/u',   // "am o comandă" (plasată deja)
         ];
 
         foreach ($patterns as $p) {
@@ -88,6 +94,10 @@ class IntentDetectionService
             '/pe\s+[aă](la|sta)\s+(vreau|comand|cumpar)/u',  // "pe ăla vreau"
             '/comand\s+produsul/u',          // "comand produsul"
             '/adaug[aă]?\s+(in|în)\s+co[sș]/u', // "adaugă în coș"
+            '/m-ar\s+interesa/u',             // "m-ar interesa"
+            '/as\s+vrea\s+sa/u',              // "aș vrea să..."
+            '/putet[iî]\s+sa.*comand/u',     // "puteți să comand"
+            '/vreau\s+sa\s+achizit/u',       // "vreau să achiziționez"
         ];
 
         foreach ($patterns as $p) {
@@ -101,7 +111,14 @@ class IntentDetectionService
         // "vreau sa cumpar" is new_order, not product search
         if ($this->isNewOrderIntent($msg)) return false;
 
-        $patterns = ['/cat.*cost/u', '/pret/u', '/caut/u', '/aveti/u', '/stoc/u'];
+        $patterns = [
+            '/cat.*cost/u', '/pret/u', '/caut/u', '/aveti/u', '/stoc/u',
+            '/disponibil/u',     // "disponibil"
+            '/recoman/u',        // "recomandare" (when not category)
+            '/alternativ/u',     // "alternativă"
+            '/model/u',          // "model"
+            '/varian/u',         // "variantă"
+        ];
         foreach ($patterns as $p) {
             if (preg_match($p, $msg)) return true;
         }
@@ -112,14 +129,47 @@ class IntentDetectionService
     {
         $greetings = ['salut', 'buna', 'hey', 'hello', 'hi', 'buna ziua', 'buna dimineata', 'buna seara'];
         $words = preg_split('/[\s,!.]+/', $msg);
-        return count($words) <= 4 && count(array_intersect($words, $greetings)) > 0;
+        return count($words) <= 8 && count(array_intersect($words, $greetings)) > 0;
     }
 
     private function isFollowup(string $msg): bool
     {
-        $followups = ['da', 'nu', 'ok', 'bine', 'multumesc', 'mersi', 'inteleg', 'am inteles', 'perfect', 'super', 'sigur'];
+        $followups = ['da', 'nu', 'ok', 'bine', 'multumesc', 'mersi', 'inteleg', 'am inteles', 'perfect', 'super', 'sigur', 'aha', 'mhm', 'exact', 'corect', 'desigur'];
         $trimmed = trim($msg, ' !.,?');
-        return in_array($trimmed, $followups) || str_word_count($msg) <= 3;
+        return in_array($trimmed, $followups);
+    }
+
+    /**
+     * Detect category browsing — user asks WHAT TYPES of products exist, not for a specific product.
+     * Examples: "ce tipuri de produse aveți", "ce categorii aveți", "cu ce vă ocupați", "ce vindeti"
+     */
+    private function isCategoryBrowse(string $msg): bool
+    {
+        $patterns = [
+            '/ce\s+(tipuri|fel|feluri|gam[aă]|sortiment|categori)/u',           // "ce tipuri/categorii..."
+            '/ce\s+(produse|articole|marfuri)\s+(aveti|aveți|vindeti|vindeți)/u', // "ce produse aveți/vindeți"
+            '/cu\s+ce\s+(va|vă)\s+ocupa/u',                                     // "cu ce vă ocupați"
+            '/ce\s+(vindeti|vindeți|comercializ)/u',                             // "ce vindeți"
+            '/ce\s+anume\s+(aveti|aveți|vindeti|vindeți|oferi)/u',               // "ce anume aveți"
+            '/ce\s+oferi(ti|ți)/u',                                             // "ce oferiți"
+            '/gama\s+de\s+produse/u',                                           // "gama de produse"
+            '/catalog/u',                                                       // "catalog"
+            '/ce\s+se\s+gaseste|ce\s+se\s+g[aă]se[sș]te/u',                   // "ce se găsește"
+            '/lista\s+(de\s+)?(produse|categori)/u',                            // "lista de produse/categorii"
+            '/categori\w*\s+(de\s+)?produs/u',                                  // "categorii de produse"
+            '/mai\s+multe\s+categori/u',                                        // "mai multe categorii"
+            '/(spui|arat[aă]|enumera|zici)\w*.*categori/u',                    // "poți să îmi spui categoriile"
+            '/(spui|arat[aă]|enumera|zici)\w*.*produs\w*\s+(aveti|aveți)/u',   // "poți să îmi arăți ce produse aveți"
+            '/(toate|alt[eă])\s+(categori|produs)/u',                           // "toate categoriile" / "alte produse"
+            '/ce\s+(alt[eă]?\s+)?(categori|tip\w*\s+de\s+produs)/u',          // "ce alte categorii"
+            '/mai\s+(aveti|aveți)\s+(si|și)?\s*(alt|produs|categori)/u',        // "mai aveți și alte..."
+        ];
+
+        foreach ($patterns as $p) {
+            if (preg_match($p, $msg)) return true;
+        }
+
+        return false;
     }
 
     /**
@@ -184,7 +234,12 @@ class IntentDetectionService
 
     private function isComplaint(string $msg): bool
     {
-        $patterns = ['/reclam/u', '/nemultu/u', '/problema/u', '/nu.*functioneaz/u', '/defect/u', '/prost/u'];
+        $patterns = [
+            '/reclam/u', '/nemultu/u', '/problema/u', '/nu.*functioneaz/u', '/defect/u', '/prost/u',
+            '/dezam[aă]gi/u',      // "dezamăgit"
+            '/sup[aă]ra/u',        // "supărat"
+            '/necorespunz/u',      // "necorespunzător"
+        ];
         foreach ($patterns as $p) {
             if (preg_match($p, $msg)) return true;
         }

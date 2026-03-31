@@ -265,11 +265,13 @@ class ProductSearchService
             $bindings[$nk] = $pattern;
             $bindings[$nnk] = $patternNoDiac;
 
+            $escapedWord = $this->escapeLike($word);
+
             $catConditions[] = "LOWER(categories::text) LIKE :{$ck}";
-            $bindings[$ck] = "%{$word}%";
+            $bindings[$ck] = "%{$escapedWord}%";
 
             $attrConditions[] = "LOWER(COALESCE(attributes::text, '')) LIKE :{$ak}";
-            $bindings[$ak] = "%{$word}%";
+            $bindings[$ak] = "%{$escapedWord}%";
 
             $fullMatchParts[] = "CASE WHEN "
                 . "LOWER(name) LIKE :{$nk} OR LOWER(name) LIKE :{$nnk} "
@@ -277,7 +279,7 @@ class ProductSearchService
                 . "OR LOWER(COALESCE(attributes::text, '')) LIKE :{$ak} "
                 . "OR LOWER(COALESCE(short_description, '')) LIKE :{$dk} "
                 . "THEN 1 ELSE 0 END";
-            $bindings[$dk] = "%{$word}%";
+            $bindings[$dk] = "%{$escapedWord}%";
         }
 
         $nameOr = implode(' OR ', $nameConditions);
@@ -300,7 +302,7 @@ class ProductSearchService
             foreach ($typePatterns as $ti => $tp) {
                 $key = "ptype_{$ti}";
                 $typeConds[] = "LOWER(name) LIKE :{$key}";
-                $bindings[$key] = "%{$tp}%";
+                $bindings[$key] = "%" . $this->escapeLike($tp) . "%";
             }
             $typeMatchSql = 'CASE WHEN ' . implode(' OR ', $typeConds) . ' THEN 1 ELSE 0 END';
         }
@@ -394,8 +396,8 @@ class ProductSearchService
                     $score += 4;
                     $reasons[] = '+4 type_in_attr';
                 } elseif ($typeInCat) {
-                    $score += 3;
-                    $reasons[] = '+3 type_in_category';
+                    $score += 5;
+                    $reasons[] = '+5 type_in_category';
                 } else {
                     // Product type NOT found anywhere → EXCLUDE
                     $excluded = true;
@@ -688,11 +690,18 @@ class ProductSearchService
         }));
     }
 
+    /** Escape LIKE special characters to prevent wildcard injection. */
+    private function escapeLike(string $value): string
+    {
+        return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);
+    }
+
     private function buildNamePattern(string $word): string
     {
+        $word = $this->escapeLike($word);
         if (preg_match('/^([a-z]+)(\d+)$/i', $word, $m)) return "%{$m[1]}%{$m[2]}%";
         if (preg_match('/^(\d+)([a-z]+)$/i', $word, $m)) return "%{$m[1]}%{$m[2]}%";
-        $stem = $this->stemRomanian($word);
+        $stem = $this->escapeLike($this->stemRomanian(str_replace(['\\%', '\\_', '\\\\'], ['%', '_', '\\'], $word)));
         if ($stem !== $word && mb_strlen($stem) >= 3) return "%{$stem}%";
         return "%{$word}%";
     }

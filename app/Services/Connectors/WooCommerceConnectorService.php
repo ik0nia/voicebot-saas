@@ -4,6 +4,7 @@ namespace App\Services\Connectors;
 
 use App\Models\BotKnowledge;
 use App\Models\KnowledgeConnector;
+use App\Models\WooCommerceCategory;
 use App\Jobs\ProcessKnowledgeBatch;
 use App\Services\Security\SsrfGuard;
 use Illuminate\Support\Facades\Cache;
@@ -118,6 +119,9 @@ class WooCommerceConnectorService
                 $totalPages = (int) ($response->header('X-WP-TotalPages') ?? 1);
             } while ($page <= $totalPages);
 
+            // Sync category hierarchy from WooCommerce
+            $this->syncCategories($connector);
+
             // Clean up products that no longer exist in WooCommerce
             if (!empty($syncedProductIds)) {
                 $deleted = BotKnowledge::where('bot_id', $connector->bot_id)
@@ -175,6 +179,71 @@ class WooCommerceConnectorService
         }
 
         return $imported;
+    }
+
+    /**
+     * Sync product categories from WooCommerce REST API.
+     * Fetches full hierarchy: id, parent, name, slug, description, image, count.
+     */
+    private function syncCategories(KnowledgeConnector $connector): void
+    {
+        try {
+            $credentials = $connector->credentials;
+            $baseUrl = rtrim($connector->site_url, '/');
+            $page = 1;
+            $syncedWcIds = [];
+
+            do {
+                $response = Http::timeout(15)
+                    ->withBasicAuth($credentials['consumer_key'], $credentials['consumer_secret'])
+                    ->get($baseUrl . '/wp-json/wc/v3/products/categories', [
+                        'per_page' => 100,
+                        'page' => $page,
+                    ]);
+
+                if (!$response->successful()) break;
+
+                $categories = $response->json();
+                if (empty($categories)) break;
+
+                foreach ($categories as $cat) {
+                    WooCommerceCategory::updateOrCreate(
+                        ['bot_id' => $connector->bot_id, 'wc_category_id' => $cat['id']],
+                        [
+                            'wc_parent_id' => $cat['parent'] ?? 0,
+                            'name' => $cat['name'] ?? '',
+                            'slug' => $cat['slug'] ?? null,
+                            'description' => !empty($cat['description']) ? strip_tags($cat['description']) : null,
+                            'image_url' => $cat['image']['src'] ?? null,
+                            'product_count' => $cat['count'] ?? 0,
+                            'position' => $cat['menu_order'] ?? 0,
+                        ]
+                    );
+                    $syncedWcIds[] = $cat['id'];
+                }
+
+                $page++;
+                $totalPages = (int) ($response->header('X-WP-TotalPages') ?? 1);
+            } while ($page <= $totalPages);
+
+            // Remove categories that no longer exist
+            if (!empty($syncedWcIds)) {
+                WooCommerceCategory::where('bot_id', $connector->bot_id)
+                    ->whereNotIn('wc_category_id', $syncedWcIds)
+                    ->delete();
+            }
+
+            // Invalidate cache
+            Cache::forget("category_browse:{$connector->bot_id}");
+            Cache::forget("category_browse_grouped:{$connector->bot_id}");
+
+            Log::info('WooCommerce sync: categories synced', [
+                'bot_id' => $connector->bot_id,
+                'count' => count($syncedWcIds),
+            ]);
+        } catch (\Exception $e) {
+            Log::warning('WooCommerce sync: category sync failed', ['error' => $e->getMessage()]);
+        }
     }
 
     private function formatProductContent(array $product): string

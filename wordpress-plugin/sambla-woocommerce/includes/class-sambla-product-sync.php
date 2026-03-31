@@ -22,6 +22,8 @@ class Sambla_Product_Sync {
         $product = wc_get_product($product_id);
         if (!$product || $product->get_status() !== 'publish') return;
         (new Sambla_Api_Client())->sync_products([$this->format_product($product)], home_url());
+        // Categories may have changed — sync them too
+        $this->sync_categories();
     }
 
     public function delete_product($product_id) {
@@ -119,6 +121,9 @@ class Sambla_Product_Sync {
             } while (count($posts) === 50);
         }
 
+        // Sync category hierarchy
+        $this->sync_categories();
+
         update_option('sambla_last_sync', current_time('mysql'));
         return [
             'synced' => $synced_products + $synced_pages,
@@ -127,9 +132,44 @@ class Sambla_Product_Sync {
         ];
     }
 
+    /**
+     * Sync all WooCommerce product categories with hierarchy.
+     */
+    public function sync_categories() {
+        if (!class_exists('WooCommerce')) return;
+
+        $terms = get_terms([
+            'taxonomy' => 'product_cat',
+            'hide_empty' => false,
+        ]);
+
+        if (is_wp_error($terms) || empty($terms)) return;
+
+        $categories = [];
+        foreach ($terms as $term) {
+            $thumbnail_id = get_term_meta($term->term_id, 'thumbnail_id', true);
+
+            $categories[] = [
+                'wc_category_id' => $term->term_id,
+                'parent_id' => $term->parent, // 0 = top-level
+                'name' => $term->name,
+                'slug' => $term->slug,
+                'description' => $term->description,
+                'image_url' => $thumbnail_id ? wp_get_attachment_image_url($thumbnail_id, 'medium') : null,
+                'product_count' => (int) $term->count,
+                'position' => get_term_meta($term->term_id, 'order', true) ?: 0,
+            ];
+        }
+
+        $client = new Sambla_Api_Client();
+        return $client->sync_categories($categories, home_url());
+    }
+
     private function format_product($product) {
         $image_id = $product->get_image_id();
-        $cats = wp_get_post_terms($product->get_id(), 'product_cat', ['fields' => 'names']);
+        $cat_terms = wp_get_post_terms($product->get_id(), 'product_cat');
+        $cats = is_array($cat_terms) ? array_map(fn($t) => $t->name, $cat_terms) : [];
+        $cat_ids = is_array($cat_terms) ? array_map(fn($t) => $t->term_id, $cat_terms) : [];
 
         $attrs = [];
         foreach ($product->get_attributes() as $attr) {
@@ -154,7 +194,8 @@ class Sambla_Product_Sync {
             'sku' => $product->get_sku(),
             'stock_status' => $product->get_stock_status(),
             'image_url' => $image_id ? wp_get_attachment_image_url($image_id, 'medium') : '',
-            'categories' => is_array($cats) ? $cats : [],
+            'categories' => $cats,
+            'category_ids' => $cat_ids,
             'attributes' => $attrs,
             'permalink' => $product->get_permalink(),
         ];

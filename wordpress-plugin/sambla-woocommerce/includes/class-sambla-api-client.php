@@ -49,6 +49,13 @@ class Sambla_Api_Client {
         ]);
     }
 
+    public function sync_categories($categories, $site_url) {
+        return $this->post('/api/v1/integrations/sync-categories', [
+            'categories' => $categories,
+            'site_url' => $site_url,
+        ]);
+    }
+
     public function update_widget_config($config) {
         return $this->put('/api/v1/integrations/widget-config', array_merge(
             ['channel_id' => get_option('sambla_channel_id', '')],

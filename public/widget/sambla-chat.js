@@ -77,6 +77,21 @@
         }
     };
 
+    // =========================================================================
+    // Page Context Tracking
+    // =========================================================================
+    var pageLoadTime = Date.now();
+
+    function getPageContext() {
+        return {
+            page_url: window.location.href,
+            page_title: document.title || '',
+            page_path: window.location.pathname,
+            time_on_page: Math.round((Date.now() - pageLoadTime) / 1000),
+            referrer: document.referrer || ''
+        };
+    }
+
     function validateColor(color) {
         return /^#([0-9A-Fa-f]{3}){1,2}$/.test(color) ? color : '#991b1b';
     }
@@ -197,6 +212,7 @@
             localStorage.removeItem(SESSION_TOKEN_KEY);
             localStorage.removeItem(LAST_ACTIVITY_KEY);
             localStorage.removeItem(MESSAGES_KEY);
+            localStorage.removeItem(CONVERSATION_ID_KEY);
         } catch(e) {}
     }
 
@@ -314,15 +330,15 @@
             *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }\
             :host { all: initial; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }\
             .sambla-bubble {\
-                position: fixed; bottom: 20px; right: ' + posRight + '; left: ' + posLeft + ';\
+                position: fixed; bottom: 100px; right: ' + posRight + '; left: ' + posLeft + ';\
                 width: 60px; height: 60px; border-radius: 50%;\
-                background: ' + config.color + '; color: #fff;\
+                background: linear-gradient(135deg, #991b1b, #dc2626); color: #fff;\
                 display: flex; align-items: center; justify-content: center;\
-                cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,0.18);\
+                cursor: pointer; box-shadow: 0 4px 20px rgba(153,27,27,0.3), 0 2px 8px rgba(0,0,0,0.1);\
                 z-index: 2147483646; transition: transform 0.2s, box-shadow 0.2s;\
                 border: none; outline: none;\
             }\
-            .sambla-bubble:hover { transform: scale(1.08); box-shadow: 0 6px 24px rgba(0,0,0,0.22); }\
+            .sambla-bubble:hover { transform: scale(1.06); box-shadow: 0 6px 28px rgba(153,27,27,0.35), 0 3px 10px rgba(0,0,0,0.12); }\
             .sambla-bubble:focus-visible { outline: 3px solid ' + config.color + '; outline-offset: 3px; }\
             .sambla-bubble svg { width: 28px; height: 28px; fill: #fff; }\
             .sambla-bubble .close-icon { display: none; }\
@@ -337,48 +353,53 @@
             .sambla-badge.show { display: flex; }\
             \
             .sambla-window {\
-                position: fixed; bottom: 92px; right: ' + posRight + '; left: ' + posLeft + ';\
+                position: fixed; bottom: 172px; right: ' + posRight + '; left: ' + posLeft + ';\
                 width: ' + config.width + 'px; max-width: calc(100vw - 24px); height: ' + config.height + 'px; max-height: calc(100vh - 120px);\
-                background: #fff; border-radius: 16px;\
-                box-shadow: 0 8px 40px rgba(0,0,0,0.16);\
+                background: #fff; border-radius: 20px;\
+                box-shadow: 0 12px 48px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.06);\
                 z-index: 2147483645; display: none; flex-direction: column;\
                 overflow: hidden; border: 1px solid #e2e8f0;\
             }\
             .sambla-window.open { display: flex; }\
             \
             .sambla-header {\
-                background: ' + config.color + '; color: #fff;\
-                padding: 16px 18px; display: flex; align-items: center; gap: 12px;\
-                flex-shrink: 0;\
+                background: linear-gradient(135deg, #991b1b, #dc2626); color: #fff;\
+                padding: 18px 20px; display: flex; align-items: center; gap: 14px;\
+                flex-shrink: 0; position: relative; overflow: hidden;\
+            }\
+            .sambla-header::before {\
+                content: ""; position: absolute; inset: 0; opacity: 0.08;\
+                background-image: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2720%27 height=%2720%27%3E%3Cpath d=%27M10 2 L14 6 L10 10 L6 6 Z%27 fill=%27white%27/%3E%3C/svg%3E");\
             }\
             .sambla-header-avatar {\
-                width: 40px; height: 40px; border-radius: 50%;\
-                background: rgba(255,255,255,0.2);\
+                width: 42px; height: 42px; border-radius: 50%;\
+                background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.15);\
                 display: flex; align-items: center; justify-content: center;\
                 flex-shrink: 0;\
             }\
             .sambla-header-avatar svg { width: 22px; height: 22px; fill: #fff; }\
-            .sambla-header-info { flex: 1; min-width: 0; }\
-            .sambla-header-name { font-size: 15px; font-weight: 600; line-height: 1.3; }\
-            .sambla-header-status { font-size: 12px; opacity: 0.85; }\
+            .sambla-header-info { flex: 1; min-width: 0; position: relative; }\
+            .sambla-header-name { font-size: 16px; font-weight: 700; line-height: 1.3; }\
+            .sambla-header-status { font-size: 11px; opacity: 0.65; display: flex; align-items: center; gap: 5px; }\
+            .sambla-header-status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #4ade80; display: inline-block; }\
             .sambla-powered {\
                 font-size: 10px; text-align: center; padding: 2px 0;\
-                color: rgba(255,255,255,0.7); background: ' + config.color + ';\
-                border-bottom: 1px solid rgba(255,255,255,0.1);\
+                color: rgba(255,255,255,0.7); background: #7f1d1d;\
+                border-bottom: 1px solid rgba(255,255,255,0.05);\
             }\
             .sambla-powered a { color: rgba(255,255,255,0.9); text-decoration: none; font-weight: 600; }\
             \
             .sambla-messages {\
-                flex: 1; overflow-y: auto; padding: 16px; display: flex;\
-                flex-direction: column; gap: 10px; background: #f8fafc;\
+                flex: 1; overflow-y: auto; padding: 18px; display: flex;\
+                flex-direction: column; gap: 12px; background: #fff;\
             }\
-            .sambla-messages::-webkit-scrollbar { width: 5px; }\
-            .sambla-messages::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }\
+            .sambla-messages::-webkit-scrollbar { width: 4px; }\
+            .sambla-messages::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }\
             \
-            .sambla-msg { max-width: 82%; padding: 10px 14px; border-radius: 14px; font-size: 14px; line-height: 1.5; word-wrap: break-word; }\
+            .sambla-msg { padding: 12px 16px; border-radius: 18px; font-size: 14px; line-height: 1.6; word-wrap: break-word; }\
             .sambla-msg.bot {\
-                align-self: flex-start; background: #fff;\
-                border: 1px solid #e2e8f0; border-bottom-left-radius: 4px;\
+                background: #f1f5f9;\
+                border: none; border-bottom-left-radius: 6px;\
                 color: #1e293b;\
             }\
             .sambla-msg.bot strong { font-weight: 700; }\
@@ -389,20 +410,25 @@
             .sambla-msg.bot ul, .sambla-msg.bot ol { margin: 4px 0 4px 18px; padding: 0; }\
             .sambla-msg.bot li { margin-bottom: 2px; }\
             .sambla-msg.user {\
-                align-self: flex-end; background: ' + config.color + ';\
-                color: #fff; border-bottom-right-radius: 4px;\
+                background: linear-gradient(135deg, #991b1b, #dc2626);\
+                color: #fff; border-bottom-right-radius: 6px;\
+                box-shadow: 0 1px 4px rgba(153,27,27,0.15);\
             }\
-            .sambla-msg .time {\
-                font-size: 10px; margin-top: 4px; opacity: 0.6; display: flex; align-items: center; gap: 4px;\
+            .sambla-msg-wrap { display: flex; flex-direction: column; max-width: 85%; }\
+            .sambla-msg-wrap.bot { align-self: flex-start; align-items: flex-start; }\
+            .sambla-msg-wrap.user { align-self: flex-end; align-items: flex-end; }\
+            .sambla-msg-wrap .time {\
+                font-size: 10px; margin-top: 4px; opacity: 0.5; display: flex; align-items: center; gap: 4px;\
+                color: #94a3b8; padding: 0 4px;\
             }\
-            .sambla-msg.user .time { justify-content: flex-end; }\
+            .sambla-msg-wrap.user .time { justify-content: flex-end; }\
             .sambla-msg .receipt { font-size: 10px; }\
             \
             .sambla-typing {\
-                align-self: flex-start; padding: 10px 18px;\
-                background: #fff; border: 1px solid #e2e8f0;\
-                border-radius: 14px; border-bottom-left-radius: 4px;\
-                display: none; gap: 4px; align-items: center;\
+                align-self: flex-start; padding: 12px 20px;\
+                background: #f1f5f9; border: none;\
+                border-radius: 18px; border-bottom-left-radius: 6px;\
+                display: none; gap: 5px; align-items: center;\
             }\
             .sambla-typing.show { display: flex; }\
             .sambla-typing span {\
@@ -413,30 +439,31 @@
             .sambla-typing span:nth-child(2) { animation-delay: 0.2s; }\
             .sambla-typing span:nth-child(3) { animation-delay: 0.4s; }\
             @keyframes sambla-bounce {\
-                0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }\
-                40% { transform: scale(1); opacity: 1; }\
+                0%, 80%, 100% { transform: scale(0.5); opacity: 0.35; }\
+                40% { transform: scale(1.1); opacity: 0.9; }\
             }\
             \
             .sambla-input-area {\
                 display: flex; align-items: center; gap: 8px;\
-                padding: 12px 14px; border-top: 1px solid #e2e8f0;\
-                background: #fff; flex-shrink: 0;\
+                padding: 14px 16px; border-top: 1px solid #f1f5f9;\
+                background: #f8fafc; flex-shrink: 0;\
             }\
             .sambla-input {\
-                flex: 1; border: 1px solid #e2e8f0; border-radius: 10px;\
-                padding: 10px 14px; font-size: 14px; outline: none;\
+                flex: 1; border: 1px solid #e2e8f0; border-radius: 24px;\
+                padding: 10px 18px; font-size: 14px; outline: none;\
                 font-family: inherit; resize: none; line-height: 1.4;\
                 max-height: 80px; background: #f8fafc; color: #1e293b;\
                 transition: border-color 0.15s;\
             }\
             .sambla-input::placeholder { color: #94a3b8; }\
-            .sambla-input:focus { border-color: ' + config.color + '; background: #fff; }\
+            .sambla-input:focus { border-color: #dc2626; background: #fff; box-shadow: 0 0 0 3px rgba(153,27,27,0.06); }\
             .sambla-send {\
-                width: 40px; height: 40px; border-radius: 10px;\
-                background: ' + config.color + '; color: #fff;\
+                width: 42px; height: 42px; border-radius: 50%;\
+                background: linear-gradient(135deg, #991b1b, #dc2626); color: #fff;\
                 border: none; cursor: pointer; display: flex;\
                 align-items: center; justify-content: center;\
-                flex-shrink: 0; transition: opacity 0.15s;\
+                flex-shrink: 0; transition: all 0.2s;\
+                box-shadow: 0 2px 8px rgba(153,27,27,0.2);\
             }\
             .sambla-send:hover { opacity: 0.9; }\
             .sambla-send:disabled { opacity: 0.5; cursor: not-allowed; }\
@@ -528,6 +555,7 @@
                 .sambla-msg.bot code { background: #334155; color: #e2e8f0; }\
                 .sambla-input-area { background: #1e293b; border-color: #334155; }\
                 .sambla-input { background: #0f172a; border-color: #334155; color: #e2e8f0; }\
+                .sambla-input:focus { background: #1e293b; color: #f1f5f9; border-color: #dc2626; box-shadow: 0 0 0 3px rgba(220,38,38,0.15); }\
                 .sambla-input::placeholder { color: #64748b; }\
                 .sambla-typing { background: #1e293b; border-color: #334155; }\
                 .sambla-session-divider::before, .sambla-session-divider::after { background: #334155; }\
@@ -550,7 +578,7 @@
             .sambla-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }\
             \
             @media (max-width: 440px) {\
-                .sambla-window { width: calc(100vw - 16px); right: 8px; left: 8px; bottom: 80px; height: calc(100vh - 100px); }\
+                .sambla-window { width: calc(100vw - 16px); right: 8px; left: 8px; bottom: 172px; height: calc(100vh - 192px); }\
                 .sambla-bubble { bottom: 12px; right: 12px; }\
             }\
         ';
@@ -585,7 +613,7 @@
                 <div class="sambla-input-area">\
                     <textarea class="sambla-input" placeholder="' + t('typeMessage') + '" rows="1" aria-label="' + t('typeMessage') + '"></textarea>\
                     <button class="sambla-send" aria-label="' + t('send') + '" tabindex="0">\
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">\
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="transform:rotate(-45deg)">\
                             <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>\
                         </svg>\
                     </button>\
@@ -793,23 +821,35 @@
             enforceMessageLimit();
             saveMessages(messages);
 
+            // Wrapper — conține bubble + timestamp separat
+            var wrapEl = document.createElement('div');
+            wrapEl.className = 'sambla-msg-wrap ' + sender;
+            wrapEl.setAttribute('role', 'article');
+
             var msgEl = document.createElement('div');
             msgEl.className = 'sambla-msg ' + sender;
-            msgEl.setAttribute('role', 'article');
             var msgHtml = escapeHtml(text);
             if (sender === 'bot') {
                 msgHtml = renderMarkdown(msgHtml);
             }
-            var receiptHtml = getReceiptHtml(sender, status);
-            msgEl.innerHTML = msgHtml + '<div class="time">' + formatTime(ts) + ' ' + receiptHtml + '</div>';
+            msgEl.innerHTML = msgHtml;
 
             // Link previews for bot messages
             if (sender === 'bot') {
                 renderLinkPreviews(text, msgEl);
             }
 
+            wrapEl.appendChild(msgEl);
+
+            // Timestamp — OUTSIDE bubble
+            var receiptHtml = getReceiptHtml(sender, status);
+            var timeEl = document.createElement('div');
+            timeEl.className = 'time';
+            timeEl.innerHTML = formatTime(ts) + ' ' + receiptHtml;
+            wrapEl.appendChild(timeEl);
+
             // Insert before typing indicator
-            messagesContainer.insertBefore(msgEl, typingEl);
+            messagesContainer.insertBefore(wrapEl, typingEl);
 
             // Render product cards if present
             if (products && products.length > 0) {
@@ -883,17 +923,12 @@
                 var productId = (data && data.product_id) ? data.product_id : undefined;
                 // Attach page context to every event
                 var props = data || {};
-                try {
-                    if (window.top && window.top.location) {
-                        props.page_url = window.top.location.href;
-                        props.page_title = window.top.document.title;
-                    } else {
-                        props.page_url = window.location.href;
-                    }
-                } catch(ex) {
-                    // cross-origin iframe — use referrer
-                    props.page_url = document.referrer || window.location.href;
-                }
+                var ctx = getPageContext();
+                props.page_url = ctx.page_url;
+                props.page_title = ctx.page_title;
+                props.page_path = ctx.page_path;
+                props.time_on_page = ctx.time_on_page;
+                props.referrer = ctx.referrer;
                 _eventQueue.push({
                     event_name: eventName,
                     properties: props,
@@ -945,9 +980,9 @@
             return vid;
         }
 
-        // Track session_ended + flush on page unload
+        // Track session_ended + flush on page unload (only if user actually chatted)
         window.addEventListener('beforeunload', function() {
-            if (getSessionId()) {
+            if (getSessionId() && _messageCount > 0) {
                 trackEvent('session_ended', {
                     duration_seconds: Math.floor((Date.now() - (_sessionStartTime || Date.now())) / 1000),
                     messages_count: _messageCount || 0
@@ -1238,7 +1273,8 @@
             var payload = {
                 message: text,
                 session_id: getSessionId(),
-                session_token: getSessionToken()
+                session_token: getSessionToken(),
+                page_context: getPageContext()
             };
 
             try {
@@ -1303,12 +1339,34 @@
         function showProductModal(product) {
             if (product.permalink && isValidUrl(product.permalink)) {
                 trackEvent('product_click', { product_id: product.id, product_name: (product.name || '').substring(0, 80) });
-                window.open(sanitizeUrl(product.permalink), '_blank', 'noopener');
+                window.location.href = sanitizeUrl(product.permalink);
             }
         }
 
         // ─── V2: Store capabilities (queried once on init) ───
         var _storeCapabilities = null;
+        var _pendingAtcSlots = []; // cards rendered before capabilities loaded
+
+        function _onCapabilitiesReady() {
+            // Retroactively populate ATC buttons on cards rendered before caps loaded
+            if (!_isCartEnabled()) return;
+            _pendingAtcSlots.forEach(function(item) {
+                var slot = item.slot, p = item.product;
+                if (p.stock_status === 'outofstock') return;
+                var btn = document.createElement('button');
+                btn.className = 'sambla-atc-btn';
+                btn.style.cssText = 'width:100%;padding:5px 0;border:none;border-radius:6px;background:#16a34a;color:#fff;font-size:11px;font-weight:600;cursor:pointer;transition:background 0.15s;';
+                btn.textContent = '\uD83D\uDED2 Adaugă în coș';
+                btn.addEventListener('mouseenter', function() { btn.style.background = '#15803d'; });
+                btn.addEventListener('mouseleave', function() { btn.style.background = '#16a34a'; });
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    _handleAddToCart(p, btn);
+                });
+                slot.appendChild(btn);
+            });
+            _pendingAtcSlots = [];
+        }
 
         function _queryCapabilities() {
             // Query storefront capabilities via companion plugin postMessage bridge
@@ -1316,15 +1374,17 @@
                 if (e.data && e.data.type === 'sambla_store_capabilities_result') {
                     _storeCapabilities = e.data.data || {};
                     window.removeEventListener('message', handler);
+                    _onCapabilitiesReady();
                 }
             });
             // Also query SaaS capabilities
-            fetch(config.apiBase + '/api/v1/chatbot/' + config.channelId + '/capabilities')
+            fetch(config.apiBase + '/api/v1/chatbot/' + config.channelId + '/capabilities?_t=' + Date.now())
                 .then(function(r) { return r.json(); })
                 .then(function(caps) {
                     if (!_storeCapabilities) _storeCapabilities = {};
                     _storeCapabilities.saas_cart_enabled = caps.cart_enabled;
                     _storeCapabilities.has_products = caps.has_products;
+                    _onCapabilitiesReady();
                 })
                 .catch(function() {});
             // Ask storefront plugin for local capabilities
@@ -1354,6 +1414,12 @@
         function renderProductCards(products) {
             if (!messagesContainer || !typingEl) return;
 
+            // Validate products — only render cards with required fields
+            products = products.filter(function(p) {
+                return p && p.name && p.name.length > 0 && (p.price || p.sale_price);
+            });
+            if (products.length === 0) return; // No valid products to show
+
             var wrap = document.createElement('div');
             wrap.style.cssText = 'display:flex;gap:8px;overflow-x:auto;padding:8px 4px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;width:100%;min-height:200px;flex-shrink:0;';
             wrap.setAttribute('role', 'list');
@@ -1367,7 +1433,7 @@
                 });
 
                 var card = document.createElement('div');
-                card.style.cssText = 'min-width:160px;width:160px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;background:#fff;scroll-snap-align:start;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.06);cursor:pointer;transition:box-shadow 0.15s,transform 0.15s;display:flex;flex-direction:column;';
+                card.style.cssText = 'min-width:156px;width:156px;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;background:#fff;scroll-snap-align:start;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.04),0 1px 2px rgba(0,0,0,0.06);cursor:pointer;transition:box-shadow 0.2s ease,transform 0.2s ease;display:flex;flex-direction:column;';
                 card.setAttribute('role', 'listitem');
                 card.setAttribute('tabindex', '0');
                 card.setAttribute('aria-label', stripAllHtml(p.name || ''));
@@ -1409,7 +1475,7 @@
                     });
 
                     if (p.permalink && isValidUrl(p.permalink)) {
-                        window.open(sanitizeUrl(p.permalink), '_blank', 'noopener');
+                        window.location.href = sanitizeUrl(p.permalink);
                     }
                 });
                 card.addEventListener('keydown', function(e) {
@@ -1420,12 +1486,12 @@
                 });
 
                 // Hover
-                card.addEventListener('mouseenter', function() { card.style.boxShadow = '0 4px 12px rgba(0,0,0,0.12)'; card.style.transform = 'translateY(-2px)'; });
-                card.addEventListener('mouseleave', function() { card.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)'; card.style.transform = 'none'; });
+                card.addEventListener('mouseenter', function() { card.style.boxShadow = '0 6px 20px rgba(0,0,0,0.1),0 2px 6px rgba(0,0,0,0.06)'; card.style.transform = 'translateY(-3px)'; });
+                card.addEventListener('mouseleave', function() { card.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04),0 1px 2px rgba(0,0,0,0.06)'; card.style.transform = 'none'; });
 
                 // ── ATC button (only if cart enabled and product in stock) ──
+                var atcSlot = card.querySelector('.sambla-atc-slot');
                 if (_isCartEnabled() && p.stock_status !== 'outofstock') {
-                    var atcSlot = card.querySelector('.sambla-atc-slot');
                     if (atcSlot) {
                         var btn = document.createElement('button');
                         btn.className = 'sambla-atc-btn';
@@ -1441,6 +1507,9 @@
 
                         atcSlot.appendChild(btn);
                     }
+                } else if (atcSlot && !_storeCapabilities) {
+                    // Capabilities not loaded yet — queue for retroactive ATC
+                    _pendingAtcSlots.push({ slot: atcSlot, product: p });
                 }
 
                 wrap.appendChild(card);
@@ -1476,7 +1545,7 @@
                         btn.textContent = '\u2192 Vezi opțiuni';
                         btn.style.background = '#3b82f6';
                         setTimeout(function() {
-                            if (product.permalink) window.open(sanitizeUrl(product.permalink), '_blank', 'noopener');
+                            if (product.permalink) window.location.href = sanitizeUrl(product.permalink);
                         }, 300);
                     } else if (error === 'out_of_stock') {
                         btn.textContent = 'Stoc epuizat';
@@ -1524,7 +1593,7 @@
                     btn.style.background = '#3b82f6';
                     btn.disabled = false;
                     btn.addEventListener('click', function() {
-                        if (product.permalink) window.open(sanitizeUrl(product.permalink), '_blank', 'noopener');
+                        if (product.permalink) window.location.href = sanitizeUrl(product.permalink);
                     }, { once: true });
                 }
             }, 8000);
@@ -1584,20 +1653,30 @@
         if (saved.length > 0) {
             saved.forEach(function(msg) {
                 messages.push(msg);
+                var wrapEl = document.createElement('div');
+                wrapEl.className = 'sambla-msg-wrap ' + msg.sender;
+                wrapEl.setAttribute('role', 'article');
+
                 var msgEl = document.createElement('div');
                 msgEl.className = 'sambla-msg ' + msg.sender;
-                msgEl.setAttribute('role', 'article');
                 var savedHtml = escapeHtml(msg.text);
                 if (msg.sender === 'bot') savedHtml = renderMarkdown(savedHtml);
-                var receiptHtml = getReceiptHtml(msg.sender, msg.receipt || 'delivered');
-                msgEl.innerHTML = savedHtml + '<div class="time">' + formatTime(msg.time) + ' ' + receiptHtml + '</div>';
-                if (expired) msgEl.style.opacity = '0.5';
-                messagesContainer.insertBefore(msgEl, typingEl);
+                msgEl.innerHTML = savedHtml;
 
-                // Link previews for restored bot messages
                 if (msg.sender === 'bot') {
                     renderLinkPreviews(msg.text, msgEl);
                 }
+
+                wrapEl.appendChild(msgEl);
+
+                var receiptHtml = getReceiptHtml(msg.sender, msg.receipt || 'delivered');
+                var timeEl = document.createElement('div');
+                timeEl.className = 'time';
+                timeEl.innerHTML = formatTime(msg.time) + ' ' + receiptHtml;
+                wrapEl.appendChild(timeEl);
+
+                if (expired) wrapEl.style.opacity = '0.5';
+                messagesContainer.insertBefore(wrapEl, typingEl);
 
                 if (msg.products && msg.products.length > 0) {
                     renderProductCards(msg.products);
@@ -1617,6 +1696,96 @@
                 headerName.textContent = data.bot_name;
             }
         });
+
+        // =========================================================================
+        // Proactive Assistance — subtle hint after page inactivity
+        // =========================================================================
+        var PROACTIVE_KEY = 'sambla_proactive_' + config.channelId;
+        var proactiveShown = false;
+
+        function getProactiveHint() {
+            var path = window.location.pathname.toLowerCase();
+            var title = (document.title || '').toLowerCase();
+
+            // Product page detection
+            if (path.match(/\/produs\/|\/product\/|\/p\//i) || document.querySelector('[data-product-id], .single-product, .product-detail')) {
+                return 'Ai întrebări despre acest produs? 💬';
+            }
+            // Cart page
+            if (path.match(/\/cos|\/cart|\/coș/i) || document.querySelector('.woocommerce-cart, .cart-page')) {
+                return 'Ai nevoie de ajutor cu comanda? 🛒';
+            }
+            // Category page
+            if (path.match(/\/categ|\/shop|\/magazin/i) || document.querySelector('.product-category, .woocommerce-shop')) {
+                return 'Cauți ceva anume? Te pot ajuta! 🔍';
+            }
+            // Generic fallback
+            return null;
+        }
+
+        function showProactiveHint() {
+            if (proactiveShown || isOpen) return;
+
+            // Don't show if user already chatted recently
+            var lastActivity = getLastActivity();
+            if (lastActivity && (Date.now() - lastActivity) < 3600000) return; // 1 hour cooldown
+
+            // Don't show if already shown this session
+            try {
+                if (sessionStorage.getItem(PROACTIVE_KEY)) return;
+            } catch(e) {}
+
+            var hint = getProactiveHint();
+            if (!hint) return;
+
+            proactiveShown = true;
+            try { sessionStorage.setItem(PROACTIVE_KEY, '1'); } catch(e) {}
+
+            // Create hint bubble
+            var hintEl = document.createElement('div');
+            hintEl.style.cssText = 'position:fixed;bottom:' + (92 + 16) + 'px;right:20px;background:#fff;color:#1e293b;padding:10px 16px;border-radius:12px 12px 4px 12px;box-shadow:0 4px 20px rgba(0,0,0,0.12);font-family:Inter,-apple-system,sans-serif;font-size:13px;max-width:220px;z-index:2147483645;cursor:pointer;opacity:0;transform:translateY(8px);transition:opacity 0.3s,transform 0.3s;border:1px solid #e2e8f0;';
+            hintEl.textContent = hint;
+            hintEl.setAttribute('role', 'status');
+
+            // Close button
+            var closeBtn = document.createElement('span');
+            closeBtn.style.cssText = 'position:absolute;top:-6px;right:-6px;width:18px;height:18px;background:#64748b;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;line-height:1;';
+            closeBtn.textContent = '×';
+            closeBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                hintEl.style.opacity = '0';
+                hintEl.style.transform = 'translateY(8px)';
+                setTimeout(function() { if (hintEl.parentNode) hintEl.parentNode.removeChild(hintEl); }, 300);
+            });
+            hintEl.appendChild(closeBtn);
+
+            // Click hint → open chat
+            hintEl.addEventListener('click', function() {
+                hintEl.style.opacity = '0';
+                setTimeout(function() { if (hintEl.parentNode) hintEl.parentNode.removeChild(hintEl); }, 300);
+                if (!isOpen) toggleChat();
+            });
+
+            document.body.appendChild(hintEl);
+
+            // Animate in
+            setTimeout(function() {
+                hintEl.style.opacity = '1';
+                hintEl.style.transform = 'translateY(0)';
+            }, 50);
+
+            // Auto-dismiss after 15 seconds
+            setTimeout(function() {
+                if (hintEl.parentNode) {
+                    hintEl.style.opacity = '0';
+                    hintEl.style.transform = 'translateY(8px)';
+                    setTimeout(function() { if (hintEl.parentNode) hintEl.parentNode.removeChild(hintEl); }, 300);
+                }
+            }, 15000);
+        }
+
+        // Trigger proactive hint after 30 seconds on page
+        setTimeout(showProactiveHint, 30000);
     }
 
     // Initialize when DOM is ready
