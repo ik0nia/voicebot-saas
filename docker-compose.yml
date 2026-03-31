@@ -58,7 +58,29 @@ services:
       dockerfile: Dockerfile
     container_name: voicebot-queue
     restart: unless-stopped
-    command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600
+    command: php artisan queue:work redis --queue=high,default --sleep=3 --tries=3 --max-time=3600
+    volumes:
+      - app-storage:/var/www/html/storage
+    env_file:
+      - .env
+    environment:
+      TZ: Europe/Bucharest
+    depends_on:
+      app:
+        condition: service_started
+    labels:
+      - "traefik.enable=false"
+    networks:
+      default: {}
+      coolify: {}
+
+  knowledge-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: voicebot-knowledge-worker
+    restart: unless-stopped
+    command: php artisan queue:work redis --queue=knowledge --sleep=5 --tries=3 --max-time=3600 --memory=512 --timeout=600
     volumes:
       - app-storage:/var/www/html/storage
     env_file:
