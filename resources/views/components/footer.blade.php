@@ -90,9 +90,9 @@
                         <h4 class="text-xs font-bold text-white uppercase tracking-widest mb-5">Contact</h4>
                         <ul class="space-y-3">
                             <li>
-                                <a href="mailto:contact@sambla.ro" class="text-sm text-slate-500 hover:text-white transition-colors flex items-center gap-2">
+                                <a href="mailto:servus@sambla.ro" class="text-sm text-slate-500 hover:text-white transition-colors flex items-center gap-2">
                                     <svg class="w-4 h-4 shrink-0 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>
-                                    contact@sambla.ro
+                                    servus@sambla.ro
                                 </a>
                             </li>
                             <li>

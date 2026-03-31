@@ -6,6 +6,7 @@ services:
     container_name: voicebot-app
     restart: unless-stopped
     volumes:
+      - /var/www/voicebot-saas:/var/www/html
       - app-storage:/var/www/html/storage
     env_file:
       - .env
@@ -34,6 +35,7 @@ services:
     expose:
       - "80"
     volumes:
+      - /var/www/voicebot-saas/public:/var/www/html/public:ro
       - app-storage:/var/www/html/storage:ro
     depends_on:
       app:
