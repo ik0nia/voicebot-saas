@@ -1,6 +1,6 @@
 /.phpunit.cache
 /node_modules
-/public/build
+# /public/build — tracked in git for consistent deployments
 /public/hot
 /public/storage
 /storage/*.key

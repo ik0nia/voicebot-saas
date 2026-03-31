@@ -40,16 +40,11 @@ WORKDIR /var/www/html
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --ignore-platform-reqs
 
-# Layer 2: Node deps (cached if package-lock.json unchanged)
-COPY package.json package-lock.json ./
-RUN npm ci
-
-# Layer 3: App code (changes every deploy - but fast COPY)
+# Layer 2: App code
 COPY . .
 
-# Layer 4: Post-install steps (quick, uses cached deps)
+# Layer 3: Post-install steps
 RUN composer dump-autoload --optimize --no-dev --ignore-platform-reqs --no-scripts
-RUN npm run build
 
 RUN chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
