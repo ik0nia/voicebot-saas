@@ -6,22 +6,20 @@
 @section('content')
 
 {{-- ==================== HERO ==================== --}}
-<section class="relative overflow-hidden bg-gradient-to-b from-white to-primary-50 section-padding pt-32 lg:pt-40">
-    <x-hero-texture />
-    <div class="container-custom text-center relative">
-        <x-hero-ornament />
-        <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 mb-6 leading-tight">
-            Funcționalități puternice pentru <span class="gradient-text">comunicare inteligentă</span>
+<section class="relative overflow-hidden bg-slate-950 pt-28 pb-20 lg:pt-36 lg:pb-24">
+    <div class="absolute inset-0 opacity-[0.04]">
+        <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="feat-motif" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse"><path d="M40 12 L52 24 L40 36 L28 24 Z" fill="#991b1b"/><rect x="38" y="2" width="4" height="8" fill="#991b1b"/><rect x="38" y="38" width="4" height="8" fill="#991b1b"/></pattern></defs><rect width="100%" height="100%" fill="url(#feat-motif)"/></svg>
+    </div>
+    <div class="absolute bottom-20 -right-40 w-[400px] h-[400px] bg-red-900/15 rounded-full blur-[120px]"></div>
+    <div class="container-custom text-center relative z-10">
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white mb-6 animate-fade-in leading-tight">
+            Funcționalități puternice pentru<br><span class="bg-gradient-to-r from-red-400 via-red-300 to-amber-300 bg-clip-text text-transparent">comunicare inteligentă</span>
         </h1>
-        <p class="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
+        <p class="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed animate-fade-in">
             Descoperă tot ce poate face Sambla pentru afacerea ta
         </p>
     </div>
-    {{-- Decorative blobs --}}
-    <div class="absolute top-20 left-10 w-64 h-64 bg-primary-200/30 rounded-full blur-3xl pointer-events-none"></div>
-    <div class="absolute bottom-0 right-10 w-48 h-48 bg-primary-300/20 rounded-full blur-3xl pointer-events-none"></div>
 </section>
-
 <x-motif-border />
 
 {{-- ==================== CATEGORY 1: TELEFONIE (white bg) ==================== --}}
@@ -30,8 +28,8 @@
         <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {{-- Text --}}
             <div>
-                <div class="w-16 h-16 rounded-2xl bg-primary-100 flex items-center justify-center mb-6">
-                    <svg class="w-8 h-8 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <div class="w-16 h-16 rounded-2xl bg-red-100 flex items-center justify-center mb-6">
+                    <svg class="w-8 h-8 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
                     </svg>
                 </div>
@@ -41,38 +39,38 @@
                 </p>
                 <ul class="space-y-4">
                     <li class="flex items-start gap-3">
-                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                         </span>
                         <span class="text-slate-700 font-medium">Integrare Twilio completă</span>
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                         </span>
                         <span class="text-slate-700 font-medium">Numere de telefon românești (+40)</span>
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                         </span>
                         <span class="text-slate-700 font-medium">IVR personalizabil cu AI</span>
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                         </span>
                         <span class="text-slate-700 font-medium">Transfer inteligent către operatori</span>
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                         </span>
                         <span class="text-slate-700 font-medium">Înregistrare și transcriere apeluri</span>
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                         </span>
                         <span class="text-slate-700 font-medium">Suport pentru cozi de așteptare</span>
                     </li>
@@ -130,7 +128,7 @@
                         <circle cx="160" cy="450" r="12" fill="#e2e8f0"/>
                     </svg>
                     {{-- Floating badge --}}
-                    <div class="absolute -top-4 -right-4 bg-primary-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
+                    <div class="absolute -top-4 -right-4 bg-red-700 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
                         Twilio
                     </div>
                 </div>
@@ -140,7 +138,7 @@
 </section>
 
 {{-- ==================== CANALE ADIȚIONALE (primary-50 bg) ==================== --}}
-<section class="bg-primary-50 section-padding">
+<section class="bg-red-50 section-padding">
     <div class="container-custom">
         <div class="text-center mb-12 lg:mb-16">
             <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Canale de Comunicare</h2>
@@ -243,28 +241,28 @@
 
             {{-- Web Chatbot --}}
             <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-lg transition-shadow duration-300">
-                <div class="w-14 h-14 rounded-2xl bg-primary-100 flex items-center justify-center mb-5">
-                    <svg class="w-7 h-7 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <div class="w-14 h-14 rounded-2xl bg-red-100 flex items-center justify-center mb-5">
+                    <svg class="w-7 h-7 text-red-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
                     </svg>
                 </div>
                 <h3 class="text-2xl font-bold text-slate-900 mb-3">Web Chatbot</h3>
                 <ul class="space-y-3">
                     <li class="flex items-start gap-3">
-                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                         </span>
                         <span class="text-slate-700 font-medium">Widget embeddable, instalare în 2 minute</span>
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                         </span>
                         <span class="text-slate-700 font-medium">Personalizare completă (culori, logo, poziție)</span>
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                         </span>
                         <span class="text-slate-700 font-medium">Compatibil cu orice site web (WordPress, Shopify, etc.)</span>
                     </li>
@@ -322,7 +320,7 @@
                         <circle cx="160" cy="160" r="140" stroke="#991b1b" stroke-width="1" stroke-opacity="0.03" fill="none"/>
                     </svg>
                     {{-- Floating badge --}}
-                    <div class="absolute -bottom-2 -left-2 bg-white text-primary-700 text-xs font-bold px-3 py-1.5 rounded-full shadow-lg border border-primary-100">
+                    <div class="absolute -bottom-2 -left-2 bg-white text-red-800 text-xs font-bold px-3 py-1.5 rounded-full shadow-lg border border-red-100">
                         OpenAI Realtime
                     </div>
                 </div>
@@ -330,8 +328,8 @@
 
             {{-- Text --}}
             <div class="order-1 lg:order-2">
-                <div class="w-16 h-16 rounded-2xl bg-primary-100 flex items-center justify-center mb-6">
-                    <svg class="w-8 h-8 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <div class="w-16 h-16 rounded-2xl bg-red-100 flex items-center justify-center mb-6">
+                    <svg class="w-8 h-8 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
                     </svg>
                 </div>
@@ -341,38 +339,38 @@
                 </p>
                 <ul class="space-y-4">
                     <li class="flex items-start gap-3">
-                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                         </span>
                         <span class="text-slate-700 font-medium">Powered by OpenAI Realtime API</span>
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                         </span>
                         <span class="text-slate-700 font-medium">Barge-in — clientul poate întrerupe botul natural</span>
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                         </span>
                         <span class="text-slate-700 font-medium">Menținere context pe tot parcursul conversației</span>
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                         </span>
                         <span class="text-slate-700 font-medium">Detectare intenție și sentiment</span>
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                         </span>
                         <span class="text-slate-700 font-medium">Răspunsuri personalizate per scenariu</span>
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                         </span>
                         <span class="text-slate-700 font-medium">Suport multilingv (română, engleză, + altele)</span>
                     </li>
@@ -388,8 +386,8 @@
         <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {{-- Text --}}
             <div>
-                <div class="w-16 h-16 rounded-2xl bg-primary-100 flex items-center justify-center mb-6">
-                    <svg class="w-8 h-8 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <div class="w-16 h-16 rounded-2xl bg-red-100 flex items-center justify-center mb-6">
+                    <svg class="w-8 h-8 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
                     </svg>
                 </div>
@@ -399,38 +397,38 @@
                 </p>
                 <ul class="space-y-4">
                     <li class="flex items-start gap-3">
-                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                         </span>
                         <span class="text-slate-700 font-medium">Dashboard live cu metrici cheie</span>
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                         </span>
                         <span class="text-slate-700 font-medium">Transcrieri automate ale fiecărui apel</span>
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                         </span>
                         <span class="text-slate-700 font-medium">Analiză de sentiment în timp real</span>
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                         </span>
                         <span class="text-slate-700 font-medium">Rapoarte de performanță zilnice/săptămânale</span>
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                         </span>
                         <span class="text-slate-700 font-medium">Export date în CSV/PDF</span>
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                         </span>
                         <span class="text-slate-700 font-medium">Alerte automate pentru anomalii</span>
                     </li>
@@ -497,7 +495,7 @@
 </section>
 
 {{-- ==================== CATEGORY 4: INTEGRATIONS (primary-50 bg) ==================== --}}
-<section class="bg-primary-50 section-padding">
+<section class="bg-red-50 section-padding">
     <div class="container-custom">
         <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {{-- Illustration: Connected Nodes (LEFT on desktop) --}}
@@ -566,8 +564,8 @@
 
             {{-- Text --}}
             <div class="order-1 lg:order-2">
-                <div class="w-16 h-16 rounded-2xl bg-primary-100 flex items-center justify-center mb-6">
-                    <svg class="w-8 h-8 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <div class="w-16 h-16 rounded-2xl bg-red-100 flex items-center justify-center mb-6">
+                    <svg class="w-8 h-8 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M14.25 6.087c0-.355.186-.676.401-.959.221-.29.349-.634.349-1.003 0-1.036-1.007-1.875-2.25-1.875s-2.25.84-2.25 1.875c0 .369.128.713.349 1.003.215.283.401.604.401.959v0a.64.64 0 01-.657.643 48.39 48.39 0 01-4.163-.3c.186 1.613.293 3.25.315 4.907a.656.656 0 01-.658.663v0c-.355 0-.676-.186-.959-.401a1.647 1.647 0 00-1.003-.349c-1.036 0-1.875 1.007-1.875 2.25s.84 2.25 1.875 2.25c.369 0 .713-.128 1.003-.349.283-.215.604-.401.959-.401v0c.31 0 .555.26.532.57a48.039 48.039 0 01-.642 5.056c1.518.19 3.058.309 4.616.354a.64.64 0 00.657-.643v0c0-.355-.186-.676-.401-.959a1.647 1.647 0 01-.349-1.003c0-1.035 1.008-1.875 2.25-1.875 1.243 0 2.25.84 2.25 1.875 0 .369-.128.713-.349 1.003-.215.283-.4.604-.4.959v0c0 .333.277.599.61.58a48.1 48.1 0 005.427-.63 48.05 48.05 0 00.582-4.717.532.532 0 00-.533-.57v0c-.355 0-.676.186-.959.401-.29.221-.634.349-1.003.349-1.035 0-1.875-1.007-1.875-2.25s.84-2.25 1.875-2.25c.37 0 .713.128 1.003.349.283.215.604.401.959.401v0a.656.656 0 00.658-.663 48.422 48.422 0 00-.37-5.36c-1.886.342-3.81.574-5.766.689a.578.578 0 01-.61-.58v0z" />
                     </svg>
                 </div>
@@ -577,38 +575,38 @@
                 </p>
                 <ul class="space-y-4">
                     <li class="flex items-start gap-3">
-                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                         </span>
                         <span class="text-slate-700 font-medium">CRM: Salesforce, HubSpot, Pipedrive</span>
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                         </span>
                         <span class="text-slate-700 font-medium">Calendar: Google Calendar, Outlook</span>
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                         </span>
                         <span class="text-slate-700 font-medium">Mesagerie: WhatsApp Business, SMS</span>
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                         </span>
                         <span class="text-slate-700 font-medium">API REST complet documentat</span>
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                         </span>
                         <span class="text-slate-700 font-medium">Webhook-uri pentru evenimente</span>
                     </li>
                     <li class="flex items-start gap-3">
-                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                        <span class="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                         </span>
                         <span class="text-slate-700 font-medium">SDK-uri Python, Node.js, PHP</span>
                     </li>
@@ -633,49 +631,49 @@
                         <tr>
                             <th class="text-left py-4 px-4 sm:px-6 text-sm font-semibold text-slate-500 uppercase tracking-wider border-b-2 border-slate-200">Criteriu</th>
                             <th class="text-center py-4 px-4 sm:px-6 text-sm font-semibold text-slate-500 uppercase tracking-wider border-b-2 border-slate-200">Operator Uman</th>
-                            <th class="text-center py-4 px-4 sm:px-6 text-sm font-semibold text-primary-600 uppercase tracking-wider border-b-2 border-primary-200 bg-primary-50/50 rounded-t-xl">Sambla AI</th>
+                            <th class="text-center py-4 px-4 sm:px-6 text-sm font-semibold text-red-700 uppercase tracking-wider border-b-2 border-red-200 bg-red-50/50 rounded-t-xl">Sambla AI</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr class="border-b border-slate-100">
                             <td class="py-4 px-4 sm:px-6 text-sm font-medium text-slate-700">Disponibilitate</td>
                             <td class="py-4 px-4 sm:px-6 text-sm text-slate-500 text-center">Program de lucru (8h)</td>
-                            <td class="py-4 px-4 sm:px-6 text-sm font-semibold text-primary-600 text-center bg-primary-50/30">24/7/365</td>
+                            <td class="py-4 px-4 sm:px-6 text-sm font-semibold text-red-700 text-center bg-red-50/30">24/7/365</td>
                         </tr>
                         <tr class="border-b border-slate-100">
                             <td class="py-4 px-4 sm:px-6 text-sm font-medium text-slate-700">Timp de răspuns</td>
                             <td class="py-4 px-4 sm:px-6 text-sm text-slate-500 text-center">30-120 secunde</td>
-                            <td class="py-4 px-4 sm:px-6 text-sm font-semibold text-primary-600 text-center bg-primary-50/30">&lt; 1 secundă</td>
+                            <td class="py-4 px-4 sm:px-6 text-sm font-semibold text-red-700 text-center bg-red-50/30">&lt; 1 secundă</td>
                         </tr>
                         <tr class="border-b border-slate-100">
                             <td class="py-4 px-4 sm:px-6 text-sm font-medium text-slate-700">Cost per apel</td>
                             <td class="py-4 px-4 sm:px-6 text-sm text-slate-500 text-center">2-5&euro;</td>
-                            <td class="py-4 px-4 sm:px-6 text-sm font-semibold text-emerald-600 text-center bg-primary-50/30">0.10-0.30&euro;</td>
+                            <td class="py-4 px-4 sm:px-6 text-sm font-semibold text-emerald-600 text-center bg-red-50/30">0.10-0.30&euro;</td>
                         </tr>
                         <tr class="border-b border-slate-100">
                             <td class="py-4 px-4 sm:px-6 text-sm font-medium text-slate-700">Scalabilitate</td>
                             <td class="py-4 px-4 sm:px-6 text-sm text-slate-500 text-center">Limitată de personal</td>
-                            <td class="py-4 px-4 sm:px-6 text-sm font-semibold text-primary-600 text-center bg-primary-50/30">Nelimitată</td>
+                            <td class="py-4 px-4 sm:px-6 text-sm font-semibold text-red-700 text-center bg-red-50/30">Nelimitată</td>
                         </tr>
                         <tr class="border-b border-slate-100">
                             <td class="py-4 px-4 sm:px-6 text-sm font-medium text-slate-700">Consistență</td>
                             <td class="py-4 px-4 sm:px-6 text-sm text-slate-500 text-center">Variabilă</td>
-                            <td class="py-4 px-4 sm:px-6 text-sm font-semibold text-primary-600 text-center bg-primary-50/30">100% consistentă</td>
+                            <td class="py-4 px-4 sm:px-6 text-sm font-semibold text-red-700 text-center bg-red-50/30">100% consistentă</td>
                         </tr>
                         <tr class="border-b border-slate-100">
                             <td class="py-4 px-4 sm:px-6 text-sm font-medium text-slate-700">Limbi străine</td>
                             <td class="py-4 px-4 sm:px-6 text-sm text-slate-500 text-center">1-2 limbi</td>
-                            <td class="py-4 px-4 sm:px-6 text-sm font-semibold text-primary-600 text-center bg-primary-50/30">10+ limbi</td>
+                            <td class="py-4 px-4 sm:px-6 text-sm font-semibold text-red-700 text-center bg-red-50/30">10+ limbi</td>
                         </tr>
                         <tr class="border-b border-slate-100">
                             <td class="py-4 px-4 sm:px-6 text-sm font-medium text-slate-700">Analiză sentiment</td>
                             <td class="py-4 px-4 sm:px-6 text-sm text-slate-500 text-center">Subiectivă</td>
-                            <td class="py-4 px-4 sm:px-6 text-sm font-semibold text-primary-600 text-center bg-primary-50/30">Obiectivă, în timp real</td>
+                            <td class="py-4 px-4 sm:px-6 text-sm font-semibold text-red-700 text-center bg-red-50/30">Obiectivă, în timp real</td>
                         </tr>
                         <tr>
                             <td class="py-4 px-4 sm:px-6 text-sm font-medium text-slate-700">Oboseală</td>
                             <td class="py-4 px-4 sm:px-6 text-sm text-slate-500 text-center">Da, scade calitatea</td>
-                            <td class="py-4 px-4 sm:px-6 text-sm font-semibold text-emerald-600 text-center bg-primary-50/30 rounded-b-xl">Nu, performanță constantă</td>
+                            <td class="py-4 px-4 sm:px-6 text-sm font-semibold text-emerald-600 text-center bg-red-50/30 rounded-b-xl">Nu, performanță constantă</td>
                         </tr>
                     </tbody>
                 </table>
@@ -731,15 +729,15 @@
 
             {{-- Badges --}}
             <div class="flex flex-wrap justify-center gap-3 mt-8">
-                <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-slate-800 text-primary-400 border border-slate-700">
+                <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-slate-800 text-red-400 border border-slate-700">
                     <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" /></svg>
                     REST API
                 </span>
-                <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-slate-800 text-primary-400 border border-slate-700">
+                <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-slate-800 text-red-400 border border-slate-700">
                     <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" /></svg>
                     WebSocket
                 </span>
-                <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-slate-800 text-primary-400 border border-slate-700">
+                <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-slate-800 text-red-400 border border-slate-700">
                     <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" /></svg>
                     Webhook-uri
                 </span>
@@ -748,28 +746,9 @@
     </div>
 </section>
 
-{{-- ==================== CTA SECTION ==================== --}}
-<section class="relative overflow-hidden section-padding bg-gradient-to-br from-primary-600 to-primary-800">
-    {{-- Decorative elements --}}
-    <div class="absolute top-0 left-0 w-64 h-64 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
-    <div class="absolute bottom-0 right-0 w-96 h-96 bg-white/5 rounded-full translate-x-1/3 translate-y-1/3"></div>
-
-    <div class="container-custom relative text-center">
-        <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6">
-            Pregătit să automatizezi comunicarea?
-        </h2>
-        <p class="text-primary-100 text-lg mb-10 max-w-xl mx-auto">
-            Începe gratuit și descoperă cum Sambla poate transforma interacțiunile cu clienții tăi.
-        </p>
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="/register" class="inline-flex items-center justify-center px-8 py-3.5 bg-white text-primary-700 font-semibold rounded-xl hover:bg-primary-50 transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-lg">
-                Începe gratuit
-            </a>
-        </div>
-        <p class="mt-6 text-primary-200 text-sm">
-            sau <a href="/contact" class="underline hover:text-white transition-colors duration-200">programează un demo personalizat</a>
-        </p>
-    </div>
-</section>
+<x-cta-section
+    title="Pregătit să automatizezi comunicarea?"
+    subtitle="Descoperă cum Sambla transformă interacțiunile cu clienții tăi."
+/>
 
 @endsection

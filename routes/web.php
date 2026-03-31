@@ -70,6 +70,14 @@ Route::get('/contact', function () {
 Route::get('/demo/{slug}', [\App\Http\Controllers\PublicDemoController::class, 'show'])->name('public.demo');
 Route::get('/dashboard/boti/{bot}/test-vocal', [\App\Http\Controllers\PublicDemoController::class, 'testById'])->name('dashboard.bots.testVocal');
 
+// Setup wizard (onboarding)
+Route::middleware('auth')->prefix('dashboard/setup')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Dashboard\SetupWizardController::class, 'index'])->name('dashboard.setup.index');
+    Route::post('/business-type', [\App\Http\Controllers\Dashboard\SetupWizardController::class, 'storeBusinessType'])->name('dashboard.setup.businessType');
+    Route::post('/generate-prompt', [\App\Http\Controllers\Dashboard\SetupWizardController::class, 'generatePrompt'])->name('dashboard.setup.generatePrompt');
+    Route::post('/complete', [\App\Http\Controllers\Dashboard\SetupWizardController::class, 'complete'])->name('dashboard.setup.complete');
+});
+
 // Dashboard home
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth'])->name('dashboard');
 

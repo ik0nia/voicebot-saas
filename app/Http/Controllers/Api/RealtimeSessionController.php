@@ -25,18 +25,23 @@ class RealtimeSessionController extends Controller
      */
     public function create(Request $request, Bot $bot): JsonResponse
     {
-        $bot = Bot::withoutGlobalScopes()->findOrFail($bot->id);
+        // Public endpoint: TenantScope is a no-op when unauthenticated (by design).
+        // No need for withoutGlobalScopes(). Verify the bot is active.
+        if (!$bot->is_active) {
+            return response()->json(['error' => 'Bot is not active'], 404);
+        }
 
-        // Check voice minute limits
+        // Check voice minute limits — tenant MUST exist for any bot
         $tenant = Tenant::find($bot->tenant_id);
-        if ($tenant) {
-            $limitCheck = app(PlanLimitService::class)->canStartVoiceCall($tenant);
-            if (!$limitCheck->allowed) {
-                return response()->json([
-                    'error' => $limitCheck->message,
-                    'limit_reached' => true,
-                ], 429);
-            }
+        if (!$tenant) {
+            return response()->json(['error' => 'Bot configuration error'], 404);
+        }
+        $limitCheck = app(PlanLimitService::class)->canStartVoiceCall($tenant);
+        if (!$limitCheck->allowed) {
+            return response()->json([
+                'error' => $limitCheck->message,
+                'limit_reached' => true,
+            ], 429);
         }
 
         $apiKey = PlatformSetting::get('openai_api_key', config('services.openai.api_key', ''));
@@ -127,7 +132,7 @@ class RealtimeSessionController extends Controller
             $query = $hasProducts
                 ? 'informații magazin, livrare, plată, contact, program'
                 : 'informații generale despre companie și servicii';
-            $knowledgeContext = $searchService->buildContext($bot->id, $query, 2, 2000);
+            $knowledgeContext = $searchService->buildContext($bot->id, $query, 4, 3000);
 
             if ($knowledgeContext) {
                 $botPrompt .= "\n\n" . $knowledgeContext;
@@ -151,8 +156,15 @@ class RealtimeSessionController extends Controller
             "- INTERZIS: 'hmm', 'păi', 'deci', 'aș putea', 'cred că', 'probabil', 'oarecum'. Doar afirmații clare.\n" .
             "- Termină fiecare răspuns cu o întrebare scurtă și directă.\n" .
             "- Transcrierea vocii poate conține erori. Interpretează SENSUL, nu cuvintele exacte.\n" .
-            "- Mesaje false gen 'subscribe', 'mulțumim pentru vizionare' sunt ERORI DE TRANSCRIERE. Ignoră-le.\n" .
-            "- Dacă mesajul nu are sens, ignoră-l. NU încheia conversația decât dacă clientul cere explicit.";
+            "- ERORI DE TRANSCRIERE (Whisper hallucinations) — NU RĂSPUNDE la mesaje care conțin:\n" .
+            "  * 'subscribe', 'like', 'abonați-vă', 'mulțumim pentru vizionare/urmărire'\n" .
+            "  * 'subtitrare', 'traducere', 'copyright', 'amara.org', adrese web\n" .
+            "  * 'la revedere', 'noapte bună', 'poftă bună', 'la mulți ani'\n" .
+            "  * sunete fără sens: 'uh', 'um', 'hm', cuvinte repetate\n" .
+            "  * orice text care pare o subtitrare de film/YouTube, NU o întrebare de client\n" .
+            "  Când primești așa ceva, NU RĂSPUNDE DELOC. Taci și așteaptă un mesaj real.\n" .
+            "- Dacă mesajul nu are sens sau e extrem de scurt fără context, NU răspunde. Așteaptă.\n" .
+            "- NU încheia conversația decât dacă clientul cere EXPLICIT (pa, la revedere cu context clar).";
 
         $model = PlatformSetting::get('openai_realtime_model', 'gpt-4o-realtime-preview');
 
@@ -168,10 +180,8 @@ class RealtimeSessionController extends Controller
                     'language' => 'ro',
                 ],
                 'turn_detection' => [
-                    'type' => 'server_vad',
-                    'threshold' => 0.5,
-                    'prefix_padding_ms' => 200,
-                    'silence_duration_ms' => 500,
+                    'type' => ($bot->settings['vad_type'] ?? 'semantic_vad'),
+                    'eagerness' => ($bot->settings['vad_eagerness'] ?? 'low'),
                 ],
             ];
 
@@ -242,10 +252,9 @@ class RealtimeSessionController extends Controller
                 default => 'Bună seara',
             };
 
-            $greetingMessage = $bot->greeting_message;
-            if ($greetingMessage) {
-                $greetingMessage = preg_replace('/^(Bun[aă]!?|Salut!?|Hello!?|Hei!?)\s*/iu', $timeGreeting . '! ', $greetingMessage);
-            }
+            $greetingMessage = $bot->greeting_message
+                ?? 'Bună ziua! Sunt asistentul virtual al magazinului. Vă pot ajuta cu informații despre produse, prețuri sau comenzi. Cu ce vă pot fi de folos?';
+            $greetingMessage = preg_replace('/^(Bun[aă]\s+(ziua|dimineata|diminea[tț]a|seara)!?|Bun[aă]!?|Salut!?|Hello!?|Hei!?)\s*/iu', $timeGreeting . '! ', $greetingMessage);
 
             $maxDuration = (int) ($bot->settings['max_call_duration'] ?? 1800);
 
@@ -264,6 +273,10 @@ class RealtimeSessionController extends Controller
                 'has_products' => $hasProducts,
                 'max_duration_seconds' => $maxDuration,
                 'warning_at_seconds' => max(0, $maxDuration - 300),
+                'vad_config' => [
+                    'type' => ($bot->settings['vad_type'] ?? 'semantic_vad'),
+                    'eagerness' => ($bot->settings['vad_eagerness'] ?? 'low'),
+                ],
             ];
 
             if ($useClonedVoice) {
@@ -289,9 +302,10 @@ class RealtimeSessionController extends Controller
         $callToken = $request->header('X-Call-Token') ?? $request->input('call_token');
         $hmacSecret = $call->metadata['hmac_secret'] ?? null;
 
-        // Calls created before security patch don't have hmac_secret — allow (backward compat)
+        // Calls created before security patch don't have hmac_secret.
+        // Allow only if call is recent (< 48h) to limit the backward compat window.
         if ($hmacSecret === null) {
-            return true;
+            return $call->created_at && $call->created_at->gt(now()->subHours(48));
         }
 
         if (empty($callToken)) {
@@ -307,7 +321,6 @@ class RealtimeSessionController extends Controller
      */
     public function saveTranscript(Request $request, Call $call): JsonResponse
     {
-        $call = Call::withoutGlobalScopes()->findOrFail($call->id);
 
         if (!$this->verifyCallToken($request, $call)) {
             Log::warning('saveTranscript: invalid call_token', ['call_id' => $call->id, 'ip' => $request->ip()]);
@@ -335,7 +348,6 @@ class RealtimeSessionController extends Controller
      */
     public function synthesize(Request $request, Bot $bot): \Illuminate\Http\Response|JsonResponse
     {
-        $bot = Bot::withoutGlobalScopes()->findOrFail($bot->id);
         $bot->load('clonedVoice');
 
         if (!$bot->usesClonedVoice()) {
@@ -369,7 +381,6 @@ class RealtimeSessionController extends Controller
      */
     public function searchProducts(Request $request, Bot $bot): JsonResponse
     {
-        $bot = Bot::withoutGlobalScopes()->findOrFail($bot->id);
 
         $request->validate([
             'query' => 'required|string|max:500',
@@ -405,7 +416,6 @@ class RealtimeSessionController extends Controller
      */
     public function endCall(Request $request, Call $call): JsonResponse
     {
-        $call = Call::withoutGlobalScopes()->findOrFail($call->id);
 
         if (!$this->verifyCallToken($request, $call)) {
             Log::warning('endCall: invalid call_token', ['call_id' => $call->id, 'ip' => $request->ip()]);

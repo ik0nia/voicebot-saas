@@ -35,8 +35,7 @@ class OrderLookupService
      */
     public function lookup(int $botId, array $params): array
     {
-        $connector = KnowledgeConnector::withoutGlobalScopes()
-            ->where('bot_id', $botId)
+        $connector = KnowledgeConnector::where('bot_id', $botId)
             ->whereIn('type', ['woocommerce', 'wordpress'])
             ->where('status', 'connected')
             ->first();
@@ -148,14 +147,17 @@ class OrderLookupService
     {
         $params = [];
 
-        // Order number
+        // Order number — strictly digits only to prevent URL injection
         if (preg_match('/#?\b(\d{3,8})\b/', $message, $m)) {
-            $params['order_number'] = $m[1];
+            $params['order_number'] = preg_replace('/\D/', '', $m[1]);
         }
 
-        // Email
+        // Email — use filter_var for proper validation instead of loose regex
         if (preg_match('/[\w.+-]+@[\w.-]+\.\w{2,}/', $message, $m)) {
-            $params['email'] = $m[0];
+            $candidate = $m[0];
+            if (filter_var($candidate, FILTER_VALIDATE_EMAIL)) {
+                $params['email'] = $candidate;
+            }
         }
 
         // Phone - E.164 international format support
@@ -176,13 +178,20 @@ class OrderLookupService
         return Cache::remember($cacheKey, now()->addMinutes(self::CACHE_TTL_MINUTES), function () use ($baseUrl, $credentials, $orderNumber, $timeout) {
             $response = Http::timeout($timeout)
                 ->withBasicAuth($credentials['consumer_key'], $credentials['consumer_secret'])
-                ->get($baseUrl . '/wp-json/wc/v3/orders/' . $orderNumber);
+                ->get($baseUrl . '/wp-json/wc/v3/orders/' . urlencode($orderNumber));
 
             if ($response->status() === 404) {
                 return ['found' => false, 'orders' => [], 'message' => trans('orders.order_not_found', ['number' => $orderNumber])];
             }
 
             if (!$response->successful()) {
+                Log::warning('OrderLookup: WooCommerce API error (byNumber)', ['status' => $response->status(), 'order' => $orderNumber]);
+                if ($response->status() === 401) {
+                    return ['found' => false, 'orders' => [], 'message' => trans('orders.credentials_invalid')];
+                }
+                if ($response->status() === 429) {
+                    return ['found' => false, 'orders' => [], 'message' => trans('orders.rate_limited')];
+                }
                 return ['found' => false, 'orders' => [], 'message' => trans('orders.verify_failed')];
             }
 
@@ -206,6 +215,13 @@ class OrderLookupService
                 ]);
 
             if (!$response->successful()) {
+                Log::warning('OrderLookup: WooCommerce API error (byEmail)', ['status' => $response->status()]);
+                if ($response->status() === 401) {
+                    return ['found' => false, 'orders' => [], 'message' => trans('orders.credentials_invalid')];
+                }
+                if ($response->status() === 429) {
+                    return ['found' => false, 'orders' => [], 'message' => trans('orders.rate_limited')];
+                }
                 return ['found' => false, 'orders' => [], 'message' => trans('orders.verify_failed')];
             }
 
@@ -234,6 +250,13 @@ class OrderLookupService
                 ]);
 
             if (!$response->successful()) {
+                Log::warning('OrderLookup: WooCommerce API error (byPhone)', ['status' => $response->status()]);
+                if ($response->status() === 401) {
+                    return ['found' => false, 'orders' => [], 'message' => trans('orders.credentials_invalid')];
+                }
+                if ($response->status() === 429) {
+                    return ['found' => false, 'orders' => [], 'message' => trans('orders.rate_limited')];
+                }
                 return ['found' => false, 'orders' => [], 'message' => trans('orders.verify_failed')];
             }
 
@@ -292,12 +315,12 @@ class OrderLookupService
             'status_raw' => $statusRaw,
             'date' => isset($order['date_created']) ? date('d.m.Y H:i', strtotime($order['date_created'])) : '',
             'total' => ($order['total'] ?? '0') . ' ' . ($order['currency'] ?? 'RON'),
-            'payment_method' => $order['payment_method_title'] ?? '',
+            // payment_method and customer_name redacted — not needed by voice/chat bot
+            // and exposing them to someone who guesses an order number is a data leak
             'shipping_method' => collect($order['shipping_lines'] ?? [])->pluck('method_title')->implode(', ') ?: '-',
             'tracking' => $trackingNumber,
             'tracking_url' => $trackingUrl,
             'items' => $items,
-            'customer_name' => trim(($order['billing']['first_name'] ?? '') . ' ' . ($order['billing']['last_name'] ?? '')),
         ];
     }
 

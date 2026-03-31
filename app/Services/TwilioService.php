@@ -12,23 +12,38 @@ class TwilioService
     protected function getClient(): Client
     {
         if (!$this->client) {
-            $this->client = new Client(
-                config('services.twilio.sid'),
-                config('services.twilio.auth_token')
-            );
+            // Read from DB (PlatformSettings) first, fallback to config/.env
+            $sid = \App\Models\PlatformSetting::get('twilio_sid')
+                ?: config('services.twilio.sid');
+            $token = \App\Models\PlatformSetting::get('twilio_auth_token')
+                ?: config('services.twilio.auth_token');
+
+            if (empty($sid) || empty($token) || $sid === 'your-twilio-sid') {
+                throw new \RuntimeException('Twilio credentials not configured. Set them in Admin → Settings → Twilio.');
+            }
+
+            $this->client = new Client($sid, $token);
         }
         return $this->client;
     }
 
     public function makeCall(string $to, string $from, string $webhookUrl): object
     {
+        // Validate E.164 format: + followed by 8-15 digits
+        if (!preg_match('/^\+[1-9]\d{7,14}$/', $to)) {
+            throw new \InvalidArgumentException("Invalid E.164 phone number: {$to}");
+        }
+        if (!preg_match('/^\+[1-9]\d{7,14}$/', $from)) {
+            throw new \InvalidArgumentException("Invalid E.164 caller number: {$from}");
+        }
+
         return $this->getClient()->calls->create(
             $to,
             $from,
             [
                 'url' => $webhookUrl,
                 'statusCallback' => route('webhook.twilio.status'),
-                'statusCallbackEvent' => ['initiated', 'ringing', 'answered', 'completed'],
+                'statusCallbackEvent' => ['initiated', 'ringing', 'answered', 'completed', 'failed', 'busy', 'no-answer'],
                 'statusCallbackMethod' => 'POST',
             ]
         );
@@ -51,6 +66,7 @@ class TwilioService
                 'monthly_cost' => 1.00, // EUR estimate
             ], $numbers);
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('TwilioService: getAvailableNumbers failed', ['country' => $country, 'error' => $e->getMessage()]);
             return [];
         }
     }
@@ -66,6 +82,7 @@ class TwilioService
                 'statusCallbackMethod' => 'POST',
             ]);
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('TwilioService: purchaseNumber failed', ['number' => $phoneNumber, 'error' => $e->getMessage()]);
             return null;
         }
     }
@@ -76,6 +93,7 @@ class TwilioService
             $this->getClient()->incomingPhoneNumbers($sid)->delete();
             return true;
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('TwilioService: releaseNumber failed', ['sid' => $sid, 'error' => $e->getMessage()]);
             return false;
         }
     }

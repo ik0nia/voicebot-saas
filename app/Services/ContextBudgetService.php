@@ -15,8 +15,8 @@ namespace App\Services;
 class ContextBudgetService
 {
     private const BUDGETS = [
-        'chat'  => 2500,
-        'voice' => 1200,
+        'chat'  => 3500,
+        'voice' => 1600,
     ];
 
     private TokenizerService $tokenizer;

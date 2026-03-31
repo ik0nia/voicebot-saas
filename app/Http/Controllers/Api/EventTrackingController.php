@@ -73,10 +73,21 @@ class EventTrackingController extends Controller
 
         $inserted = $this->events->trackBatch($events, $bot->tenant_id);
 
-        // V2: If session_ended was in this batch, trigger outcome derivation
+        // V2: If session_ended was in this batch, mark conversation completed + trigger outcome derivation
         foreach ($events as $event) {
             if (($event['event_name'] ?? '') === 'session_ended' && !empty($event['conversation_id'])) {
-                \App\Jobs\DeriveConversationOutcomes::dispatch((int) $event['conversation_id'])
+                $conversationId = (int) $event['conversation_id'];
+
+                // Mark conversation as completed if it exists and isn't already completed
+                \App\Models\Conversation::withoutGlobalScopes()
+                    ->where('id', $conversationId)
+                    ->where('status', '!=', 'completed')
+                    ->update([
+                        'status' => 'completed',
+                        'ended_at' => now(),
+                    ]);
+
+                \App\Jobs\DeriveConversationOutcomes::dispatch($conversationId)
                     ->delay(now()->addSeconds(10)); // slight delay to ensure all events are stored
                 break; // only once per batch
             }
@@ -119,7 +130,7 @@ class EventTrackingController extends Controller
             'lead_enabled' => true, // Phase 3 will make this tenant-configurable
             'handoff_enabled' => true,
             'voice_enabled' => $channel->type === 'voice',
-        ]);
+        ])->header('Cache-Control', 'no-store, no-cache, must-revalidate');
     }
 
     /**

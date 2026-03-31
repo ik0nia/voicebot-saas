@@ -88,11 +88,10 @@ class OutcomeEngine
         if (($conversation->messages_count ?? 0) >= 3) { $score += 10; $reasons[] = 'engaged_conversation'; }
         if ($impressionCount >= 5) { $score += 10; $reasons[] = 'many_impressions'; }
 
-        // Check if has lead
+        // Check if has lead (with email OR phone) for THIS conversation
         $hasLead = \App\Models\Lead::where('conversation_id', $conversation->id)
-            ->whereNotNull('email')
-            ->orWhere(function ($q) use ($conversation) {
-                $q->where('conversation_id', $conversation->id)->whereNotNull('phone');
+            ->where(function ($q) {
+                $q->whereNotNull('email')->orWhereNotNull('phone');
             })
             ->exists();
 

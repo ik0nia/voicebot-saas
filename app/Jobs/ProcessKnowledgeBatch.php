@@ -43,7 +43,8 @@ class ProcessKnowledgeBatch implements ShouldQueue
         $lockKey = "knowledge_batch_processing_{$this->botId}";
 
         // Prevent concurrent batch processing for same bot
-        $lock = Cache::lock($lockKey, 600);
+        // Lock for 60s (batches typically complete in ~15s, but allow buffer for slow embeddings)
+        $lock = Cache::lock($lockKey, 60);
         if (!$lock->get()) {
             Log::info('ProcessKnowledgeBatch: skipped, another batch running', ['bot_id' => $this->botId]);
             return;

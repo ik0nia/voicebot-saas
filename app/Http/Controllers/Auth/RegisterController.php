@@ -63,7 +63,7 @@ class RegisterController extends Controller
         // 4. Login the user
         Auth::login($user);
 
-        // 5. Redirect to dashboard
-        return redirect('/dashboard');
+        // 5. Redirect to setup wizard (new users) or dashboard (existing)
+        return redirect('/dashboard/setup');
     }
 }

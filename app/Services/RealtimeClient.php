@@ -79,10 +79,8 @@ class RealtimeClient
                     'model' => 'whisper-1',
                 ],
                 'turn_detection' => [
-                    'type' => 'server_vad',
-                    'threshold' => $options['vad_threshold'] ?? 0.5,
-                    'prefix_padding_ms' => 300,
-                    'silence_duration_ms' => $options['silence_duration_ms'] ?? 500,
+                    'type' => $options['vad_type'] ?? 'semantic_vad',
+                    'eagerness' => $options['vad_eagerness'] ?? 'low',
                 ],
                 'tools' => $options['tools'] ?? [],
                 'tool_choice' => 'auto',

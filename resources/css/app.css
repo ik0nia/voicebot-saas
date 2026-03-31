@@ -10,10 +10,10 @@
 
 @layer components {
     .btn-primary {
-        @apply inline-flex items-center justify-center px-6 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-all duration-200 shadow-lg shadow-primary-600/25 hover:shadow-xl hover:shadow-primary-600/30 hover:-translate-y-0.5;
+        @apply inline-flex items-center justify-center px-6 py-3 bg-red-700 text-white font-bold rounded-xl hover:bg-red-600 transition-all duration-200 shadow-lg shadow-red-700/20 hover:shadow-xl hover:shadow-red-600/25;
     }
     .btn-secondary {
-        @apply inline-flex items-center justify-center px-6 py-3 bg-white text-primary-600 font-semibold rounded-xl border-2 border-primary-200 hover:border-primary-600 transition-all duration-200 hover:-translate-y-0.5;
+        @apply inline-flex items-center justify-center px-6 py-3 bg-white text-red-700 font-semibold rounded-xl border-2 border-slate-200 hover:border-red-300 transition-all duration-200;
     }
     .section-padding {
         @apply py-20 lg:py-28;
@@ -22,7 +22,7 @@
         @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
     }
     .gradient-text {
-        @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-primary-400;
+        @apply bg-clip-text text-transparent bg-gradient-to-r from-red-600 to-red-400;
     }
 }
 

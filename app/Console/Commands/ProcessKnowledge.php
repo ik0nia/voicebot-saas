@@ -50,11 +50,6 @@ class ProcessKnowledge extends Command
         $dispatched = 0;
 
         foreach ($botsWithPending as $row) {
-            if ($dispatched >= $maxBatches) {
-                $this->info("Max batches ({$maxBatches}) reached. Remaining bots will be processed next run.");
-                break;
-            }
-
             // Check if bot already has a batch running
             $lockKey = "knowledge_batch_processing_{$row->bot_id}";
             if (Cache::has($lockKey)) {
@@ -62,14 +57,25 @@ class ProcessKnowledge extends Command
                 continue;
             }
 
-            if ($this->option('dry-run')) {
-                $this->line("  Bot {$row->bot_id}: would dispatch batch of {$batchSize} (pending: {$row->pending_count})");
-                continue;
+            // Dispatch multiple batches for the same bot when there's a large backlog
+            $batchesForBot = min($maxBatches - $dispatched, max(1, (int) ceil($row->pending_count / $batchSize)));
+
+            for ($i = 0; $i < $batchesForBot; $i++) {
+                if ($dispatched >= $maxBatches) break;
+
+                if ($this->option('dry-run')) {
+                    $this->line("  Bot {$row->bot_id}: would dispatch batch {$i}+1 of {$batchSize} (pending: {$row->pending_count})");
+                } else {
+                    ProcessKnowledgeBatch::dispatch($row->bot_id, $batchSize);
+                    $this->line("  Bot {$row->bot_id}: dispatched batch " . ($i + 1) . " of {$batchSize} (pending: {$row->pending_count})");
+                }
+                $dispatched++;
             }
 
-            ProcessKnowledgeBatch::dispatch($row->bot_id, $batchSize);
-            $dispatched++;
-            $this->line("  Bot {$row->bot_id}: dispatched batch of {$batchSize} (pending: {$row->pending_count})");
+            if ($dispatched >= $maxBatches) {
+                $this->info("Max batches ({$maxBatches}) reached.");
+                break;
+            }
         }
 
         $this->info("Dispatched {$dispatched} batches.");

@@ -52,7 +52,9 @@ class TwilioWebhookController extends Controller
         $bot = $phoneNumber->bot;
 
         // Idempotency check: prevent duplicate call creation on Twilio retries
-        $existingCall = Call::whereJsonContains('metadata->twilio_call_sid', $callSid)->first();
+        // Scoped by tenant to prevent cross-tenant lookups
+        $existingCall = Call::where('tenant_id', $phoneNumber->tenant_id)
+            ->whereJsonContains('metadata->twilio_call_sid', $callSid)->first();
         if ($existingCall) {
             Log::info('TwilioWebhook: duplicate handleVoice for existing call', [
                 'call_id' => $existingCall->id,

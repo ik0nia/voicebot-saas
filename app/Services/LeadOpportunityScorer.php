@@ -46,9 +46,9 @@ class LeadOpportunityScorer
             if ($name === 'knowledge_query') { $score += 5; $signals[] = 'info_seeking'; }
         }
 
-        // ── Dead end signals ──
-        if (in_array('no_results', $eventNames)) { $score += 10; $signals[] = 'dead_end_search'; }
-        if (in_array('fallback_triggered', $eventNames)) { $score += 5; $signals[] = 'fallback_hit'; }
+        // ── Dead end signals (negative — frustrated user, not a conversion opportunity) ──
+        if (in_array('no_results', $eventNames)) { $score -= 10; $signals[] = 'dead_end_search'; }
+        if (in_array('fallback_triggered', $eventNames)) { $score -= 5; $signals[] = 'fallback_hit'; }
 
         // ── Negative signals ──
         if (in_array('add_to_cart_success', $eventNames)) { $score -= 15; $signals[] = 'already_in_cart'; }

@@ -32,18 +32,18 @@
         // CSS pentru widget
         var style = document.createElement('style');
         style.textContent = '' +
-            '#sambla-chatbot-widget { position: fixed; bottom: 20px; right: 20px; z-index: 999999; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }' +
-            '#sambla-chatbot-toggle { width: 60px; height: 60px; border-radius: 50%; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; transition: transform 0.2s ease, box-shadow 0.2s ease; }' +
-            '#sambla-chatbot-toggle:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(0,0,0,0.2); }' +
+            '#sambla-chatbot-widget { position: fixed; bottom: 32px; right: 20px; z-index: 999999; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }' +
+            '#sambla-chatbot-toggle { width: 60px; height: 60px; border-radius: 50%; border: none; cursor: pointer; box-shadow: 0 4px 24px rgba(0,0,0,0.15), 0 1px 4px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: center; transition: transform 0.2s ease, box-shadow 0.2s ease; background: linear-gradient(135deg, #991b1b, #dc2626); }' +
+            '#sambla-chatbot-toggle:hover { transform: scale(1.06); box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.1); }' +
             '#sambla-chatbot-toggle svg { width: 28px; height: 28px; fill: white; }' +
-            '#sambla-chatbot-frame-container { display: none; position: absolute; bottom: 72px; right: 0; width: 380px; height: 520px; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.15); background: #fff; }' +
+            '#sambla-chatbot-frame-container { display: none; position: absolute; bottom: 72px; right: 0; width: 400px; height: 540px; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.12), 0 4px 20px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04); background: #fff; }' +
             '#sambla-chatbot-frame-container.open { display: block; }' +
-            '#sambla-chatbot-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; color: #fff; }' +
-            '#sambla-chatbot-header span { font-size: 15px; font-weight: 600; }' +
-            '#sambla-chatbot-close { background: none; border: none; color: #fff; cursor: pointer; font-size: 20px; line-height: 1; padding: 0 4px; opacity: 0.8; }' +
-            '#sambla-chatbot-close:hover { opacity: 1; }' +
-            '#sambla-chatbot-iframe { width: 100%; height: calc(100% - 48px); border: none; }' +
-            '@media (max-width: 480px) { #sambla-chatbot-frame-container { width: calc(100vw - 24px); right: -8px; height: 70vh; bottom: 72px; } }';
+            '#sambla-chatbot-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; color: #fff; background: linear-gradient(135deg, #991b1b, #dc2626); }' +
+            '#sambla-chatbot-header span { font-size: 16px; font-weight: 700; }' +
+            '#sambla-chatbot-close { background: none; border: none; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 18px; line-height: 1; padding: 4px; border-radius: 6px; }' +
+            '#sambla-chatbot-close:hover { color: #fff; background: rgba(255,255,255,0.1); }' +
+            '#sambla-chatbot-iframe { width: 100%; height: calc(100% - 56px); border: none; }' +
+            '@media (max-width: 480px) { #sambla-chatbot-frame-container { width: calc(100vw - 16px); right: -8px; height: 75vh; bottom: 72px; border-radius: 16px; } }';
         document.head.appendChild(style);
 
         // Creează widget-ul
@@ -57,7 +57,7 @@
         // Header
         var header = document.createElement('div');
         header.id = 'sambla-chatbot-header';
-        header.style.backgroundColor = color;
+        header.style.background = 'linear-gradient(135deg, #991b1b, #dc2626)';
 
         var nameSpan = document.createElement('span');
         nameSpan.textContent = botName;

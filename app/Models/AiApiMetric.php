@@ -22,7 +22,7 @@ class AiApiMetric extends Model
     protected $casts = [
         'input_tokens' => 'integer',
         'output_tokens' => 'integer',
-        'cost_cents' => 'integer',
+        'cost_cents' => 'decimal:4',
         'response_time_ms' => 'integer',
     ];
 }

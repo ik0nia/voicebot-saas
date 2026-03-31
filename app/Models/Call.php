@@ -22,6 +22,7 @@ class Call extends Model
     public const STATUS_BUSY = 'busy';
     public const STATUS_NO_ANSWER = 'no_answer';
     public const STATUS_CANCELED = 'canceled';
+    public const STATUS_ABANDONED = 'abandoned';
 
     protected $fillable = [
         'tenant_id',

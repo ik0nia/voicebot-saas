@@ -24,7 +24,7 @@ class ChatbotEmbedController extends Controller
 
         return response($js)
             ->header('Content-Type', 'application/javascript; charset=utf-8')
-            ->header('Cache-Control', 'public, max-age=3600')
+            ->header('Cache-Control', 'public, max-age=300')
             ->header('X-Content-Type-Options', 'nosniff');
     }
 

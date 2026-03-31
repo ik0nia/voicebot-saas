@@ -5,20 +5,20 @@
 
 @section('content')
 
-{{-- Hero Section --}}
-<section class="relative overflow-hidden bg-gradient-to-b from-white to-primary-50 section-padding pt-32 lg:pt-40">
-    <x-hero-texture />
-    <div class="container-custom text-center relative">
-        <x-hero-ornament />
-        <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 mb-6 animate-fade-in">
-            <span class="gradient-text">Contactează-ne</span>
+<section class="relative overflow-hidden bg-slate-950 pt-28 pb-20 lg:pt-36 lg:pb-24">
+    <div class="absolute inset-0 opacity-[0.04]">
+        <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="contact-motif" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse"><path d="M40 12 L52 24 L40 36 L28 24 Z" fill="#991b1b"/><rect x="38" y="2" width="4" height="8" fill="#991b1b"/><rect x="38" y="38" width="4" height="8" fill="#991b1b"/></pattern></defs><rect width="100%" height="100%" fill="url(#contact-motif)"/></svg>
+    </div>
+    <div class="absolute bottom-10 -left-20 w-[300px] h-[300px] bg-red-900/15 rounded-full blur-[100px]"></div>
+    <div class="container-custom text-center relative z-10">
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white mb-6 animate-fade-in">
+            <span class="bg-gradient-to-r from-red-400 via-red-300 to-amber-300 bg-clip-text text-transparent">Contactează-ne</span>
         </h1>
-        <p class="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed animate-fade-in-delay-1">
-            Suntem aici să te ajutăm. Răspundem în maxim 2 ore.
+        <p class="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed animate-fade-in">
+            Suntem aici să te ajutăm. Răspundem rapid.
         </p>
     </div>
 </section>
-
 <x-motif-border />
 
 {{-- Contact Form + Info --}}
@@ -47,28 +47,28 @@
                             <div>
                                 <label for="nume" class="block text-sm font-semibold text-slate-700 mb-2">Nume <span class="text-red-500">*</span></label>
                                 <input type="text" id="nume" name="nume" required placeholder="Numele tău complet"
-                                    class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all duration-200 text-slate-900 placeholder-slate-400">
+                                    class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 outline-none transition-all duration-200 text-slate-900 placeholder-slate-400">
                             </div>
 
                             {{-- Email --}}
                             <div>
                                 <label for="email" class="block text-sm font-semibold text-slate-700 mb-2">Email <span class="text-red-500">*</span></label>
                                 <input type="email" id="email" name="email" required placeholder="email@companie.ro"
-                                    class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all duration-200 text-slate-900 placeholder-slate-400">
+                                    class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 outline-none transition-all duration-200 text-slate-900 placeholder-slate-400">
                             </div>
 
                             {{-- Companie --}}
                             <div>
                                 <label for="companie" class="block text-sm font-semibold text-slate-700 mb-2">Companie <span class="text-red-500">*</span></label>
                                 <input type="text" id="companie" name="companie" required placeholder="Numele companiei"
-                                    class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all duration-200 text-slate-900 placeholder-slate-400">
+                                    class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 outline-none transition-all duration-200 text-slate-900 placeholder-slate-400">
                             </div>
 
                             {{-- Telefon --}}
                             <div>
                                 <label for="telefon" class="block text-sm font-semibold text-slate-700 mb-2">Telefon <span class="text-slate-400 font-normal">(opțional)</span></label>
                                 <input type="tel" id="telefon" name="telefon" placeholder="+40 7XX XXX XXX"
-                                    class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all duration-200 text-slate-900 placeholder-slate-400">
+                                    class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 outline-none transition-all duration-200 text-slate-900 placeholder-slate-400">
                             </div>
                         </div>
 
@@ -76,7 +76,7 @@
                         <div class="mb-6">
                             <label for="subiect" class="block text-sm font-semibold text-slate-700 mb-2">Subiect <span class="text-red-500">*</span></label>
                             <select id="subiect" name="subiect" required
-                                class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all duration-200 text-slate-900 bg-white">
+                                class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 outline-none transition-all duration-200 text-slate-900 bg-white">
                                 <option value="" disabled selected>Selectează un subiect</option>
                                 <option value="informatii">Informații generale</option>
                                 <option value="demo">Solicitare demo</option>
@@ -90,7 +90,7 @@
                         <div class="mb-8">
                             <label for="mesaj" class="block text-sm font-semibold text-slate-700 mb-2">Mesaj <span class="text-red-500">*</span></label>
                             <textarea id="mesaj" name="mesaj" required rows="5" placeholder="Scrie mesajul tău aici..."
-                                class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all duration-200 text-slate-900 placeholder-slate-400 resize-y"></textarea>
+                                class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 outline-none transition-all duration-200 text-slate-900 placeholder-slate-400 resize-y"></textarea>
                         </div>
 
                         {{-- Submit --}}
@@ -112,14 +112,14 @@
                     <div class="space-y-6">
                         {{-- Email --}}
                         <div class="flex items-start gap-4">
-                            <div class="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center shrink-0">
-                                <svg class="w-5 h-5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <div class="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center shrink-0">
+                                <svg class="w-5 h-5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
                                 </svg>
                             </div>
                             <div>
                                 <p class="text-sm font-semibold text-slate-900 mb-1">Email</p>
-                                <a href="mailto:contact@sambla.ro" class="text-sm text-primary-600 hover:text-primary-700 transition-colors">contact@sambla.ro</a>
+                                <a href="mailto:contact@sambla.ro" class="text-sm text-red-700 hover:text-red-800 transition-colors">contact@sambla.ro</a>
                             </div>
                         </div>
 
@@ -132,7 +132,7 @@
                             </div>
                             <div>
                                 <p class="text-sm font-semibold text-slate-900 mb-1">Telefon</p>
-                                <a href="tel:+4021XXXXXXX" class="text-sm text-slate-600 hover:text-primary-600 transition-colors">+40 21 XXX XXXX</a>
+                                <a href="tel:+4021XXXXXXX" class="text-sm text-slate-600 hover:text-red-700 transition-colors">+40 21 XXX XXXX</a>
                             </div>
                         </div>
 

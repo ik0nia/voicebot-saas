@@ -14,13 +14,19 @@ class PublicDemoController extends Controller
             ->where('is_active', true)
             ->firstOrFail();
 
-        return view('public.demo', compact('bot'));
+        return response()
+            ->view('public.demo', compact('bot'))
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate')
+            ->header('Pragma', 'no-cache');
     }
 
     public function testById(Bot $bot)
     {
         $bot = Bot::withoutGlobalScopes()->findOrFail($bot->id);
 
-        return view('public.demo', compact('bot'));
+        return response()
+            ->view('public.demo', compact('bot'))
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate')
+            ->header('Pragma', 'no-cache');
     }
 }

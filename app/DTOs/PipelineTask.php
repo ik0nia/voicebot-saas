@@ -8,8 +8,8 @@ class PipelineTask
         public readonly string $name,
         public readonly DetectedIntent $intent,
         public readonly array $params = [],
-        public readonly int $durationMs = 0,
-        public readonly int $resultsCount = 0,
+        public int $durationMs = 0,
+        public int $resultsCount = 0,
     ) {}
 
     public function toArray(): array

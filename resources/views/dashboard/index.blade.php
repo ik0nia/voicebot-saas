@@ -128,6 +128,20 @@
     </script>
     @endif
 
+    {{-- Welcome Header --}}
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900">
+                @php
+                    $hour = (int) now()->format('H');
+                    $greeting = $hour < 12 ? 'Bună dimineața' : ($hour < 18 ? 'Bună ziua' : 'Bună seara');
+                @endphp
+                {{ $greeting }}, {{ Str::before(auth()->user()->name, ' ') }}
+            </h1>
+            <p class="mt-0.5 text-sm text-slate-500">Iată ce se întâmplă cu platforma ta azi.</p>
+        </div>
+    </div>
+
     {{-- Stat Cards --}}
     <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {{-- 1. Boti activi --}}

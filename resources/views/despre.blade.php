@@ -6,22 +6,20 @@
 @section('content')
 
 {{-- Hero Section --}}
-<section class="relative bg-gradient-to-b from-white to-primary-50 section-padding pt-32 lg:pt-40 overflow-hidden">
-    <x-hero-texture />
-
-    <div class="container-custom text-center relative">
-        <x-hero-ornament />
-
-        <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 mb-6 animate-fade-in">
-            Despre <span class="gradient-text">noi</span>
+<section class="relative overflow-hidden bg-slate-950 pt-28 pb-20 lg:pt-36 lg:pb-24">
+    <div class="absolute inset-0 opacity-[0.04]">
+        <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="about-motif" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse"><path d="M40 12 L52 24 L40 36 L28 24 Z" fill="#991b1b"/><rect x="38" y="2" width="4" height="8" fill="#991b1b"/><rect x="38" y="38" width="4" height="8" fill="#991b1b"/></pattern></defs><rect width="100%" height="100%" fill="url(#about-motif)"/></svg>
+    </div>
+    <div class="absolute top-20 -left-40 w-[400px] h-[400px] bg-red-900/20 rounded-full blur-[120px]"></div>
+    <div class="container-custom text-center relative z-10">
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white mb-6 animate-fade-in">
+            Despre <span class="bg-gradient-to-r from-red-400 via-red-300 to-amber-300 bg-clip-text text-transparent">noi</span>
         </h1>
-        <p class="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed animate-fade-in-delay-1">
+        <p class="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed animate-fade-in">
             Un nume cu rădăcini adânci în graiul românesc, o tehnologie care privește spre viitor.
         </p>
     </div>
 </section>
-
-{{-- Romanian motif border --}}
 <x-motif-border />
 
 {{-- De unde vine numele Section --}}
@@ -30,7 +28,7 @@
         <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             {{-- Text --}}
             <div>
-                <span class="inline-flex items-center gap-2 text-sm font-semibold text-primary-600 mb-4">
+                <span class="inline-flex items-center gap-2 text-sm font-semibold text-red-700 mb-4">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                         <path d="M8 1 L11 5 L8 9 L5 5 Z" opacity="0.6"/>
                         <path d="M8 7 L11 11 L8 15 L5 11 Z" opacity="0.6"/>
@@ -39,7 +37,7 @@
                     POVESTEA NUMELUI
                 </span>
                 <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-6">
-                    Ce înseamnă <span class="gradient-text">Sambla</span>?
+                    Ce înseamnă <span class="bg-gradient-to-r from-red-400 via-red-300 to-amber-300 bg-clip-text text-transparent">Sambla</span>?
                 </h2>
                 <p class="text-lg text-slate-600 leading-relaxed mb-6">
                     <strong class="text-slate-900">„A sâmbla"</strong> este un verb vechi din graiul ardelenesc, folosit în Ardeal și Banat de sute de ani. Sensul lui primar este <em>a semăna</em> — dar în literatura clasică, cuvântul capătă o profunzime aparte.
@@ -49,9 +47,9 @@
                 </p>
 
                 {{-- Quote block with Romanian ornament --}}
-                <div class="relative bg-primary-50/50 rounded-2xl p-6 border border-primary-100 mb-6">
+                <div class="relative bg-red-50/50 rounded-2xl p-6 border border-red-100 mb-6">
                     <div class="absolute -top-3 left-6">
-                        <svg width="24" height="24" viewBox="0 0 24 24" class="text-primary-400" fill="currentColor">
+                        <svg width="24" height="24" viewBox="0 0 24 24" class="text-red-300" fill="currentColor">
                             <path d="M12 2 L16 8 L12 14 L8 8 Z" opacity="0.5"/>
                             <path d="M12 5 L14 8 L12 11 L10 8 Z"/>
                         </svg>
@@ -133,12 +131,12 @@
 
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {{-- Tradiție --}}
-            <div class="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 hover:shadow-md hover:border-primary-200 transition-all duration-300 relative overflow-hidden">
+            <div class="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 hover:shadow-md hover:border-red-200 transition-all duration-300 relative overflow-hidden">
                 <div class="absolute top-0 right-0 w-20 h-20 opacity-5">
                     <svg viewBox="0 0 40 40" fill="#991b1b"><path d="M20 0 L30 10 L20 20 L10 10 Z"/><path d="M20 20 L30 30 L20 40 L10 30 Z"/></svg>
                 </div>
-                <div class="w-14 h-14 rounded-xl bg-primary-100 flex items-center justify-center mb-6">
-                    <svg class="w-7 h-7 text-primary-600" viewBox="0 0 24 24" fill="currentColor">
+                <div class="w-14 h-14 rounded-xl bg-red-100 flex items-center justify-center mb-6">
+                    <svg class="w-7 h-7 text-red-700" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 2 L16 8 L12 14 L8 8 Z" opacity="0.5"/>
                         <path d="M12 10 L16 16 L12 22 L8 16 Z" opacity="0.5"/>
                         <path d="M12 6 L16 12 L12 18 L8 12 Z"/>
@@ -149,7 +147,7 @@
             </div>
 
             {{-- Inovație --}}
-            <div class="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 hover:shadow-md hover:border-primary-200 transition-all duration-300 relative overflow-hidden">
+            <div class="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 hover:shadow-md hover:border-red-200 transition-all duration-300 relative overflow-hidden">
                 <div class="absolute top-0 right-0 w-20 h-20 opacity-5">
                     <svg viewBox="0 0 40 40" fill="#991b1b"><path d="M20 0 L30 10 L20 20 L10 10 Z"/><path d="M20 20 L30 30 L20 40 L10 30 Z"/></svg>
                 </div>
@@ -163,7 +161,7 @@
             </div>
 
             {{-- Parteneriat --}}
-            <div class="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 hover:shadow-md hover:border-primary-200 transition-all duration-300 relative overflow-hidden">
+            <div class="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 hover:shadow-md hover:border-red-200 transition-all duration-300 relative overflow-hidden">
                 <div class="absolute top-0 right-0 w-20 h-20 opacity-5">
                     <svg viewBox="0 0 40 40" fill="#991b1b"><path d="M20 0 L30 10 L20 20 L10 10 Z"/><path d="M20 20 L30 30 L20 40 L10 30 Z"/></svg>
                 </div>
@@ -190,7 +188,7 @@
         <div class="space-y-8">
             {{-- Slavici quote --}}
             <div class="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 relative">
-                <div class="absolute top-6 left-6 text-primary-200">
+                <div class="absolute top-6 left-6 text-red-200">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" opacity="0.4">
                         <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
                     </svg>
@@ -200,8 +198,8 @@
                         „Mara sâmbla tăt cu bărbatu-său la chip, dar la minte era deosebită."
                     </blockquote>
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
-                            <span class="text-sm font-bold text-primary-700">IS</span>
+                        <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                            <span class="text-sm font-bold text-red-800">IS</span>
                         </div>
                         <div>
                             <cite class="text-sm font-semibold text-slate-900 not-italic">Ioan Slavici</cite>
@@ -213,7 +211,7 @@
 
             {{-- Agârbiceanu quote --}}
             <div class="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 relative">
-                <div class="absolute top-6 left-6 text-primary-200">
+                <div class="absolute top-6 left-6 text-red-200">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" opacity="0.4">
                         <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
                     </svg>
@@ -223,8 +221,8 @@
                         „Vorba lor sâmbla a minciună, dar oamenii tot o ascultau."
                     </blockquote>
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
-                            <span class="text-sm font-bold text-primary-700">IA</span>
+                        <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                            <span class="text-sm font-bold text-red-800">IA</span>
                         </div>
                         <div>
                             <cite class="text-sm font-semibold text-slate-900 not-italic">Ion Agârbiceanu</cite>
@@ -236,9 +234,9 @@
         </div>
 
         {{-- Connection explanation --}}
-        <div class="mt-12 bg-gradient-to-br from-primary-50 to-white rounded-2xl p-8 lg:p-10 border border-primary-100">
+        <div class="mt-12 bg-gradient-to-br from-red-50 to-white rounded-2xl p-8 lg:p-10 border border-red-100">
             <div class="flex items-start gap-4">
-                <div class="shrink-0 w-12 h-12 rounded-xl bg-primary-600 flex items-center justify-center">
+                <div class="shrink-0 w-12 h-12 rounded-xl bg-red-700 flex items-center justify-center">
                     <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 2 L16 8 L12 14 L8 8 Z" opacity="0.6"/>
                         <path d="M12 10 L16 16 L12 22 L8 16 Z" opacity="0.6"/>
@@ -260,7 +258,7 @@
 </section>
 
 {{-- Numbers Section --}}
-<section class="py-16 lg:py-20 bg-primary-600 relative overflow-hidden">
+<section class="py-16 lg:py-20 bg-red-700 relative overflow-hidden">
     {{-- Subtle motif overlay --}}
     <div class="absolute inset-0 opacity-10">
         <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
@@ -277,35 +275,27 @@
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
             <div class="text-center">
                 <div class="text-4xl md:text-5xl font-extrabold text-white mb-2">150+</div>
-                <div class="text-primary-200 font-medium">Clienți activi</div>
+                <div class="text-red-200 font-medium">Clienți activi</div>
             </div>
             <div class="text-center">
                 <div class="text-4xl md:text-5xl font-extrabold text-white mb-2">2M+</div>
-                <div class="text-primary-200 font-medium">Apeluri procesate</div>
+                <div class="text-red-200 font-medium">Apeluri procesate</div>
             </div>
             <div class="text-center">
                 <div class="text-4xl md:text-5xl font-extrabold text-white mb-2">99.9%</div>
-                <div class="text-primary-200 font-medium">Uptime</div>
+                <div class="text-red-200 font-medium">Uptime</div>
             </div>
             <div class="text-center">
                 <div class="text-4xl md:text-5xl font-extrabold text-white mb-2">4.8/5</div>
-                <div class="text-primary-200 font-medium">Rating clienți</div>
+                <div class="text-red-200 font-medium">Rating clienți</div>
             </div>
         </div>
     </div>
 </section>
 
-{{-- CTA Section --}}
-<section class="section-padding">
-    <div class="container-custom text-center">
-        <x-motif-divider class="mb-10" />
-        <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-6">Vrei să faci parte din poveste?</h2>
-        <p class="text-lg text-slate-600 max-w-xl mx-auto mb-10">Hai să dăm voce afacerii tale. Cu rădăcini în tradiție și privirea spre viitor.</p>
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="/register" class="btn-primary text-lg px-8 py-4">Începe gratuit</a>
-            <a href="/contact" class="text-primary-600 hover:text-primary-700 font-semibold transition-colors duration-200">Sau contactează-ne &rarr;</a>
-        </div>
-    </div>
-</section>
+<x-cta-section
+    title="Vrei să faci parte din poveste?"
+    subtitle="Hai să dăm voce afacerii tale. Cu rădăcini în tradiție și privirea spre viitor."
+/>
 
 @endsection

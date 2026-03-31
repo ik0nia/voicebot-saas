@@ -165,9 +165,16 @@ class BotController extends Controller
         // Recent knowledge documents
         $recentKnowledge = $bot->knowledge()->where('status', 'ready')->latest()->take(5)->get();
 
+        // Bot Health Score (adaptive intelligence)
+        $healthScore = app(\App\Services\BotHealthScoreService::class)->calculate($bot);
+
+        // Knowledge Gaps
+        $knowledgeGaps = app(\App\Services\KnowledgeGapService::class)->analyze($bot->id);
+
         return view('dashboard.bots.show', compact(
             'bot', 'recentCalls', 'callsThisMonth', 'avgDuration',
-            'kbStats', 'clonedVoice', 'apiTokens', 'wcConnector', 'recentKnowledge'
+            'kbStats', 'clonedVoice', 'apiTokens', 'wcConnector', 'recentKnowledge',
+            'healthScore', 'knowledgeGaps'
         ));
     }
 
@@ -271,6 +278,9 @@ class BotController extends Controller
 
     public function testVocal(Bot $bot)
     {
-        return view('dashboard.bots.test-vocal', compact('bot'));
+        return response()
+            ->view('public.demo', compact('bot'))
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate')
+            ->header('Pragma', 'no-cache');
     }
 }

@@ -45,9 +45,25 @@ class QueryComplexityService
         $wordCount = str_word_count($q);
         $qLower = mb_strtolower($q);
 
-        // Very short queries (1-3 words) are usually simple
+        // Very short queries (1-3 words) — but only if they DON'T contain
+        // product-like nouns (≥4 chars, not a stopword). Short product queries
+        // like "sarma", "ciment", "plasa sudata" are common in e-commerce chat
+        // and MUST trigger product search.
         if ($wordCount <= 3) {
-            return 'simple';
+            $hasSubstantiveWord = false;
+            $words = preg_split('/\s+/', $qLower);
+            $chatWords = ['ce', 'cum', 'cat', 'cât', 'unde', 'cand', 'când', 'care', 'imi', 'îmi', 'pot', 'poti', 'poți', 'aveti', 'aveți', 'exista', 'există', 'vreau', 'vrea', 'caut'];
+            foreach ($words as $w) {
+                $clean = preg_replace('/[?.!,;:]+$/u', '', $w);
+                if (mb_strlen($clean) >= 4 && !in_array($clean, $chatWords, true)) {
+                    $hasSubstantiveWord = true;
+                    break;
+                }
+            }
+            if (!$hasSubstantiveWord) {
+                return 'simple';
+            }
+            // Has a substantive word → treat as medium (may need product/knowledge search)
         }
 
         // Check complexity signals

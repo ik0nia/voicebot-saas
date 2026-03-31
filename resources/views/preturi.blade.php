@@ -5,20 +5,20 @@
 
 @section('content')
 
-    {{-- Section 1: Hero --}}
-    <section class="relative overflow-hidden bg-gradient-to-b from-slate-50 to-primary-50 section-padding">
-        <x-hero-texture />
-        <div class="container-custom text-center animate-fade-in relative">
-            <x-hero-ornament />
-            <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-slate-900 mb-6">
-                Prețuri <span class="gradient-text">simple, transparente</span>
+    <section class="relative overflow-hidden bg-slate-950 pt-28 pb-20 lg:pt-36 lg:pb-24">
+        <div class="absolute inset-0 opacity-[0.04]">
+            <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="price-motif" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse"><path d="M40 12 L52 24 L40 36 L28 24 Z" fill="#991b1b"/><rect x="38" y="2" width="4" height="8" fill="#991b1b"/><rect x="38" y="38" width="4" height="8" fill="#991b1b"/></pattern></defs><rect width="100%" height="100%" fill="url(#price-motif)"/></svg>
+        </div>
+        <div class="absolute top-10 right-0 w-[350px] h-[350px] bg-red-900/20 rounded-full blur-[100px]"></div>
+        <div class="container-custom text-center relative z-10">
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-6 animate-fade-in">
+                Prețuri <span class="bg-gradient-to-r from-red-400 via-red-300 to-amber-300 bg-clip-text text-transparent">simple, transparente</span>
             </h1>
-            <p class="text-lg md:text-xl text-slate-700 max-w-2xl mx-auto">
-                Alege planul potrivit pentru afacerea ta. Fără costuri ascunse.
+            <p class="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto animate-fade-in">
+                Alege planul potrivit pentru afacerea ta.
             </p>
         </div>
     </section>
-
     <x-motif-border />
 
     {{-- Section 2: Webchat Packages --}}
@@ -38,7 +38,7 @@
                 <button
                     id="billing-toggle"
                     type="button"
-                    class="relative inline-flex h-7 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-slate-300 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                    class="relative inline-flex h-7 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-slate-300 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                     role="switch"
                     aria-checked="false"
                     data-billing="monthly"
@@ -63,10 +63,10 @@
                             $overageCostPerBot = $overage['cost_per_extra_bot'] ?? null;
                             $isEnterprise = $plan->price_monthly === null || $plan->price_monthly == 0 && strtolower($plan->slug ?? $plan->name) === 'enterprise';
                         @endphp
-                        <div class="animate-slide-up rounded-2xl {{ $isPopular ? 'border-2 border-primary-600 shadow-xl md:scale-105' : 'border border-slate-200 shadow-md hover:shadow-lg' }} bg-white p-8 transition-shadow duration-300 relative">
+                        <div class="animate-slide-up rounded-2xl {{ $isPopular ? 'border-2 border-red-700 shadow-xl md:scale-105' : 'border border-slate-200 shadow-md hover:shadow-lg' }} bg-white p-8 transition-shadow duration-300 relative">
                             @if($isPopular)
                                 <div class="absolute -top-4 left-1/2 -translate-x-1/2">
-                                    <span class="inline-flex items-center rounded-full bg-primary-600 px-4 py-1 text-xs font-bold text-white uppercase tracking-wide shadow-lg">
+                                    <span class="inline-flex items-center rounded-full bg-red-700 px-4 py-1 text-xs font-bold text-white uppercase tracking-wide shadow-lg">
                                         Cel mai popular
                                     </span>
                                 </div>
@@ -80,7 +80,7 @@
                             <div class="mb-8">
                                 @if($plan->price_monthly !== null && $plan->price_monthly > 0)
                                     <div class="flex items-baseline gap-1">
-                                        <span class="text-4xl font-extrabold {{ $isPopular ? 'text-primary-700' : 'text-slate-900' }} pricing-amount" data-monthly="{{ number_format($plan->price_monthly, 0) }}" data-annual="{{ number_format($plan->price_yearly, 0) }}">{{ number_format($plan->price_monthly, 0) }}</span>
+                                        <span class="text-4xl font-extrabold {{ $isPopular ? 'text-red-800' : 'text-slate-900' }} pricing-amount" data-monthly="{{ number_format($plan->price_monthly, 0) }}" data-annual="{{ number_format($plan->price_yearly, 0) }}">{{ number_format($plan->price_monthly, 0) }}</span>
                                         <span class="text-lg font-semibold text-slate-700">&euro;</span>
                                         <span class="text-sm text-slate-600">/lună</span>
                                     </div>
@@ -149,7 +149,7 @@
                             $minutesIncluded = $limits['minutes'] ?? $limits['voice_minutes'] ?? null;
                             $isEnterprise = $plan->price_monthly === null || ($plan->price_monthly == 0 && str_contains(strtolower($plan->name), 'enterprise'));
                         @endphp
-                        <div class="animate-slide-up rounded-2xl border border-slate-700 bg-slate-800/80 backdrop-blur p-8 shadow-lg hover:shadow-xl hover:border-primary-500/50 transition-all duration-300 relative">
+                        <div class="animate-slide-up rounded-2xl border border-slate-700 bg-slate-800/80 backdrop-blur p-8 shadow-lg hover:shadow-xl hover:border-red-500/50 transition-all duration-300 relative">
                             <div class="mb-6">
                                 <h3 class="text-lg font-bold text-white uppercase tracking-wide">{{ $plan->name }}</h3>
                                 @if($plan->description)
@@ -171,14 +171,14 @@
                                 @endif
                             </div>
                             @if($minutesIncluded)
-                                <p class="text-sm text-primary-400 font-semibold mb-4">
+                                <p class="text-sm text-red-400 font-semibold mb-4">
                                     {{ $minutesIncluded == -1 ? 'Minute nelimitate' : number_format($minutesIncluded) . ' minute incluse' }}
                                 </p>
                             @endif
                             <ul class="space-y-3 mb-6">
                                 @foreach($features as $feature)
                                     <li class="flex items-start gap-3 text-sm text-slate-300">
-                                        <svg class="w-5 h-5 text-primary-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                                        <svg class="w-5 h-5 text-red-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
                                         {{ $feature }}
                                     </li>
                                 @endforeach
@@ -221,8 +221,8 @@
                 {{-- Messages overage --}}
                 <div class="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
                     <div class="flex items-center gap-3 mb-6">
-                        <div class="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center">
-                            <svg class="w-5 h-5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 011.037-.443 48.282 48.282 0 005.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" /></svg>
+                        <div class="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 011.037-.443 48.282 48.282 0 005.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" /></svg>
                         </div>
                         <h3 class="text-lg font-bold text-slate-900">Mesaje suplimentare</h3>
                     </div>
@@ -256,8 +256,8 @@
                 {{-- Extra bots --}}
                 <div class="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
                     <div class="flex items-center gap-3 mb-6">
-                        <div class="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center">
-                            <svg class="w-5 h-5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" /></svg>
+                        <div class="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" /></svg>
                         </div>
                         <h3 class="text-lg font-bold text-slate-900">Chatboți suplimentari</h3>
                     </div>
@@ -291,8 +291,8 @@
                 {{-- Minutes overage --}}
                 <div class="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
                     <div class="flex items-center gap-3 mb-6">
-                        <div class="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center">
-                            <svg class="w-5 h-5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" /></svg>
+                        <div class="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" /></svg>
                         </div>
                         <h3 class="text-lg font-bold text-slate-900">Minute voce suplimentare</h3>
                     </div>
@@ -412,19 +412,14 @@
         </div>
     </section>
 
-    {{-- Section 6: Contact CTA --}}
-    <section class="section-padding bg-gradient-to-b from-primary-100 to-primary-50">
-        <div class="container-custom text-center max-w-2xl animate-fade-in">
-            <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-                Nu ești sigur ce plan ți se potrivește?
-            </h2>
-            <p class="text-lg text-slate-700 mb-8">
-                Hai să discutăm. Echipa noastră te poate ajuta să alegi soluția optimă.
-            </p>
-            <a href="/contact" class="btn-primary inline-block">Programează o consultație gratuită</a>
-            <p class="text-sm text-slate-600 mt-4">Răspundem în maxim 2 ore</p>
-        </div>
-    </section>
+    <x-cta-section
+        title="Nu ești sigur ce plan ți se potrivește?"
+        subtitle="Hai să discutăm. Echipa noastră te ajută să alegi soluția optimă."
+        primary-text="Contactează-ne"
+        primary-href="/contact"
+        secondary-text="Vezi funcționalități"
+        secondary-href="/functionalitati"
+    />
 
 @endsection
 
@@ -446,7 +441,7 @@
 
             if (isAnnual) {
                 toggle.classList.remove('bg-slate-300');
-                toggle.classList.add('bg-primary-600');
+                toggle.classList.add('bg-red-700');
                 knob.classList.remove('translate-x-0');
                 knob.classList.add('translate-x-7');
                 toggle.setAttribute('aria-checked', 'true');
@@ -456,7 +451,7 @@
                 labelAnnual.classList.remove('text-slate-500', 'font-medium');
                 labelAnnual.classList.add('text-slate-900', 'font-semibold');
             } else {
-                toggle.classList.remove('bg-primary-600');
+                toggle.classList.remove('bg-red-700');
                 toggle.classList.add('bg-slate-300');
                 knob.classList.remove('translate-x-7');
                 knob.classList.add('translate-x-0');

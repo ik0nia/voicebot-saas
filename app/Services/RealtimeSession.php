@@ -38,6 +38,9 @@ class RealtimeSession
     /** @var array<int, array{role: string, content: string}> Buffer for transcripts not yet flushed. */
     private array $transcriptBuffer = [];
 
+    /** @var bool Whether we're waiting for session.updated before sending the greeting. */
+    private bool $pendingGreeting = false;
+
     public function __construct(Bot $bot, Call $call, ?TtsOutputStrategy $ttsStrategy = null)
     {
         // Tenant isolation: ensure Bot and Call belong to the same tenant
@@ -78,8 +81,8 @@ class RealtimeSession
             'instructions' => $instructions,
             'voice' => $this->bot->voice ?? 'alloy',
             'modalities' => $this->ttsStrategy->getModalities(),
-            'vad_threshold' => $settings['vad_threshold'] ?? 0.5,
-            'silence_duration_ms' => $settings['silence_duration_ms'] ?? 500,
+            'vad_type' => $settings['vad_type'] ?? 'semantic_vad',
+            'vad_eagerness' => $settings['vad_eagerness'] ?? 'low',
             'temperature' => $settings['temperature'] ?? 0.7,
             'max_tokens' => $settings['max_tokens'] ?? 1024,
         ]);
@@ -128,8 +131,8 @@ class RealtimeSession
             $knowledgeContext = $this->knowledgeService->buildContext(
                 $this->bot->id,
                 $query,
-                3, // Keep init context lean; mid-call updates fetch more
-                3000 // Max 3000 chars for initial voice prompt
+                4, // Keep init context lean; mid-call updates fetch more
+                3500 // Max 3500 chars for initial voice prompt
             );
 
             if ($knowledgeContext) {
@@ -163,6 +166,17 @@ class RealtimeSession
         $base .= "\n- Răspunde natural și concis în limba {$language}.";
         $base .= "\n- Dacă nu știi răspunsul, oferă-te să transferi apelul la un operator uman.";
         $base .= "\n- Fii politicos și profesional în toate interacțiunile.";
+
+        $base .= "\n\n=== ERORI DE TRANSCRIERE (CRITIC) ==="
+            . "\nTranscrierea vocală generează uneori texte FALSE din liniște sau zgomot."
+            . "\nAceste texte TREBUIE IGNORATE COMPLET — NU RĂSPUNDE la ele:"
+            . "\n- 'subscribe', 'like', 'abonați-vă', 'mulțumim pentru vizionare/urmărire'"
+            . "\n- 'subtitrare', 'traducere', 'copyright', adrese web"
+            . "\n- 'la revedere', 'noapte bună', 'poftă bună', 'la mulți ani' (fără context real)"
+            . "\n- Sunete fără sens: 'uh', 'um', 'hm', cuvinte repetate"
+            . "\n- Orice pare subtitrare de film/YouTube/podcast"
+            . "\nCând primești așa ceva, NU RĂSPUNDE DELOC. Taci și așteaptă un mesaj real."
+            . "\n=== SFÂRȘIT ERORI ===";
 
         // V2: Order lookup instructions
         $base .= "\n\n=== COMENZI ==="
@@ -294,15 +308,48 @@ class RealtimeSession
         if ($type === 'session.created') {
             Log::info("Realtime session created for call {$this->call->id}");
 
-            CallEvent::create([
-                'call_id'     => $this->call->id,
-                'type'        => 'realtime.session_created',
-                'metadata'    => ['session_id' => $event['session']['id'] ?? null],
-                'occurred_at' => now(),
-            ]);
+            try {
+                CallEvent::create([
+                    'call_id'     => $this->call->id,
+                    'type'        => 'realtime.session_created',
+                    'metadata'    => ['session_id' => $event['session']['id'] ?? null],
+                    'occurred_at' => now(),
+                ]);
+            } catch (\Throwable $e) {
+                Log::warning("RealtimeSession: failed to persist session_created event for call {$this->call->id}", ['error' => $e->getMessage()]);
+            }
+
+            // Store greeting for sending after session.updated
+            $this->pendingGreeting = true;
 
             // Return session config to send to OpenAI.
             return $this->getSessionConfig();
+        }
+
+        if ($type === 'session.updated' && $this->pendingGreeting) {
+            $this->pendingGreeting = false;
+            Log::info("Realtime session updated for call {$this->call->id}");
+
+            // Send greeting as first bot response
+            $greeting = $this->bot->greeting_message
+                ?? 'Bună ziua! Sunt asistentul virtual. Vă pot ajuta cu informații despre produse, prețuri sau comenzi. Cu ce vă pot fi de folos?';
+
+            // Adjust greeting based on time of day
+            $hour = (int) now()->format('H');
+            $timeGreeting = match(true) {
+                $hour >= 5 && $hour < 12 => 'Bună dimineața',
+                $hour >= 12 && $hour < 18 => 'Bună ziua',
+                default => 'Bună seara',
+            };
+            $greeting = preg_replace('/^(Bun[aă]\s+(ziua|dimineata|diminea[tț]a|seara)!?|Bun[aă]!?|Salut!?|Hello!?|Hei!?)\s*/iu', $timeGreeting . '! ', $greeting);
+
+            return [
+                'type' => 'response.create',
+                'response' => [
+                    'modalities' => ['text', 'audio'],
+                    'instructions' => 'Spune exact urmatorul text, fara sa adaugi sau sa schimbi nimic: "' . str_replace('"', '\\"', $greeting) . '"',
+                ],
+            ];
         }
 
         if ($type === 'session.updated') {
@@ -319,20 +366,24 @@ class RealtimeSession
     {
         $type = $event['type'];
 
-        if ($type === 'input_audio_buffer.speech_started') {
-            CallEvent::create([
-                'call_id'     => $this->call->id,
-                'type'        => 'speech.started',
-                'occurred_at' => now(),
-            ]);
-        }
+        try {
+            if ($type === 'input_audio_buffer.speech_started') {
+                CallEvent::create([
+                    'call_id'     => $this->call->id,
+                    'type'        => 'speech.started',
+                    'occurred_at' => now(),
+                ]);
+            }
 
-        if ($type === 'input_audio_buffer.committed') {
-            CallEvent::create([
-                'call_id'     => $this->call->id,
-                'type'        => 'audio.committed',
-                'occurred_at' => now(),
-            ]);
+            if ($type === 'input_audio_buffer.committed') {
+                CallEvent::create([
+                    'call_id'     => $this->call->id,
+                    'type'        => 'audio.committed',
+                    'occurred_at' => now(),
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::warning("RealtimeSession: failed to persist input_audio event for call {$this->call->id}", ['error' => $e->getMessage()]);
         }
 
         return null;
@@ -347,6 +398,14 @@ class RealtimeSession
 
         if ($type === 'conversation.item.input_audio_transcription.completed') {
             $transcript = $event['transcript'] ?? '';
+
+            // Filter Whisper hallucinations (phantom transcripts from silence/noise)
+            if (WhisperHallucinationFilter::isHallucination($transcript)) {
+                Log::debug("RealtimeSession: filtered Whisper hallucination for call {$this->call->id}", [
+                    'transcript' => mb_substr($transcript, 0, 100),
+                ]);
+                return null;
+            }
 
             if ($transcript) {
                 try {
@@ -421,7 +480,7 @@ class RealtimeSession
 
                     // Knowledge search — uses OpenAI embedding API (slower).
                     // If products were found, use fewer results to keep context lean.
-                    $knowledgeLimit = $foundProducts ? 3 : 5;
+                    $knowledgeLimit = $foundProducts ? 4 : 8;
                     $knowledgeContext = $this->knowledgeService->buildContext(
                         $this->bot->id,
                         $transcript,
@@ -480,14 +539,21 @@ class RealtimeSession
         }
 
         if ($type === 'response.done') {
-            CallEvent::create([
-                'call_id'     => $this->call->id,
-                'type'        => 'response.completed',
-                'metadata'    => [
-                    'usage' => $event['response']['usage'] ?? null,
-                ],
-                'occurred_at' => now(),
-            ]);
+            try {
+                CallEvent::create([
+                    'call_id'     => $this->call->id,
+                    'type'        => 'response.completed',
+                    'metadata'    => [
+                        'usage' => $event['response']['usage'] ?? null,
+                    ],
+                    'occurred_at' => now(),
+                ]);
+            } catch (\Throwable $e) {
+                Log::warning("RealtimeSession: failed to persist response.completed event for call {$this->call->id}", ['error' => $e->getMessage()]);
+            }
+
+            // Track token usage for cost monitoring
+            $this->trackTokenUsage($event);
 
             // V2: Try to extract lead data from conversation transcripts
             $this->tryExtractVoiceLead();
@@ -502,6 +568,11 @@ class RealtimeSession
      */
     private function tryExtractVoiceLead(): void
     {
+        // Atomic lock to prevent duplicate leads from concurrent response.done events
+        $lockKey = "voice_lead_extract:{$this->call->id}";
+        $lock = \Illuminate\Support\Facades\Cache::lock($lockKey, 10);
+        if (!$lock->get()) return; // Another extraction is in progress
+
         try {
             // Check if we already have a lead for this call
             $existingLead = Lead::where('tenant_id', $this->call->tenant_id)
@@ -629,6 +700,10 @@ class RealtimeSession
             Log::debug("RealtimeSession: voice lead extraction failed for call {$this->call->id}", [
                 'error' => $e->getMessage(),
             ]);
+        } finally {
+            if (isset($lock)) {
+                $lock->release();
+            }
         }
     }
 
@@ -640,14 +715,59 @@ class RealtimeSession
         $error = $event['error'] ?? [];
         Log::error("Realtime error for call {$this->call->id}", $error);
 
-        CallEvent::create([
-            'call_id'     => $this->call->id,
-            'type'        => 'realtime.error',
-            'metadata'    => $error,
-            'occurred_at' => now(),
-        ]);
+        try {
+            CallEvent::create([
+                'call_id'     => $this->call->id,
+                'type'        => 'realtime.error',
+                'metadata'    => $error,
+                'occurred_at' => now(),
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning("RealtimeSession: failed to persist error event for call {$this->call->id}", ['error' => $e->getMessage()]);
+        }
 
         return null;
+    }
+
+    // -----------------------------------------------------------------
+    //  Token usage tracking
+    // -----------------------------------------------------------------
+
+    /**
+     * Persist token usage from response.done to AiApiMetric for cost monitoring.
+     */
+    private function trackTokenUsage(array $event): void
+    {
+        try {
+            $usage = $event['response']['usage'] ?? null;
+            if (!$usage) return;
+
+            $inputTokens = (int) ($usage['input_tokens'] ?? $usage['total_tokens'] ?? 0);
+            $outputTokens = (int) ($usage['output_tokens'] ?? 0);
+
+            if ($inputTokens === 0 && $outputTokens === 0) return;
+
+            // OpenAI Realtime pricing: ~$0.06/1K input, ~$0.24/1K output (audio tokens)
+            $inputCost = $inputTokens * 0.06 / 1000;
+            $outputCost = $outputTokens * 0.24 / 1000;
+            $costCents = (int) round(($inputCost + $outputCost) * 100);
+
+            \App\Models\AiApiMetric::create([
+                'provider' => 'openai',
+                'model' => 'gpt-4o-realtime',
+                'input_tokens' => $inputTokens,
+                'output_tokens' => $outputTokens,
+                'cost_cents' => $costCents,
+                'response_time_ms' => 0,
+                'status' => 'success',
+                'bot_id' => $this->bot->id,
+                'tenant_id' => $this->bot->tenant_id,
+            ]);
+        } catch (\Throwable $e) {
+            Log::debug("RealtimeSession: failed to track token usage for call {$this->call->id}", [
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     // -----------------------------------------------------------------
@@ -660,9 +780,15 @@ class RealtimeSession
     public function endSession(): void
     {
         try {
+            $endedAt = now();
+            $durationSeconds = $this->call->started_at
+                ? (int) $endedAt->diffInSeconds($this->call->started_at)
+                : 0;
+
             $this->call->update([
-                'status'   => 'completed',
-                'ended_at' => now(),
+                'status'           => 'completed',
+                'ended_at'         => $endedAt,
+                'duration_seconds' => $durationSeconds,
             ]);
 
             CallEvent::create([

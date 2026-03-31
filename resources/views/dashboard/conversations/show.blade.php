@@ -131,7 +131,34 @@
                                         @if($msg->sent_at)
                                             &middot; {{ $msg->sent_at->format('H:i') }}
                                         @endif
+                                        @if($msg->ai_model)
+                                            &middot; <span class="text-slate-300">{{ $msg->ai_model }}</span>
+                                        @endif
+                                        @if($msg->cost_cents > 0)
+                                            &middot; <span class="text-slate-300">${{ number_format($msg->cost_cents / 100, 4) }}</span>
+                                        @endif
                                     </p>
+                                    {{-- AI Debug Info (collapsible) --}}
+                                    @if(!empty($msg->detected_intents) || !empty($msg->pipelines_executed) || !empty($msg->knowledge_chunks_used))
+                                        <details class="mt-1 ml-1">
+                                            <summary class="text-[10px] text-slate-300 cursor-pointer hover:text-slate-500 transition-colors">AI Debug</summary>
+                                            <div class="mt-1 text-[10px] text-slate-400 space-y-0.5 bg-slate-50 rounded p-2">
+                                                @if(!empty($msg->detected_intents))
+                                                    <p><span class="font-medium">Intents:</span>
+                                                        @foreach($msg->detected_intents as $intent)
+                                                            <span class="inline-flex px-1.5 py-0.5 rounded bg-slate-200 text-slate-600 mr-0.5">{{ $intent['name'] ?? $intent }} {{ isset($intent['confidence']) ? round($intent['confidence']*100).'%' : '' }}</span>
+                                                        @endforeach
+                                                    </p>
+                                                @endif
+                                                @if(!empty($msg->pipelines_executed))
+                                                    <p><span class="font-medium">Pipelines:</span> {{ implode(', ', array_column($msg->pipelines_executed, 'pipeline')) }}</p>
+                                                @endif
+                                                @if(!empty($msg->knowledge_chunks_used))
+                                                    <p><span class="font-medium">KB Chunks:</span> {{ count($msg->knowledge_chunks_used) }} used</p>
+                                                @endif
+                                            </div>
+                                        </details>
+                                    @endif
                                 </div>
                             </div>
                         @else
@@ -145,6 +172,15 @@
                                         {{ $conversation->contact_name ?? 'Client' }}
                                         @if($msg->sent_at)
                                             &middot; {{ $msg->sent_at->format('H:i') }}
+                                        @endif
+                                        {{-- Page context badge --}}
+                                        @if(!empty($msg->metadata['page_context']['page_title']))
+                                            &middot; <span class="inline-flex items-center gap-0.5 text-slate-300" title="{{ $msg->metadata['page_context']['page_url'] ?? '' }}">
+                                                <svg class="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                                                {{ Str::limit($msg->metadata['page_context']['page_title'], 30) }}
+                                            </span>
+                                        @elseif(!empty($msg->metadata['page_context']['page_path']))
+                                            &middot; <span class="text-slate-300">{{ $msg->metadata['page_context']['page_path'] }}</span>
                                         @endif
                                     </p>
                                 </div>

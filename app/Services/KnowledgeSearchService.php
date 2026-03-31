@@ -578,7 +578,7 @@ class KnowledgeSearchService
             // Build numbered list of candidate summaries (title + first 200 chars of content)
             $candidateList = '';
             foreach ($candidates as $i => $c) {
-                $snippet = mb_substr($c->content ?? '', 0, 200);
+                $snippet = mb_substr($c->content ?? '', 0, 350);
                 $candidateList .= "[{$i}] {$c->title}: {$snippet}\n";
             }
 
@@ -589,7 +589,12 @@ class KnowledgeSearchService
                 'messages' => [
                     [
                         'role' => 'system',
-                        'content' => 'You are a relevance judge. Given a query and numbered text passages, return ONLY the indices of the most relevant passages in order of relevance, as comma-separated numbers. Return at most ' . $limit . ' indices. No explanation.',
+                        'content' => 'You are a customer support relevance judge for an e-commerce/business platform. '
+                            . 'Given a customer query and numbered text passages from a knowledge base, '
+                            . 'return ONLY the indices of passages that DIRECTLY answer the customer\'s question, in order of relevance. '
+                            . 'Prioritize: exact answers > partial answers > related context. '
+                            . 'Exclude passages that are only tangentially related. '
+                            . 'Return at most ' . $limit . ' indices as comma-separated numbers. No explanation.',
                     ],
                     [
                         'role' => 'user',

@@ -22,16 +22,21 @@ class QueueAutoScale extends Command
         $jobsPerWorker = (int) $this->option('jobs-per-worker');
         $queue = $this->option('queue');
 
+        // ── Ensure a dedicated knowledge worker is ALWAYS running ──
+        // The main Horizon supervisor only processes high,default.
+        // Knowledge needs its own worker — check and restart if missing.
+        $this->ensureKnowledgeWorker();
+
         $queueDepth = $this->getQueueDepth($queue);
         $currentWorkers = $this->countWorkers();
 
         $this->info("Queue depth: {$queueDepth} | Current workers: {$currentWorkers} | Max: {$maxWorkers}");
 
         if ($queueDepth <= $threshold) {
-            // Low queue — kill extra workers, keep at least 1 (the main Horizon/supervisor one)
             if ($currentWorkers > 1) {
+                // Kill extra scaling workers, but NOT the dedicated knowledge worker
                 $this->killExtraWorkers();
-                $this->info('Queue is low. Stopped extra workers.');
+                $this->info('Queue is low. Stopped extra scaling workers.');
             } else {
                 $this->info('Queue is low. No scaling needed.');
             }
@@ -88,9 +93,34 @@ class QueueAutoScale extends Command
         exec($cmd);
     }
 
+    /**
+     * Ensure a dedicated knowledge queue worker is always running.
+     * This is essential because the main Horizon supervisor only handles high,default.
+     * Called every minute via cron — if the worker died or was never started, restart it.
+     */
+    private function ensureKnowledgeWorker(): void
+    {
+        $count = 0;
+        exec("ps aux | grep '[q]ueue:work redis' | grep 'queue=knowledge' | grep -v autoscale | wc -l", $output);
+        $count = (int) ($output[0] ?? 0);
+
+        if ($count > 0) {
+            return; // Already running
+        }
+
+        $this->info('Knowledge worker not running — starting one.');
+
+        $cmd = 'nohup php ' . base_path('artisan')
+            . ' queue:work redis'
+            . ' --queue=knowledge'
+            . ' --sleep=5 --tries=2 --max-time=3600 --memory=512 --timeout=300'
+            . ' >> ' . storage_path('logs/knowledge-worker.log') . ' 2>&1 &';
+        exec($cmd);
+    }
+
     private function killExtraWorkers(): void
     {
-        // Graceful: send SIGTERM so workers finish their current job before stopping
-        exec("ps aux | grep '[q]ueue:work redis' | grep -v horizon | awk '{print $2}' | xargs -r kill -SIGTERM 2>/dev/null");
+        // Graceful: send SIGTERM to extra scaling workers, but preserve the dedicated knowledge worker
+        exec("ps aux | grep '[q]ueue:work redis' | grep -v horizon | grep -v 'queue=knowledge' | awk '{print $2}' | xargs -r kill -SIGTERM 2>/dev/null");
     }
 }

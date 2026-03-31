@@ -44,7 +44,7 @@ class CleanupStaleSessions extends Command
             $costCents = max(1, (int) round($duration * $costPerMinDollars * 100 / 60));
 
             $call->update([
-                'status' => 'abandoned',
+                'status' => Call::STATUS_ABANDONED,
                 'ended_at' => now(),
                 'duration_seconds' => $duration,
                 'cost_cents' => $costCents,

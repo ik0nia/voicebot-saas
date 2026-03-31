@@ -1,7 +1,11 @@
 <!DOCTYPE html>
+<!-- v=20260330-1255 -->
 <html lang="ro">
 <head>
     <meta charset="utf-8">
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Demo {{ $bot->name }} — Sambla</title>
@@ -277,6 +281,7 @@
         let dataChannel = null;
         let localStream = null;
         let callId = null;
+        let callToken = null;
         let activeBotId = null;
         let hasProducts = false;
         let useClonedVoice = false;
@@ -628,9 +633,15 @@
                 const session = await sessionRes.json();
                 const ephemeralToken = session.token;
                 callId = session.call_id;
+                callToken = session.call_token || null;
                 activeBotId = session.bot_id;
                 hasProducts = session.has_products || false;
                 useClonedVoice = session.use_cloned_voice || false;
+
+                // VAD config from backend — used for all session.update calls
+                var vadConfig = session.vad_config || { threshold: 0.8, prefix_padding_ms: 500, silence_duration_ms: 800 };
+                window._vadConfig = vadConfig;
+                debugLog('VAD config from server:', JSON.stringify(vadConfig));
                 if (useClonedVoice) {
                     elVoiceId = session.elevenlabs_voice_id;
                     elAudioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
@@ -690,12 +701,7 @@
                                 sendDataChannelMsg({
                                     type: 'session.update',
                                     session: {
-                                        turn_detection: {
-                                            type: 'server_vad',
-                                            threshold: 0.5,
-                                            prefix_padding_ms: 200,
-                                            silence_duration_ms: 500,
-                                        }
+                                        turn_detection: window._vadConfig || { type: 'semantic_vad', eagerness: 'low' }
                                     }
                                 });
                             }, 5000);
@@ -705,19 +711,19 @@
                                 sendDataChannelMsg({
                                     type: 'session.update',
                                     session: {
-                                        turn_detection: {
-                                            type: 'server_vad',
-                                            threshold: 0.5,
-                                            prefix_padding_ms: 200,
-                                            silence_duration_ms: 500,
-                                        }
+                                        turn_detection: window._vadConfig || { type: 'semantic_vad', eagerness: 'low' }
                                     }
                                 });
                             }, 1000);
                         }
                     } else {
-                        // Native voice — send greeting immediately
+                        // Native voice — disable turn detection during greeting to prevent
+                        // bot audio from echoing back and interrupting itself
                         if (greetingMsg) {
+                            sendDataChannelMsg({
+                                type: 'session.update',
+                                session: { turn_detection: null }
+                            });
                             sendDataChannelMsg({
                                 type: 'response.create',
                                 response: {
@@ -725,6 +731,18 @@
                                     instructions: 'Spune exact urmatorul text, fara sa adaugi sau sa schimbi nimic: "' + greetingMsg.replace(/"/g, '\\"') + '"',
                                 }
                             });
+                            // Re-enable turn detection after greeting finishes (~5s)
+                            setTimeout(function() {
+                                if (isInCall) {
+                                    sendDataChannelMsg({
+                                        type: 'session.update',
+                                        session: {
+                                            turn_detection: window._vadConfig || { type: 'semantic_vad', eagerness: 'low' }
+                                        }
+                                    });
+                                    debugLog('Turn detection re-enabled after greeting');
+                                }
+                            }, 6000);
                         }
                     }
                 };
@@ -906,6 +924,7 @@
             if (useClonedVoice) elStopPlayback();
             if (elAudioCtx) { elAudioCtx.close().catch(() => {}); elAudioCtx = null; }
             callId = null;
+            callToken = null;
             isMuted = false;
             document.getElementById('muteOffIcon').classList.remove('hidden');
             document.getElementById('muteOnIcon').classList.add('hidden');
@@ -949,6 +968,9 @@
                 /lasati\s+un\s+comentariu/,
                 /distribuiti/,
                 /abonati[\s-]?va/,
+                /va\s+abonati/,
+                /abonati\s+la\s+(canal|pagina)/,
+                /uitati\s+sa\s+va\s+abonati/,
                 /material\s+video/,
                 /retea\s+social|retele\s+sociale/,
                 /subscribe/,
@@ -1110,6 +1132,13 @@
             elNextPlayTime = 0;
         }
 
+        // ── Track pending speech for hallucination cancellation ──
+        var _lastResponseId = null;
+        var _pendingTranscriptItemId = null;
+        var _speechStartedAt = 0;
+        var _hallucinationCount = 0; // consecutive hallucinations
+        var _lastRealSpeechAt = 0;
+
         // ── Handle OpenAI Realtime events via data channel ──
         function handleRealtimeEvent(event) {
             try {
@@ -1121,7 +1150,15 @@
                 }
 
                 switch (msg.type) {
+                    case 'session.created':
+                    case 'session.updated':
+                        if (msg.session && msg.session.turn_detection) {
+                            debugLog('Session turn_detection:', JSON.stringify(msg.session.turn_detection));
+                        }
+                        break;
+
                     case 'response.created':
+                        _lastResponseId = (msg.response || {}).id || null;
                         // New response starting — open fresh ElevenLabs WS
                         if (useClonedVoice) {
                             elNewResponse();
@@ -1149,6 +1186,8 @@
 
                     case 'conversation.item.input_audio_transcription.completed':
                         if (msg.transcript && !isWhisperHallucination(msg.transcript)) {
+                            _hallucinationCount = 0; // reset on real speech
+                            _lastRealSpeechAt = Date.now();
                             // Replace placeholder with actual text
                             var placeholder = document.getElementById('user-typing');
                             if (placeholder) {
@@ -1160,13 +1199,27 @@
                             saveTranscript('user', msg.transcript);
                             trackUserSentiment(msg.transcript);
                         } else {
-                            // Remove placeholder if hallucination
+                            // Hallucination detected — clean up
+                            debugLog('Whisper hallucination filtered:', msg.transcript);
+
+                            // Delete the hallucinated item from OpenAI conversation context
+                            if (msg.item_id) {
+                                sendDataChannelMsg({
+                                    type: 'conversation.item.delete',
+                                    item_id: msg.item_id
+                                });
+                            }
+
+                            // Remove placeholder
                             var placeholder = document.getElementById('user-typing');
                             if (placeholder) placeholder.remove();
+                            setThinking(false);
+                            if (isInCall) callStatus.textContent = 'Conectat — vorbeste liber';
                         }
                         break;
 
                     case 'input_audio_buffer.speech_started':
+                        _speechStartedAt = Date.now();
                         callStatus.textContent = 'Te ascult...';
                         if (useClonedVoice) elStopPlayback();
                         // Add placeholder for user message immediately
@@ -1181,6 +1234,8 @@
                         break;
 
                     case 'input_audio_buffer.speech_stopped':
+                        var speechDuration = Date.now() - _speechStartedAt;
+                        debugLog('Speech duration:', speechDuration + 'ms');
                         callStatus.textContent = 'Se gandeste...';
                         setThinking(true);
                         break;
@@ -1203,8 +1258,14 @@
                         break;
 
                     case 'error':
+                        var errMsg = (msg.error || {}).message || 'necunoscuta';
+                        // Suppress harmless cancellation errors (from hallucination cleanup)
+                        if (errMsg.indexOf('Cancellation failed') !== -1 || errMsg.indexOf('no active response') !== -1) {
+                            debugLog('Suppressed cancel error:', errMsg);
+                            break;
+                        }
                         debugError('Realtime error:', msg.error);
-                        addMessage('Eroare: ' + (msg.error?.message || 'necunoscuta'), 'system');
+                        addMessage('Eroare: ' + errMsg, 'system');
                         break;
                 }
             } catch(e) {
@@ -1332,13 +1393,16 @@
             if (!callId || !content) return;
             const elapsed = callStartTime ? Date.now() - callStartTime : 0;
 
-            fetchWithTimeout('/api/v1/calls/' + callId + '/transcript', {
-                method: 'POST',
-                headers: {
+            var headers = {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': csrfToken,
                     'Accept': 'application/json',
-                },
+                };
+            if (callToken) headers['X-Call-Token'] = callToken;
+
+            fetchWithTimeout('/api/v1/calls/' + callId + '/transcript', {
+                method: 'POST',
+                headers: headers,
                 body: JSON.stringify({
                     role: role,
                     content: content,
@@ -1360,6 +1424,7 @@
             var formData = new FormData();
             formData.append('_token', csrfToken);
             formData.append('duration', duration);
+            if (callToken) formData.append('call_token', callToken);
             navigator.sendBeacon('/api/v1/calls/' + id + '/end', formData);
         }
 

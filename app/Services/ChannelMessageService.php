@@ -6,7 +6,6 @@ use App\Models\Channel;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\Tenant;
-use App\Models\WooCommerceProduct;
 use Illuminate\Support\Facades\Log;
 
 class ChannelMessageService
@@ -106,6 +105,9 @@ class ChannelMessageService
             app(PlanLimitService::class)->recordMessage($tenant);
         }
 
+        // ── Auto-extract lead from channel messages ──
+        $this->tryExtractChannelLead($bot, $conversation, $messageText, $contactId, $contactName);
+
         Log::info("Processed incoming message on channel [{$channel->type}]", [
             'channel_id' => $channel->id,
             'conversation_id' => $conversation->id,
@@ -118,138 +120,191 @@ class ChannelMessageService
         ];
     }
 
+    /**
+     * Auto-extract lead data from channel messages (WhatsApp, Facebook, etc.)
+     */
+    private function tryExtractChannelLead(
+        $bot,
+        Conversation $conversation,
+        string $messageText,
+        string $contactId,
+        string $contactName
+    ): void {
+        try {
+            // Already have a qualified lead? Just update with new info
+            $existingLead = \App\Models\Lead::where('conversation_id', $conversation->id)
+                ->first();
+
+            // Extract email from message
+            $email = null;
+            if (preg_match('/[\w.+-]+@[\w.-]+\.\w{2,}/', $messageText, $m)) {
+                $email = mb_strtolower($m[0]);
+            }
+
+            // Extract phone from message
+            $phone = null;
+            $digitsOnly = preg_replace('/[^\d]/', '', $messageText);
+            if (preg_match('/(07\d{8})/', $digitsOnly, $m)) {
+                $phone = $m[1];
+            }
+            if (!$phone && preg_match('/0\s*7[\s.-]?\d[\s.-]?\d[\s.-]?\d[\s.-]?\d[\s.-]?\d[\s.-]?\d[\s.-]?\d[\s.-]?\d/', $messageText, $m)) {
+                $phone = preg_replace('/[\s.-]/', '', $m[0]);
+            }
+
+            // Use contactId as phone if it looks like a phone number (WhatsApp)
+            if (!$phone && preg_match('/^(\+?4?0?7\d{8})$/', preg_replace('/\D/', '', $contactId))) {
+                $phone = preg_replace('/\D/', '', $contactId);
+                if (strlen($phone) === 11 && str_starts_with($phone, '40')) {
+                    $phone = '0' . substr($phone, 2);
+                }
+            }
+
+            // Use contactName as name if available
+            $name = ($contactName && $contactName !== 'Unknown') ? $contactName : null;
+
+            if (!$email && !$phone && !$name) return;
+
+            if ($existingLead) {
+                $updates = [];
+                if ($email && !$existingLead->email) $updates['email'] = $email;
+                if ($phone && !$existingLead->phone) $updates['phone'] = $phone;
+                if ($name && !$existingLead->name) $updates['name'] = $name;
+                if (!empty($updates)) {
+                    $existingLead->update($updates);
+                }
+                return;
+            }
+
+            // Only create lead after a few exchanges (avoid false positives)
+            if (($conversation->messages_count ?? 0) < 3) return;
+
+            $qualificationScore = ($email ? 30 : 0) + ($phone ? 20 : 0) + ($name ? 10 : 0);
+
+            \App\Models\Lead::create([
+                'tenant_id' => $bot->tenant_id,
+                'bot_id' => $bot->id,
+                'conversation_id' => $conversation->id,
+                'name' => $name,
+                'email' => $email,
+                'phone' => $phone,
+                'status' => ($email || $phone) ? 'qualified' : 'partial',
+                'qualification_score' => $qualificationScore,
+                'capture_source' => 'chat',
+                'capture_reason' => 'channel_auto_extract',
+            ]);
+
+        } catch (\Throwable $e) {
+            Log::debug("Channel lead extraction failed", ['error' => $e->getMessage()]);
+        }
+    }
+
     private function generateAiResponse($bot, Conversation $conversation, string $messageText): string
     {
         try {
-            $systemPrompt = $bot->buildSystemPrompt();
+            // Use orchestrator for all channels (parity with voice/chat widget)
+            $orchestrator = app(\App\Services\IntentOrchestratorService::class);
+            $plan = $orchestrator->plan($messageText, $conversation, $bot);
+            $result = $orchestrator->execute($plan, $bot, $messageText, $conversation);
 
-            // Intent detection — skip knowledge for trivial messages (aligned with ChatbotApiController)
-            $intentService = app(IntentDetectionService::class);
-            $skipKnowledge = $intentService->shouldSkipKnowledge($messageText);
+            // ── Adaptive Intelligence Layer ──
+            $frustration = app(FrustrationDetectorService::class)->analyze($conversation, $messageText);
+            $queryIntelligence = app(QueryIntelligenceService::class)->classify($messageText, [
+                'last_intent' => ($conversation->metadata ?? [])['last_intent'] ?? null,
+                'message_count' => $conversation->messages_count ?? 0,
+            ]);
+            $strategy = app(ConversationStrategyEngine::class)->decide(
+                $conversation, $bot, $messageText, $queryIntelligence, $frustration
+            );
 
-            // Add knowledge base context (skip for greetings, smalltalk)
-            if (!$skipKnowledge) {
-                $knowledgeContext = $this->knowledgeSearchService->buildContext($bot->id, $messageText);
-                if ($knowledgeContext) {
-                    $systemPrompt .= "\n\n" . $knowledgeContext;
-                }
+            // Save last intent for context continuity
+            $meta = $conversation->metadata ?? [];
+            $meta['last_intent'] = $queryIntelligence['type'];
+            $conversation->updateQuietly(['metadata' => $meta]);
+
+            // Build prompt via PromptBuilder (includes all adaptive layers)
+            $builder = \App\Services\PromptBuilder::for($bot)
+                ->withFrustration($frustration['level'])
+                ->withQueryIntelligence($queryIntelligence)
+                ->withStrategy($strategy);
+
+            if ($result->knowledgeContext) {
+                $builder->withKnowledgeContext($result->knowledgeContext);
+            }
+            if ($result->productContext) {
+                $builder->withExtra($result->productContext);
+            }
+            if ($result->orderContext) {
+                $builder->withExtra($result->orderContext);
+            }
+            if ($result->leadContext) {
+                $builder->withExtra($result->leadContext);
+            }
+            if ($result->handoffContext) {
+                $builder->withExtra($result->handoffContext);
             }
 
-            // Intent detection for order separation
-            $intents = $intentService->detect($messageText);
-
-            // NEW ORDER vs EXISTING ORDER — separate handling
-            if ($intents['is_new_order_intent'] ?? false) {
-                $lastProduct = ($conversation->metadata ?? [])['last_product_context'] ?? null;
-                $orderGuide = "\n\n[COMANDĂ NOUĂ — Ajută clientul să comande. NU cere număr de comandă. NU cere email pentru verificare.";
-                if ($lastProduct) {
-                    $orderGuide .= "\nProdus discutat: {$lastProduct['name']} — {$lastProduct['price']} {$lastProduct['currency']}.";
-                }
-                $orderGuide .= "]";
-                $systemPrompt .= $orderGuide;
-            } elseif ($intents['is_order_query'] ?? false) {
-                $orderParams = $this->orderLookupService->detectOrderQuery($messageText);
-                if ($orderParams !== null) {
-                    $orderResult = $this->orderLookupService->lookup($bot->id, $orderParams);
-                    if ($orderResult['found']) {
-                        $systemPrompt .= "\n\nInformații comandă client:\n" . json_encode($orderResult['orders'], JSON_UNESCAPED_UNICODE);
-                    } elseif (!empty($orderResult['message'])) {
-                        $systemPrompt .= "\n\n" . $orderResult['message'];
-                    }
-                }
-            }
-
-            // Product search — only if bot has products
-            if (WooCommerceProduct::where('bot_id', $bot->id)->exists()) {
-                $products = $this->productSearchService->search($bot->id, $messageText, 5);
-                if (!empty($products)) {
-                    $productContext = "Produse relevante găsite:\n";
-                    foreach ($products as $p) {
-                        $productContext .= "- {$p->name}: {$p->price} {$p->currency}";
-                        if ($p->sale_price) {
-                            $productContext .= " (reducere de la {$p->regular_price})";
-                        }
-                        $productContext .= "\n";
-                    }
-                    $systemPrompt .= "\n\n" . $productContext;
-
-                    // Save last product for memory
-                    $first = $products[0];
-                    $meta = $conversation->metadata ?? [];
-                    $meta['last_product_context'] = [
-                        'id' => $first->id ?? null,
-                        'name' => $first->name ?? '',
-                        'price' => $first->price ?? '',
-                        'currency' => $first->currency ?? 'RON',
-                    ];
-                    $conversation->update(['metadata' => $meta]);
-                }
-            }
-
-            // Inject last product context for references
+            // Inject last product memory
             $lastProduct = ($conversation->metadata ?? [])['last_product_context'] ?? null;
             if ($lastProduct) {
-                $systemPrompt .= "\n\nPRODUS DISCUTAT ANTERIOR: {$lastProduct['name']} — {$lastProduct['price']} {$lastProduct['currency']}"
-                    . "\nDacă clientul face referire la \"ăla\", \"acela\", \"produsul\" — folosește ACEST produs.";
+                $builder->withLastProduct($lastProduct);
             }
 
-            // Order intent rules
-            $systemPrompt .= "\n\nREGULI COMENZI:"
-                . "\n- \"Vreau să comand\" = comandă NOUĂ. NU cere număr de comandă."
-                . "\n- \"Unde e comanda mea\" = verificare EXISTENTĂ. Cere numărul comenzii.";
+            $systemPrompt = $builder->build();
 
-            // Apply centralized anti-hallucination guardrails
-            $systemPrompt = PromptGuardrails::apply($systemPrompt);
-
-            // Build messages with automatic summarization for long conversations
-            $summaryService = app(ConversationSummaryService::class);
+            // Build messages with summarization
+            $summaryService = app(\App\Services\ConversationSummaryService::class);
             $messages = $summaryService->buildMessages($systemPrompt, $conversation, $messageText);
 
-            $history = $conversation->messages()
-                ->orderBy('created_at', 'desc')
-                ->take(20)
-                ->get()
-                ->reverse();
-
-            // Route to appropriate model with cost-awareness
+            // Route model
+            $history = $conversation->messages()->orderBy('created_at', 'desc')->take(20)->get()->reverse();
             $conversationCost = $conversation->cost_cents ?? 0;
             $modelConfig = $this->chatModelRouter->route($messageText, count($history), $conversationCost);
 
-            // Truncate history to fit within context window (aligned with ChatbotApiController)
-            $tokenCounter = app(TokenCounterService::class);
+            // Truncate history
+            $tokenCounter = app(\App\Services\TokenCounterService::class);
             $maxTokens = \App\Models\ModelPricing::getMaxTokens($modelConfig['model']);
-            $messages = $tokenCounter->truncateHistory($messages, (int) ($maxTokens * 0.95));
+            $messages = $tokenCounter->truncateHistory($messages, (int)($maxTokens * 0.95));
 
-            // Call AI with cascading fallback
+            $aiResult = $this->chatCompletionService->complete($messages, $modelConfig, $bot->id, $bot->tenant_id);
+
+            // Save product context for memory
+            if (!empty($result->products)) {
+                $meta = $conversation->metadata ?? [];
+                $first = $result->products[0];
+                $meta['last_product_context'] = [
+                    'id' => $first['id'] ?? null,
+                    'name' => $first['name'] ?? '',
+                    'price' => $first['price'] ?? '',
+                    'currency' => $first['currency'] ?? 'RON',
+                ];
+                $meta['last_product_cards'] = $result->products;
+                $conversation->update(['metadata' => $meta]);
+            }
+
+            if (($aiResult['cost_cents'] ?? 0) > 0) {
+                $conversation->increment('cost_cents', (int)round($aiResult['cost_cents']));
+            }
+
+            return $aiResult['content'];
+        } catch (\Exception $e) {
+            Log::warning('ChannelMessage: orchestrator failed, using fallback', [
+                'bot_id' => $bot->id, 'error' => $e->getMessage(),
+            ]);
+
+            // Minimal fallback
             try {
-                $result = $this->chatCompletionService->complete($messages, $modelConfig, $bot->id, $bot->tenant_id);
-            } catch (\Exception $e) {
-                // Fallback: retry without knowledge
-                Log::warning('ChannelMessage: fallback — retrying without knowledge', [
-                    'bot_id' => $bot->id,
-                    'error' => $e->getMessage(),
-                ]);
                 $basePrompt = PromptGuardrails::apply($bot->buildSystemPrompt());
-                $shortMessages = [
+                $messages = [
                     ['role' => 'system', 'content' => $basePrompt],
                     ['role' => 'user', 'content' => $messageText],
                 ];
-                $result = $this->chatCompletionService->complete($shortMessages, $modelConfig, $bot->id, $bot->tenant_id);
+                $modelConfig = $this->chatModelRouter->route($messageText, 0, 0);
+                $result = $this->chatCompletionService->complete($messages, $modelConfig, $bot->id, $bot->tenant_id);
+                return $result['content'];
+            } catch (\Exception $e2) {
+                Log::error('ChannelMessage: total fallback failed', ['error' => $e2->getMessage()]);
+                return 'Îmi cer scuze, am întâmpinat o eroare tehnică. Vă rog să încercați din nou.';
             }
-
-            // Track cost on conversation
-            if (($result['cost_cents'] ?? 0) > 0) {
-                $conversation->increment('cost_cents', (int) round($result['cost_cents']));
-            }
-
-            return $result['content'];
-        } catch (\Exception $e) {
-            Log::error('ChannelMessageService: AI response failed, using fallback', [
-                'bot_id' => $bot->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return 'Îmi cer scuze, am întâmpinat o eroare tehnică. Vă rog să încercați din nou.';
         }
     }
 }
