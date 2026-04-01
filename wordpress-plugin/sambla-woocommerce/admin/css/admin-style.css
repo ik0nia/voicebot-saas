@@ -539,6 +539,18 @@
     flex: 1;
 }
 
+/* WordPress admin menu icon fix — remove grey background */
+#adminmenu .toplevel_page_sambla-settings .wp-menu-image img,
+#adminmenu .toplevel_page_sambla-settings .wp-menu-image {
+    background: none !important;
+    padding: 0 !important;
+}
+#adminmenu .toplevel_page_sambla-settings .wp-menu-image img {
+    width: 20px !important;
+    height: 20px !important;
+    opacity: 1 !important;
+}
+
 /* Notices */
 #sambla-notices .notice {
     margin: 0 0 16px;

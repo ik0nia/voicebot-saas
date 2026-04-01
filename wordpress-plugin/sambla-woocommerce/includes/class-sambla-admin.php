@@ -5,6 +5,7 @@ class Sambla_Admin {
     public function __construct() {
         add_action('admin_menu', [$this, 'add_menu']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_scripts']);
+        add_action('admin_head', [$this, 'menu_icon_css']);
         add_action('wp_ajax_sambla_connect', [$this, 'ajax_connect']);
         add_action('wp_ajax_sambla_disconnect', [$this, 'ajax_disconnect']);
         add_action('wp_ajax_sambla_sync_now', [$this, 'ajax_sync_now']);
@@ -22,6 +23,20 @@ class Sambla_Admin {
             'data:image/svg+xml;base64,' . base64_encode('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" rx="20" fill="#991b1b"/><rect x="18" y="28" width="44" height="24" rx="12" fill="white"/><circle cx="32" cy="40" r="4" fill="#991b1b"/><circle cx="48" cy="40" r="4" fill="#991b1b"/></svg>'),
             30
         );
+    }
+
+    public function menu_icon_css() {
+        echo '<style>
+            #adminmenu .toplevel_page_sambla-settings .wp-menu-image img {
+                width: 20px !important;
+                height: 20px !important;
+                padding: 7px 0 !important;
+                opacity: 1 !important;
+            }
+            #adminmenu .toplevel_page_sambla-settings .wp-menu-image {
+                background: none !important;
+            }
+        </style>';
     }
 
     public function enqueue_scripts($hook) {
