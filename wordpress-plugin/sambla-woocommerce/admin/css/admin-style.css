@@ -39,15 +39,15 @@
 .sambla-hero__logo {
     width: 44px;
     height: 44px;
-    background: linear-gradient(135deg, #991b1b, #dc2626);
-    color: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 12px;
-    font-weight: 800;
-    font-size: 20px;
     flex-shrink: 0;
+}
+.sambla-hero__logo svg {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
 }
 .sambla-hero__title {
     font-size: 22px;

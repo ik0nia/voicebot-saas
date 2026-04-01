@@ -4,7 +4,15 @@
     <div class="sambla-hero">
         <div class="sambla-hero__inner">
             <div class="sambla-hero__brand">
-                <div class="sambla-hero__logo">S</div>
+                <div class="sambla-hero__logo">
+                    <svg width="32" height="32" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="0" y="0" width="80" height="80" rx="20" fill="url(#samblaGrad)"/>
+                        <rect x="18" y="28" width="44" height="24" rx="12" fill="white"/>
+                        <circle cx="32" cy="40" r="4" fill="#991b1b"/>
+                        <circle cx="48" cy="40" r="4" fill="#991b1b"/>
+                        <defs><linearGradient id="samblaGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#991b1b"/><stop offset="100%" stop-color="#dc2626"/></linearGradient></defs>
+                    </svg>
+                </div>
                 <div>
                     <h1 class="sambla-hero__title">Sambla <span>AI</span></h1>
                     <p class="sambla-hero__subtitle">Angajatul tău AI care știe totul despre afacerea ta</p>
@@ -12,8 +20,8 @@
             </div>
             <?php if ($connected): ?>
             <div class="sambla-hero__actions">
-                <a href="https://sambla.ro/dashboard" target="_blank" class="sambla-btn sambla-btn--white">
-                    <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h7"/></svg>
+                <a href="https://sambla.ro/dashboard/boti/<?php echo esc_attr(get_option('sambla_bot_id')); ?>" target="_blank" class="sambla-btn sambla-btn--white">
+                    <svg viewBox="0 0 24 24"><path d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>
                     Deschide Dashboard
                 </a>
             </div>
@@ -119,7 +127,7 @@
                     <?php endforeach; ?>
                 </div>
                 <div style="padding:12px 20px;border-top:1px solid #f1f5f9;">
-                    <a href="https://sambla.ro/dashboard/conversatii" target="_blank" class="sambla-link">
+                    <a href="https://sambla.ro/dashboard/transcrieri/web_chatbot" target="_blank" class="sambla-link">
                         Vezi toate conversațiile →
                     </a>
                 </div>
@@ -172,7 +180,7 @@
                     <svg viewBox="0 0 24 24"><path d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42"/></svg>
                 </div>
                 <h2 class="sambla-card__title">Aspect widget</h2>
-                <a href="https://sambla.ro/dashboard/boturi/<?php echo esc_attr(get_option('sambla_bot_id')); ?>" target="_blank" class="sambla-card__action">
+                <a href="https://sambla.ro/dashboard/boti/<?php echo esc_attr(get_option('sambla_bot_id')); ?>" target="_blank" class="sambla-card__action">
                     Setări avansate în Dashboard →
                 </a>
             </div>
@@ -194,7 +202,7 @@
                         </select>
                     </div>
                 </div>
-                <p class="sambla-field__hint" style="margin-top:12px;">Mesajul de întâmpinare și setările avansate ale chatbot-ului se configurează din <a href="https://sambla.ro/dashboard/boturi/<?php echo esc_attr(get_option('sambla_bot_id')); ?>" target="_blank">Dashboard-ul Sambla</a>.</p>
+                <p class="sambla-field__hint" style="margin-top:12px;">Mesajul de întâmpinare și setările avansate ale chatbot-ului se configurează din <a href="https://sambla.ro/dashboard/boti/<?php echo esc_attr(get_option('sambla_bot_id')); ?>" target="_blank">Dashboard-ul Sambla</a>.</p>
                 <div style="margin-top:16px;">
                     <button class="sambla-btn sambla-btn--primary" id="sambla-save-settings">
                         <svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
@@ -289,23 +297,24 @@
                 <h2 class="sambla-card__title">Acces rapid</h2>
             </div>
             <div class="sambla-card__body" style="padding:0;">
-                <a href="https://sambla.ro/dashboard" target="_blank" class="sambla-quick-link">
-                    <span>Dashboard principal</span>
+                <?php $botId = esc_attr(get_option('sambla_bot_id')); ?>
+                <a href="https://sambla.ro/dashboard/boti/<?php echo $botId; ?>" target="_blank" class="sambla-quick-link">
+                    <span>Dashboard Bot</span>
                     <svg viewBox="0 0 24 24"><path d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
                 </a>
-                <a href="https://sambla.ro/dashboard/conversatii" target="_blank" class="sambla-quick-link">
+                <a href="https://sambla.ro/dashboard/transcrieri/web_chatbot" target="_blank" class="sambla-quick-link">
                     <span>Conversații</span>
                     <svg viewBox="0 0 24 24"><path d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
                 </a>
-                <a href="https://sambla.ro/dashboard/lead-uri" target="_blank" class="sambla-quick-link">
+                <a href="https://sambla.ro/dashboard/leads" target="_blank" class="sambla-quick-link">
                     <span>Lead-uri</span>
                     <svg viewBox="0 0 24 24"><path d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
                 </a>
-                <a href="https://sambla.ro/dashboard/knowledge" target="_blank" class="sambla-quick-link">
+                <a href="https://sambla.ro/dashboard/boti/<?php echo $botId; ?>/knowledge" target="_blank" class="sambla-quick-link">
                     <span>Baza de cunoștințe</span>
                     <svg viewBox="0 0 24 24"><path d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
                 </a>
-                <a href="https://sambla.ro/dashboard/analytics" target="_blank" class="sambla-quick-link">
+                <a href="https://sambla.ro/dashboard/analiza" target="_blank" class="sambla-quick-link">
                     <span>Analiză & Rapoarte</span>
                     <svg viewBox="0 0 24 24"><path d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
                 </a>
