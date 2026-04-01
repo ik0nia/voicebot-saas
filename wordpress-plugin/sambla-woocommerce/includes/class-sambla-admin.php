@@ -9,6 +9,7 @@ class Sambla_Admin {
         add_action('wp_ajax_sambla_disconnect', [$this, 'ajax_disconnect']);
         add_action('wp_ajax_sambla_sync_now', [$this, 'ajax_sync_now']);
         add_action('wp_ajax_sambla_save_settings', [$this, 'ajax_save_settings']);
+        add_action('wp_ajax_sambla_save_page_mapping', [$this, 'ajax_save_page_mapping']);
     }
 
     public function add_menu() {
@@ -41,7 +42,44 @@ class Sambla_Admin {
         $config = get_option('sambla_widget_config', []);
         $last_sync = get_option('sambla_last_sync', '');
         $api_key = get_option('sambla_api_key', '');
+
+        // Fetch usage and conversations from Sambla API (cached 5 min)
+        $usage = [];
+        $recent_conversations = [];
+        $bot_name = '';
+        $plan_name = '';
+
+        if ($connected) {
+            $status = $this->get_cached_status();
+            if ($status) {
+                $usage = $status['usage'] ?? [];
+                $recent_conversations = $status['recent_conversations'] ?? [];
+                $bot_name = $status['bot_name'] ?? '';
+                $plan_name = $status['plan'] ?? 'starter';
+            }
+        }
+
+        // Get WordPress pages for page mapping
+        $wp_pages = get_pages(['sort_column' => 'post_title', 'sort_order' => 'ASC']);
+        $page_mapping = get_option('sambla_page_mapping', []);
+
         include SAMBLA_PLUGIN_DIR . 'admin/views/settings-page.php';
+    }
+
+    /**
+     * Get status from Sambla API with 5-minute cache.
+     */
+    private function get_cached_status() {
+        $cached = get_transient('sambla_dashboard_status');
+        if ($cached !== false) return $cached;
+
+        $client = new Sambla_Api_Client();
+        $status = $client->get_status();
+
+        if (isset($status['error'])) return null;
+
+        set_transient('sambla_dashboard_status', $status, 300); // 5 min cache
+        return $status;
     }
 
     public function ajax_connect() {
@@ -49,7 +87,6 @@ class Sambla_Admin {
         $api_key = sanitize_text_field($_POST['api_key'] ?? '');
         if (empty($api_key)) wp_send_json_error(['message' => 'API Key este obligatoriu.']);
 
-        // Save WooCommerce credentials if provided
         $wc_key = sanitize_text_field($_POST['wc_key'] ?? '');
         $wc_secret = sanitize_text_field($_POST['wc_secret'] ?? '');
         if ($wc_key) update_option('sambla_wc_consumer_key', $wc_key);
@@ -70,6 +107,7 @@ class Sambla_Admin {
         if (isset($result['widget_config'])) {
             update_option('sambla_widget_config', array_merge(get_option('sambla_widget_config', []), $result['widget_config']));
         }
+        delete_transient('sambla_dashboard_status');
         wp_send_json_success(['message' => 'Conectat cu succes!']);
     }
 
@@ -80,13 +118,13 @@ class Sambla_Admin {
         update_option('sambla_channel_id', '');
         update_option('sambla_bot_id', '');
         update_option('sambla_connector_id', '');
+        delete_transient('sambla_dashboard_status');
         wp_send_json_success(['message' => 'Deconectat.']);
     }
 
     public function ajax_sync_now() {
         check_ajax_referer('sambla_admin', 'nonce');
 
-        // Cooldown: 5 minutes between full syncs
         $last = get_option('sambla_last_sync', '');
         if ($last && (time() - strtotime($last)) < 300) {
             $remaining = 300 - (time() - strtotime($last));
@@ -100,6 +138,7 @@ class Sambla_Admin {
         $products = $result['products'] ?? 0;
         $pages = $result['pages'] ?? 0;
         $msg = "{$products} produse și {$pages} pagini sincronizate.";
+        delete_transient('sambla_dashboard_status');
         wp_send_json_success(['message' => $msg, 'data' => $result]);
     }
 
@@ -107,13 +146,60 @@ class Sambla_Admin {
         check_ajax_referer('sambla_admin', 'nonce');
         $config = [
             'color' => sanitize_hex_color($_POST['color'] ?? '#991b1b'),
-            'icon_url' => esc_url_raw($_POST['icon_url'] ?? ''),
             'position' => sanitize_text_field($_POST['position'] ?? 'bottom-right'),
-            'greeting' => sanitize_textarea_field($_POST['greeting'] ?? ''),
             'bot_name' => sanitize_text_field($_POST['bot_name'] ?? ''),
         ];
+        // Greeting is managed from Sambla dashboard, not from WP plugin
+        $existing = get_option('sambla_widget_config', []);
+        $config = array_merge($existing, $config);
         update_option('sambla_widget_config', $config);
         (new Sambla_Api_Client())->update_widget_config($config);
         wp_send_json_success(['message' => 'Setări salvate!']);
+    }
+
+    /**
+     * Save page mapping — standard business pages linked to Sambla knowledge base.
+     */
+    public function ajax_save_page_mapping() {
+        check_ajax_referer('sambla_admin', 'nonce');
+
+        $mapping = [];
+        $page_types = ['contact', 'terms', 'delivery', 'returns', 'privacy', 'cookies', 'about', 'faq'];
+
+        foreach ($page_types as $type) {
+            $page_id = intval($_POST["page_{$type}"] ?? 0);
+            if ($page_id > 0) {
+                $mapping[$type] = $page_id;
+            }
+        }
+
+        update_option('sambla_page_mapping', $mapping);
+
+        // Sync mapped pages content to Sambla as knowledge
+        $synced = 0;
+        $client = new Sambla_Api_Client();
+        $pages_data = [];
+
+        foreach ($mapping as $type => $page_id) {
+            $page = get_post($page_id);
+            if (!$page) continue;
+
+            $content = strip_tags(apply_filters('the_content', $page->post_content));
+            if (strlen($content) < 20) continue;
+
+            $pages_data[] = [
+                'title' => $page->post_title,
+                'content' => $content,
+                'type' => $type,
+                'url' => get_permalink($page_id),
+            ];
+            $synced++;
+        }
+
+        if (!empty($pages_data)) {
+            $client->sync_pages($pages_data, home_url());
+        }
+
+        wp_send_json_success(['message' => "{$synced} pagini standard sincronizate cu baza de cunoștințe."]);
     }
 }

@@ -22,9 +22,8 @@ class PluginUpdateController extends Controller
             return response()->json(['error' => 'Unknown plugin'], 404);
         }
 
-        // Latest version available - bump this when releasing a new plugin version
-        $latestVersion = config('sambla.plugin_version', '1.0.0');
-        $downloadUrl = url('/downloads/sambla-woocommerce-' . $latestVersion . '.zip');
+        $latestVersion = '2.0.1';
+        $downloadUrl = url('/downloads/sambla-woocommerce.zip');
 
         $data = [
             'new_version' => $latestVersion,
@@ -46,11 +45,18 @@ class PluginUpdateController extends Controller
         return response()->json($data);
     }
 
-    private function getChangelog(string $version): string
+    private function getChangelog(): string
     {
-        return "<h4>{$version}</h4><ul>"
+        return '<h4>2.0.1 (Aprilie 2026)</h4><ul>'
+            . '<li>Redesign complet admin panel (dark hero, metrici live, link-uri rapide)</li>'
+            . '<li>Afișare plan curent și consum mesaje/lună cu progress bar</li>'
+            . '<li>Ultimele 5 conversații vizibile direct din WordPress</li>'
+            . '<li>Mapare pagini standard (Contact, Termeni, Livrare) pentru baza de cunoștințe AI</li>'
+            . '<li>Greeting se configurează din Dashboard (link direct)</li>'
+            . '</ul>'
+            . '<h4>2.0.0</h4><ul>'
             . '<li>Sincronizare paginată pentru magazine mari (5000+ produse)</li>'
-            . '<li>Îmbunătățiri la stabilitatea conexiunii</li>'
+            . '<li>Integrare completă cu platforma Sambla AI</li>'
             . '</ul>';
     }
 }

@@ -63,10 +63,23 @@ jQuery(document).ready(function($) {
         $.post(samblaAdmin.ajaxUrl, {
             action: 'sambla_save_settings', nonce: samblaAdmin.nonce,
             bot_name: $('#sambla-bot-name').val(), color: $('#sambla-color').val(),
-            icon_url: $('#sambla-icon-url').val(), position: $('#sambla-position').val(),
-            greeting: $('#sambla-greeting').val()
+            position: $('#sambla-position').val()
         }, function(r) {
-            btn.prop('disabled', false).html('<svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg> Salvează Setările');
+            btn.prop('disabled', false).html('<svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg> Salvează');
+            notice(r.success ? 'success' : 'error', r.data.message);
+        });
+    });
+
+    // Page mapping save
+    $('#sambla-save-pages').on('click', function() {
+        var btn = $(this);
+        btn.prop('disabled', true);
+        var data = { action: 'sambla_save_page_mapping', nonce: samblaAdmin.nonce };
+        $('.sambla-page-map__select').each(function() {
+            data['page_' + $(this).data('page-type')] = $(this).val();
+        });
+        $.post(samblaAdmin.ajaxUrl, data, function(r) {
+            btn.prop('disabled', false);
             notice(r.success ? 'success' : 'error', r.data.message);
         });
     });
