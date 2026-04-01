@@ -819,10 +819,10 @@ class ChatbotApiController extends Controller
                 if ($hasProducts) {
                     $prompt .= "\n\n"
                         . "Ești asistentul unui magazin online. REGULI STRICTE PRODUSE:"
-                        . "\n- Când contextul conține '[Am găsit X produse]', cardurile se afișează AUTOMAT sub mesajul tău."
-                        . "\n- NU enumera produse în text. NU scrie nume de produse, prețuri sau liste. NICIODATĂ."
-                        . "\n- Când produse SUNT găsite, spune SCURT: 'Iată ce am găsit:' sau 'Uite câteva opțiuni:' — fără detalii."
-                        . "\n- Când contextul conține '[NU am găsit produse]', NU spune că ai găsit produse. Spune: 'Din păcate nu am găsit exact ce cauți. Poți reformula sau contacta echipa noastră.'"
+                        . "\n- Când contextul conține '[CARDURI PRODUSE' sau '[PRODUSE RECOMANDATE', înseamnă că PRODUSELE AU FOST GĂSITE și se afișează automat ca carduri vizuale sub mesajul tău."
+                        . "\n- Când produse SUNT găsite (carduri), spune SCURT: 'Iată ce am găsit:' sau 'Uite câteva opțiuni potrivite:' — fără a enumera produse în text."
+                        . "\n- NU enumera produse în text. NU scrie nume de produse, prețuri sau liste. Cardurile le arată automat."
+                        . "\n- DOAR când contextul conține explicit '[NU s-au găsit produse relevante]' poți spune că nu ai găsit. Altfel, PRESUPUNE că produsele sunt afișate."
                         . "\n- Dacă întrebarea NU e despre produse (livrare, retur, contact, etc.), răspunde la întrebare FĂRĂ a menționa produse."
                         . "\n- NU inventa produse, prețuri sau specificații. Răspunde doar din datele furnizate."
                         . "\n- Fii natural, concis și util.";

@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sambla AI Platform — Full Product Audit Report</title>
+<style>
+:root {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface2: #334155;
+  --border: #475569;
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+  --accent: #38bdf8;
+  --accent2: #818cf8;
+  --green: #4ade80;
+  --yellow: #fbbf24;
+  --red: #f87171;
+  --orange: #fb923c;
+  --purple: #c084fc;
+  --pink: #f472b6;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height:1.7; font-size:15px; }
+.layout { display:flex; min-height:100vh; }
+.toc { position:sticky; top:0; height:100vh; width:280px; min-width:280px; background:var(--surface); border-right:1px solid var(--border); overflow-y:auto; padding:24px 16px; }
+.toc h2 { font-size:14px; text-transform:uppercase; letter-spacing:1.5px; color:var(--accent); margin-bottom:16px; }
+.toc a { display:block; padding:6px 10px; color:var(--text-muted); text-decoration:none; font-size:13px; border-radius:6px; margin-bottom:2px; transition: all .15s; }
+.toc a:hover, .toc a.active { background:var(--surface2); color:var(--text); }
+.toc .toc-section { font-weight:600; color:var(--text); font-size:13px; margin-top:12px; }
+.main { flex:1; max-width:960px; margin:0 auto; padding:40px 48px; }
+h1 { font-size:32px; font-weight:800; background:linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:8px; }
+.subtitle { color:var(--text-muted); font-size:16px; margin-bottom:40px; }
+h2 { font-size:24px; font-weight:700; color:var(--accent); margin:48px 0 20px; padding-top:20px; border-top:1px solid var(--border); }
+h3 { font-size:18px; font-weight:600; color:var(--text); margin:28px 0 12px; }
+h4 { font-size:15px; font-weight:600; color:var(--accent2); margin:20px 0 8px; }
+p, li { color:var(--text); margin-bottom:8px; }
+ul, ol { padding-left:24px; margin-bottom:16px; }
+li { margin-bottom:6px; }
+.badge { display:inline-block; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; }
+.badge-green { background:#166534; color:#4ade80; }
+.badge-yellow { background:#713f12; color:#fbbf24; }
+.badge-red { background:#7f1d1d; color:#f87171; }
+.badge-blue { background:#1e3a5f; color:#38bdf8; }
+.badge-purple { background:#3b0764; color:#c084fc; }
+.badge-orange { background:#7c2d12; color:#fb923c; }
+.score-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:16px; margin:24px 0; }
+.score-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px; text-align:center; }
+.score-card .score { font-size:42px; font-weight:800; }
+.score-card .label { font-size:12px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-top:4px; }
+.score-high .score { color:var(--green); }
+.score-mid .score { color:var(--yellow); }
+.score-low .score { color:var(--red); }
+table { width:100%; border-collapse:collapse; margin:16px 0 24px; font-size:14px; }
+th { background:var(--surface2); color:var(--accent); text-align:left; padding:10px 14px; font-size:12px; text-transform:uppercase; letter-spacing:0.5px; }
+td { padding:10px 14px; border-bottom:1px solid var(--border); vertical-align:top; }
+tr:hover td { background:var(--surface); }
+.card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px; margin:16px 0; }
+.card-accent { border-left:4px solid var(--accent); }
+.card-green { border-left:4px solid var(--green); }
+.card-yellow { border-left:4px solid var(--yellow); }
+.card-red { border-left:4px solid var(--red); }
+.card-purple { border-left:4px solid var(--purple); }
+.finding { margin:12px 0; padding:16px; background:var(--surface); border-radius:8px; border-left:3px solid var(--border); }
+.finding-strength { border-left-color: var(--green); }
+.finding-issue { border-left-color: var(--red); }
+.finding-rec { border-left-color: var(--accent); }
+.finding-warn { border-left-color: var(--yellow); }
+.tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; margin-right:4px; background:var(--surface2); color:var(--text-muted); }
+.cols-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.cols-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+blockquote { border-left:3px solid var(--accent2); padding:12px 20px; margin:16px 0; background:var(--surface); border-radius:0 8px 8px 0; color:var(--text-muted); font-style:italic; }
+code { background:var(--surface2); padding:2px 6px; border-radius:4px; font-size:13px; font-family:'JetBrains Mono',monospace; }
+pre { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:16px; overflow-x:auto; font-size:13px; margin:12px 0; }
+.priority-tag { display:inline-block; padding:3px 10px; border-radius:4px; font-size:11px; font-weight:700; }
+.p0 { background:#7f1d1d; color:#fca5a5; }
+.p1 { background:#7c2d12; color:#fdba74; }
+.p2 { background:#713f12; color:#fde68a; }
+.p3 { background:#1e3a5f; color:#93c5fd; }
+.separator { height:1px; background:linear-gradient(90deg, transparent, var(--border), transparent); margin:40px 0; }
+.highlight-box { background:linear-gradient(135deg, rgba(56,189,248,0.1), rgba(129,140,248,0.1)); border:1px solid rgba(56,189,248,0.3); border-radius:12px; padding:24px; margin:24px 0; }
+@media(max-width:900px) {
+  .toc { display:none; }
+  .main { padding:24px 16px; }
+  .cols-2, .cols-3 { grid-template-columns:1fr; }
+  .score-grid { grid-template-columns:repeat(2,1fr); }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<nav class="toc">
+  <h2>Audit Report</h2>
+  <a href="#exec" class="toc-section">1. Executive Summary</a>
+  <a href="#e2e">2. End-to-End AI Flow</a>
+  <a href="#rag">3. RAG Audit</a>
+  <a href="#prompts">4. Prompt System</a>
+  <a href="#conversation">5. Conversation Logic</a>
+  <a href="#settings">6. Tenant Settings</a>
+  <a href="#kb">7. Knowledge Base Builder</a>
+  <a href="#ux">8. UX / Dashboard</a>
+  <a href="#wow">9. WOW Factor</a>
+  <a href="#roadmap">10. Prioritized Roadmap</a>
+</nav>
+
+<main class="main">
+
+<h1>Sambla AI Platform</h1>
+<p class="subtitle">Full Product Audit Report &mdash; 31 March 2026</p>
+
+<!-- ============================================================ -->
+<h2 id="exec">1. Executive Summary</h2>
+
+<div class="score-grid">
+  <div class="score-card score-mid"><div class="score">7.2</div><div class="label">Overall Platform</div></div>
+  <div class="score-card score-mid"><div class="score">7.5</div><div class="label">RAG Quality</div></div>
+  <div class="score-card score-mid"><div class="score">7.0</div><div class="label">Prompt System</div></div>
+  <div class="score-card score-mid"><div class="score">6.8</div><div class="label">Conversation Quality</div></div>
+  <div class="score-card score-mid"><div class="score">5.5</div><div class="label">Configurability</div></div>
+  <div class="score-card score-low"><div class="score">5.0</div><div class="label">Usability / UX</div></div>
+  <div class="score-card score-mid"><div class="score">6.5</div><div class="label">Commercial Readiness</div></div>
+</div>
+
+<h3>What Is Already Strong</h3>
+<div class="finding finding-strength">
+<strong>Hybrid RAG Pipeline:</strong> The vector + FTS + RRF fusion, business-aware rescoring, dedup, overlap-aware chunking, LLM reranking, and Romanian-specific FTS is genuinely above market for this segment. Most competitors use naive vector-only search.
+</div>
+<div class="finding finding-strength">
+<strong>Multi-Intent Orchestration:</strong> The transition from legacy single-intent to scored multi-intent with pipelines is well-architected. Priority-based execution, contextual follow-up detection, and data-source gating are production-grade.
+</div>
+<div class="finding finding-strength">
+<strong>Voice + Chat Parity:</strong> Same AI brain across both channels with appropriate per-channel prompt tuning (voice brevity vs chat structure). Cloned voice support adds premium differentiation.
+</div>
+<div class="finding finding-strength">
+<strong>Lead Pipeline & CRM:</strong> Full pipeline (new → contacted → scheduled → met → quoted → won/lost) with callback scheduling, opportunity scoring, and conversation-to-lead attribution. This is a complete CRM mini-system built into the platform.
+</div>
+<div class="finding finding-strength">
+<strong>E-commerce Integration Depth:</strong> Product search with semantic filtering, dimension matching, order lookup via WooCommerce API, add-to-cart tracking, purchase attribution, and funnel analytics. Goes well beyond typical chatbot integrations.
+</div>
+
+<h3>What Is Limiting Quality</h3>
+<div class="finding finding-issue">
+<strong>ConversationPolicy Not Connected to Prompt Builder:</strong> The <code>ConversationPolicy</code> model exists with rich fields (tone, verbosity, CTA aggressiveness, brand vocabulary, custom messages, business rules) but is <strong>never read by PromptBuilder</strong>. This is the single biggest quality gap — all the tenant customization infrastructure exists but isn't wired up.
+</div>
+<div class="finding finding-issue">
+<strong>Chat Channel Missing Orchestrator:</strong> The advanced multi-intent orchestrator (<code>IntentOrchestratorService</code>) is only used by voice. Chat messages go through <code>ChannelMessageService</code> which uses the legacy <code>IntentDetectionService</code> — no confidence scoring, no data-source gating, no complexity classification. Chat quality is systematically lower than voice.
+</div>
+<div class="finding finding-issue">
+<strong>No Guided Onboarding:</strong> A tenant must figure out on their own what to put in the knowledge base, how to write a good system prompt, and what settings matter. There's no wizard, no templates, no quality scoring. The path from "signed up" to "good results" is unclear.
+</div>
+
+<h3>What Is Missing to Sell</h3>
+<div class="finding finding-warn">
+<strong>No Bot Health Score:</strong> Tenants can't see if their bot is well-configured. A simple "Bot Health: 72%" with "Add FAQ content" suggestions would drive self-service quality.
+</div>
+<div class="finding finding-warn">
+<strong>No Demo Mode / Playground:</strong> No easy way for a buyer to test a bot with pre-loaded demo content before committing. The existing <code>/demo/{slug}</code> page is voice-only and requires a configured bot.
+</div>
+<div class="finding finding-warn">
+<strong>No Preset Templates:</strong> No "E-commerce Bot" or "Service Business Bot" template that pre-fills system prompt, greeting, KB structure, and settings. Every tenant starts from scratch.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="e2e">2. End-to-End AI Flow Audit</h2>
+
+<h3>Stage 1: User Input</h3>
+<div class="card card-green">
+<h4>How It Works</h4>
+<p>Chat: Widget sends message via <code>POST /api/v1/chatbot/{channel}/message</code>. Voice: OpenAI Realtime API receives audio, Whisper transcribes, triggers <code>conversation.item.input_audio_transcription.completed</code>.</p>
+<p><strong>Good:</strong> Rate limiting (30/min chat, per-IP), session management with HMAC tokens, domain verification for widget CORS.</p>
+<p><strong>Weak:</strong> Voice transcription depends entirely on Whisper quality. The <code>WhisperHallucinationFilter</code> catches 40+ patterns but is static — no feedback loop from corrections.</p>
+<p><strong>Recommendation:</strong> Log filtered hallucinations per bot to identify patterns specific to a tenant's domain. Allow tenants to add custom "ignore phrases" (e.g., background music patterns in their call center).</p>
+</div>
+
+<h3>Stage 2: Intent Detection</h3>
+<div class="card card-yellow">
+<h4>How It Works</h4>
+<p><strong>Voice (Orchestrator):</strong> Multi-intent with confidence scoring (0.0–1.0), 8 intent types, contextual follow-up awareness, priority-ordered pipelines.</p>
+<p><strong>Chat (Legacy):</strong> Boolean flag detection — single pass, no confidence, no context awareness for follow-ups.</p>
+<p><strong>Weak:</strong> Chat channel is significantly weaker. A user saying "da" after the bot asked "Vrei să comandați?" is not recognized as order confirmation in chat. Regex-only detection (no ML/embeddings) means it's brittle for Romanian variations — "as dori" (I would like) won't trigger <code>isNewOrderIntent</code>.</p>
+<p><strong>Critical Gap:</strong> Greeting detection is max 4 words hardcoded. "Bună ziua, am o întrebare" (Hello, I have a question) = 6 words → not greeting → hits full RAG pipeline for a simple hello.</p>
+<p><strong>Recommendation:</strong> Route chat through the Orchestrator. Increase greeting word limit to 8. Add "as dori", "aș vrea", "m-ar interesa" to new_order patterns.</p>
+</div>
+
+<h3>Stage 3: Query Rewrite / Classification</h3>
+<div class="card card-green">
+<h4>How It Works</h4>
+<p>Query expansion via Romanian synonym dictionary (12 groups) + optional LLM rewrite (gpt-4o-mini, now enabled). Complexity classification: simple/medium/complex based on word count + signal words.</p>
+<p><strong>Good:</strong> LLM rewrite transforms vague queries ("cât costă ăla") into search-optimized text. Dictionary expansion covers common Romanian e-commerce terms.</p>
+<p><strong>Weak:</strong> Dictionary only has 12 synonym groups — missing common queries like "disponibilitate" (availability), "termen" (deadline), "material" (material type), "compatibil" (compatible). LLM rewrite adds ~200ms latency on every query even when unnecessary (simple queries).</p>
+<p><strong>Recommendation:</strong> Skip LLM rewrite for simple complexity queries. Expand synonym dictionary to 25+ groups covering construction/home improvement domain.</p>
+</div>
+
+<h3>Stage 4: Retrieval</h3>
+<div class="card card-green">
+<h4>How It Works</h4>
+<p>Hybrid search: pgvector HNSW cosine similarity + PostgreSQL GIN FTS (Romanian stemmer) merged via RRF scoring. Up to 20 candidates retrieved when reranking enabled.</p>
+<p><strong>Good:</strong> HNSW index (m=16, ef=64) provides excellent recall. Romanian-specific FTS catches keyword matches that vector search misses. RRF fusion is well-implemented with configurable FTS weight (1.5x).</p>
+<p><strong>Weak:</strong> Similarity threshold at 0.55 may include noisy results that burden the reranker. No query-type adaptive retrieval — a product question and a policy question use the same pipeline with the same limits.</p>
+</div>
+
+<h3>Stage 5: Reranking</h3>
+<div class="card card-green">
+<h4>How It Works</h4>
+<p>LLM reranking (gpt-4o-mini, now enabled) on deduplicated candidates. Business-aware prompt prioritizes direct answers over tangential context.</p>
+<p><strong>Good:</strong> 350-char snippets give reranker enough context. Business-aware prompt is a significant improvement over generic "relevance judge".</p>
+<p><strong>Weak:</strong> Reranker sees title + 350 chars only — may miss relevant content in the middle/end of longer chunks. No cross-encoder or dedicated reranking model (gpt-4o-mini is general-purpose). Cost: ~$0.002/query — acceptable but adds up at scale.</p>
+</div>
+
+<h3>Stage 6: Prompt Building</h3>
+<div class="card card-yellow">
+<h4>How It Works</h4>
+<p><code>PromptBuilder</code> assembles: base prompt + products + knowledge + summary + extra context + order rules + response quality + confidence modifier + fallback + guardrails. Token budget enforced via <code>ContextBudgetService</code>.</p>
+<p><strong>Good:</strong> Clear priority hierarchy (products > knowledge > summary > history). Guardrails always appended last (highest LLM priority). Voice vs chat prompt differentiation.</p>
+<p><strong>Critical Gap:</strong> <code>ConversationPolicy</code> (tone, verbosity, CTA aggressiveness, brand vocabulary, custom greeting/handoff/lead/out-of-stock messages, prohibited phrases, business rules, snippets) is <strong>never loaded by PromptBuilder</strong>. All that rich configuration exists in the database but has zero effect on AI behavior.</p>
+<p><strong>Recommendation:</strong> Wire <code>ConversationPolicy</code> into <code>PromptBuilder.build()</code>. This single change would unlock massive configurability for tenants.</p>
+</div>
+
+<h3>Stage 7: Answer Generation</h3>
+<div class="card card-green">
+<h4>How It Works</h4>
+<p>Chat: <code>ChatCompletionService</code> via OpenAI API (model routed by <code>ChatModelRouter</code>). Voice: OpenAI Realtime API (GPT-4o) with streaming audio output.</p>
+<p><strong>Good:</strong> Model routing allows cost optimization. Conversation summarization kicks in after 8 messages to prevent context overflow.</p>
+<p><strong>Weak:</strong> No streaming for chat (user waits for full response). Summarization prompt is basic ("max 150 words") — may lose important details like specific products discussed or prices mentioned.</p>
+</div>
+
+<h3>Stage 8: Follow-up Behavior</h3>
+<div class="card card-yellow">
+<h4>How It Works</h4>
+<p>Voice orchestrator checks last bot message for contextual cues ("doriți să comandați?"). Chat: no follow-up awareness — each message treated in isolation (except conversation history).</p>
+<p><strong>Weak:</strong> If the bot asks "Vrei în alt culori?" and user says "da" in chat, the system has no memory of what "da" refers to. Voice handles this via orchestrator context, chat doesn't.</p>
+</div>
+
+<h3>Stage 9: Lead Capture / Handoff</h3>
+<div class="card card-green">
+<h4>How It Works</h4>
+<p>Lead scoring based on engagement signals (message count, product clicks, intent types). Threshold: 30 points. Voice: automatic phone/name extraction from transcripts. Chat: regex extraction after 3+ messages. Handoff: detected by keyword patterns ("operator", "agent", "persoana").</p>
+<p><strong>Good:</strong> Sophisticated scoring with positive and negative signals. Voice lead extraction handles spaced digits ("0 7 4 2...") and name confirmations.</p>
+<p><strong>Weak:</strong> Lead capture timing is hardcoded — can't be adjusted per tenant. Some businesses want early aggressive capture, others want consultative approach first. The <code>lead_aggressiveness</code> field in ConversationPolicy exists but isn't used.</p>
+</div>
+
+<h3>Stage 10: Voice vs Chat Differences</h3>
+<div class="card card-red">
+<h4>Critical Finding</h4>
+<table>
+<tr><th>Capability</th><th>Voice</th><th>Chat</th></tr>
+<tr><td>Intent Detection</td><td><span class="badge badge-green">Multi-intent + confidence</span></td><td><span class="badge badge-red">Legacy boolean flags</span></td></tr>
+<tr><td>Orchestration</td><td><span class="badge badge-green">Full pipeline orchestrator</span></td><td><span class="badge badge-red">Linear execution</span></td></tr>
+<tr><td>Data Source Gating</td><td><span class="badge badge-green">Complexity-aware</span></td><td><span class="badge badge-red">Always queries everything</span></td></tr>
+<tr><td>Follow-up Context</td><td><span class="badge badge-green">Context-aware</span></td><td><span class="badge badge-yellow">History only</span></td></tr>
+<tr><td>Lead Scoring</td><td><span class="badge badge-green">Automatic + extraction</span></td><td><span class="badge badge-yellow">Regex after 3 msgs</span></td></tr>
+<tr><td>Decision Logging</td><td><span class="badge badge-green">Full observability</span></td><td><span class="badge badge-red">Minimal logging</span></td></tr>
+</table>
+<p><strong>Impact:</strong> Chat is the primary channel for most businesses, yet it runs on inferior infrastructure. A buyer testing the chat widget will get noticeably worse results than testing voice — this is a demo risk.</p>
+<p><strong>Recommendation:</strong> Route <code>ChannelMessageService</code> through <code>IntentOrchestratorService</code>. This is the single highest-impact technical change for perceived product quality.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="rag">3. RAG Audit</h2>
+
+<h3>Indexing Quality</h3>
+<div class="finding finding-strength">
+<strong>Embedding Model:</strong> <code>text-embedding-3-small</code> (1536 dim) — good balance of cost and quality for Romanian. HNSW index with m=16, ef_construction=64 provides ~98% recall.
+</div>
+<div class="finding finding-warn">
+<strong>No Embedding Model Upgrade Path:</strong> When OpenAI releases better embedding models, there's no mechanism to re-embed existing chunks. The <code>embedding_model</code> column tracks version per chunk but no migration tooling exists.
+</div>
+
+<h3>Chunking Strategy</h3>
+<table>
+<tr><th>Source Type</th><th>Chunk Size (tokens)</th><th>Overlap</th><th>Quality Filter</th></tr>
+<tr><td>FAQ</td><td>128</td><td>16 tokens (12.5%)</td><td>Min 20 chars / 3 words</td></tr>
+<tr><td>Manual</td><td>256</td><td>32 tokens</td><td>Min 50 chars / 5 words</td></tr>
+<tr><td>Scan</td><td>384</td><td>48 tokens</td><td>Min 50 chars / 5 words</td></tr>
+<tr><td>Upload / Connector / Agent</td><td>512</td><td>64 tokens</td><td>Min 50 chars / 5 words</td></tr>
+</table>
+<div class="finding finding-strength">
+<strong>Good:</strong> Semantic paragraph-boundary splitting (not arbitrary character cuts). Source-type-aware chunk sizes. Token-accurate counting via tiktoken. Overlap prevents information loss at boundaries.
+</div>
+<div class="finding finding-issue">
+<strong>Issue:</strong> No semantic chunking — splitting is purely by paragraph + token count. A topic that spans 3 paragraphs gets split into separate chunks that lose coherence. For FAQ content at 128 tokens, multi-part answers get fragmented.
+</div>
+
+<h3>Metadata Usage</h3>
+<div class="finding finding-warn">
+<strong>Underused:</strong> Chunks have <code>source_type</code>, <code>category</code>, <code>source_date</code>, <code>metadata</code> (JSON) fields, but only <code>source_type</code> is used in business-aware rescoring. Category filtering exists in the search API but tenants have no UI to assign categories. The <code>metadata</code> JSON field is unused.
+</div>
+
+<h3>Context Injection</h3>
+<div class="finding finding-strength">
+<strong>Well-designed:</strong> Chunks grouped by source title for coherent reading, sorted by chunk_index within groups. Near-duplicate removal (>80% word overlap). Budget-aware truncation.
+</div>
+<div class="finding finding-warn">
+<strong>Missing source attribution in context:</strong> The context block shows titles and relevance percentage but doesn't indicate if information is from FAQ (authoritative) vs. website scan (potentially outdated). Tenants can't prioritize source types.
+</div>
+
+<h3>Failure Modes & Hallucination Risks</h3>
+<div class="finding finding-issue">
+<strong>Quality Gate Too Binary:</strong> If top similarity < 0.50 AND top RRF < 0.025, the system returns ZERO context. This means the bot either has good context or none at all — no "partial confidence" mode where it says "I found some related information but I'm not fully sure."
+</div>
+<div class="finding finding-warn">
+<strong>Stale Content Risk:</strong> Website scan content has no expiration. A bot scanning a website once gets that content forever, even if the website changes. No re-scan scheduling or staleness detection.
+</div>
+
+<h3>RAG Presets by Business Type</h3>
+
+<div class="card card-accent">
+<h4>Preset 1: Services Business (Consultancy, Agency, Clinic)</h4>
+<table>
+<tr><td><strong>Chunking</strong></td><td>FAQ: 128t, Manual: 256t — short, definitive answers</td></tr>
+<tr><td><strong>Retrieval</strong></td><td>6 chunks, threshold 0.60</td></tr>
+<tr><td><strong>Reranking</strong></td><td>ON — critical for matching vague service queries</td></tr>
+<tr><td><strong>Query Rewrite</strong></td><td>ON — clients often describe needs vaguely</td></tr>
+<tr><td><strong>Context Size</strong></td><td>6000 chars (services don't need product catalogs)</td></tr>
+<tr><td><strong>Answer Style</strong></td><td>Consultative, asks qualifying questions, always offers booking/contact</td></tr>
+<tr><td><strong>Prompt Strategy</strong></td><td>Emphasize expertise, use "we recommend" language, guide to scheduling</td></tr>
+</table>
+</div>
+
+<div class="card card-accent">
+<h4>Preset 2: E-commerce (Online Shop)</h4>
+<table>
+<tr><td><strong>Chunking</strong></td><td>Product: 512t, Policy: 256t — detailed product info matters</td></tr>
+<tr><td><strong>Retrieval</strong></td><td>8 chunks, threshold 0.55</td></tr>
+<tr><td><strong>Reranking</strong></td><td>ON — critical for finding right product among similar ones</td></tr>
+<tr><td><strong>Query Rewrite</strong></td><td>ON — product queries need dimension/spec expansion</td></tr>
+<tr><td><strong>Context Size</strong></td><td>8000 chars (product details need space)</td></tr>
+<tr><td><strong>Answer Style</strong></td><td>Product-focused, compare options, highlight deals, guide to cart</td></tr>
+<tr><td><strong>Prompt Strategy</strong></td><td>Emphasize product knowledge, pricing transparency, availability</td></tr>
+</table>
+</div>
+
+<div class="card card-accent">
+<h4>Preset 3: Hybrid (Services + Products)</h4>
+<table>
+<tr><td><strong>Chunking</strong></td><td>Mixed: FAQ 128t, Product 512t, Service 256t</td></tr>
+<tr><td><strong>Retrieval</strong></td><td>8 chunks, threshold 0.55</td></tr>
+<tr><td><strong>Reranking</strong></td><td>ON — essential for cross-domain queries</td></tr>
+<tr><td><strong>Query Rewrite</strong></td><td>ON — queries span both product and service domains</td></tr>
+<tr><td><strong>Context Size</strong></td><td>8000 chars</td></tr>
+<tr><td><strong>Answer Style</strong></td><td>Adaptive — detects if question is product or service related</td></tr>
+<tr><td><strong>Prompt Strategy</strong></td><td>Cross-sell services with products, "We can also help you install this"</td></tr>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="prompts">4. Prompt System Audit</h2>
+
+<h3>Architecture Assessment</h3>
+
+<div class="finding finding-strength">
+<strong>Guardrails Last Pattern:</strong> <code>PromptGuardrails::apply()</code> appends anti-hallucination rules at the END of the prompt — maximizing LLM attention. This is correct prompt engineering.
+</div>
+<div class="finding finding-strength">
+<strong>Confidence-Adaptive:</strong> Low-confidence prompts instruct the bot to be cautious and ask clarifying questions. High-confidence prompts allow definitive answers. This prevents hallucination scaling with certainty.
+</div>
+
+<h3>Prompt Weaknesses</h3>
+
+<div class="finding finding-issue">
+<strong>System Prompt Is Single Textarea:</strong> The tenant writes ONE system prompt that controls everything — personality, tone, domain knowledge, rules. No separation of concerns. A tenant who writes a good personality prompt but forgets business rules gets a charismatic but dangerous bot.
+</div>
+
+<div class="finding finding-issue">
+<strong>No Prompt Validation:</strong> A tenant can write "Ignore all previous instructions" in the system prompt and there's no sanitization. The guardrails are appended AFTER, which helps, but the base prompt could still contain conflicting instructions.
+</div>
+
+<div class="finding finding-warn">
+<strong>Hardcoded Romanian:</strong> All prompt templates (response quality, fallback, guardrails, order rules, lead capture) are in Romanian. No i18n layer. A tenant setting <code>language: en</code> gets an English-speaking bot with Romanian instruction templates — the bot will respond in English but its internal rules are in Romanian, causing inconsistent behavior.
+</div>
+
+<h3>Proposed Layered Prompt Architecture</h3>
+
+<div class="highlight-box">
+<h4>Layer Stack (bottom to top = lowest to highest priority)</h4>
+<ol>
+<li><strong>Global Base Layer:</strong> Platform-wide rules (safety, anti-hallucination, data handling). Never overridden by tenant.</li>
+<li><strong>Business Type Layer:</strong> E-commerce rules (product comparison, pricing), Service rules (booking, consultation), or Hybrid rules. Auto-selected from preset.</li>
+<li><strong>Tenant Brand Layer:</strong> From <code>ConversationPolicy</code> — tone, verbosity, brand vocabulary, prohibited/required phrases. Written by tenant or generated from template.</li>
+<li><strong>Channel Layer:</strong> Voice (brevity, no lists, questions), Chat (structured, markdown, cards), WhatsApp (emoji-friendly, shorter).</li>
+<li><strong>Task Layer:</strong> Dynamic per-request — search prompt, order lookup prompt, lead capture prompt, complaint handling prompt. Injected by orchestrator based on detected intents.</li>
+<li><strong>Guardrails Layer:</strong> Anti-hallucination, data verification, escalation triggers. Always last. Never overridable.</li>
+</ol>
+</div>
+
+<h3>Specific Prompt Issues</h3>
+<table>
+<tr><th>Prompt</th><th>Issue</th><th>Fix</th></tr>
+<tr><td>Reranking</td><td>Uses generic "customer support" framing even for non-support bots</td><td>Make business-type-aware: "for a construction materials shop" vs "for a dental clinic"</td></tr>
+<tr><td>Query Rewrite</td><td>"Max 15 cuvinte" may be too short for complex product queries with dimensions</td><td>Increase to 25 words, add "include dimensions and specifications"</td></tr>
+<tr><td>Conversation Summary</td><td>"Max 150 cuvinte" loses product details, prices, quantities discussed</td><td>Add instruction: "MUST include specific product names, prices, and quantities mentioned"</td></tr>
+<tr><td>Lead Capture (Voice)</td><td>Long inline prompt in RealtimeSession.php (25+ lines)</td><td>Move to dedicated template, make timing configurable</td></tr>
+<tr><td>Fallback (no context)</td><td>Good but static — same fallback for first message and 10th message</td><td>Adapt based on conversation depth: early = explore, late = escalate</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="conversation">5. Conversation Logic Audit</h2>
+
+<h3>Greetings</h3>
+<div class="finding finding-strength">
+<strong>Voice:</strong> Time-of-day-aware greetings ("Bună dimineața" / "Bună ziua" / "Bună seara"). Natural and warm.
+</div>
+<div class="finding finding-issue">
+<strong>Chat:</strong> Uses <code>greeting_message</code> from bot config — static, same greeting every time. No time awareness, no returning-visitor detection, no personalization. A user coming back the next day gets the same "Bună! Cu ce te pot ajuta?" without acknowledgment.
+</div>
+
+<h3>Follow-up & Clarification</h3>
+<div class="finding finding-warn">
+<strong>No Explicit Clarification Logic:</strong> When the bot isn't sure what the user means, it relies entirely on the LLM to decide whether to ask a clarifying question. There's no structured "if ambiguous, ask X" logic. The prompt says "pune o întrebare de clarificare" but doesn't define what counts as ambiguous.
+</div>
+
+<h3>Complaint Handling</h3>
+<div class="finding finding-issue">
+<strong>Detected But Not Specially Routed:</strong> <code>IntentDetectionService</code> detects complaints (nemulțumit, reclamație, defect) but the orchestrator doesn't have a dedicated complaint pipeline. Complaints go through the generic knowledge search, which may return product info instead of escalation instructions.
+</div>
+<p><strong>Recommendation:</strong> Add a complaint pipeline that: (1) acknowledges the issue empathetically, (2) asks for details, (3) always offers human escalation, (4) never tries to sell during a complaint.</p>
+
+<h3>Multi-Intent Handling</h3>
+<div class="finding finding-strength">
+<strong>Voice orchestrator handles multiple intents well:</strong> "Vreau să comand adezivul ăla, dar mai întâi verifică comanda anterioară" → both <code>new_order</code> and <code>existing_order</code> pipelines fire.
+</div>
+<div class="finding finding-issue">
+<strong>Chat can't handle this:</strong> Same message in chat gets only one intent detected (first match wins). The user gets a confusing response that addresses only one intent.
+</div>
+
+<h3>Memory / Context Carryover</h3>
+<div class="finding finding-strength">
+<strong>Good:</strong> <code>last_product_context</code> stored in conversation metadata enables "pe ăla vreau" (I want that one) references. Conversation summary compresses history after 8 messages.
+</div>
+<div class="finding finding-warn">
+<strong>Missing:</strong> No structured memory of what the user has already been told. If a user asks about shipping twice, they get the same answer repeated verbatim. No "as I mentioned earlier" awareness.
+</div>
+
+<h3>Where It Feels Robotic</h3>
+<ul>
+<li><strong>Identical greetings:</strong> Every chat session starts the same way</li>
+<li><strong>No empathy escalation:</strong> After 3 failed searches, no "I'm sorry I haven't been helpful — would you like to speak with someone?"</li>
+<li><strong>No personality variance:</strong> Bot always responds in the same style regardless of conversation mood</li>
+<li><strong>Static call-to-action:</strong> Always pushes to the same action (order/contact) regardless of where the user is in their journey</li>
+</ul>
+
+<h3>Recommended Conversation Improvements</h3>
+<div class="card card-accent">
+<ol>
+<li><strong>Frustration Detection:</strong> Track failed searches, repeated questions, complaint words. After threshold → auto-escalate tone (more empathetic) and offer handoff.</li>
+<li><strong>Journey-Aware CTAs:</strong> First visit → explore. Second visit → compare. Third visit → buy. Adapt CTA based on conversation count for same visitor.</li>
+<li><strong>Repeat Question Detection:</strong> If user asks the same topic twice, acknowledge it: "Am înțeles că subiectul livrării este important pentru tine. Hai să detaliez mai mult."</li>
+<li><strong>Graceful Degradation:</strong> When confidence is low, instead of generic fallback, offer specific alternatives: "Nu am găsit exact asta, dar pot să te ajut cu [related topic A] sau [related topic B]?"</li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="settings">6. Tenant Settings / Configuration Audit</h2>
+
+<h3>Critical Finding: Configuration Gap</h3>
+<div class="card card-red">
+<p>The <code>ConversationPolicy</code> model has <strong>17 configuration fields</strong> (tone, verbosity, emoji, CTA aggressiveness, lead aggressiveness, fallback message, escalation message, prohibited phrases, required phrases, brand vocabulary, custom greeting, custom handoff, custom lead prompt, custom out-of-stock, business rules, snippets). <strong>None of these are loaded by the PromptBuilder or any other service.</strong></p>
+<p>This means the UI for these settings either doesn't exist or exists but has no effect. This is a significant product gap — the infrastructure for deep customization is built but disconnected.</p>
+</div>
+
+<h3>Proposed Full Configuration Model</h3>
+
+<table>
+<tr><th>Category</th><th>Setting</th><th>Control</th><th>Default</th><th>Access Level</th></tr>
+
+<tr><td colspan="5" style="background:var(--surface2);"><strong>1. Brand Voice & Tone</strong></td></tr>
+<tr><td></td><td>Tone</td><td>Dropdown: friendly / professional / casual / formal</td><td>professional</td><td>Basic</td></tr>
+<tr><td></td><td>Verbosity</td><td>Slider: concise (1) → detailed (5)</td><td>3</td><td>Basic</td></tr>
+<tr><td></td><td>Emoji allowed</td><td>Toggle</td><td>OFF</td><td>Basic</td></tr>
+<tr><td></td><td>Brand vocabulary</td><td>Tag input (words to use)</td><td>[]</td><td>Advanced</td></tr>
+<tr><td></td><td>Prohibited phrases</td><td>Tag input (words to avoid)</td><td>[]</td><td>Advanced</td></tr>
+
+<tr><td colspan="5" style="background:var(--surface2);"><strong>2. Greeting Style</strong></td></tr>
+<tr><td></td><td>Custom greeting</td><td>Textarea</td><td>Auto-generated</td><td>Basic</td></tr>
+<tr><td></td><td>Time-aware greeting</td><td>Toggle</td><td>ON (voice), OFF (chat)</td><td>Advanced</td></tr>
+<tr><td></td><td>Returning visitor greeting</td><td>Textarea</td><td>"Bine ai revenit!"</td><td>Advanced</td></tr>
+
+<tr><td colspan="5" style="background:var(--surface2);"><strong>3. Lead Capture Strategy</strong></td></tr>
+<tr><td></td><td>Lead aggressiveness</td><td>Slider: passive (1) → aggressive (5)</td><td>3</td><td>Basic</td></tr>
+<tr><td></td><td>Lead capture timing</td><td>Dropdown: after 3 msgs / after 5 msgs / after product view / manual</td><td>after 5 msgs</td><td>Advanced</td></tr>
+<tr><td></td><td>Required fields</td><td>Checkboxes: name, phone, email, company</td><td>name + phone</td><td>Basic</td></tr>
+<tr><td></td><td>Custom lead prompt</td><td>Textarea</td><td>System default</td><td>Advanced</td></tr>
+<tr><td></td><td>GDPR consent text</td><td>Textarea</td><td>Default Romanian GDPR</td><td>Basic</td></tr>
+
+<tr><td colspan="5" style="background:var(--surface2);"><strong>4. Support Style</strong></td></tr>
+<tr><td></td><td>Escalation trigger</td><td>Dropdown: after 2 fails / after complaint / manual only</td><td>after complaint</td><td>Basic</td></tr>
+<tr><td></td><td>Custom escalation message</td><td>Textarea</td><td>"Te conectez cu un coleg."</td><td>Basic</td></tr>
+<tr><td></td><td>Support hours display</td><td>Toggle + time picker</td><td>OFF</td><td>Basic</td></tr>
+
+<tr><td colspan="5" style="background:var(--surface2);"><strong>5. Sales Behavior</strong></td></tr>
+<tr><td></td><td>CTA aggressiveness</td><td>Slider: consultative (1) → hard sell (5)</td><td>2</td><td>Basic</td></tr>
+<tr><td></td><td>Show prices first vs benefits</td><td>Toggle: price-first / benefits-first</td><td>benefits-first</td><td>Advanced</td></tr>
+<tr><td></td><td>Cross-sell enabled</td><td>Toggle</td><td>ON</td><td>Basic</td></tr>
+<tr><td></td><td>Out-of-stock message</td><td>Textarea</td><td>"Momentan indisponibil, dar..."</td><td>Advanced</td></tr>
+
+<tr><td colspan="5" style="background:var(--surface2);"><strong>6. Knowledge & Search</strong></td></tr>
+<tr><td></td><td>Search results count</td><td>Slider: 3–12</td><td>8</td><td>Advanced</td></tr>
+<tr><td></td><td>Cite sources</td><td>Toggle</td><td>OFF</td><td>Advanced</td></tr>
+<tr><td></td><td>Confidence display</td><td>Toggle (show "I'm X% confident")</td><td>OFF</td><td>Advanced</td></tr>
+
+<tr><td colspan="5" style="background:var(--surface2);"><strong>7. Answer Formatting</strong></td></tr>
+<tr><td></td><td>Use bullet lists</td><td>Toggle</td><td>ON (chat) / OFF (voice)</td><td>Basic</td></tr>
+<tr><td></td><td>Max response length</td><td>Slider: short (50w) → detailed (300w)</td><td>150 words</td><td>Advanced</td></tr>
+<tr><td></td><td>Include follow-up questions</td><td>Toggle</td><td>ON</td><td>Basic</td></tr>
+
+<tr><td colspan="5" style="background:var(--surface2);"><strong>8. Fallback Behavior</strong></td></tr>
+<tr><td></td><td>Custom fallback message</td><td>Textarea</td><td>System default</td><td>Basic</td></tr>
+<tr><td></td><td>Fallback action</td><td>Dropdown: apologize / suggest / escalate / contact form</td><td>suggest</td><td>Advanced</td></tr>
+
+<tr><td colspan="5" style="background:var(--surface2);"><strong>9. Channel-Specific</strong></td></tr>
+<tr><td></td><td>Voice: max call duration</td><td>Slider: 1–60 min</td><td>15 min</td><td>Basic</td></tr>
+<tr><td></td><td>Voice: voice type</td><td>Dropdown + cloned option</td><td>alloy</td><td>Basic</td></tr>
+<tr><td></td><td>Chat: pre-chat form</td><td>Toggle + field config</td><td>OFF</td><td>Basic</td></tr>
+<tr><td></td><td>Chat: widget color</td><td>Color picker</td><td>#991b1b</td><td>Basic</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="kb">7. Knowledge Base Builder Audit</h2>
+
+<h3>Current State</h3>
+<div class="finding finding-strength">
+<strong>Multiple Input Methods:</strong> File upload (PDF, DOCX, TXT, CSV), URL scraping, raw text input, AI agents (FAQ generator, product sync), website scanner, WooCommerce connector. This is comprehensive.
+</div>
+<div class="finding finding-issue">
+<strong>No Structure or Guidance:</strong> The KB builder is a flat list of documents. No categories, no templates, no "you're missing X" warnings. A tenant uploading 10 PDFs has no idea if the content is sufficient for good bot performance.
+</div>
+<div class="finding finding-issue">
+<strong>No Content Quality Validation:</strong> Any text is accepted — even a document saying "Lorem ipsum" gets chunked and embedded. No readability check, no duplicate detection across documents, no thin-content warning.
+</div>
+
+<h3>Proposed Knowledge Base Builder</h3>
+
+<div class="highlight-box">
+<h4>KB Completeness Score Concept</h4>
+<p>Show a visual score: <strong>"Your bot knows 65% of what it needs"</strong> with specific gaps highlighted.</p>
+<p>Score components: Company info (✓), Services/Products (✓), FAQ (✗ missing), Policies (✗ missing), Contact info (✓).</p>
+</div>
+
+<h3>Recommended KB Structure by Business Type</h3>
+
+<div class="card card-accent">
+<h4>Services Business (Agency, Clinic, Consultancy)</h4>
+<table>
+<tr><th>Section</th><th>Priority</th><th>Content</th><th>Status</th></tr>
+<tr><td>Company Info</td><td><span class="badge badge-red">Required</span></td><td>Name, description, location, hours, contact</td><td>Mandatory</td></tr>
+<tr><td>Services</td><td><span class="badge badge-red">Required</span></td><td>Each service: name, description, price range, duration, who it's for</td><td>Mandatory</td></tr>
+<tr><td>FAQ</td><td><span class="badge badge-red">Required</span></td><td>Top 10-20 questions with clear answers</td><td>Mandatory</td></tr>
+<tr><td>Pricing</td><td><span class="badge badge-yellow">Important</span></td><td>Price list or "starting from" ranges</td><td>Recommended</td></tr>
+<tr><td>Booking Process</td><td><span class="badge badge-yellow">Important</span></td><td>How to schedule, what to expect, preparation</td><td>Recommended</td></tr>
+<tr><td>Team / Expertise</td><td><span class="badge badge-blue">Optional</span></td><td>Team bios, certifications, experience</td><td>Optional</td></tr>
+<tr><td>Testimonials</td><td><span class="badge badge-blue">Optional</span></td><td>Client reviews, case studies</td><td>Trust builder</td></tr>
+<tr><td>Differentiators</td><td><span class="badge badge-yellow">Important</span></td><td>Why choose us, unique value props</td><td>Recommended</td></tr>
+</table>
+</div>
+
+<div class="card card-accent">
+<h4>E-commerce (Online Shop)</h4>
+<table>
+<tr><th>Section</th><th>Priority</th><th>Content</th><th>Status</th></tr>
+<tr><td>Product Catalog</td><td><span class="badge badge-red">Required</span></td><td>Via WooCommerce connector (auto-sync)</td><td>Auto</td></tr>
+<tr><td>Shipping Policy</td><td><span class="badge badge-red">Required</span></td><td>Methods, costs, timeframes, coverage areas</td><td>Mandatory</td></tr>
+<tr><td>Return Policy</td><td><span class="badge badge-red">Required</span></td><td>Conditions, timeframe, process, exceptions</td><td>Mandatory</td></tr>
+<tr><td>Payment Methods</td><td><span class="badge badge-red">Required</span></td><td>Accepted methods, installments, invoicing</td><td>Mandatory</td></tr>
+<tr><td>FAQ</td><td><span class="badge badge-yellow">Important</span></td><td>Top 15 customer questions</td><td>Recommended</td></tr>
+<tr><td>Product Guides</td><td><span class="badge badge-blue">Optional</span></td><td>How to choose, size guides, compatibility</td><td>Quality booster</td></tr>
+<tr><td>Promotions</td><td><span class="badge badge-blue">Optional</span></td><td>Current deals, coupon codes, bulk pricing</td><td>Sales booster</td></tr>
+<tr><td>Company Info</td><td><span class="badge badge-yellow">Important</span></td><td>About, contact, physical store locations</td><td>Recommended</td></tr>
+</table>
+</div>
+
+<div class="card card-accent">
+<h4>Hybrid Business</h4>
+<p>Combination of both above, with the addition of:</p>
+<table>
+<tr><th>Section</th><th>Priority</th><th>Content</th></tr>
+<tr><td>Service + Product Mapping</td><td><span class="badge badge-yellow">Important</span></td><td>"For this service, you'll also need these products"</td></tr>
+<tr><td>Project Estimator</td><td><span class="badge badge-blue">Optional</span></td><td>Common project types with materials lists</td></tr>
+</table>
+</div>
+
+<h3>Content Quality Rules (Proposed)</h3>
+<div class="card card-yellow">
+<ul>
+<li><strong>Warning:</strong> Document with &lt;100 words — "This content is very short and may not provide enough context for the AI"</li>
+<li><strong>Warning:</strong> No question-answer pairs detected — "Consider adding FAQ-style content for better bot responses"</li>
+<li><strong>Warning:</strong> No pricing information detected — "Customers frequently ask about prices. Consider adding pricing data."</li>
+<li><strong>Error:</strong> Duplicate title detected — "A document with this title already exists. Uploading will replace it."</li>
+<li><strong>Warning:</strong> Content older than 6 months — "This content may be outdated. Consider reviewing and updating."</li>
+<li><strong>Auto-generate:</strong> After KB upload, offer "Generate 10 FAQ from your content" via AI agent</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="ux">8. UX / Dashboard / Product Experience Audit</h2>
+
+<h3>Onboarding Assessment</h3>
+<div class="finding finding-warn">
+<strong>Current State:</strong> Dashboard shows a 5-step onboarding checklist (create site, create bot, add knowledge, configure number, make first call). This is functional but doesn't ensure quality — a tenant can "complete" onboarding with a bad prompt and empty knowledge base.
+</div>
+
+<h3>Proposed Setup Wizard</h3>
+<div class="card card-accent">
+<h4>Step 1: Business Type Selection</h4>
+<p>Choose: E-commerce / Services / Hybrid → auto-applies preset (prompt template, settings, KB structure)</p>
+
+<h4>Step 2: Brand Identity</h4>
+<p>Company name, tone (friendly/professional/casual), language, greeting message (with preview). AI generates a system prompt from these inputs.</p>
+
+<h4>Step 3: Knowledge Base</h4>
+<p>Guided upload with category suggestions based on business type. "Most e-commerce bots add: shipping policy, return policy, FAQ, payment methods." Upload each as a separate document.</p>
+
+<h4>Step 4: Test & Refine</h4>
+<p>Embedded chat test panel alongside KB. Ask sample questions, see how the bot responds, identify gaps. "Ask your bot: How much does shipping cost? → If the answer is wrong, upload your shipping policy."</p>
+
+<h4>Step 5: Go Live</h4>
+<p>Embed code, channel connections, phone number setup.</p>
+</div>
+
+<h3>Bot Health Score (Proposed)</h3>
+<div class="highlight-box">
+<p>Dashboard widget showing: <strong>Bot Health: 72%</strong></p>
+<ul>
+<li>Knowledge Base: 8/10 (has FAQ, products, policies — missing: contact info)</li>
+<li>Prompt Quality: 6/10 (good personality but missing business rules)</li>
+<li>Recent Performance: 7/10 (85% queries answered, 12% fallback rate)</li>
+<li>Configuration: 8/10 (voice configured, channels active)</li>
+</ul>
+<p><strong>Actionable suggestions:</strong> "Add contact information to improve 5% of unanswered queries" / "Your fallback rate increased 3% this week — consider adding content about [top failed queries]"</p>
+</div>
+
+<h3>Missing Dashboard Features</h3>
+<table>
+<tr><th>Feature</th><th>Impact</th><th>Complexity</th></tr>
+<tr><td>Bot Health Score</td><td><span class="badge badge-green">High</span></td><td>Medium</td></tr>
+<tr><td>Failed Query Dashboard (what the bot couldn't answer)</td><td><span class="badge badge-green">High</span></td><td>Low — data exists in SearchAnalytics</td></tr>
+<tr><td>Conversation Quality Score (per conversation)</td><td><span class="badge badge-yellow">Medium</span></td><td>Medium</td></tr>
+<tr><td>KB Completeness Checker</td><td><span class="badge badge-green">High</span></td><td>Low</td></tr>
+<tr><td>A/B Test Results Visualization</td><td><span class="badge badge-yellow">Medium</span></td><td>Low — BotPromptVersion already has metrics</td></tr>
+<tr><td>Competitive Benchmark ("Your bot answers 85% — industry avg is 70%")</td><td><span class="badge badge-green">High</span></td><td>Low (synthetic benchmark)</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="wow">9. WOW Factor Audit</h2>
+
+<h3>Top 10 Missing Product Ideas</h3>
+<div class="card card-purple">
+<ol>
+<li><strong>AI Setup Assistant:</strong> "Describe your business in 2 sentences" → AI generates system prompt, greeting, and KB structure suggestions. Reduces setup from hours to minutes.</li>
+<li><strong>Live Conversation Takeover:</strong> Human agent sees live conversation, can take over mid-chat. Bot summarizes context for the agent automatically.</li>
+<li><strong>"What Your Bot Doesn't Know" Dashboard:</strong> Show top 20 unanswered questions per week. One-click "Generate answer" using AI agent. This turns a gap into a feature.</li>
+<li><strong>Conversation Replay with AI Commentary:</strong> Replay a conversation with annotations: "Here the bot used RAG chunk #3" / "Here the bot had low confidence" / "This is where the customer became interested."</li>
+<li><strong>Smart Notifications:</strong> "Your bot had 5 conversations today where it couldn't find shipping information. Add your shipping policy to fix this." Push via email/Slack.</li>
+<li><strong>Voice Cloning 2.0:</strong> Clone the business owner's voice from a 30-second sample. "Your customers hear YOU, 24/7." Powerful emotional pitch.</li>
+<li><strong>Multi-Bot Routing:</strong> One phone number, multiple bots. Caller says "I want to talk about product X" → routed to the right specialized bot.</li>
+<li><strong>Scheduled Outbound Campaigns:</strong> Bot calls leads from the pipeline automatically. "Call all 'contacted' leads and ask if they're ready to schedule."</li>
+<li><strong>WhatsApp Catalog Sync:</strong> Bot's product knowledge auto-published as WhatsApp Business catalog. Customer browses + asks questions in same chat.</li>
+<li><strong>Customer Satisfaction Auto-Survey:</strong> After each conversation, bot asks "A fost util acest răspuns? 1-5" → feeds into quality scoring.</li>
+</ol>
+</div>
+
+<h3>Top 10 Highest-Impact Improvements</h3>
+<table>
+<tr><th>#</th><th>Improvement</th><th>Impact</th><th>Effort</th></tr>
+<tr><td>1</td><td>Wire ConversationPolicy into PromptBuilder</td><td><span class="badge badge-green">Critical</span></td><td>1 day</td></tr>
+<tr><td>2</td><td>Route chat through Orchestrator (parity with voice)</td><td><span class="badge badge-green">Critical</span></td><td>2-3 days</td></tr>
+<tr><td>3</td><td>Bot Health Score dashboard widget</td><td><span class="badge badge-green">High</span></td><td>1-2 days</td></tr>
+<tr><td>4</td><td>Setup Wizard with business-type presets</td><td><span class="badge badge-green">High</span></td><td>3-4 days</td></tr>
+<tr><td>5</td><td>"What Your Bot Doesn't Know" dashboard</td><td><span class="badge badge-green">High</span></td><td>1 day</td></tr>
+<tr><td>6</td><td>AI-generated system prompt from business description</td><td><span class="badge badge-yellow">Medium</span></td><td>1 day</td></tr>
+<tr><td>7</td><td>Streaming chat responses</td><td><span class="badge badge-yellow">Medium</span></td><td>2 days</td></tr>
+<tr><td>8</td><td>Prompt template i18n (EN/DE/FR)</td><td><span class="badge badge-yellow">Medium</span></td><td>2 days</td></tr>
+<tr><td>9</td><td>Conversation quality scoring + alerts</td><td><span class="badge badge-yellow">Medium</span></td><td>2-3 days</td></tr>
+<tr><td>10</td><td>KB content templates by business type</td><td><span class="badge badge-yellow">Medium</span></td><td>1 day</td></tr>
+</table>
+
+<h3>Top 5 Easiest Wins</h3>
+<div class="cols-2">
+<div class="card card-green">
+<strong>1. Failed Queries Dashboard</strong><br>
+Data already exists in <code>SearchAnalytics</code> with <code>topZeroResults()</code>. Just needs a UI page showing "Top queries your bot couldn't answer." Instant value.
+</div>
+<div class="card card-green">
+<strong>2. Wire ConversationPolicy</strong><br>
+Model and table already exist. Just need to load it in PromptBuilder and inject tone/verbosity/custom messages into the prompt. Unlocks all existing config fields.
+</div>
+<div class="card card-green">
+<strong>3. Chat Greeting Variation</strong><br>
+Use <code>greeting_message</code> as template, add time-of-day awareness and "Bine ai revenit!" for returning visitors (check session cookie).
+</div>
+<div class="card card-green">
+<strong>4. KB Completeness Warning</strong><br>
+Count documents by inferred category. If 0 FAQ-type content → show "Add FAQ for better responses." Simple query, high perceived value.
+</div>
+</div>
+
+<h3>Top 5 Differentiators for Selling</h3>
+<div class="card card-purple">
+<ol>
+<li><strong>"It knows your business, not just AI"</strong> — RAG with domain-specific knowledge, not generic ChatGPT. The bot answers from YOUR data.</li>
+<li><strong>"Voice AND chat, same brain"</strong> — Customers call or type, get the same quality. No separate tools to manage.</li>
+<li><strong>"Leads, not just conversations"</strong> — Built-in CRM pipeline. Every conversation has a business outcome tracked. Not just a chatbot — a sales tool.</li>
+<li><strong>"E-commerce native"</strong> — Product search, order tracking, cart attribution, purchase funnel analytics. Built for stores, not bolted on.</li>
+<li><strong>"Setup in minutes, not weeks"</strong> — (after wizard is built) Upload your docs, pick a voice, go live. AI handles the rest.</li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="roadmap">10. Prioritized Roadmap</h2>
+
+<h3 style="margin-top:24px;"><span class="priority-tag p0">P0</span> Immediate Fixes (This Week)</h3>
+<table>
+<tr><th>Item</th><th>Why</th><th>Impact</th><th>Effort</th></tr>
+<tr>
+  <td><strong>Wire ConversationPolicy into PromptBuilder</strong></td>
+  <td>Rich config infrastructure exists but is disconnected. Tenants may already be setting these fields with zero effect. This is the biggest quality-per-effort win.</td>
+  <td>Unlocks all tenant customization. Tone, verbosity, brand vocab, custom messages all start working.</td>
+  <td>4-6 hours</td>
+</tr>
+<tr>
+  <td><strong>Route chat through IntentOrchestratorService</strong></td>
+  <td>Chat (primary channel) uses inferior legacy pipeline. Buyers testing chat get worse results than voice. Demo risk.</td>
+  <td>Chat gets multi-intent, confidence scoring, data-source gating, and decision logging. Immediate quality jump.</td>
+  <td>1-2 days</td>
+</tr>
+<tr>
+  <td><strong>Fix greeting word limit (4 → 8)</strong></td>
+  <td>"Bună ziua, am o întrebare despre livrare" triggers full RAG pipeline. Wastes tokens and adds latency.</td>
+  <td>Faster greeting responses, lower cost per session.</td>
+  <td>10 minutes</td>
+</tr>
+<tr>
+  <td><strong>Add missing intent patterns</strong></td>
+  <td>"Aș dori", "m-ar interesa", "puteți să" don't trigger new_order or product_search.</td>
+  <td>Catches 10-15% more purchase intents that currently fall through.</td>
+  <td>30 minutes</td>
+</tr>
+</table>
+
+<h3><span class="priority-tag p1">P1</span> High-Impact Product Improvements (Next 2 Weeks)</h3>
+<table>
+<tr><th>Item</th><th>Why</th><th>Impact</th><th>Effort</th></tr>
+<tr>
+  <td><strong>Bot Health Score widget</strong></td>
+  <td>Tenants don't know if their bot is well-configured. Self-service quality improvement.</td>
+  <td>Reduces support burden, increases KB completion rate, makes dashboard feel smart.</td>
+  <td>1-2 days</td>
+</tr>
+<tr>
+  <td><strong>"What Your Bot Doesn't Know" page</strong></td>
+  <td>Data exists (SearchAnalytics.topZeroResults). Just needs UI.</td>
+  <td>Tenants see exactly what to add. Turns a weakness into a feature. Powerful demo moment.</td>
+  <td>1 day</td>
+</tr>
+<tr>
+  <td><strong>Setup Wizard with business-type presets</strong></td>
+  <td>New tenants struggle with blank canvas. Preset templates reduce time-to-value from days to minutes.</td>
+  <td>Better first impression, higher activation rate, lower churn.</td>
+  <td>3-4 days</td>
+</tr>
+<tr>
+  <td><strong>AI-generated system prompt</strong></td>
+  <td>"Describe your business" → AI writes the prompt. Most tenants can't write a good system prompt.</td>
+  <td>Better default quality for all new bots. Demo-friendly ("watch it configure itself").</td>
+  <td>1 day</td>
+</tr>
+<tr>
+  <td><strong>Complaint pipeline in Orchestrator</strong></td>
+  <td>Complaints detected but not specially handled. Risk of bot trying to sell during a complaint.</td>
+  <td>Better complaint handling, automatic escalation, professional impression.</td>
+  <td>4-6 hours</td>
+</tr>
+<tr>
+  <td><strong>Prompt i18n (EN/DE/FR)</strong></td>
+  <td>All prompt templates hardcoded in Romanian. English bots get Romanian instructions internally.</td>
+  <td>Opens international market. Required for any non-Romanian deployment.</td>
+  <td>2 days</td>
+</tr>
+</table>
+
+<h3><span class="priority-tag p2">P2</span> Configuration & UX Improvements (Month 2)</h3>
+<table>
+<tr><th>Item</th><th>Why</th><th>Impact</th><th>Effort</th></tr>
+<tr>
+  <td><strong>ConversationPolicy settings UI</strong></td>
+  <td>After P0 wiring, tenants need a UI to actually configure tone, verbosity, custom messages.</td>
+  <td>Self-service brand customization. Reduces "make my bot sound like X" support tickets.</td>
+  <td>2-3 days</td>
+</tr>
+<tr>
+  <td><strong>KB Completeness Checker</strong></td>
+  <td>Visual indicator of what content is missing per business type.</td>
+  <td>Guides tenants to add the right content. Improves average bot quality.</td>
+  <td>1-2 days</td>
+</tr>
+<tr>
+  <td><strong>Streaming chat responses</strong></td>
+  <td>Users wait 2-5 seconds for full response. Streaming shows words appearing instantly.</td>
+  <td>Perceived speed improvement. Feels modern and responsive.</td>
+  <td>2-3 days</td>
+</tr>
+<tr>
+  <td><strong>Chat playground / demo mode</strong></td>
+  <td>No way for buyer to test with sample data before committing.</td>
+  <td>Reduces sales friction. "Try it now" on landing page.</td>
+  <td>2-3 days</td>
+</tr>
+<tr>
+  <td><strong>Conversation replay with AI annotations</strong></td>
+  <td>Tenants can't understand why the bot responded a certain way.</td>
+  <td>Debugging tool for admins. Shows RAG chunks used, intent detected, confidence level.</td>
+  <td>3-4 days</td>
+</tr>
+<tr>
+  <td><strong>KB content templates</strong></td>
+  <td>Pre-written templates ("Shipping Policy Template", "FAQ Template") for each business type.</td>
+  <td>Faster KB creation. Better content quality. Lower barrier to good results.</td>
+  <td>1-2 days</td>
+</tr>
+<tr>
+  <td><strong>Expand synonym dictionary to 25+ groups</strong></td>
+  <td>Current 12 groups miss common construction/home improvement terms.</td>
+  <td>Better FTS recall for domain-specific queries.</td>
+  <td>2-3 hours</td>
+</tr>
+</table>
+
+<h3><span class="priority-tag p3">P3</span> Strategic Differentiators (Month 3+)</h3>
+<table>
+<tr><th>Item</th><th>Why</th><th>Impact</th><th>Effort</th></tr>
+<tr>
+  <td><strong>Live Agent Takeover</strong></td>
+  <td>Human-in-the-loop for complex cases. Bot summarizes context for agent.</td>
+  <td>Enterprise-tier feature. Addresses "but what if the bot can't handle it?" objection.</td>
+  <td>1-2 weeks</td>
+</tr>
+<tr>
+  <td><strong>Smart Notifications (Slack/email)</strong></td>
+  <td>"Your bot failed 5 shipping queries today" → proactive quality alerts.</td>
+  <td>Keeps tenants engaged. Drives KB improvement without dashboard visits.</td>
+  <td>3-4 days</td>
+</tr>
+<tr>
+  <td><strong>Multi-language RAG</strong></td>
+  <td>Support for English, German, French knowledge bases with language-appropriate FTS.</td>
+  <td>International expansion. Each new language = new market.</td>
+  <td>1 week</td>
+</tr>
+<tr>
+  <td><strong>Outbound Campaign Engine</strong></td>
+  <td>Bot calls leads automatically from pipeline. "Call all 'contacted' leads tomorrow at 10am."</td>
+  <td>Unique differentiator. No competitor does this at this price point.</td>
+  <td>2-3 weeks</td>
+</tr>
+<tr>
+  <td><strong>CSAT Auto-Survey</strong></td>
+  <td>After each conversation: "Was this helpful? 1-5" → feeds quality scoring.</td>
+  <td>Real user feedback loop. Enables data-driven quality improvement.</td>
+  <td>3-4 days</td>
+</tr>
+<tr>
+  <td><strong>Embedding Model Migration Tool</strong></td>
+  <td>When better models launch, re-embed all chunks automatically.</td>
+  <td>Future-proofs the platform. "Your bot gets smarter without you doing anything."</td>
+  <td>1 week</td>
+</tr>
+<tr>
+  <td><strong>WhatsApp Business Catalog Integration</strong></td>
+  <td>Product catalog in WhatsApp + AI chat in same thread.</td>
+  <td>Huge for Romanian market. WhatsApp is primary business channel.</td>
+  <td>1-2 weeks</td>
+</tr>
+</table>
+
+<div class="separator"></div>
+
+<div class="highlight-box" style="text-align:center;">
+<h3 style="margin-top:0;">Summary</h3>
+<p style="font-size:16px; max-width:700px; margin:12px auto;">
+Sambla is a <strong>technically impressive platform</strong> with genuine depth in RAG, multi-intent orchestration, and e-commerce integration. The core AI pipeline is above market average. The primary gaps are in <strong>product polish</strong>: disconnected configuration (ConversationPolicy), chat/voice parity, onboarding guidance, and tenant self-service tools. Closing these gaps transforms a strong engineering project into a <strong>sellable product</strong>.
+</p>
+<p style="color:var(--text-muted); font-size:13px; margin-top:16px;">
+Audit performed on 31 March 2026 &middot; Based on full codebase analysis &middot; Sambla AI Platform v1.0
+</p>
+</div>
+
+</main>
+</div>
+</body>
+</html>

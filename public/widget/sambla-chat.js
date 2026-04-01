@@ -1418,55 +1418,74 @@
             products = products.filter(function(p) {
                 return p && p.name && p.name.length > 0 && (p.price || p.sale_price);
             });
-            if (products.length === 0) return; // No valid products to show
+            if (products.length === 0) return;
 
             var wrap = document.createElement('div');
-            wrap.style.cssText = 'display:flex;gap:8px;overflow-x:auto;padding:8px 4px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;width:100%;min-height:200px;flex-shrink:0;';
+            wrap.style.cssText = 'display:flex;flex-direction:column;gap:8px;padding:8px 0;width:100%;flex-shrink:0;';
             wrap.setAttribute('role', 'list');
             wrap.setAttribute('aria-label', 'Products');
 
             products.forEach(function(p, index) {
-                // ── Track impression ──
                 trackEvent('product_impression', {
                     product_id: p.id, product_name: (p.name || '').substring(0, 80),
                     price: p.price, position: index
                 });
 
                 var card = document.createElement('div');
-                card.style.cssText = 'min-width:156px;width:156px;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;background:#fff;scroll-snap-align:start;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.04),0 1px 2px rgba(0,0,0,0.06);cursor:pointer;transition:box-shadow 0.2s ease,transform 0.2s ease;display:flex;flex-direction:column;';
+                card.style.cssText = 'width:100%;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.04);cursor:pointer;transition:box-shadow 0.2s,transform 0.15s;display:flex;flex-direction:row;align-items:stretch;';
                 card.setAttribute('role', 'listitem');
                 card.setAttribute('tabindex', '0');
                 card.setAttribute('aria-label', stripAllHtml(p.name || ''));
 
                 var h = '';
+
+                // Image (left side, square)
                 if (p.image_url && isValidUrl(p.image_url)) {
-                    h += '<img src="' + sanitizeHtml(p.image_url) + '" style="width:100%;height:100px;object-fit:cover;display:block;" loading="lazy" alt="' + sanitizeHtml(p.name || '') + '">';
+                    h += '<div style="width:90px;min-height:90px;flex-shrink:0;overflow:hidden;background:#f8fafc;">';
+                    h += '<img src="' + sanitizeHtml(p.image_url) + '" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" alt="' + sanitizeHtml(p.name || '') + '">';
+                    h += '</div>';
                 }
-                h += '<div style="padding:8px 10px;flex:1;display:flex;flex-direction:column;">';
-                h += '<div style="font-size:11px;font-weight:600;color:#1e293b;line-height:1.3;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">' + sanitizeHtml(p.name) + '</div>';
 
+                // Content (right side)
+                h += '<div style="padding:10px 12px;flex:1;display:flex;flex-direction:column;justify-content:center;min-width:0;">';
+
+                // Product name
+                h += '<div style="font-size:13px;font-weight:600;color:#1e293b;line-height:1.3;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">' + sanitizeHtml(p.name) + '</div>';
+
+                // Short description (if available, max 60 chars)
+                if (p.short_description) {
+                    var desc = stripAllHtml(p.short_description).substring(0, 60);
+                    if (desc.length > 0) {
+                        h += '<div style="font-size:11px;color:#64748b;line-height:1.3;margin-bottom:4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + sanitizeHtml(desc) + '</div>';
+                    }
+                }
+
+                // Price row
                 var safeCurrency = sanitizeCurrency(p.currency);
+                h += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">';
                 if (sanitizePrice(p.sale_price) && sanitizePrice(p.regular_price)) {
-                    h += '<div style="font-size:13px;font-weight:700;color:#dc2626;">' + sanitizePrice(p.sale_price) + ' ' + safeCurrency + ' <span style="font-size:10px;color:#94a3b8;text-decoration:line-through;font-weight:400;">' + sanitizePrice(p.regular_price) + '</span></div>';
+                    h += '<span style="font-size:15px;font-weight:700;color:#dc2626;">' + sanitizePrice(p.sale_price) + ' ' + safeCurrency + '</span>';
+                    h += '<span style="font-size:11px;color:#94a3b8;text-decoration:line-through;">' + sanitizePrice(p.regular_price) + '</span>';
                 } else if (sanitizePrice(p.price)) {
-                    h += '<div style="font-size:13px;font-weight:700;color:#1e293b;">' + sanitizePrice(p.price) + ' ' + safeCurrency + '</div>';
+                    h += '<span style="font-size:15px;font-weight:700;color:#1e293b;">' + sanitizePrice(p.price) + ' ' + safeCurrency + '</span>';
                 }
 
-                // Stock indicator
+                // Stock badge
                 if (p.stock_status === 'outofstock') {
-                    h += '<div style="font-size:9px;color:#dc2626;margin-top:2px;">Indisponibil</div>';
+                    h += '<span style="font-size:9px;color:#dc2626;background:#fef2f2;padding:1px 6px;border-radius:4px;font-weight:600;">Indisponibil</span>';
+                } else if (p.stock_status === 'instock') {
+                    h += '<span style="font-size:9px;color:#16a34a;background:#f0fdf4;padding:1px 6px;border-radius:4px;font-weight:600;">In stoc</span>';
                 }
+                h += '</div>';
 
-                h += '<div style="flex:1;"></div>'; // spacer
+                // ATC button placeholder
+                h += '<div class="sambla-atc-slot"></div>';
 
-                // ATC button placeholder (populated below if cart enabled)
-                h += '<div class="sambla-atc-slot" style="margin-top:6px;"></div>';
                 h += '</div>';
                 card.innerHTML = h;
 
-                // ── Click card → open product permalink (NOT modal) ──
+                // Click card → open product permalink
                 card.addEventListener('click', function(e) {
-                    // Don't navigate if clicking the ATC button
                     if (e.target.closest && e.target.closest('.sambla-atc-btn')) return;
                     if (e.target.classList && e.target.classList.contains('sambla-atc-btn')) return;
 
@@ -1479,36 +1498,30 @@
                     }
                 });
                 card.addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        card.click();
-                    }
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); }
                 });
 
-                // Hover
-                card.addEventListener('mouseenter', function() { card.style.boxShadow = '0 6px 20px rgba(0,0,0,0.1),0 2px 6px rgba(0,0,0,0.06)'; card.style.transform = 'translateY(-3px)'; });
-                card.addEventListener('mouseleave', function() { card.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04),0 1px 2px rgba(0,0,0,0.06)'; card.style.transform = 'none'; });
+                // Hover effect
+                card.addEventListener('mouseenter', function() { card.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'; card.style.transform = 'translateY(-1px)'; });
+                card.addEventListener('mouseleave', function() { card.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)'; card.style.transform = 'none'; });
 
-                // ── ATC button (only if cart enabled and product in stock) ──
+                // ATC button
                 var atcSlot = card.querySelector('.sambla-atc-slot');
                 if (_isCartEnabled() && p.stock_status !== 'outofstock') {
                     if (atcSlot) {
                         var btn = document.createElement('button');
                         btn.className = 'sambla-atc-btn';
-                        btn.style.cssText = 'width:100%;padding:5px 0;border:none;border-radius:6px;background:#16a34a;color:#fff;font-size:11px;font-weight:600;cursor:pointer;transition:background 0.15s;';
+                        btn.style.cssText = 'padding:5px 14px;border:none;border-radius:6px;background:#16a34a;color:#fff;font-size:11px;font-weight:600;cursor:pointer;transition:background 0.15s;';
                         btn.textContent = '\uD83D\uDED2 Adaugă în coș';
                         btn.addEventListener('mouseenter', function() { btn.style.background = '#15803d'; });
                         btn.addEventListener('mouseleave', function() { btn.style.background = '#16a34a'; });
-
                         btn.addEventListener('click', function(e) {
                             e.stopPropagation();
                             _handleAddToCart(p, btn);
                         });
-
                         atcSlot.appendChild(btn);
                     }
                 } else if (atcSlot && !_storeCapabilities) {
-                    // Capabilities not loaded yet — queue for retroactive ATC
                     _pendingAtcSlots.push({ slot: atcSlot, product: p });
                 }
 

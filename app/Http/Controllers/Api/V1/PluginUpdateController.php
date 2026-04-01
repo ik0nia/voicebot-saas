@@ -22,7 +22,7 @@ class PluginUpdateController extends Controller
             return response()->json(['error' => 'Unknown plugin'], 404);
         }
 
-        $latestVersion = '2.0.1';
+        $latestVersion = '2.0.2';
         $downloadUrl = url('/downloads/sambla-woocommerce.zip');
 
         $data = [
@@ -47,7 +47,11 @@ class PluginUpdateController extends Controller
 
     private function getChangelog(): string
     {
-        return '<h4>2.0.1 (Aprilie 2026)</h4><ul>'
+        return '<h4>2.0.2 (Aprilie 2026)</h4><ul>'
+            . '<li>Carduri produse full-width cu imagine, descriere, preț și badge stoc</li>'
+            . '<li>Fix: chatbot nu mai spune "nu am găsit" când produsele sunt afișate ca carduri</li>'
+            . '</ul>'
+            . '<h4>2.0.1 (Aprilie 2026)</h4><ul>'
             . '<li>Redesign complet admin panel (dark hero, metrici live, link-uri rapide)</li>'
             . '<li>Afișare plan curent și consum mesaje/lună cu progress bar</li>'
             . '<li>Ultimele 5 conversații vizibile direct din WordPress</li>'

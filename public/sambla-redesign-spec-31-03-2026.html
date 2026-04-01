@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sambla V2 — Complete Product Redesign Specification</title>
+<style>
+:root{--bg:#0a0a0a;--surface:#141414;--surface2:#1c1c1e;--surface3:#2c2c2e;--border:#333;--text:#f5f5f7;--text2:#a1a1a6;--accent:#0a84ff;--green:#30d158;--red:#ff453a;--orange:#ff9f0a;--purple:#bf5af2;--pink:#ff375f;--yellow:#ffd60a;--teal:#64d2ff}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased}
+.container{max-width:1100px;margin:0 auto;padding:60px 32px}
+h1{font-size:48px;font-weight:800;letter-spacing:-1.5px;background:linear-gradient(135deg,#fff,#999);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+.subtitle{color:var(--text2);font-size:18px;margin-bottom:60px}
+h2{font-size:28px;font-weight:700;letter-spacing:-0.5px;margin:64px 0 24px;padding-top:32px;border-top:1px solid var(--border)}
+h3{font-size:20px;font-weight:600;margin:32px 0 12px;color:var(--text)}
+h4{font-size:16px;font-weight:600;margin:20px 0 8px;color:var(--accent)}
+p{color:var(--text2);margin-bottom:12px}
+ul,ol{padding-left:24px;margin-bottom:16px}
+li{color:var(--text2);margin-bottom:6px}
+li strong{color:var(--text)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;margin:16px 0}
+.card-accent{border-left:3px solid var(--accent)}
+.card-green{border-left:3px solid var(--green)}
+.card-red{border-left:3px solid var(--red)}
+.card-purple{border-left:3px solid var(--purple)}
+.badge{display:inline-block;padding:3px 10px;border-radius:8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px}
+.badge-p0{background:#7f1d1d;color:#fca5a5}
+.badge-p1{background:#7c2d12;color:#fdba74}
+.badge-p2{background:#1e3a5f;color:#93c5fd}
+.badge-new{background:#064e3b;color:#6ee7b7}
+.badge-replace{background:#4c1d95;color:#c4b5fd}
+.badge-delete{background:#450a0a;color:#fca5a5}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px}
+th{background:var(--surface2);color:var(--accent);text-align:left;padding:10px 14px;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border)}
+td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:top}
+tr:hover td{background:var(--surface)}
+code{background:var(--surface2);padding:2px 6px;border-radius:4px;font-size:13px;font-family:'SF Mono',monospace;color:var(--teal)}
+pre{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;overflow-x:auto;font-size:13px;margin:12px 0;font-family:'SF Mono',monospace;color:var(--text2)}
+.cols-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.cols-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.highlight{background:linear-gradient(135deg,rgba(10,132,255,0.08),rgba(191,90,242,0.08));border:1px solid rgba(10,132,255,0.2);border-radius:16px;padding:28px;margin:24px 0}
+.flow-step{display:flex;align-items:flex-start;gap:16px;margin:12px 0;padding:16px;background:var(--surface);border-radius:12px;border:1px solid var(--border)}
+.flow-step .num{width:32px;height:32px;border-radius:10px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
+.toc{position:fixed;right:24px;top:50%;transform:translateY(-50%);background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;z-index:100;max-height:80vh;overflow-y:auto;width:200px}
+.toc a{display:block;padding:4px 8px;color:var(--text2);text-decoration:none;font-size:11px;border-radius:6px;margin-bottom:2px}
+.toc a:hover{background:var(--surface2);color:var(--text)}
+@media(max-width:1400px){.toc{display:none}}
+@media(max-width:768px){.cols-2,.cols-3{grid-template-columns:1fr}.container{padding:32px 16px}h1{font-size:32px}}
+</style>
+</head>
+<body>
+
+<nav class="toc">
+<a href="#vision"><strong>Vision</strong></a>
+<a href="#design">Design System</a>
+<a href="#onboarding">Onboarding</a>
+<a href="#kb">Knowledge Base</a>
+<a href="#dashboard">Dashboard</a>
+<a href="#superadmin">Super Admin</a>
+<a href="#chat">Chat Widget</a>
+<a href="#website">Website</a>
+<a href="#wow">WOW Moments</a>
+<a href="#impl">Implementation</a>
+</nav>
+
+<div class="container">
+
+<h1>Sambla V2</h1>
+<p class="subtitle">Complete Product Redesign Specification &mdash; March 31, 2026</p>
+
+<!-- ============================================================ -->
+<h2 id="vision">1. Product Vision</h2>
+
+<div class="highlight">
+<h3 style="margin-top:0">What Sambla Really Is</h3>
+<p style="font-size:18px;color:var(--text)"><strong>Sambla is an AI employee for your business.</strong> Not a chatbot. Not a widget. An employee that knows everything about your business, talks to your customers 24/7 on any channel, and gets smarter every day.</p>
+</div>
+
+<h3>Core User Journeys (Prioritized)</h3>
+<div class="card card-accent">
+<ol>
+<li><strong>Sign up → first working bot in 10 minutes.</strong> The entire onboarding must fit in a single focused session.</li>
+<li><strong>Daily check: "How is my AI doing?"</strong> Dashboard answers this in 5 seconds with one glance.</li>
+<li><strong>Weekly improvement: "What should I add?"</strong> Knowledge gaps + auto-suggestions make this effortless.</li>
+<li><strong>Customer experience: "This chatbot actually helps."</strong> Accurate answers, no hallucination, natural conversation.</li>
+</ol>
+</div>
+
+<h3>What Makes Sambla Different (Positioning)</h3>
+<div class="cols-3">
+<div class="card"><h4 style="margin-top:0">Learns Your Business</h4><p>Not generic AI. Answers from YOUR documents, products, and policies. Never invents.</p></div>
+<div class="card"><h4 style="margin-top:0">Voice + Chat, One Brain</h4><p>Customers call or write &mdash; same quality. One system, all channels.</p></div>
+<div class="card"><h4 style="margin-top:0">Gets Smarter Alone</h4><p>Identifies what it doesn't know, suggests content to add, improves automatically.</p></div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="design">2. Design System V2</h2>
+
+<h3>Color Palette</h3>
+<table>
+<tr><th>Token</th><th>Value</th><th>Usage</th></tr>
+<tr><td><code>--brand</code></td><td>#991b1b (deep red)</td><td>Primary brand, buttons, accents</td></tr>
+<tr><td><code>--brand-light</code></td><td>#fef2f2</td><td>Hover states, subtle backgrounds</td></tr>
+<tr><td><code>--surface</code></td><td>#ffffff</td><td>Cards, modals</td></tr>
+<tr><td><code>--background</code></td><td>#f8fafc</td><td>Page background</td></tr>
+<tr><td><code>--border</code></td><td>#e2e8f0</td><td>Card borders, dividers</td></tr>
+<tr><td><code>--text-primary</code></td><td>#0f172a</td><td>Headings, primary text</td></tr>
+<tr><td><code>--text-secondary</code></td><td>#64748b</td><td>Descriptions, secondary info</td></tr>
+<tr><td><code>--text-muted</code></td><td>#94a3b8</td><td>Timestamps, metadata</td></tr>
+<tr><td><code>--success</code></td><td>#16a34a</td><td>Active, completed, positive</td></tr>
+<tr><td><code>--warning</code></td><td>#d97706</td><td>Alerts, attention needed</td></tr>
+<tr><td><code>--danger</code></td><td>#dc2626</td><td>Errors, critical issues</td></tr>
+<tr><td><code>--info</code></td><td>#2563eb</td><td>Information, links</td></tr>
+</table>
+
+<h3>Typography Scale</h3>
+<table>
+<tr><th>Name</th><th>Size</th><th>Weight</th><th>Usage</th></tr>
+<tr><td>Page Title</td><td>24px</td><td>700</td><td>Top of each page</td></tr>
+<tr><td>Section Title</td><td>16px</td><td>600</td><td>Card headers</td></tr>
+<tr><td>Body</td><td>14px</td><td>400</td><td>Default text</td></tr>
+<tr><td>Small</td><td>13px</td><td>500</td><td>Labels, badges</td></tr>
+<tr><td>Caption</td><td>12px</td><td>400</td><td>Timestamps, metadata</td></tr>
+<tr><td>Micro</td><td>11px</td><td>600</td><td>Badges, status indicators</td></tr>
+</table>
+
+<h3>Spacing System</h3>
+<p>Base unit: 4px. All spacing must be multiples of 4.</p>
+<table>
+<tr><th>Token</th><th>Value</th><th>Usage</th></tr>
+<tr><td><code>xs</code></td><td>4px</td><td>Icon gaps, tight spacing</td></tr>
+<tr><td><code>sm</code></td><td>8px</td><td>Between related elements</td></tr>
+<tr><td><code>md</code></td><td>16px</td><td>Card padding, section gaps</td></tr>
+<tr><td><code>lg</code></td><td>24px</td><td>Between sections</td></tr>
+<tr><td><code>xl</code></td><td>32px</td><td>Page-level spacing</td></tr>
+<tr><td><code>2xl</code></td><td>48px</td><td>Between major sections</td></tr>
+</table>
+
+<h3>Component Library</h3>
+<table>
+<tr><th>Component</th><th>Variants</th><th>Description</th></tr>
+<tr><td>Card</td><td>default, elevated, outlined, interactive</td><td>Rounded-xl, shadow-sm, border-slate-200</td></tr>
+<tr><td>Button</td><td>primary, secondary, ghost, danger</td><td>Rounded-lg, 3 sizes (sm/md/lg)</td></tr>
+<tr><td>Badge</td><td>status, count, label</td><td>Rounded-full, dot indicator optional</td></tr>
+<tr><td>Input</td><td>text, textarea, select, search</td><td>Rounded-lg, focus ring brand color</td></tr>
+<tr><td>Metric Card</td><td>simple, trend, progress</td><td>Value + label + optional trend arrow</td></tr>
+<tr><td>Empty State</td><td>illustration, action</td><td>Icon + message + CTA button</td></tr>
+<tr><td>Skeleton</td><td>text, card, table</td><td>Loading placeholder with pulse animation</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="onboarding">3. Onboarding Flow (Complete Redesign)</h2>
+
+<div class="highlight">
+<p style="color:var(--text);font-size:16px"><strong>Goal:</strong> From signup to first working bot in under 10 minutes. No technical knowledge required.</p>
+</div>
+
+<h3>Flow Steps</h3>
+
+<div class="flow-step">
+<div class="num">1</div>
+<div>
+<h4 style="margin-top:0">Sign Up (30 seconds)</h4>
+<p>Name, email, password. No company details yet. No credit card. Instant access.</p>
+<p><strong>After signup:</strong> Redirect directly to setup wizard, NOT to empty dashboard.</p>
+</div>
+</div>
+
+<div class="flow-step">
+<div class="num">2</div>
+<div>
+<h4 style="margin-top:0">Choose Your Business Type (15 seconds)</h4>
+<p>Three large, clear cards with illustrations:</p>
+<ul>
+<li><strong>E-commerce</strong> &mdash; "Vinzi produse online" (You sell products online)</li>
+<li><strong>Servicii</strong> &mdash; "Oferi servicii sau consultanță" (You offer services or consulting)</li>
+<li><strong>Ambele</strong> &mdash; "Vinzi produse ȘI oferi servicii" (Both products and services)</li>
+</ul>
+<p><strong>Effect:</strong> Pre-fills system prompt template, KB structure, recommended settings, and ConversationPolicy defaults.</p>
+</div>
+</div>
+
+<div class="flow-step">
+<div class="num">3</div>
+<div>
+<h4 style="margin-top:0">Describe Your Business (60 seconds)</h4>
+<p>Single textarea: "Descrie afacerea ta în 2-3 propoziții"</p>
+<p>Examples shown as placeholder: "Suntem un magazin online de materiale de construcții cu livrare în toată țara. Avem peste 5000 de produse și oferim consultanță gratuită."</p>
+<p><strong>AI generates:</strong> System prompt, greeting message, bot name suggestion. User reviews and approves.</p>
+</div>
+</div>
+
+<div class="flow-step">
+<div class="num">4</div>
+<div>
+<h4 style="margin-top:0">Add Your Website (90 seconds)</h4>
+<p>Enter domain → auto-verification → one-click site scan option.</p>
+<p>"Vrei să scanăm site-ul pentru informații? Bot-ul va învăța automat din conținutul tău."</p>
+<p>Optional: Connect WooCommerce (if e-commerce was selected)</p>
+</div>
+</div>
+
+<div class="flow-step">
+<div class="num">5</div>
+<div>
+<h4 style="margin-top:0">Build Knowledge Base (3-5 minutes)</h4>
+<p><strong>Guided checklist</strong> based on business type. Each item is a one-click action:</p>
+<ul>
+<li>📄 Upload policy documents (drag &amp; drop)</li>
+<li>❓ Generate FAQ from website (AI agent, one click)</li>
+<li>📞 Add contact info (simple form: phone, email, address, hours)</li>
+<li>🛒 Sync products (if WooCommerce connected)</li>
+</ul>
+<p>Show live completeness bar: "Bot-ul tău știe 65% din ce trebuie"</p>
+</div>
+</div>
+
+<div class="flow-step">
+<div class="num">6</div>
+<div>
+<h4 style="margin-top:0">Test Your Bot (60 seconds)</h4>
+<p>Embedded chat panel on the RIGHT side. Pre-filled suggested questions on the LEFT.</p>
+<p>"Întreabă bot-ul tău: Cât costă livrarea? / Ce program aveți? / Vreau să comand"</p>
+<p>If bot can't answer → highlight which KB content is missing → one-click add.</p>
+<p><strong>This is the magic moment.</strong> User sees their bot actually knowing their business.</p>
+</div>
+</div>
+
+<div class="flow-step">
+<div class="num">7</div>
+<div>
+<h4 style="margin-top:0">Go Live (30 seconds)</h4>
+<p>Show embed code. Copy button. "Adaugă acest cod pe site-ul tău."</p>
+<p>Or: "Instalează plugin-ul WordPress" with one-click download.</p>
+<p>Confetti animation. "Bot-ul tău e live! 🎉"</p>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="kb">4. Knowledge Base System V2</h2>
+
+<h3>Structure: Category-Based, Not Document-Based</h3>
+<div class="card card-accent">
+<p>Current system: flat list of documents. Users don't know what to upload.</p>
+<p><strong>V2: Category grid.</strong> Each category shows: status (complete/partial/empty), content count, last updated. Users see exactly what's needed.</p>
+</div>
+
+<h3>Categories (Per Business Type)</h3>
+<table>
+<tr><th>Category</th><th>E-commerce</th><th>Services</th><th>Hybrid</th><th>Auto-fill Option</th></tr>
+<tr><td>Company Info</td><td>Required</td><td>Required</td><td>Required</td><td>From website scan</td></tr>
+<tr><td>Products / Services</td><td>Required (WC sync)</td><td>Required</td><td>Required</td><td>WooCommerce / manual</td></tr>
+<tr><td>FAQ</td><td>Required</td><td>Required</td><td>Required</td><td>AI-generated from content</td></tr>
+<tr><td>Shipping / Delivery</td><td>Required</td><td>Optional</td><td>Required</td><td>Template + fill-in</td></tr>
+<tr><td>Returns / Warranty</td><td>Required</td><td>Optional</td><td>Required</td><td>Template</td></tr>
+<tr><td>Payment Methods</td><td>Required</td><td>Optional</td><td>Required</td><td>Template</td></tr>
+<tr><td>Contact &amp; Hours</td><td>Required</td><td>Required</td><td>Required</td><td>Simple form</td></tr>
+<tr><td>Promotions</td><td>Optional</td><td>Optional</td><td>Optional</td><td>Manual</td></tr>
+<tr><td>Booking / Scheduling</td><td>N/A</td><td>Required</td><td>Optional</td><td>Template</td></tr>
+<tr><td>Team / Expertise</td><td>Optional</td><td>Optional</td><td>Optional</td><td>Manual</td></tr>
+</table>
+
+<h3>Completeness Score</h3>
+<p>Visual progress ring showing: "Bot-ul tău știe <strong>72%</strong> din ce trebuie"</p>
+<p>Below: list of missing categories with "Adaugă acum" buttons.</p>
+<p>Warning badges on categories with thin content (&lt;50 words).</p>
+
+<h3>Content Quality Rules</h3>
+<ul>
+<li>&lt;50 words in a document → <span class="badge badge-p1">Warning: content prea scurt</span></li>
+<li>No FAQ content → <span class="badge badge-p0">Lipsește: Întrebări frecvente</span></li>
+<li>No contact info → <span class="badge badge-p0">Lipsește: Informații de contact</span></li>
+<li>Duplicate title → <span class="badge badge-p1">Document duplicat detectat</span></li>
+<li>Content older than 6 months → <span class="badge badge-p2">Verifică dacă informațiile sunt actuale</span></li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="dashboard">5. Dashboard V2 (Complete Redesign)</h2>
+
+<h3>Design Principles</h3>
+<ul>
+<li><strong>Glanceable:</strong> Admin understands everything in 5 seconds</li>
+<li><strong>Actionable:</strong> Every metric links to a specific action</li>
+<li><strong>Calm:</strong> No noise, no visual overload</li>
+<li><strong>Progressive:</strong> Simple by default, detailed on demand</li>
+</ul>
+
+<h3>Main Dashboard Layout</h3>
+<pre>
+┌─────────────────────────────────────────────────┐
+│ Bună dimineața, [Name]                          │
+│ Iată ce se întâmplă azi.                        │
+├─────────────────────────────────────────────────┤
+│ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐   │
+│ │Conv. │ │Mesaje│ │Lead- │ │Apel. │ │Minut.│   │
+│ │ 24   │ │ 156  │ │ 3    │ │ 8    │ │ 42   │   │
+│ │ ↑12% │ │ ↑8%  │ │ ↑50% │ │ ↓2   │ │ ↑15  │   │
+│ └──────┘ └──────┘ └──────┘ └──────┘ └──────┘   │
+├──────────────────────┬──────────────────────────┤
+│                      │                          │
+│  📊 Activity Chart   │  🎯 What To Do Next     │
+│  (7-day sparkline)   │                          │
+│                      │  ⚠️ 15% searches fail   │
+│                      │     → Add shipping FAQ   │
+│                      │                          │
+│                      │  📚 KB completeness: 72% │
+│                      │     → Add return policy  │
+│                      │                          │
+│                      │  ⭐ Bot health: 78/100   │
+│                      │     → Configure tone     │
+│                      │                          │
+├──────────────────────┴──────────────────────────┤
+│                                                  │
+│  🤖 Your Bots                                    │
+│  ┌─────────────────────────────────────────┐    │
+│  │ Bot Name    │ Health │ Convs │ Status   │    │
+│  │ Main Bot    │ 78/100 │  24   │ ● Active │    │
+│  │ Support Bot │ 45/100 │   3   │ ● Active │    │
+│  └─────────────────────────────────────────┘    │
+│                                                  │
+└─────────────────────────────────────────────────┘
+</pre>
+
+<h3>Bot Detail Page Layout</h3>
+<pre>
+┌─────────────────────────────────────────────────┐
+│ [Bot Name]              [Test] [Demo] [Edit]    │
+│ ● Active                                        │
+├──────────────────────┬──────────────────────────┤
+│                      │                          │
+│  ⭐ Health: 78/100   │  📊 This Week            │
+│  ┌────────────────┐  │  Conversations: 142      │
+│  │ ██████████░░░░ │  │  Messages: 890           │
+│  │    78/100      │  │  Leads: 12               │
+│  └────────────────┘  │  Avg. response: 1.8s     │
+│                      │  Satisfaction: 4.2/5      │
+│  Components:         │                          │
+│  KB ████████░░ 80%   │                          │
+│  Prompt ██████░ 70%  │                          │
+│  Config ████░░░ 50%  │                          │
+│  Channels ████████ % │                          │
+│                      │                          │
+├──────────────────────┴──────────────────────────┤
+│                                                  │
+│  🔍 Ce nu știe bot-ul (Knowledge Gaps)          │
+│  ┌───────────────┐ ┌───────────────┐            │
+│  │ 🚚 Livrare    │ │ 🔄 Retur      │            │
+│  │ 8 întrebări   │ │ 5 întrebări   │            │
+│  │ [Adaugă acum] │ │ [Adaugă acum] │            │
+│  └───────────────┘ └───────────────┘            │
+│                                                  │
+├─────────────────────────────────────────────────┤
+│ Tabs: [Knowledge] [Conversations] [Settings]    │
+│                                                  │
+│ (tab content based on selection)                │
+│                                                  │
+└─────────────────────────────────────────────────┘
+</pre>
+
+<h3>Conversations View — Redesigned</h3>
+<div class="card card-accent">
+<p><strong>Current:</strong> Debug-heavy raw message list. Shows AI debug info inline (intents, pipelines, costs).</p>
+<p><strong>V2:</strong> Clean conversation timeline. Debug info in a separate "AI Insights" sidebar that appears on click. Admins see conversations like customers see them — clean — with AI analysis available on demand.</p>
+</div>
+
+<pre>
+┌──────────────────────────────────┬──────────────┐
+│                                  │ AI Insights  │
+│  Conversation with Ion Popescu   │              │
+│  pe pagina: /produs/bca-30       │ Intent:      │
+│                                  │ transactional│
+│  ┌─────────────────────────┐     │ Confidence:  │
+│  │ User: Cât costă BCA-ul? │     │ 87%          │
+│  └─────────────────────────┘     │              │
+│                                  │ Strategy:    │
+│  ┌────────────────────────────┐  │ mid-stage    │
+│  │ Bot: Iată ce am găsit:    │  │ recommend    │
+│  │                            │  │              │
+│  │ [Card: BCA 30cm - 12 RON] │  │ Products:    │
+│  │ [Card: BCA 25cm - 10 RON] │  │ 2 shown      │
+│  └────────────────────────────┘  │ confidence:  │
+│                                  │ high         │
+│  ┌─────────────────────────┐     │              │
+│  │ User: Îl comand pe ăla   │     │ Frustration: │
+│  │       de 30              │     │ low (0/100)  │
+│  └─────────────────────────┘     │              │
+│                                  │ Lead score:  │
+│  ┌────────────────────────────┐  │ 45/100       │
+│  │ Bot: Perfect! Pentru a    │  │              │
+│  │ finaliza comanda, am      │  │ Page:        │
+│  │ nevoie de câteva date...  │  │ /produs/bca  │
+│  └────────────────────────────┘  │ Time: 2m 30s │
+│                                  │              │
+└──────────────────────────────────┴──────────────┘
+</pre>
+
+<!-- ============================================================ -->
+<h2 id="superadmin">6. Super Admin Panel V2</h2>
+
+<h3>Overview Dashboard</h3>
+<div class="card">
+<ul>
+<li><strong>Global metrics:</strong> Total tenants, active bots, conversations today, revenue this month</li>
+<li><strong>Health map:</strong> All bots by health score (heatmap/grid). Red = needs attention, green = healthy.</li>
+<li><strong>Alerts:</strong> Bots with high fallback rates, high frustration, error spikes.</li>
+<li><strong>Recent activity:</strong> Last 10 tenant actions (signup, bot created, KB updated).</li>
+</ul>
+</div>
+
+<h3>Tenant Detail</h3>
+<div class="card">
+<ul>
+<li>Tenant info + plan + usage</li>
+<li>All bots with health scores</li>
+<li>Revenue and costs breakdown</li>
+<li>AI quality score (aggregate of all bots)</li>
+<li>Plan override controls</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="chat">7. Chat Widget V2</h2>
+
+<h3>Visual Identity</h3>
+<div class="card card-accent">
+<p><strong>Current:</strong> Good basic widget with dark brand color. Product cards are functional but basic.</p>
+<p><strong>V2 direction:</strong> More refined shadows, smoother animations, better product card layout, context-aware greetings, no visual noise.</p>
+</div>
+
+<h3>Product Card Rules (Strict)</h3>
+<table>
+<tr><th>Scenario</th><th>Show Cards?</th><th>Reason</th></tr>
+<tr><td>User asks about products</td><td>Yes</td><td>Transactional intent</td></tr>
+<tr><td>User compares options</td><td>Yes</td><td>Comparison intent</td></tr>
+<tr><td>User explores categories</td><td>Yes</td><td>Exploratory intent</td></tr>
+<tr><td>User asks about shipping policy</td><td>No</td><td>Informational &mdash; not about products</td></tr>
+<tr><td>User asks about returns</td><td>No</td><td>Support intent</td></tr>
+<tr><td>User has complaint</td><td>No</td><td>Never sell during frustration</td></tr>
+<tr><td>User says "salut"</td><td>No</td><td>Greeting &mdash; no data needed</td></tr>
+<tr><td>AI says "no products found"</td><td>No</td><td>Suppress cards when negative response</td></tr>
+<tr><td>AI doesn't mention products</td><td>No</td><td>Cards must match response content</td></tr>
+</table>
+
+<h3>Emoji Usage Rules</h3>
+<table>
+<tr><th>Context</th><th>Emoji?</th><th>Examples</th></tr>
+<tr><td>Greeting</td><td>1 subtle</td><td>"Bună! 👋" or "Salut!"</td></tr>
+<tr><td>Product found</td><td>Optional 1</td><td>"Iată ce am găsit: ✅" or none</td></tr>
+<tr><td>Complaint</td><td>Never</td><td>Empathy only, no decoration</td></tr>
+<tr><td>Error/fallback</td><td>Never</td><td>Professional, no emoji</td></tr>
+<tr><td>Confirmation</td><td>Optional 1</td><td>"Am notat! ✅" or "Perfect."</td></tr>
+<tr><td>Long answer</td><td>Never</td><td>Content speaks for itself</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="website">8. Presentation Website V2</h2>
+
+<h3>Structure</h3>
+
+<div class="flow-step">
+<div class="num">1</div>
+<div>
+<h4 style="margin-top:0">Hero</h4>
+<p><strong>Headline:</strong> "Un angajat AI care știe totul despre afacerea ta"</p>
+<p><strong>Subheading:</strong> "Răspunde clienților pe chat și telefon, 24/7, din informațiile tale reale. Setup în 10 minute."</p>
+<p><strong>CTA:</strong> "Începe gratuit" (primary) + "Vezi cum funcționează" (secondary, scrolls to demo)</p>
+<p><strong>Visual:</strong> Live chat demo on right side (functional, not screenshot)</p>
+</div>
+</div>
+
+<div class="flow-step">
+<div class="num">2</div>
+<div>
+<h4 style="margin-top:0">Trust Bar</h4>
+<p>Four trust signals in a horizontal bar: GDPR Compliant · Numere românești · Hosting în România · &lt;200ms latență</p>
+</div>
+</div>
+
+<div class="flow-step">
+<div class="num">3</div>
+<div>
+<h4 style="margin-top:0">How It Works (3 Steps)</h4>
+<p>Simplified from current 6 steps to 3:</p>
+<ol>
+<li><strong>"Spune-i despre afacerea ta"</strong> &mdash; Upload docs, connect website, sync products</li>
+<li><strong>"Personalizează comportamentul"</strong> &mdash; Ton, stil, reguli de business</li>
+<li><strong>"Activează pe site"</strong> &mdash; O linie de cod, gata</li>
+</ol>
+</div>
+</div>
+
+<div class="flow-step">
+<div class="num">4</div>
+<div>
+<h4 style="margin-top:0">Why Different (3 pillars)</h4>
+<p>"Învață din datele tale" · "Se auto-îmbunătățește" · "Voce + Chat, același creier"</p>
+</div>
+</div>
+
+<div class="flow-step">
+<div class="num">5</div>
+<div>
+<h4 style="margin-top:0">Use Cases</h4>
+<p>3 tabs or cards: E-commerce / Servicii / Hybrid</p>
+<p>Each with: specific value prop, example conversation screenshot, key benefit metric</p>
+</div>
+</div>
+
+<div class="flow-step">
+<div class="num">6</div>
+<div>
+<h4 style="margin-top:0">Live Demo</h4>
+<p>Embedded functional chatbot. Suggested questions. "Încearcă-l acum."</p>
+</div>
+</div>
+
+<div class="flow-step">
+<div class="num">7</div>
+<div>
+<h4 style="margin-top:0">Testimonials</h4>
+<p>3 real testimonials with photos (when available). Specific metrics cited.</p>
+</div>
+</div>
+
+<div class="flow-step">
+<div class="num">8</div>
+<div>
+<h4 style="margin-top:0">Final CTA</h4>
+<p>"Gata să transformi comunicarea cu clienții?"</p>
+<p>"Începe gratuit, fără card de credit. Configurare în 10 minute."</p>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="wow">9. WOW Moments</h2>
+
+<div class="cols-2">
+<div class="card card-purple">
+<h4 style="margin-top:0">WOW #1: AI Generates Your Prompt</h4>
+<p>"Describe your business in 2 sentences" → AI writes a complete system prompt, greeting, and personality. User sees it and thinks: "It understood my business perfectly."</p>
+</div>
+<div class="card card-purple">
+<h4 style="margin-top:0">WOW #2: First Test Answer</h4>
+<p>During onboarding, user asks their bot a real question. Bot answers correctly from the KB they just uploaded. "Wait, it already knows this?"</p>
+</div>
+<div class="card card-purple">
+<h4 style="margin-top:0">WOW #3: Knowledge Gaps Dashboard</h4>
+<p>Admin sees: "12 clienți au întrebat despre livrare dar bot-ul nu știe." One click → AI drafts a shipping policy → Approve → Bot now knows. "It tells me what to fix."</p>
+</div>
+<div class="card card-purple">
+<h4 style="margin-top:0">WOW #4: Voice + Chat Same Brain</h4>
+<p>Demo: type a question in chat, get an answer. Call the phone number, ask the same question — same quality answer, spoken naturally. "It's the same AI on both channels."</p>
+</div>
+<div class="card card-purple">
+<h4 style="margin-top:0">WOW #5: Proactive Hint on Product Page</h4>
+<p>Customer browsing a product for 30 seconds → subtle bubble: "Ai întrebări despre acest produs? 💬" → clicks → chat opens with product context. "It knew what page I was on."</p>
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="impl">10. Implementation Plan</h2>
+
+<h3>Phase 1: Foundation (Week 1)</h3>
+<table>
+<tr><th>Item</th><th>Type</th><th>Impact</th><th>Files</th></tr>
+<tr><td>Design system CSS tokens</td><td><span class="badge badge-new">New</span></td><td>Foundation</td><td><code>resources/css/design-system.css</code></td></tr>
+<tr><td>Reusable Blade components</td><td><span class="badge badge-new">New</span></td><td>Foundation</td><td><code>resources/views/components/ui/</code> (card, button, badge, metric, empty-state, skeleton)</td></tr>
+<tr><td>Dashboard layout V2</td><td><span class="badge badge-replace">Replace</span></td><td>High</td><td><code>resources/views/layouts/dashboard.blade.php</code></td></tr>
+<tr><td>Main dashboard V2</td><td><span class="badge badge-replace">Replace</span></td><td>High</td><td><code>resources/views/dashboard/index.blade.php</code></td></tr>
+</table>
+
+<h3>Phase 2: Onboarding (Week 1-2)</h3>
+<table>
+<tr><th>Item</th><th>Type</th><th>Impact</th><th>Files</th></tr>
+<tr><td>Setup wizard controller</td><td><span class="badge badge-new">New</span></td><td>Critical</td><td><code>app/Http/Controllers/Dashboard/SetupWizardController.php</code></td></tr>
+<tr><td>Setup wizard views (7 steps)</td><td><span class="badge badge-new">New</span></td><td>Critical</td><td><code>resources/views/dashboard/setup/</code> (step-1 through step-7)</td></tr>
+<tr><td>AI prompt generator endpoint</td><td><span class="badge badge-new">New</span></td><td>High</td><td><code>POST /api/v1/setup/generate-prompt</code></td></tr>
+<tr><td>Business type presets</td><td><span class="badge badge-new">New</span></td><td>High</td><td><code>config/business-presets.php</code></td></tr>
+<tr><td>Post-registration redirect</td><td><span class="badge badge-replace">Replace</span></td><td>High</td><td><code>app/Http/Controllers/Auth/RegisterController.php</code></td></tr>
+</table>
+
+<h3>Phase 3: Knowledge Base V2 (Week 2)</h3>
+<table>
+<tr><th>Item</th><th>Type</th><th>Impact</th><th>Files</th></tr>
+<tr><td>KB category grid view</td><td><span class="badge badge-replace">Replace</span></td><td>High</td><td><code>resources/views/dashboard/bots/knowledge/index.blade.php</code></td></tr>
+<tr><td>KB completeness score component</td><td><span class="badge badge-new">New</span></td><td>High</td><td><code>resources/views/components/ui/kb-completeness.blade.php</code></td></tr>
+<tr><td>Content templates per category</td><td><span class="badge badge-new">New</span></td><td>Medium</td><td><code>config/kb-templates.php</code></td></tr>
+<tr><td>Contact info form (quick-add)</td><td><span class="badge badge-new">New</span></td><td>Medium</td><td><code>resources/views/dashboard/bots/knowledge/partials/contact-form.blade.php</code></td></tr>
+</table>
+
+<h3>Phase 4: Bot Detail V2 (Week 2-3)</h3>
+<table>
+<tr><th>Item</th><th>Type</th><th>Impact</th><th>Files</th></tr>
+<tr><td>Bot detail page redesign</td><td><span class="badge badge-replace">Replace</span></td><td>High</td><td><code>resources/views/dashboard/bots/show.blade.php</code></td></tr>
+<tr><td>Health score visual component</td><td><span class="badge badge-new">New</span></td><td>High</td><td><code>resources/views/components/ui/health-score.blade.php</code></td></tr>
+<tr><td>Knowledge gaps component</td><td><span class="badge badge-new">New</span></td><td>High</td><td><code>resources/views/components/ui/knowledge-gaps.blade.php</code></td></tr>
+<tr><td>Tabbed bot detail (KB / Conversations / Settings)</td><td><span class="badge badge-new">New</span></td><td>Medium</td><td>Alpine.js tabs in show.blade.php</td></tr>
+</table>
+
+<h3>Phase 5: Conversations V2 (Week 3)</h3>
+<table>
+<tr><th>Item</th><th>Type</th><th>Impact</th><th>Files</th></tr>
+<tr><td>Conversation view with AI sidebar</td><td><span class="badge badge-replace">Replace</span></td><td>High</td><td><code>resources/views/dashboard/conversations/show.blade.php</code></td></tr>
+<tr><td>Page context display</td><td><span class="badge badge-new">New</span></td><td>Medium</td><td>In conversation view (already have data)</td></tr>
+</table>
+
+<h3>Phase 6: Website V2 (Week 3-4)</h3>
+<table>
+<tr><th>Item</th><th>Type</th><th>Impact</th><th>Files</th></tr>
+<tr><td>Homepage redesign</td><td><span class="badge badge-replace">Replace</span></td><td>High</td><td><code>resources/views/home.blade.php</code></td></tr>
+<tr><td>Use cases section</td><td><span class="badge badge-new">New</span></td><td>Medium</td><td>In home.blade.php</td></tr>
+<tr><td>Pricing page redesign</td><td><span class="badge badge-replace">Replace</span></td><td>Medium</td><td><code>resources/views/preturi.blade.php</code></td></tr>
+</table>
+
+<h3>Phase 7: Super Admin V2 (Week 4)</h3>
+<table>
+<tr><th>Item</th><th>Type</th><th>Impact</th><th>Files</th></tr>
+<tr><td>Admin dashboard redesign</td><td><span class="badge badge-replace">Replace</span></td><td>Medium</td><td><code>resources/views/admin/dashboard.blade.php</code></td></tr>
+<tr><td>Tenant health heatmap</td><td><span class="badge badge-new">New</span></td><td>Medium</td><td>In admin dashboard</td></tr>
+<tr><td>AI quality alerts</td><td><span class="badge badge-new">New</span></td><td>Medium</td><td>In admin dashboard</td></tr>
+</table>
+
+<h3>What to Delete</h3>
+<table>
+<tr><th>File/Section</th><th>Reason</th></tr>
+<tr><td>Fake client logos on homepage</td><td><span class="badge badge-delete">Done</span> Replaced with trust bar</td></tr>
+<tr><td>Blog page (placeholder)</td><td>Remove from nav until real content exists</td></tr>
+<tr><td><code>resources/views/welcome.blade.php</code></td><td>Unused Laravel default</td></tr>
+<tr><td>Raw JSON metadata dump in conversations</td><td>Replace with structured AI insights sidebar</td></tr>
+<tr><td>Hardcoded Romanian in prompt templates</td><td>Move to i18n files for multi-language support</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2>11. QA Review</h2>
+
+<div class="card card-red">
+<h3 style="margin-top:0">What is NOT yet WOW</h3>
+<ul>
+<li><strong>No video content.</strong> Every premium SaaS has a product video. Sambla has none. A 60-second demo video on the homepage would be the single highest-impact addition.</li>
+<li><strong>No real testimonials with photos.</strong> Current testimonials are clearly fabricated names. Real customers with photos or nothing.</li>
+<li><strong>Blog is dead.</strong> Remove it from navigation until there's real content. A link to "/blog" that shows fake articles damages credibility.</li>
+<li><strong>Pricing page likely empty.</strong> Plans aren't seeded in production. This needs real pricing before any sales push.</li>
+<li><strong>No onboarding wizard exists yet.</strong> This is the #1 missing product piece. Users land on an empty dashboard and don't know what to do.</li>
+<li><strong>ConversationPolicy has no settings UI.</strong> The model exists, it's wired into PromptBuilder, but there's no page where admins can configure tone/verbosity/CTA.</li>
+<li><strong>No dark mode.</strong> Chat widget supports it, dashboard doesn't. Not critical but noticeable.</li>
+<li><strong>No streaming in chat.</strong> Users wait 2-5 seconds for full response. Streaming would feel instant.</li>
+<li><strong>Setup wizard doesn't exist.</strong> The most critical UX gap for conversion.</li>
+<li><strong>No mobile app or PWA.</strong> Dashboard on mobile is responsive but not optimized.</li>
+</ul>
+</div>
+
+<div class="card card-green">
+<h3 style="margin-top:0">What IS Already WOW</h3>
+<ul>
+<li><strong>10-layer adaptive prompt system.</strong> Tone adapts to frustration, query type, conversation stage. Genuinely sophisticated.</li>
+<li><strong>Self-improving loop.</strong> AdaptiveLearning + KnowledgeGaps + AutoKB = platform gets smarter alone.</li>
+<li><strong>Voice + Chat parity.</strong> Same orchestrator, same quality. Unique differentiator.</li>
+<li><strong>Proactive hints on product pages.</strong> Context-aware, non-annoying, helpful.</li>
+<li><strong>Product card gating.</strong> Dual-signal check prevents irrelevant cards. Zero misleading behavior.</li>
+<li><strong>Health score + knowledge gaps in dashboard.</strong> Visible, actionable intelligence.</li>
+<li><strong>E-commerce depth.</strong> Product search, order lookup, cart attribution, purchase funnel. Way beyond typical chatbots.</li>
+<li><strong>Lead pipeline with CRM.</strong> Full funnel from conversation → lead → won/lost.</li>
+</ul>
+</div>
+
+<div class="highlight" style="text-align:center;margin-top:48px">
+<h3 style="margin-top:0">Summary</h3>
+<p style="font-size:17px;color:var(--text);max-width:700px;margin:12px auto">The backend intelligence is <strong>world-class</strong>. The gap is in <strong>product experience</strong>: onboarding wizard, KB builder UX, ConversationPolicy settings UI, and a convincing presentation website. Close these gaps and Sambla competes globally.</p>
+<p style="color:var(--text2);font-size:13px;margin-top:24px">Redesign specification v2.0 · March 31, 2026 · Sambla AI Platform</p>
+</div>
+
+</div>
+</body>
+</html>

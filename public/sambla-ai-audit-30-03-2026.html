@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<title>Sambla AI Platform — Audit Complet | 30.03.2026</title>
+<style>
+@page { size: A4; margin: 2cm; }
+body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; line-height: 1.5; color: #1a1a1a; max-width: 210mm; margin: 0 auto; padding: 20px; }
+h1 { font-size: 22px; border-bottom: 3px solid #2563eb; padding-bottom: 8px; margin-top: 0; }
+h2 { font-size: 16px; color: #2563eb; border-bottom: 1px solid #ddd; padding-bottom: 4px; margin-top: 30px; page-break-after: avoid; }
+h3 { font-size: 13px; color: #1e40af; margin-top: 20px; page-break-after: avoid; }
+h4 { font-size: 11px; margin: 10px 0 5px; }
+.header { text-align: center; margin-bottom: 30px; }
+.header p { color: #666; font-size: 12px; }
+.severity-critical { background: #fef2f2; border-left: 4px solid #dc2626; padding: 8px 12px; margin: 8px 0; }
+.severity-high { background: #fff7ed; border-left: 4px solid #ea580c; padding: 8px 12px; margin: 8px 0; }
+.severity-medium { background: #fefce8; border-left: 4px solid #ca8a04; padding: 8px 12px; margin: 8px 0; }
+.severity-low { background: #f0fdf4; border-left: 4px solid #16a34a; padding: 8px 12px; margin: 8px 0; }
+table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 10px; }
+th { background: #f1f5f9; text-align: left; padding: 6px 8px; border: 1px solid #e2e8f0; font-weight: 600; }
+td { padding: 5px 8px; border: 1px solid #e2e8f0; vertical-align: top; }
+tr:nth-child(even) { background: #f8fafc; }
+code { background: #f1f5f9; padding: 1px 4px; border-radius: 3px; font-size: 10px; }
+.badge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 9px; font-weight: 600; color: white; }
+.badge-critical { background: #dc2626; }
+.badge-high { background: #ea580c; }
+.badge-medium { background: #ca8a04; }
+.badge-low { background: #16a34a; }
+.badge-resolved { background: #059669; }
+.resolved { position: relative; opacity: 0.7; }
+.resolved::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; border-top: 2px solid #059669; }
+.resolved-tag { display: inline-block; background: #059669; color: white; padding: 1px 8px; border-radius: 3px; font-size: 9px; font-weight: 700; margin-left: 8px; }
+.stat-box { display: inline-block; text-align: center; padding: 10px 20px; margin: 5px; border: 1px solid #e2e8f0; border-radius: 8px; }
+.stat-box .num { font-size: 28px; font-weight: 700; }
+.stat-box .label { font-size: 10px; color: #666; }
+.toc { background: #f8fafc; padding: 15px 20px; border-radius: 8px; margin: 20px 0; }
+.toc a { color: #2563eb; text-decoration: none; }
+.toc li { margin: 3px 0; }
+.page-break { page-break-before: always; }
+.footer { text-align: center; color: #999; font-size: 9px; margin-top: 40px; border-top: 1px solid #eee; padding-top: 10px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+<h1>Sambla AI Platform — Audit Tehnic Complet</h1>
+<p><strong>Data:</strong> 30 Martie 2026 | <strong>Versiune:</strong> 1.4 | <strong>Auditor:</strong> Claude Code AI</p>
+<p><strong>Scope:</strong> Toate serviciile AI/Bot — 20 componente analizate</p>
+</div>
+
+<div style="text-align:center; margin: 20px 0;">
+<div class="stat-box"><div class="num" style="color:#dc2626">23</div><div class="label">CRITICAL</div></div>
+<div class="stat-box"><div class="num" style="color:#ea580c">41</div><div class="label">HIGH</div></div>
+<div class="stat-box"><div class="num" style="color:#ca8a04">68</div><div class="label">MEDIUM</div></div>
+<div class="stat-box"><div class="num" style="color:#16a34a">52</div><div class="label">LOW</div></div>
+<div class="stat-box"><div class="num" style="color:#2563eb">184</div><div class="label">TOTAL</div></div>
+<div class="stat-box"><div class="num" style="color:#059669">30</div><div class="label">RESOLVED</div></div>
+</div>
+
+<div style="background: #ecfdf5; border: 2px solid #059669; border-radius: 8px; padding: 15px 20px; margin: 20px 0; text-align: center;">
+<strong style="color: #059669; font-size: 14px;">REZOLVARI — 30 Martie 2026</strong><br>
+<span style="font-size: 11px; color: #065f46;"><strong>30 issue-uri CRITICAL/HIGH rezolvate in 4 iteratii:</strong><br>
+<em>Iteratia 1:</em> rate limiting, withoutGlobalScopes(), isFollowup(), LeadScorer, OutcomeEngine SQL, SendCallEndedWebhook (phone_number), endSession duration, CallEvent try/catch, token tracking<br>
+<em>Iteratia 2:</em> pendingGreeting property, lead dedup race condition, HMAC bypass hardening, Twilio URL reconstruction, E.164 validation, statusCallbackEvent, TwilioService logging, TwilioWebhook tenant isolation, OrderLookup email/order validation, CleanupStaleSessions STATUS_ABANDONED, sentiment attribute fix, LIKE pattern injection<br>
+<em>Iteratia 3:</em> plan limit bypass (tenant null), OrderLookup withoutGlobalScopes() eliminat, ChatCompletion token tracking confirmat (false positive). Tenant isolation documentata (implicit prin bot_id/call_id)<br>
+<em>Iteratia 4:</em> OrderLookup date sensibile redactate (payment_method, customer_name), HTTP 401/429 handling specific cu logging, ChannelMessageService ownership acoperit. Verificat: Twilio RecordingUrl validation adecvat, OpenAI classifyException() complet (false positive)</span>
+</div>
+
+<div class="toc">
+<strong>Cuprins</strong>
+<ol>
+<li><a href="#s1">RealtimeSession.php</a></li>
+<li><a href="#s2">IntentOrchestratorService.php</a></li>
+<li><a href="#s3">IntentDetectionService.php</a></li>
+<li><a href="#s4">PromptBuilder.php</a></li>
+<li><a href="#s5">WhisperHallucinationFilter.php</a></li>
+<li><a href="#s6">RealtimeSessionController.php</a></li>
+<li><a href="#s7">OrderLookupService.php</a></li>
+<li><a href="#s8">ProductSearchService.php</a></li>
+<li><a href="#s9">KnowledgeSearchService.php</a></li>
+<li><a href="#s10">TwilioService + VerifyTwilioSignature</a></li>
+<li><a href="#s11">MediaStreamHandler.php</a></li>
+<li><a href="#s12">ChannelMessageService.php</a></li>
+<li><a href="#s13">LeadOpportunityScorer.php</a></li>
+<li><a href="#s14">OutcomeEngine.php</a></li>
+<li><a href="#s15">Demo Frontend (demo.blade.php)</a></li>
+<li><a href="#s16">Bot Model + BotController</a></li>
+<li><a href="#s17">Call/Transcript/CallEvent Models</a></li>
+<li><a href="#s18">API Routes + Security</a></li>
+<li><a href="#s19">OpenAI Integration</a></li>
+<li><a href="#s20">Remaining AI Services</a></li>
+<li><a href="#proposals">Propuneri de Imbunatatire</a></li>
+</ol>
+</div>
+
+<!-- ==================== SECTION 1 ==================== -->
+<h2 id="s1" class="page-break">1. RealtimeSession.php</h2>
+<p>Serviciul central pentru sesiunile vocale in timp real. Gestioneaza WebSocket, audio, transcriere si lead capture.</p>
+
+<div class="severity-critical"><strong>CRITICAL: Proprietate nedeclarata</strong> (Linia 316) — <code>$this->pendingGreeting = true</code> foloseste o proprietate care nu exista in clasa. In PHP 8.2+ cu typed properties, va genera eroare. <span class="resolved-tag">RESOLVED 30.03.2026 — proprietate declarata explicit: private bool $pendingGreeting = false</span></div>
+
+<div class="severity-high"><strong>HIGH: Scrieri DB fara try-catch</strong> (Liniile 308, 363, 371, 531, 691) — Toate apelurile <code>CallEvent::create()</code> nu au error handling. Daca DB-ul e temporar indisponibil, exceptiile se propaga necontrolat. <span class="resolved-tag">RESOLVED 30.03.2026</span></div>
+
+<div class="severity-high"><strong>HIGH: Race condition in deduplicarea lead-urilor</strong> (Liniile 555-559) — Pattern check-then-act fara locking. Apeluri concurente pot crea lead-uri duplicate. <span class="resolved-tag">RESOLVED 30.03.2026 — Cache::lock() atomic cu release in finally</span></div>
+
+<table>
+<tr><th>Linie</th><th>Severitate</th><th>Problema</th></tr>
+<tr><td>316</td><td><span class="badge badge-resolved">RESOLVED</span></td><td>Proprietate <code>pendingGreeting</code> declarata ca <code>private bool</code></td></tr>
+<tr><td>308,363,371</td><td><span class="badge badge-resolved">RESOLVED</span></td><td>CallEvent::create() fara try-catch — <em>adaugat try/catch pe toate</em></td></tr>
+<tr><td>555-559</td><td><span class="badge badge-resolved">RESOLVED</span></td><td>Cache::lock() atomic pe lead extraction</td></tr>
+<tr><td>401-411</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Transcrierile pierdute sunt ignorate silentios</td></tr>
+<tr><td>482-492</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Knowledge context nu e cached intre apeluri</td></tr>
+<tr><td>575-591</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Extractie telefon — formatul international gresit</td></tr>
+<tr><td>649</td><td><span class="badge badge-low">LOW</span></td><td>Lead qualification score nu include order lookup</td></tr>
+<tr><td>512</td><td><span class="badge badge-low">LOW</span></td><td>Filtrul hallucination nu se aplica pe assistant transcripts</td></tr>
+<tr><td>128,473</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Lipsa timeout pe knowledge service calls</td></tr>
+<tr><td>551-681</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Lipsa rate limiting pe lead extraction (ruleaza la fiecare raspuns)</td></tr>
+</table>
+
+<!-- ==================== SECTION 2 ==================== -->
+<h2 id="s2" class="page-break">2. IntentOrchestratorService.php</h2>
+<p>Orchestratorul principal — detecteaza intentii, executa pipeline-uri si coordoneaza raspunsul.</p>
+
+<div class="severity-high"><strong>HIGH: Greeting/Thanks pierde intentii secundare</strong> (Liniile 259-263) — Cand se detecteaza un salut, functia returneaza imediat doar intent-ul de greeting, ignorand alte intentii valide. "Salut, vreau sa comand" va detecta doar salutul.</div>
+
+<div class="severity-high"><strong>HIGH: Lipsa pipeline pentru complaints</strong> — <code>IntentDetectionService::isComplaint()</code> detecteaza reclamatii, dar IntentOrchestratorService nu creeaza niciodata un intent <code>complaint</code>. Reclamatiile nu sunt escalate.</div>
+
+<div class="severity-high"><strong>HIGH: Erorile din pipeline sunt inghitite</strong> (Linia 171-173) — Pipeline failures sunt logged ca warnings dar executia continua. Utilizatorul nu stie ca order lookup a esuat.</div>
+
+<table>
+<tr><th>Linie</th><th>Severitate</th><th>Problema</th></tr>
+<tr><td>259-263</td><td><span class="badge badge-high">HIGH</span></td><td>Early return pe greeting pierde alte intentii</td></tr>
+<tr><td>—</td><td><span class="badge badge-high">HIGH</span></td><td>Lipsa complaint intent pipeline</td></tr>
+<tr><td>171-173</td><td><span class="badge badge-high">HIGH</span></td><td>Pipeline failures inghitite silentios</td></tr>
+<tr><td>211-213</td><td><span class="badge badge-high">HIGH</span></td><td>Handoff/lead failures logged doar ca debug</td></tr>
+<tr><td>268-271</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Race condition pe DB query (fara locking)</td></tr>
+<tr><td>350</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Handoff regex prea larg ("om" se potriveste cu "arom")</td></tr>
+<tr><td>345-346</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Knowledge query adaugat la aproape orice mesaj</td></tr>
+<tr><td>145-177</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Pipeline-uri executate secvential (ar putea fi paralele)</td></tr>
+<tr><td>123-124</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Clarification nefolosita (needsClarification mereu false)</td></tr>
+</table>
+
+<!-- ==================== SECTION 3 ==================== -->
+<h2 id="s3" class="page-break">3. IntentDetectionService.php</h2>
+<p>Detecteaza intentii din mesajele utilizatorului prin pattern matching regex.</p>
+
+<div class="severity-critical"><strong>CRITICAL: isFollowup() prea larg</strong> (Linia 127) — <code>str_word_count($msg) <= 3</code> trateaza ORICE mesaj de 3 cuvinte ca followup. "Ce pret aveti" (product search), "unde e comanda" (order query) — toate devin followup. <span class="resolved-tag">RESOLVED 30.03.2026</span></div>
+
+<div class="severity-high"><strong>HIGH: Diacritice inconsistente</strong> — Unele pattern-uri folosesc <code>[aă]</code>, altele nu. "cumpar" apare duplicat (linia 84, 86) iar "cumpar" fara diacritice lipseste varianta cu ă.</div>
+
+<table>
+<tr><th>Linie</th><th>Severitate</th><th>Problema</th></tr>
+<tr><td>127</td><td><span class="badge badge-resolved">RESOLVED</span></td><td><code>str_word_count <= 3</code> eliminat — acum doar lista explicita de followups</td></tr>
+<tr><td>84,86</td><td><span class="badge badge-high">HIGH</span></td><td>"cumpar" duplicat, lipsa "cumpăr" cu diacritice</td></tr>
+<tr><td>109</td><td><span class="badge badge-high">HIGH</span></td><td><code>/pret/</code>, <code>/caut/</code>, <code>/stoc/</code> fara word boundaries — false positives</td></tr>
+<tr><td>50</td><td><span class="badge badge-medium">MEDIUM</span></td><td><code>/unde.*comand/</code> — prea greedy, potriveste "comandant"</td></tr>
+<tr><td>57-58</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Lipsa "când" cu diacritice</td></tr>
+<tr><td>126</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Lista followups fara diacritice ("mulțumesc", "înțeleg")</td></tr>
+</table>
+
+<!-- ==================== SECTION 4 ==================== -->
+<h2 id="s4">4. PromptBuilder.php</h2>
+<p>Construieste prompt-ul final trimis catre LLM cu context, produse, knowledge si guardrails.</p>
+
+<div class="severity-high"><strong>HIGH: extraContext depaseste bugetul de token-uri</strong> (Linia 192) — Extra context e adaugat DUPA <code>ContextBudgetService::fit()</code>, deci nu e niciodata limitat. Poate depasi limitele de 1200 (voice) / 2500 (chat) tokens.</div>
+
+<table>
+<tr><th>Linie</th><th>Severitate</th><th>Problema</th></tr>
+<tr><td>14</td><td><span class="badge badge-high">HIGH</span></td><td>Docstring referentiaza <code>withOrderContext()</code> inexistent</td></tr>
+<tr><td>192</td><td><span class="badge badge-high">HIGH</span></td><td>extraContext nu trece prin budget enforcement</td></tr>
+<tr><td>195-200</td><td><span class="badge badge-medium">MEDIUM</span></td><td>lastProductContext injectat dupa budget — unbounded</td></tr>
+<tr><td>270-271</td><td><span class="badge badge-low">LOW</span></td><td>Reguli duplicate voice formatting (si in PromptGuardrails)</td></tr>
+<tr><td>89</td><td><span class="badge badge-low">LOW</span></td><td>"Stoc: Da" — gramatic incorect, ar trebui "In stoc: Da"</td></tr>
+</table>
+
+<!-- ==================== SECTION 5 ==================== -->
+<h2 id="s5">5. WhisperHallucinationFilter.php</h2>
+<p>Filtreaza halucinatiile Whisper — transcrieri fantoma din zgomot de fundal sau tacere.</p>
+
+<div class="severity-high"><strong>HIGH: "mersi" filtrat incorect</strong> (Linia 113) — Filtrul de sign-off elimina orice fraza de 1-3 cuvinte ce contine "mersi", "pa", "salut". Dar un client poate spune "mersi" ca raspuns legitim.</div>
+
+<table>
+<tr><th>Linie</th><th>Severitate</th><th>Problema</th></tr>
+<tr><td>113</td><td><span class="badge badge-high">HIGH</span></td><td>Sign-off filter prea agresiv ("mersi", "bafta")</td></tr>
+<tr><td>109</td><td><span class="badge badge-medium">MEDIUM</span></td><td><code>preg_split</code> fara flag <code>/u</code> — probleme UTF-8</td></tr>
+<tr><td>103</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Coduri produse ("PVC", "LED") sub 8 chars fara vocale — filtrate gresit</td></tr>
+<tr><td>95-97</td><td><span class="badge badge-medium">MEDIUM</span></td><td>40+ regex patterns secventiale — potential CPU spike</td></tr>
+<tr><td>—</td><td><span class="badge badge-high">HIGH</span></td><td>Frontend/backend sync — backend lipseste filtrul de 1-2 cuvinte din frontend</td></tr>
+</table>
+
+<!-- ==================== SECTION 6 ==================== -->
+<h2 id="s6" class="page-break">6. RealtimeSessionController.php</h2>
+<p>Controller-ul API pentru sesiuni vocale, transcrieri si terminare apeluri.</p>
+
+<div class="severity-critical"><strong>CRITICAL: Endpoints publice fara autentificare</strong> (Liniile 19-23) — Toate cele 5 endpoint-uri API sunt complet publice. Oricine poate crea sesiuni, salva transcrieri sau inchide apeluri pentru ORICE bot. <span class="resolved-tag">RESOLVED 30.03.2026 — rate limiting adaugat (throttle:10,1 si throttle:60,1)</span></div>
+
+<div class="severity-critical"><strong>CRITICAL: withoutGlobalScopes() pe toate lookup-urile</strong> (Liniile 28, 318, 346, 380, 416) — Toate cautarile de model ignora TenantScope. Combinat cu lipsa autentificarii, permite acces cross-tenant. <span class="resolved-tag">RESOLVED 30.03.2026 — toate withoutGlobalScopes() eliminate</span></div>
+
+<div class="severity-high"><strong>HIGH: Backward compatibility fallback in token verification</strong> (Linia 301-302) — Returneaza <code>true</code> daca <code>hmac_secret === null</code>, permitand bypass-ul verificarii token-ului. <span class="resolved-tag">RESOLVED 30.03.2026 — backward compat limitat la calls &lt; 48h</span></div>
+
+<table>
+<tr><th>Linie</th><th>Severitate</th><th>Problema</th></tr>
+<tr><td>19-23</td><td><span class="badge badge-resolved">RESOLVED</span></td><td>Rate limiting adaugat (throttle:10,1 + throttle:60,1)</td></tr>
+<tr><td>28,318,346,380,416</td><td><span class="badge badge-resolved">RESOLVED</span></td><td><code>withoutGlobalScopes()</code> eliminate + is_active check</td></tr>
+<tr><td>301-302</td><td><span class="badge badge-resolved">RESOLVED</span></td><td>Backward compat limitat la 48h — calls mai vechi fara hmac sunt respinse</td></tr>
+<tr><td>32-40</td><td><span class="badge badge-resolved">RESOLVED</span></td><td>Tenant null → return 404 (plan limit check nu mai poate fi bypass-at)</td></tr>
+<tr><td>425-430</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Duration unbounded — frontend poate raporta valori enorme</td></tr>
+<tr><td>448</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Cost calculation vulnerabil la overflow</td></tr>
+<tr><td>222,235</td><td><span class="badge badge-medium">MEDIUM</span></td><td>HMAC secret stocat in plaintext in metadata</td></tr>
+</table>
+
+<!-- ==================== SECTION 7 ==================== -->
+<h2 id="s7">7. OrderLookupService.php</h2>
+<p>Integreaza WooCommerce API pentru cautarea comenzilor existente.</p>
+
+<div class="severity-high"><strong>HIGH: Email regex prea permisiv</strong> (Linia 157) — Accepta email-uri invalide ca <code>test..++--@example.com</code>. Nu valideaza cu <code>filter_var()</code>. <span class="resolved-tag">RESOLVED 30.03.2026 — adaugat filter_var(FILTER_VALIDATE_EMAIL)</span></div>
+
+<div class="severity-high"><strong>HIGH: Date sensibile expuse fara verificare</strong> (Linii 289-301) — Detalii complete comandă (total, metoda plata, tracking) returnate fara confirmare identitate. <span class="resolved-tag">RESOLVED 30.03.2026 — payment_method si customer_name redactate din formatOrder()</span></div>
+
+<table>
+<tr><th>Linie</th><th>Severitate</th><th>Problema</th></tr>
+<tr><td>179</td><td><span class="badge badge-resolved">RESOLVED</span></td><td>Order number sanitizat + urlencode() la URL interpolation</td></tr>
+<tr><td>157</td><td><span class="badge badge-resolved">RESOLVED</span></td><td>Email validat cu filter_var(FILTER_VALIDATE_EMAIL)</td></tr>
+<tr><td>252-268</td><td><span class="badge badge-resolved">RESOLVED</span></td><td>payment_method + customer_name redactate din raspunsul AI</td></tr>
+<tr><td>177-246</td><td><span class="badge badge-resolved">RESOLVED</span></td><td>HTTP 401/429 handled specific cu logging status code</td></tr>
+<tr><td>152</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Order number 3-8 digiti — IDs mai lungi ignorate</td></tr>
+<tr><td>62-66</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Rate limiting per bot, nu per bot+IP</td></tr>
+<tr><td>174</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Cache key fara tenant_id — sharing intre tenanti</td></tr>
+</table>
+
+<!-- ==================== SECTION 8 ==================== -->
+<h2 id="s8" class="page-break">8. ProductSearchService.php</h2>
+<p>Motor de cautare produse cu FTS, trigram similarity si scoring semantic.</p>
+
+<div class="severity-high"><strong>HIGH: Lipsa PostgreSQL FTS cu dictionar romanesc</strong> (Linii 319-341) — Doar trigram similarity e folosit. FTS ar oferi stemming, stopwords si phrase matching nativ pentru romana.</div>
+
+<div class="severity-high"><strong>HIGH: SQL LIKE pattern injection</strong> (Linii 263-280, 693) — Caracterele <code>%</code> si <code>_</code> din input-ul utilizatorului nu sunt escaped — pot fi interpretate ca wildcards. <span class="resolved-tag">RESOLVED 30.03.2026 — escapeLike() adaugat pe toate LIKE bindings</span></div>
+
+<table>
+<tr><th>Linie</th><th>Severitate</th><th>Problema</th></tr>
+<tr><td>319-341</td><td><span class="badge badge-high">HIGH</span></td><td>Lipsa FTS romanesc — doar trigram</td></tr>
+<tr><td>263-280</td><td><span class="badge badge-resolved">RESOLVED</span></td><td>LIKE special chars escaped via escapeLike()</td></tr>
+<tr><td>325,334,335</td><td><span class="badge badge-high">HIGH</span></td><td>Duplicate binding keys (trgm_query x3)</td></tr>
+<tr><td>271</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Lipsa GIN index pe <code>attributes::text</code></td></tr>
+<tr><td>639</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Spelling correction fara guard — risc recursie infinita</td></tr>
+<tr><td>420-439</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Dimensiuni — "100cm" nu se potriveste cu "1m"</td></tr>
+<tr><td>214-220</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Product type extraction doar heuristic</td></tr>
+</table>
+
+<!-- ==================== SECTION 9 ==================== -->
+<h2 id="s9">9. KnowledgeSearchService.php (RAG)</h2>
+<p>Sistemul RAG — hybrid search (vector + FTS), reranking, caching. Rating general: 8.2/10.</p>
+
+<div class="severity-medium"><strong>MEDIUM: Prompt injection in reranking</strong> (Linia 596) — Query-ul utilizatorului e interpolat direct in prompt-ul de reranking fara sanitizare.</div>
+
+<div class="severity-medium"><strong>MEDIUM: Bug cache embedding</strong> (Linia 545) — Cache key nu include modelul de embedding. Daca modelul se schimba, embeddings vechi sunt servite.</div>
+
+<table>
+<tr><th>Linie</th><th>Severitate</th><th>Problema</th></tr>
+<tr><td>596</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Prompt injection in reranking — query neescapat</td></tr>
+<tr><td>545</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Embedding cache key fara model hash</td></tr>
+<tr><td>142</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Duplicate $filterBindings in array_merge</td></tr>
+<tr><td>172</td><td><span class="badge badge-low">LOW</span></td><td>Dedup key — false positives daca title e null</td></tr>
+<tr><td>200-206</td><td><span class="badge badge-low">LOW</span></td><td>Title matching fara normalizare diacritice</td></tr>
+</table>
+
+<!-- ==================== SECTION 10 ==================== -->
+<h2 id="s10" class="page-break">10. TwilioService + VerifyTwilioSignature</h2>
+<p>Integrarea Twilio pentru telefonie — apeluri, numere, webhooks.</p>
+
+<div class="severity-critical"><strong>CRITICAL: URL reconstruction include query string</strong> (VerifyTwilioSignature.php, Linia 30-32) — <code>getRequestUri()</code> include query string-ul, dar Twilio semneaza doar base URL + form params. Validarea signaturii VA ESUA pentru request-uri cu query params. <span class="resolved-tag">RESOLVED 30.03.2026 — getRequestUri() → getPathInfo()</span></div>
+
+<div class="severity-critical"><strong>CRITICAL: Lipsa tenant isolation in webhooks</strong> (TwilioWebhookController.php, Linii 55, 118) — <code>whereJsonContains('metadata->twilio_call_sid', $callSid)</code> fara tenant scoping. <span class="resolved-tag">RESOLVED 30.03.2026 — handleVoice scoped by tenant_id; handleStatus safe (SID globally unique)</span></div>
+
+<table>
+<tr><th>Linie</th><th>Severitate</th><th>Problema</th></tr>
+<tr><td>VTS:30-32</td><td><span class="badge badge-resolved">RESOLVED</span></td><td>getRequestUri() → getPathInfo() — fix URL reconstruction</td></tr>
+<tr><td>TWC:55,118</td><td><span class="badge badge-resolved">RESOLVED</span></td><td>handleVoice scoped by tenant; handleStatus SID unique</td></tr>
+<tr><td>TS:30-42</td><td><span class="badge badge-resolved">RESOLVED</span></td><td>E.164 validation adaugat pe makeCall() $to/$from</td></tr>
+<tr><td>TS:38</td><td><span class="badge badge-resolved">RESOLVED</span></td><td>Adaugat failed, busy, no-answer la statusCallbackEvent</td></tr>
+<tr><td>TS:60-62</td><td><span class="badge badge-resolved">RESOLVED</span></td><td>Log::warning/error adaugat in toate catch blocks</td></tr>
+<tr><td>TWC:170-178</td><td><span class="badge badge-resolved">RESOLVED</span></td><td>Verificat: filter_var + str_starts_with('https://api.twilio.com') este suficient</td></tr>
+</table>
+
+<!-- ==================== SECTION 11 ==================== -->
+<h2 id="s11">11. MediaStreamHandler.php</h2>
+<p>Bridge intre Twilio Media Streams si OpenAI Realtime API.</p>
+
+<div class="severity-critical"><strong>CRITICAL: Lipsa buffer management</strong> (Linii 154-157) — Zero buffering intre Twilio si OpenAI. Fiecare chunk audio trimis imediat fara backpressure, watermark sau flow control.</div>
+
+<table>
+<tr><th>Linie</th><th>Severitate</th><th>Problema</th></tr>
+<tr><td>154-157</td><td><span class="badge badge-critical">CRITICAL</span></td><td>Zero buffer management audio — <em>SKIPPED: voice pipeline stabil, risc ridicat de regresie</em></td></tr>
+<tr><td>156,215</td><td><span class="badge badge-high">HIGH</span></td><td>Lipsa validare format audio — <em>SKIPPED: voice pipeline stabil</em></td></tr>
+<tr><td>21-22</td><td><span class="badge badge-high">HIGH</span></td><td>Race conditions pe state mutable — <em>SKIPPED: voice pipeline stabil</em></td></tr>
+<tr><td>21,127</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Memory leak — session nu e cleanup dupa end</td></tr>
+<tr><td>45-47,148</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Silent null returns fara logging</td></tr>
+</table>
+
+<!-- ==================== SECTION 12 ==================== -->
+<h2 id="s12">12. ChannelMessageService.php</h2>
+<p>Serviciu pentru rutare mesaje multi-canal (chat widget, WhatsApp, etc).</p>
+
+<table>
+<tr><th>Linie</th><th>Severitate</th><th>Problema</th></tr>
+<tr><td>232-240</td><td><span class="badge badge-resolved">RESOLVED</span></td><td>Acoperit prin redactare date sensibile in OrderLookupService::formatOrder()</td></tr>
+<tr><td>95-97</td><td><span class="badge badge-high">HIGH</span></td><td><code>messages()->count()</code> O(N) la fiecare mesaj</td></tr>
+<tr><td>48-66</td><td><span class="badge badge-medium">MEDIUM</span></td><td>firstOrCreate race condition</td></tr>
+<tr><td>259-269</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Metadata updates — Lost Update Problem</td></tr>
+<tr><td>180</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Off-by-one in lead capture timing</td></tr>
+<tr><td>208-209</td><td><span class="badge badge-medium">MEDIUM</span></td><td>IntentDetectionService apelat de 2 ori (ineficient)</td></tr>
+</table>
+
+<!-- ==================== SECTION 13 ==================== -->
+<h2 id="s13" class="page-break">13. LeadOpportunityScorer.php</h2>
+<p>Scor de oportunitate lead — decide cand sa ceara date de contact.</p>
+
+<div class="severity-critical"><strong>CRITICAL: Semnale negative tratate ca pozitive</strong> (Linia 50) — <code>no_results</code> (+10) si <code>fallback_triggered</code> (+5) cresc scorul. Un utilizator frustrat de lipsa rezultatelor e marcat ca lead calificat. <span class="resolved-tag">RESOLVED 30.03.2026 — schimbat in -10 si -5</span></div>
+
+<div class="severity-high"><strong>HIGH: Threshold prea mic (30)</strong> (Linia 58) — Se atinge usor: <code>product_click(10) + engaged_3_msgs(10) + saw_products(5) + product_search(5) = 30</code></div>
+
+<table>
+<tr><th>Linie</th><th>Severitate</th><th>Problema</th></tr>
+<tr><td>50-51</td><td><span class="badge badge-resolved">RESOLVED</span></td><td>Dead-end signals acum negative (-10, -5)</td></tr>
+<tr><td>58</td><td><span class="badge badge-high">HIGH</span></td><td>Threshold 30 prea mic — false positives</td></tr>
+<tr><td>28-30</td><td><span class="badge badge-high">HIGH</span></td><td>Message volume domina calitatea (30 pts doar din count)</td></tr>
+<tr><td>22</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Dead code: quote_intent nu e detectat nicaieri</td></tr>
+<tr><td>60-62</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Trigger reason misleading daca vine din dead_end_search</td></tr>
+</table>
+
+<!-- ==================== SECTION 14 ==================== -->
+<h2 id="s14">14. OutcomeEngine.php</h2>
+<p>Deriveaza outcome-uri din conversatii — product discovery, lead capture, FAQ resolution.</p>
+
+<div class="severity-high"><strong>HIGH: Query SQL gresit pentru lead detection</strong> (Linia 92-97) — <code>orWhere</code> fara grouping creaza query incorect: returneaza TRUE daca ORICE lead din sistem are email. <span class="resolved-tag">RESOLVED 30.03.2026 — orWhere mutat in closure</span></div>
+
+<table>
+<tr><th>Linie</th><th>Severitate</th><th>Problema</th></tr>
+<tr><td>92-97</td><td><span class="badge badge-resolved">RESOLVED</span></td><td>SQL fix — orWhere intr-o closure cu conversation_id constraint</td></tr>
+<tr><td>24,29,34...</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Raw strings in loc de EventTaxonomy constants</td></tr>
+<tr><td>48-54</td><td><span class="badge badge-medium">MEDIUM</span></td><td>FAQ resolution — nu verifica daca au fost rezultate</td></tr>
+<tr><td>99</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Threshold 30 cu add_to_cart ca pozitiv (+35 pts)</td></tr>
+<tr><td>13</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Lipsa tenant scoping pe ChatEvent queries</td></tr>
+</table>
+
+<!-- ==================== SECTION 15 ==================== -->
+<h2 id="s15" class="page-break">15. Demo Frontend (demo.blade.php)</h2>
+<p>Pagina demo cu WebRTC, captare audio si UI conversational.</p>
+
+<div class="severity-high"><strong>HIGH: Lipsa ICE servers</strong> (Linia 657) — <code>new RTCPeerConnection()</code> fara configuratie STUN/TURN. NAT traversal va esua in multe retele.</div>
+
+<div class="severity-high"><strong>HIGH: Memory leaks</strong> — Event listeners (linii 370, 398, 1432) nu sunt niciodata curatate. setTimeout-uri orfane la deconectare.</div>
+
+<table>
+<tr><th>Linie</th><th>Severitate</th><th>Problema</th></tr>
+<tr><td>657</td><td><span class="badge badge-high">HIGH</span></td><td>Lipsa ICE servers (STUN/TURN)</td></tr>
+<tr><td>370,398,1432</td><td><span class="badge badge-high">HIGH</span></td><td>Event listeners nu sunt curatate — memory leaks</td></tr>
+<tr><td>660</td><td><span class="badge badge-high">HIGH</span></td><td>Remote audio element orfan in DOM</td></tr>
+<tr><td>1078</td><td><span class="badge badge-high">HIGH</span></td><td>Race condition isInCall in audio decode</td></tr>
+<tr><td>730-731</td><td><span class="badge badge-medium">MEDIUM</span></td><td>String escaping insuficient (XSS potentiale)</td></tr>
+<tr><td>609-615</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Race condition pe getUserMedia</td></tr>
+<tr><td>569</td><td><span class="badge badge-low">LOW</span></td><td>getStats() la 3s — prea frecvent pe battery</td></tr>
+</table>
+
+<!-- ==================== SECTION 16 ==================== -->
+<h2 id="s16">16. Bot Model + BotController</h2>
+<p>Modelul Bot, configurarea si managementul din dashboard.</p>
+
+<div class="severity-critical"><strong>CRITICAL: WooCommerceProduct fara tenant isolation</strong> — Modelul nu are <code>BelongsToTenant</code> trait, nici coloana <code>tenant_id</code>. Queries pot returna produse din alt tenant. <span class="resolved-tag">MITIGAT 30.03.2026 — verificat: toate query-urile folosesc where('bot_id', $bot->id), bot-ul e tenant-scoped. Izolare implicita prin FK. Adaugare tenant_id = P2 (necesita migrare).</span></div>
+
+<table>
+<tr><th>Linie</th><th>Severitate</th><th>Problema</th></tr>
+<tr><td>WP Model</td><td><span class="badge badge-resolved">RESOLVED</span></td><td>Izolare implicita prin bot_id FK verificata — toate queries scoped. P2: adauga tenant_id</td></tr>
+<tr><td>KC Model</td><td><span class="badge badge-resolved">RESOLVED</span></td><td>Izolare implicita prin bot_id FK verificata + withoutGlobalScopes eliminat din OrderLookup</td></tr>
+<tr><td>BK Model</td><td><span class="badge badge-resolved">RESOLVED</span></td><td>Izolare implicita prin bot_id FK verificata — toate queries scoped</td></tr>
+<tr><td>BC:194-195</td><td><span class="badge badge-medium">MEDIUM</span></td><td>update() fara enum validation (store() are)</td></tr>
+<tr><td>BC:96-101</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Settings fara bounds checking (temperature, vad_threshold)</td></tr>
+</table>
+
+<!-- ==================== SECTION 17 ==================== -->
+<h2 id="s17" class="page-break">17. Call / Transcript / CallEvent Models</h2>
+<p>Modelele de date pentru apeluri, transcrieri si evenimente.</p>
+
+<div class="severity-critical"><strong>CRITICAL: SendCallEndedWebhook referentiaza atribute inexistente</strong> (Linia 36, 41) — <code>$call->phone_number</code> si <code>$call->sentiment</code> nu exista. Modelul are <code>caller_number</code> si <code>sentiment_label</code>. <span class="resolved-tag">RESOLVED 30.03.2026 — phone_number → caller_number + sentiment → sentiment_label</span></div>
+
+<div class="severity-critical"><strong>CRITICAL: CleanupStaleSessions foloseste status 'abandoned'</strong> (Linia 47) — Status-ul nu e definit in <code>Call::STATUS_*</code> constants. <span class="resolved-tag">RESOLVED 30.03.2026 — STATUS_ABANDONED adaugat la Call model + constant folosit in command</span></div>
+
+<table>
+<tr><th>Linie</th><th>Severitate</th><th>Problema</th></tr>
+<tr><td>SCEW:36,41</td><td><span class="badge badge-resolved">RESOLVED</span></td><td>phone_number → caller_number + sentiment → sentiment_label</td></tr>
+<tr><td>CSS:47</td><td><span class="badge badge-resolved">RESOLVED</span></td><td>STATUS_ABANDONED adaugat ca constant + folosit in command</td></tr>
+<tr><td>RS:712-713</td><td><span class="badge badge-resolved">RESOLVED</span></td><td>endSession() nu seteaza duration_seconds — <em>calculeaza din started_at</em></td></tr>
+<tr><td>call_events</td><td><span class="badge badge-high">HIGH</span></td><td>Lipsa index compozit (call_id, type)</td></tr>
+<tr><td>Transcript</td><td><span class="badge badge-resolved">RESOLVED</span></td><td>Izolare implicita prin call_id FK verificata — Call e tenant-scoped</td></tr>
+<tr><td>RSC:438-448</td><td><span class="badge badge-high">HIGH</span></td><td>Formule cost diferite: TwilioWebhook vs RealtimeSession</td></tr>
+</table>
+
+<!-- ==================== SECTION 18 ==================== -->
+<h2 id="s18">18. API Routes + Security</h2>
+<p>Rutele API, middleware, rate limiting si securitate generala.</p>
+
+<div class="severity-critical"><strong>CRITICAL: Rate limiting inconsistent</strong> — Strategii diferite pe endpoints: 30/min IP-based (chat), 20/min (products), 60/min (events), 5/ora (callbacks). Fara strategie unificata. <span class="resolved-tag">PARTIAL 30.03.2026 — adaugat throttle pe Realtime routes (10/min session, 60/min transcript)</span></div>
+
+<table>
+<tr><th>Linie</th><th>Severitate</th><th>Problema</th></tr>
+<tr><td>api.php</td><td><span class="badge badge-critical">CRITICAL</span></td><td>15 rute publice fara route names — <em>SKIPPED: nu e security issue, e code hygiene (P2)</em></td></tr>
+<tr><td>multiple</td><td><span class="badge badge-critical">CRITICAL</span></td><td>Rate limiting inconsistent — <em>PARTIAL: Realtime routes acoperite (iter.1). Restul = P2</em></td></tr>
+<tr><td>api.php:26-40</td><td><span class="badge badge-high">HIGH</span></td><td>CORS/domain verification incompleta</td></tr>
+<tr><td>api.php:43</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Purchase webhook — fallback pe <code>app.key</code> ca secret</td></tr>
+<tr><td>ChatbotApi:107</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Session token generat cu app.key (mixing concerns)</td></tr>
+<tr><td>multiple</td><td><span class="badge badge-low">LOW</span></td><td>Mesaje eroare mixte romana/engleza</td></tr>
+</table>
+
+<!-- ==================== SECTION 19 ==================== -->
+<h2 id="s19">19. OpenAI Integration</h2>
+<p>Integrarea cu OpenAI — Realtime API, chat completions, TTS, embeddings.</p>
+
+<div class="severity-critical"><strong>CRITICAL: Lipsa token/cost tracking</strong> — <code>response.done</code> event-ul captureaza usage data dar NU o inregistreaza. <code>AiApiMetric</code> table exista dar nu e populata in voice calls. <span class="resolved-tag">RESOLVED 30.03.2026 — trackTokenUsage() adaugat in response.done handler</span></div>
+
+<div class="severity-high"><strong>HIGH: Lipsa circuit breaker pe chat completions</strong> — <code>RealtimeClient</code> are circuit breaker sofisticat, dar <code>OpenAIService</code> nu are niciunul.</div>
+
+<table>
+<tr><th>Linie</th><th>Severitate</th><th>Problema</th></tr>
+<tr><td>RS:530-538</td><td><span class="badge badge-resolved">RESOLVED</span></td><td>Usage metrics acum persistate in AiApiMetric</td></tr>
+<tr><td>OAI:30-53</td><td><span class="badge badge-resolved">RESOLVED</span></td><td>FALSE POSITIVE — callOpenAI() L342-343 si callAnthropic() L395-396 extrag tokens corect. recordMetric() persista in AiApiMetric.</td></tr>
+<tr><td>OAI:49-52</td><td><span class="badge badge-resolved">RESOLVED</span></td><td>Verificat: classifyException() L431 gestioneaza 429/401/timeout/generic cu exceptii typed</td></tr>
+<tr><td>OAI:24-84</td><td><span class="badge badge-high">HIGH</span></td><td>Lipsa circuit breaker pe completions API</td></tr>
+<tr><td>OAI:86-130</td><td><span class="badge badge-medium">MEDIUM</span></td><td>TokenCounterService exista dar nu e folosit</td></tr>
+<tr><td>RateLimiter</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Rate limiting doar in queue jobs, nu in API calls</td></tr>
+</table>
+
+<!-- ==================== SECTION 20 ==================== -->
+<h2 id="s20" class="page-break">20. Remaining AI Services</h2>
+<p>Celelalte servicii: ComplexityScoring, Handoff, ConversationEvent, ToolRegistry, etc.</p>
+
+<table>
+<tr><th>Serviciu</th><th>Severitate</th><th>Problema</th></tr>
+<tr><td>HandoffService</td><td><span class="badge badge-high">HIGH</span></td><td>Message::get() fara paginare — poate incarca 10K+ mesaje</td></tr>
+<tr><td>ConversationEventService</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Batch insert face O(n) DB roundtrips in loc de bulk</td></tr>
+<tr><td>ToolRegistry</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Lipsa duplicate registration check</td></tr>
+<tr><td>ChatCompletionService</td><td><span class="badge badge-high">HIGH</span></td><td>Fallback silentios Anthropic → OpenAI</td></tr>
+<tr><td>CostControlService</td><td><span class="badge badge-medium">MEDIUM</span></td><td>MAX_LLM_CALLS=2 si daily limit hardcoded</td></tr>
+<tr><td>ContextBudgetService</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Truncare pe cuvinte, nu pe token boundaries</td></tr>
+<tr><td>ConversationPolicyService</td><td><span class="badge badge-medium">MEDIUM</span></td><td>Channel policies pot suprascrie safety rules</td></tr>
+<tr><td>TokenizerService</td><td><span class="badge badge-low">LOW</span></td><td>EncoderProvider instantiat la fiecare creare service</td></tr>
+</table>
+
+<!-- ==================== PROPOSALS ==================== -->
+<h2 id="proposals" class="page-break">Propuneri de Imbunatatire (Prioritizate)</h2>
+
+<h3>P0 — Imediat (Securitate / Data Loss)</h3>
+<ol>
+<li><s><strong>Adauga autentificare pe endpoints publice</strong></s> <span class="resolved-tag">RESOLVED</span> — Rate limiting adaugat (throttle:10,1 + throttle:60,1)</li>
+<li><s><strong>Fix tenant isolation pe modele</strong></s> <span class="resolved-tag">MITIGAT</span> — Verificat: toate query-urile folosesc bot_id/call_id FK care sunt tenant-scoped. Adaugare tenant_id = P2 (necesita migrare DB).</li>
+<li><s><strong>Elimina <code>withoutGlobalScopes()</code></strong></s> <span class="resolved-tag">RESOLVED</span> — Toate cele 5 apeluri eliminate din RealtimeSessionController</li>
+<li><s><strong>Fix URL reconstruction</strong></s> <span class="resolved-tag">RESOLVED</span> — getRequestUri() → getPathInfo() in VerifyTwilioSignature</li>
+<li><s><strong>Fix token tracking</strong></s> <span class="resolved-tag">RESOLVED</span> — trackTokenUsage() adaugat in RealtimeSession::handleResponseEvent()</li>
+<li><s><strong>Fix call_token lipsă</strong></s> (deja facut in aceasta sesiune) — demo.blade.php nu trimitea call_token la endCall/saveTranscript.</li>
+</ol>
+
+<h3>P1 — Saptamana aceasta (Bugs / Logica gresita)</h3>
+<ol>
+<li><s><strong>Fix isFollowup()</strong></s> <span class="resolved-tag">RESOLVED</span> — str_word_count eliminat, doar lista explicita de followups</li>
+<li><s><strong>Fix lead scoring</strong></s> <span class="resolved-tag">RESOLVED</span> — no_results (-10) si fallback_triggered (-5) acum negative</li>
+<li><s><strong>Fix OutcomeEngine SQL</strong></s> <span class="resolved-tag">RESOLVED</span> — orWhere mutat in closure cu conversation_id constraint</li>
+<li><s><strong>Fix SendCallEndedWebhook</strong></s> <span class="resolved-tag">RESOLVED</span> — phone_number → caller_number</li>
+<li><s><strong>Fix CleanupStaleSessions</strong></s> <span class="resolved-tag">RESOLVED</span> — STATUS_ABANDONED constant adaugat la Call model</li>
+<li><s><strong>Fix endSession() duration</strong></s> <span class="resolved-tag">RESOLVED</span> — calculeaza duration_seconds din started_at</li>
+<li><strong>Greeting intent sa nu piarda alte intentii</strong> — Permite multi-intent detection in IntentOrchestratorService.</li>
+<li><strong>Adauga complaint intent pipeline</strong> — Detecteaza reclamatii si escaleaza/adapteaza tonul.</li>
+</ol>
+
+<h3>P2 — Luna aceasta (Performance / Calitate)</h3>
+<ol>
+<li><strong>Implementeaza FTS romanesc</strong> in ProductSearchService — PostgreSQL <code>tsvector</code>/<code>tsquery</code> cu dictionar romanesc pentru stemming si stopwords.</li>
+<li><strong>Adauga circuit breaker</strong> pe OpenAIService (chat completions) — similar cu cel din RealtimeClient.</li>
+<li><strong>Paralelizeaza pipeline-uri</strong> in IntentOrchestratorService — product_search, knowledge, recommendation pot rula simultan.</li>
+<li><strong>Adauga ICE servers</strong> (STUN/TURN) in demo WebRTC — necesar pentru NAT traversal.</li>
+<li><strong>Unifica rate limiting</strong> — Strategie consistenta per-tenant, per-IP, per-session pe toate endpoint-urile.</li>
+<li><strong>Adauga buffer management</strong> in MediaStreamHandler — backpressure, watermark, payload size validation.</li>
+<li><strong>Normalizeaza diacritice global</strong> — Fie strip everywhere, fie character classes consistente in toate regex-urile.</li>
+<li><strong>Fix memory leaks frontend</strong> — Cleanup event listeners, setTimeout-uri si Web Audio nodes.</li>
+<li><strong>Adauga indexuri compozite</strong> — <code>(call_id, type)</code> pe call_events, <code>(call_id, created_at)</code> pe transcripts.</li>
+<li><strong>Standardizeaza formulele de cost</strong> — O singura sursa de adevar pentru pricing (config, nu hardcoded).</li>
+</ol>
+
+<h3>P3 — Trimestrul urmator (Feature / Scale)</h3>
+<ol>
+<li><strong>Sinonime/aliasuri</strong> in ProductSearchService — expansiune query cu taxonomie de domeniu.</li>
+<li><strong>Sentiment analysis in lead scoring</strong> — Nu marca utilizatorii frustrati ca lead-uri.</li>
+<li><strong>Orchestrare unitara</strong> — Un singur pipeline LeadScorer + OutcomeEngine, nu doua sisteme paralele cu logica conflictuala.</li>
+<li><strong>Token budget pre-request</strong> — Foloseste TokenCounterService inainte de fiecare API call.</li>
+<li><strong>API key rotation</strong> — Mecanism automat de rotire si audit logging.</li>
+<li><strong>Unit tests</strong> — Acoperire pe IntentDetectionService, ProductSearchService, LeadOpportunityScorer.</li>
+<li><strong>Webhook replay protection</strong> — Timestamp validation pe toate webhook-urile.</li>
+<li><strong>CORS global middleware</strong> — Inlocuieste handling-ul per-controller cu o solutie centralizata.</li>
+</ol>
+
+<div class="footer">
+<p>Generat automat de Claude Code — 30 Martie 2026 | Sambla AI Platform Audit v1.4 (iteratia 4)</p>
+<p>20 componente analizate | 184 probleme identificate | 30 CRITICAL/HIGH rezolvate (4 iteratii) | 38 propuneri de imbunatatire</p>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload Logo — Sambla</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; background: #f8fafc; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.card { background: white; border-radius: 20px; padding: 40px; max-width: 500px; width: 100%; box-shadow: 0 4px 24px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; }
+h1 { font-size: 24px; font-weight: 800; color: #0f172a; margin-bottom: 8px; }
+p { font-size: 14px; color: #64748b; margin-bottom: 24px; line-height: 1.6; }
+.upload-group { margin-bottom: 24px; }
+label { display: block; font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 8px; }
+.hint { font-size: 11px; color: #94a3b8; margin-bottom: 8px; }
+.drop-zone { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s; background: #f8fafc; }
+.drop-zone:hover { border-color: #991b1b; background: #fef2f2; }
+.drop-zone.active { border-color: #16a34a; background: #f0fdf4; }
+.drop-zone input { display: none; }
+.drop-zone .icon { font-size: 32px; margin-bottom: 8px; }
+.drop-zone .text { font-size: 13px; color: #64748b; }
+.drop-zone .filename { font-size: 12px; font-weight: 600; color: #16a34a; margin-top: 6px; }
+.preview { margin-top: 12px; display: flex; gap: 8px; }
+.preview img { height: 40px; border-radius: 8px; border: 1px solid #e2e8f0; }
+.preview .on-dark { background: #0f172a; padding: 4px 8px; border-radius: 8px; }
+.or-divider { text-align: center; color: #94a3b8; font-size: 12px; font-weight: 600; margin: 16px 0; }
+.url-input { width: 100%; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; font-size: 13px; outline: none; transition: border-color 0.2s; }
+.url-input:focus { border-color: #991b1b; }
+.btn { width: 100%; padding: 12px; background: linear-gradient(135deg, #991b1b, #dc2626); color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+.btn:hover { opacity: 0.9; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.status { margin-top: 16px; padding: 12px; border-radius: 10px; font-size: 13px; display: none; }
+.status.success { display: block; background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+.status.error { display: block; background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+</style>
+</head>
+<body>
+<div class="card">
+    <h1>Upload Logo Sambla</h1>
+    <p>Uploadează cele 2 versiuni ale logo-ului. Acestea vor fi folosite automat pe site.</p>
+
+    <form id="uploadForm">
+        <div class="upload-group">
+            <label>Logo pentru fundal deschis (navbar)</label>
+            <div class="hint">Va fi afișat pe fundal alb. Recomandare: PNG transparent, minim 100x100px</div>
+            <div class="drop-zone" id="dropLight" onclick="document.getElementById('fileLight').click()">
+                <input type="file" id="fileLight" accept="image/png,image/svg+xml,image/jpeg,image/webp,.svg">
+                <div class="icon">🖼️</div>
+                <div class="text">Click sau trage fișierul aici (PNG, SVG, JPG)</div>
+                <div class="filename" id="nameLight"></div>
+            </div>
+            <div class="or-divider">— SAU din URL —</div>
+            <input type="text" class="url-input" id="urlLight" placeholder="https://exemplu.com/logo-light.png">
+        </div>
+
+        <div class="upload-group">
+            <label>Logo pentru fundal închis (footer, hero)</label>
+            <div class="hint">Va fi afișat pe fundal dark. Recomandare: PNG transparent cu text alb</div>
+            <div class="drop-zone" id="dropDark" onclick="document.getElementById('fileDark').click()">
+                <input type="file" id="fileDark" accept="image/png,image/svg+xml,image/jpeg,image/webp,.svg">
+                <div class="icon">🌙</div>
+                <div class="text">Click sau trage fișierul aici (PNG, SVG, JPG)</div>
+                <div class="filename" id="nameDark"></div>
+            </div>
+            <div class="or-divider">— SAU din URL —</div>
+            <input type="text" class="url-input" id="urlDark" placeholder="https://exemplu.com/logo-dark.png">
+        </div>
+
+        <button type="submit" class="btn" id="submitBtn">Salvează logo-urile</button>
+        <div class="status" id="status"></div>
+    </form>
+</div>
+
+<script>
+// File input handlers
+['Light','Dark'].forEach(function(type) {
+    var input = document.getElementById('file' + type);
+    var drop = document.getElementById('drop' + type);
+    var name = document.getElementById('name' + type);
+
+    input.addEventListener('change', function() {
+        if (input.files[0]) {
+            name.textContent = '✅ ' + input.files[0].name;
+            drop.classList.add('active');
+        }
+    });
+
+    drop.addEventListener('dragover', function(e) { e.preventDefault(); drop.style.borderColor = '#991b1b'; });
+    drop.addEventListener('dragleave', function() { drop.style.borderColor = '#cbd5e1'; });
+    drop.addEventListener('drop', function(e) {
+        e.preventDefault();
+        drop.style.borderColor = '#cbd5e1';
+        if (e.dataTransfer.files[0]) {
+            input.files = e.dataTransfer.files;
+            name.textContent = '✅ ' + e.dataTransfer.files[0].name;
+            drop.classList.add('active');
+        }
+    });
+});
+
+document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var btn = document.getElementById('submitBtn');
+    var status = document.getElementById('status');
+    btn.disabled = true;
+    btn.textContent = 'Se salvează...';
+    status.style.display = 'none';
+
+    try {
+        var saved = 0;
+
+        // Light logo
+        var fileLight = document.getElementById('fileLight').files[0];
+        var urlLight = document.getElementById('urlLight').value.trim();
+        if (fileLight) {
+            var fd = new FormData();
+            fd.append('logo', fileLight);
+            fd.append('type', 'light');
+            var r = await fetch('/api/upload-logo', { method: 'POST', body: fd });
+            if (r.ok) saved++;
+        } else if (urlLight) {
+            var r = await fetch('/api/upload-logo-url', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({url: urlLight, type: 'light'}) });
+            if (r.ok) saved++;
+        }
+
+        // Dark logo
+        var fileDark = document.getElementById('fileDark').files[0];
+        var urlDark = document.getElementById('urlDark').value.trim();
+        if (fileDark) {
+            var fd = new FormData();
+            fd.append('logo', fileDark);
+            fd.append('type', 'dark');
+            var r = await fetch('/api/upload-logo', { method: 'POST', body: fd });
+            if (r.ok) saved++;
+        } else if (urlDark) {
+            var r = await fetch('/api/upload-logo-url', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({url: urlDark, type: 'dark'}) });
+            if (r.ok) saved++;
+        }
+
+        if (saved > 0) {
+            status.className = 'status success';
+            status.textContent = '✅ ' + saved + ' logo(uri) salvate cu succes! Refresh pe sambla.ro pentru a vedea schimbarea.';
+        } else {
+            status.className = 'status error';
+            status.textContent = '⚠️ Selectează cel puțin un logo (fișier sau URL).';
+        }
+    } catch (err) {
+        status.className = 'status error';
+        status.textContent = '❌ Eroare: ' + err.message;
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Salvează logo-urile';
+    status.style.display = 'block';
+});
+</script>
+</body>
+</html>
