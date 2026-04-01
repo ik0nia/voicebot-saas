@@ -520,9 +520,15 @@ class ChatbotApiController extends Controller
             ]);
 
             // Suppress cards if:
-            // 1. AI said it couldn't find products, OR
+            // 1. AI said it couldn't find products AND intent wasn't explicitly about products, OR
             // 2. AI response has no positive product reference AND intent wasn't explicitly about products
-            if ($hasNegativeProductMention || (!$hasPositiveProductMention && !$isExplicitProductIntent)) {
+            // NOTE: If orchestrator found products via semantic search for an explicit product intent,
+            // KEEP the cards even if the AI response says "nu am găsit" (the AI may not know about
+            // the semantic product retrieval results that are displayed as visual cards)
+            if ($isExplicitProductIntent) {
+                // Explicit product intent: always keep cards from orchestrator/semantic search
+                // The AI response text may be misleading but the cards are correct
+            } elseif ($hasNegativeProductMention || !$hasPositiveProductMention) {
                 $products = [];
             }
         }
