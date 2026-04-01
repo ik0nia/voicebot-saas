@@ -33,7 +33,7 @@
 
     <?php if ($connected): ?>
 
-    <!-- Status Bar -->
+    <!-- Status Bar — full width, includes connection info -->
     <div class="sambla-status-bar">
         <div class="sambla-status-bar__item">
             <span class="sambla-status-bar__dot sambla-status-bar__dot--green"></span>
@@ -48,7 +48,20 @@
             <span class="sambla-status-bar__value sambla-status-bar__badge"><?php echo esc_html(ucfirst($plan_name ?: 'Starter')); ?></span>
         </div>
         <div class="sambla-status-bar__item">
+            <span class="sambla-status-bar__label">Bot ID:</span>
+            <span class="sambla-status-bar__value"><?php echo esc_html(get_option('sambla_bot_id')); ?></span>
+        </div>
+        <div class="sambla-status-bar__item">
+            <span class="sambla-status-bar__label">Channel:</span>
+            <span class="sambla-status-bar__value"><?php echo esc_html(get_option('sambla_channel_id')); ?></span>
+        </div>
+        <div class="sambla-status-bar__item">
             <span class="sambla-status-bar__label">v<?php echo SAMBLA_VERSION; ?></span>
+        </div>
+        <div class="sambla-status-bar__item" style="margin-left:auto;">
+            <button class="sambla-btn sambla-btn--danger" id="sambla-disconnect" style="padding:4px 10px;font-size:11px;">
+                Deconectează
+            </button>
         </div>
     </div>
 
@@ -173,8 +186,8 @@
             </div>
         </div>
 
-        <!-- Widget Settings Card -->
-        <div class="sambla-card sambla-card--full">
+        <!-- Widget Settings Card — span 2 columns -->
+        <div class="sambla-card sambla-card--span2">
             <div class="sambla-card__header">
                 <div class="sambla-card__icon sambla-card__icon--purple">
                     <svg viewBox="0 0 24 24"><path d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42"/></svg>
@@ -212,38 +225,8 @@
             </div>
         </div>
 
-        <!-- Connection Info Card -->
-        <div class="sambla-card">
-            <div class="sambla-card__header">
-                <div class="sambla-card__icon sambla-card__icon--green">
-                    <svg viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                </div>
-                <h2 class="sambla-card__title">Conexiune</h2>
-            </div>
-            <div class="sambla-card__body">
-                <div class="sambla-info">
-                    <span class="sambla-info__label">Bot ID</span>
-                    <span class="sambla-info__value"><?php echo esc_html(get_option('sambla_bot_id')); ?></span>
-                </div>
-                <div class="sambla-info">
-                    <span class="sambla-info__label">Channel ID</span>
-                    <span class="sambla-info__value"><?php echo esc_html(get_option('sambla_channel_id')); ?></span>
-                </div>
-                <div class="sambla-info">
-                    <span class="sambla-info__label">Plugin</span>
-                    <span class="sambla-info__value">v<?php echo SAMBLA_VERSION; ?></span>
-                </div>
-                <div style="margin-top:16px;">
-                    <button class="sambla-btn sambla-btn--danger" id="sambla-disconnect">
-                        <svg viewBox="0 0 24 24"><path d="M18.36 6.64A9 9 0 115.64 18.36 9 9 0 0118.36 6.64zM12 2v10"/></svg>
-                        Deconectează
-                    </button>
-                </div>
-            </div>
-        </div>
-
         <!-- Page Mapping — Standard Business Pages -->
-        <div class="sambla-card sambla-card--full">
+        <div class="sambla-card sambla-card--span2">
             <div class="sambla-card__header">
                 <div class="sambla-card__icon sambla-card__icon--blue">
                     <svg viewBox="0 0 24 24"><path d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
