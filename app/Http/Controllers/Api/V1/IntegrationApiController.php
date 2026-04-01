@@ -517,8 +517,9 @@ class IntegrationApiController extends Controller
 
         // Plan info
         $plan = $tenant->plan ?? 'starter';
-        $planLimits = app(\App\Services\PlanLimitService::class)->getLimits($tenant);
-        $messagesLimit = $planLimits['max_messages_per_month'] ?? 0;
+        $planService = app(\App\Services\PlanLimitService::class);
+        $planObj = $planService->getPlanForTenant($tenant);
+        $messagesLimit = $planObj->getLimit('messages_per_month', 0);
 
         // Recent conversations (last 5)
         $recentConversations = \App\Models\Conversation::withoutGlobalScopes()
