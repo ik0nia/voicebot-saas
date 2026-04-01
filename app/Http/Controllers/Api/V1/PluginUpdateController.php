@@ -22,7 +22,7 @@ class PluginUpdateController extends Controller
             return response()->json(['error' => 'Unknown plugin'], 404);
         }
 
-        $latestVersion = '2.0.4';
+        $latestVersion = '2.0.5';
         $downloadUrl = url('/downloads/sambla-woocommerce.zip');
 
         $data = [
