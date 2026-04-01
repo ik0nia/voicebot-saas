@@ -493,15 +493,69 @@ class IntegrationApiController extends Controller
             ->where('type', Channel::TYPE_WEB_CHATBOT)
             ->first();
 
+        // Usage stats for WordPress plugin dashboard
+        $now = now();
+        $monthStart = $now->copy()->startOfMonth();
+
+        $messagesThisMonth = \App\Models\Message::withoutGlobalScopes()
+            ->whereHas('conversation', fn($q) => $q->where('bot_id', $bot->id))
+            ->where('direction', 'outbound')
+            ->where('created_at', '>=', $monthStart)
+            ->count();
+
+        $knowledgeCount = BotKnowledge::withoutGlobalScopes()
+            ->where('bot_id', $bot->id)
+            ->where('status', 'ready')
+            ->whereIn('chunk_index', [0, null])
+            ->count();
+
+        $productsCount = WooCommerceProduct::where('bot_id', $bot->id)->count();
+
+        $leadsCount = \App\Models\Lead::withoutGlobalScopes()
+            ->where('bot_id', $bot->id)
+            ->count();
+
+        // Plan info
+        $plan = $tenant->plan ?? 'starter';
+        $planLimits = app(\App\Services\PlanLimitService::class)->getLimits($tenant);
+        $messagesLimit = $planLimits['max_messages_per_month'] ?? 0;
+
+        // Recent conversations (last 5)
+        $recentConversations = \App\Models\Conversation::withoutGlobalScopes()
+            ->where('bot_id', $bot->id)
+            ->orderByDesc('last_activity_at')
+            ->limit(5)
+            ->get()
+            ->map(function ($conv) {
+                $lastMsg = $conv->messages()->orderByDesc('created_at')->first();
+                return [
+                    'id' => $conv->id,
+                    'contact_name' => $conv->contact_name,
+                    'last_message' => $lastMsg?->content ? mb_substr($lastMsg->content, 0, 80) : '',
+                    'messages_count' => $conv->messages_count ?? $conv->messages()->count(),
+                    'time_ago' => $conv->last_activity_at?->diffForHumans() ?? '',
+                    'status' => $conv->status,
+                ];
+            });
+
         return response()->json([
             'connected' => $connector->status === 'connected',
             'connector_id' => $connector->id,
             'bot_id' => $bot->id,
             'bot_name' => $bot->name,
+            'plan' => $plan,
             'channel_id' => $channel?->id,
             'channel_active' => $channel?->is_active ?? false,
             'last_synced_at' => $connector->last_synced_at,
-            'total_products' => WooCommerceProduct::where('bot_id', $bot->id)->count(),
+            'total_products' => $productsCount,
+            'usage' => [
+                'messages_used' => $messagesThisMonth,
+                'messages_limit' => $messagesLimit > 0 ? $messagesLimit : null,
+                'knowledge_count' => $knowledgeCount,
+                'products_synced' => $productsCount,
+                'leads_count' => $leadsCount,
+            ],
+            'recent_conversations' => $recentConversations,
             'widget_config' => $channel ? [
                 'color' => $channel->config['color'] ?? '#991b1b',
                 'greeting' => $channel->config['greeting'] ?? '',
