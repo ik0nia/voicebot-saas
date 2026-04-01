@@ -37,6 +37,7 @@ services:
     volumes:
       - /var/www/voicebot-saas/public:/var/www/html/public:ro
       - app-storage:/var/www/html/storage:ro
+      - /home/sambla/ancpi/public:/var/www/html/public/ancpi:ro
     depends_on:
       app:
         condition: service_healthy
