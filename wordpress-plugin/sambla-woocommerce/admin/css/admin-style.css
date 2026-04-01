@@ -520,8 +520,8 @@
 /* Page mapping section */
 .sambla-page-map {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    grid-template-columns: 1fr;
+    gap: 8px;
 }
 .sambla-page-map__item {
     display: flex;
