@@ -28,7 +28,10 @@ class IntentOrchestratorService
         private ConversationEventService $events,
         private LeadOpportunityScorer $leadScorer,
         private HandoffService $handoffService,
-    ) {}
+        private ?SemanticProductRetrievalService $semanticProducts = null,
+    ) {
+        $this->semanticProducts ??= app(SemanticProductRetrievalService::class);
+    }
 
     /**
      * Decide which data sources to use based on detected intents.
@@ -41,6 +44,7 @@ class IntentOrchestratorService
         $decision = [
             'use_rag' => false,
             'use_products' => false,
+            'use_semantic_products' => false,
             'use_tools' => false,
             'rag_limit' => 3,
             'complexity' => $queryComplexity ?? 'medium',
@@ -68,9 +72,15 @@ class IntentOrchestratorService
         foreach ($intents as $intent) {
             if (in_array($intent->name, ['product_search', 'category_recommendation'])) {
                 $decision['use_products'] = true;
+                // For recommendation/suitability queries, also use semantic product retrieval
+                if ($intent->name === 'category_recommendation') {
+                    $decision['use_semantic_products'] = true;
+                }
                 if ($intent->confidence < 0.7) {
                     $decision['use_rag'] = true;
                     $decision['rag_limit'] = 2;
+                    // Low-confidence product search benefits from semantic retrieval as fallback
+                    $decision['use_semantic_products'] = true;
                 }
             }
 
@@ -148,7 +158,8 @@ class IntentOrchestratorService
             // Skip pipelines not needed by decision logic
             $skip = match ($pipeline->name) {
                 'knowledge' => !$dataSources['use_rag'],
-                'product_search', 'recommendation' => !$dataSources['use_products'],
+                'product_search' => !$dataSources['use_products'],
+                'recommendation' => !$dataSources['use_products'] && !($dataSources['use_semantic_products'] ?? false),
                 'category_browse' => false, // Never skip category browse
                 'new_order', 'order_lookup' => false, // Never skip order-related pipelines
                 default => false,
@@ -493,6 +504,16 @@ class IntentOrchestratorService
             $result->products = array_map(fn($r) => $this->productSearch->toCardArray($r), $products);
             $result->productContext = "\n\n[CARDURI PRODUSE: " . count($result->products) . " produse se afișează automat ca carduri vizuale. Spune SCURT: 'Iată ce am găsit:' — fără a enumera produsele în text.]";
         } else {
+            // Fallback: try semantic product retrieval when structured search fails
+            if ($this->semanticProducts && $query) {
+                $semanticResults = $this->semanticProducts->search($botId, $query, 4);
+                if (!empty($semanticResults)) {
+                    $result->products = array_map(fn($r) => $r->toCardArray(), $semanticResults);
+                    $result->productContext = "\n\n[CARDURI PRODUSE: " . count($result->products) . " produse găsite prin căutare semantică. Spune SCURT: 'Iată ce am găsit:' — fără a enumera produsele în text.]";
+                    $task->resultsCount = count($semanticResults);
+                    return;
+                }
+            }
             $result->productContext = "\n\n[NU s-au găsit produse relevante. NU spune că ai găsit produse.]";
         }
         $task->resultsCount = count($products);
@@ -501,6 +522,9 @@ class IntentOrchestratorService
     private function executeRecommendation(int $botId, PipelineTask $task, OrchestratorResult $result): void
     {
         $concept = $task->params['concept'] ?? '';
+        $query = $task->params['query'] ?? $concept;
+
+        // Try structured recommendation first
         if ($concept && $this->recommendations->hasConcept($concept)) {
             $rec = $this->recommendations->recommend($botId, $concept, 2);
             if (!empty($rec['products'])) {
@@ -509,6 +533,25 @@ class IntentOrchestratorService
                 $result->productContext = "\n\n[Recomandări pentru \"{$concept}\": " . count($result->products) . " produse din categoriile: {$subQueries}. Explică pe scurt DE CE sunt necesare.]";
             }
         }
+
+        // If no structured results, try SEMANTIC product retrieval (vector search on product embeddings)
+        if (empty($result->products) && $query && $this->semanticProducts) {
+            $semanticResults = $this->semanticProducts->search($botId, $query, 4);
+            if (!empty($semanticResults)) {
+                $result->products = array_map(fn($r) => $r->toCardArray(), $semanticResults);
+                $result->productContext = "\n\n[PRODUSE RECOMANDATE SEMANTIC: " . count($result->products)
+                    . " produse găsite prin căutare semantică pentru \"{$query}\". "
+                    . "Prezintă-le natural, explică de ce sunt relevante pentru cererea clientului.]";
+
+                Log::debug('IntentOrchestrator: semantic product retrieval used', [
+                    'bot_id' => $botId,
+                    'query' => $query,
+                    'results' => count($semanticResults),
+                    'top_similarity' => $semanticResults[0]->semantic_similarity ?? 0,
+                ]);
+            }
+        }
+
         $task->resultsCount = count($result->products);
     }
 

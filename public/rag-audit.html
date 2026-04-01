@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sambla RAG System Audit - Aprilie 2026</title>
+    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap" rel="stylesheet" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #0f172a; color: #e2e8f0; line-height: 1.6; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+        /* Header */
+        .header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); border-bottom: 1px solid #334155; padding: 48px 0 40px; }
+        .header h1 { font-size: 2.5rem; font-weight: 800; color: #fff; margin-bottom: 8px; }
+        .header h1 span { background: linear-gradient(135deg, #ef4444, #f97316); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header .subtitle { color: #94a3b8; font-size: 1.1rem; }
+        .header .meta { display: flex; gap: 24px; margin-top: 16px; flex-wrap: wrap; }
+        .header .meta span { display: flex; align-items: center; gap: 6px; color: #64748b; font-size: 0.85rem; }
+        .header .meta .dot { width: 8px; height: 8px; border-radius: 50%; }
+        .dot-green { background: #22c55e; }
+        .dot-yellow { background: #eab308; }
+        .dot-red { background: #ef4444; }
+
+        /* Score Banner */
+        .score-banner { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: -32px 0 40px; position: relative; z-index: 1; }
+        .score-card { background: #1e293b; border: 1px solid #334155; border-radius: 16px; padding: 24px; text-align: center; }
+        .score-card .label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin-bottom: 8px; }
+        .score-card .value { font-size: 2rem; font-weight: 800; }
+        .score-card .detail { font-size: 0.8rem; color: #94a3b8; margin-top: 4px; }
+        .text-green { color: #22c55e; }
+        .text-yellow { color: #eab308; }
+        .text-red { color: #ef4444; }
+        .text-blue { color: #3b82f6; }
+        .text-white { color: #fff; }
+
+        /* Sections */
+        .section { margin-bottom: 48px; }
+        .section-title { font-size: 1.5rem; font-weight: 700; color: #fff; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; }
+        .section-title .num { background: #991b1b; color: white; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; flex-shrink: 0; }
+        .section-desc { color: #94a3b8; margin-bottom: 24px; max-width: 800px; }
+
+        /* Cards */
+        .card { background: #1e293b; border: 1px solid #334155; border-radius: 16px; padding: 24px; margin-bottom: 16px; }
+        .card h3 { font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 12px; }
+        .card p { color: #94a3b8; font-size: 0.9rem; }
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { text-align: left; padding: 12px 16px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.7rem; border-bottom: 1px solid #334155; }
+        td { padding: 12px 16px; border-bottom: 1px solid #1e293b; color: #cbd5e1; }
+        tr:hover td { background: #1e293b; }
+
+        /* Tags */
+        .tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 99px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .tag-green { background: rgba(34,197,94,0.1); color: #22c55e; border: 1px solid rgba(34,197,94,0.2); }
+        .tag-yellow { background: rgba(234,179,8,0.1); color: #eab308; border: 1px solid rgba(234,179,8,0.2); }
+        .tag-red { background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2); }
+        .tag-blue { background: rgba(59,130,246,0.1); color: #3b82f6; border: 1px solid rgba(59,130,246,0.2); }
+
+        /* Flow diagram */
+        .flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 16px 0; }
+        .flow-step { background: #334155; border-radius: 8px; padding: 8px 14px; font-size: 0.8rem; color: #e2e8f0; font-weight: 500; }
+        .flow-arrow { color: #64748b; font-size: 1.2rem; }
+
+        /* Grid */
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 16px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+
+        /* Code */
+        code { background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 2px 8px; font-size: 0.8rem; color: #f97316; font-family: 'Fira Code', monospace; }
+        .code-block { background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 20px; overflow-x: auto; margin: 12px 0; }
+        .code-block pre { font-size: 0.8rem; color: #94a3b8; font-family: 'Fira Code', monospace; white-space: pre-wrap; }
+
+        /* Improvement cards */
+        .improve { border-left: 3px solid; padding-left: 16px; margin-bottom: 16px; }
+        .improve-high { border-color: #ef4444; }
+        .improve-med { border-color: #eab308; }
+        .improve-low { border-color: #3b82f6; }
+        .improve h4 { font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 4px; }
+        .improve p { font-size: 0.85rem; color: #94a3b8; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.8rem; }
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .score-banner { grid-template-columns: repeat(2, 1fr); }
+            table { font-size: 0.75rem; }
+            th, td { padding: 8px 10px; }
+        }
+
+        /* TOC */
+        .toc { background: #1e293b; border: 1px solid #334155; border-radius: 16px; padding: 24px; margin-bottom: 40px; }
+        .toc h2 { font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 12px; }
+        .toc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 6px; }
+        .toc a { color: #94a3b8; text-decoration: none; font-size: 0.85rem; padding: 4px 0; display: block; }
+        .toc a:hover { color: #ef4444; }
+        .toc a .n { color: #ef4444; font-weight: 700; margin-right: 6px; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="container">
+        <h1>Sambla <span>RAG Audit</span></h1>
+        <p class="subtitle">Analiza completă a sistemului Retrieval-Augmented Generation</p>
+        <div class="meta">
+            <span><span class="dot dot-green"></span> Data: 1 Aprilie 2026</span>
+            <span><span class="dot dot-yellow"></span> Versiune: 1.0</span>
+            <span><span class="dot dot-green"></span> Stack: Laravel + PostgreSQL + pgvector</span>
+        </div>
+    </div>
+</div>
+
+<div class="container" style="padding-top: 48px;">
+
+<!-- Score Banner -->
+<div class="score-banner">
+    <div class="score-card">
+        <div class="label">Arhitectură</div>
+        <div class="value text-green">A</div>
+        <div class="detail">Hybrid Search + RRF</div>
+    </div>
+    <div class="score-card">
+        <div class="label">Embedding Model</div>
+        <div class="value text-blue" style="font-size:1.2rem;">text-embedding-3-small</div>
+        <div class="detail">1536 dimensiuni</div>
+    </div>
+    <div class="score-card">
+        <div class="label">Index Vector</div>
+        <div class="value text-green" style="font-size:1.3rem;">HNSW</div>
+        <div class="detail">m=16, ef=64</div>
+    </div>
+    <div class="score-card">
+        <div class="label">FTS Language</div>
+        <div class="value text-green" style="font-size:1.3rem;">Romanian</div>
+        <div class="detail">GIN index nativ</div>
+    </div>
+    <div class="score-card">
+        <div class="label">Anti-Halucinare</div>
+        <div class="value text-green">Da</div>
+        <div class="detail">Quality gate + guardrails</div>
+    </div>
+</div>
+
+<!-- TOC -->
+<div class="toc">
+    <h2>Cuprins</h2>
+    <div class="toc-grid">
+        <a href="#s1"><span class="n">01</span> Arhitectura Search Pipeline</a>
+        <a href="#s2"><span class="n">02</span> Document Processing & Chunking</a>
+        <a href="#s3"><span class="n">03</span> Schema DB & Indexare</a>
+        <a href="#s4"><span class="n">04</span> Prompt Building & Context Injection</a>
+        <a href="#s5"><span class="n">05</span> Query Expansion & Synonyms</a>
+        <a href="#s6"><span class="n">06</span> Website Scanner</a>
+        <a href="#s7"><span class="n">07</span> WordPress & WooCommerce</a>
+        <a href="#s8"><span class="n">08</span> Knowledge Agents</a>
+        <a href="#s9"><span class="n">09</span> Knowledge Gap Detection</a>
+        <a href="#s10"><span class="n">10</span> Voice vs Text RAG</a>
+        <a href="#s11"><span class="n">11</span> Caching & Performance</a>
+        <a href="#s12"><span class="n">12</span> Recomandări de Îmbunătățire</a>
+    </div>
+</div>
+
+<!-- Section 1: Search Pipeline -->
+<div class="section" id="s1">
+    <h2 class="section-title"><span class="num">01</span> Arhitectura Search Pipeline</h2>
+    <p class="section-desc">Sistemul folosește Hybrid Search cu Reciprocal Rank Fusion (RRF), combinând căutare vectorială (semantică) cu full-text search (keyword).</p>
+
+    <div class="flow">
+        <span class="flow-step">Query utilizator</span><span class="flow-arrow">&rarr;</span>
+        <span class="flow-step">Cache check (5 min)</span><span class="flow-arrow">&rarr;</span>
+        <span class="flow-step">Query expansion</span><span class="flow-arrow">&rarr;</span>
+        <span class="flow-step">Embedding (OpenAI)</span><span class="flow-arrow">&rarr;</span>
+        <span class="flow-step">Vector Search (pgvector)</span><span class="flow-arrow">+</span>
+        <span class="flow-step">FTS (Romanian)</span><span class="flow-arrow">&rarr;</span>
+        <span class="flow-step">RRF Fusion</span><span class="flow-arrow">&rarr;</span>
+        <span class="flow-step">Dedup</span><span class="flow-arrow">&rarr;</span>
+        <span class="flow-step">Business scoring</span><span class="flow-arrow">&rarr;</span>
+        <span class="flow-step">Quality gate</span><span class="flow-arrow">&rarr;</span>
+        <span class="flow-step">Context</span>
+    </div>
+
+    <div class="card">
+        <h3>Formula RRF</h3>
+        <div class="code-block"><pre>RRF_score = 1.0 / (60 + rank_vector) + fts_weight / (60 + rank_fts)
+
+Unde:
+  k = 60 (constantă de normalizare)
+  fts_weight = 1.5 (FTS primește 50% bonus)
+  FULL OUTER JOIN combină rezultatele ambelor metode
+  Filtru: similarity >= 0.55 SAU găsit în FTS</pre></div>
+    </div>
+
+    <div class="grid-2">
+        <div class="card">
+            <h3>Vector Search</h3>
+            <table>
+                <tr><td>Operator</td><td><code>&lt;=&gt;</code> (cosine distance)</td></tr>
+                <tr><td>Similarity</td><td><code>1 - (embedding &lt;=&gt; query)</code></td></tr>
+                <tr><td>Threshold</td><td><code>0.55</code> (configurable)</td></tr>
+                <tr><td>Index</td><td>HNSW (m=16, ef=64)</td></tr>
+                <tr><td>Candidates</td><td>20 (cu reranking) sau 4x limit</td></tr>
+            </table>
+        </div>
+        <div class="card">
+            <h3>Full-Text Search</h3>
+            <table>
+                <tr><td>Limba</td><td><code>romanian</code> (stemming nativ)</td></tr>
+                <tr><td>Index</td><td>GIN pe <code>title || content</code></td></tr>
+                <tr><td>Title weight</td><td><code>3x</code> mai mult ca content</td></tr>
+                <tr><td>Operator</td><td><code>@@</code> cu <code>ts_rank_cd</code></td></tr>
+                <tr><td>Query type</td><td>OR (<code>word1 | word2</code>)</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Post-Processing Pipeline</h3>
+        <table>
+            <tr><th>Etapă</th><th>Detalii</th><th>Configurare</th></tr>
+            <tr><td>Deduplicare</td><td>Max chunks per document</td><td><code>3</code></td></tr>
+            <tr><td>Business scoring</td><td>FAQ: +0.08, Recent 30d: +0.05, Upload: +0.03, Title match: +0.04</td><td>Hardcoded</td></tr>
+            <tr><td>LLM Reranking</td><td>GPT-4o-mini judecă relevanța (~$0.003/call)</td><td><code>enabled: true</code></td></tr>
+            <tr><td>Quality Gate</td><td>Dacă top similarity &lt; 0.50 AND RRF &lt; 0.025 &rarr; zero results</td><td>Hardcoded</td></tr>
+        </table>
+    </div>
+</div>
+
+<!-- Section 2: Document Processing -->
+<div class="section" id="s2">
+    <h2 class="section-title"><span class="num">02</span> Document Processing & Chunking</h2>
+    <p class="section-desc">Documente procesate prin semantic paragraph chunking cu token overlap de ~12.5%.</p>
+
+    <div class="grid-2">
+        <div class="card">
+            <h3>Tipuri documente suportate</h3>
+            <table>
+                <tr><th>Tip</th><th>Extracție</th><th>Chunk size</th></tr>
+                <tr><td>PDF</td><td><code>pdftotext</code> (system)</td><td>512 tokens</td></tr>
+                <tr><td>DOCX</td><td>PhpWord (tabele incluse)</td><td>512 tokens</td></tr>
+                <tr><td>CSV</td><td>Header: value mapping</td><td>512 tokens</td></tr>
+                <tr><td>TXT</td><td>Direct</td><td>512 tokens</td></tr>
+                <tr><td>URL</td><td>HTML &rarr; Markdown</td><td>384 tokens</td></tr>
+                <tr><td>Text manual</td><td>Direct (max 100K chars)</td><td>256 tokens</td></tr>
+                <tr><td>FAQ</td><td>Direct</td><td>128 tokens</td></tr>
+                <tr><td>Conector</td><td>WordPress/WooCommerce</td><td>512 tokens</td></tr>
+            </table>
+        </div>
+        <div class="card">
+            <h3>Chunking Algorithm</h3>
+            <p style="margin-bottom: 12px;">Semantic paragraph-aware cu overlap:</p>
+            <table>
+                <tr><td>Split</td><td>Pe <code>\n\s*\n</code> (paragrafe)</td></tr>
+                <tr><td>Overlap</td><td>~12.5% (min 32 tokens)</td></tr>
+                <tr><td>Tokenizer</td><td><code>cl100k_base</code> (tiktoken)</td></tr>
+                <tr><td>Min chunk</td><td>50 chars / 5 words (FAQ: 20/3)</td></tr>
+                <tr><td>Max document</td><td>100,000 tokens</td></tr>
+                <tr><td>Embedding batch</td><td>100 chunks per API call</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Embedding Model</h3>
+        <table>
+            <tr><td>Model</td><td><code>text-embedding-3-small</code></td></tr>
+            <tr><td>Dimensiuni</td><td>1536</td></tr>
+            <tr><td>Cost</td><td>~$0.02 / 1M tokens input</td></tr>
+            <tr><td>Cache embedding</td><td>24 ore</td></tr>
+            <tr><td>Fallback</td><td>Stale cache dacă API fails</td></tr>
+        </table>
+    </div>
+</div>
+
+<!-- Section 3: DB Schema -->
+<div class="section" id="s3">
+    <h2 class="section-title"><span class="num">03</span> Schema DB & Indexare</h2>
+    <p class="section-desc">Tabel unic <code>bot_knowledge</code> pentru documente și chunks, cu pgvector + GIN FTS.</p>
+
+    <div class="card">
+        <h3>bot_knowledge - Coloane principale</h3>
+        <table>
+            <tr><th>Coloană</th><th>Tip</th><th>Scop</th></tr>
+            <tr><td><code>id</code></td><td>BIGINT PK</td><td>Identificator</td></tr>
+            <tr><td><code>bot_id</code></td><td>FK &rarr; bots</td><td>Izolare per bot</td></tr>
+            <tr><td><code>content</code></td><td>TEXT</td><td>Textul chunk-ului</td></tr>
+            <tr><td><code>embedding</code></td><td>vector(1536)</td><td>pgvector embedding</td></tr>
+            <tr><td><code>chunk_index</code></td><td>INT</td><td>Poziție în document (0-based)</td></tr>
+            <tr><td><code>source_type</code></td><td>VARCHAR</td><td>upload, scan, connector, agent, manual, faq</td></tr>
+            <tr><td><code>content_hash</code></td><td>VARCHAR(64)</td><td>SHA-256 deduplicare</td></tr>
+            <tr><td><code>tokens_count</code></td><td>INT</td><td>Token count per chunk</td></tr>
+            <tr><td><code>status</code></td><td>VARCHAR</td><td>pending &rarr; processing &rarr; ready / failed</td></tr>
+        </table>
+    </div>
+
+    <div class="card">
+        <h3>Indexuri</h3>
+        <table>
+            <tr><th>Index</th><th>Tip</th><th>Detalii</th></tr>
+            <tr><td><code>embedding_hnsw_idx</code></td><td><span class="tag tag-green">HNSW</span></td><td>vector_cosine_ops, m=16, ef_construction=64</td></tr>
+            <tr><td><code>fts_gin_idx</code></td><td><span class="tag tag-blue">GIN</span></td><td>to_tsvector('romanian', title || content) WHERE status='ready'</td></tr>
+            <tr><td><code>search_idx</code></td><td>B-tree</td><td>(bot_id, status) WHERE embedding IS NOT NULL</td></tr>
+            <tr><td><code>content_hash</code></td><td>B-tree</td><td>Deduplicare conținut</td></tr>
+            <tr><td><code>group_listing</code></td><td>B-tree</td><td>(bot_id, title, type, source_type, status)</td></tr>
+        </table>
+    </div>
+</div>
+
+<!-- Section 4: Prompt Building -->
+<div class="section" id="s4">
+    <h2 class="section-title"><span class="num">04</span> Prompt Building & Context Injection</h2>
+    <p class="section-desc">Prompt assembler cu 15 layere, budget per canal, și guardrails anti-halucinare.</p>
+
+    <div class="card">
+        <h3>Ordinea straturilor în prompt</h3>
+        <table>
+            <tr><th>#</th><th>Strat</th><th>Prioritate</th></tr>
+            <tr><td>1</td><td>System prompt (bot.system_prompt)</td><td>Bază</td></tr>
+            <tr><td>2</td><td>Conversation Policy (ton, verbozitate, CTA)</td><td>Configurare</td></tr>
+            <tr><td>3</td><td>Produse (carduri vizuale)</td><td><span class="tag tag-green">Cea mai mare</span></td></tr>
+            <tr><td>4</td><td>Knowledge RAG context</td><td><span class="tag tag-blue">Mare</span></td></tr>
+            <tr><td>5</td><td>Context comandă (dacă există)</td><td>Contextual</td></tr>
+            <tr><td>6</td><td>Ultimul produs discutat</td><td>Contextual</td></tr>
+            <tr><td>7</td><td>Reguli comenzi</td><td>Business</td></tr>
+            <tr><td>8</td><td>Instrucțiuni calitate răspuns</td><td>Format</td></tr>
+            <tr><td>9</td><td>Confidence modifier</td><td>Adaptiv</td></tr>
+            <tr><td>10</td><td>Query intelligence</td><td>Adaptiv</td></tr>
+            <tr><td>11</td><td>Strategie conversație</td><td>Adaptiv</td></tr>
+            <tr><td>12</td><td>Frustrare modifier</td><td>Adaptiv</td></tr>
+            <tr><td>13</td><td>Fallback instructions</td><td>Safety</td></tr>
+            <tr><td>14</td><td><strong>Guardrails anti-halucinare</strong></td><td><span class="tag tag-red">ULTIMUL = prioritate maximă LLM</span></td></tr>
+        </table>
+    </div>
+
+    <div class="grid-2">
+        <div class="card">
+            <h3>Context Budget per Canal</h3>
+            <table>
+                <tr><th>Canal</th><th>Token Budget</th><th>Max Chars</th><th>Chunks</th></tr>
+                <tr><td>Chat (text)</td><td><strong>3500</strong> tokens</td><td>8000</td><td>5-8</td></tr>
+                <tr><td>Voice</td><td><strong>1600</strong> tokens</td><td>3500</td><td>4</td></tr>
+            </table>
+            <p style="margin-top: 12px; font-size: 0.8rem; color: #64748b;">Trimming priority: History (lowest) &rarr; Summary &rarr; Knowledge &rarr; Products (highest)</p>
+        </div>
+        <div class="card">
+            <h3>Format context injectat</h3>
+            <div class="code-block"><pre>Informații relevante din baza de cunoștințe:
+
+--- Condiții livrare [manual] (relevance: 92%) ---
+Livrare gratuită pentru comenzi > 100 lei...
+
+--- Garanție produse [faq] (relevance: 87%) ---
+Garanție 2 ani pentru defecte de fabricație...</pre></div>
+        </div>
+    </div>
+</div>
+
+<!-- Section 5: Query Expansion -->
+<div class="section" id="s5">
+    <h2 class="section-title"><span class="num">05</span> Query Expansion & Synonyms</h2>
+    <p class="section-desc">Sistem dual: LLM rewrite (opțional) + dicționar sinonime românești (25+ grupuri).</p>
+
+    <div class="grid-2">
+        <div class="card">
+            <h3>Dicționar sinonime (selectiv)</h3>
+            <table>
+                <tr><th>Cuvânt cheie</th><th>Expansiune</th></tr>
+                <tr><td><code>pret</code></td><td>cost tarif valoare suma</td></tr>
+                <tr><td><code>livrare</code></td><td>transport expediere curier shipping</td></tr>
+                <tr><td><code>retur</code></td><td>returnare schimb inapoi ramburs</td></tr>
+                <tr><td><code>plata</code></td><td>platesc achit card numerar rate factura</td></tr>
+                <tr><td><code>stoc</code></td><td>disponibil disponibilitate exista aveti</td></tr>
+                <tr><td><code>garantie</code></td><td>service reparatie piese</td></tr>
+                <tr><td><code>reducere</code></td><td>oferta promotie discount cupon voucher</td></tr>
+                <tr><td><code>contact</code></td><td>telefon email adresa locatie sediu</td></tr>
+            </table>
+            <p style="margin-top: 12px; font-size: 0.8rem; color: #64748b;">Total: 25+ grupuri. Normalizare diacritice: ă&rarr;a, ș&rarr;s, ț&rarr;t</p>
+        </div>
+        <div class="card">
+            <h3>LLM Query Rewrite</h3>
+            <table>
+                <tr><td>Model</td><td><code>gpt-4o-mini</code></td></tr>
+                <tr><td>Cost</td><td>~$0.0005 per query</td></tr>
+                <tr><td>Max output</td><td>80 tokens / 15 cuvinte</td></tr>
+                <tr><td>Temperatura</td><td>0 (deterministic)</td></tr>
+                <tr><td>Fallback</td><td>Dicționar dacă LLM fails</td></tr>
+            </table>
+            <div class="code-block"><pre>System: "Rescrie query-ul pentru vector + FTS.
+Adaugă sinonime și termeni înrudiți în română."
+
+Input:  "care e pretul"
+Output: "pret cost tarif produs valoare cumpara"</pre></div>
+        </div>
+    </div>
+</div>
+
+<!-- Section 6: Website Scanner -->
+<div class="section" id="s6">
+    <h2 class="section-title"><span class="num">06</span> Website Scanner</h2>
+    <p class="section-desc">Crawler BFS cu respectare robots.txt, protecție SSRF, și rate limiting 1 req/sec.</p>
+
+    <div class="grid-3">
+        <div class="card">
+            <h3>Configurare</h3>
+            <table>
+                <tr><td>Max pages</td><td><strong>200</strong></td></tr>
+                <tr><td>Rate limit</td><td>1 req/sec</td></tr>
+                <tr><td>HTTP timeout</td><td>15 sec</td></tr>
+                <tr><td>Job timeout</td><td>10 min</td></tr>
+                <tr><td>Min content</td><td>100 chars</td></tr>
+                <tr><td>Chunk size</td><td>384 tokens</td></tr>
+            </table>
+        </div>
+        <div class="card">
+            <h3>Content extraction</h3>
+            <p style="font-size: 0.85rem;">Prioritate: <code>&lt;main&gt;</code> &rarr; <code>&lt;article&gt;</code> &rarr; <code>&lt;div.content&gt;</code> &rarr; <code>&lt;body&gt;</code></p>
+            <p style="margin-top: 8px; font-size: 0.85rem;">Remove: script, style, nav, footer, header, aside, comments</p>
+            <p style="margin-top: 8px; font-size: 0.85rem;">Convert: HTML &rarr; Markdown &rarr; Clean text</p>
+        </div>
+        <div class="card">
+            <h3>Protecție SSRF</h3>
+            <p style="font-size: 0.85rem;">Blocked: localhost, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16, ::1, metadata.google.internal</p>
+            <p style="margin-top: 8px; font-size: 0.85rem;">Scheme: doar http/https</p>
+        </div>
+    </div>
+</div>
+
+<!-- Section 7: WP + WC -->
+<div class="section" id="s7">
+    <h2 class="section-title"><span class="num">07</span> WordPress & WooCommerce Connectors</h2>
+    <p class="section-desc">Full sync via WP REST API + WC REST API. Plugin WordPress cu auto-push pe hooks.</p>
+
+    <div class="grid-2">
+        <div class="card">
+            <h3>WordPress</h3>
+            <table>
+                <tr><td>Endpoint</td><td><code>/wp-json/wp/v2/posts</code></td></tr>
+                <tr><td>Per page</td><td>20 items</td></tr>
+                <tr><td>Filter</td><td>status=publish</td></tr>
+                <tr><td>Content</td><td>Strip HTML, decode entities</td></tr>
+                <tr><td>Min length</td><td>50 chars</td></tr>
+                <tr><td>Title prefix</td><td><code>[WP page/post]</code></td></tr>
+            </table>
+        </div>
+        <div class="card">
+            <h3>WooCommerce</h3>
+            <table>
+                <tr><td>Endpoint</td><td><code>/wp-json/wc/v3/products</code></td></tr>
+                <tr><td>Per page</td><td>100 items (WC max)</td></tr>
+                <tr><td>Auth</td><td>Basic Auth (consumer key/secret)</td></tr>
+                <tr><td>Sync type</td><td>Full + stale cleanup</td></tr>
+                <tr><td>Concurrency</td><td>Cache lock 30 min</td></tr>
+                <tr><td>Descriere</td><td>Truncat la 1500 chars</td></tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Section 8: Knowledge Agents -->
+<div class="section" id="s8">
+    <h2 class="section-title"><span class="num">08</span> Knowledge Agents (AI Content Generation)</h2>
+    <p class="section-desc">20 agenți AI pre-configurați în 4 categorii, cu prompt customizabil per bot.</p>
+
+    <div class="grid-2">
+        <div class="card">
+            <h3>Categorii agenți</h3>
+            <table>
+                <tr><th>Categorie</th><th>Count</th><th>Exemple</th></tr>
+                <tr><td><span class="tag tag-green">Generator</span></td><td>8</td><td>FAQ, product-specialist, policy-writer</td></tr>
+                <tr><td><span class="tag tag-blue">Analyzer</span></td><td>4</td><td>gap-analyzer, tone-analyzer, accuracy-checker</td></tr>
+                <tr><td><span class="tag tag-yellow">Researcher</span></td><td>4</td><td>competitor, market-trends, customer-persona</td></tr>
+                <tr><td><span class="tag tag-red">Optimizer</span></td><td>4</td><td>response-templates, escalation, objection-handler</td></tr>
+            </table>
+        </div>
+        <div class="card">
+            <h3>Configurare</h3>
+            <table>
+                <tr><td>Model</td><td>gpt-4o sau gpt-4o-mini</td></tr>
+                <tr><td>Max tokens</td><td>3000-10000 per run</td></tr>
+                <tr><td>Temperatura</td><td>0.1-0.8 per agent</td></tr>
+                <tr><td>Retries</td><td>3 cu backoff [15s, 60s, 180s]</td></tr>
+                <tr><td>Rate limit</td><td>30 calls/min</td></tr>
+                <tr><td>Plan limitat</td><td>10 runs/lună (free plan)</td></tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Section 9: Knowledge Gaps -->
+<div class="section" id="s9">
+    <h2 class="section-title"><span class="num">09</span> Knowledge Gap Detection</h2>
+    <p class="section-desc">Sistem multi-layered: SearchAnalytics + ChatEvents + KnowledgeGapService + BotHealthScore.</p>
+
+    <div class="card">
+        <h3>Pipeline detecție gaps</h3>
+        <div class="flow">
+            <span class="flow-step">Zero-result search</span><span class="flow-arrow">&rarr;</span>
+            <span class="flow-step">SearchAnalytics (results_count=0)</span><span class="flow-arrow">&rarr;</span>
+            <span class="flow-step">Normalizare query</span><span class="flow-arrow">&rarr;</span>
+            <span class="flow-step">Categorizare (9 tipuri)</span><span class="flow-arrow">&rarr;</span>
+            <span class="flow-step">Sugestii acționabile</span>
+        </div>
+    </div>
+
+    <div class="grid-2">
+        <div class="card">
+            <h3>Categorii gap-uri</h3>
+            <table>
+                <tr><td>pricing</td><td>pret, cost, tarif, cat costa</td></tr>
+                <tr><td>shipping</td><td>livrare, transport, curier</td></tr>
+                <tr><td>returns</td><td>retur, schimb, inapoi</td></tr>
+                <tr><td>payment</td><td>plata, card, rate, factura</td></tr>
+                <tr><td>availability</td><td>stoc, disponibil, cand vine</td></tr>
+                <tr><td>product_info</td><td>dimensiune, culoare, material</td></tr>
+                <tr><td>contact</td><td>telefon, email, program</td></tr>
+                <tr><td>warranty</td><td>garantie, service</td></tr>
+                <tr><td>promotions</td><td>reducere, oferta, discount</td></tr>
+            </table>
+        </div>
+        <div class="card">
+            <h3>Bot Health Score (100 puncte)</h3>
+            <table>
+                <tr><th>Component</th><th>Max</th></tr>
+                <tr><td>Knowledge completeness</td><td>25 pts</td></tr>
+                <tr><td>System prompt quality</td><td>20 pts</td></tr>
+                <tr><td>Configuration</td><td>15 pts</td></tr>
+                <tr><td>Recent performance</td><td>25 pts</td></tr>
+                <tr><td>Channel readiness</td><td>15 pts</td></tr>
+            </table>
+            <p style="margin-top: 12px; font-size: 0.8rem; color: #64748b;">Grade: A+ (90+), A (80+), B (70+), C (60+), D (40+), F (&lt;40)</p>
+        </div>
+    </div>
+</div>
+
+<!-- Section 10: Voice vs Text -->
+<div class="section" id="s10">
+    <h2 class="section-title"><span class="num">10</span> Voice vs Text RAG</h2>
+    <p class="section-desc">Agentul vocal folosește context mai mic, cu refresh dinamic la fiecare replică a utilizatorului.</p>
+
+    <div class="card">
+        <table>
+            <tr><th>Aspect</th><th>Chat (text)</th><th>Voice</th></tr>
+            <tr><td>Token budget</td><td><strong>3500</strong></td><td><strong>1600</strong></td></tr>
+            <tr><td>Max context chars</td><td>8000</td><td>3500</td></tr>
+            <tr><td>Chunks default</td><td>5-8</td><td>4 (adaptiv: 8 dacă nu sunt produse)</td></tr>
+            <tr><td>Produse max</td><td>10</td><td>5 + top 10 populare preloaded</td></tr>
+            <tr><td>Context refresh</td><td>Per mesaj</td><td>Per transcripție audio</td></tr>
+            <tr><td>Hallucination filter</td><td>Nu</td><td><span class="tag tag-green">WhisperHallucinationFilter</span></td></tr>
+            <tr><td>Lead extraction</td><td>Regex din text</td><td>Auto din transcript</td></tr>
+            <tr><td>Guardrails</td><td>Standard</td><td>+ "Max 2 propoziții, prețuri în cuvinte"</td></tr>
+            <tr><td>Context injection</td><td>Chat completion messages</td><td><code>session.update</code> (OpenAI Realtime)</td></tr>
+        </table>
+    </div>
+</div>
+
+<!-- Section 11: Caching -->
+<div class="section" id="s11">
+    <h2 class="section-title"><span class="num">11</span> Caching & Performance</h2>
+    <p class="section-desc">Strategie dual-level cu version bumping pentru invalidare instant.</p>
+
+    <div class="card">
+        <table>
+            <tr><th>Cache</th><th>TTL</th><th>Key Pattern</th><th>Invalidare</th></tr>
+            <tr><td>Search results</td><td><strong>5 min</strong></td><td><code>rag_search_{botId}_{version}_{md5}</code></td><td>Version bump</td></tr>
+            <tr><td>Query embeddings</td><td><strong>24 ore</strong></td><td><code>query_embedding_{botId}_{version}_{md5}</code></td><td>Version bump</td></tr>
+            <tr><td>Response cache</td><td><strong>3 min</strong></td><td><code>md5(botId + normalized_query)</code></td><td>TTL auto</td></tr>
+            <tr><td>Knowledge gaps</td><td><strong>30 min</strong></td><td><code>knowledge_gaps_{botId}_{days}</code></td><td>Manual invalidate</td></tr>
+            <tr><td>Bot health score</td><td><strong>1 oră</strong></td><td>Per bot</td><td>TTL auto</td></tr>
+        </table>
+    </div>
+</div>
+
+<!-- Section 12: Recomandări -->
+<div class="section" id="s12">
+    <h2 class="section-title"><span class="num">12</span> Recomandări de Îmbunătățire</h2>
+    <p class="section-desc">Priorități identificate pentru îmbunătățirea sistemului RAG.</p>
+
+    <h3 style="color: #ef4444; margin: 24px 0 16px; font-size: 1.1rem;">Prioritate ridicată</h3>
+
+    <div class="improve improve-high">
+        <h4>1. Upgrade la text-embedding-3-large (3072 dims)</h4>
+        <p>Modelul actual (text-embedding-3-small, 1536 dims) e bun, dar <code>text-embedding-3-large</code> oferă acuratețe semnificativ mai bună, mai ales pentru limba română. Cost: ~$0.13/1M tokens (de la $0.02). Necesită re-embedding al tuturor chunks + migrare coloană vector(3072).</p>
+    </div>
+
+    <div class="improve improve-high">
+        <h4>2. Indexare FTS cu ts_vector stocat (materialized)</h4>
+        <p>Acum <code>to_tsvector('romanian', title || content)</code> se calculează la fiecare query. Adăugarea unei coloane <code>tsv</code> generate + trigger UPDATE ar elimina acest overhead. Impact mare la volum mare de chunks.</p>
+    </div>
+
+    <div class="improve improve-high">
+        <h4>3. Chunk overlap variabil bazat pe conținut</h4>
+        <p>Overlap-ul fix de 12.5% nu e optim. FAQ-urile nu au nevoie de overlap, iar documentele tehnice lungi ar beneficia de 20-25%. Recomandare: overlap adaptiv per <code>source_type</code>.</p>
+    </div>
+
+    <h3 style="color: #eab308; margin: 24px 0 16px; font-size: 1.1rem;">Prioritate medie</h3>
+
+    <div class="improve improve-med">
+        <h4>4. Parent-child chunk retrieval</h4>
+        <p>Când un chunk mic e relevant, ar trebui să aducă și chunk-urile adiacente (parent/sibling) pentru context mai complet. Acum chunk_index e stocat dar nefolosit în search. Implementare: dacă chunk_index > 0, fetch chunk_index - 1 și + 1.</p>
+    </div>
+
+    <div class="improve improve-med">
+        <h4>5. Feedback loop implicit</h4>
+        <p>Nu există un mecanism de a marca un răspuns RAG ca "bun" sau "rău". Adăugarea unui click tracking (thumbs up/down) pe răspunsuri ar permite fine-tuning-ul threshold-urilor și re-scoring-ului. Datele există deja în ChatEvent.</p>
+    </div>
+
+    <div class="improve improve-med">
+        <h4>6. Cross-document context window</h4>
+        <p>Documentele sunt grupate per titlu dar nu sunt ordonate global. Un document cu 3 chunks la index 0,1,2 ar trebui să fie afișat secvențial, nu intercalat cu alte documente. Parțial implementat, dar <code>buildContext()</code> ar beneficia de grupare mai strictă.</p>
+    </div>
+
+    <div class="improve improve-med">
+        <h4>7. Semantic deduplication cross-source</h4>
+        <p>Funcția <code>removeSimilarContent</code> face dedup per query result (80% word overlap), dar nu verifică dacă aceleași informații vin din surse diferite (ex: scanare website + upload manual). Un embeddings-based dedup la ingest ar fi mai robust.</p>
+    </div>
+
+    <h3 style="color: #3b82f6; margin: 24px 0 16px; font-size: 1.1rem;">Prioritate scăzută (nice to have)</h3>
+
+    <div class="improve improve-low">
+        <h4>8. Multi-query RAG (query decomposition)</h4>
+        <p>Întrebări complexe ("Care e diferența de preț între modelul X și Y și cum se livrează fiecare?") ar beneficia de descompunere în sub-queries. Acum o singură query merge la search, care poate rata un aspect.</p>
+    </div>
+
+    <div class="improve improve-low">
+        <h4>9. Hypothetical Document Embedding (HyDE)</h4>
+        <p>În loc să embeddezi query-ul direct, generezi un "răspuns ideal" cu LLM și embeddezi acel răspuns. Crește recall-ul semnificativ pentru întrebări scurte/vagi. Cost: +1 LLM call per search.</p>
+    </div>
+
+    <div class="improve improve-low">
+        <h4>10. Metadata-enriched chunks</h4>
+        <p>Chunks-urile nu au metadata structurată (preț, categorie produs, dată validitate). Adăugarea de metadata la ingest (via LLM extraction) ar permite filtrare mai inteligentă și expirare automată a conținutului vechi.</p>
+    </div>
+
+    <div class="improve improve-low">
+        <h4>11. A/B testing pe parametri RAG</h4>
+        <p>Threshold-ul (0.55), fts_weight (1.5), chunk sizes sunt setate static. Un sistem A/B pe acești parametri, cu tracking de quality metrics, ar permite optimizare data-driven.</p>
+    </div>
+
+    <div class="improve improve-low">
+        <h4>12. HNSW ef_search tuning</h4>
+        <p>Parametrul <code>ef_search</code> (runtime recall vs speed tradeoff) nu e configurat explicit. Default PostgreSQL poate fi suboptimal. Recomandare: <code>SET hnsw.ef_search = 100</code> per session pentru recall mai bun.</p>
+    </div>
+</div>
+
+<!-- Footer -->
+<div style="border-top: 1px solid #334155; padding: 32px 0; margin-top: 48px; text-align: center;">
+    <p style="color: #64748b; font-size: 0.85rem;">Sambla RAG Audit &middot; Generat automat &middot; Aprilie 2026</p>
+    <p style="color: #475569; font-size: 0.75rem; margin-top: 4px;">Analiza bazată pe 10 agenți concurenți peste codebase-ul Sambla voicebot-saas</p>
+</div>
+
+</div>
+</body>
+</html>

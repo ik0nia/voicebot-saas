@@ -246,6 +246,14 @@ class WooCommerceConnectorService
         }
     }
 
+    /**
+     * Format product content for SEMANTIC embedding (knowledge base).
+     *
+     * IMPORTANT: Price, stock, SKU, URLs are NOT included here.
+     * These are transactional fields that change frequently and must be
+     * injected at query time from live structured data (woocommerce_products table).
+     * Including them in embeddings causes stale answers and unnecessary re-embedding.
+     */
     private function formatProductContent(array $product): string
     {
         $parts = [];
@@ -263,22 +271,14 @@ class WooCommerceConnectorService
             }
             $parts[] = 'Descriere: ' . $desc;
         }
-        if (!empty($product['price'])) {
-            $currency = $product['currency'] ?? '';
-            $parts[] = 'Preț: ' . $product['price'] . ' ' . $currency;
 
-            if (!empty($product['regular_price']) && !empty($product['sale_price'])) {
-                $parts[] = 'Preț normal: ' . $product['regular_price'] . ' ' . $currency;
-                $parts[] = 'Preț redus: ' . $product['sale_price'] . ' ' . $currency;
-            }
-        }
-        if (!empty($product['sku'])) {
-            $parts[] = 'SKU: ' . $product['sku'];
-        }
+        // Categories are semantic identity — include them
         if (!empty($product['categories'])) {
             $cats = array_map(fn($c) => $c['name'] ?? '', $product['categories']);
             $parts[] = 'Categorii: ' . implode(', ', array_filter($cats));
         }
+
+        // Attributes are semantic identity — include them (brand, color, material, etc.)
         if (!empty($product['attributes'])) {
             foreach ($product['attributes'] as $attr) {
                 $options = implode(', ', $attr['options'] ?? []);
@@ -287,12 +287,9 @@ class WooCommerceConnectorService
                 }
             }
         }
-        if (isset($product['stock_status'])) {
-            $parts[] = 'Stoc: ' . ($product['stock_status'] === 'instock' ? 'În stoc' : 'Indisponibil');
-        }
-        if (!empty($product['permalink'])) {
-            $parts[] = 'Link: ' . $product['permalink'];
-        }
+
+        // DO NOT include: price, sale_price, stock_status, sku, permalink
+        // These are live/transactional data injected at query time from woocommerce_products table
 
         return implode("\n", $parts);
     }

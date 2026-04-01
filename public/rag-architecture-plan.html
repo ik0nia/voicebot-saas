@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sambla RAG Architecture Plan - Enterprise Implementation</title>
+<link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0f172a;color:#cbd5e1;line-height:1.7;font-size:15px}
+.c{max-width:1100px;margin:0 auto;padding:0 24px}
+h1{font-size:2.2rem;font-weight:800;color:#fff;margin-bottom:8px}
+h1 span{background:linear-gradient(135deg,#ef4444,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+h2{font-size:1.6rem;font-weight:700;color:#fff;margin:48px 0 8px;padding-top:24px;border-top:1px solid #1e293b}
+h2 .n{background:#991b1b;color:#fff;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:10px;font-size:.85rem;margin-right:10px;flex-shrink:0}
+h3{font-size:1.15rem;font-weight:700;color:#f1f5f9;margin:24px 0 10px}
+h4{font-size:1rem;font-weight:700;color:#e2e8f0;margin:16px 0 6px}
+p{margin-bottom:12px;color:#94a3b8}
+.sub{color:#64748b;font-size:.9rem;margin-bottom:32px}
+.card{background:#1e293b;border:1px solid #334155;border-radius:14px;padding:20px;margin:12px 0}
+table{width:100%;border-collapse:collapse;font-size:.82rem;margin:8px 0}
+th{text-align:left;padding:10px 12px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.5px;font-size:.7rem;border-bottom:1px solid #334155;background:#0f172a}
+td{padding:10px 12px;border-bottom:1px solid #1e293b}
+tr:hover td{background:rgba(30,41,59,.5)}
+code{background:#0f172a;border:1px solid #334155;border-radius:5px;padding:1px 6px;font-size:.8rem;color:#f97316}
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.g3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.tag{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.tg{background:rgba(34,197,94,.1);color:#22c55e;border:1px solid rgba(34,197,94,.2)}
+.ty{background:rgba(234,179,8,.1);color:#eab308;border:1px solid rgba(234,179,8,.2)}
+.tr{background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.2)}
+.tb{background:rgba(59,130,246,.1);color:#3b82f6;border:1px solid rgba(59,130,246,.2)}
+.box{border-left:3px solid;padding:12px 16px;margin:12px 0;background:#1e293b;border-radius:0 10px 10px 0}
+.box-g{border-color:#22c55e}.box-y{border-color:#eab308}.box-r{border-color:#ef4444}.box-b{border-color:#3b82f6}
+.box strong{color:#fff}
+.now{color:#22c55e;font-weight:700}.next{color:#eab308;font-weight:700}.later{color:#64748b;font-weight:700}
+.hdr{background:linear-gradient(135deg,#0f172a,#1e293b);border-bottom:1px solid #334155;padding:48px 0 36px}
+.pre{background:#0f172a;border:1px solid #334155;border-radius:10px;padding:16px;overflow-x:auto;margin:10px 0;font-size:.8rem;color:#94a3b8;font-family:monospace;white-space:pre-wrap}
+ul{margin:8px 0 12px 20px}
+li{margin:4px 0;color:#94a3b8}
+li strong{color:#e2e8f0}
+.verdict{background:#991b1b22;border:1px solid #991b1b44;border-radius:10px;padding:16px;margin:16px 0}
+.verdict strong{color:#fca5a5}
+@media(max-width:768px){.g2,.g3{grid-template-columns:1fr}h1{font-size:1.6rem}h2{font-size:1.3rem}}
+</style>
+</head>
+<body>
+<div class="hdr"><div class="c">
+<h1>Sambla RAG <span>Architecture Plan</span></h1>
+<p class="sub">Enterprise Implementation Plan &middot; Cost Analysis &middot; Multilingual Strategy &middot; Aprilie 2026</p>
+<div class="g3" style="margin-top:20px">
+<div class="card" style="text-align:center"><div style="color:#64748b;font-size:.7rem;text-transform:uppercase;letter-spacing:1px">Document</div><div style="color:#fff;font-size:1.3rem;font-weight:800">9 Parts</div></div>
+<div class="card" style="text-align:center"><div style="color:#64748b;font-size:.7rem;text-transform:uppercase;letter-spacing:1px">Scope</div><div style="color:#fff;font-size:1.3rem;font-weight:800">Full RAG Redesign</div></div>
+<div class="card" style="text-align:center"><div style="color:#64748b;font-size:.7rem;text-transform:uppercase;letter-spacing:1px">Approach</div><div style="color:#fff;font-size:1.3rem;font-weight:800">Phased Rollout</div></div>
+</div>
+</div></div>
+
+<div class="c" style="padding-top:32px">
+
+<!-- ============================================================ -->
+<!-- PART 1: COST IMPACT ANALYSIS -->
+<!-- ============================================================ -->
+
+<h2 id="p1"><span class="n">P1</span> Cost Impact Analysis</h2>
+<p>All estimates assume: ~1,000 messages/month current volume, ~5 RAG searches per message average, 60-70% cache hit rate on search results, average query length ~30 tokens, average chunk ~300 tokens.</p>
+
+<h3>Assumptions &amp; Baseline Pricing (April 2026)</h3>
+<div class="card">
+<table>
+<tr><th>Resource</th><th>Model / Service</th><th>Cost</th></tr>
+<tr><td>Query embedding</td><td>text-embedding-3-small</td><td>$0.02 / 1M tokens</td></tr>
+<tr><td>Query embedding (large)</td><td>text-embedding-3-large</td><td>$0.13 / 1M tokens</td></tr>
+<tr><td>LLM query rewrite</td><td>gpt-4o-mini</td><td>$0.15 in / $0.60 out per 1M tokens</td></tr>
+<tr><td>LLM reranking</td><td>gpt-4o-mini</td><td>$0.15 in / $0.60 out per 1M tokens</td></tr>
+<tr><td>Chat completion (fast)</td><td>gpt-4o-mini</td><td>$0.15 in / $0.60 out per 1M tokens</td></tr>
+<tr><td>Chat completion (smart)</td><td>claude-sonnet-4-5</td><td>$3.00 in / $15.00 out per 1M tokens</td></tr>
+<tr><td>Ingestion embedding</td><td>text-embedding-3-small</td><td>$0.02 / 1M tokens (batch of 100)</td></tr>
+<tr><td>pgvector / PostgreSQL</td><td>Self-hosted</td><td>$0 marginal</td></tr>
+<tr><td>Redis cache</td><td>Self-hosted</td><td>$0 marginal</td></tr>
+</table>
+</div>
+
+<h3>Current System: Cost per 1,000 Messages</h3>
+<div class="card">
+<table>
+<tr><th>Component</th><th>Calls per msg</th><th>Tokens per call</th><th>Cost per call</th><th>Cache hit %</th><th>Effective / msg</th><th>Per 1K msgs</th></tr>
+<tr><td>Query embedding</td><td>1</td><td>~30 in</td><td>$0.0000006</td><td>70%</td><td>$0.00000018</td><td><strong>$0.0002</strong></td></tr>
+<tr><td>LLM query rewrite</td><td>1</td><td>~120 in + 60 out</td><td>$0.000054</td><td>70%</td><td>$0.000016</td><td><strong>$0.016</strong></td></tr>
+<tr><td>LLM reranking</td><td>0.5 (not always)</td><td>~800 in + 80 out</td><td>$0.000168</td><td>70%</td><td>$0.000025</td><td><strong>$0.025</strong></td></tr>
+<tr><td>pgvector search</td><td>1</td><td>n/a</td><td>$0 (self-hosted)</td><td>70%</td><td>$0</td><td><strong>$0</strong></td></tr>
+<tr><td>Chat completion (fast, 80%)</td><td>0.8</td><td>~2500 in + 300 out</td><td>$0.000555</td><td>0%</td><td>$0.000444</td><td><strong>$0.444</strong></td></tr>
+<tr><td>Chat completion (smart, 20%)</td><td>0.2</td><td>~2500 in + 300 out</td><td>$0.012</td><td>0%</td><td>$0.0024</td><td><strong>$2.40</strong></td></tr>
+<tr style="background:#1e293b"><td colspan="6" style="text-align:right;font-weight:700;color:#fff">Total per 1,000 messages</td><td style="font-weight:800;color:#22c55e;font-size:1.1rem"><strong>~$2.89</strong></td></tr>
+</table>
+</div>
+
+<div class="box box-b">
+<strong>Key insight:</strong> RAG search costs (embedding + rewrite + rerank) represent only ~$0.04 per 1,000 messages (~1.4% of total). The dominant cost is chat completion, especially the 20% of queries routed to Claude Sonnet (~$2.40/1K). Any RAG improvement that reduces smart-model routing by even 5% saves more than any embedding upgrade.
+</div>
+
+<h3>Cost Impact of Each Recommendation</h3>
+
+<div class="card">
+<h4>1. Upgrade to text-embedding-3-large</h4>
+<table>
+<tr><th>Metric</th><th>Current (small)</th><th>After (large)</th><th>Delta</th></tr>
+<tr><td>One-time re-embedding (10K chunks)</td><td>n/a</td><td>~$0.26</td><td>+$0.26 once</td></tr>
+<tr><td>Query embedding per 1K msgs</td><td>$0.0002</td><td>$0.0013</td><td>+$0.0011</td></tr>
+<tr><td>Storage (pgvector)</td><td>1536 dims</td><td>3072 dims</td><td>~2x disk for vectors</td></tr>
+<tr><td>HNSW index memory</td><td>Baseline</td><td>~2x</td><td>Larger but manageable</td></tr>
+<tr><td>Quality improvement</td><td>Baseline</td><td>+5-12% recall</td><td>Notable for RO</td></tr>
+</table>
+<div class="verdict"><strong>Verdict:</strong> Cost increase is negligible ($0.001/1K msgs). The real cost is migration effort (~4-6 hours) and re-embedding downtime. Quality gain is meaningful for Romanian where the small model has known weaknesses with diacritics and regional terms. <span class="next">NEXT</span> - implement when you have quality data showing retrieval misses.</div>
+</div>
+
+<div class="card">
+<h4>2. Materialized FTS (stored tsvector column)</h4>
+<table>
+<tr><td>One-time migration</td><td>~2 hours code + migration</td></tr>
+<tr><td>Ingestion cost</td><td>+0 (trigger-based, no API)</td></tr>
+<tr><td>Query cost</td><td>+0 (eliminates runtime to_tsvector)</td></tr>
+<tr><td>Latency impact</td><td>-5-15ms per FTS query</td></tr>
+<tr><td>Storage</td><td>+~20% on bot_knowledge table</td></tr>
+</table>
+<div class="verdict"><strong>Verdict:</strong> Zero recurring cost, small latency win. <span class="now">NOW</span> - pure improvement, no risk.</div>
+</div>
+
+<div class="card">
+<h4>3. Parent-child chunk retrieval</h4>
+<table>
+<tr><td>One-time</td><td>~4 hours code</td></tr>
+<tr><td>Ingestion cost</td><td>+0</td></tr>
+<tr><td>Query cost</td><td>+1-2 extra DB reads per search (free, self-hosted)</td></tr>
+<tr><td>Context size</td><td>+10-30% more context tokens &rarr; slightly higher LLM cost</td></tr>
+<tr><td>Quality</td><td>Significant improvement for multi-chunk documents</td></tr>
+</table>
+<div class="verdict"><strong>Verdict:</strong> Minimal cost increase (~$0.05/1K msgs from larger context). Major quality improvement for documents like policies, guides. <span class="now">NOW</span></div>
+</div>
+
+<div class="card">
+<h4>4. Metadata-enriched chunks (LLM extraction at ingest)</h4>
+<table>
+<tr><td>One-time</td><td>~6-8 hours code</td></tr>
+<tr><td>Ingestion cost</td><td>+1 LLM call per chunk (~$0.0001/chunk). For 10K chunks: $1 total</td></tr>
+<tr><td>Query cost</td><td>+0 (metadata used for filtering only)</td></tr>
+<tr><td>Quality</td><td>Better filtering, expiration, category routing</td></tr>
+</table>
+<div class="verdict"><strong>Verdict:</strong> Very cheap ingestion cost. Worth it for tenants with 500+ chunks. <span class="next">NEXT</span></div>
+</div>
+
+<div class="card">
+<h4>5. Reducing LLM reranking usage</h4>
+<table>
+<tr><td>Change</td><td>Only rerank when top vector score is in "uncertain zone" (0.55-0.75)</td></tr>
+<tr><td>Current cost</td><td>~$0.025 per 1K msgs (reranking ~50% of searches)</td></tr>
+<tr><td>After</td><td>~$0.008 per 1K msgs (reranking ~15% of searches)</td></tr>
+<tr><td>Quality</td><td>Negligible loss (high-confidence results don't need reranking)</td></tr>
+</table>
+<div class="verdict"><strong>Verdict:</strong> Saves ~$0.017/1K msgs. <span class="now">NOW</span> - simple config change.</div>
+</div>
+
+<div class="card">
+<h4>6. HyDE (Hypothetical Document Embedding)</h4>
+<table>
+<tr><td>Query cost</td><td>+1 LLM call per search (~$0.0003). Per 1K msgs: +$0.09</td></tr>
+<tr><td>Quality</td><td>+10-20% recall for vague queries</td></tr>
+<tr><td>Latency</td><td>+200-400ms per search</td></tr>
+</table>
+<div class="verdict"><strong>Verdict:</strong> Moderate cost increase, significant latency hit. <span class="later">LATER</span> - only if short/vague queries are a proven problem.</div>
+</div>
+
+<h3>Cost Scenarios Summary</h3>
+<div class="card">
+<table>
+<tr><th>Scenario</th><th>Per 1K messages</th><th>Delta vs Current</th></tr>
+<tr><td><strong>Current system</strong></td><td><strong>~$2.89</strong></td><td>baseline</td></tr>
+<tr><td>+ Materialized FTS + ef_search tuning</td><td>~$2.89</td><td>$0 (latency-only gain)</td></tr>
+<tr><td>+ Conditional reranking (15% instead of 50%)</td><td>~$2.87</td><td>-$0.02</td></tr>
+<tr><td>+ Parent-child retrieval</td><td>~$2.94</td><td>+$0.05 (more context)</td></tr>
+<tr><td>+ Smart model routing improvement (15% smart &rarr; Claude)</td><td>~$2.29</td><td><strong>-$0.60</strong></td></tr>
+<tr><td>+ Upgrade to embedding-3-large</td><td>~$2.30</td><td>+$0.001</td></tr>
+<tr><td>+ HyDE</td><td>~$2.39</td><td>+$0.09</td></tr>
+<tr style="background:#0f172a"><td><strong>Best realistic scenario (no HyDE)</strong></td><td style="color:#22c55e;font-weight:800">~$2.29</td><td style="color:#22c55e;font-weight:700">-$0.60 (-21%)</td></tr>
+<tr style="background:#0f172a"><td><strong>Worst case (all features + HyDE)</strong></td><td style="color:#eab308;font-weight:800">~$2.44</td><td style="color:#eab308">-$0.45 (-16%)</td></tr>
+</table>
+</div>
+
+<div class="box box-g">
+<strong>Bottom line:</strong> The single biggest cost lever is reducing smart-model routing (Claude Sonnet) from 20% to 15% through better RAG quality. If better retrieval gives the fast model (gpt-4o-mini) enough context to handle 5% more queries, you save $0.60/1K messages. All RAG infrastructure improvements combined cost less than $0.10/1K extra. The ROI is clear: better RAG quality &rarr; more fast-model routing &rarr; lower total cost.
+</div>
+
+<!-- ============================================================ -->
+<!-- PART 2: MULTILINGUAL STRATEGY -->
+<!-- ============================================================ -->
+
+<h2 id="p2"><span class="n">P2</span> Multilingual / English Strategy</h2>
+
+<h3>Option Analysis</h3>
+<div class="card">
+<table>
+<tr><th>Criterion</th><th>A: Single shared</th><th>B: Separate pipelines</th><th>C: Hybrid (recommended)</th></tr>
+<tr><td>Relevance quality</td><td class="ty">Medium - Romanian FTS hurts English queries</td><td class="tg">High - each language optimized</td><td class="tg">High - best of both</td></tr>
+<tr><td>Operational complexity</td><td class="tg">Low - one pipeline</td><td class="tr">High - duplicate infra</td><td class="ty">Medium - shared vector, split FTS</td></tr>
+<tr><td>Ingestion complexity</td><td class="tg">Low</td><td class="tr">High - route to correct pipeline</td><td class="ty">Medium - detect language at ingest</td></tr>
+<tr><td>Tenant isolation</td><td class="tg">Native (bot_id filter)</td><td class="tg">Native</td><td class="tg">Native</td></tr>
+<tr><td>Scaling</td><td class="tg">Simple</td><td class="tr">N indexes per language</td><td class="tg">One vector index, N FTS configs</td></tr>
+<tr><td>Cost</td><td class="tg">Lowest</td><td class="tr">Highest (duplicate embeddings)</td><td class="tg">Same as A for vectors</td></tr>
+<tr><td>Maintainability</td><td class="tg">Easy</td><td class="tr">Hard</td><td class="ty">Moderate</td></tr>
+</table>
+</div>
+
+<h3>Final Recommendation: Option C (Hybrid)</h3>
+
+<div class="box box-g">
+<strong>Architecture:</strong>
+<ul>
+<li><strong>Vector search layer: SHARED.</strong> OpenAI embeddings are multilingual by design. text-embedding-3-small/large handles Romanian and English equally well at the vector level. One HNSW index, one embedding model, one search query. No duplication needed.</li>
+<li><strong>FTS layer: LANGUAGE-SPECIFIC.</strong> PostgreSQL FTS configs differ by language (stemming, stopwords). Store a <code>language</code> column on bot_knowledge. Use <code>to_tsvector(language, text)</code> dynamically. Create partial GIN indexes per language for tenants with significant volume.</li>
+<li><strong>Query expansion: LANGUAGE-SPECIFIC.</strong> Synonym dictionaries per language. Language detected from bot.language setting (not runtime detection for known bots).</li>
+<li><strong>Caching: LANGUAGE-AWARE keys.</strong> Include language in cache keys to prevent cross-language cache pollution.</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>Specific multilingual concerns</h4>
+<table>
+<tr><th>Concern</th><th>Solution</th></tr>
+<tr><td>Romanian FTS vs English FTS</td><td>Use bot's <code>language</code> field to select FTS config. <code>to_tsvector($lang, text)</code>. PostgreSQL has built-in <code>romanian</code> and <code>english</code> configs with correct stemming.</td></tr>
+<tr><td>Synonyms dictionary per language</td><td>Structure config as <code>knowledge.synonyms.ro</code> and <code>knowledge.synonyms.en</code>. Load based on bot language.</td></tr>
+<tr><td>Query expansion per language</td><td>LLM rewrite prompt includes language instruction. Dictionary lookup uses language-specific map.</td></tr>
+<tr><td>Mixed-language content</td><td>Detect at chunk level during ingestion. Store <code>content_language</code> on each chunk. Vector search handles mixed content naturally; FTS uses detected language or falls back to <code>simple</code> config.</td></tr>
+<tr><td>Product titles in different languages</td><td>WooCommerce content comes in the store's language. Store as-is. Vector embeddings handle cross-language similarity. FTS only matches same-language queries.</td></tr>
+<tr><td>Bot UI language differs from content language</td><td>Vector search bridges this gap (semantic similarity is cross-lingual). FTS may miss, but that's acceptable since vector search is the primary retrieval method. RRF scoring naturally handles the imbalance.</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h4>Implementation: what changes</h4>
+<table>
+<tr><th>File / Component</th><th>Change</th><th>Effort</th></tr>
+<tr><td><code>bot_knowledge</code> table</td><td>Add <code>content_language VARCHAR(5) DEFAULT 'ro'</code></td><td>Migration</td></tr>
+<tr><td><code>KnowledgeSearchService</code></td><td>Pass bot language to FTS queries: <code>to_tsvector($lang, ...)</code></td><td>~2 hours</td></tr>
+<tr><td><code>config/knowledge.php</code></td><td>Restructure synonyms as <code>synonyms.ro</code>, <code>synonyms.en</code></td><td>~1 hour</td></tr>
+<tr><td><code>expandQuery()</code></td><td>Load language-specific synonyms</td><td>~1 hour</td></tr>
+<tr><td>FTS GIN index</td><td>For now, keep Romanian GIN. Add English GIN when first English tenant appears.</td><td>Migration</td></tr>
+<tr><td>Cache keys</td><td>Include <code>$botLanguage</code> in all cache key patterns</td><td>~30 min</td></tr>
+<tr><td><code>ProcessKnowledgeDocument</code></td><td>Detect content language at ingest (simple: use bot.language. Advanced: use langdetect)</td><td>~1 hour</td></tr>
+</table>
+</div>
+
+<div class="verdict"><strong>Cost impact of multilingual:</strong> Zero additional API cost. Vector embeddings are already multilingual. FTS config switching is free. Only engineering effort (~6-8 hours total). No separate indexes, no duplicate embeddings, no additional infrastructure.</div>
+
+<!-- ============================================================ -->
+<!-- PART 3: IMPLEMENTATION ROADMAP -->
+<!-- ============================================================ -->
+
+<h2 id="p3"><span class="n">P3</span> Implementation Roadmap</h2>
+
+<div class="card">
+<table>
+<tr><th>Priority</th><th>Recommendation</th><th>ROI</th><th>Risk</th><th>Effort</th><th>When</th></tr>
+<tr><td><span class="tag tg">1</span></td><td>Materialized tsvector column + trigger</td><td>High (latency)</td><td>None</td><td>2h</td><td class="now">NOW</td></tr>
+<tr><td><span class="tag tg">2</span></td><td>ef_search = 100 per session</td><td>High (recall)</td><td>None</td><td>15min</td><td class="now">NOW</td></tr>
+<tr><td><span class="tag tg">3</span></td><td>Conditional reranking (only uncertain zone)</td><td>Medium (cost)</td><td>None</td><td>1h</td><td class="now">NOW</td></tr>
+<tr><td><span class="tag tg">4</span></td><td>Parent-child chunk retrieval</td><td>High (quality)</td><td>Low</td><td>4h</td><td class="now">NOW</td></tr>
+<tr><td><span class="tag tg">5</span></td><td>Language-aware FTS + synonyms</td><td>High (EN support)</td><td>Low</td><td>6h</td><td class="now">NOW</td></tr>
+<tr><td><span class="tag ty">6</span></td><td>Variable chunk overlap per source_type</td><td>Medium</td><td>Low</td><td>2h</td><td class="next">NEXT</td></tr>
+<tr><td><span class="tag ty">7</span></td><td>Semantic deduplication at ingest</td><td>Medium</td><td>Low</td><td>4h</td><td class="next">NEXT</td></tr>
+<tr><td><span class="tag ty">8</span></td><td>Metadata-enriched chunks (LLM extraction)</td><td>Medium</td><td>Medium</td><td>8h</td><td class="next">NEXT</td></tr>
+<tr><td><span class="tag ty">9</span></td><td>Products as first-class retrieval objects</td><td>High (e-comm)</td><td>Medium</td><td>12h</td><td class="next">NEXT</td></tr>
+<tr><td><span class="tag ty">10</span></td><td>Feedback loop (thumbs up/down)</td><td>High (long-term)</td><td>Low</td><td>6h</td><td class="next">NEXT</td></tr>
+<tr><td><span class="tag tb">11</span></td><td>Upgrade to text-embedding-3-large</td><td>Medium</td><td>Medium</td><td>6h</td><td class="later">LATER</td></tr>
+<tr><td><span class="tag tb">12</span></td><td>A/B testing on RAG thresholds</td><td>Medium</td><td>Low</td><td>8h</td><td class="later">LATER</td></tr>
+<tr><td><span class="tag tb">13</span></td><td>HyDE (hypothetical doc embedding)</td><td>Medium</td><td>Medium</td><td>4h</td><td class="later">LATER</td></tr>
+<tr><td><span class="tag tb">14</span></td><td>Multi-query decomposition</td><td>Low</td><td>Medium</td><td>6h</td><td class="later">LATER</td></tr>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<!-- PART 4: PRODUCTS AS FIRST-CLASS RETRIEVAL OBJECTS -->
+<!-- ============================================================ -->
+
+<h2 id="p4"><span class="n">P4</span> Products as First-Class Retrieval Objects</h2>
+<p>WooCommerce products are NOT just catalog records. They are semantic knowledge that must support exact lookup, recommendations, comparisons, suitability questions, and attribute filtering.</p>
+
+<h3>Product Field Strategy</h3>
+<div class="card">
+<table>
+<tr><th>Field</th><th>Embedded (semantic)?</th><th>Structured (filter)?</th><th>Notes</th></tr>
+<tr><td>Name / Title</td><td><span class="tag tg">Yes</span></td><td><span class="tag tg">Yes</span></td><td>Primary identifier. Weighted 3x in FTS.</td></tr>
+<tr><td>Short description</td><td><span class="tag tg">Yes</span></td><td>No</td><td>High-value semantic content.</td></tr>
+<tr><td>Full description</td><td><span class="tag tg">Yes (truncated 1500 chars)</span></td><td>No</td><td>Truncate to avoid noise. Strip HTML.</td></tr>
+<tr><td>Categories</td><td><span class="tag tg">Yes (as text)</span></td><td><span class="tag tg">Yes</span></td><td>Include full path: "Electronics > Laptops > Gaming"</td></tr>
+<tr><td>Attributes (brand, color, material, size)</td><td><span class="tag tg">Yes (as "key: value" pairs)</span></td><td><span class="tag tg">Yes</span></td><td>Normalize: "Brand: Samsung, Culoare: Negru"</td></tr>
+<tr><td>Price</td><td>No</td><td><span class="tag tg">Yes</span></td><td><strong>NEVER embed price.</strong> Changes too frequently. Inject at query time from live data.</td></tr>
+<tr><td>Sale price</td><td>No</td><td><span class="tag tg">Yes</span></td><td>Same. Live data only.</td></tr>
+<tr><td>Stock status</td><td>No</td><td><span class="tag tg">Yes</span></td><td><strong>NEVER embed stock.</strong> Check at query time. Optionally filter out OOS from results.</td></tr>
+<tr><td>SKU</td><td>No</td><td><span class="tag tg">Yes</span></td><td>Exact match only.</td></tr>
+<tr><td>Images</td><td>No</td><td><span class="tag tg">Yes (URLs)</span></td><td>For display in chat cards.</td></tr>
+<tr><td>Permalink</td><td>No</td><td><span class="tag tg">Yes</span></td><td>For "View product" links.</td></tr>
+</table>
+</div>
+
+<h3>Embedding Template for Products</h3>
+<div class="pre">Produs: {name}
+Categorie: {category_path}
+{short_description}
+{description_truncated_1500}
+{foreach attribute: "{attr_name}: {attr_values}"}
+
+// DO NOT include: price, stock, SKU, URLs
+// These are injected from structured data at query time</div>
+
+<h3>Product Retrieval Modes</h3>
+<div class="card">
+<table>
+<tr><th>Mode</th><th>Method</th><th>Example query</th></tr>
+<tr><td>Exact lookup</td><td>Structured: SKU match, name match (trigram)</td><td>"Arată-mi produsul X" / "SKU ABC123"</td></tr>
+<tr><td>Category browsing</td><td>Structured: filter by category_id</td><td>"Ce laptopuri aveți?"</td></tr>
+<tr><td>Attribute filtering</td><td>Structured: WHERE attribute = value</td><td>"Tricouri roșii mărimea L"</td></tr>
+<tr><td>Semantic recommendation</td><td>Vector search on product embedding</td><td>"Ceva pentru cadou de Crăciun"</td></tr>
+<tr><td>Comparison</td><td>Vector search + structured data side-by-side</td><td>"Diferența între X și Y"</td></tr>
+<tr><td>Suitability</td><td>Vector search + attribute filtering</td><td>"Ce parfum e bun pentru birou?"</td></tr>
+</table>
+</div>
+
+<div class="box box-y">
+<strong>Critical design rule:</strong> Price and stock must NEVER be part of the embedding. They change frequently and would require constant re-embedding. Instead, inject live price/stock data into the LLM context AFTER retrieval, from the structured <code>woocommerce_products</code> table. The embedding captures semantic identity; the structured data provides fresh transactional facts.
+</div>
+
+<h3>Avoiding Noisy / Duplicate Product Content</h3>
+<div class="card">
+<ul>
+<li><strong>HTML stripping:</strong> Already implemented. Good.</li>
+<li><strong>Description truncation:</strong> 1500 chars max. Prevents SEO-stuffed descriptions from polluting embeddings.</li>
+<li><strong>Duplicate detection:</strong> Use <code>content_hash</code> (SHA-256) at ingest. If product content hasn't changed, skip re-embedding.</li>
+<li><strong>Category dedup:</strong> A product in 3 categories should NOT create 3 knowledge entries. One entry with all categories concatenated.</li>
+<li><strong>Variant handling:</strong> WooCommerce variable products should embed the parent only. Variations stored as structured attributes. Prevents 50 near-identical embeddings for color variants.</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<!-- PART 5: RETRIEVAL ARCHITECTURE -->
+<!-- ============================================================ -->
+
+<h2 id="p5"><span class="n">P5</span> Retrieval Architecture Redesign</h2>
+
+<h3>Layered Architecture</h3>
+<div class="pre">
+User Message
+    |
+    v
+[IntentOrchestratorService] -- detects: greeting, product_search, knowledge_query, order_lookup, etc.
+    |
+    v
+[RetrievalRouter] -- decides WHICH retrieval paths to activate
+    |
+    +---> [StructuredProductRetrieval]   -- exact, category, attribute filters (SQL)
+    +---> [SemanticProductRetrieval]     -- vector search on product embeddings
+    +---> [GeneralKnowledgeRetrieval]    -- vector + FTS on knowledge chunks
+    +---> [OrderLookupService]           -- WooCommerce API
+    |
+    v
+[ContextAssembler] -- merges results, applies budget, dedup, priority
+    |
+    v
+[PromptBuilder] -- layers: system + policy + context + guardrails
+    |
+    v
+[ChatCompletionService] -- LLM call with retry/fallback
+</div>
+
+<h3>Retrieval Router Decision Matrix</h3>
+<div class="card">
+<table>
+<tr><th>Intent</th><th>Structured Product</th><th>Semantic Product</th><th>Knowledge RAG</th><th>Order</th></tr>
+<tr><td>Greeting / Thanks</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+<tr><td>Product search (specific)</td><td><span class="tag tg">Primary</span></td><td><span class="tag ty">Fallback</span></td><td>-</td><td>-</td></tr>
+<tr><td>Product recommendation</td><td>-</td><td><span class="tag tg">Primary</span></td><td><span class="tag ty">Supplement</span></td><td>-</td></tr>
+<tr><td>Category browsing</td><td><span class="tag tg">Primary</span></td><td>-</td><td>-</td><td>-</td></tr>
+<tr><td>Product comparison</td><td><span class="tag tg">Primary</span></td><td><span class="tag tg">Primary</span></td><td>-</td><td>-</td></tr>
+<tr><td>Knowledge question</td><td>-</td><td>-</td><td><span class="tag tg">Primary</span></td><td>-</td></tr>
+<tr><td>Mixed (product + knowledge)</td><td>-</td><td><span class="tag tg">Yes</span></td><td><span class="tag tg">Yes</span></td><td>-</td></tr>
+<tr><td>Order status</td><td>-</td><td>-</td><td>-</td><td><span class="tag tg">Primary</span></td></tr>
+<tr><td>Suitability query</td><td><span class="tag ty">Filter</span></td><td><span class="tag tg">Primary</span></td><td><span class="tag ty">Supplement</span></td><td>-</td></tr>
+</table>
+</div>
+
+<h3>When RAG is Skipped</h3>
+<div class="card">
+<ul>
+<li><strong>Greeting / thanks / farewell</strong> - no retrieval needed, respond directly</li>
+<li><strong>Order lookup</strong> - structured API call, not RAG</li>
+<li><strong>Handoff request</strong> - transfer to human, no retrieval</li>
+<li><strong>Simple followup</strong> (&lt;8 words + history has context) - use conversation context, skip new search</li>
+<li><strong>Cache hit on identical query</strong> - return cached results</li>
+</ul>
+</div>
+
+<h3>Context Assembly Priority</h3>
+<div class="card">
+<table>
+<tr><th>Priority</th><th>Source</th><th>Budget (chat)</th><th>Budget (voice)</th></tr>
+<tr><td>1 (highest)</td><td>Order context (if exists)</td><td>500 tokens</td><td>300 tokens</td></tr>
+<tr><td>2</td><td>Product results (if exists)</td><td>1200 tokens</td><td>600 tokens</td></tr>
+<tr><td>3</td><td>Knowledge RAG</td><td>1500 tokens</td><td>500 tokens</td></tr>
+<tr><td>4 (lowest)</td><td>Conversation summary</td><td>300 tokens</td><td>200 tokens</td></tr>
+<tr><td>-</td><td><strong>Total budget</strong></td><td><strong>3500 tokens</strong></td><td><strong>1600 tokens</strong></td></tr>
+</table>
+</div>
+
+<h3>Caching Strategy</h3>
+<div class="card">
+<table>
+<tr><th>Cache Layer</th><th>Key Pattern</th><th>TTL</th><th>Invalidation</th></tr>
+<tr><td>Query embedding</td><td><code>emb:{botId}:{ver}:{md5(query)}</code></td><td>24h</td><td>Version bump</td></tr>
+<tr><td>Knowledge search results</td><td><code>rag:{botId}:{ver}:{lang}:{md5(query+filters)}</code></td><td>5min</td><td>Version bump</td></tr>
+<tr><td>Product search results</td><td><code>prod:{botId}:{md5(query)}</code></td><td>3min</td><td>On product sync</td></tr>
+<tr><td>LLM response</td><td><code>llm:{botId}:{md5(norm_query)}</code></td><td>3min</td><td>TTL only</td></tr>
+<tr><td>Bot config/prompt</td><td><code>bot:{botId}:config</code></td><td>10min</td><td>On bot update</td></tr>
+</table>
+<p style="margin-top:8px"><strong>Language-awareness:</strong> Include <code>{lang}</code> in knowledge cache keys. Product cache is already language-neutral (products stored in source language, vector search is cross-lingual).</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- PART 6: CODE-LEVEL IMPLEMENTATION -->
+<!-- ============================================================ -->
+
+<h2 id="p6"><span class="n">P6</span> Code-Level Implementation Plan</h2>
+
+<h3>Phase 1: Quick Wins (NOW - 1 week)</h3>
+
+<div class="card">
+<h4>1.1 Materialized tsvector + ef_search</h4>
+<table>
+<tr><td>Migration</td><td>Add <code>tsv tsvector</code> column + GIN index + trigger on INSERT/UPDATE</td></tr>
+<tr><td>Migration</td><td>Add <code>content_language VARCHAR(5) DEFAULT 'ro'</code></td></tr>
+<tr><td>SQL</td><td><code>SET LOCAL hnsw.ef_search = 100</code> at start of search method</td></tr>
+<tr><td>Modify</td><td><code>KnowledgeSearchService::search()</code> - use <code>tsv</code> column instead of runtime <code>to_tsvector()</code></td></tr>
+<tr><td>Modify</td><td><code>ProcessKnowledgeDocument</code> - populate <code>tsv</code> and <code>content_language</code> at ingest</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h4>1.2 Conditional reranking</h4>
+<table>
+<tr><td>Modify</td><td><code>KnowledgeSearchService::search()</code></td></tr>
+<tr><td>Logic</td><td>Only call LLM reranking if top vector similarity is between 0.55 and 0.75. Above 0.75 = confident, skip reranking. Below 0.55 = low quality, reranking won't help.</td></tr>
+<tr><td>Config</td><td>Add <code>reranking.min_threshold</code> and <code>reranking.max_threshold</code> to <code>config/knowledge.php</code></td></tr>
+</table>
+</div>
+
+<div class="card">
+<h4>1.3 Parent-child chunk retrieval</h4>
+<table>
+<tr><td>Modify</td><td><code>KnowledgeSearchService::buildContext()</code></td></tr>
+<tr><td>Logic</td><td>After search, for each result with <code>chunk_index > 0</code>, fetch <code>chunk_index - 1</code> and <code>chunk_index + 1</code> siblings (same title, same bot_id). Include siblings in context if budget allows.</td></tr>
+<tr><td>Budget</td><td>Siblings are lower priority than primary results. Only include if context budget has room.</td></tr>
+</table>
+</div>
+
+<h3>Phase 2: Multilingual + Product Retrieval (NEXT - 2-3 weeks)</h3>
+
+<div class="card">
+<h4>2.1 Language-aware query expansion</h4>
+<table>
+<tr><td>Config</td><td>Restructure <code>config/knowledge.php</code> synonyms as <code>'synonyms' => ['ro' => [...], 'en' => [...]]</code></td></tr>
+<tr><td>Modify</td><td><code>KnowledgeSearchService::expandQuery()</code> - pass <code>$language</code> parameter, load correct synonym map</td></tr>
+<tr><td>Modify</td><td>LLM rewrite prompt - include language instruction</td></tr>
+<tr><td>Modify</td><td>Cache keys - include language</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h4>2.2 Semantic product retrieval improvements</h4>
+<table>
+<tr><td>New migration</td><td>Add <code>embedding vector(1536)</code> to <code>woocommerce_products</code> table (dedicated product embeddings separate from knowledge chunks)</td></tr>
+<tr><td>New service</td><td><code>SemanticProductRetrievalService</code> - vector search on product embeddings for recommendation/suitability queries</td></tr>
+<tr><td>Modify</td><td><code>WooCommerceConnectorService::sync()</code> - generate product embedding using the template (name + category + description + attributes, WITHOUT price/stock)</td></tr>
+<tr><td>Modify</td><td><code>IntentOrchestratorService</code> - route recommendation/suitability queries to semantic product retrieval</td></tr>
+<tr><td>Keep</td><td><code>ProductSearchService</code> stays for structured queries (exact, category, attribute filter)</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h4>2.3 Variable chunk overlap</h4>
+<table>
+<tr><td>Modify</td><td><code>ProcessKnowledgeDocument::chunkText()</code></td></tr>
+<tr><td>Config</td><td><code>'chunk_overlap' => ['faq' => 0, 'manual' => 0.10, 'scan' => 0.15, 'upload' => 0.125, 'connector' => 0.10]</code></td></tr>
+<tr><td>Logic</td><td>FAQ = 0 overlap (self-contained). Uploads = 12.5%. Scans = 15% (web content needs more continuity).</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h4>2.4 Feedback loop</h4>
+<table>
+<tr><td>Migration</td><td>Add <code>retrieval_feedback</code> table: conversation_id, message_id, rating (1-5 or thumbs), chunk_ids used, created_at</td></tr>
+<tr><td>API endpoint</td><td><code>POST /api/chatbot/{channelId}/feedback</code></td></tr>
+<tr><td>Widget</td><td>Add thumbs up/down buttons after bot replies in chat widget</td></tr>
+<tr><td>Analytics</td><td>Dashboard view showing retrieval quality over time, worst-performing queries</td></tr>
+</table>
+</div>
+
+<h3>Phase 3: Advanced (LATER - 1-2 months)</h3>
+
+<div class="card">
+<table>
+<tr><th>Item</th><th>Files</th><th>Notes</th></tr>
+<tr><td>Embedding model upgrade</td><td>Migration (vector(3072)), re-embedding job, config</td><td>Only after quality data proves need</td></tr>
+<tr><td>A/B testing on thresholds</td><td>New <code>RetrievalExperimentService</code>, config for experiment variants</td><td>Requires feedback loop data first</td></tr>
+<tr><td>Metadata-enriched chunks</td><td>New job at ingest: LLM extracts category, entities, date from each chunk</td><td>Enables smart filtering and expiration</td></tr>
+<tr><td>Semantic dedup at ingest</td><td>Modify <code>ProcessKnowledgeDocument</code>: after embedding, check cosine similarity vs existing chunks</td><td>Threshold: 0.95 similarity = duplicate</td></tr>
+<tr><td>HyDE</td><td>New method in <code>KnowledgeSearchService</code>: generate hypothetical answer, embed it, search with that</td><td>Only for short/vague queries (&lt;5 words)</td></tr>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<!-- PART 7: PERFORMANCE TARGETS -->
+<!-- ============================================================ -->
+
+<h2 id="p7"><span class="n">P7</span> Performance &amp; Latency Targets</h2>
+
+<div class="card">
+<table>
+<tr><th>Metric</th><th>Current (estimated)</th><th>Target</th><th>How</th></tr>
+<tr><td>Total response latency (chat)</td><td>~2-4s</td><td>&lt;2.5s p95</td><td>Cache hits, conditional reranking</td></tr>
+<tr><td>Retrieval latency (search)</td><td>~200-500ms</td><td>&lt;150ms p95 (cached), &lt;400ms uncached</td><td>Materialized FTS, ef_search tuning</td></tr>
+<tr><td>Embedding cache hit rate</td><td>~60-70%</td><td>&gt;80%</td><td>Better normalization, longer TTL</td></tr>
+<tr><td>Search cache hit rate</td><td>~60-70%</td><td>&gt;75%</td><td>Normalized query keys</td></tr>
+<tr><td>Context size (chat avg)</td><td>~2500 tokens</td><td>~2000 tokens (more focused)</td><td>Better dedup, parent-child</td></tr>
+<tr><td>Retrieval quality (top-1 relevance)</td><td>~75%</td><td>&gt;85%</td><td>All improvements combined</td></tr>
+<tr><td>Cost per 1K messages</td><td>~$2.89</td><td>&lt;$2.50</td><td>Better routing, conditional reranking</td></tr>
+<tr><td>Tenant cost visibility</td><td>Per-message tracking</td><td>Dashboard with daily/weekly trends</td><td>Already exists, refine</td></tr>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<!-- PART 8: FAILURE SCENARIOS -->
+<!-- ============================================================ -->
+
+<h2 id="p8"><span class="n">P8</span> Failure Scenarios &amp; Fallbacks</h2>
+
+<div class="card">
+<table>
+<tr><th>Scenario</th><th>Fallback Strategy</th><th>Already Implemented?</th></tr>
+<tr><td>OpenAI embedding API latency spike</td><td>Return stale cached embedding. If no cache, fall back to FTS-only search.</td><td><span class="tag tg">Yes</span></td></tr>
+<tr><td>Cache miss (cold start)</td><td>Execute full search pipeline. Pre-warm popular queries on bot deploy.</td><td><span class="tag ty">Partial</span> (no pre-warm)</td></tr>
+<tr><td>Language detection mistake</td><td>Use bot.language as primary. Runtime detection only as tiebreaker. Vector search is cross-lingual, so wrong FTS language degrades gracefully.</td><td><span class="tag tr">No</span> (to implement)</td></tr>
+<tr><td>Mixed-language documents</td><td>Store with <code>content_language = 'mul'</code>. Use <code>simple</code> FTS config (no stemming). Vector search handles it natively.</td><td><span class="tag tr">No</span></td></tr>
+<tr><td>Missing product attributes</td><td>Embed what's available. Missing attrs = shorter embedding text. Structured search skips missing fields gracefully.</td><td><span class="tag tg">Yes</span></td></tr>
+<tr><td>Stale product info (price/stock)</td><td>NEVER embed price/stock. Always fetch from <code>woocommerce_products</code> at query time. Display "verifică pe site" for prices older than 24h.</td><td><span class="tag ty">Partial</span> (price is embedded now)</td></tr>
+<tr><td>Large tenant (50K+ chunks)</td><td>Pagination in HNSW is automatic. Consider per-tenant ef_search tuning. Monitor query latency per tenant.</td><td><span class="tag ty">Partial</span></td></tr>
+<tr><td>Poor WooCommerce content quality</td><td>Quality gate: skip products with &lt;50 chars combined title+description. Log skipped products for tenant notification.</td><td><span class="tag tg">Yes</span></td></tr>
+<tr><td>Queue backlog during re-embedding</td><td>Process in priority order: FAQ &gt; manual &gt; products &gt; scans. Show progress bar. Don't block search (old embeddings work until replaced).</td><td><span class="tag tg">Yes</span></td></tr>
+<tr><td>Multilingual synonym drift</td><td>Version synonym dictionaries. Log which synonyms trigger. Review monthly.</td><td><span class="tag tr">No</span></td></tr>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<!-- PART 9: FINAL RECOMMENDATION -->
+<!-- ============================================================ -->
+
+<h2 id="p9"><span class="n">P9</span> Final Recommendation</h2>
+
+<h3>1. Cost Impact Summary</h3>
+<div class="box box-g">
+<ul>
+<li><strong>RAG search costs are negligible</strong> (~1.4% of total message cost). Optimizing RAG infrastructure has near-zero cost impact.</li>
+<li><strong>The biggest cost lever is chat completion routing.</strong> If better retrieval quality lets 5% more queries use gpt-4o-mini instead of Claude, you save $0.60/1K messages (21% reduction).</li>
+<li><strong>All recommended improvements combined</strong> add &lt;$0.10/1K in infrastructure cost while potentially saving $0.60/1K through better routing.</li>
+<li><strong>Net expected saving: ~$0.50/1K messages</strong> ($2.89 &rarr; ~$2.39).</li>
+</ul>
+</div>
+
+<h3>2. Final Multilingual Strategy</h3>
+<div class="box box-b">
+<strong>Option C: Hybrid approach.</strong>
+<ul>
+<li>Shared vector layer (embeddings are multilingual by design).</li>
+<li>Language-specific FTS configs (<code>romanian</code>, <code>english</code>, <code>simple</code> fallback).</li>
+<li>Language-specific synonym dictionaries.</li>
+<li>Language stored per chunk (<code>content_language</code> column).</li>
+<li>Bot language used as primary signal, not runtime detection.</li>
+<li>Cost: $0 extra. Effort: ~8 hours.</li>
+</ul>
+</div>
+
+<h3>3. Final Retrieval Architecture</h3>
+<div class="box box-b">
+<strong>4-layer retrieval with intelligent routing:</strong>
+<ul>
+<li><strong>Layer 1:</strong> Structured product retrieval (SQL exact/filter) for specific product queries.</li>
+<li><strong>Layer 2:</strong> Semantic product retrieval (vector search on product embeddings) for recommendations/suitability.</li>
+<li><strong>Layer 3:</strong> General knowledge RAG (hybrid vector+FTS) for FAQ, policies, documentation.</li>
+<li><strong>Layer 4:</strong> Order lookup (WooCommerce API) for order status queries.</li>
+<li><strong>Router:</strong> IntentOrchestratorService decides which layers to activate per message.</li>
+<li><strong>Assembler:</strong> ContextBudgetService merges, deduplicates, and truncates to channel budget.</li>
+</ul>
+</div>
+
+<h3>4. Top 10 Actions in Priority Order</h3>
+<div class="card">
+<table>
+<tr><th>#</th><th>Action</th><th>When</th><th>Effort</th><th>Impact</th></tr>
+<tr><td>1</td><td>Add materialized tsvector column + trigger</td><td class="now">NOW</td><td>2h</td><td>Latency -15ms, cleaner code</td></tr>
+<tr><td>2</td><td>Set ef_search = 100</td><td class="now">NOW</td><td>15min</td><td>Recall +5-10%</td></tr>
+<tr><td>3</td><td>Conditional reranking (uncertain zone only)</td><td class="now">NOW</td><td>1h</td><td>Cost -$0.02/1K, latency -200ms on 35% of queries</td></tr>
+<tr><td>4</td><td>Parent-child chunk retrieval</td><td class="now">NOW</td><td>4h</td><td>Quality +15% on multi-chunk docs</td></tr>
+<tr><td>5</td><td>Language-aware FTS + cache keys + synonyms</td><td class="now">NOW</td><td>6h</td><td>English bot support, future-proof</td></tr>
+<tr><td>6</td><td>Remove price/stock from product embeddings</td><td class="next">NEXT</td><td>3h</td><td>Eliminates stale pricing answers</td></tr>
+<tr><td>7</td><td>Semantic product retrieval (vector search on products)</td><td class="next">NEXT</td><td>12h</td><td>Recommendation quality +30%</td></tr>
+<tr><td>8</td><td>Feedback loop (thumbs up/down)</td><td class="next">NEXT</td><td>6h</td><td>Data for all future optimizations</td></tr>
+<tr><td>9</td><td>Variable chunk overlap</td><td class="next">NEXT</td><td>2h</td><td>Quality +5% on long documents</td></tr>
+<tr><td>10</td><td>Semantic dedup at ingest</td><td class="next">NEXT</td><td>4h</td><td>Cleaner knowledge base, less noise</td></tr>
+</table>
+</div>
+
+<h3>5. Quick Wins (can implement today)</h3>
+<div class="g3">
+<div class="card" style="border-color:#22c55e">
+<h4 style="color:#22c55e">ef_search = 100</h4>
+<p>One line of SQL. Better recall, zero cost.</p>
+<div class="pre">DB::statement('SET LOCAL hnsw.ef_search = 100');</div>
+</div>
+<div class="card" style="border-color:#22c55e">
+<h4 style="color:#22c55e">Conditional reranking</h4>
+<p>Skip reranking when top_similarity > 0.75 or < 0.55.</p>
+</div>
+<div class="card" style="border-color:#22c55e">
+<h4 style="color:#22c55e">Cache key language</h4>
+<p>Add <code>{$bot->language}</code> to cache key patterns. Prevents future issues.</p>
+</div>
+</div>
+
+<h3>6. Code Implementation Roadmap</h3>
+<div class="card">
+<table>
+<tr><th>Week</th><th>Deliverables</th><th>Files Modified</th></tr>
+<tr><td>Week 1</td><td>Materialized FTS, ef_search, conditional reranking, parent-child retrieval</td><td>1 migration, KnowledgeSearchService.php, config/knowledge.php</td></tr>
+<tr><td>Week 2</td><td>Language-aware FTS, multilingual synonyms, cache key update</td><td>1 migration, KnowledgeSearchService.php, config/knowledge.php, ProcessKnowledgeDocument.php</td></tr>
+<tr><td>Week 3-4</td><td>Semantic product retrieval, remove price from embeddings, feedback loop</td><td>1 migration, new SemanticProductRetrievalService.php, WooCommerceConnectorService.php, ChatbotApiController.php, widget JS</td></tr>
+<tr><td>Week 5-6</td><td>Variable chunk overlap, semantic dedup, retrieval metrics dashboard</td><td>ProcessKnowledgeDocument.php, new RetrievalMetricsService.php</td></tr>
+<tr><td>Later</td><td>Embedding upgrade, A/B testing, HyDE, metadata enrichment</td><td>Large migration + re-embedding job</td></tr>
+</table>
+</div>
+
+<h3>7. Rollout / Migration Plan</h3>
+<div class="card">
+<ul>
+<li><strong>Phase 1 (Quick wins):</strong> Deploy immediately. All changes are additive (new columns, new config). No breaking changes. Existing data works as before.</li>
+<li><strong>Phase 2 (Multilingual):</strong> Backfill <code>content_language</code> column with 'ro' for all existing data. New ingestion sets it automatically. No re-embedding needed.</li>
+<li><strong>Phase 3 (Product retrieval):</strong> Generate product embeddings as background job. Doesn't affect existing product search. New semantic retrieval runs in parallel. Gradual rollout per tenant.</li>
+<li><strong>Phase 4 (Embedding upgrade):</strong> Create new <code>embedding_v2 vector(3072)</code> column. Re-embed in background. Switch search to v2 when complete. Drop old column after verification. Zero-downtime migration.</li>
+</ul>
+</div>
+
+<h3>8. Risks to Watch</h3>
+<div class="card">
+<table>
+<tr><th>Risk</th><th>Probability</th><th>Impact</th><th>Mitigation</th></tr>
+<tr><td>Re-embedding causes queue backlog</td><td><span class="tag ty">Medium</span></td><td><span class="tag ty">Medium</span></td><td>Rate limit embedding jobs. Process during off-hours. Don't block search during re-embedding.</td></tr>
+<tr><td>Parent-child retrieval bloats context</td><td><span class="tag ty">Medium</span></td><td><span class="tag tg">Low</span></td><td>Budget-aware: only include siblings if budget allows. Hard cap at +2 siblings per result.</td></tr>
+<tr><td>Language detection errors</td><td><span class="tag tg">Low</span></td><td><span class="tag tg">Low</span></td><td>Use bot.language (set by user, reliable). Don't auto-detect at query time.</td></tr>
+<tr><td>Product embedding without price confuses LLM</td><td><span class="tag tg">Low</span></td><td><span class="tag ty">Medium</span></td><td>Explicitly inject "Preț actual: X RON" in context after retrieval. LLM sees fresh price.</td></tr>
+<tr><td>Conditional reranking misses edge cases</td><td><span class="tag tg">Low</span></td><td><span class="tag tg">Low</span></td><td>Log reranking decisions. A/B test with feedback data later.</td></tr>
+</table>
+</div>
+
+<h3>9. Final Recommendation for This Project Right Now</h3>
+<div class="box box-g" style="border-width:4px">
+<strong style="font-size:1.1rem;display:block;margin-bottom:8px">Do the 5 quick wins this week. They cost $0, reduce latency, and improve quality.</strong>
+<p style="color:#cbd5e1">The current RAG system is well-built. It doesn't need a rewrite - it needs targeted improvements. The 5 NOW items (materialized FTS, ef_search, conditional reranking, parent-child retrieval, language-aware cache keys) can be implemented in ~13 hours with zero risk and zero additional cost.</p>
+<p style="color:#cbd5e1;margin-top:8px">Then prioritize the feedback loop (thumbs up/down) so you have data to drive future decisions. Without quality signals from real users, you're optimizing blind.</p>
+<p style="color:#cbd5e1;margin-top:8px">The product retrieval redesign (removing price from embeddings + semantic product search) is the highest-impact NEXT item for e-commerce bots. Do it in weeks 3-4.</p>
+<p style="color:#cbd5e1;margin-top:8px">Defer embedding model upgrade and HyDE until you have feedback data proving retrieval misses.</p>
+<p style="color:#cbd5e1;margin-top:12px;font-weight:600">Expected outcome: ~21% cost reduction, ~15% better retrieval quality, English bot support, and a data-driven optimization path for the future.</p>
+</div>
+
+<!-- Footer -->
+<div style="border-top:1px solid #334155;padding:32px 0;margin-top:48px;text-align:center">
+<p style="color:#64748b;font-size:.85rem">Sambla RAG Architecture Plan &middot; Aprilie 2026</p>
+<p style="color:#475569;font-size:.75rem;margin-top:4px">Prepared based on full codebase audit with 10 concurrent analysis agents</p>
+</div>
+
+</div>
+</body>
+</html>

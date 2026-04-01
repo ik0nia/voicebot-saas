@@ -59,18 +59,18 @@
                     >
                 </div>
 
-                {{-- Company Name --}}
+                {{-- Website --}}
                 <div>
-                    <label for="company_name" class="block text-sm font-medium text-slate-700 mb-1.5">Numele companiei</label>
+                    <label for="website" class="block text-sm font-medium text-slate-700 mb-1.5">Site-ul tău</label>
                     <input
-                        type="text"
-                        id="company_name"
-                        name="company_name"
-                        value="{{ old('company_name') }}"
+                        type="url"
+                        id="website"
+                        name="website"
+                        value="{{ old('website') }}"
                         required
-                        autocomplete="organization"
+                        autocomplete="url"
                         class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition duration-200"
-                        placeholder="Compania SRL"
+                        placeholder="https://exemplu.ro"
                     >
                 </div>
 
@@ -112,7 +112,7 @@
 
                 {{-- Trial note --}}
                 <p class="text-center text-xs text-slate-400">
-                    14 zile gratuit, fără card de credit
+                    7 zile gratuit, fără card de credit
                 </p>
             </form>
         </div>

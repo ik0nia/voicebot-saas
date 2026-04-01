@@ -56,7 +56,12 @@ class ProcessKnowledgeDocument implements ShouldQueue
                 "knowledge.chunking.{$this->knowledge->source_type}",
                 config('knowledge.chunking.upload', 512)
             );
-            $overlap = max(32, (int) ($chunkSize * 0.125)); // ~12.5% overlap
+            // Variable overlap per source type (FAQ=0, scan=15%, upload=12.5%, etc.)
+            $overlapRatio = config(
+                "knowledge.chunk_overlap.{$this->knowledge->source_type}",
+                0.125
+            );
+            $overlap = $overlapRatio > 0 ? max(32, (int) ($chunkSize * $overlapRatio)) : 0;
             $rawChunks = $this->chunkText($text, $chunkSize, $overlap);
 
             // Filter out garbage chunks (too short, whitespace-only, etc.)
@@ -109,12 +114,16 @@ class ProcessKnowledgeDocument implements ShouldQueue
                 foreach ($chunks as $index => $chunk) {
                     $embedding = $embeddings[$index];
 
+                    // Detect content language from bot setting
+                    $contentLanguage = $this->knowledge->bot?->language ?? 'ro';
+
                     if ($index === 0) {
                         $this->knowledge->update([
                             'content' => $chunk,
                             'chunk_index' => 0,
                             'status' => 'ready',
                             'embedding_model' => $embeddingModel,
+                            'content_language' => $contentLanguage,
                         ]);
                         // Set embedding via raw query for pgvector
                         DB::statement(
@@ -132,6 +141,7 @@ class ProcessKnowledgeDocument implements ShouldQueue
                             'chunk_index' => $index,
                             'status' => 'ready',
                             'embedding_model' => $embeddingModel,
+                            'content_language' => $contentLanguage,
                             'metadata' => $this->knowledge->metadata,
                         ]);
                         DB::statement(

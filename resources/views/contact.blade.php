@@ -119,7 +119,7 @@
                             </div>
                             <div>
                                 <p class="text-sm font-semibold text-slate-900 mb-1">Email</p>
-                                <a href="mailto:contact@sambla.ro" class="text-sm text-red-700 hover:text-red-800 transition-colors">contact@sambla.ro</a>
+                                <a href="mailto:servus@sambla.ro" class="text-sm text-red-700 hover:text-red-800 transition-colors">servus@sambla.ro</a>
                             </div>
                         </div>
 
@@ -132,7 +132,7 @@
                             </div>
                             <div>
                                 <p class="text-sm font-semibold text-slate-900 mb-1">Telefon</p>
-                                <a href="tel:+4021XXXXXXX" class="text-sm text-slate-600 hover:text-red-700 transition-colors">+40 21 XXX XXXX</a>
+                                <a href="tel:+40775222333" class="text-sm text-slate-600 hover:text-red-700 transition-colors">0775 222 333</a>
                             </div>
                         </div>
 
@@ -146,7 +146,7 @@
                             </div>
                             <div>
                                 <p class="text-sm font-semibold text-slate-900 mb-1">Adresă</p>
-                                <p class="text-sm text-slate-600">Str. Exemplu nr. 10,<br>București, România</p>
+                                <p class="text-sm text-slate-600">Bd. Dacia nr. 31,<br>Oradea, România</p>
                             </div>
                         </div>
 
@@ -159,20 +159,12 @@
                             </div>
                             <div>
                                 <p class="text-sm font-semibold text-slate-900 mb-1">Program</p>
-                                <p class="text-sm text-slate-600">Luni - Vineri, 09:00 - 18:00</p>
+                                <p class="text-sm text-slate-600">Luni - Joi, 10:00 - 16:00</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {{-- Map Placeholder --}}
-                <div class="bg-slate-100 rounded-2xl border-2 border-dashed border-slate-300 h-56 flex flex-col items-center justify-center">
-                    <svg class="w-10 h-10 text-slate-400 mb-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
-                    </svg>
-                    <p class="text-sm font-medium text-slate-500">Google Maps</p>
-                    <p class="text-xs text-slate-400 mt-1">Hartă interactivă</p>
-                </div>
             </div>
         </div>
     </div>
@@ -183,24 +175,266 @@
     <div class="container-custom">
         <h2 class="text-3xl md:text-4xl font-bold text-slate-900 text-center mb-4">Întrebări frecvente</h2>
         <p class="text-lg text-slate-600 text-center max-w-2xl mx-auto mb-12">Răspunsuri rapide la cele mai comune întrebări.</p>
-        <div class="max-w-3xl mx-auto space-y-6">
-            {{-- Q1 --}}
-            <div class="bg-white rounded-2xl p-8 shadow-sm border border-slate-100">
-                <h3 class="text-lg font-bold text-slate-900 mb-3">Cât durează implementarea?</h3>
-                <p class="text-slate-600 leading-relaxed">În medie, configurarea inițială durează 1-2 zile. Echipa noastră te ghidează pas cu pas prin întreg procesul.</p>
-            </div>
+        <div class="max-w-3xl mx-auto space-y-4">
 
-            {{-- Q2 --}}
-            <div class="bg-white rounded-2xl p-8 shadow-sm border border-slate-100">
-                <h3 class="text-lg font-bold text-slate-900 mb-3">Oferiți suport în română?</h3>
-                <p class="text-slate-600 leading-relaxed">Da, întreaga echipă de suport vorbește română nativ. Comunicăm în limba ta, fără bariere.</p>
-            </div>
+            {{-- Categorie: Despre platformă --}}
+            <h3 class="text-sm font-bold text-red-700 uppercase tracking-wider mt-2 mb-2">Despre platformă</h3>
 
-            {{-- Q3 --}}
-            <div class="bg-white rounded-2xl p-8 shadow-sm border border-slate-100">
-                <h3 class="text-lg font-bold text-slate-900 mb-3">Putem avea o demonstrație live?</h3>
-                <p class="text-slate-600 leading-relaxed">Desigur! Completează formularul de mai sus sau sună-ne direct. Programăm o demonstrație personalizată în funcție de nevoile tale.</p>
-            </div>
+            <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
+                    <h4 class="text-lg font-bold text-slate-900">Ce este Sambla?</h4>
+                    <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                </summary>
+                <div class="px-6 pb-6">
+                    <p class="text-slate-600 leading-relaxed">Sambla este o platformă AI românească de comunicare inteligentă. Oferă chatbot text pentru site-ul tău și agent vocal AI pentru apeluri telefonice — totul alimentat de modele AI de ultimă generație (GPT-4o, Claude) și conectat la baza ta de cunoștințe.</p>
+                </div>
+            </details>
+
+            <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
+                    <h4 class="text-lg font-bold text-slate-900">Ce poate face chatbot-ul text?</h4>
+                    <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                </summary>
+                <div class="px-6 pb-6">
+                    <p class="text-slate-600 leading-relaxed">Chatbot-ul răspunde la întrebări bazat pe documentele tale (PDF, DOCX, CSV), caută produse și le afișează cu poze și prețuri, verifică statusul comenzilor cu tracking automat (FanCourier, Cargus, DPD, SameDay), captează lead-uri automat, detectează intenții și frustrare, și poate escalada conversația către un operator uman când e necesar.</p>
+                </div>
+            </details>
+
+            <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
+                    <h4 class="text-lg font-bold text-slate-900">Ce poate face agentul vocal?</h4>
+                    <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                </summary>
+                <div class="px-6 pb-6">
+                    <p class="text-slate-600 leading-relaxed">Agentul vocal poate răspunde și iniția apeluri telefonice cu o voce naturală, folosind OpenAI Realtime API. Poate răspunde la întrebări din baza de cunoștințe, căuta produse, verifica comenzi, colecta date de contact (lead-uri) și transfera la operator. Fiecare apel este transcris automat și analizat pentru sentiment.</p>
+                </div>
+            </details>
+
+            <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
+                    <h4 class="text-lg font-bold text-slate-900">Ce este voice cloning?</h4>
+                    <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                </summary>
+                <div class="px-6 pb-6">
+                    <p class="text-slate-600 leading-relaxed">Poți clona vocea brandului tău folosind o mostră audio. Agentul vocal va vorbi exact cu vocea pe care o alegi, creând o experiență autentică pentru clienți. Tehnologia este pusă la dispoziție prin ElevenLabs și suportă limba română nativ.</p>
+                </div>
+            </details>
+
+            <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
+                    <h4 class="text-lg font-bold text-slate-900">Ce modele AI folosiți?</h4>
+                    <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                </summary>
+                <div class="px-6 pb-6">
+                    <p class="text-slate-600 leading-relaxed">Folosim GPT-4o și GPT-4o-mini de la OpenAI, Claude de la Anthropic, OpenAI Realtime API pentru voce și ElevenLabs pentru sinteză vocală și voice cloning. Platforma rutează automat între modele în funcție de complexitatea întrebării — răspunsuri rapide pentru întrebări simple, analiză profundă pentru cele complexe.</p>
+                </div>
+            </details>
+
+            {{-- Categorie: Implementare --}}
+            <h3 class="text-sm font-bold text-red-700 uppercase tracking-wider mt-8 mb-2">Implementare</h3>
+
+            <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
+                    <h4 class="text-lg font-bold text-slate-900">Cât durează implementarea?</h4>
+                    <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                </summary>
+                <div class="px-6 pb-6">
+                    <p class="text-slate-600 leading-relaxed">Chatbot-ul text poate fi live pe site-ul tău în 10 minute — o singură linie de cod de adăugat. Configurarea bazei de cunoștințe (documente, scanare site, conectori) durează de obicei câteva ore. Agentul vocal necesită configurare Twilio suplimentară, de obicei 1-2 zile.</p>
+                </div>
+            </details>
+
+            <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
+                    <h4 class="text-lg font-bold text-slate-900">Cum instalez chatbot-ul pe site?</h4>
+                    <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                </summary>
+                <div class="px-6 pb-6">
+                    <p class="text-slate-600 leading-relaxed">Copiezi o singură linie de cod (tag script) și o adaugi în HTML-ul site-ului tău, înainte de &lt;/body&gt;. Funcționează pe orice platformă: WordPress, Shopify, WooCommerce, site-uri custom — orice site care acceptă JavaScript.</p>
+                </div>
+            </details>
+
+            <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
+                    <h4 class="text-lg font-bold text-slate-900">Cum învăț chatbot-ul despre afacerea mea?</h4>
+                    <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                </summary>
+                <div class="px-6 pb-6">
+                    <p class="text-slate-600 leading-relaxed">Ai mai multe opțiuni: încarcă documente (PDF, DOCX, CSV, TXT), adaugă URL-uri pe care le scanăm automat, conectează-ți magazinul WordPress/WooCommerce pentru sincronizare automată de produse, sau scrie direct informațiile ca text. Chatbot-ul folosește tot ce îi dai ca bază de cunoștințe pentru a răspunde clienților.</p>
+                </div>
+            </details>
+
+            <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
+                    <h4 class="text-lg font-bold text-slate-900">Pot personaliza aspectul widget-ului?</h4>
+                    <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                </summary>
+                <div class="px-6 pb-6">
+                    <p class="text-slate-600 leading-relaxed">Da, complet. Poți schimba culoarea principală (se potrivește cu brandul tău), mesajul de bun venit, numele chatbot-ului, poziția pe ecran (stânga sau dreapta) și tonul conversației (profesional, prietenos, premium etc.).</p>
+                </div>
+            </details>
+
+            <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
+                    <h4 class="text-lg font-bold text-slate-900">Am nevoie de cunoștințe tehnice?</h4>
+                    <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                </summary>
+                <div class="px-6 pb-6">
+                    <p class="text-slate-600 leading-relaxed">Nu. Dashboard-ul este intuitiv, iar instalarea chatbot-ului necesită doar copy-paste a unui cod. Pentru integrări avansate (API, webhook-uri), oferim documentație completă și suport tehnic.</p>
+                </div>
+            </details>
+
+            {{-- Categorie: E-Commerce --}}
+            <h3 class="text-sm font-bold text-red-700 uppercase tracking-wider mt-8 mb-2">E-Commerce</h3>
+
+            <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
+                    <h4 class="text-lg font-bold text-slate-900">Funcționează cu magazinul meu WooCommerce?</h4>
+                    <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                </summary>
+                <div class="px-6 pb-6">
+                    <p class="text-slate-600 leading-relaxed">Da, avem conector WooCommerce nativ. Se sincronizează automat cu catalogul de produse (nume, descriere, prețuri, imagini, categorii, stoc) și cu comenzile. Chatbot-ul poate afișa produse cu poze și preț, permite adăugarea în coș și verifică statusul comenzilor.</p>
+                </div>
+            </details>
+
+            <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
+                    <h4 class="text-lg font-bold text-slate-900">Poate chatbot-ul să verifice o comandă?</h4>
+                    <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                </summary>
+                <div class="px-6 pb-6">
+                    <p class="text-slate-600 leading-relaxed">Da. Clientul poate întreba „Unde e comanda mea?" și să dea numărul comenzii, email-ul sau telefonul. Chatbot-ul caută comanda, afișează statusul, produsele comandate și link-ul de tracking AWB pentru FanCourier, Cargus, DPD, SameDay, GLS sau Urgent Cargus.</p>
+                </div>
+            </details>
+
+            <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
+                    <h4 class="text-lg font-bold text-slate-900">Pot măsura vânzările generate de chatbot?</h4>
+                    <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                </summary>
+                <div class="px-6 pb-6">
+                    <p class="text-slate-600 leading-relaxed">Da. Dashboard-ul Commerce Analytics arată funnel-ul complet: câte produse au fost afișate, câte click-uri, câte adăugări în coș și câte achiziții. Atribuirea vânzărilor funcționează pe 3 moduri: strict (directă), probabil și asistat.</p>
+                </div>
+            </details>
+
+            {{-- Categorie: Lead-uri și analiză --}}
+            <h3 class="text-sm font-bold text-red-700 uppercase tracking-wider mt-8 mb-2">Lead-uri și analiză</h3>
+
+            <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
+                    <h4 class="text-lg font-bold text-slate-900">Cum captează chatbot-ul lead-uri?</h4>
+                    <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                </summary>
+                <div class="px-6 pb-6">
+                    <p class="text-slate-600 leading-relaxed">Chatbot-ul folosește un sistem de scoring cu peste 30 de semnale (număr mesaje, interacțiuni cu produse, intenție de cumpărare) și cere datele de contact la momentul potrivit — fără a fi agresiv. Lead-urile intră într-un pipeline cu 7 etape pe care îl gestionezi din dashboard.</p>
+                </div>
+            </details>
+
+            <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
+                    <h4 class="text-lg font-bold text-slate-900">Ce analize și rapoarte oferă platforma?</h4>
+                    <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                </summary>
+                <div class="px-6 pb-6">
+                    <p class="text-slate-600 leading-relaxed">Dashboard-ul arată: număr conversații și trend pe 7 zile, cost per mesaj/conversație/bot, analiză de sentiment în timp real, funnel de vânzări, 40+ tipuri de evenimente tracked per conversație, detecție „knowledge gaps" (întrebări la care chatbot-ul nu știe să răspundă) și export CSV/PDF.</p>
+                </div>
+            </details>
+
+            <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
+                    <h4 class="text-lg font-bold text-slate-900">Poate chatbot-ul să transfere la un om?</h4>
+                    <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                </summary>
+                <div class="px-6 pb-6">
+                    <p class="text-slate-600 leading-relaxed">Da. Când detectează că clientul cere un operator uman sau când situația depășește ce poate rezolva singur, chatbot-ul creează automat un handoff request cu rezumatul conversației, intențiile detectate și produsele discutate. Echipa ta primește notificarea și preia conversația.</p>
+                </div>
+            </details>
+
+            {{-- Categorie: Securitate și date --}}
+            <h3 class="text-sm font-bold text-red-700 uppercase tracking-wider mt-8 mb-2">Securitate și date</h3>
+
+            <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
+                    <h4 class="text-lg font-bold text-slate-900">Este platforma conformă GDPR?</h4>
+                    <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                </summary>
+                <div class="px-6 pb-6">
+                    <p class="text-slate-600 leading-relaxed">Da. Platforma colectează date personale doar cu consimțământ explicit, hosting-ul este în România, datele fiecărui client sunt izolate complet (arhitectură multi-tenant), și poți șterge contul și toate datele asociate oricând.</p>
+                </div>
+            </details>
+
+            <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
+                    <h4 class="text-lg font-bold text-slate-900">Unde sunt stocate datele?</h4>
+                    <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                </summary>
+                <div class="px-6 pb-6">
+                    <p class="text-slate-600 leading-relaxed">Toate datele sunt stocate pe servere din România. Baza de date PostgreSQL cu extensia pgvector pentru căutare semantică. Comunicarea cu API-urile externe (OpenAI, ElevenLabs, Twilio) se face prin conexiuni securizate (HTTPS/WSS).</p>
+                </div>
+            </details>
+
+            <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
+                    <h4 class="text-lg font-bold text-slate-900">Cine are acces la conversațiile clienților mei?</h4>
+                    <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                </summary>
+                <div class="px-6 pb-6">
+                    <p class="text-slate-600 leading-relaxed">Doar echipa ta. Platforma are 4 niveluri de acces (Admin, Manager, Viewer și Super Admin) cu permisiuni granulare. Datele fiecărui tenant sunt complet izolate — un client nu poate vedea datele altui client, nici măcar accidental.</p>
+                </div>
+            </details>
+
+            {{-- Categorie: Prețuri și suport --}}
+            <h3 class="text-sm font-bold text-red-700 uppercase tracking-wider mt-8 mb-2">Prețuri și suport</h3>
+
+            <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
+                    <h4 class="text-lg font-bold text-slate-900">Cât costă platforma?</h4>
+                    <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                </summary>
+                <div class="px-6 pb-6">
+                    <p class="text-slate-600 leading-relaxed">Avem planuri flexibile care pornesc de la un plan gratuit pentru testare. Prețul depinde de volumul de mesaje, minute vocale și funcționalitățile necesare. Vizitează <a href="/preturi" class="text-red-700 hover:text-red-800 font-medium">pagina de prețuri</a> pentru detalii complete sau contactează-ne pentru o ofertă personalizată.</p>
+                </div>
+            </details>
+
+            <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
+                    <h4 class="text-lg font-bold text-slate-900">Există perioadă de probă gratuită?</h4>
+                    <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                </summary>
+                <div class="px-6 pb-6">
+                    <p class="text-slate-600 leading-relaxed">Da, poți testa platforma fără card de credit. Creezi un cont, configurezi chatbot-ul și vezi cum funcționează pe site-ul tău înainte de a alege un plan plătit.</p>
+                </div>
+            </details>
+
+            <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
+                    <h4 class="text-lg font-bold text-slate-900">Oferiți suport în română?</h4>
+                    <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                </summary>
+                <div class="px-6 pb-6">
+                    <p class="text-slate-600 leading-relaxed">Da, 100%. Suntem o echipă românească. Suportul, documentația și comunicarea sunt în română nativ. Poți să ne scrii la servus@sambla.ro sau să ne suni la 0775 222 333 (Luni-Joi, 10:00-16:00).</p>
+                </div>
+            </details>
+
+            <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
+                    <h4 class="text-lg font-bold text-slate-900">Putem avea o demonstrație live?</h4>
+                    <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                </summary>
+                <div class="px-6 pb-6">
+                    <p class="text-slate-600 leading-relaxed">Desigur! Completează formularul de mai sus, scrie-ne la servus@sambla.ro sau sună-ne direct. Programăm o demonstrație personalizată în funcție de industria și nevoile tale.</p>
+                </div>
+            </details>
+
+            <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
+                    <h4 class="text-lg font-bold text-slate-900">Câte limbi suportă chatbot-ul?</h4>
+                    <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                </summary>
+                <div class="px-6 pb-6">
+                    <p class="text-slate-600 leading-relaxed">Chatbot-ul suportă 10+ limbi, cu optimizare specială pentru română. Detectează automat limba clientului și răspunde în aceeași limbă. Limbile principale: română, engleză, germană, franceză, spaniolă.</p>
+                </div>
+            </details>
+
         </div>
     </div>
 </section>

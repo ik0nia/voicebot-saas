@@ -20,6 +20,7 @@ class BotKnowledge extends Model
         'source_id',
         'title',
         'content',
+        'content_language',
         'status',
         'embedding_model',
         'chunk_index',

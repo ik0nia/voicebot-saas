@@ -24,26 +24,31 @@ class RegisterController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'company_name' => ['required', 'string', 'max:255'],
+            'website' => ['required', 'url', 'max:255'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ], [
             'name.required' => 'Numele este obligatoriu.',
             'email.required' => 'Adresa de email este obligatorie.',
             'email.email' => 'Adresa de email nu este validă.',
             'email.unique' => 'Această adresă de email este deja înregistrată.',
-            'company_name.required' => 'Numele companiei este obligatoriu.',
+            'website.required' => 'Adresa site-ului este obligatorie.',
+            'website.url' => 'Adresa site-ului nu este validă (ex: https://exemplu.ro).',
             'password.required' => 'Parola este obligatorie.',
             'password.min' => 'Parola trebuie să aibă cel puțin 8 caractere.',
             'password.confirmed' => 'Confirmarea parolei nu se potrivește.',
         ]);
 
-        $user = DB::transaction(function () use ($validated) {
+        // Extract domain name for tenant
+        $domain = parse_url($validated['website'], PHP_URL_HOST) ?: $validated['website'];
+        $tenantName = preg_replace('/^www\./', '', $domain);
+
+        $user = DB::transaction(function () use ($validated, $tenantName) {
             // 1. Create Tenant
             $tenant = Tenant::create([
-                'name' => $validated['company_name'],
-                'slug' => Str::slug($validated['company_name']),
+                'name' => $tenantName,
+                'slug' => Str::slug($tenantName),
                 'plan' => 'starter',
-                'trial_ends_at' => now()->addDays(14),
+                'trial_ends_at' => now()->addDays(7),
             ]);
 
             // 2. Create User

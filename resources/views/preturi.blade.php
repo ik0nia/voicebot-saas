@@ -379,7 +379,7 @@
                     </button>
                     <div class="faq-content max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
                         <div class="px-6 pb-5 text-slate-700 text-sm leading-relaxed">
-                            Da, toate planurile includ 14 zile de probă gratuită, fără card de credit.
+                            Da, toate planurile includ 7 zile de probă gratuită, fără card de credit.
                         </div>
                     </div>
                 </div>

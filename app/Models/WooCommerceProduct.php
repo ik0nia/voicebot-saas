@@ -27,6 +27,7 @@ class WooCommerceProduct extends Model
         'categories',
         'attributes',
         'site_url',
+        'semantic_text',
     ];
 
     protected function casts(): array
