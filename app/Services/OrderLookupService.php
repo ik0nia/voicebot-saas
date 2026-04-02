@@ -94,8 +94,14 @@ class OrderLookupService
     {
         $msg = mb_strtolower(trim($message));
 
+        // Exclude "placing a new order" intents — only match order TRACKING/STATUS queries
+        $placingOrderPattern = '/(?:vreau|doresc|as\s+vrea|pot\s+sa|cum\s+(?:pot|fac|plasez)|fac|plasa|plaseaz|da[- ]?mi|trimite)/u';
+        if (preg_match($placingOrderPattern, $msg) && preg_match('/comand[aă]/u', $msg)) {
+            // User wants to PLACE an order, not track one
+            return null;
+        }
+
         $orderPatterns = [
-            '/comand[aă]/u',
             '/unde.*comand/u',
             '/status.*comand/u',
             '/comand.*statu/u',
@@ -111,7 +117,6 @@ class OrderLookupService
             '/awb/i',
             '/expedit/u',
             '/status.*livr/u',
-            // Extended patterns
             '/cand.*primesc/u',
             '/unde.*e.*comanda/u',
             '/verific.*comand/u',
