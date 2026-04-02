@@ -87,15 +87,17 @@ class TelnyxService
 
             $numbers = $response->json('data', []);
 
+            $featureNames = fn($features) => array_map(fn($f) => $f['name'] ?? $f, $features ?? []);
+
             return array_map(fn($n) => [
                 'number' => $n['phone_number'],
                 'friendly_name' => $n['phone_number'],
                 'capabilities' => [
-                    'voice' => in_array('voice', $n['features'] ?? []),
-                    'sms' => in_array('sms', $n['features'] ?? []),
+                    'voice' => in_array('voice', $featureNames($n['features'] ?? [])),
+                    'sms' => in_array('sms', $featureNames($n['features'] ?? [])),
                 ],
                 'region' => $n['region_information'] ?? [],
-                'monthly_cost' => 1.00, // EUR estimate
+                'monthly_cost' => (float) ($n['cost_information']['monthly_cost'] ?? 1.00),
             ], $numbers);
         } catch (\Exception $e) {
             Log::warning('TelnyxService: getAvailableNumbers failed', ['country' => $country, 'error' => $e->getMessage()]);

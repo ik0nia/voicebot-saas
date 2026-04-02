@@ -105,7 +105,7 @@
                         <label for="provider" class="block text-sm font-medium text-slate-700 mb-1">Provider</label>
                         <select name="provider" id="provider"
                                 class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition">
-                            <option value="telnyx" {{ old('provider') === 'telnyx' ? 'selected' : '' }}>Telnyx</option>
+                            <option value="telnyx" {{ old('provider') === 'telnyx' ? 'selected' : '' }}>Automat</option>
                             <option value="manual" {{ old('provider') === 'manual' ? 'selected' : '' }}>Manual</option>
                         </select>
                     </div>
@@ -326,8 +326,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         <p class="text-sm text-red-800">
-            Pentru a cumpăra numere automat prin Telnyx, configurează credențialele în
-            <a href="/dashboard/setari" class="font-semibold underline hover:text-red-900 transition-colors">Setări &rarr; Integrări</a>.
+            Pentru a cumpăra numere de telefon automat, contactează administratorul platformei.
         </p>
     </div>
 
