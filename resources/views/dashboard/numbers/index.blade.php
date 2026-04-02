@@ -398,7 +398,7 @@
                                 (num.capabilities && num.capabilities.sms ? '<span class="text-xs text-blue-600 font-medium">SMS</span>' : '') +
                             '</div>' +
                         '</div>' +
-                        '<span class="text-sm font-medium text-slate-500">$' + num.monthly_cost + '/lună</span>' +
+                        '<span class="text-sm font-medium text-slate-500">27 lei/lună</span>' +
                     '</label>';
                 list.appendChild(div);
             });

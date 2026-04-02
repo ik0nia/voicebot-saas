@@ -59,7 +59,7 @@ class PhoneNumberController extends Controller
 
         $validated['tenant_id'] = auth()->user()->tenant_id;
         $validated['is_active'] = true;
-        $validated['monthly_cost_cents'] = $request->get('monthly_cost_cents', 200); // $2/mo Telnyx default
+        $validated['monthly_cost_cents'] = $request->get('monthly_cost_cents', 2700); // 27 lei/lună
 
         PhoneNumber::create($validated);
 
