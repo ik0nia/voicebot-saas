@@ -80,6 +80,9 @@
                                     @elseif($doc->status === 'pending') Așteptare
                                     @else Eșuat @endif
                                 </span>
+                                @if($doc->status === 'failed' && $doc->error_message)
+                                    <span class="text-xs text-red-500 truncate max-w-[200px]" title="{{ $doc->error_message }}">{{ Str::limit($doc->error_message, 60) }}</span>
+                                @endif
 
                                 <span class="text-xs text-slate-400">{{ $doc->chunks_count }} {{ $doc->chunks_count == 1 ? 'fragment' : 'fragmente' }}</span>
                                 <span class="text-xs text-slate-400">{{ \Carbon\Carbon::parse($doc->created_at)->diffForHumans() }}</span>
@@ -126,5 +129,13 @@
             }
         });
     }
+
+    // Auto-refresh when documents are processing
+    (function() {
+        var hasPending = document.querySelectorAll('.doc-item [class*="bg-yellow-100"], .doc-item [class*="bg-slate-100"]').length > 0;
+        if (hasPending) {
+            setTimeout(function() { location.reload(); }, 8000);
+        }
+    })();
 </script>
 @endpush

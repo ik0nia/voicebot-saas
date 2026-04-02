@@ -57,7 +57,7 @@
             {{-- Step 1: Informații de bază --}}
             <div id="step-1" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
                 <h2 class="text-lg font-semibold text-slate-900 mb-1">Informații de bază</h2>
-                <p class="text-sm text-slate-500 mb-6">Alege numele, limba și vocea botului tău.</p>
+                <p class="text-sm text-slate-500 mb-6">Alege numele si limba botului tau.</p>
 
                 <div class="space-y-5">
                     {{-- Nume bot --}}
@@ -102,21 +102,8 @@
                         </select>
                     </div>
 
-                    {{-- Voce --}}
-                    <div>
-                        <label for="voice" class="block text-sm font-medium text-slate-700 mb-1.5">Voce <span class="text-red-500">*</span></label>
-                        <select name="voice" id="voice" required
-                                class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition">
-                            <option value="">Selectează vocea...</option>
-                            <option value="alloy" {{ old('voice') === 'alloy' ? 'selected' : '' }}>Alloy (neutru)</option>
-                            <option value="echo" {{ old('voice') === 'echo' ? 'selected' : '' }}>Echo (masculin)</option>
-                            <option value="fable" {{ old('voice') === 'fable' ? 'selected' : '' }}>Fable (expresiv)</option>
-                            <option value="onyx" {{ old('voice') === 'onyx' ? 'selected' : '' }}>Onyx (profund)</option>
-                            <option value="nova" {{ old('voice') === 'nova' ? 'selected' : '' }}>Nova (feminin)</option>
-                            <option value="shimmer" {{ old('voice') === 'shimmer' ? 'selected' : '' }}>Shimmer (cald)</option>
-                        </select>
-                        <p class="text-xs text-slate-400 mt-2">Dupa crearea botului, vei putea configura o voce clonata personalizata.</p>
-                    </div>
+                    {{-- Voce — set default, configurable later in bot settings --}}
+                    <input type="hidden" name="voice" value="alloy">
                 </div>
             </div>
 
@@ -286,10 +273,10 @@
         if (currentStep === 1) {
             var name = document.getElementById('name');
             var language = document.getElementById('language');
-            var voice = document.getElementById('voice');
+            var voice = { value: 'alloy' };
             if (!name.value.trim()) { name.focus(); return; }
             if (!language.value) { language.focus(); return; }
-            if (!voice.value) { voice.focus(); return; }
+            // voice is set as hidden field with default 'alloy'
         }
         if (currentStep < totalSteps) {
             goToStep(currentStep + 1);

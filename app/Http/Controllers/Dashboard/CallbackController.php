@@ -10,9 +10,8 @@ class CallbackController extends Controller
 {
     public function index(Request $request)
     {
-        $tenant = auth()->user()->currentTenant();
-        $query = CallbackRequest::where('tenant_id', $tenant->id)
-            ->with('bot', 'lead')
+        $tenant = auth()->user()->tenant;
+        $query = CallbackRequest::with('bot', 'lead')
             ->orderByDesc('created_at');
 
         if ($status = $request->input('status')) $query->where('status', $status);
@@ -22,10 +21,10 @@ class CallbackController extends Controller
         $bots = $tenant->bots()->select('id', 'name')->get();
 
         $stats = [
-            'pending' => CallbackRequest::where('tenant_id', $tenant->id)->where('status', 'pending')->count(),
-            'today' => CallbackRequest::where('tenant_id', $tenant->id)->whereDate('preferred_date', today())->count(),
-            'total' => CallbackRequest::where('tenant_id', $tenant->id)->count(),
-            'completed' => CallbackRequest::where('tenant_id', $tenant->id)->where('status', 'completed')->count(),
+            'pending' => CallbackRequest::where('status', 'pending')->count(),
+            'today' => CallbackRequest::whereDate('preferred_date', today())->count(),
+            'total' => CallbackRequest::count(),
+            'completed' => CallbackRequest::where('status', 'completed')->count(),
         ];
 
         return view('dashboard.callbacks.index', compact('callbacks', 'bots', 'stats'));

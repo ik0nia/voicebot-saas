@@ -184,7 +184,10 @@ class ProcessKnowledgeDocument implements ShouldQueue
 
     public function failed(\Throwable $e): void
     {
-        $this->knowledge->update(['status' => 'failed']);
+        $this->knowledge->update([
+            'status' => 'failed',
+            'error_message' => mb_substr($e->getMessage(), 0, 1000),
+        ]);
 
         BotKnowledge::where('bot_id', $this->knowledge->bot_id)
             ->where('title', $this->knowledge->title)

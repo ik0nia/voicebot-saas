@@ -10,8 +10,18 @@ class TenantScope implements Scope
 {
     public function apply(Builder $builder, Model $model): void
     {
-        if (auth()->check() && auth()->user()->tenant_id && !auth()->user()->isSuperAdmin()) {
-            $builder->where($model->getTable() . '.tenant_id', auth()->user()->tenant_id);
+        if (!auth()->check()) return;
+
+        $user = auth()->user();
+
+        // Super admin with "view all" toggle: bypass scope entirely
+        if ($user->isSuperAdmin() && session('admin_view_all', false)) {
+            return;
+        }
+
+        // Everyone else (including super admin with toggle OFF): filter to own tenant
+        if ($user->tenant_id) {
+            $builder->where($model->getTable() . '.tenant_id', $user->tenant_id);
         }
     }
 }

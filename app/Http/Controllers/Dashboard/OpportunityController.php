@@ -11,9 +11,8 @@ class OpportunityController extends Controller
 {
     public function index(Request $request)
     {
-        $tenant = auth()->user()->currentTenant();
-        $query = Conversation::where('tenant_id', $tenant->id)
-            ->where('is_opportunity', true)
+        $tenant = auth()->user()->tenant;
+        $query = Conversation::where('is_opportunity', true)
             ->with('bot')
             ->orderByDesc('opportunity_score');
 
@@ -25,10 +24,10 @@ class OpportunityController extends Controller
         $opportunities = $query->paginate(25);
         $bots = $tenant->bots()->select('id', 'name')->get();
         $stats = [
-            'total' => Conversation::where('tenant_id', $tenant->id)->where('is_opportunity', true)->count(),
-            'avg_score' => (int) Conversation::where('tenant_id', $tenant->id)->where('is_opportunity', true)->avg('opportunity_score'),
+            'total' => Conversation::where('is_opportunity', true)->count(),
+            'avg_score' => (int) Conversation::where('is_opportunity', true)->avg('opportunity_score'),
             'with_clicks' => ChatEvent::whereIn('conversation_id',
-                Conversation::where('tenant_id', $tenant->id)->where('is_opportunity', true)->pluck('id')
+                Conversation::where('is_opportunity', true)->pluck('id')
             )->where('event_name', 'product_click')->distinct('conversation_id')->count('conversation_id'),
         ];
 

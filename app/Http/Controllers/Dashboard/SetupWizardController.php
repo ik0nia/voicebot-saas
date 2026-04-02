@@ -18,7 +18,7 @@ class SetupWizardController extends Controller
         $tenant = auth()->user()->tenant;
 
         // If tenant already has bots, skip wizard
-        if (Bot::where('tenant_id', $tenant->id)->exists()) {
+        if (Bot::exists()) {
             return redirect()->route('dashboard');
         }
 

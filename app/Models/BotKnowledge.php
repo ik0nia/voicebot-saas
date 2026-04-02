@@ -22,6 +22,7 @@ class BotKnowledge extends Model
         'content',
         'content_language',
         'status',
+        'error_message',
         'embedding_model',
         'chunk_index',
         'metadata',

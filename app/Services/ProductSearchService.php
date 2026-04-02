@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\SearchAnalytics;
+use App\Models\RetrievalFeedback;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -111,6 +112,9 @@ class ProductSearchService
 
             // 3. Semantic filtering + scoring
             $scored = $this->semanticFilter($candidates, $intent, $debug);
+
+            // 3b. Feedback boost — adjust scores based on user thumbs up/down history
+            $scored = $this->applyFeedbackBoost($scored, $botId, $query, $debug);
 
             // 4. Confidence gate
             $minScore = config('product_search.min_confidence_score', 5);
@@ -496,6 +500,78 @@ class ProductSearchService
                 'reasons' => $reasons,
             ];
         }
+
+        return $scored;
+    }
+
+    /**
+     * Apply feedback boost/penalty based on retrieval_feedback history.
+     *
+     * Logic: For each product in the scored set, look up how many thumbs-up (+1)
+     * and thumbs-down (-1) it received on similar queries in the last 30 days.
+     * Apply a net score adjustment: +1.5 per net positive, -1.5 per net negative (capped).
+     */
+    private function applyFeedbackBoost(array $scored, int $botId, string $query, bool $debug = false): array
+    {
+        if (empty($scored)) return $scored;
+
+        // Collect all product IDs from scored results
+        $productIds = [];
+        foreach ($scored as $item) {
+            $pid = $item['product']->wc_product_id ?? $item['product']->id;
+            if ($pid) $productIds[] = (int) $pid;
+        }
+
+        if (empty($productIds)) return $scored;
+
+        // Get feedback signals for these products from last 30 days
+        $feedbackData = Cache::remember(
+            "feedback_boost_{$botId}_" . md5(implode(',', $productIds)),
+            now()->addMinutes(15),
+            function () use ($botId, $productIds) {
+                // Aggregate ratings per product_id from retrieval_feedback
+                $rows = RetrievalFeedback::where('bot_id', $botId)
+                    ->where('retrieval_type', 'product')
+                    ->where('created_at', '>=', now()->subDays(30))
+                    ->whereNotNull('product_ids')
+                    ->get(['product_ids', 'rating']);
+
+                $scores = [];
+                foreach ($rows as $row) {
+                    $pids = is_array($row->product_ids) ? $row->product_ids : json_decode($row->product_ids, true);
+                    if (!is_array($pids)) continue;
+                    foreach ($pids as $pid) {
+                        $pid = (int) $pid;
+                        if (!isset($scores[$pid])) $scores[$pid] = 0;
+                        $scores[$pid] += $row->rating; // +1 or -1
+                    }
+                }
+                return $scores;
+            }
+        );
+
+        if (empty($feedbackData)) return $scored;
+
+        // Apply boost
+        foreach ($scored as &$item) {
+            $pid = (int) ($item['product']->wc_product_id ?? $item['product']->id);
+            if (isset($feedbackData[$pid])) {
+                $netRating = $feedbackData[$pid];
+                // Cap at +/- 3 points (avoids runaway boosting)
+                $boost = max(-3, min(3, $netRating * 1.5));
+                $item['score'] = round($item['score'] + $boost, 2);
+                $item['reasons'][] = ($boost >= 0 ? '+' : '') . $boost . ' feedback_boost(net:' . $netRating . ')';
+
+                if ($debug) {
+                    Log::debug('ProductSearch:feedback_boost', [
+                        'product' => mb_substr($item['product']->name, 0, 40),
+                        'net_rating' => $netRating,
+                        'boost' => $boost,
+                    ]);
+                }
+            }
+        }
+        unset($item);
 
         return $scored;
     }

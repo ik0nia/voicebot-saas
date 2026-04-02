@@ -11,9 +11,8 @@ class LeadController extends Controller
 {
     public function index(Request $request)
     {
-        $tenant = auth()->user()->currentTenant();
-        $query = Lead::where('tenant_id', $tenant->id)
-            ->with('bot', 'conversation')
+        // TenantScope handles filtering (respects super admin toggle automatically)
+        $query = Lead::with('bot', 'conversation')
             ->orderByDesc('created_at');
 
         if ($stage = $request->input('stage')) $query->where('pipeline_stage', $stage);
@@ -23,18 +22,17 @@ class LeadController extends Controller
         if ($to = $request->input('to')) $query->where('created_at', '<=', $to . ' 23:59:59');
 
         $leads = $query->paginate(25);
-        $bots = $tenant->bots()->select('id', 'name')->get();
+        $bots = \App\Models\Bot::select('id', 'name')->get();
 
-        // Pipeline stats
-        $pipelineBase = Lead::where('tenant_id', $tenant->id);
+        // Pipeline stats (TenantScope applied automatically)
         $pipeline = [];
         foreach (Lead::STAGES as $stageKey => $stageLabel) {
-            $pipeline[$stageKey] = (clone $pipelineBase)->where('pipeline_stage', $stageKey)->count();
+            $pipeline[$stageKey] = Lead::where('pipeline_stage', $stageKey)->count();
         }
 
         $stats = [
-            'total' => Lead::where('tenant_id', $tenant->id)->count(),
-            'active' => Lead::where('tenant_id', $tenant->id)->active()->count(),
+            'total' => Lead::count(),
+            'active' => Lead::active()->count(),
             'won' => $pipeline['won'],
             'scheduled' => $pipeline['scheduled'],
             'pipeline' => $pipeline,
@@ -96,8 +94,7 @@ class LeadController extends Controller
 
     public function export(Request $request): StreamedResponse
     {
-        $tenant = auth()->user()->currentTenant();
-        $leads = Lead::where('tenant_id', $tenant->id)->with('bot')->orderByDesc('created_at')->get();
+        $leads = Lead::with('bot')->orderByDesc('created_at')->get();
 
         return response()->streamDownload(function () use ($leads) {
             $handle = fopen('php://output', 'w');

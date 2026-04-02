@@ -80,6 +80,7 @@ Route::middleware('auth')->prefix('dashboard/setup')->group(function () {
 
 // Dashboard home
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth'])->name('dashboard');
+Route::post('/dashboard/toggle-admin-view', [DashboardController::class, 'toggleAdminView'])->middleware(['auth'])->name('dashboard.toggleAdminView');
 
 // Billing routes (dashboard)
 Route::get('/dashboard/facturare', [BillingController::class, 'index'])->middleware('auth')->name('dashboard.billing.index');
@@ -95,6 +96,7 @@ Route::middleware('auth')->prefix('dashboard/boti')->group(function () {
     Route::delete('/{bot}', [BotController::class, 'destroy'])->name('dashboard.bots.destroy');
     Route::patch('/{bot}/toggle', [BotController::class, 'toggleActive'])->name('dashboard.bots.toggle');
     Route::patch('/{bot}/update-field', [BotController::class, 'updateField'])->name('dashboard.bots.updateField');
+    Route::post('/{bot}/policy', [BotController::class, 'updatePolicy'])->name('dashboard.bots.updatePolicy');
 
     // Voice cloning
     Route::get('/{bot}/voice-clone', [ClonedVoiceController::class, 'create'])->name('dashboard.bots.voiceClone.create');

@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Traits\BelongsToTenant;
 
 class SearchAnalytics extends Model
 {
+    use BelongsToTenant;
     protected $fillable = [
         'bot_id',
         'tenant_id',

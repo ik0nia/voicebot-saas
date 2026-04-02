@@ -22,7 +22,7 @@ class PluginUpdateController extends Controller
             return response()->json(['error' => 'Unknown plugin'], 404);
         }
 
-        $latestVersion = '2.0.5';
+        $latestVersion = config('sambla.plugin_version');
         $downloadUrl = url('/downloads/sambla-woocommerce.zip');
 
         $data = [
@@ -45,7 +45,7 @@ class PluginUpdateController extends Controller
         return response()->json($data);
     }
 
-    private function getChangelog(): string
+    private function getChangelog(string $version = ''): string
     {
         return '<h4>2.0.3 (Aprilie 2026)</h4><ul>'
             . '<li>Logo Sambla real în header și meniu WordPress</li>'

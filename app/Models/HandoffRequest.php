@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\Traits\BelongsToTenant;
 
 class HandoffRequest extends Model
 {
+    use BelongsToTenant;
     protected $fillable = [
         'tenant_id', 'bot_id', 'conversation_id', 'lead_id',
         'status', 'trigger_reason', 'conversation_summary',

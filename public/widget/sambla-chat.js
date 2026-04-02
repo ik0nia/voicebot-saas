@@ -575,6 +575,21 @@
                 .sambla-messages::-webkit-scrollbar-thumb { background: #475569; }\
             }\
             \
+            .sambla-feedback { display: flex; gap: 4px; margin-top: 4px; margin-left: 2px; }\
+            .sambla-feedback-btn {\
+                background: none; border: 1px solid transparent; border-radius: 6px; padding: 3px 6px;\
+                cursor: pointer; opacity: 0.35; transition: opacity 0.2s, background 0.2s, border-color 0.2s;\
+                font-size: 14px; line-height: 1; display: flex; align-items: center;\
+            }\
+            .sambla-feedback-btn:hover { opacity: 0.7; background: #f1f5f9; }\
+            .sambla-feedback-btn.active-up { opacity: 1; background: #dcfce7; border-color: #86efac; }\
+            .sambla-feedback-btn.active-down { opacity: 1; background: #fee2e2; border-color: #fca5a5; }\
+            @media (prefers-color-scheme: dark) {\
+                .sambla-feedback-btn:hover { background: #334155; }\
+                .sambla-feedback-btn.active-up { background: #14532d; border-color: #22c55e; }\
+                .sambla-feedback-btn.active-down { background: #450a0a; border-color: #ef4444; }\
+            }\
+            \
             .sambla-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }\
             \
             @media (max-width: 440px) {\
@@ -809,13 +824,14 @@
             }
         }
 
-        function addMessage(text, sender, timestamp, products, receiptStatus) {
+        function addMessage(text, sender, timestamp, products, receiptStatus, messageId) {
             var ts = timestamp || new Date().toISOString();
             var status = receiptStatus || (sender === 'user' ? 'sent' : null);
             var msgData = { text: text, sender: sender, time: ts };
             if (products && products.length > 0) {
                 msgData.products = products;
             }
+            if (messageId) msgData.messageId = messageId;
             if (status) msgData.receipt = status;
             messages.push(msgData);
             enforceMessageLimit();
@@ -847,6 +863,71 @@
             timeEl.className = 'time';
             timeEl.innerHTML = formatTime(ts) + ' ' + receiptHtml;
             wrapEl.appendChild(timeEl);
+
+            // Feedback buttons — on bot messages, randomly (~30%)
+            var showFeedback = sender === 'bot' && messageId && Math.random() < 0.3;
+            if (showFeedback) {
+                msgData.showFeedback = true;
+            }
+            if (sender === 'bot' && messageId && msgData.showFeedback) {
+                var feedbackEl = document.createElement('div');
+                feedbackEl.className = 'sambla-feedback';
+                var thumbUp = document.createElement('button');
+                thumbUp.className = 'sambla-feedback-btn';
+                thumbUp.innerHTML = '&#128077;';
+                thumbUp.setAttribute('aria-label', 'Răspuns util');
+                thumbUp.setAttribute('title', 'Răspuns util');
+                var thumbDown = document.createElement('button');
+                thumbDown.className = 'sambla-feedback-btn';
+                thumbDown.innerHTML = '&#128078;';
+                thumbDown.setAttribute('aria-label', 'Răspuns neutil');
+                thumbDown.setAttribute('title', 'Răspuns neutil');
+
+                // Check if already rated (from saved messages)
+                if (msgData.feedback === 1) { thumbUp.classList.add('active-up'); }
+                if (msgData.feedback === -1) { thumbDown.classList.add('active-down'); }
+
+                function sendFeedback(rating, btnActive, btnOther, activeClass, otherClass) {
+                    // Toggle: if already active, remove rating
+                    var newRating = btnActive.classList.contains(activeClass) ? 0 : rating;
+
+                    btnActive.classList.toggle(activeClass);
+                    btnOther.classList.remove(otherClass);
+
+                    // Save to local state
+                    msgData.feedback = newRating === 0 ? undefined : newRating;
+                    saveMessages(messages);
+
+                    if (newRating === 0) return; // No API call for un-rating
+
+                    try {
+                        fetch(config.apiBase + '/api/v1/chatbot/' + config.channelId + '/feedback', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                            body: JSON.stringify({
+                                message_id: messageId,
+                                conversation_id: getConversationId(),
+                                rating: rating,
+                                session_id: getSessionId(),
+                                session_token: getSessionToken()
+                            })
+                        });
+                    } catch(e) {}
+
+                    trackEvent('message_feedback', { rating: rating, message_id: messageId });
+                }
+
+                thumbUp.addEventListener('click', function() {
+                    sendFeedback(1, thumbUp, thumbDown, 'active-up', 'active-down');
+                });
+                thumbDown.addEventListener('click', function() {
+                    sendFeedback(-1, thumbDown, thumbUp, 'active-down', 'active-up');
+                });
+
+                feedbackEl.appendChild(thumbUp);
+                feedbackEl.appendChild(thumbDown);
+                wrapEl.appendChild(feedbackEl);
+            }
 
             // Insert before typing indicator
             messagesContainer.insertBefore(wrapEl, typingEl);
@@ -1315,7 +1396,7 @@
                 }
                 var responseText = data.response || data.reply || t('errorMessage');
                 var products = (data.products && data.products.length > 0) ? data.products : null;
-                addMessage(responseText, 'bot', null, products);
+                addMessage(responseText, 'bot', null, products, null, data.message_id || null);
                 trackEvent('message_received', { hasProducts: !!products });
             })
             .catch(function(err) {
@@ -1355,8 +1436,8 @@
                 if (p.stock_status === 'outofstock') return;
                 var btn = document.createElement('button');
                 btn.className = 'sambla-atc-btn';
-                btn.style.cssText = 'width:100%;padding:5px 0;border:none;border-radius:6px;background:#16a34a;color:#fff;font-size:11px;font-weight:600;cursor:pointer;transition:background 0.15s;';
-                btn.textContent = '\uD83D\uDED2 Adaugă în coș';
+                btn.style.cssText = 'width:100%;padding:5px 0;border:none;border-radius:6px;background:#16a34a;color:#fff;font-size:11px;font-weight:600;cursor:pointer;transition:background 0.15s;display:flex;align-items:center;justify-content:center;gap:4px;';
+                btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg> Adaugă în coș';
                 btn.addEventListener('mouseenter', function() { btn.style.background = '#15803d'; });
                 btn.addEventListener('mouseleave', function() { btn.style.background = '#16a34a'; });
                 btn.addEventListener('click', function(e) {
@@ -1511,8 +1592,8 @@
                     if (atcSlot) {
                         var btn = document.createElement('button');
                         btn.className = 'sambla-atc-btn';
-                        btn.style.cssText = 'padding:5px 14px;border:none;border-radius:6px;background:#16a34a;color:#fff;font-size:11px;font-weight:600;cursor:pointer;transition:background 0.15s;';
-                        btn.textContent = '\uD83D\uDED2 Adaugă în coș';
+                        btn.style.cssText = 'padding:5px 14px;border:none;border-radius:6px;background:#16a34a;color:#fff;font-size:11px;font-weight:600;cursor:pointer;transition:background 0.15s;display:flex;align-items:center;justify-content:center;gap:4px;';
+                        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg> Adaugă în coș';
                         btn.addEventListener('mouseenter', function() { btn.style.background = '#15803d'; });
                         btn.addEventListener('mouseleave', function() { btn.style.background = '#16a34a'; });
                         btn.addEventListener('click', function(e) {
@@ -1687,6 +1768,61 @@
                 timeEl.className = 'time';
                 timeEl.innerHTML = formatTime(msg.time) + ' ' + receiptHtml;
                 wrapEl.appendChild(timeEl);
+
+                // Restore feedback buttons for bot messages that had them
+                if (msg.sender === 'bot' && msg.messageId && msg.showFeedback) {
+                    (function(msgRef) {
+                        var feedbackEl = document.createElement('div');
+                        feedbackEl.className = 'sambla-feedback';
+                        var thumbUp = document.createElement('button');
+                        thumbUp.className = 'sambla-feedback-btn' + (msgRef.feedback === 1 ? ' active-up' : '');
+                        thumbUp.innerHTML = '&#128077;';
+                        thumbUp.setAttribute('aria-label', 'Răspuns util');
+                        var thumbDown = document.createElement('button');
+                        thumbDown.className = 'sambla-feedback-btn' + (msgRef.feedback === -1 ? ' active-down' : '');
+                        thumbDown.innerHTML = '&#128078;';
+                        thumbDown.setAttribute('aria-label', 'Răspuns neutil');
+
+                        thumbUp.addEventListener('click', function() {
+                            var wasActive = thumbUp.classList.contains('active-up');
+                            thumbUp.classList.toggle('active-up');
+                            thumbDown.classList.remove('active-down');
+                            msgRef.feedback = wasActive ? undefined : 1;
+                            saveMessages(messages);
+                            if (!wasActive) {
+                                try {
+                                    fetch(config.apiBase + '/api/v1/chatbot/' + config.channelId + '/feedback', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                                        body: JSON.stringify({ message_id: msgRef.messageId, conversation_id: getConversationId(), rating: 1, session_id: getSessionId(), session_token: getSessionToken() })
+                                    });
+                                } catch(e) {}
+                                trackEvent('message_feedback', { rating: 1, message_id: msgRef.messageId });
+                            }
+                        });
+                        thumbDown.addEventListener('click', function() {
+                            var wasActive = thumbDown.classList.contains('active-down');
+                            thumbDown.classList.toggle('active-down');
+                            thumbUp.classList.remove('active-up');
+                            msgRef.feedback = wasActive ? undefined : -1;
+                            saveMessages(messages);
+                            if (!wasActive) {
+                                try {
+                                    fetch(config.apiBase + '/api/v1/chatbot/' + config.channelId + '/feedback', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                                        body: JSON.stringify({ message_id: msgRef.messageId, conversation_id: getConversationId(), rating: -1, session_id: getSessionId(), session_token: getSessionToken() })
+                                    });
+                                } catch(e) {}
+                                trackEvent('message_feedback', { rating: -1, message_id: msgRef.messageId });
+                            }
+                        });
+
+                        feedbackEl.appendChild(thumbUp);
+                        feedbackEl.appendChild(thumbDown);
+                        wrapEl.appendChild(feedbackEl);
+                    })(msg);
+                }
 
                 if (expired) wrapEl.style.opacity = '0.5';
                 messagesContainer.insertBefore(wrapEl, typingEl);
