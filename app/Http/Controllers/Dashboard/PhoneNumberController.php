@@ -43,7 +43,10 @@ class PhoneNumberController extends Controller
             'provider' => 'string|in:telnyx,manual',
         ]);
 
-        // If provider is telnyx, purchase the number first
+        $validated['tenant_id'] = auth()->user()->tenant_id;
+        $validated['monthly_cost_cents'] = $request->get('monthly_cost_cents', 2700); // 27 lei/lună
+
+        // If provider is telnyx, purchase the number
         if (($validated['provider'] ?? 'telnyx') === 'telnyx') {
             try {
                 $service = app(TelnyxService::class);
@@ -52,18 +55,25 @@ class PhoneNumberController extends Controller
                 if (!$result) {
                     return back()->with('error', 'Nu s-a putut achiziționa numărul. Încearcă alt număr.')->withInput();
                 }
+
+                $validated['status'] = PhoneNumber::STATUS_PENDING;
+                $validated['is_active'] = false;
+                $validated['telnyx_order_id'] = $result->id ?? null;
             } catch (\Exception $e) {
                 return back()->with('error', 'Eroare la achiziția numărului: ' . $e->getMessage())->withInput();
             }
+        } else {
+            $validated['status'] = PhoneNumber::STATUS_ACTIVE;
+            $validated['is_active'] = true;
         }
-
-        $validated['tenant_id'] = auth()->user()->tenant_id;
-        $validated['is_active'] = true;
-        $validated['monthly_cost_cents'] = $request->get('monthly_cost_cents', 2700); // 27 lei/lună
 
         PhoneNumber::create($validated);
 
-        return back()->with('success', 'Numărul a fost adăugat cu succes!');
+        $message = $validated['status'] === PhoneNumber::STATUS_PENDING
+            ? 'Numărul a fost comandat! Este în curs de activare — verificarea documentelor poate dura 1-2 zile lucrătoare.'
+            : 'Numărul a fost adăugat cu succes!';
+
+        return back()->with('success', $message);
     }
 
     public function update(Request $request, PhoneNumber $phoneNumber)

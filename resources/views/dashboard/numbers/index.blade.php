@@ -235,7 +235,12 @@
 
                                 {{-- Status --}}
                                 <td class="px-4 py-3">
-                                    @if($phoneNumber->is_active)
+                                    @if($phoneNumber->status === 'pending')
+                                        <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                                            Se activează
+                                        </span>
+                                    @elseif($phoneNumber->is_active)
                                         <span class="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700">
                                             <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
                                             Activ

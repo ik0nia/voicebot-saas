@@ -19,7 +19,18 @@ class PhoneNumber extends Model
         'friendly_name',
         'monthly_cost_cents',
         'is_active',
+        'status',
+        'telnyx_order_id',
     ];
+
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_FAILED = 'failed';
+
+    public function isPending(): bool
+    {
+        return $this->status === self::STATUS_PENDING;
+    }
 
     protected function casts(): array
     {
