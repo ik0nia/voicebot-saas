@@ -51,6 +51,6 @@ class PhoneNumber extends Model
 
     public function formattedCost(): string
     {
-        return number_format($this->monthly_cost_cents / 100, 2, ',', '.') . ' EUR';
+        return number_format($this->monthly_cost_cents / 100, 2, ',', '.') . ' lei';
     }
 }
