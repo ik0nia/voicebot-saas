@@ -78,15 +78,44 @@
                     </button>
                 </div>
 
-                <form method="POST" action="{{ route('dashboard.numbers.store') }}" class="space-y-4">
+                <form method="POST" action="{{ route('dashboard.numbers.store') }}" class="space-y-4" id="add-number-form">
                     @csrf
+                    <input type="hidden" name="provider" value="telnyx">
 
-                    {{-- Număr de telefon --}}
+                    {{-- Alege număr de telefon --}}
                     <div>
-                        <label for="number" class="block text-sm font-medium text-slate-700 mb-1">Număr de telefon</label>
-                        <input type="text" name="number" id="number" required placeholder="+40721234567"
-                               value="{{ old('number') }}"
-                               class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" />
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="block text-sm font-medium text-slate-700">Alege un număr de telefon</label>
+                            <button type="button" onclick="loadAvailableNumbers()"
+                                    class="inline-flex items-center gap-1.5 text-xs font-medium text-red-700 hover:text-red-900 transition-colors"
+                                    id="refresh-numbers-btn">
+                                <svg class="w-3.5 h-3.5" id="refresh-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Alte numere
+                            </button>
+                        </div>
+
+                        {{-- Loading state --}}
+                        <div id="numbers-loading" class="hidden py-8 text-center">
+                            <svg class="animate-spin h-6 w-6 text-red-700 mx-auto mb-2" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                            <p class="text-sm text-slate-500">Se caută numere disponibile...</p>
+                        </div>
+
+                        {{-- Error state --}}
+                        <div id="numbers-error" class="hidden rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+                            Nu s-au putut încărca numerele. Încearcă din nou.
+                        </div>
+
+                        {{-- Numbers list --}}
+                        <div id="numbers-list" class="space-y-2">
+                            {{-- Populated by JS --}}
+                        </div>
+
+                        <input type="hidden" name="number" id="selected-number" required>
                         @error('number')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -98,16 +127,6 @@
                         <input type="text" name="friendly_name" id="friendly_name" placeholder="Linia principală"
                                value="{{ old('friendly_name') }}"
                                class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" />
-                    </div>
-
-                    {{-- Provider --}}
-                    <div>
-                        <label for="provider" class="block text-sm font-medium text-slate-700 mb-1">Provider</label>
-                        <select name="provider" id="provider"
-                                class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition">
-                            <option value="telnyx" {{ old('provider') === 'telnyx' ? 'selected' : '' }}>Automat</option>
-                            <option value="manual" {{ old('provider') === 'manual' ? 'selected' : '' }}>Manual</option>
-                        </select>
                     </div>
 
                     {{-- Asociază cu bot --}}
@@ -122,23 +141,15 @@
                         </select>
                     </div>
 
-                    {{-- Cost lunar --}}
-                    <div>
-                        <label for="monthly_cost_cents" class="block text-sm font-medium text-slate-700 mb-1">Cost lunar <span class="text-slate-400">(cenți EUR)</span></label>
-                        <input type="number" name="monthly_cost_cents" id="monthly_cost_cents" value="{{ old('monthly_cost_cents', 100) }}" min="0"
-                               class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" />
-                        <p class="mt-1 text-xs text-slate-400">100 cenți = 1,00 EUR</p>
-                    </div>
-
                     {{-- Buttons --}}
                     <div class="flex items-center justify-end gap-3 pt-2">
                         <button type="button" onclick="document.getElementById('add-number-modal').classList.add('hidden')"
                                 class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
                             Anulează
                         </button>
-                        <button type="submit"
-                                class="rounded-lg bg-red-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 transition-colors">
-                            Adaugă
+                        <button type="submit" id="submit-number-btn" disabled
+                                class="rounded-lg bg-red-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            Activează numărul
                         </button>
                     </div>
                 </form>
@@ -156,7 +167,6 @@
                             <th class="px-4 py-3 font-semibold text-slate-600">Număr</th>
                             <th class="px-4 py-3 font-semibold text-slate-600">Nume</th>
                             <th class="px-4 py-3 font-semibold text-slate-600 hidden md:table-cell">Bot asociat</th>
-                            <th class="px-4 py-3 font-semibold text-slate-600 hidden lg:table-cell">Provider</th>
                             <th class="px-4 py-3 font-semibold text-slate-600 hidden lg:table-cell">Cost lunar</th>
                             <th class="px-4 py-3 font-semibold text-slate-600">Status</th>
                             <th class="px-4 py-3 font-semibold text-slate-600 text-right">Acțiuni</th>
@@ -216,13 +226,6 @@
                                             <span class="text-slate-400">Neasociat</span>
                                         @endif
                                     </div>
-                                </td>
-
-                                {{-- Provider --}}
-                                <td class="px-4 py-3 hidden lg:table-cell">
-                                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $phoneNumber->provider === 'telnyx' ? 'bg-red-50 text-red-800' : 'bg-slate-100 text-slate-600' }}">
-                                        {{ ucfirst($phoneNumber->provider ?? 'manual') }}
-                                    </span>
                                 </td>
 
                                 {{-- Cost lunar --}}
@@ -320,15 +323,6 @@
         </div>
     @endif
 
-    {{-- Info box --}}
-    <div class="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 flex items-start gap-3">
-        <svg class="w-5 h-5 text-red-700 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <p class="text-sm text-red-800">
-            Pentru a cumpăra numere de telefon automat, contactează administratorul platformei.
-        </p>
-    </div>
 
     {{-- Show modal on validation errors --}}
     @if($errors->any())
@@ -348,5 +342,99 @@
         editEl.classList.toggle('hidden');
         displayEl.classList.toggle('hidden');
     }
+
+    function loadAvailableNumbers() {
+        var list = document.getElementById('numbers-list');
+        var loading = document.getElementById('numbers-loading');
+        var error = document.getElementById('numbers-error');
+        var submitBtn = document.getElementById('submit-number-btn');
+        var refreshBtn = document.getElementById('refresh-numbers-btn');
+        var refreshIcon = document.getElementById('refresh-icon');
+
+        list.innerHTML = '';
+        error.classList.add('hidden');
+        loading.classList.remove('hidden');
+        submitBtn.disabled = true;
+        document.getElementById('selected-number').value = '';
+        refreshIcon.classList.add('animate-spin');
+
+        fetch('{{ route("dashboard.numbers.available") }}', {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            loading.classList.add('hidden');
+            refreshIcon.classList.remove('animate-spin');
+
+            if (!data.numbers || data.numbers.length === 0) {
+                error.textContent = 'Nu sunt numere disponibile momentan. Încearcă din nou.';
+                error.classList.remove('hidden');
+                return;
+            }
+
+            data.numbers.forEach(function(num, i) {
+                var region = '';
+                if (num.region && num.region.length > 0) {
+                    for (var r = 0; r < num.region.length; r++) {
+                        if (num.region[r].region_type === 'location') {
+                            region = num.region[r].region_name;
+                            break;
+                        }
+                    }
+                }
+
+                var div = document.createElement('div');
+                div.innerHTML =
+                    '<label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 cursor-pointer hover:border-red-300 hover:bg-red-50/50 transition-all' + (i === 0 ? '' : '') + '">' +
+                        '<input type="radio" name="number_selection" value="' + num.number + '" class="w-4 h-4 text-red-700 border-slate-300 focus:ring-red-700">' +
+                        '<div class="flex-1 min-w-0">' +
+                            '<div class="flex items-center gap-2">' +
+                                '<span class="text-base leading-none">&#x1F1F7;&#x1F1F4;</span>' +
+                                '<span class="font-semibold text-slate-900">' + num.number + '</span>' +
+                            '</div>' +
+                            '<div class="flex items-center gap-3 mt-0.5">' +
+                                (region ? '<span class="text-xs text-slate-500">' + region + '</span>' : '') +
+                                (num.capabilities && num.capabilities.voice ? '<span class="text-xs text-green-600 font-medium">Voice</span>' : '') +
+                                (num.capabilities && num.capabilities.sms ? '<span class="text-xs text-blue-600 font-medium">SMS</span>' : '') +
+                            '</div>' +
+                        '</div>' +
+                        '<span class="text-sm font-medium text-slate-500">$' + num.monthly_cost + '/lună</span>' +
+                    '</label>';
+                list.appendChild(div);
+            });
+
+            list.querySelectorAll('input[name="number_selection"]').forEach(function(radio) {
+                radio.addEventListener('change', function() {
+                    document.getElementById('selected-number').value = this.value;
+                    submitBtn.disabled = false;
+
+                    list.querySelectorAll('label').forEach(function(l) {
+                        l.classList.remove('border-red-500', 'bg-red-50');
+                    });
+                    this.closest('label').classList.add('border-red-500', 'bg-red-50');
+                });
+            });
+        })
+        .catch(function() {
+            loading.classList.add('hidden');
+            refreshIcon.classList.remove('animate-spin');
+            error.textContent = 'Eroare la încărcarea numerelor. Încearcă din nou.';
+            error.classList.remove('hidden');
+        });
+    }
+
+    // Auto-load numbers when modal opens
+    var addBtn = document.querySelector('[onclick*="add-number-modal"]');
+    if (addBtn) {
+        var origOnclick = addBtn.getAttribute('onclick');
+        addBtn.setAttribute('onclick', origOnclick + '; loadAvailableNumbers();');
+    }
+    // Also for empty state button
+    document.querySelectorAll('[onclick*="add-number-modal"]').forEach(function(btn) {
+        var orig = btn.getAttribute('onclick');
+        if (orig.indexOf('loadAvailableNumbers') === -1) {
+            btn.setAttribute('onclick', orig + '; loadAvailableNumbers();');
+        }
+    });
 </script>
 @endpush

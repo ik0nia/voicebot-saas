@@ -131,6 +131,7 @@ Route::middleware('auth')->prefix('dashboard/analiza')->group(function () {
 // Phone numbers routes (dashboard)
 Route::middleware('auth')->prefix('dashboard/numere')->group(function () {
     Route::get('/', [PhoneNumberController::class, 'index'])->name('dashboard.numbers.index');
+    Route::get('/available', [PhoneNumberController::class, 'availableNumbers'])->name('dashboard.numbers.available');
     Route::post('/', [PhoneNumberController::class, 'store'])->name('dashboard.numbers.store');
     Route::put('/{phoneNumber}', [PhoneNumberController::class, 'update'])->name('dashboard.numbers.update');
     Route::delete('/{phoneNumber}', [PhoneNumberController::class, 'destroy'])->name('dashboard.numbers.destroy');

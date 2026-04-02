@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Dashboard;
 use App\Http\Controllers\Controller;
 use App\Models\PhoneNumber;
 use App\Models\Bot;
+use App\Services\TelnyxService;
 use Illuminate\Http\Request;
 
 class PhoneNumberController extends Controller
@@ -17,6 +18,22 @@ class PhoneNumberController extends Controller
         return view('dashboard.numbers.index', compact('numbers', 'bots'));
     }
 
+    public function availableNumbers(Request $request)
+    {
+        try {
+            $service = app(TelnyxService::class);
+            $numbers = $service->getAvailableNumbers(
+                $request->get('country', 'RO'),
+                'local',
+                5
+            );
+
+            return response()->json(['numbers' => $numbers]);
+        } catch (\Exception $e) {
+            return response()->json(['numbers' => [], 'error' => 'Nu s-au putut încărca numerele disponibile.'], 500);
+        }
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -26,13 +43,27 @@ class PhoneNumberController extends Controller
             'provider' => 'string|in:telnyx,manual',
         ]);
 
+        // If provider is telnyx, purchase the number first
+        if (($validated['provider'] ?? 'telnyx') === 'telnyx') {
+            try {
+                $service = app(TelnyxService::class);
+                $result = $service->purchaseNumber($validated['number']);
+
+                if (!$result) {
+                    return back()->with('error', 'Nu s-a putut achiziționa numărul. Încearcă alt număr.')->withInput();
+                }
+            } catch (\Exception $e) {
+                return back()->with('error', 'Eroare la achiziția numărului: ' . $e->getMessage())->withInput();
+            }
+        }
+
         $validated['tenant_id'] = auth()->user()->tenant_id;
         $validated['is_active'] = true;
-        $validated['monthly_cost_cents'] = $request->get('monthly_cost_cents', 100); // 1 EUR default
+        $validated['monthly_cost_cents'] = $request->get('monthly_cost_cents', 200); // $2/mo Telnyx default
 
         PhoneNumber::create($validated);
 
-        return back()->with('success', 'Numărul a fost adăugat.');
+        return back()->with('success', 'Numărul a fost adăugat cu succes!');
     }
 
     public function update(Request $request, PhoneNumber $phoneNumber)
