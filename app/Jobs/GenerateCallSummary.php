@@ -24,17 +24,22 @@ class GenerateCallSummary implements ShouldQueue
 
     public function handle(): void
     {
-        $call = Call::find($this->callId);
-        if (!$call || !$call->transcript) {
+        $call = Call::with('transcripts')->find($this->callId);
+        if (!$call || $call->transcripts->isEmpty()) {
             return;
         }
+
+        $transcript = $call->transcripts
+            ->sortBy('timestamp_ms')
+            ->map(fn($t) => ($t->role === 'user' ? 'Client' : 'Agent') . ': ' . $t->content)
+            ->implode("\n");
 
         try {
             $response = OpenAI::chat()->create([
                 'model' => 'gpt-4o-mini',
                 'messages' => [
                     ['role' => 'system', 'content' => 'Summarize this phone call transcript in 2-3 sentences. Include the main topic, any decisions made, and follow-up actions needed. Reply in the same language as the transcript.'],
-                    ['role' => 'user', 'content' => mb_substr($call->transcript, 0, 8000)],
+                    ['role' => 'user', 'content' => mb_substr($transcript, 0, 8000)],
                 ],
                 'max_tokens' => 200,
                 'temperature' => 0.3,

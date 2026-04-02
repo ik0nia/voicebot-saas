@@ -23,10 +23,10 @@ class RealtimeSessionController extends Controller
     /**
      * Create an ephemeral OpenAI Realtime session token + Call record.
      */
-    public function create(Request $request, Bot $bot): JsonResponse
+    public function create(Request $request, int $bot): JsonResponse
     {
-        // Public endpoint: TenantScope is a no-op when unauthenticated (by design).
-        // No need for withoutGlobalScopes(). Verify the bot is active.
+        $bot = Bot::withoutGlobalScopes()->findOrFail($bot);
+
         if (!$bot->is_active) {
             return response()->json(['error' => 'Bot is not active'], 404);
         }
@@ -319,8 +319,9 @@ class RealtimeSessionController extends Controller
     /**
      * Save a transcript line (called from frontend during/after call).
      */
-    public function saveTranscript(Request $request, Call $call): JsonResponse
+    public function saveTranscript(Request $request, int $call): JsonResponse
     {
+        $call = Call::withoutGlobalScopes()->findOrFail($call);
 
         if (!$this->verifyCallToken($request, $call)) {
             Log::warning('saveTranscript: invalid call_token', ['call_id' => $call->id, 'ip' => $request->ip()]);
@@ -346,8 +347,9 @@ class RealtimeSessionController extends Controller
     /**
      * Synthesize text to speech using the bot's cloned voice.
      */
-    public function synthesize(Request $request, Bot $bot): \Illuminate\Http\Response|JsonResponse
+    public function synthesize(Request $request, int $bot): \Illuminate\Http\Response|JsonResponse
     {
+        $bot = Bot::withoutGlobalScopes()->findOrFail($bot);
         $bot->load('clonedVoice');
 
         if (!$bot->usesClonedVoice()) {
@@ -379,8 +381,9 @@ class RealtimeSessionController extends Controller
      * Search products for voice bot function calling.
      * Called by frontend when OpenAI Realtime triggers the search_products tool.
      */
-    public function searchProducts(Request $request, Bot $bot): JsonResponse
+    public function searchProducts(Request $request, int $bot): JsonResponse
     {
+        $bot = Bot::withoutGlobalScopes()->findOrFail($bot);
 
         $request->validate([
             'query' => 'required|string|max:500',
@@ -414,8 +417,9 @@ class RealtimeSessionController extends Controller
     /**
      * End a call session (update status + duration).
      */
-    public function endCall(Request $request, Call $call): JsonResponse
+    public function endCall(Request $request, int $call): JsonResponse
     {
+        $call = Call::withoutGlobalScopes()->findOrFail($call);
 
         if (!$this->verifyCallToken($request, $call)) {
             Log::warning('endCall: invalid call_token', ['call_id' => $call->id, 'ip' => $request->ip()]);

@@ -604,7 +604,7 @@ class RealtimeSession
                 $phone = $m[1];
             }
             // Find with country code +40 / 40
-            elseif (preg_match('/(40\s?7\d{8})/', $digitsOnly, $m)) {
+            elseif (preg_match('/(407\d{8})/', $digitsOnly, $m)) {
                 $phone = '0' . substr(preg_replace('/\D/', '', $m[1]), 2);
             }
 

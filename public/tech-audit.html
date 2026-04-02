@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sambla - Audit Tehnic | Platformă AI Conversațională</title>
+<meta name="description" content="Audit tehnic complet al platformei Sambla - motor AI conversațional pentru chat text, voce și RAG">
+<link rel="preconnect" href="https://fonts.bunny.net">
+<link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800,900" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --red-900:#450a0a;--red-800:#7f1d1d;--red-700:#991b1b;--red-600:#b91c1c;
+  --red-500:#dc2626;--red-400:#f87171;--red-300:#fca5a5;--red-200:#fecaca;
+  --red-100:#fee2e2;--red-50:#fef2f2;
+  --slate-900:#0f172a;--slate-800:#1e293b;--slate-700:#334155;--slate-600:#475569;
+  --slate-500:#64748b;--slate-400:#94a3b8;--slate-300:#cbd5e1;--slate-200:#e2e8f0;
+  --slate-100:#f1f5f9;--slate-50:#f8fafc;
+  --emerald-500:#10b981;--emerald-400:#34d399;--amber-500:#f59e0b;--blue-500:#3b82f6;
+  --purple-500:#8b5cf6;--indigo-500:#6366f1;
+  --grad:linear-gradient(135deg,var(--red-700),var(--red-500));
+  --grad-dark:linear-gradient(135deg,var(--red-800),var(--red-700));
+  --shadow-sm:0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md:0 4px 6px -1px rgba(0,0,0,0.1),0 2px 4px -2px rgba(0,0,0,0.1);
+  --shadow-lg:0 10px 15px -3px rgba(0,0,0,0.1),0 4px 6px -4px rgba(0,0,0,0.1);
+  --shadow-xl:0 20px 25px -5px rgba(0,0,0,0.1),0 8px 10px -6px rgba(0,0,0,0.1);
+}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;color:var(--slate-900);background:var(--slate-50);line-height:1.6;overflow-x:hidden}
+img,svg{max-width:100%;height:auto}
+
+/* Utility */
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+@media(min-width:768px){.container{padding:0 40px}}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+
+/* Navigation */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(15,23,42,0.95);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,0.08)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;height:64px}
+.nav-logo{height:36px;width:auto}
+.nav-links{display:none;gap:8px;list-style:none}
+@media(min-width:768px){.nav-links{display:flex}}
+.nav-links a{color:rgba(255,255,255,0.7);text-decoration:none;font-size:13px;font-weight:500;padding:6px 12px;border-radius:8px;transition:all 0.2s}
+.nav-links a:hover{color:#fff;background:rgba(255,255,255,0.08)}
+.nav-badge{background:var(--grad);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:0.5px}
+.menu-btn{display:flex;align-items:center;justify-content:center;width:40px;height:40px;background:none;border:none;color:#fff;cursor:pointer;border-radius:8px}
+.menu-btn:hover{background:rgba(255,255,255,0.1)}
+@media(min-width:768px){.menu-btn{display:none}}
+
+/* Mobile menu */
+.mobile-menu{display:none;position:fixed;top:64px;left:0;right:0;background:var(--slate-900);border-bottom:1px solid var(--slate-800);padding:16px 24px;z-index:99}
+.mobile-menu.active{display:block}
+.mobile-menu a{display:block;color:rgba(255,255,255,0.8);text-decoration:none;padding:12px 0;font-size:15px;border-bottom:1px solid var(--slate-800)}
+.mobile-menu a:last-child{border:none}
+
+/* Hero */
+.hero{position:relative;background:var(--slate-900);padding:120px 0 80px;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-50%;right:-20%;width:800px;height:800px;background:radial-gradient(circle,rgba(220,38,38,0.15) 0%,transparent 70%);pointer-events:none}
+.hero::after{content:'';position:absolute;bottom:-30%;left:-10%;width:600px;height:600px;background:radial-gradient(circle,rgba(153,27,27,0.1) 0%,transparent 70%);pointer-events:none}
+.hero-content{position:relative;z-index:2;text-align:center;max-width:900px;margin:0 auto}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(220,38,38,0.15);color:var(--red-400);border:1px solid rgba(220,38,38,0.25);border-radius:24px;padding:6px 16px;font-size:13px;font-weight:600;margin-bottom:24px}
+.hero-badge-dot{width:8px;height:8px;background:var(--emerald-400);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.hero h1{font-size:clamp(32px,5vw,56px);font-weight:800;color:#fff;line-height:1.15;margin-bottom:20px;letter-spacing:-0.02em}
+.hero h1 span{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:clamp(16px,2vw,20px);color:var(--slate-400);max-width:700px;margin:0 auto 40px;line-height:1.7}
+.hero-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;max-width:700px;margin:0 auto}
+@media(min-width:640px){.hero-stats{grid-template-columns:repeat(4,1fr)}}
+.hero-stat{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:20px 16px;text-align:center}
+.hero-stat-value{font-size:clamp(24px,3vw,36px);font-weight:800;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-stat-label{font-size:12px;color:var(--slate-400);margin-top:4px;font-weight:500;text-transform:uppercase;letter-spacing:0.5px}
+
+/* Section */
+.section{padding:80px 0}
+@media(min-width:768px){.section{padding:100px 0}}
+.section-dark{background:var(--slate-900);color:#fff}
+.section-dark .section-desc{color:var(--slate-400)}
+.section-alt{background:var(--slate-100)}
+.section-header{text-align:center;margin-bottom:56px}
+.section-tag{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--red-600);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+.section-dark .section-tag{color:var(--red-400)}
+.section-tag-icon{width:20px;height:20px;background:var(--grad);border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:11px}
+.section-title{font-size:clamp(28px,4vw,42px);font-weight:800;letter-spacing:-0.02em;line-height:1.2;margin-bottom:16px}
+.section-desc{font-size:17px;color:var(--slate-600);max-width:650px;margin:0 auto;line-height:1.7}
+
+/* Architecture Diagram */
+.arch-flow{display:flex;flex-direction:column;gap:24px;align-items:center;max-width:900px;margin:0 auto}
+.arch-row{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;width:100%}
+.arch-node{background:#fff;border:2px solid var(--slate-200);border-radius:16px;padding:20px 24px;text-align:center;min-width:140px;flex:1;max-width:220px;transition:all 0.3s}
+.arch-node:hover{border-color:var(--red-300);box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.arch-node-icon{font-size:28px;margin-bottom:8px}
+.arch-node-title{font-size:14px;font-weight:700;color:var(--slate-900);margin-bottom:4px}
+.arch-node-desc{font-size:12px;color:var(--slate-500);line-height:1.5}
+.arch-node-primary{background:var(--grad);border-color:transparent;color:#fff}
+.arch-node-primary .arch-node-title{color:#fff}
+.arch-node-primary .arch-node-desc{color:rgba(255,255,255,0.8)}
+.arch-arrow{display:flex;align-items:center;justify-content:center;color:var(--red-500);font-size:24px;font-weight:700}
+.arch-arrow-down::after{content:'';width:2px;height:32px;background:var(--red-300);display:block}
+
+/* Feature grid */
+.features-grid{display:grid;gap:24px;grid-template-columns:1fr}
+@media(min-width:640px){.features-grid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:960px){.features-grid{grid-template-columns:repeat(3,1fr)}}
+.feature-card{background:#fff;border-radius:16px;padding:32px 28px;border:1px solid var(--slate-200);transition:all 0.3s;position:relative;overflow:hidden}
+.feature-card:hover{border-color:var(--red-200);box-shadow:var(--shadow-lg);transform:translateY(-4px)}
+.feature-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--grad);opacity:0;transition:opacity 0.3s}
+.feature-card:hover::before{opacity:1}
+.section-dark .feature-card{background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.08)}
+.section-dark .feature-card:hover{background:rgba(255,255,255,0.08);border-color:rgba(220,38,38,0.3)}
+.feature-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:16px;background:var(--red-50);color:var(--red-600)}
+.section-dark .feature-icon{background:rgba(220,38,38,0.15)}
+.feature-title{font-size:17px;font-weight:700;margin-bottom:8px}
+.feature-desc{font-size:14px;color:var(--slate-600);line-height:1.7}
+.section-dark .feature-desc{color:var(--slate-400)}
+
+/* Detail Cards */
+.detail-grid{display:grid;gap:32px;grid-template-columns:1fr}
+@media(min-width:768px){.detail-grid{grid-template-columns:repeat(2,1fr)}}
+.detail-card{background:#fff;border-radius:20px;overflow:hidden;border:1px solid var(--slate-200);transition:all 0.3s}
+.detail-card:hover{box-shadow:var(--shadow-xl);transform:translateY(-2px)}
+.detail-card-header{padding:28px 28px 0;display:flex;align-items:flex-start;gap:16px}
+.detail-card-icon{width:52px;height:52px;min-width:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;background:var(--grad);color:#fff}
+.detail-card-title{font-size:20px;font-weight:700;margin-bottom:4px}
+.detail-card-subtitle{font-size:14px;color:var(--slate-500)}
+.detail-card-body{padding:20px 28px 28px}
+.detail-card-body ul{list-style:none;display:flex;flex-direction:column;gap:10px}
+.detail-card-body li{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:var(--slate-700);line-height:1.6}
+.detail-card-body li::before{content:'';width:6px;height:6px;min-width:6px;background:var(--red-500);border-radius:50%;margin-top:7px}
+
+/* Pipeline */
+.pipeline{display:flex;flex-direction:column;gap:0;max-width:800px;margin:0 auto}
+@media(min-width:768px){.pipeline{flex-direction:row;gap:0;align-items:flex-start}}
+.pipeline-step{flex:1;position:relative;text-align:center;padding:24px 16px}
+.pipeline-step::after{content:'';position:absolute;left:50%;bottom:-8px;width:2px;height:16px;background:var(--red-300)}
+@media(min-width:768px){.pipeline-step::after{content:'';position:absolute;top:40px;right:-12px;left:auto;bottom:auto;width:24px;height:2px;background:var(--red-300)}}
+.pipeline-step:last-child::after{display:none}
+.pipeline-dot{width:48px;height:48px;border-radius:50%;background:var(--grad);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;margin:0 auto 12px;box-shadow:0 4px 12px rgba(153,27,27,0.3)}
+.pipeline-label{font-size:13px;font-weight:700;color:var(--slate-900);margin-bottom:4px}
+.pipeline-desc{font-size:12px;color:var(--slate-500);line-height:1.5}
+.section-dark .pipeline-label{color:#fff}
+.section-dark .pipeline-desc{color:var(--slate-400)}
+
+/* Chat simulation */
+.chat-sim{background:#fff;border-radius:20px;max-width:400px;margin:0 auto;border:1px solid var(--slate-200);box-shadow:var(--shadow-xl);overflow:hidden}
+.chat-sim-header{background:var(--grad);padding:16px 20px;display:flex;align-items:center;gap:12px}
+.chat-sim-avatar{width:36px;height:36px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px}
+.chat-sim-name{color:#fff;font-weight:600;font-size:15px}
+.chat-sim-status{color:rgba(255,255,255,0.7);font-size:12px;display:flex;align-items:center;gap:4px}
+.chat-sim-status::before{content:'';width:6px;height:6px;background:var(--emerald-400);border-radius:50%}
+.chat-sim-body{padding:20px;display:flex;flex-direction:column;gap:12px;min-height:280px;background:var(--slate-50)}
+.chat-msg{max-width:85%;padding:12px 16px;border-radius:18px;font-size:14px;line-height:1.5;animation:fadeIn 0.3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.chat-msg-bot{background:#fff;border:1px solid var(--slate-200);align-self:flex-start;border-bottom-left-radius:6px}
+.chat-msg-user{background:var(--grad);color:#fff;align-self:flex-end;border-bottom-right-radius:6px}
+.chat-msg-time{font-size:11px;color:var(--slate-400);margin-top:4px}
+.chat-sim-input{padding:12px 16px;border-top:1px solid var(--slate-200);display:flex;gap:8px;align-items:center;background:#fff}
+.chat-sim-input-field{flex:1;background:var(--slate-50);border:1px solid var(--slate-200);border-radius:24px;padding:10px 16px;font-size:14px;color:var(--slate-400);font-family:inherit}
+.chat-sim-send{width:38px;height:38px;border-radius:50%;background:var(--grad);border:none;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
+
+/* Product cards simulation */
+.product-sim{display:flex;gap:12px;background:#fff;border:1px solid var(--slate-200);border-radius:14px;padding:12px;max-width:85%;align-self:flex-start;animation:fadeIn 0.4s ease}
+.product-sim-img{width:64px;height:64px;min-width:64px;background:var(--slate-100);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:24px}
+.product-sim-info{flex:1;min-width:0}
+.product-sim-name{font-size:13px;font-weight:600;color:var(--slate-900);margin-bottom:2px}
+.product-sim-price{font-size:15px;font-weight:700;color:var(--red-600);margin-bottom:4px}
+.product-sim-btn{background:var(--grad);color:#fff;border:none;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit}
+.product-sim-stock{font-size:11px;color:var(--emerald-500);font-weight:500}
+
+/* Metric cards */
+.metrics{display:grid;gap:16px;grid-template-columns:repeat(2,1fr)}
+@media(min-width:640px){.metrics{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:960px){.metrics{grid-template-columns:repeat(5,1fr)}}
+.metric{background:#fff;border-radius:14px;padding:24px 20px;text-align:center;border:1px solid var(--slate-200);transition:all 0.3s}
+.metric:hover{border-color:var(--red-200);box-shadow:var(--shadow-md)}
+.section-dark .metric{background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.08)}
+.metric-icon{font-size:28px;margin-bottom:8px}
+.metric-value{font-size:28px;font-weight:800;color:var(--red-600)}
+.section-dark .metric-value{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.metric-label{font-size:12px;color:var(--slate-500);margin-top:4px;font-weight:500}
+
+/* Funnel */
+.funnel{max-width:600px;margin:0 auto;display:flex;flex-direction:column;gap:0}
+.funnel-step{display:flex;align-items:center;gap:16px;padding:16px 0;border-bottom:1px solid rgba(255,255,255,0.06)}
+.funnel-step:last-child{border:none}
+.funnel-bar{height:40px;border-radius:8px;background:var(--grad);display:flex;align-items:center;padding:0 16px;min-width:60px;transition:all 0.6s}
+.funnel-bar span{color:#fff;font-size:13px;font-weight:600;white-space:nowrap}
+.funnel-label{font-size:14px;font-weight:600;color:#fff;min-width:140px}
+.funnel-pct{font-size:14px;color:var(--slate-400);min-width:50px;text-align:right}
+
+/* Two-col layout */
+.two-col{display:grid;gap:48px;grid-template-columns:1fr;align-items:center}
+@media(min-width:768px){.two-col{grid-template-columns:1fr 1fr}}
+.two-col-text h3{font-size:clamp(24px,3vw,32px);font-weight:800;margin-bottom:16px;letter-spacing:-0.01em}
+.two-col-text p{color:var(--slate-600);font-size:16px;line-height:1.8;margin-bottom:20px}
+.section-dark .two-col-text p{color:var(--slate-400)}
+.two-col-list{list-style:none;display:flex;flex-direction:column;gap:12px}
+.two-col-list li{display:flex;align-items:flex-start;gap:12px;font-size:15px;color:var(--slate-700)}
+.section-dark .two-col-list li{color:var(--slate-300)}
+.two-col-list li .check{width:22px;height:22px;min-width:22px;border-radius:50%;background:var(--grad);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;margin-top:1px}
+
+/* Code-like display */
+.code-block{background:var(--slate-900);border-radius:16px;padding:24px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:13px;overflow-x:auto;border:1px solid var(--slate-700);position:relative}
+.code-block::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--grad);border-radius:16px 16px 0 0}
+.code-line{display:block;padding:2px 0;color:var(--slate-300)}
+.code-comment{color:var(--slate-500)}
+.code-keyword{color:var(--red-400)}
+.code-string{color:var(--emerald-400)}
+.code-number{color:var(--amber-500)}
+
+/* Scalability grid */
+.scale-grid{display:grid;gap:24px;grid-template-columns:1fr}
+@media(min-width:640px){.scale-grid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:960px){.scale-grid{grid-template-columns:repeat(4,1fr)}}
+.scale-card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:28px 24px;text-align:center;transition:all 0.3s}
+.scale-card:hover{background:rgba(255,255,255,0.08);border-color:rgba(220,38,38,0.3);transform:translateY(-4px)}
+.scale-icon{font-size:32px;margin-bottom:12px}
+.scale-title{font-size:16px;font-weight:700;color:#fff;margin-bottom:8px}
+.scale-desc{font-size:13px;color:var(--slate-400);line-height:1.6}
+
+/* Timeline */
+.timeline{max-width:700px;margin:0 auto}
+.tl-item{display:flex;gap:20px;padding-bottom:32px;position:relative}
+.tl-item:last-child{padding-bottom:0}
+.tl-line{position:absolute;left:19px;top:40px;bottom:0;width:2px;background:var(--slate-200)}
+.tl-item:last-child .tl-line{display:none}
+.tl-dot{width:40px;height:40px;min-width:40px;border-radius:50%;background:var(--grad);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;z-index:1}
+.tl-content{flex:1}
+.tl-title{font-size:16px;font-weight:700;margin-bottom:4px}
+.tl-desc{font-size:14px;color:var(--slate-600);line-height:1.7}
+
+/* CTA */
+.cta{background:var(--grad);padding:80px 0;text-align:center}
+.cta h2{font-size:clamp(28px,4vw,40px);font-weight:800;color:#fff;margin-bottom:16px}
+.cta p{font-size:18px;color:rgba(255,255,255,0.8);margin-bottom:32px;max-width:500px;margin-left:auto;margin-right:auto}
+.cta-btn{display:inline-flex;align-items:center;gap:8px;background:#fff;color:var(--red-700);font-size:16px;font-weight:700;padding:16px 32px;border-radius:14px;text-decoration:none;box-shadow:var(--shadow-lg);transition:all 0.3s}
+.cta-btn:hover{transform:translateY(-2px);box-shadow:var(--shadow-xl)}
+
+/* Footer */
+.footer{background:var(--slate-900);border-top:1px solid var(--slate-800);padding:40px 0;text-align:center}
+.footer p{color:var(--slate-500);font-size:13px}
+.footer a{color:var(--red-400);text-decoration:none}
+
+/* Animated counters */
+.counter{display:inline-block}
+
+/* Security badges */
+.badges{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:32px}
+.badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px 16px;font-size:13px;color:var(--slate-300);font-weight:500}
+.badge-icon{font-size:18px}
+
+/* Voice wave animation */
+.voice-wave{display:flex;align-items:center;justify-content:center;gap:3px;height:40px;margin:16px 0}
+.voice-bar{width:4px;border-radius:4px;background:var(--grad);animation:wave 1.2s ease-in-out infinite}
+.voice-bar:nth-child(1){height:12px;animation-delay:0s}
+.voice-bar:nth-child(2){height:24px;animation-delay:0.1s}
+.voice-bar:nth-child(3){height:36px;animation-delay:0.2s}
+.voice-bar:nth-child(4){height:28px;animation-delay:0.3s}
+.voice-bar:nth-child(5){height:16px;animation-delay:0.4s}
+.voice-bar:nth-child(6){height:32px;animation-delay:0.5s}
+.voice-bar:nth-child(7){height:20px;animation-delay:0.6s}
+@keyframes wave{0%,100%{transform:scaleY(0.5)}50%{transform:scaleY(1.2)}}
+
+/* Tags */
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.tag{background:var(--red-50);color:var(--red-700);font-size:12px;font-weight:600;padding:4px 12px;border-radius:8px;border:1px solid var(--red-100)}
+.section-dark .tag{background:rgba(220,38,38,0.1);color:var(--red-400);border-color:rgba(220,38,38,0.2)}
+
+/* Table */
+.spec-table{width:100%;border-collapse:collapse;margin-top:24px}
+.spec-table th{text-align:left;font-size:12px;font-weight:600;color:var(--slate-500);text-transform:uppercase;letter-spacing:0.5px;padding:12px 16px;border-bottom:2px solid var(--slate-200)}
+.spec-table td{padding:14px 16px;font-size:14px;border-bottom:1px solid var(--slate-100)}
+.spec-table td:first-child{font-weight:600;color:var(--slate-900)}
+.spec-table tr:hover td{background:var(--red-50)}
+
+/* Responsive */
+@media(max-width:640px){
+  .hero{padding:100px 0 60px}
+  .section{padding:60px 0}
+  .pipeline{gap:0}
+  .funnel-label{min-width:100px;font-size:12px}
+  .detail-card-header{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="nav">
+  <div class="container nav-inner">
+    <svg width="130" height="36" viewBox="0 0 420 120" xmlns="http://www.w3.org/2000/svg" class="nav-logo" aria-label="Sambla">
+      <defs><linearGradient id="navGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#991b1b"/><stop offset="100%" stop-color="#dc2626"/></linearGradient></defs>
+      <g transform="translate(10,10)"><rect width="80" height="80" rx="20" fill="url(#navGrad)"/><rect x="18" y="28" width="44" height="24" rx="12" fill="white"/><circle cx="32" cy="40" r="4" fill="#991b1b"/><circle cx="48" cy="40" r="4" fill="#991b1b"/></g>
+      <text x="110" y="72" font-family="Inter, sans-serif" font-size="54" font-weight="700" fill="#ffffff">Sambla</text>
+    </svg>
+    <ul class="nav-links">
+      <li><a href="#architecture">Arhitectura</a></li>
+      <li><a href="#chat-engine">Chat AI</a></li>
+      <li><a href="#voice-engine">Voice AI</a></li>
+      <li><a href="#rag">Knowledge RAG</a></li>
+      <li><a href="#commerce">E-Commerce</a></li>
+      <li><a href="#analytics">Analytics</a></li>
+      <li><a href="#scalability">Scalabilitate</a></li>
+      <li><a href="#security">Securitate</a></li>
+    </ul>
+    <button class="menu-btn" onclick="document.querySelector('.mobile-menu').classList.toggle('active')" aria-label="Meniu">
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+  </div>
+</nav>
+<div class="mobile-menu">
+  <a href="#architecture" onclick="this.parentElement.classList.remove('active')">Arhitectura</a>
+  <a href="#chat-engine" onclick="this.parentElement.classList.remove('active')">Chat AI</a>
+  <a href="#voice-engine" onclick="this.parentElement.classList.remove('active')">Voice AI</a>
+  <a href="#rag" onclick="this.parentElement.classList.remove('active')">Knowledge RAG</a>
+  <a href="#commerce" onclick="this.parentElement.classList.remove('active')">E-Commerce</a>
+  <a href="#analytics" onclick="this.parentElement.classList.remove('active')">Analytics</a>
+  <a href="#scalability" onclick="this.parentElement.classList.remove('active')">Scalabilitate</a>
+  <a href="#security" onclick="this.parentElement.classList.remove('active')">Securitate</a>
+</div>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="container hero-content">
+    <div class="hero-badge">
+      <span class="hero-badge-dot"></span>
+      AUDIT TEHNIC 2026
+    </div>
+    <h1>Motor AI Conversational<br><span>de nivel enterprise</span></h1>
+    <p class="hero-sub">Analiza completa a arhitecturii Sambla: platforma AI care gestioneaza conversatii text, apeluri vocale si baza de cunostinte inteligenta pentru business-uri din orice industrie.</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-value">18+</div>
+        <div class="hero-stat-label">Servicii AI</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-value">5</div>
+        <div class="hero-stat-label">Canale</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-value">6</div>
+        <div class="hero-stat-label">Limbi</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-value">18</div>
+        <div class="hero-stat-label">Template-uri</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Architecture Overview -->
+<section class="section" id="architecture">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag"><span class="section-tag-icon">1</span> PRIVIRE DE ANSAMBLU</div>
+      <h2 class="section-title">Arhitectura Platformei</h2>
+      <p class="section-desc">O arhitectura distribuita, construita pentru performanta si scalabilitate, cu izolarea completa a datelor per client (multi-tenant).</p>
+    </div>
+
+    <div class="arch-flow">
+      <!-- Layer 1: Input channels -->
+      <div class="arch-row">
+        <div class="arch-node">
+          <div class="arch-node-icon">💬</div>
+          <div class="arch-node-title">Widget Chat</div>
+          <div class="arch-node-desc">Integrat pe orice site, zero dependente externe</div>
+        </div>
+        <div class="arch-node">
+          <div class="arch-node-icon">📞</div>
+          <div class="arch-node-title">Apeluri Vocale</div>
+          <div class="arch-node-desc">Inbound & outbound via Twilio</div>
+        </div>
+        <div class="arch-node">
+          <div class="arch-node-icon">📱</div>
+          <div class="arch-node-title">WhatsApp & Social</div>
+          <div class="arch-node-desc">WhatsApp, Facebook, Instagram</div>
+        </div>
+        <div class="arch-node">
+          <div class="arch-node-icon">🔌</div>
+          <div class="arch-node-title">REST API</div>
+          <div class="arch-node-desc">Integrare programatica via token</div>
+        </div>
+      </div>
+
+      <div class="arch-arrow"><div class="arch-arrow-down"></div></div>
+
+      <!-- Layer 2: Core engine -->
+      <div class="arch-row">
+        <div class="arch-node arch-node-primary">
+          <div class="arch-node-icon">🧠</div>
+          <div class="arch-node-title">Motor AI Sambla</div>
+          <div class="arch-node-desc">Intent Orchestrator + RAG + Prompt Builder + Model Router</div>
+        </div>
+      </div>
+
+      <div class="arch-arrow"><div class="arch-arrow-down"></div></div>
+
+      <!-- Layer 3: Services -->
+      <div class="arch-row">
+        <div class="arch-node">
+          <div class="arch-node-icon">🔍</div>
+          <div class="arch-node-title">Knowledge RAG</div>
+          <div class="arch-node-desc">Vector + FTS cu reranking</div>
+        </div>
+        <div class="arch-node">
+          <div class="arch-node-icon">🛒</div>
+          <div class="arch-node-title">Product Search</div>
+          <div class="arch-node-desc">Semantic + trigram fuzzy</div>
+        </div>
+        <div class="arch-node">
+          <div class="arch-node-icon">👤</div>
+          <div class="arch-node-title">Lead Engine</div>
+          <div class="arch-node-desc">Captura automata + CRM pipeline</div>
+        </div>
+        <div class="arch-node">
+          <div class="arch-node-icon">📊</div>
+          <div class="arch-node-title">Analytics</div>
+          <div class="arch-node-desc">Funnel complet + atribuire venituri</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Chat Engine -->
+<section class="section section-alt" id="chat-engine">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag"><span class="section-tag-icon">2</span> CHAT AI ENGINE</div>
+      <h2 class="section-title">Motor de Conversatie Text</h2>
+      <p class="section-desc">Un pipeline inteligent care proceseaza fiecare mesaj prin detectie multi-intent, inbogatire cu context si rutare catre modelul AI optim.</p>
+    </div>
+
+    <div class="two-col">
+      <div class="two-col-text">
+        <h3>Pipeline-ul de procesare a mesajelor</h3>
+        <p>Fiecare mesaj trece prin 8 etape de procesare inainte de a genera raspunsul, asigurand relevanta maxima si costuri optimizate.</p>
+        <ul class="two-col-list">
+          <li><span class="check">1</span><strong>Detectie Multi-Intent</strong> &mdash; identificarea simultana a tuturor intentiilor (produs, comanda, asistenta, escaladare)</li>
+          <li><span class="check">2</span><strong>Context Enrichment</strong> &mdash; baza de cunostinte, produse, comenzi, istoric</li>
+          <li><span class="check">3</span><strong>Analiza Frustare</strong> &mdash; detecteaza nemultumirea si ajusteaza tonul conversatiei in timp real</li>
+          <li><span class="check">4</span><strong>Strategie Adaptiva</strong> &mdash; comportament diferit early/mid/late in conversatie</li>
+          <li><span class="check">5</span><strong>Model Router</strong> &mdash; alegere automata intre modele AI bazat pe complexitate si cost</li>
+          <li><span class="check">6</span><strong>Guardrails Anti-Hallucinare</strong> &mdash; raspunsul se bazeaza strict pe datele din context</li>
+        </ul>
+      </div>
+      <div>
+        <!-- Chat Simulation -->
+        <div class="chat-sim">
+          <div class="chat-sim-header">
+            <div class="chat-sim-avatar">🤖</div>
+            <div>
+              <div class="chat-sim-name">Asistent Sambla</div>
+              <div class="chat-sim-status">Online</div>
+            </div>
+          </div>
+          <div class="chat-sim-body">
+            <div class="chat-msg chat-msg-bot">
+              Buna! Cu ce te pot ajuta astazi? 😊
+              <div class="chat-msg-time">14:32</div>
+            </div>
+            <div class="chat-msg chat-msg-user">
+              Caut adeziv pentru gresie de exterior
+              <div class="chat-msg-time">14:32</div>
+            </div>
+            <div class="chat-msg chat-msg-bot">
+              Am gasit cateva optiuni potrivite pentru exterior:
+              <div class="chat-msg-time">14:33</div>
+            </div>
+            <div class="product-sim">
+              <div class="product-sim-img">🧱</div>
+              <div class="product-sim-info">
+                <div class="product-sim-name">Adeziv Flex C2TE</div>
+                <div class="product-sim-price">45,90 RON</div>
+                <div class="product-sim-stock">In stoc</div>
+                <button class="product-sim-btn">Adauga in cos</button>
+              </div>
+            </div>
+          </div>
+          <div class="chat-sim-input">
+            <div class="chat-sim-input-field">Scrie un mesaj...</div>
+            <button class="chat-sim-send" aria-label="Trimite">
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat features grid -->
+    <div class="features-grid" style="margin-top:64px">
+      <div class="feature-card">
+        <div class="feature-icon">🎯</div>
+        <div class="feature-title">Orchestrator Multi-Intent</div>
+        <div class="feature-desc">Detecteaza simultan toate intentiile din mesaj (produs, comanda, handoff, FAQ) si le executa in ordine de prioritate.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔄</div>
+        <div class="feature-title">Model Router Inteligent</div>
+        <div class="feature-desc">Alege automat modelul AI optimal: modele rapide pentru intrebari simple, modele puternice pentru comparatii complexe. Cost redus cu 40%.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💡</div>
+        <div class="feature-title">Sumarizare Conversatie</div>
+        <div class="feature-desc">Dupa 8 mesaje, istoricul vechi este sumarizat automat. Botul pastreaza contextul complet pe conversatii lungi fara a depasi limitele.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🌐</div>
+        <div class="feature-title">Multi-Canal Unificat</div>
+        <div class="feature-desc">Acelasi motor AI serveste widget web, WhatsApp, Facebook Messenger si Instagram DM. O singura configurare, toate canalele.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">😤</div>
+        <div class="feature-title">Detectie Frustrare</div>
+        <div class="feature-desc">Analizeaza repetitii, limbaj negativ, punctuatie intensa. La frustrare ridicata, opreste vanzarea si ofera escaladare la operator uman.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🛡️</div>
+        <div class="feature-title">Circuit Breaker & Failover</div>
+        <div class="feature-desc">Daca un provider AI cade (>80% erori), trece automat pe provider-ul alternativ. Zero downtime pentru utilizatorii finali.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Voice Engine -->
+<section class="section section-dark" id="voice-engine">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag"><span class="section-tag-icon">3</span> VOICE AI ENGINE</div>
+      <h2 class="section-title">Motor de Conversatie Vocala</h2>
+      <p class="section-desc">Apeluri telefonice gestionate complet de AI, cu voce naturala, transcriere in timp real si intelegere contextuala a limbii romane.</p>
+    </div>
+
+    <div class="voice-wave">
+      <div class="voice-bar"></div><div class="voice-bar"></div><div class="voice-bar"></div>
+      <div class="voice-bar"></div><div class="voice-bar"></div><div class="voice-bar"></div><div class="voice-bar"></div>
+    </div>
+
+    <div class="two-col" style="margin-top:32px">
+      <div class="two-col-text">
+        <h3>Voce naturala, conversatie reala</h3>
+        <p>Sistemul utilizeaza OpenAI Realtime API pentru conversatii vocale cu latenta minima, combinat cu Twilio pentru telefonie de inalta calitate.</p>
+        <ul class="two-col-list">
+          <li><span class="check">&#10003;</span><strong>Streaming audio bidirectional</strong> &mdash; audio in timp real prin WebSocket cu codec g711 (standard telefonie)</li>
+          <li><span class="check">&#10003;</span><strong>6 voci native + voce clonata</strong> &mdash; personalizare completa cu ElevenLabs voice cloning</li>
+          <li><span class="check">&#10003;</span><strong>Barge-in natural</strong> &mdash; utilizatorul poate intrerupe botul, exact ca intr-o conversatie reala</li>
+          <li><span class="check">&#10003;</span><strong>VAD semantic</strong> &mdash; detectie inteligenta a vorbirii (nu doar pe volum, ci pe sens)</li>
+          <li><span class="check">&#10003;</span><strong>Transcriere Whisper</strong> &mdash; cu filtru anti-halucinare pentru limba romana</li>
+          <li><span class="check">&#10003;</span><strong>Analiza sentiment post-apel</strong> &mdash; scor de la -1.0 la +1.0 cu clasificare automata</li>
+        </ul>
+      </div>
+      <div>
+        <div class="features-grid" style="grid-template-columns:1fr">
+          <div class="feature-card">
+            <div class="feature-icon">📥</div>
+            <div class="feature-title">Flux Apel Inbound</div>
+            <div class="feature-desc">Apel primit &rarr; Twilio identifica botul &rarr; Media Stream WebSocket &rarr; OpenAI Realtime sesiune &rarr; Conversatie naturala cu RAG &rarr; Post-procesare (sentiment, rezumat, webhook)</div>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">📤</div>
+            <div class="feature-title">Flux Apel Outbound</div>
+            <div class="feature-desc">API call &rarr; Twilio dial &rarr; Conectare &rarr; Acelasi motor AI &rarr; Greeting personalizat (dimineata/zi/seara) &rarr; Conversatie + captura lead</div>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🎙️</div>
+            <div class="feature-title">Context Dinamic Mid-Apel</div>
+            <div class="feature-desc">In timpul apelului, botul cauta in timp real: produse, status comenzi, baza de cunostinte. Contextul se actualizeaza la fiecare replica.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RAG Pipeline -->
+<section class="section" id="rag">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag"><span class="section-tag-icon">4</span> KNOWLEDGE RAG</div>
+      <h2 class="section-title">Baza de Cunostinte Inteligenta</h2>
+      <p class="section-desc">Sistem avansat de Retrieval-Augmented Generation cu cautare hibrida vector + full-text, optimizat pentru limba romana.</p>
+    </div>
+
+    <!-- RAG Pipeline Steps -->
+    <div class="pipeline">
+      <div class="pipeline-step">
+        <div class="pipeline-dot">1</div>
+        <div class="pipeline-label">Ingestie</div>
+        <div class="pipeline-desc">Upload documente (PDF, DOCX, CSV, URL) sau conectori automatizati (WooCommerce, WordPress)</div>
+      </div>
+      <div class="pipeline-step">
+        <div class="pipeline-dot">2</div>
+        <div class="pipeline-label">Chunking</div>
+        <div class="pipeline-desc">Segmentare inteligenta cu respectarea paragrafelor, overlap configurabil per sursa (128-512 tokens)</div>
+      </div>
+      <div class="pipeline-step">
+        <div class="pipeline-dot">3</div>
+        <div class="pipeline-label">Embedding</div>
+        <div class="pipeline-desc">Vectorizare 1536 dim cu OpenAI text-embedding-3-small, batch de 100 cu rate limiting</div>
+      </div>
+      <div class="pipeline-step">
+        <div class="pipeline-dot">4</div>
+        <div class="pipeline-label">Indexare</div>
+        <div class="pipeline-desc">HNSW index (pgvector) pentru vectori + GIN index pentru full-text search cu tsvector romanian</div>
+      </div>
+      <div class="pipeline-step">
+        <div class="pipeline-dot">5</div>
+        <div class="pipeline-label">Retrieval</div>
+        <div class="pipeline-desc">Cautare hibrida RRF (Reciprocal Rank Fusion) + reranking conditionat + deduplicare</div>
+      </div>
+    </div>
+
+    <!-- RAG Details -->
+    <div class="detail-grid" style="margin-top:64px">
+      <div class="detail-card">
+        <div class="detail-card-header">
+          <div class="detail-card-icon">🔍</div>
+          <div>
+            <div class="detail-card-title">Cautare Hibrida RRF</div>
+            <div class="detail-card-subtitle">Vector + Full-Text Search combinate</div>
+          </div>
+        </div>
+        <div class="detail-card-body">
+          <ul>
+            <li>Cautare vectoriala cu HNSW (cosine similarity) — recall >95%</li>
+            <li>Full-text search cu suport nativ limba romana (stemming, stopwords)</li>
+            <li>Reciprocal Rank Fusion combina ambele score-uri cu FTS weight 1.5x</li>
+            <li>Pragul de similaritate minim: 0.55 (configurable per bot)</li>
+            <li>Suport 5 limbi: romana, engleza, germana, franceza, spaniola</li>
+          </ul>
+        </div>
+      </div>
+      <div class="detail-card">
+        <div class="detail-card-header">
+          <div class="detail-card-icon">🎯</div>
+          <div>
+            <div class="detail-card-title">Reranking Inteligent</div>
+            <div class="detail-card-subtitle">Activare conditionata doar in zona incerta</div>
+          </div>
+        </div>
+        <div class="detail-card-body">
+          <ul>
+            <li>Reranking LLM activat doar in zona incerta (similaritate 0.50-0.78)</li>
+            <li>Eliminat cand rezultatele sunt clare (&gt;0.78) sau prea slabe (&lt;0.50)</li>
+            <li>Deduplicare: max 3 chunk-uri per document sursa</li>
+            <li>Parent-child retrieval: include chunk-urile adiacente pentru context complet</li>
+            <li>Business-aware scoring: FAQ +8%, documente recente +5%, title match +4%</li>
+          </ul>
+        </div>
+      </div>
+      <div class="detail-card">
+        <div class="detail-card-header">
+          <div class="detail-card-icon">📚</div>
+          <div>
+            <div class="detail-card-title">Surse de Cunostinte</div>
+            <div class="detail-card-subtitle">Multiple tipuri de ingestie</div>
+          </div>
+        </div>
+        <div class="detail-card-body">
+          <ul>
+            <li><strong>Upload manual:</strong> PDF, DOCX, TXT, CSV cu parsare inteligenta</li>
+            <li><strong>Website scan:</strong> Crawl automat cu conversie HTML-to-Markdown</li>
+            <li><strong>Conectori:</strong> WooCommerce, WordPress cu sync automat</li>
+            <li><strong>Agenti AI:</strong> Generare automata de continut (FAQ, ghiduri)</li>
+            <li><strong>Manual:</strong> Editare directa cu preview instant</li>
+          </ul>
+        </div>
+      </div>
+      <div class="detail-card">
+        <div class="detail-card-header">
+          <div class="detail-card-icon">⚡</div>
+          <div>
+            <div class="detail-card-title">Optimizari Performanta</div>
+            <div class="detail-card-subtitle">Cache multi-nivel si fallback</div>
+          </div>
+        </div>
+        <div class="detail-card-body">
+          <ul>
+            <li>Cache rezultate 5 minute, cache embeddings 24 ore</li>
+            <li>HNSW index cu ef_search=100 pentru recall optim</li>
+            <li>Fallback automat la FTS-only daca embedding-ul esueaza</li>
+            <li>Budget de context adaptat per canal (3500 tokens chat, 1600 voice)</li>
+            <li>Near-duplicate removal (&gt;80% word overlap eliminat)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- E-Commerce -->
+<section class="section section-dark" id="commerce">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag"><span class="section-tag-icon">5</span> E-COMMERCE AI</div>
+      <h2 class="section-title">Motor de Comert Inteligent</h2>
+      <p class="section-desc">Integrare completa cu WooCommerce: cautare produse semantica, recomandari, cos de cumparaturi si atribuire venituri.</p>
+    </div>
+
+    <!-- Conversion Funnel -->
+    <div class="funnel">
+      <div class="funnel-step">
+        <div class="funnel-label">Conversatii</div>
+        <div class="funnel-bar" style="width:100%"><span>100%</span></div>
+      </div>
+      <div class="funnel-step">
+        <div class="funnel-label">Produse afisate</div>
+        <div class="funnel-bar" style="width:72%"><span>72%</span></div>
+      </div>
+      <div class="funnel-step">
+        <div class="funnel-label">Click produs</div>
+        <div class="funnel-bar" style="width:45%"><span>45%</span></div>
+      </div>
+      <div class="funnel-step">
+        <div class="funnel-label">Adaugare cos</div>
+        <div class="funnel-bar" style="width:28%"><span>28%</span></div>
+      </div>
+      <div class="funnel-step">
+        <div class="funnel-label">Achizitie</div>
+        <div class="funnel-bar" style="width:15%"><span>15%</span></div>
+      </div>
+    </div>
+
+    <div class="features-grid" style="margin-top:64px">
+      <div class="feature-card">
+        <div class="feature-icon">🔎</div>
+        <div class="feature-title">Cautare 4 Etape</div>
+        <div class="feature-desc">1) Parsare intent query, 2) SQL trigram retrieval, 3) Semantic scoring cu 4 reguli, 4) Confidence gating. Precizie &gt; Recall — 0 rezultate e mai bun decat rezultate gresite.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🧠</div>
+        <div class="feature-title">Cautare Semantica Separata</div>
+        <div class="feature-desc">Embedding-uri vectoriale dedicate per produs (HNSW index). Pentru recomandari de tip "ce e potrivit pentru baie?" — nu doar match exact pe nume.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🛒</div>
+        <div class="feature-title">Add-to-Cart Direct</div>
+        <div class="feature-desc">Buton "Adauga in cos" direct din chat. Comunicare cu plugin-ul WooCommerce via PostMessage bridge. Fallback la redirect daca nu e plugin.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📦</div>
+        <div class="feature-title">Status Comanda Live</div>
+        <div class="feature-desc">Lookup comanda prin numar/email/telefon. Tracking AWB automat cu suport FanCourier, Cargus, DPD, SameDay, GLS. Cache 10 minute.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💰</div>
+        <div class="feature-title">Atribuire Venituri 3 Nivele</div>
+        <div class="feature-desc"><strong>Direct:</strong> cumparare din aceeasi sesiune. <strong>Influentat:</strong> click produs in 24h. <strong>Asistat:</strong> produs afisat in fereastra de timp.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔄</div>
+        <div class="feature-title">Sync Automat</div>
+        <div class="feature-desc">Plugin WordPress cu sync in timp real la modificare produs + cron full-sync de 2x/zi. Categorii, pagini, produse cu atribute.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Bot Builder -->
+<section class="section section-alt" id="builder">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag"><span class="section-tag-icon">6</span> BOT BUILDER</div>
+      <h2 class="section-title">Configurare si Personalizare</h2>
+      <p class="section-desc">18 template-uri pre-configurate pentru industrii specifice, cu personalizarea completa a personalitatii, tonului si comportamentului conversational.</p>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <div class="features-grid" style="grid-template-columns:repeat(3,1fr);gap:12px">
+          <div class="feature-card" style="padding:16px;text-align:center">
+            <div style="font-size:28px;margin-bottom:8px">🏗️</div>
+            <div style="font-size:12px;font-weight:600">Constructii</div>
+          </div>
+          <div class="feature-card" style="padding:16px;text-align:center">
+            <div style="font-size:28px;margin-bottom:8px">🛍️</div>
+            <div style="font-size:12px;font-weight:600">Magazin Online</div>
+          </div>
+          <div class="feature-card" style="padding:16px;text-align:center">
+            <div style="font-size:28px;margin-bottom:8px">🍽️</div>
+            <div style="font-size:12px;font-weight:600">Restaurant</div>
+          </div>
+          <div class="feature-card" style="padding:16px;text-align:center">
+            <div style="font-size:28px;margin-bottom:8px">💇</div>
+            <div style="font-size:12px;font-weight:600">Salon Beauty</div>
+          </div>
+          <div class="feature-card" style="padding:16px;text-align:center">
+            <div style="font-size:28px;margin-bottom:8px">🏥</div>
+            <div style="font-size:12px;font-weight:600">Cabinet Medical</div>
+          </div>
+          <div class="feature-card" style="padding:16px;text-align:center">
+            <div style="font-size:28px;margin-bottom:8px">⚖️</div>
+            <div style="font-size:12px;font-weight:600">Avocatura</div>
+          </div>
+          <div class="feature-card" style="padding:16px;text-align:center">
+            <div style="font-size:28px;margin-bottom:8px">🏠</div>
+            <div style="font-size:12px;font-weight:600">Imobiliare</div>
+          </div>
+          <div class="feature-card" style="padding:16px;text-align:center">
+            <div style="font-size:28px;margin-bottom:8px">🏨</div>
+            <div style="font-size:12px;font-weight:600">Hotel</div>
+          </div>
+          <div class="feature-card" style="padding:16px;text-align:center">
+            <div style="font-size:28px;margin-bottom:8px">🔧</div>
+            <div style="font-size:12px;font-weight:600">Service Auto</div>
+          </div>
+          <div class="feature-card" style="padding:16px;text-align:center">
+            <div style="font-size:28px;margin-bottom:8px">💪</div>
+            <div style="font-size:12px;font-weight:600">Fitness</div>
+          </div>
+          <div class="feature-card" style="padding:16px;text-align:center">
+            <div style="font-size:28px;margin-bottom:8px">📚</div>
+            <div style="font-size:12px;font-weight:600">Educatie</div>
+          </div>
+          <div class="feature-card" style="padding:16px;text-align:center">
+            <div style="font-size:28px;margin-bottom:8px">💼</div>
+            <div style="font-size:12px;font-weight:600">+6 industrii</div>
+          </div>
+        </div>
+      </div>
+      <div class="two-col-text">
+        <h3>Personalitate configurabila per bot</h3>
+        <p>Fiecare bot are o politica conversationala detaliata, cu control granular asupra modului in care interactioneaza cu clientii.</p>
+        <ul class="two-col-list">
+          <li><span class="check">&#10003;</span><strong>Ton:</strong> Profesional, Prietenos, Casual sau Tehnic</li>
+          <li><span class="check">&#10003;</span><strong>Verbozitate:</strong> Concis (1-2 prop.) / Detaliat / Complet cu exemple</li>
+          <li><span class="check">&#10003;</span><strong>CTA Agresivitate:</strong> De la subtil la proactiv (5 niveluri)</li>
+          <li><span class="check">&#10003;</span><strong>Lead Capture:</strong> De la discret la insistent (5 niveluri)</li>
+          <li><span class="check">&#10003;</span><strong>Vocabular brand:</strong> Termeni obligatorii si expresii interzise</li>
+          <li><span class="check">&#10003;</span><strong>Reguli business:</strong> Logica custom per business (ex: "nu da discount fara cerere")</li>
+          <li><span class="check">&#10003;</span><strong>A/B Testing:</strong> Versiuni multiple de prompt cu distributie ponderata</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Analytics -->
+<section class="section" id="analytics">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag"><span class="section-tag-icon">7</span> ANALYTICS & INSIGHTS</div>
+      <h2 class="section-title">Analytics Complet</h2>
+      <p class="section-desc">Vizibilitate totala asupra performantei: de la metrici conversationale pana la atribuirea veniturilor si calitatea raspunsurilor AI.</p>
+    </div>
+
+    <div class="metrics">
+      <div class="metric">
+        <div class="metric-icon">💬</div>
+        <div class="metric-value">100%</div>
+        <div class="metric-label">Conversatii tracked</div>
+      </div>
+      <div class="metric">
+        <div class="metric-icon">🎯</div>
+        <div class="metric-value">8+</div>
+        <div class="metric-label">Intent-uri detectate</div>
+      </div>
+      <div class="metric">
+        <div class="metric-icon">💰</div>
+        <div class="metric-value">3</div>
+        <div class="metric-label">Modele atribuire</div>
+      </div>
+      <div class="metric">
+        <div class="metric-icon">📊</div>
+        <div class="metric-value">7</div>
+        <div class="metric-label">Stagii pipeline lead</div>
+      </div>
+      <div class="metric">
+        <div class="metric-icon">🔬</div>
+        <div class="metric-value">15+</div>
+        <div class="metric-label">Metrici per apel</div>
+      </div>
+    </div>
+
+    <div class="features-grid" style="margin-top:48px">
+      <div class="feature-card">
+        <div class="feature-icon">📈</div>
+        <div class="feature-title">Funnel Complet de Conversie</div>
+        <div class="feature-desc">Urmarire de la prima vizita pana la achizitie: sesiuni &rarr; mesaje &rarr; afisari produse &rarr; click-uri &rarr; cos &rarr; cumparare. Cu procent de drop-off per etapa.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎙️</div>
+        <div class="feature-title">Analytics Apeluri Vocale</div>
+        <div class="feature-desc">Durata, cost, scor sentiment (-1 la +1), rezumat AI generat automat, transcript complet, distributie status si trend zilnic.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💼</div>
+        <div class="feature-title">Pipeline CRM Integrat</div>
+        <div class="feature-desc">7 stagii (nou &rarr; contactat &rarr; programat &rarr; intalnire &rarr; oferta &rarr; castigat/pierdut). Scor calificare 0-100, export CSV, callback scheduling.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🤖</div>
+        <div class="feature-title">Metrici AI & Costuri</div>
+        <div class="feature-desc">Tokens input/output, latenta API, cost per mesaj (precizie 4 zecimale), buget zilnic per client, distributie modele utilizate.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔍</div>
+        <div class="feature-title">Search Quality Insights</div>
+        <div class="feature-desc">Top cautari fara rezultate (knowledge gaps), feedback thumbs up/down pe retrieval, scor de confidenta per raspuns.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🏥</div>
+        <div class="feature-title">Bot Health Score</div>
+        <div class="feature-desc">Scor 0-100 per bot: prompt configurat, baza de cunostinte, canale active, conversatii recente, documente esuate. Action items automate.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Human-AI Collaboration -->
+<section class="section section-alt" id="handoff">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag"><span class="section-tag-icon">8</span> HUMAN-AI COLLABORATION</div>
+      <h2 class="section-title">Escaladare Inteligenta</h2>
+      <p class="section-desc">Trei cai de escaladare catre agentii umani, cu context complet transferat si programare callback integrata.</p>
+    </div>
+
+    <div class="detail-grid">
+      <div class="detail-card">
+        <div class="detail-card-header">
+          <div class="detail-card-icon">🙋</div>
+          <div>
+            <div class="detail-card-title">Escaladare la Cerere</div>
+            <div class="detail-card-subtitle">Clientul cere explicit un operator</div>
+          </div>
+        </div>
+        <div class="detail-card-body">
+          <ul>
+            <li>Detectie keywords: "operator", "om", "persoana reala", "ajutor"</li>
+            <li>HandoffRequest creat cu rezumatul conversatiei (20 mesaje)</li>
+            <li>Intent-urile detectate si produsele discutate sunt transferate</li>
+            <li>Botul intreaba metoda preferata de contact (email/telefon)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="detail-card">
+        <div class="detail-card-header">
+          <div class="detail-card-icon">😤</div>
+          <div>
+            <div class="detail-card-title">Escaladare pe Frustrare</div>
+            <div class="detail-card-subtitle">Detectie automata a nemultumirii</div>
+          </div>
+        </div>
+        <div class="detail-card-body">
+          <ul>
+            <li>6 semnale analizate: repetitii, limbaj negativ, CAPS, "!!!", cautari esuate, mesaje scurte dismissive</li>
+            <li>Scor &ge;60 = HIGH: opreste vanzarea, ofera operator imediat</li>
+            <li>Scor 30-59 = MEDIUM: empatie, ton adaptat</li>
+            <li>Conversatii lungi nerezolvate (&ge;15 mesaje) trigger automat</li>
+          </ul>
+        </div>
+      </div>
+      <div class="detail-card">
+        <div class="detail-card-header">
+          <div class="detail-card-icon">📅</div>
+          <div>
+            <div class="detail-card-title">Callback Scheduling</div>
+            <div class="detail-card-subtitle">Programare apel de revenire</div>
+          </div>
+        </div>
+        <div class="detail-card-body">
+          <ul>
+            <li>Formular integrat in widget: nume, telefon, data, interval orar</li>
+            <li>3 intervale: dimineata (8-12), dupa-amiaza (12-17), seara (17-20)</li>
+            <li>Tracking status: pending &rarr; confirmed &rarr; completed</li>
+            <li>Note interne per callback cu timestamp si autor</li>
+          </ul>
+        </div>
+      </div>
+      <div class="detail-card">
+        <div class="detail-card-header">
+          <div class="detail-card-icon">👤</div>
+          <div>
+            <div class="detail-card-title">Captura Lead Inteligenta</div>
+            <div class="detail-card-subtitle">Timing adaptat pe engagement</div>
+          </div>
+        </div>
+        <div class="detail-card-body">
+          <ul>
+            <li>Scor engagement: click produse (+10), mesaje 6+ (+10), handoff (+30)</li>
+            <li>Botul cere date de contact natural, nu intreruptiv</li>
+            <li>Pre-chat form optional (captura inainte de conversatie)</li>
+            <li>Extractie automata email/telefon din text conversatie</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Scalability -->
+<section class="section section-dark" id="scalability">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag"><span class="section-tag-icon">9</span> SCALABILITATE</div>
+      <h2 class="section-title">Arhitectura Scalabila</h2>
+      <p class="section-desc">Arhitectura containerizata cu workers dedicati, procesare asincrona si mecanisme de failover automat.</p>
+    </div>
+
+    <div class="scale-grid">
+      <div class="scale-card">
+        <div class="scale-icon">🐳</div>
+        <div class="scale-title">5 Containere Docker</div>
+        <div class="scale-desc">App server, web server, queue workers, scheduler, WebSocket server — fiecare scalabil independent</div>
+      </div>
+      <div class="scale-card">
+        <div class="scale-icon">⚡</div>
+        <div class="scale-title">Queue Workers</div>
+        <div class="scale-desc">Procesare asincrona pentru: embeddings, sync produse, analiza sentiment, rezumate, webhooks. Cu retry si backoff exponential.</div>
+      </div>
+      <div class="scale-card">
+        <div class="scale-icon">🔄</div>
+        <div class="scale-title">Circuit Breaker</div>
+        <div class="scale-desc">Monitorizare in timp real a provider-ilor AI. La >80% erori in 5 minute, switch automat pe provider alternativ. Zero downtime.</div>
+      </div>
+      <div class="scale-card">
+        <div class="scale-icon">💾</div>
+        <div class="scale-title">Cache Multi-Nivel</div>
+        <div class="scale-desc">Redis cache pentru: sesiuni, RAG results (5 min), embeddings (24h), plan limits (5 min), model pricing. Reducere 60%+ API calls.</div>
+      </div>
+    </div>
+
+    <!-- Worker details -->
+    <div class="detail-grid" style="margin-top:48px">
+      <div class="detail-card" style="background:rgba(255,255,255,0.03);border-color:rgba(255,255,255,0.08)">
+        <div class="detail-card-header">
+          <div class="detail-card-icon">🔧</div>
+          <div>
+            <div class="detail-card-title" style="color:#fff">Workers & Job Processing</div>
+            <div class="detail-card-subtitle" style="color:var(--slate-400)">Procesare distribuita pe cozi dedicate</div>
+          </div>
+        </div>
+        <div class="detail-card-body">
+          <ul>
+            <li style="color:var(--slate-300)"><strong>Knowledge Queue:</strong> Ingestie documente, chunking, batch embeddings (100/batch), cu timeout 5 min si 3 retry-uri</li>
+            <li style="color:var(--slate-300)"><strong>Default Queue:</strong> Mesaje multi-canal (WhatsApp, Facebook, Instagram), backoff [10s, 30s, 120s]</li>
+            <li style="color:var(--slate-300)"><strong>Post-Call Jobs:</strong> Sentiment analysis (delay 15s), rezumat (delay 20s), webhook (delay 25s) — secvential pentru consistenta</li>
+            <li style="color:var(--slate-300)"><strong>Sync Jobs:</strong> WooCommerce product sync cu lock 30 min, progress tracking Redis, batch 50 produse</li>
+            <li style="color:var(--slate-300)"><strong>Concurrency Control:</strong> Cache locks pentru operatii duplicate, rate limiting 200 req/min pe OpenAI</li>
+          </ul>
+        </div>
+      </div>
+      <div class="detail-card" style="background:rgba(255,255,255,0.03);border-color:rgba(255,255,255,0.08)">
+        <div class="detail-card-header">
+          <div class="detail-card-icon">🏗️</div>
+          <div>
+            <div class="detail-card-title" style="color:#fff">Infrastructura</div>
+            <div class="detail-card-subtitle" style="color:var(--slate-400)">Self-hosted, control complet</div>
+          </div>
+        </div>
+        <div class="detail-card-body">
+          <ul>
+            <li style="color:var(--slate-300)"><strong>PostgreSQL 16 + pgvector:</strong> Baza de date cu suport vectorial nativ, HNSW indexes, FTS romanian</li>
+            <li style="color:var(--slate-300)"><strong>Redis 7:</strong> Cache, queue broker, session store, rate limiting counters, circuit breaker state</li>
+            <li style="color:var(--slate-300)"><strong>WebSocket Server:</strong> Dedicat pentru real-time events si broadcast per-tenant</li>
+            <li style="color:var(--slate-300)"><strong>Nginx + Traefik:</strong> Reverse proxy cu SSL termination, WebSocket upgrade, load balancing</li>
+            <li style="color:var(--slate-300)"><strong>Coolify PaaS:</strong> Self-hosted deployment platform, zero-downtime deploys, auto-restart</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Performance metrics -->
+    <div class="metrics" style="margin-top:48px">
+      <div class="metric">
+        <div class="metric-icon">⏱️</div>
+        <div class="metric-value">&lt;2s</div>
+        <div class="metric-label">Timp raspuns chat</div>
+      </div>
+      <div class="metric">
+        <div class="metric-icon">🔄</div>
+        <div class="metric-value">3x</div>
+        <div class="metric-label">Retry cu backoff</div>
+      </div>
+      <div class="metric">
+        <div class="metric-icon">💰</div>
+        <div class="metric-value">40%</div>
+        <div class="metric-label">Reducere cost AI</div>
+      </div>
+      <div class="metric">
+        <div class="metric-icon">🛡️</div>
+        <div class="metric-value">99.9%</div>
+        <div class="metric-label">Uptime target</div>
+      </div>
+      <div class="metric">
+        <div class="metric-icon">📊</div>
+        <div class="metric-value">30</div>
+        <div class="metric-label">Msg/min rate limit</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Security -->
+<section class="section" id="security">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag"><span class="section-tag-icon">10</span> SECURITATE</div>
+      <h2 class="section-title">Securitate Enterprise</h2>
+      <p class="section-desc">5 niveluri de izolare date per client, protectie SSRF, guardrails AI anti-halucinare si cost control automat.</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🔒</div>
+        <div class="feature-title">Izolare Multi-Tenant 5 Niveluri</div>
+        <div class="feature-desc">Database (FK constraints) &rarr; ORM (global scopes pe 22+ modele) &rarr; Controller (verificare explicita) &rarr; Middleware (TenantAccess) &rarr; Aplicatie (sesiune atomica)</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🛡️</div>
+        <div class="feature-title">Anti-Halucinare AI</div>
+        <div class="feature-desc">Guardrails aplicate ULTIMELE in prompt (nu pot fi suprascrise). Botul raspunde STRICT din context. Nu inventeaza preturi, termene sau date.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🌐</div>
+        <div class="feature-title">Protectie SSRF</div>
+        <div class="feature-desc">Blocheaza IP-uri private (RFC 1918), loopback, link-local, cloud metadata. Validare DNS inainte de access URL. Doar HTTP/HTTPS permis.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💳</div>
+        <div class="feature-title">Cost Control Automat</div>
+        <div class="feature-desc">Limita zilnica per client ($5/zi default). Max 2 call-uri LLM per request. Max 8000 tokens per cerere. Buget per conversatie (15 centi).</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔑</div>
+        <div class="feature-title">Autentificare Multi-Layer</div>
+        <div class="feature-desc">Sanctum tokens API. HMAC-SHA256 pentru Twilio + Meta + WooCommerce webhooks. Sesiuni chat cu token anti-hijack. RBAC cu 4 roluri.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <div class="feature-title">Rate Limiting Granular</div>
+        <div class="feature-desc">30 msg/min per IP pe chat. 10 req/min pe voice sessions. 5 callback/ora. 60 req/min API general. Protectie per-endpoint configurabila.</div>
+      </div>
+    </div>
+
+    <div class="badges">
+      <div class="badge"><span class="badge-icon">🔐</span> AES-256-CBC Encryption</div>
+      <div class="badge"><span class="badge-icon">🛡️</span> HMAC-SHA256 Webhooks</div>
+      <div class="badge"><span class="badge-icon">🌐</span> Domain Whitelist</div>
+      <div class="badge"><span class="badge-icon">🔒</span> Tenant Isolation</div>
+      <div class="badge"><span class="badge-icon">⚡</span> XSS Protection</div>
+      <div class="badge"><span class="badge-icon">🎯</span> RBAC 4 Roles</div>
+    </div>
+  </div>
+</section>
+
+<!-- Widget -->
+<section class="section section-dark" id="widget">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag"><span class="section-tag-icon">11</span> WIDGET CHAT</div>
+      <h2 class="section-title">Widget Embeddable</h2>
+      <p class="section-desc">Widget de chat complet izolat, fara dependente externe, cu suport offline, dark mode, accesibilitate WCAG si integrare e-commerce.</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🎨</div>
+        <div class="feature-title">Zero Dependente</div>
+        <div class="feature-desc">~94KB vanilla JavaScript. Shadow DOM pentru izolarea stilurilor. Nu afecteaza si nu e afectat de CSS-ul site-ului gazda.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📱</div>
+        <div class="feature-title">Mobile-First</div>
+        <div class="feature-desc">Responsive complet: full-width pe mobile (&lt;440px), dimensiuni configurabile pe desktop (300-600px). Touch-friendly, scroll independent.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🌙</div>
+        <div class="feature-title">Dark Mode Automat</div>
+        <div class="feature-desc">Detecteaza preferinta OS/browser si adapteaza culorile automat. Fundal, mesaje, input, link-uri — toate cu varianta dark.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">♿</div>
+        <div class="feature-title">Accesibilitate WCAG</div>
+        <div class="feature-desc">aria-live, role="dialog", focus trap, keyboard navigation (Tab/Shift+Tab/Enter/Escape), screen reader announcements.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📶</div>
+        <div class="feature-title">Mod Offline</div>
+        <div class="feature-desc">Mesajele se salveaza local cand nu e conexiune. Coada automata se trimite la reconectare. Istoric persistent in localStorage (200 mesaje).</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💡</div>
+        <div class="feature-title">Proactive Hints</div>
+        <div class="feature-desc">Dupa 30 secunde, ofera hint contextual: pe pagina produs, cos sau categorie. Mesaje diferite per tip de pagina, cooldown 1 ora.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Multi-tenant & Billing -->
+<section class="section" id="tenant">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag"><span class="section-tag-icon">12</span> MULTI-TENANT & BILLING</div>
+      <h2 class="section-title">Platforma Multi-Tenant</h2>
+      <p class="section-desc">Izolare completa a datelor per client cu plan limits, billing Stripe integrat si onboarding in 3 pasi.</p>
+    </div>
+
+    <div class="two-col">
+      <div class="two-col-text">
+        <h3>SaaS-ready din prima zi</h3>
+        <p>Fiecare client (tenant) are propriul mediu izolat: boti, conversatii, cunostinte, analytics, facturi — totul separat prin 5 niveluri de izolare.</p>
+        <ul class="two-col-list">
+          <li><span class="check">&#10003;</span><strong>Plan Limits:</strong> Max boti, minute, mesaje, tokens — toate configurabile per plan si cu override per client</li>
+          <li><span class="check">&#10003;</span><strong>Stripe Billing:</strong> Subscriptii lunare via Stripe Cashier cu overage per minut</li>
+          <li><span class="check">&#10003;</span><strong>Trial 7 zile:</strong> Acces complet fara card, onboarding wizard cu AI prompt generation</li>
+          <li><span class="check">&#10003;</span><strong>4 Roluri RBAC:</strong> Super Admin, Admin Client, Manager, Viewer cu permisiuni granulare</li>
+          <li><span class="check">&#10003;</span><strong>Usage Tracking:</strong> Contorizare lunara: agent runs, tokens, pagini scanate, mesaje</li>
+          <li><span class="check">&#10003;</span><strong>Company Billing:</strong> CIF, numar inregistrare, adresa, IBAN — compliant fiscal RO</li>
+        </ul>
+      </div>
+      <div>
+        <table class="spec-table">
+          <thead>
+            <tr><th>Feature</th><th>Starter</th><th>Professional</th><th>Enterprise</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Boti</td><td>1</td><td>25</td><td>Nelimitat</td></tr>
+            <tr><td>Minute voce</td><td>500</td><td>2.000</td><td>Nelimitat</td></tr>
+            <tr><td>Canale</td><td>2</td><td>Toate</td><td>Toate</td></tr>
+            <tr><td>Sentiment</td><td>-</td><td>Da</td><td>Da</td></tr>
+            <tr><td>API Access</td><td>-</td><td>Da</td><td>Da</td></tr>
+            <tr><td>Voice Cloning</td><td>-</td><td>-</td><td>Da</td></tr>
+            <tr><td>SLA</td><td>-</td><td>24/7</td><td>99.99%</td></tr>
+            <tr><td>Pret</td><td>$99/luna</td><td>$299/luna</td><td>Custom</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Tech Specs Summary -->
+<section class="section section-dark" id="specs">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag"><span class="section-tag-icon">13</span> SPECIFICATII TEHNICE</div>
+      <h2 class="section-title">Stiva Tehnologica</h2>
+      <p class="section-desc">Componente enterprise-grade, selectate pentru performanta, scalabilitate si mentenabilitate.</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🧠</div>
+        <div class="feature-title">AI & NLP</div>
+        <div class="feature-desc">GPT-4o, GPT-4o-mini, Claude Sonnet, Claude Haiku. Router inteligent cross-provider cu circuit breaker si fallback automat.</div>
+        <div class="tags"><span class="tag">OpenAI</span><span class="tag">Anthropic</span><span class="tag">Multi-Model</span></div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🗣️</div>
+        <div class="feature-title">Voice & Telephony</div>
+        <div class="feature-desc">OpenAI Realtime API (GPT-4o voice), Twilio telephony, ElevenLabs voice cloning. Whisper transcriere cu filtru halucinari.</div>
+        <div class="tags"><span class="tag">Realtime API</span><span class="tag">Twilio</span><span class="tag">ElevenLabs</span></div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🗄️</div>
+        <div class="feature-title">Database & Search</div>
+        <div class="feature-desc">PostgreSQL 16 cu pgvector (HNSW 1536-dim), full-text search cu tsvector romanian, trigram similarity pentru fuzzy match.</div>
+        <div class="tags"><span class="tag">pgvector</span><span class="tag">HNSW</span><span class="tag">FTS Romanian</span></div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <div class="feature-title">Cache & Queue</div>
+        <div class="feature-desc">Redis 7 pentru cache, message queue, session store, rate limiting si circuit breaker state. Workers dedicati pe cozi separate.</div>
+        <div class="tags"><span class="tag">Redis 7</span><span class="tag">Workers</span><span class="tag">Async</span></div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🐳</div>
+        <div class="feature-title">Containerizare</div>
+        <div class="feature-desc">Docker multi-stage build, 5 servicii independente. Coolify self-hosted PaaS cu Traefik reverse proxy si auto-SSL.</div>
+        <div class="tags"><span class="tag">Docker</span><span class="tag">Coolify</span><span class="tag">Traefik</span></div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💳</div>
+        <div class="feature-title">Payments & Billing</div>
+        <div class="feature-desc">Stripe via Cashier cu subscriptii, facturare, overage billing si company details compliance (CIF, IBAN, J-number).</div>
+        <div class="tags"><span class="tag">Stripe</span><span class="tag">Cashier</span><span class="tag">Invoicing</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+  <div class="container">
+    <h2>Pregatit pentru viitor</h2>
+    <p>Platforma Sambla combina AI de ultima generatie cu o arhitectura robusta, gata de scalare.</p>
+    <a href="https://sambla.ro" class="cta-btn">
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+      Viziteaza sambla.ro
+    </a>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <p style="margin-bottom:8px">
+      <svg width="80" height="24" viewBox="0 0 420 120" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle">
+        <defs><linearGradient id="fGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#991b1b"/><stop offset="100%" stop-color="#dc2626"/></linearGradient></defs>
+        <g transform="translate(10,10)"><rect width="80" height="80" rx="20" fill="url(#fGrad)"/><rect x="18" y="28" width="44" height="24" rx="12" fill="white"/><circle cx="32" cy="40" r="4" fill="#991b1b"/><circle cx="48" cy="40" r="4" fill="#991b1b"/></g>
+        <text x="110" y="72" font-family="Inter, sans-serif" font-size="54" font-weight="700" fill="#94a3b8">Sambla</text>
+      </svg>
+    </p>
+    <p>&copy; 2026 Sambla. Audit tehnic generat automat. <a href="https://sambla.ro">sambla.ro</a></p>
+  </div>
+</footer>
+
+<script>
+// Smooth scroll for anchor links
+document.querySelectorAll('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click',e=>{
+    e.preventDefault();
+    const t=document.querySelector(a.getAttribute('href'));
+    if(t)t.scrollIntoView({behavior:'smooth',block:'start'});
+  });
+});
+
+// Intersection Observer for fade-in animations
+const obs=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.style.opacity='1';
+      e.target.style.transform='translateY(0)';
+    }
+  });
+},{threshold:0.1,rootMargin:'0px 0px -50px 0px'});
+
+document.querySelectorAll('.feature-card,.detail-card,.arch-node,.scale-card,.metric,.pipeline-step,.chat-sim,.tl-item').forEach(el=>{
+  el.style.opacity='0';
+  el.style.transform='translateY(20px)';
+  el.style.transition='opacity 0.6s ease, transform 0.6s ease';
+  obs.observe(el);
+});
+
+// Active nav link highlight
+const sections=document.querySelectorAll('section[id]');
+const navLinks=document.querySelectorAll('.nav-links a');
+window.addEventListener('scroll',()=>{
+  let current='';
+  sections.forEach(s=>{
+    if(window.scrollY>=s.offsetTop-100)current=s.id;
+  });
+  navLinks.forEach(l=>{
+    l.style.color=l.getAttribute('href')==='#'+current?'#fff':'';
+    l.style.background=l.getAttribute('href')==='#'+current?'rgba(255,255,255,0.08)':'';
+  });
+});
+</script>
+</body>
+</html>

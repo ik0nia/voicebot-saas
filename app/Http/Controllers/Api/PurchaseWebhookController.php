@@ -15,9 +15,9 @@ use Illuminate\Support\Facades\Log;
  */
 class PurchaseWebhookController extends Controller
 {
-    public function handle(Request $request, Bot $bot): JsonResponse
+    public function handle(Request $request, int $bot): JsonResponse
     {
-        $bot = Bot::withoutGlobalScopes()->findOrFail($bot->id);
+        $bot = Bot::withoutGlobalScopes()->findOrFail($bot);
 
         // Verify HMAC signature
         $signature = $request->header('X-Sambla-Signature', '');

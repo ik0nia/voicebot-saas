@@ -123,7 +123,7 @@ class RunKnowledgeAgent implements ShouldQueue
             $this->run->update([
                 'status' => 'failed',
                 'generated_content' => 'A apărut o eroare la generarea conținutului. Vă rugăm să încercați din nou.',
-                'model_used' => $modelToUse ?? ($agent->model ?? 'gpt-4o-mini'),
+                'model_used' => $modelToUse ?? (isset($agent) ? ($agent->model ?? 'gpt-4o-mini') : 'gpt-4o-mini'),
             ]);
 
             throw $e;

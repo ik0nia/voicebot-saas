@@ -51,6 +51,13 @@ class TwilioWebhookController extends Controller
 
         $bot = $phoneNumber->bot;
 
+        if (!$bot) {
+            $response = new VoiceResponse();
+            $response->say('Ne cerem scuze, acest numar nu este configurat momentan. La revedere.', ['language' => 'ro-RO']);
+            $response->hangup();
+            return response($response, 200)->header('Content-Type', 'text/xml');
+        }
+
         // Idempotency check: prevent duplicate call creation on Twilio retries
         // Scoped by tenant to prevent cross-tenant lookups
         $existingCall = Call::where('tenant_id', $phoneNumber->tenant_id)
@@ -117,7 +124,7 @@ class TwilioWebhookController extends Controller
         $status = $request->get('CallStatus');
         $duration = $request->get('CallDuration', 0);
 
-        $call = Call::whereJsonContains('metadata->twilio_call_sid', $callSid)->first();
+        $call = Call::withoutGlobalScopes()->whereJsonContains('metadata->twilio_call_sid', $callSid)->first();
 
         if (!$call) {
             return response('OK', 200);

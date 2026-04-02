@@ -306,7 +306,8 @@ class OrderLookupService
             'total' => $item['total'],
         ])->toArray();
 
-        $trackingNumber = $order['meta_data'] ? collect($order['meta_data'])->firstWhere('key', '_tracking_number')['value'] ?? null : null;
+        $trackingMeta = $order['meta_data'] ? collect($order['meta_data'])->firstWhere('key', '_tracking_number') : null;
+        $trackingNumber = $trackingMeta['value'] ?? null;
         $trackingUrl = $trackingNumber ? $this->buildTrackingUrl($trackingNumber, $order['shipping_lines'] ?? []) : null;
 
         return [

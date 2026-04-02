@@ -171,10 +171,26 @@ class BotController extends Controller
         // Knowledge Gaps
         $knowledgeGaps = app(\App\Services\KnowledgeGapService::class)->analyze($bot->id);
 
+        // Conversation Policy (personality settings) — bypass tenant scope since we already resolved the bot
+        // Use a blank model as fallback so views don't access properties on null
+        $policy = \App\Models\ConversationPolicy::withoutGlobalScopes()->where('bot_id', $bot->id)->first()
+            ?? new \App\Models\ConversationPolicy();
+
+        // Conversation stats for this bot
+        $conversationsThisMonth = \App\Models\Conversation::where('bot_id', $bot->id)
+            ->whereMonth('created_at', now()->month)
+            ->count();
+        $conversationsTotal = \App\Models\Conversation::where('bot_id', $bot->id)->count();
+        $recentConversations = \App\Models\Conversation::where('bot_id', $bot->id)
+            ->latest()
+            ->take(5)
+            ->get();
+
         return view('dashboard.bots.show', compact(
             'bot', 'recentCalls', 'callsThisMonth', 'avgDuration',
             'kbStats', 'clonedVoice', 'apiTokens', 'wcConnector', 'recentKnowledge',
-            'healthScore', 'knowledgeGaps'
+            'healthScore', 'knowledgeGaps', 'policy',
+            'conversationsThisMonth', 'conversationsTotal', 'recentConversations'
         ));
     }
 
@@ -251,6 +267,40 @@ class BotController extends Controller
         $bot = $this->resolveBot($botId);
         $bot->update(['is_active' => !$bot->is_active]);
         return back()->with('success', $bot->is_active ? 'Bot activat.' : 'Bot dezactivat.');
+    }
+
+    public function updatePolicy(Request $request, $botId)
+    {
+        $bot = $this->resolveBot($botId);
+
+        $validated = $request->validate([
+            'tone' => 'nullable|in:professional,friendly,technical,casual',
+            'verbosity' => 'nullable|in:concise,detailed,verbose',
+            'emoji_allowed' => 'nullable|boolean',
+            'cta_aggressiveness' => 'nullable|in:soft,moderate,aggressive',
+            'lead_aggressiveness' => 'nullable|in:soft,moderate,aggressive',
+            'fallback_message' => 'nullable|string|max:500',
+            'escalation_message' => 'nullable|string|max:500',
+        ]);
+
+        // Handle both form checkbox (not sent when unchecked) and JSON boolean
+        $validated['emoji_allowed'] = $request->expectsJson()
+            ? (bool) $request->input('emoji_allowed', false)
+            : $request->has('emoji_allowed');
+
+        $policy = \App\Models\ConversationPolicy::withoutGlobalScopes()->updateOrCreate(
+            ['bot_id' => $bot->id],
+            array_merge($validated, [
+                'tenant_id' => $bot->tenant_id,
+                'is_active' => true,
+            ])
+        );
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true]);
+        }
+
+        return back()->with('success', 'Setarile de personalitate au fost salvate.');
     }
 
     public function updateField(Request $request, $botId)

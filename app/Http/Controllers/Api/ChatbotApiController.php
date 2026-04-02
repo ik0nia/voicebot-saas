@@ -21,6 +21,7 @@ use App\Services\ProductContextService;
 use App\Services\PromptGuardrails;
 use App\Services\TokenCounterService;
 use App\Models\BotPromptVersion;
+use App\Models\RetrievalFeedback;
 use App\Models\Tenant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -46,10 +47,10 @@ class ChatbotApiController extends Controller
         $channelConfig = $channel->config ?? [];
 
         return response()->json([
-            'bot_name' => $bot->name ?? 'Sambla Bot',
+            'bot_name' => $bot?->name ?? 'Sambla Bot',
             'greeting' => $channelConfig['greeting'] ?? 'Bună! Cu ce te pot ajuta?',
             'color' => $channelConfig['color'] ?? '#991b1b',
-            'language' => $bot->language ?? 'ro',
+            'language' => $bot?->language ?? 'ro',
         ]);
     }
 
@@ -176,6 +177,18 @@ class ChatbotApiController extends Controller
             ], array_merge($eventCtx, [
                 'idempotency_key' => $eventService->idempotencyKey((string) $conversation->id, 'session_started'),
             ]));
+
+            // Save greeting as first message so it appears in transcripts
+            $channelConfig = $channel->config ?? [];
+            $greetingText = $channelConfig['greeting'] ?? 'Bună! Cu ce te pot ajuta?';
+            Message::create([
+                'conversation_id' => $conversation->id,
+                'direction' => 'outbound',
+                'content' => $greetingText,
+                'content_type' => 'text',
+                'sent_at' => now(),
+            ]);
+            $conversation->increment('messages_count');
         }
 
         // Save user message with page context for observability
@@ -416,11 +429,46 @@ class ChatbotApiController extends Controller
         // Generate AI response with cost tracking
         $aiResult = $this->generateAIResponse($bot, $conversation, $userMessage, $extraContext, $channel);
 
+        $botResponse = $aiResult['content'];
+
+        // ── Post-response product relevance gate ──
+        // STRICT: suppress cards unless the AI response actually discusses products
+        // This catches ALL paths (orchestrator AND legacy) to prevent irrelevant cards
+        if (!empty($products)) {
+            // Check if AI response mentions products positively (not "nu am găsit")
+            $hasPositiveProductMention = preg_match('/(?:recoman|suger[aă]m|am găsit|avem|iată|produse?\s+(?:potrivit|relevant|disponibil)|poți\s+comanda|adaugă\s+în\s+coș)/iu', $botResponse);
+            $hasNegativeProductMention = preg_match('/(?:nu\s+am\s+(?:găsit|gasit)|nu\s+avem|indisponibil|nu\s+(?:știu|stiu)|nu\s+pot\s+(?:găsi|gasi))/iu', $botResponse);
+
+            // Determine the effective query type from whatever path was taken
+            $effectiveQueryType = $queryIntel['type']
+                ?? (is_array($detectedIntents) && isset($detectedIntents[0]['name']) ? $detectedIntents[0]['name'] : null)
+                ?? 'unknown';
+
+            // Explicitly transactional intents always keep cards (user asked for products)
+            $isExplicitProductIntent = in_array($effectiveQueryType, [
+                'transactional', 'product_search', 'category_recommendation', 'comparison', 'exploratory',
+            ]);
+
+            // Suppress cards if:
+            // 1. AI said it couldn't find products AND intent wasn't explicitly about products, OR
+            // 2. AI response has no positive product reference AND intent wasn't explicitly about products
+            if ($isExplicitProductIntent) {
+                // Explicit product intent: always keep cards from orchestrator/semantic search
+                // If AI says "nu am găsit" but we DO have product cards, fix the contradiction
+                if ($hasNegativeProductMention && !empty($products)) {
+                    $botResponse = $this->buildProductIntroText($products, $userMessage);
+                }
+            } elseif ($hasNegativeProductMention || !$hasPositiveProductMention) {
+                $products = [];
+            }
+        }
+
         // Save bot response with AI metadata + product cards + V2 intent data
-        Message::create([
+        // (saved AFTER post-response gate so content and products reflect final state)
+        $botMessage = Message::create([
             'conversation_id' => $conversation->id,
             'direction' => 'outbound',
-            'content' => $aiResult['content'],
+            'content' => $botResponse,
             'content_type' => 'text',
             'ai_model' => $aiResult['model'] ?? null,
             'ai_provider' => $aiResult['provider'] ?? null,
@@ -444,6 +492,10 @@ class ChatbotApiController extends Controller
         if ($tenant) {
             app(PlanLimitService::class)->recordMessage($tenant);
         }
+
+        // ── Auto-extract lead from chat messages ──
+        // If user provides email/phone in conversation, create/update Lead automatically.
+        $this->tryExtractChatLead($bot, $conversation, $userMessage, $products, $eventService ?? null, $eventCtx ?? []);
 
         // V2: Track analytics events (reuse $eventService if already instantiated above)
         if (!isset($eventService)) {
@@ -495,44 +547,6 @@ class ChatbotApiController extends Controller
             }
         }
 
-        $botResponse = $aiResult['content'];
-
-        // ── Auto-extract lead from chat messages ──
-        // If user provides email/phone in conversation, create/update Lead automatically.
-        $this->tryExtractChatLead($bot, $conversation, $userMessage, $products, $eventService ?? null, $eventCtx ?? []);
-
-        // ── Post-response product relevance gate ──
-        // STRICT: suppress cards unless the AI response actually discusses products
-        // This catches ALL paths (orchestrator AND legacy) to prevent irrelevant cards
-        if (!empty($products)) {
-            // Check if AI response mentions products positively (not "nu am găsit")
-            $hasPositiveProductMention = preg_match('/(?:recoman|suger[aă]m|am găsit|avem|iată|produse?\s+(?:potrivit|relevant|disponibil)|poți\s+comanda|adaugă\s+în\s+coș)/iu', $botResponse);
-            $hasNegativeProductMention = preg_match('/(?:nu\s+am\s+(?:găsit|gasit)|nu\s+avem|indisponibil|nu\s+(?:știu|stiu)|nu\s+pot\s+(?:găsi|gasi))/iu', $botResponse);
-
-            // Determine the effective query type from whatever path was taken
-            $effectiveQueryType = $queryIntel['type']
-                ?? ($detectedIntents[0]['name'] ?? null)
-                ?? 'unknown';
-
-            // Explicitly transactional intents always keep cards (user asked for products)
-            $isExplicitProductIntent = in_array($effectiveQueryType, [
-                'transactional', 'product_search', 'category_recommendation', 'comparison', 'exploratory',
-            ]);
-
-            // Suppress cards if:
-            // 1. AI said it couldn't find products AND intent wasn't explicitly about products, OR
-            // 2. AI response has no positive product reference AND intent wasn't explicitly about products
-            // NOTE: If orchestrator found products via semantic search for an explicit product intent,
-            // KEEP the cards even if the AI response says "nu am găsit" (the AI may not know about
-            // the semantic product retrieval results that are displayed as visual cards)
-            if ($isExplicitProductIntent) {
-                // Explicit product intent: always keep cards from orchestrator/semantic search
-                // The AI response text may be misleading but the cards are correct
-            } elseif ($hasNegativeProductMention || !$hasPositiveProductMention) {
-                $products = [];
-            }
-        }
-
         return response()->json([
             'response' => $botResponse,
             'reply' => $botResponse,
@@ -541,6 +555,7 @@ class ChatbotApiController extends Controller
             'session_expired' => $sessionExpired,
             'products' => $products,
             'conversation_id' => $conversation->id,
+            'message_id' => $botMessage->id,
         ]);
     }
 
@@ -573,7 +588,7 @@ class ChatbotApiController extends Controller
             $digitsOnly = preg_replace('/[^\d]/', '', $userMessage);
             if (preg_match('/(07\d{8})/', $digitsOnly, $m)) {
                 $phone = $m[1];
-            } elseif (preg_match('/(40\s?7\d{8})/', $digitsOnly, $m)) {
+            } elseif (preg_match('/(407\d{8})/', $digitsOnly, $m)) {
                 $phone = '0' . substr(preg_replace('/\D/', '', $m[1]), 2);
             }
             // Flexible spacing: 07xx xxx xxx
@@ -986,6 +1001,56 @@ class ChatbotApiController extends Controller
      * Search product cards using dedicated product search (trigram + keyword).
      * Knowledge base vector search is still used separately for AI context (RAG).
      */
+    /**
+     * Build a natural, varied intro text for product cards using product details.
+     */
+    private function buildProductIntroText(array $products, string $userMessage): string
+    {
+        $count = count($products);
+        $prices = array_filter(array_map(fn($p) => (float) ($p['sale_price'] ?? $p['price'] ?? 0), $products));
+        $minPrice = !empty($prices) ? min($prices) : null;
+        $maxPrice = !empty($prices) ? max($prices) : null;
+        $inStock = count(array_filter($products, fn($p) => ($p['stock_status'] ?? '') === 'instock'));
+        $firstName = $products[0]['name'] ?? '';
+
+        // Build price range string
+        $priceStr = '';
+        if ($minPrice && $maxPrice && $minPrice !== $maxPrice) {
+            $currency = $products[0]['currency'] ?? 'RON';
+            $priceStr = number_format($minPrice, 2) . ' - ' . number_format($maxPrice, 2) . ' ' . $currency;
+        } elseif ($minPrice) {
+            $currency = $products[0]['currency'] ?? 'RON';
+            $priceStr = 'de la ' . number_format($minPrice, 2) . ' ' . $currency;
+        }
+
+        $templates = [];
+
+        // Templates with price range
+        if ($priceStr) {
+            $templates[] = "Am {$count} opțiuni disponibile, cu prețuri între {$priceStr}:";
+            $templates[] = "Am găsit {$count} produse potrivite ({$priceStr}):";
+            $templates[] = "Uite ce am, prețuri de la {$priceStr}:";
+        }
+
+        // Templates with stock info
+        if ($inStock > 0) {
+            $templates[] = "Am {$count} variante disponibile, " . ($inStock === $count ? 'toate în stoc' : "{$inStock} din {$count} în stoc") . ':';
+        }
+
+        // Templates with first product name hint
+        if ($firstName) {
+            $shortName = mb_substr($firstName, 0, 40);
+            $templates[] = "Am câteva opțiuni, inclusiv {$shortName}" . ($count > 1 ? " și încă " . ($count - 1) . ":" : ":");
+        }
+
+        // Generic varied templates
+        $templates[] = "Am găsit {$count} produse care se potrivesc:";
+        $templates[] = "Uite {$count} opțiuni pe care le avem disponibile:";
+        $templates[] = "Sigur! Am {$count} variante pentru tine:";
+
+        return $templates[array_rand($templates)];
+    }
+
     private function searchProductCards(int $botId, string $userMessage): array
     {
         try {
@@ -1002,7 +1067,7 @@ class ChatbotApiController extends Controller
     /**
      * Search products for a chatbot channel (public endpoint).
      */
-    public function searchProducts(Request $request, Channel $channel): JsonResponse
+    public function searchProducts(Request $request, int $channel): JsonResponse
     {
         // Rate limiting: 20 product searches per minute per IP
         $rateLimitKey = 'chatbot:products:' . $request->ip();
@@ -1011,7 +1076,7 @@ class ChatbotApiController extends Controller
         }
         RateLimiter::hit($rateLimitKey, 60);
 
-        $channel = Channel::withoutGlobalScopes()->findOrFail($channel->id);
+        $channel = Channel::withoutGlobalScopes()->findOrFail($channel);
 
         if (!$channel->bot) {
             return response()->json(['products' => []]);
@@ -1030,5 +1095,83 @@ class ChatbotApiController extends Controller
         $products = array_map(fn($r) => $productSearch->toCardArray($r), $results);
 
         return response()->json(['products' => $products]);
+    }
+
+    public function feedback(Request $request, $channelId): JsonResponse
+    {
+        $channel = Channel::withoutGlobalScopes()
+            ->where('id', $channelId)
+            ->where('is_active', true)
+            ->first();
+
+        if (!$channel) {
+            return response()->json(['error' => 'Canal invalid.'], 404);
+        }
+
+        $validated = $request->validate([
+            'message_id' => 'required|integer',
+            'conversation_id' => 'required|integer',
+            'rating' => 'required|integer|in:-1,1',
+            'session_id' => 'nullable|string|max:255',
+            'session_token' => 'nullable|string|max:255',
+        ]);
+
+        // Verify session ownership
+        if ($validated['session_token'] && $validated['session_id']) {
+            $expectedToken = hash_hmac('sha256', $validated['session_id'] . $channelId, config('app.key'));
+            if (!hash_equals($expectedToken, $validated['session_token'])) {
+                return response()->json(['error' => 'Sesiune invalidă.'], 403);
+            }
+        }
+
+        // Find the message and verify it belongs to this conversation/channel
+        $message = Message::where('id', $validated['message_id'])
+            ->where('conversation_id', $validated['conversation_id'])
+            ->where('direction', 'outbound')
+            ->first();
+
+        if (!$message) {
+            return response()->json(['error' => 'Mesaj negăsit.'], 404);
+        }
+
+        $conversation = Conversation::where('id', $validated['conversation_id'])
+            ->where('channel_id', $channel->id)
+            ->first();
+
+        if (!$conversation) {
+            return response()->json(['error' => 'Conversație negăsită.'], 404);
+        }
+
+        $bot = Bot::withoutGlobalScopes()->find($channel->bot_id);
+
+        // Extract product IDs from message metadata
+        $productIds = [];
+        if (!empty($message->metadata['products'])) {
+            $productIds = array_column($message->metadata['products'], 'id');
+        }
+
+        // Find the user message that triggered this bot response (previous inbound message)
+        $userMessage = Message::where('conversation_id', $conversation->id)
+            ->where('direction', 'inbound')
+            ->where('id', '<', $message->id)
+            ->orderByDesc('id')
+            ->first();
+
+        // Upsert feedback (one rating per message)
+        RetrievalFeedback::updateOrCreate(
+            [
+                'message_id' => $message->id,
+            ],
+            [
+                'bot_id' => $bot->id,
+                'conversation_id' => $conversation->id,
+                'query' => $userMessage?->content ?? '',
+                'rating' => $validated['rating'],
+                'product_ids' => !empty($productIds) ? $productIds : null,
+                'retrieval_type' => !empty($productIds) ? 'product' : 'knowledge',
+            ]
+        );
+
+        return response()->json(['ok' => true]);
     }
 }

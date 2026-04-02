@@ -20,9 +20,9 @@ class PublicDemoController extends Controller
             ->header('Pragma', 'no-cache');
     }
 
-    public function testById(Bot $bot)
+    public function testById(int $bot)
     {
-        $bot = Bot::withoutGlobalScopes()->findOrFail($bot->id);
+        $bot = Bot::withoutGlobalScopes()->findOrFail($bot);
 
         return response()
             ->view('public.demo', compact('bot'))

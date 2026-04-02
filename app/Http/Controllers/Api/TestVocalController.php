@@ -12,8 +12,10 @@ use Illuminate\Http\JsonResponse;
 
 class TestVocalController extends Controller
 {
-    public function handle(Request $request, Bot $bot): JsonResponse
+    public function handle(Request $request, int $bot): JsonResponse
     {
+        $bot = Bot::withoutGlobalScopes()->findOrFail($bot);
+
         $userMessage = $request->input('message', '');
         $history = $request->input('history', []);
         $isGreeting = $userMessage === '__greeting__';
