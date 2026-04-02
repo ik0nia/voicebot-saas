@@ -44,7 +44,7 @@ class ElevenLabsClonedTts implements TtsOutputStrategy
             }
 
             return [
-                'action' => 'send_audio_to_twilio',
+                'action' => 'send_audio_to_telnyx',
                 'data' => [
                     'event' => 'media',
                     'streamSid' => $streamSid,

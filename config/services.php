@@ -35,10 +35,10 @@ return [
         ],
     ],
 
-    'twilio' => [
-        'sid' => env('TWILIO_SID'),
-        'auth_token' => env('TWILIO_AUTH_TOKEN'),
-        'phone_number' => env('TWILIO_PHONE_NUMBER'),
+    'telnyx' => [
+        'api_key' => env('TELNYX_API_KEY'),
+        'connection_id' => env('TELNYX_CONNECTION_ID'),
+        'public_key' => env('TELNYX_PUBLIC_KEY'),
     ],
 
     'anthropic' => [

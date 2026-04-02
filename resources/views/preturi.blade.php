@@ -135,7 +135,7 @@
                 Adaugă funcționalitate <span class="gradient-text">vocală</span>
             </h2>
             <p class="text-center text-slate-300 mb-12 max-w-2xl mx-auto animate-fade-in">
-                Extinde chatbot-ul cu voce AI. Gestionează apeluri telefonice automat prin Twilio + OpenAI.
+                Extinde chatbot-ul cu voce AI. Gestionează apeluri telefonice automat prin Telnyx + OpenAI.
             </p>
 
             @if($voicePlans->count())

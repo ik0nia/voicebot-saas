@@ -398,7 +398,7 @@
                         <div class="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center">
                             <svg class="w-6 h-6 text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" /></svg>
                         </div>
-                        <h3 class="text-lg font-bold text-slate-900">Telefonie Twilio integrată</h3>
+                        <h3 class="text-lg font-bold text-slate-900">Telefonie Telnyx integrată</h3>
                     </div>
                     <p class="text-slate-600 text-sm leading-relaxed mb-3">Numere de telefon românești (+40), apeluri inbound și outbound, înregistrare completă cu transcriere automată și analiză de sentiment post-apel.</p>
                     <div class="flex flex-wrap gap-2">
@@ -646,7 +646,7 @@
                     <svg class="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" /></svg>
                 </div>
                 <h3 class="text-white font-semibold mb-2">Verificare webhook signatures</h3>
-                <p class="text-slate-400 text-sm">HMAC-SHA256 pentru sesiuni chat, verificare semnătură Twilio pe toate webhook-urile.</p>
+                <p class="text-slate-400 text-sm">HMAC-SHA256 pentru sesiuni chat, verificare semnătură Telnyx pe toate webhook-urile.</p>
             </div>
             <div class="p-6 rounded-2xl bg-slate-800/60 border border-slate-700/50">
                 <div class="w-10 h-10 rounded-lg bg-red-700/20 flex items-center justify-center mb-4">

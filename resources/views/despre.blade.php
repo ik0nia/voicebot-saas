@@ -301,7 +301,7 @@
                 <p class="text-xs text-slate-500">AI multi-model</p>
             </div>
             <div class="p-4 rounded-xl bg-white border border-slate-200 text-center hover:shadow-md hover:border-red-200 transition-all duration-300">
-                <div class="text-2xl mb-2 font-bold text-slate-900">Twilio</div>
+                <div class="text-2xl mb-2 font-bold text-slate-900">Telnyx</div>
                 <p class="text-xs text-slate-500">Telefonie & SMS</p>
             </div>
             <div class="p-4 rounded-xl bg-white border border-slate-200 text-center hover:shadow-md hover:border-red-200 transition-all duration-300">

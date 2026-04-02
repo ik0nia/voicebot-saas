@@ -19,7 +19,7 @@ class PhoneNumberFactory extends Factory
             'tenant_id' => Tenant::factory(),
             'bot_id' => null,
             'number' => '+40' . fake()->unique()->numerify('#########'),
-            'provider' => 'twilio',
+            'provider' => 'telnyx',
             'friendly_name' => fake()->words(2, true),
             'monthly_cost_cents' => 100,
             'is_active' => true,

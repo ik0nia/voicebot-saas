@@ -9,12 +9,12 @@ use App\Services\TtsStrategies\ElevenLabsClonedTts;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Bridges Twilio Media Streams and OpenAI Realtime API.
+ * Bridges Telnyx Media Streams and OpenAI Realtime API.
  *
- * Translates inbound Twilio WebSocket events (connected, start, media, stop)
+ * Translates inbound Telnyx WebSocket events (connected, start, media, stop)
  * into actions the WebSocket server should perform (connect to OpenAI,
  * forward audio, disconnect, etc.) and translates OpenAI Realtime events
- * back into Twilio-compatible payloads (media, mark, clear).
+ * back into Telnyx-compatible payloads (media, mark, clear).
  */
 class MediaStreamHandler
 {
@@ -22,13 +22,13 @@ class MediaStreamHandler
     private string $streamSid = '';
 
     // -----------------------------------------------------------------
-    //  Twilio -> Application
+    //  Telnyx -> Application
     // -----------------------------------------------------------------
 
     /**
-     * Process an inbound Twilio Media Stream WebSocket message.
+     * Process an inbound Telnyx Media Stream WebSocket message.
      *
-     * @param  string  $message  Raw JSON string from Twilio.
+     * @param  string  $message  Raw JSON string from Telnyx.
      * @return array|null  An action descriptor for the WebSocket server, or null.
      */
     public function handleMessage(string $message): ?array
@@ -36,7 +36,7 @@ class MediaStreamHandler
         try {
             $data = json_decode($message, true);
         } catch (\Throwable $e) {
-            Log::warning('MediaStreamHandler: failed to decode Twilio message', [
+            Log::warning('MediaStreamHandler: failed to decode Telnyx message', [
                 'error' => $e->getMessage(),
             ]);
             return null;
@@ -57,7 +57,7 @@ class MediaStreamHandler
                 default     => null,
             };
         } catch (\Throwable $e) {
-            Log::error("MediaStreamHandler: error processing Twilio event '{$event}'", [
+            Log::error("MediaStreamHandler: error processing Telnyx event '{$event}'", [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
@@ -66,11 +66,11 @@ class MediaStreamHandler
     }
 
     /**
-     * Handle the Twilio "connected" event.
+     * Handle the Telnyx "connected" event.
      */
     private function handleConnected(array $data): ?array
     {
-        Log::info('Twilio Media Stream connected', [
+        Log::info('Telnyx Media Stream connected', [
             'streamSid' => $data['streamSid'] ?? '',
         ]);
 
@@ -78,7 +78,7 @@ class MediaStreamHandler
     }
 
     /**
-     * Handle the Twilio "start" event.
+     * Handle the Telnyx "start" event.
      *
      * Extracts bot_id and call_id from custom parameters, initialises the
      * RealtimeSession, and returns the OpenAI connection config.
@@ -135,7 +135,7 @@ class MediaStreamHandler
     }
 
     /**
-     * Handle the Twilio "media" event (audio chunk).
+     * Handle the Telnyx "media" event (audio chunk).
      *
      * Wraps the base64-encoded audio payload as an input_audio_buffer.append
      * event for OpenAI.
@@ -159,11 +159,11 @@ class MediaStreamHandler
     }
 
     /**
-     * Handle the Twilio "stop" event (call ended / stream closed).
+     * Handle the Telnyx "stop" event (call ended / stream closed).
      */
     private function handleStop(array $data): ?array
     {
-        Log::info('Twilio Media Stream stopped', [
+        Log::info('Telnyx Media Stream stopped', [
             'streamSid' => $this->streamSid,
         ]);
 
@@ -177,11 +177,11 @@ class MediaStreamHandler
     }
 
     // -----------------------------------------------------------------
-    //  OpenAI -> Twilio
+    //  OpenAI -> Telnyx
     // -----------------------------------------------------------------
 
     /**
-     * Process an inbound OpenAI Realtime event and produce a Twilio-bound action.
+     * Process an inbound OpenAI Realtime event and produce a Telnyx-bound action.
      *
      * Also delegates to RealtimeSession for logging and transcription.
      *
@@ -210,13 +210,13 @@ class MediaStreamHandler
                 ];
             }
 
-            // Stream audio delta back to Twilio (only for native OpenAI TTS).
+            // Stream audio delta back to Telnyx (only for native OpenAI TTS).
             if ($type === 'response.audio.delta' && $this->session->getTtsStrategy()->shouldPassthroughAudio()) {
                 $audioDelta = $event['delta'] ?? '';
 
                 if ($audioDelta) {
                     return [
-                        'action' => 'send_audio_to_twilio',
+                        'action' => 'send_audio_to_telnyx',
                         'data'   => [
                             'event'     => 'media',
                             'streamSid' => $this->streamSid,
@@ -255,10 +255,10 @@ class MediaStreamHandler
                 ];
             }
 
-            // Barge-in: clear queued Twilio audio when the user starts speaking.
+            // Barge-in: clear queued Telnyx audio when the user starts speaking.
             if ($type === 'input_audio_buffer.speech_started') {
                 return [
-                    'action' => 'clear_twilio_audio',
+                    'action' => 'clear_telnyx_audio',
                     'data'   => [
                         'event'     => 'clear',
                         'streamSid' => $this->streamSid,

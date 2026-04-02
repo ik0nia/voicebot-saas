@@ -50,7 +50,7 @@
                 $tabs = [
                     'general' => ['label' => 'General', 'icon' => 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z'],
                     'openai' => ['label' => 'OpenAI', 'icon' => 'M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 001.5 2.25M14.25 3.104c.251.023.501.05.75.082M19.5 14.5l-4.09-4.09a2.25 2.25 0 01-.66-1.591V3.186'],
-                    'twilio' => ['label' => 'Twilio', 'icon' => 'M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z'],
+                    'telnyx' => ['label' => 'Telnyx', 'icon' => 'M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z'],
                     'stripe' => ['label' => 'Stripe', 'icon' => 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'],
                     'email' => ['label' => 'Email', 'icon' => 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'],
                     'whatsapp' => ['label' => 'WhatsApp', 'icon' => 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z'],
@@ -323,37 +323,28 @@
     @endif
 
     {{-- ============================================================ --}}
-    {{-- TAB: Twilio --}}
+    {{-- TAB: Telnyx --}}
     {{-- ============================================================ --}}
-    @if($tab === 'twilio')
+    @if($tab === 'telnyx')
         <div class="bg-white rounded-xl border border-slate-200 p-6">
-            <h2 class="text-lg font-semibold text-slate-900">Configurare Twilio</h2>
-            <p class="mt-1 text-sm text-slate-500">Credențiale și configurări pentru serviciul de telefonie Twilio.</p>
+            <h2 class="text-lg font-semibold text-slate-900">Configurare Telnyx</h2>
+            <p class="mt-1 text-sm text-slate-500">Credențiale și configurări pentru serviciul de telefonie Telnyx.</p>
 
-            <form method="POST" action="{{ url('/admin/setari/twilio') }}" class="mt-6 space-y-5">
+            <form method="POST" action="{{ url('/admin/setari/telnyx') }}" class="mt-6 space-y-5">
                 @csrf
                 @method('PUT')
 
                 <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                    {{-- Account SID --}}
+                    {{-- API Key --}}
                     <div>
-                        <label for="twilio_sid" class="block text-sm font-medium text-slate-700">Account SID</label>
-                        <input type="text" name="twilio_sid" id="twilio_sid"
-                               value="{{ old('twilio_sid', $settings['twilio']['twilio_sid'] ?? '') }}"
-                               placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors font-mono text-xs"
-                               required>
-                    </div>
-
-                    {{-- Auth Token --}}
-                    <div>
-                        <label for="twilio_auth_token" class="block text-sm font-medium text-slate-700">Auth Token</label>
+                        <label for="telnyx_api_key" class="block text-sm font-medium text-slate-700">API Key</label>
                         <div class="relative mt-1.5">
-                            <input type="password" name="twilio_auth_token" id="twilio_auth_token"
-                                   value="{{ old('twilio_auth_token', $settings['twilio']['twilio_auth_token'] ?? '') }}"
+                            <input type="password" name="telnyx_api_key" id="telnyx_api_key"
+                                   value="{{ old('telnyx_api_key', $settings['telnyx']['telnyx_api_key'] ?? '') }}"
+                                   placeholder="KEYxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                                    class="block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 pr-10 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors font-mono text-xs"
                                    required>
-                            <button type="button" onclick="togglePassword('twilio_auth_token')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                            <button type="button" onclick="togglePassword('telnyx_api_key')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -362,21 +353,29 @@
                         </div>
                     </div>
 
-                    {{-- Phone Number --}}
+                    {{-- Connection ID --}}
                     <div>
-                        <label for="twilio_phone_number" class="block text-sm font-medium text-slate-700">Număr Telefon Principal</label>
-                        <input type="text" name="twilio_phone_number" id="twilio_phone_number"
-                               value="{{ old('twilio_phone_number', $settings['twilio']['twilio_phone_number'] ?? '') }}"
-                               placeholder="+40XXXXXXXXX"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors"
+                        <label for="telnyx_connection_id" class="block text-sm font-medium text-slate-700">Connection ID</label>
+                        <input type="text" name="telnyx_connection_id" id="telnyx_connection_id"
+                               value="{{ old('telnyx_connection_id', $settings['telnyx']['telnyx_connection_id'] ?? '') }}"
+                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors font-mono text-xs"
+                               required>
+                    </div>
+
+                    {{-- Public Key --}}
+                    <div>
+                        <label for="telnyx_public_key" class="block text-sm font-medium text-slate-700">Public Key</label>
+                        <input type="text" name="telnyx_public_key" id="telnyx_public_key"
+                               value="{{ old('telnyx_public_key', $settings['telnyx']['telnyx_public_key'] ?? '') }}"
+                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors font-mono text-xs"
                                required>
                     </div>
 
                     {{-- Webhook URL --}}
                     <div>
-                        <label for="twilio_webhook_url" class="block text-sm font-medium text-slate-700">Webhook URL</label>
-                        <input type="url" name="twilio_webhook_url" id="twilio_webhook_url"
-                               value="{{ old('twilio_webhook_url', $settings['twilio']['twilio_webhook_url'] ?? '') }}"
+                        <label for="telnyx_webhook_url" class="block text-sm font-medium text-slate-700">Webhook URL</label>
+                        <input type="url" name="telnyx_webhook_url" id="telnyx_webhook_url"
+                               value="{{ old('telnyx_webhook_url', $settings['telnyx']['telnyx_webhook_url'] ?? '') }}"
                                class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors"
                                required>
                     </div>
@@ -385,7 +384,7 @@
                 <div class="flex justify-end pt-2">
                     <button type="submit"
                             class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-colors">
-                        Salvează setările Twilio
+                        Salvează setările Telnyx
                     </button>
                 </div>
             </form>
@@ -682,7 +681,7 @@
                         <select name="whatsapp_provider" id="whatsapp_provider"
                                 class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
                             @php $currentProvider = old('whatsapp_provider', $settings['whatsapp']['whatsapp_provider'] ?? 'meta_cloud_api'); @endphp
-                            <option value="twilio_whatsapp" {{ $currentProvider === 'twilio_whatsapp' ? 'selected' : '' }}>Twilio WhatsApp</option>
+                            <option value="telnyx_whatsapp" {{ $currentProvider === 'telnyx_whatsapp' ? 'selected' : '' }}>Telnyx WhatsApp</option>
                             <option value="meta_cloud_api" {{ $currentProvider === 'meta_cloud_api' ? 'selected' : '' }}>Meta Cloud API</option>
                         </select>
                     </div>
@@ -728,7 +727,7 @@
                                value="{{ old('whatsapp_verify_token', $settings['whatsapp']['whatsapp_verify_token'] ?? '') }}"
                                placeholder="Token pentru verificare webhook"
                                class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
-                        <p class="mt-1 text-xs text-slate-500">Token folosit pentru verificarea webhook-ului de către Meta/Twilio.</p>
+                        <p class="mt-1 text-xs text-slate-500">Token folosit pentru verificarea webhook-ului de către Meta/Telnyx.</p>
                     </div>
 
                     {{-- Webhook URL (readonly) --}}

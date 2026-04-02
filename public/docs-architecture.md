@@ -26,14 +26,14 @@
 │  ProductSearchService      ChannelMessageService                 │
 │  ChatModelRouter           IntentDetectionService                │
 │  PlanLimitService          ElevenLabsService                     │
-│  TwilioService             KnowledgeAgentService                 │
+│  TelnyxService             KnowledgeAgentService                 │
 └──────────────┬──────────────────────────────────┬───────────────┘
                │                                  │
 ┌──────────────▼──────────────┐  ┌────────────────▼───────────────┐
 │        JOB QUEUE (Redis)    │  │     EXTERNAL APIs              │
 │  ProcessKnowledgeDocument   │  │  - OpenAI (GPT-4o, Realtime)  │
 │  CrawlWebsite               │  │  - Anthropic (Claude)          │
-│  RunKnowledgeAgent          │  │  - Twilio (telephony)          │
+│  RunKnowledgeAgent          │  │  - Telnyx (telephony)          │
 │  SyncConnector              │  │  - ElevenLabs (TTS/cloning)    │
 │  AnalyzeCallSentiment       │  │  - Meta (WhatsApp/FB/IG)       │
 │  ProcessChannelMessage      │  │  - WooCommerce REST API        │
@@ -62,9 +62,9 @@
 | **ProductSearchService** | `app/Services/ProductSearchService.php` | Căutare produse cu trigram similarity + fuzzy match |
 | **ChannelMessageService** | `app/Services/ChannelMessageService.php` | Procesare mesaje WhatsApp/Facebook/Instagram |
 | **PlanLimitService** | `app/Services/PlanLimitService.php` | Enforcement limite per plan (bots, knowledge, minute, mesaje) |
-| **MediaStreamHandler** | `app/Services/MediaStreamHandler.php` | Bridge Twilio Media Streams ↔ OpenAI Realtime API |
+| **MediaStreamHandler** | `app/Services/MediaStreamHandler.php` | Bridge Telnyx Media Streams ↔ OpenAI Realtime API |
 | **ElevenLabsService** | `app/Services/ElevenLabsService.php` | Voice cloning și TTS via ElevenLabs |
-| **TwilioService** | `app/Services/TwilioService.php` | Provizionare numere, creare apeluri, TwiML |
+| **TelnyxService** | `app/Services/TelnyxService.php` | Provizionare numere, creare apeluri, TeXML |
 
 ---
 
@@ -166,14 +166,14 @@ ChatbotApiController::message()
 ### C) User pune întrebare în VOICE
 
 ```
-Apel telefonic → Twilio → POST /webhook/twilio/voice
+Apel telefonic → Telnyx → POST /webhook/telnyx/voice
                             │
-TwilioWebhookController::handleVoice()
+TelnyxWebhookController::handleVoice()
   ├─ Validare număr telefon → găsire Bot
   ├─ Creare Call + CallEvent records
-  └─ TwiML response: <Connect><Stream> → WebSocket URL
+  └─ TeXML response: <Connect><Stream> → WebSocket URL
 
-Twilio Media Stream → MediaStreamHandler (WebSocket)
+Telnyx Media Stream → MediaStreamHandler (WebSocket)
   │                      ↕
   │              OpenAI Realtime API (WebSocket bidirecțional)
   │

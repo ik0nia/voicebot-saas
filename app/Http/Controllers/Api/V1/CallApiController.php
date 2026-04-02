@@ -8,7 +8,7 @@ use App\Http\Resources\TranscriptResource;
 use App\Models\Bot;
 use App\Models\Call;
 use App\Models\PhoneNumber;
-use App\Services\TwilioService;
+use App\Services\TelnyxService;
 use Illuminate\Http\Request;
 
 class CallApiController extends Controller
@@ -65,11 +65,11 @@ class CallApiController extends Controller
         }
 
         try {
-            $twilio = app(TwilioService::class);
-            $twilioCall = $twilio->makeCall(
+            $telnyx = app(TelnyxService::class);
+            $telnyxCall = $telnyx->makeCall(
                 $validated['to'],
                 $from,
-                route('webhook.twilio.voice')
+                route('webhook.telnyx.voice')
             );
 
             $call = Call::create([
@@ -78,7 +78,7 @@ class CallApiController extends Controller
                 'caller_number' => $validated['to'],
                 'direction' => 'outbound',
                 'status' => 'initiated',
-                'metadata' => ['twilio_call_sid' => $twilioCall->sid],
+                'metadata' => ['telnyx_call_control_id' => $telnyxCall->call_control_id],
                 'started_at' => now(),
             ]);
 

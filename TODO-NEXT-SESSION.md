@@ -64,5 +64,5 @@
 
 ### Alte idei discutate
 - [ ] Knowledge base - refactorizare pentru a fi mai practic
-- [ ] Twilio setup (nu e configurat inca)
+- [ ] Telnyx setup (nu e configurat inca)
 - [ ] Alte platforme ecommerce (Shopify, PrestaShop)

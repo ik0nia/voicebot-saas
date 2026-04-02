@@ -33,9 +33,9 @@ class ApiKeyServiceProvider extends ServiceProvider
             'openai_organization' => 'openai.organization',
             'anthropic_api_key' => 'services.anthropic.api_key',
             'elevenlabs_api_key' => 'services.elevenlabs.api_key',
-            'twilio_sid' => 'services.twilio.sid',
-            'twilio_auth_token' => 'services.twilio.token',
-            'twilio_phone_number' => 'services.twilio.from',
+            'telnyx_api_key' => 'services.telnyx.api_key',
+            'telnyx_connection_id' => 'services.telnyx.connection_id',
+            'telnyx_public_key' => 'services.telnyx.public_key',
         ];
 
         foreach ($keyMap as $settingKey => $configKey) {

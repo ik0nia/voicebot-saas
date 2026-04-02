@@ -43,7 +43,7 @@ return [
     | Voice / Latency-Aware Routing
     |--------------------------------------------------------------------------
     */
-    'voice_channel_types' => ['voice', 'webrtc', 'twilio', 'phone'],
+    'voice_channel_types' => ['voice', 'webrtc', 'telnyx', 'phone'],
 
     /*
     |--------------------------------------------------------------------------

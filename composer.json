@@ -22,7 +22,6 @@
         "phpoffice/phpword": "^1.1",
         "sentry/sentry-laravel": "^4.23",
         "spatie/laravel-permission": "^6.25",
-        "twilio/sdk": "^8.11",
         "yethee/tiktoken": "^1.1"
     },
     "require-dev": {

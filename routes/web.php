@@ -18,7 +18,7 @@ use App\Http\Controllers\Dashboard\TeamController;
 use App\Http\Controllers\Admin\AdminSettingsController;
 use App\Http\Controllers\Webhook\FacebookWebhookController;
 use App\Http\Controllers\Webhook\InstagramWebhookController;
-use App\Http\Controllers\Webhook\TwilioWebhookController;
+use App\Http\Controllers\Webhook\TelnyxWebhookController;
 use App\Http\Controllers\Webhook\WhatsAppWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -256,7 +256,7 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
     Route::get('/setari', [AdminSettingsController::class, 'index'])->name('admin.settings.index');
     Route::put('/setari/general', [AdminSettingsController::class, 'updateGeneral'])->name('admin.settings.updateGeneral');
     Route::put('/setari/openai', [AdminSettingsController::class, 'updateOpenai'])->name('admin.settings.updateOpenai');
-    Route::put('/setari/twilio', [AdminSettingsController::class, 'updateTwilio'])->name('admin.settings.updateTwilio');
+    Route::put('/setari/telnyx', [AdminSettingsController::class, 'updateTelnyx'])->name('admin.settings.updateTelnyx');
     Route::put('/setari/stripe', [AdminSettingsController::class, 'updateStripe'])->name('admin.settings.updateStripe');
     Route::put('/setari/email', [AdminSettingsController::class, 'updateEmail'])->name('admin.settings.updateEmail');
     Route::put('/setari/whatsapp', [AdminSettingsController::class, 'updateWhatsapp'])->name('admin.settings.updateWhatsapp');
@@ -313,11 +313,11 @@ Route::prefix('webhook/instagram')
             ->middleware(\App\Http\Middleware\VerifyMetaWebhookSignature::class);
     });
 
-// Twilio webhooks (no CSRF, no auth - signature verified by middleware)
-Route::prefix('webhook/twilio')
+// Telnyx webhooks (no CSRF, no auth - signature verified by middleware)
+Route::prefix('webhook/telnyx')
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
-    ->middleware('twilio.verify')
+    ->middleware('telnyx.verify')
     ->group(function () {
-        Route::post('/voice', [TwilioWebhookController::class, 'handleVoice'])->name('webhook.twilio.voice');
-        Route::post('/status', [TwilioWebhookController::class, 'handleStatus'])->name('webhook.twilio.status');
+        Route::post('/voice', [TelnyxWebhookController::class, 'handleVoice'])->name('webhook.telnyx.voice');
+        Route::post('/status', [TelnyxWebhookController::class, 'handleStatus'])->name('webhook.telnyx.status');
     });

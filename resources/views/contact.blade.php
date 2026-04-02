@@ -239,7 +239,7 @@
                     <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
                 </summary>
                 <div class="px-6 pb-6">
-                    <p class="text-slate-600 leading-relaxed">Chatbot-ul text poate fi live pe site-ul tău în 10 minute — o singură linie de cod de adăugat. Configurarea bazei de cunoștințe (documente, scanare site, conectori) durează de obicei câteva ore. Agentul vocal necesită configurare Twilio suplimentară, de obicei 1-2 zile.</p>
+                    <p class="text-slate-600 leading-relaxed">Chatbot-ul text poate fi live pe site-ul tău în 10 minute — o singură linie de cod de adăugat. Configurarea bazei de cunoștințe (documente, scanare site, conectori) durează de obicei câteva ore. Agentul vocal necesită configurare Telnyx suplimentară, de obicei 1-2 zile.</p>
                 </div>
             </details>
 
@@ -368,7 +368,7 @@
                     <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
                 </summary>
                 <div class="px-6 pb-6">
-                    <p class="text-slate-600 leading-relaxed">Toate datele sunt stocate pe servere din România. Baza de date PostgreSQL cu extensia pgvector pentru căutare semantică. Comunicarea cu API-urile externe (OpenAI, ElevenLabs, Twilio) se face prin conexiuni securizate (HTTPS/WSS).</p>
+                    <p class="text-slate-600 leading-relaxed">Toate datele sunt stocate pe servere din România. Baza de date PostgreSQL cu extensia pgvector pentru căutare semantică. Comunicarea cu API-urile externe (OpenAI, ElevenLabs, Telnyx) se face prin conexiuni securizate (HTTPS/WSS).</p>
                 </div>
             </details>
 

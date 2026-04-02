@@ -37,11 +37,11 @@ return new class extends Migration
             ['key' => 'openai_max_tokens', 'value' => '4096', 'type' => 'integer', 'group' => 'openai'],
             ['key' => 'openai_temperature', 'value' => '0.7', 'type' => 'float', 'group' => 'openai'],
 
-            // Twilio
-            ['key' => 'twilio_sid', 'value' => '', 'type' => 'string', 'group' => 'twilio'],
-            ['key' => 'twilio_auth_token', 'value' => '', 'type' => 'string', 'group' => 'twilio'],
-            ['key' => 'twilio_phone_number', 'value' => '', 'type' => 'string', 'group' => 'twilio'],
-            ['key' => 'twilio_webhook_url', 'value' => 'https://sambla.ro/webhook/twilio/voice', 'type' => 'string', 'group' => 'twilio'],
+            // Telnyx
+            ['key' => 'telnyx_api_key', 'value' => '', 'type' => 'string', 'group' => 'telnyx'],
+            ['key' => 'telnyx_connection_id', 'value' => '', 'type' => 'string', 'group' => 'telnyx'],
+            ['key' => 'telnyx_public_key', 'value' => '', 'type' => 'string', 'group' => 'telnyx'],
+            ['key' => 'telnyx_webhook_url', 'value' => 'https://sambla.ro/webhook/telnyx/voice', 'type' => 'string', 'group' => 'telnyx'],
 
             // Stripe
             ['key' => 'stripe_public_key', 'value' => '', 'type' => 'string', 'group' => 'stripe'],

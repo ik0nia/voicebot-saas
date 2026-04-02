@@ -11,12 +11,12 @@ interface TtsOutputStrategy
     public function getModalities(): array;
 
     /**
-     * Whether OpenAI audio delta events should be forwarded to Twilio.
+     * Whether OpenAI audio delta events should be forwarded to Telnyx.
      */
     public function shouldPassthroughAudio(): bool;
 
     /**
-     * Convert text response to audio and return Twilio-compatible action.
+     * Convert text response to audio and return Telnyx-compatible action.
      */
     public function handleTextResponse(string $text, string $streamSid): ?array;
 }

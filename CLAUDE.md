@@ -1,7 +1,7 @@
 # Sambla - Architecture Document
 
 ## Overview
-Multi-tenant SaaS platform for AI-powered voice bots. Businesses can create, configure, and deploy conversational voice agents that handle inbound/outbound phone calls using OpenAI's Realtime API and Twilio for telephony.
+Multi-tenant SaaS platform for AI-powered voice bots. Businesses can create, configure, and deploy conversational voice agents that handle inbound/outbound phone calls using OpenAI's Realtime API and Telnyx for telephony.
 
 ## Domain
 - Production: https://sambla.ro
@@ -14,7 +14,7 @@ Multi-tenant SaaS platform for AI-powered voice bots. Businesses can create, con
 - **Cache/Queue/Session:** Redis 7
 - **WebSocket:** Laravel Reverb
 - **AI Voice:** OpenAI Realtime API (GPT-4o voice)
-- **Telephony:** Twilio (voice calls, phone numbers)
+- **Telephony:** Telnyx (voice calls, phone numbers)
 - **Payments:** Stripe via Laravel Cashier
 - **Auth/Permissions:** Laravel Sanctum + spatie/laravel-permission
 - **Error Tracking:** Sentry
@@ -36,8 +36,8 @@ Multi-tenant SaaS platform for AI-powered voice bots. Businesses can create, con
 ## Key Modules
 1. **Tenant Management** - registration, onboarding, settings
 2. **Voice Bot Builder** - prompt configuration, personality, knowledge base
-3. **Phone Numbers** - Twilio number provisioning per tenant
-4. **Call Handling** - inbound/outbound calls via Twilio + OpenAI Realtime
+3. **Phone Numbers** - Telnyx number provisioning per tenant
+4. **Call Handling** - inbound/outbound calls via Telnyx + OpenAI Realtime
 5. **Knowledge Base** - document upload, embedding with pgvector, RAG
 6. **Analytics** - call logs, duration, sentiment, cost tracking
 7. **Billing** - Stripe subscriptions, usage-based billing for call minutes

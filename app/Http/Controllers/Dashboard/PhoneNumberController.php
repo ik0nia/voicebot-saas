@@ -23,7 +23,7 @@ class PhoneNumberController extends Controller
             'number' => 'required|string|unique:phone_numbers,number',
             'friendly_name' => 'nullable|string|max:255',
             'bot_id' => 'nullable|exists:bots,id',
-            'provider' => 'string|in:twilio,manual',
+            'provider' => 'string|in:telnyx,manual',
         ]);
 
         $validated['tenant_id'] = auth()->user()->tenant_id;

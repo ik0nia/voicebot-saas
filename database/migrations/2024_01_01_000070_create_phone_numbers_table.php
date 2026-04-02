@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('tenant_id')->constrained('tenants')->cascadeOnDelete();
             $table->foreignId('bot_id')->nullable()->constrained('bots')->nullOnDelete();
             $table->string('number')->unique();
-            $table->string('provider')->default('twilio');
+            $table->string('provider')->default('telnyx');
             $table->string('friendly_name')->nullable();
             $table->unsignedInteger('monthly_cost_cents')->default(0);
             $table->boolean('is_active')->default(true);

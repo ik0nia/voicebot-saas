@@ -16,7 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
         $middleware->alias([
             'tenant' => \App\Http\Middleware\TenantAccess::class,
-            'twilio.verify' => \App\Http\Middleware\VerifyTwilioSignature::class,
+            'telnyx.verify' => \App\Http\Middleware\VerifyTelnyxSignature::class,
             'api.rate' => \App\Http\Middleware\ApiRateLimit::class,
             'super_admin' => \App\Http\Middleware\EnsureSuperAdmin::class,
             'plan.limit' => \App\Http\Middleware\CheckPlanLimits::class,
