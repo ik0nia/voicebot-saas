@@ -144,6 +144,32 @@ class TelnyxService
         }
     }
 
+    public function updateNumberTags(string $phoneNumber, array $tags): bool
+    {
+        try {
+            // Find the Telnyx phone number ID by number
+            $response = $this->request()->get('/phone_numbers', [
+                'filter[phone_number]' => $phoneNumber,
+            ]);
+
+            if ($response->failed() || empty($response->json('data'))) {
+                Log::warning('TelnyxService: number not found for tagging', ['number' => $phoneNumber]);
+                return false;
+            }
+
+            $telnyxId = $response->json('data.0.id');
+
+            $updateResponse = $this->request()->patch("/phone_numbers/{$telnyxId}", [
+                'tags' => $tags,
+            ]);
+
+            return $updateResponse->successful();
+        } catch (\Exception $e) {
+            Log::warning('TelnyxService: updateNumberTags failed', ['number' => $phoneNumber, 'error' => $e->getMessage()]);
+            return false;
+        }
+    }
+
     public function generateMediaStreamTexml(string $botId, string $callId): string
     {
         $host = config('app.url_host', 'sambla.ro');

@@ -67,7 +67,18 @@ class PhoneNumberController extends Controller
             $validated['is_active'] = true;
         }
 
-        PhoneNumber::create($validated);
+        $phoneNumber = PhoneNumber::create($validated);
+
+        // Set tags in Telnyx with bot name
+        if ($phoneNumber->bot_id && $phoneNumber->provider === 'telnyx') {
+            $bot = Bot::find($phoneNumber->bot_id);
+            if ($bot) {
+                app(TelnyxService::class)->updateNumberTags($phoneNumber->number, [
+                    'bot' => $bot->name,
+                    'tenant_id' => (string) $phoneNumber->tenant_id,
+                ]);
+            }
+        }
 
         $message = $validated['status'] === PhoneNumber::STATUS_PENDING
             ? 'Numărul a fost comandat! Este în curs de activare — verificarea documentelor poate dura 1-2 zile lucrătoare.'
@@ -84,6 +95,18 @@ class PhoneNumberController extends Controller
         ]);
 
         $phoneNumber->update($validated);
+
+        // Update tags in Telnyx when bot association changes
+        if ($phoneNumber->provider === 'telnyx' && array_key_exists('bot_id', $validated)) {
+            $tags = ['tenant_id' => (string) $phoneNumber->tenant_id];
+            if ($phoneNumber->bot_id) {
+                $bot = Bot::find($phoneNumber->bot_id);
+                if ($bot) {
+                    $tags['bot'] = $bot->name;
+                }
+            }
+            app(TelnyxService::class)->updateNumberTags($phoneNumber->number, $tags);
+        }
 
         return back()->with('success', 'Numărul a fost actualizat.');
     }
