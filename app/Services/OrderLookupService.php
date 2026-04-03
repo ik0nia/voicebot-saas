@@ -95,9 +95,9 @@ class OrderLookupService
         $msg = mb_strtolower(trim($message));
 
         // Exclude "placing a new order" intents — only match order TRACKING/STATUS queries
-        $placingOrderPattern = '/(?:vreau|doresc|as\s+vrea|pot\s+sa|cum\s+(?:pot|fac|plasez)|fac|plasa|plaseaz|da[- ]?mi|trimite)/u';
-        if (preg_match($placingOrderPattern, $msg) && preg_match('/comand[aă]/u', $msg)) {
-            // User wants to PLACE an order, not track one
+        // Matches: "vreau sa fac o comanda", "doresc sa comand", "pot sa plasez comanda", "fac o comanda"
+        $placingPattern = '/(?:vreau|doresc|as\s+vrea|pot)\s+(?:sa\s+)?(?:fac|plasez|comand)|(?:fac|plasa|plaseaz)\s+(?:o\s+)?comand|da[- ]?mi.*comand|trimite.*comand|cum\s+(?:pot|fac)\s+(?:o\s+)?comand/u';
+        if (preg_match($placingPattern, $msg)) {
             return null;
         }
 
@@ -120,6 +120,9 @@ class OrderLookupService
             '/cand.*primesc/u',
             '/unde.*e.*comanda/u',
             '/verific.*comand/u',
+            '/comand.*nu.*(?:ajuns|primit|venit|livrat)/u',
+            '/nu.*(?:ajuns|primit|venit|livrat).*comand/u',
+            '/am\s+(?:facut|plasat|dat)\s+(?:o\s+)?comand/u',
         ];
 
         $isOrderQuery = false;
