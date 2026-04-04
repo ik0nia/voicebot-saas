@@ -375,7 +375,7 @@
                 flex-shrink: 0; position: relative; overflow: hidden;\
             }\
             .sambla-header::before {\
-                content: ""; position: absolute; inset: 0; opacity: 0.08;\
+                content: ""; position: absolute; inset: 0; opacity: 0.08; pointer-events: none;\
                 background-image: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2720%27 height=%2720%27%3E%3Cpath d=%27M10 2 L14 6 L10 10 L6 6 Z%27 fill=%27white%27/%3E%3C/svg%3E");\
             }\
             .sambla-header-avatar {\
@@ -393,8 +393,9 @@
                 background: rgba(255,255,255,0.15); border: none; color: #fff; width: 32px; height: 32px;\
                 border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;\
                 transition: background 0.2s; flex-shrink: 0; padding: 0; margin-left: 8px;\
+                position: relative; z-index: 2; -webkit-tap-highlight-color: transparent;\
             }\
-            .sambla-header-close:hover { background: rgba(255,255,255,0.25); }\
+            .sambla-header-close:hover, .sambla-header-close:active { background: rgba(255,255,255,0.3); }\
             .sambla-powered {\
                 font-size: 10px; text-align: center; padding: 2px 0;\
                 color: rgba(255,255,255,0.7); background: #7f1d1d;\
@@ -463,7 +464,7 @@
             }\
             .sambla-input {\
                 flex: 1; border: 1px solid #e2e8f0; border-radius: 24px;\
-                padding: 10px 18px; font-size: 14px; outline: none;\
+                padding: 10px 18px; font-size: 16px; outline: none;\
                 font-family: inherit; resize: none; line-height: 1.4;\
                 max-height: 80px; background: #f8fafc; color: #1e293b;\
                 transition: border-color 0.15s;\
@@ -607,16 +608,18 @@
             \
             @media (max-width: 440px) {\
                 .sambla-window {\
-                    width: 100vw !important; height: 100dvh !important; height: 100vh !important;\
-                    max-height: 100dvh !important; max-height: 100vh !important;\
-                    max-width: 100vw !important;\
+                    position: fixed !important;\
+                    width: 100% !important; height: 100% !important;\
+                    max-height: none !important; max-width: none !important;\
                     right: 0 !important; left: 0 !important; bottom: 0 !important; top: 0 !important;\
                     border-radius: 0 !important; border: none !important;\
                     box-shadow: none !important; z-index: 2147483647 !important;\
                 }\
                 .sambla-window .sambla-header { border-radius: 0; }\
+                .sambla-window .sambla-messages { flex: 1; min-height: 0; }\
                 .sambla-window .sambla-input-area {\
                     padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;\
+                    flex-shrink: 0 !important;\
                 }\
                 .sambla-bubble { bottom: calc(16px + env(safe-area-inset-bottom, 0px)); right: 16px; }\
             }\
@@ -1460,46 +1463,51 @@
                 // Flush offline queue
                 flushOfflineQueue();
 
-                // Mobile: lock body scroll when chat is open
+                // Mobile: lock body scroll + handle iOS keyboard
                 if (window.innerWidth <= 440) {
+                    chatWindow._scrollY = window.scrollY;
                     document.body.style.overflow = 'hidden';
                     document.body.style.position = 'fixed';
                     document.body.style.width = '100%';
-                    document.body.style.top = '-' + window.scrollY + 'px';
-                    chatWindow._scrollY = window.scrollY;
-                }
+                    document.body.style.top = '-' + chatWindow._scrollY + 'px';
+                    document.documentElement.style.overflow = 'hidden';
 
-                // Mobile keyboard resize handler (iOS Safari)
-                if (window.visualViewport && window.innerWidth <= 440) {
-                    if (!chatWindow._vvHandler) {
+                    // iOS keyboard handler via visualViewport
+                    if (window.visualViewport) {
                         chatWindow._vvHandler = function() {
                             var vv = window.visualViewport;
+                            // Set height to visual viewport (shrinks when keyboard opens)
                             chatWindow.style.height = vv.height + 'px';
-                            chatWindow.style.maxHeight = vv.height + 'px';
-                            scrollToBottom();
+                            // Offset for any scroll the viewport does
+                            chatWindow.style.top = vv.offsetTop + 'px';
+                            // Ensure input stays visible
+                            requestAnimationFrame(function() { scrollToBottom(); });
                         };
                         window.visualViewport.addEventListener('resize', chatWindow._vvHandler);
                         window.visualViewport.addEventListener('scroll', chatWindow._vvHandler);
+                        // Set initial height
+                        chatWindow._vvHandler();
                     }
                 }
             } else {
                 bubble.focus();
-                // Remove viewport handler
+                // Mobile: cleanup keyboard handler + restore scroll
                 if (chatWindow._vvHandler && window.visualViewport) {
                     window.visualViewport.removeEventListener('resize', chatWindow._vvHandler);
                     window.visualViewport.removeEventListener('scroll', chatWindow._vvHandler);
                     chatWindow._vvHandler = null;
-                    chatWindow.style.height = '';
-                    chatWindow.style.maxHeight = '';
                 }
-                // Mobile: restore body scroll
-                if (window.innerWidth <= 440) {
-                    var scrollY = chatWindow._scrollY || 0;
+                chatWindow.style.height = '';
+                chatWindow.style.top = '';
+                if (chatWindow._scrollY !== undefined) {
+                    var scrollY = chatWindow._scrollY;
                     document.body.style.overflow = '';
                     document.body.style.position = '';
                     document.body.style.width = '';
                     document.body.style.top = '';
+                    document.documentElement.style.overflow = '';
                     window.scrollTo(0, scrollY);
+                    chatWindow._scrollY = undefined;
                 }
             }
         }
