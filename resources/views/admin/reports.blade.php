@@ -30,67 +30,56 @@
     {{-- ============================================================= --}}
     {{-- LATENCY OVERVIEW (always visible, above tabs) --}}
     {{-- ============================================================= --}}
-    @if(!($latencyBreakdown['error'] ?? null))
-    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <div class="px-6 py-3 border-b border-slate-100 flex items-center gap-3">
-            <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
-                <svg class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+    @if(!($latencyBreakdown['error'] ?? null) && count($latencyBreakdown['per_model'] ?? []) > 0)
+    <div class="bg-gradient-to-r from-slate-800 to-slate-900 rounded-2xl overflow-hidden shadow-lg">
+        <div class="px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <svg class="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <h2 class="text-base font-bold text-white">Latency</h2>
             </div>
-            <h2 class="text-sm font-semibold text-slate-900">Latency Overview</h2>
-            <span class="ml-auto text-[10px] text-slate-400">Ultimele 7 zile</span>
+            <span class="text-xs text-slate-400">7 zile</span>
         </div>
-        <div class="p-4 space-y-4">
-            {{-- Per model cards --}}
-            @if(count($latencyBreakdown['per_model'] ?? []) > 0)
-            <div class="flex gap-3 overflow-x-auto pb-1">
+        <div class="px-6 pb-5">
+            {{-- Per model cards - inline --}}
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-{{ min(count($latencyBreakdown['per_model']), 5) }} gap-3 mb-4">
                 @foreach($latencyBreakdown['per_model'] as $lm)
-                <div class="bg-slate-50 rounded-lg p-3 border border-slate-100 min-w-[180px] shrink-0">
-                    <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">{{ $lm['provider'] }}/{{ Str::limit($lm['model'], 18) }}</p>
-                    <div class="flex items-baseline gap-2 mb-1">
-                        <span class="text-lg font-bold text-slate-900">{{ $lm['avg_ms'] }}<span class="text-xs font-normal text-slate-400">ms</span></span>
-                        <span class="text-[10px] text-slate-500">avg</span>
+                <div class="bg-white/10 backdrop-blur rounded-xl p-4">
+                    <p class="text-xs font-medium text-slate-300 mb-2">{{ $lm['provider'] }}/{{ $lm['model'] }}</p>
+                    <p class="text-2xl font-bold text-white">{{ $lm['avg_ms'] }}<span class="text-sm font-normal text-slate-400">ms</span></p>
+                    <div class="flex gap-3 mt-2 text-xs">
+                        <span class="text-slate-400">p50 <span class="text-white font-semibold">{{ $lm['p50'] }}</span></span>
+                        <span class="text-amber-400">p95 <span class="font-semibold">{{ $lm['p95'] }}</span></span>
+                        <span class="text-red-400">p99 <span class="font-semibold">{{ $lm['p99'] }}</span></span>
                     </div>
-                    <div class="flex gap-3 text-[10px]">
-                        <span class="text-slate-500">p50: <span class="font-semibold text-slate-700">{{ $lm['p50'] }}</span></span>
-                        <span class="text-amber-600">p95: <span class="font-semibold">{{ $lm['p95'] }}</span></span>
-                        <span class="text-red-600">p99: <span class="font-semibold">{{ $lm['p99'] }}</span></span>
-                    </div>
-                    <p class="text-[10px] text-slate-400 mt-1">{{ number_format($lm['cnt']) }} cereri &bull; max: {{ number_format($lm['max_ms']) }}ms</p>
+                    <p class="text-[11px] text-slate-500 mt-1">{{ number_format($lm['cnt']) }} cereri</p>
                 </div>
                 @endforeach
             </div>
-            @endif
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {{-- Hourly trend (24h) mini sparkline --}}
+                {{-- Hourly trend --}}
                 @if(count($latencyBreakdown['hourly_trend'] ?? []) > 0)
                 <div>
-                    <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Latency medie pe oră (24h)</p>
-                    <div class="flex items-end gap-px h-12 bg-slate-50 rounded p-1 border border-slate-100">
+                    <p class="text-xs font-medium text-slate-400 mb-2">Trend orar (24h)</p>
+                    <div class="flex items-end gap-px h-14 bg-white/5 rounded-lg p-1.5">
                         @foreach($latencyBreakdown['hourly_trend'] as $ht)
                             @php
                                 $pct = $latencyBreakdown['max_hourly_ms'] > 0 ? ($ht['avg_ms'] / $latencyBreakdown['max_hourly_ms']) * 100 : 0;
-                                $barColor = $ht['avg_ms'] < 200 ? 'bg-green-400' : ($ht['avg_ms'] < 500 ? 'bg-cyan-400' : ($ht['avg_ms'] < 1000 ? 'bg-amber-400' : 'bg-red-500'));
+                                $barColor = $ht['avg_ms'] < 200 ? 'bg-emerald-400' : ($ht['avg_ms'] < 500 ? 'bg-cyan-400' : ($ht['avg_ms'] < 1000 ? 'bg-amber-400' : 'bg-red-400'));
                             @endphp
-                            <div class="flex-1 {{ $barColor }} rounded-t-sm group relative cursor-pointer" style="height: {{ max($pct, 2) }}%">
-                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-slate-800 text-white text-[10px] rounded px-2 py-1 whitespace-nowrap z-10">
+                            <div class="flex-1 {{ $barColor }} rounded-t group relative cursor-pointer" style="height: {{ max($pct, 3) }}%">
+                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-white text-slate-800 text-[10px] font-medium rounded px-2 py-1 whitespace-nowrap z-10 shadow-lg">
                                     {{ $ht['hour'] }}: {{ $ht['avg_ms'] }}ms
                                 </div>
                             </div>
                         @endforeach
                     </div>
-                    <div class="flex items-center gap-3 mt-1 text-[9px] text-slate-400">
-                        <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-sm bg-green-400"></span>&lt;200ms</span>
-                        <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-sm bg-cyan-400"></span>200-500ms</span>
-                        <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-sm bg-amber-400"></span>500ms-1s</span>
-                        <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-sm bg-red-500"></span>&gt;1s</span>
-                    </div>
                 </div>
                 @endif
 
-                {{-- Category distribution stacked bar --}}
+                {{-- Category distribution --}}
                 <div>
-                    <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Distribuție latency (7 zile)</p>
+                    <p class="text-xs font-medium text-slate-400 mb-2">Distribuție</p>
                     @php
                         $cats = $latencyBreakdown['categories'] ?? ['fast' => 0, 'normal' => 0, 'slow' => 0, 'very_slow' => 0];
                         $catTotal = $latencyBreakdown['category_total'] ?? 1;
@@ -99,51 +88,49 @@
                         $slowPct = round(($cats['slow'] / $catTotal) * 100, 1);
                         $verySlowPct = round(($cats['very_slow'] / $catTotal) * 100, 1);
                     @endphp
-                    <div class="flex h-6 rounded-full overflow-hidden border border-slate-200">
-                        @if($fastPct > 0)<div class="bg-green-400 relative group cursor-pointer" style="width: {{ $fastPct }}%"><div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-slate-800 text-white text-[10px] rounded px-2 py-1 whitespace-nowrap z-10">Rapid (&lt;200ms): {{ number_format($cats['fast']) }} ({{ $fastPct }}%)</div></div>@endif
-                        @if($normalPct > 0)<div class="bg-cyan-400 relative group cursor-pointer" style="width: {{ $normalPct }}%"><div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-slate-800 text-white text-[10px] rounded px-2 py-1 whitespace-nowrap z-10">Normal (200-500ms): {{ number_format($cats['normal']) }} ({{ $normalPct }}%)</div></div>@endif
-                        @if($slowPct > 0)<div class="bg-amber-400 relative group cursor-pointer" style="width: {{ $slowPct }}%"><div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-slate-800 text-white text-[10px] rounded px-2 py-1 whitespace-nowrap z-10">Lent (500ms-1s): {{ number_format($cats['slow']) }} ({{ $slowPct }}%)</div></div>@endif
-                        @if($verySlowPct > 0)<div class="bg-red-500 relative group cursor-pointer" style="width: {{ $verySlowPct }}%"><div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-slate-800 text-white text-[10px] rounded px-2 py-1 whitespace-nowrap z-10">Foarte lent (&gt;1s): {{ number_format($cats['very_slow']) }} ({{ $verySlowPct }}%)</div></div>@endif
+                    <div class="flex h-8 rounded-lg overflow-hidden">
+                        @if($fastPct > 0)<div class="bg-emerald-400 relative group cursor-pointer" style="width: {{ $fastPct }}%"><div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-white text-slate-800 text-[10px] font-medium rounded px-2 py-1 whitespace-nowrap z-10 shadow-lg">Rapid: {{ number_format($cats['fast']) }} ({{ $fastPct }}%)</div></div>@endif
+                        @if($normalPct > 0)<div class="bg-cyan-400 relative group cursor-pointer" style="width: {{ $normalPct }}%"><div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-white text-slate-800 text-[10px] font-medium rounded px-2 py-1 whitespace-nowrap z-10 shadow-lg">Normal: {{ number_format($cats['normal']) }} ({{ $normalPct }}%)</div></div>@endif
+                        @if($slowPct > 0)<div class="bg-amber-400 relative group cursor-pointer" style="width: {{ $slowPct }}%"><div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-white text-slate-800 text-[10px] font-medium rounded px-2 py-1 whitespace-nowrap z-10 shadow-lg">Lent: {{ number_format($cats['slow']) }} ({{ $slowPct }}%)</div></div>@endif
+                        @if($verySlowPct > 0)<div class="bg-red-400 relative group cursor-pointer" style="width: {{ $verySlowPct }}%"><div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-white text-slate-800 text-[10px] font-medium rounded px-2 py-1 whitespace-nowrap z-10 shadow-lg">F. Lent: {{ number_format($cats['very_slow']) }} ({{ $verySlowPct }}%)</div></div>@endif
                     </div>
-                    <div class="flex items-center gap-4 mt-2 text-[10px] text-slate-500">
-                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-green-400"></span>Rapid: {{ number_format($cats['fast']) }}</span>
-                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-cyan-400"></span>Normal: {{ number_format($cats['normal']) }}</span>
-                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-amber-400"></span>Lent: {{ number_format($cats['slow']) }}</span>
-                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-red-500"></span>F. Lent: {{ number_format($cats['very_slow']) }}</span>
+                    <div class="flex items-center gap-4 mt-2 text-[11px] text-slate-400">
+                        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded bg-emerald-400"></span>&lt;200ms ({{ $fastPct }}%)</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded bg-cyan-400"></span>200-500ms</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded bg-amber-400"></span>500ms-1s</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded bg-red-400"></span>&gt;1s</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    @elseif($latencyBreakdown['error'] ?? null)
-    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">Latency: {{ $latencyBreakdown['error'] }}</div>
     @endif
 
     {{-- ============================================================= --}}
     {{-- TAB NAVIGATION --}}
     {{-- ============================================================= --}}
-    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <div class="flex overflow-x-auto border-b border-slate-200" id="report-tabs">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden sticky top-0 z-30">
+        <div class="flex overflow-x-auto" id="report-tabs">
             @php
                 $tabs = [
-                    'costuri' => ['label' => 'Costuri', 'icon' => 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z'],
-                    'servicii' => ['label' => 'Servicii', 'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
-                    'utilizare' => ['label' => 'Utilizare', 'icon' => 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6'],
-                    'erori' => ['label' => 'Erori', 'icon' => 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z'],
-                    'handoff' => ['label' => 'Handoff', 'icon' => 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4'],
-                    'profit' => ['label' => 'Profit', 'icon' => 'M9 8h6m-5 0a3 3 0 110 6H9l3 3m-3-6h6m6 1a9 9 0 11-18 0 9 9 0 0118 0z'],
-                    'abtesting' => ['label' => 'A/B Testing', 'icon' => 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'],
-                    'knowledge' => ['label' => 'Knowledge', 'icon' => 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'],
-                    'integratii' => ['label' => 'Integrări', 'icon' => 'M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1'],
-                    'workers' => ['label' => 'Workers', 'icon' => 'M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01'],
+                    'costuri' => ['label' => 'Costuri', 'color' => 'amber', 'icon' => 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z'],
+                    'servicii' => ['label' => 'Servicii', 'color' => 'green', 'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
+                    'utilizare' => ['label' => 'Utilizare', 'color' => 'blue', 'icon' => 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6'],
+                    'erori' => ['label' => 'Erori', 'color' => 'red', 'icon' => 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z'],
+                    'handoff' => ['label' => 'Handoff', 'color' => 'violet', 'icon' => 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4'],
+                    'profit' => ['label' => 'Profit', 'color' => 'emerald', 'icon' => 'M9 8h6m-5 0a3 3 0 110 6H9l3 3m-3-6h6m6 1a9 9 0 11-18 0 9 9 0 0118 0z'],
+                    'abtesting' => ['label' => 'A/B Testing', 'color' => 'pink', 'icon' => 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'],
+                    'knowledge' => ['label' => 'Knowledge', 'color' => 'sky', 'icon' => 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'],
+                    'integratii' => ['label' => 'Integrări', 'color' => 'rose', 'icon' => 'M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1'],
+                    'workers' => ['label' => 'Workers', 'color' => 'slate', 'icon' => 'M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01'],
                 ];
             @endphp
             @foreach($tabs as $tabId => $tab)
                 <button onclick="switchTab('{{ $tabId }}')"
                     id="tab-btn-{{ $tabId }}"
-                    class="tab-btn flex items-center gap-2 px-5 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors
-                           {{ $loop->first ? 'border-indigo-600 text-indigo-700 bg-indigo-50/50' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50' }}">
-                    <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $tab['icon'] }}"/></svg>
+                    class="tab-btn flex items-center gap-2.5 px-6 py-4 text-sm font-semibold whitespace-nowrap border-b-3 transition-all
+                           {{ $loop->first ? 'border-slate-900 text-slate-900 bg-slate-50' : 'border-transparent text-slate-400 hover:text-slate-700 hover:bg-slate-50/80' }}">
+                    <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $tab['icon'] }}"/></svg>
                     {{ $tab['label'] }}
                 </button>
             @endforeach
@@ -1474,13 +1461,13 @@
 function switchTab(tabId) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
     document.querySelectorAll('.tab-btn').forEach(el => {
-        el.classList.remove('border-indigo-600', 'text-indigo-700', 'bg-indigo-50/50');
-        el.classList.add('border-transparent', 'text-slate-500');
+        el.classList.remove('border-slate-900', 'text-slate-900', 'bg-slate-50');
+        el.classList.add('border-transparent', 'text-slate-400');
     });
     document.getElementById('tab-' + tabId).classList.remove('hidden');
     const btn = document.getElementById('tab-btn-' + tabId);
-    btn.classList.add('border-indigo-600', 'text-indigo-700', 'bg-indigo-50/50');
-    btn.classList.remove('border-transparent', 'text-slate-500');
+    btn.classList.add('border-slate-900', 'text-slate-900', 'bg-slate-50');
+    btn.classList.remove('border-transparent', 'text-slate-400');
 }
 
 function fetchQASamples() {
