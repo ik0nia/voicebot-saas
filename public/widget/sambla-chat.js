@@ -601,14 +601,18 @@
             \
             @media (max-width: 440px) {\
                 .sambla-window {\
-                    width: 100vw !important; height: 100vh !important;\
-                    max-height: 100vh !important; max-width: 100vw !important;\
+                    width: 100vw !important; height: 100dvh !important; height: 100vh !important;\
+                    max-height: 100dvh !important; max-height: 100vh !important;\
+                    max-width: 100vw !important;\
                     right: 0 !important; left: 0 !important; bottom: 0 !important; top: 0 !important;\
                     border-radius: 0 !important; border: none !important;\
                     box-shadow: none !important; z-index: 2147483647 !important;\
                 }\
                 .sambla-window .sambla-header { border-radius: 0; }\
-                .sambla-bubble { bottom: 16px; right: 16px; }\
+                .sambla-window .sambla-input-area {\
+                    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;\
+                }\
+                .sambla-bubble { bottom: calc(16px + env(safe-area-inset-bottom, 0px)); right: 16px; }\
             }\
         ';
 
