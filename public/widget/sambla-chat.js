@@ -1476,15 +1476,12 @@
                     if (window.visualViewport) {
                         chatWindow._vvHandler = function() {
                             var vv = window.visualViewport;
-                            // Set height to visual viewport (shrinks when keyboard opens)
                             chatWindow.style.height = vv.height + 'px';
-                            // Offset for any scroll the viewport does
-                            chatWindow.style.top = vv.offsetTop + 'px';
-                            // Ensure input stays visible
+                            chatWindow.style.top = 'auto';
+                            chatWindow.style.bottom = '0';
                             requestAnimationFrame(function() { scrollToBottom(); });
                         };
                         window.visualViewport.addEventListener('resize', chatWindow._vvHandler);
-                        window.visualViewport.addEventListener('scroll', chatWindow._vvHandler);
                         // Set initial height
                         chatWindow._vvHandler();
                     }
