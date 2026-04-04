@@ -15,6 +15,7 @@ use App\Http\Controllers\Dashboard\PhoneNumberController;
 use App\Http\Controllers\Dashboard\SiteController;
 use App\Http\Controllers\Dashboard\SettingsController;
 use App\Http\Controllers\Dashboard\TeamController;
+use App\Http\Controllers\Admin\AdminReportController;
 use App\Http\Controllers\Admin\AdminSettingsController;
 use App\Http\Controllers\Webhook\FacebookWebhookController;
 use App\Http\Controllers\Webhook\InstagramWebhookController;
@@ -295,6 +296,9 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
     Route::post('/boti/{botId}/prompt-versions', [\App\Http\Controllers\Admin\AdminPromptVersionController::class, 'store'])->name('admin.prompt-versions.store');
     Route::put('/prompt-versions/{version}', [\App\Http\Controllers\Admin\AdminPromptVersionController::class, 'update'])->name('admin.prompt-versions.update');
     Route::delete('/prompt-versions/{version}', [\App\Http\Controllers\Admin\AdminPromptVersionController::class, 'destroy'])->name('admin.prompt-versions.destroy');
+
+    // Reports
+    Route::get('rapoarte', [AdminReportController::class, 'index'])->name('admin.reports.index');
 
     // System Health
     Route::get('/system', [\App\Http\Controllers\Admin\AdminSystemController::class, 'index'])->name('admin.system.index');
