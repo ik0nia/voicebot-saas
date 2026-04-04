@@ -295,6 +295,14 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
     Route::post('/boti/{botId}/prompt-versions', [\App\Http\Controllers\Admin\AdminPromptVersionController::class, 'store'])->name('admin.prompt-versions.store');
     Route::put('/prompt-versions/{version}', [\App\Http\Controllers\Admin\AdminPromptVersionController::class, 'update'])->name('admin.prompt-versions.update');
     Route::delete('/prompt-versions/{version}', [\App\Http\Controllers\Admin\AdminPromptVersionController::class, 'destroy'])->name('admin.prompt-versions.destroy');
+
+    // System Health
+    Route::get('/system', [\App\Http\Controllers\Admin\AdminSystemController::class, 'index'])->name('admin.system.index');
+    Route::post('/system/retry-job/{jobId}', [\App\Http\Controllers\Admin\AdminSystemController::class, 'retryJob'])->name('admin.system.retryJob');
+    Route::post('/system/retry-all', [\App\Http\Controllers\Admin\AdminSystemController::class, 'retryAllJobs'])->name('admin.system.retryAll');
+    Route::post('/system/clear-failed', [\App\Http\Controllers\Admin\AdminSystemController::class, 'clearFailedJobs'])->name('admin.system.clearFailed');
+    Route::post('/system/reprocess-kb', [\App\Http\Controllers\Admin\AdminSystemController::class, 'reprocessFailedKnowledge'])->name('admin.system.reprocessKb');
+    Route::post('/system/clear-caches', [\App\Http\Controllers\Admin\AdminSystemController::class, 'clearAllCaches'])->name('admin.system.clearCaches');
 });
 
 // WhatsApp webhooks
