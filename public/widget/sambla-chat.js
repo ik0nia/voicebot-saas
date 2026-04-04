@@ -609,14 +609,15 @@
             @media (max-width: 440px) {\
                 .sambla-window {\
                     position: fixed !important;\
+                    top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;\
                     width: 100% !important; height: 100% !important;\
                     max-height: none !important; max-width: none !important;\
-                    right: 0 !important; left: 0 !important; bottom: 0 !important; top: 0 !important;\
                     border-radius: 0 !important; border: none !important;\
                     box-shadow: none !important; z-index: 2147483647 !important;\
+                    padding-top: env(safe-area-inset-top, 0px);\
                 }\
-                .sambla-window .sambla-header { border-radius: 0; }\
-                .sambla-window .sambla-messages { flex: 1; min-height: 0; }\
+                .sambla-window .sambla-header { border-radius: 0; flex-shrink: 0; }\
+                .sambla-window .sambla-messages { flex: 1; min-height: 0; overflow-y: auto; }\
                 .sambla-window .sambla-input-area {\
                     padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;\
                     flex-shrink: 0 !important;\
@@ -1463,47 +1464,19 @@
                 // Flush offline queue
                 flushOfflineQueue();
 
-                // Mobile: lock body scroll + handle iOS keyboard
+                // Mobile: lock body scroll
                 if (window.innerWidth <= 440) {
                     chatWindow._scrollY = window.scrollY;
                     document.body.style.overflow = 'hidden';
-                    document.body.style.position = 'fixed';
-                    document.body.style.width = '100%';
-                    document.body.style.top = '-' + chatWindow._scrollY + 'px';
                     document.documentElement.style.overflow = 'hidden';
-
-                    // iOS keyboard handler via visualViewport
-                    if (window.visualViewport) {
-                        chatWindow._vvHandler = function() {
-                            var vv = window.visualViewport;
-                            chatWindow.style.height = vv.height + 'px';
-                            chatWindow.style.top = 'auto';
-                            chatWindow.style.bottom = '0';
-                            requestAnimationFrame(function() { scrollToBottom(); });
-                        };
-                        window.visualViewport.addEventListener('resize', chatWindow._vvHandler);
-                        // Set initial height
-                        chatWindow._vvHandler();
-                    }
                 }
             } else {
                 bubble.focus();
-                // Mobile: cleanup keyboard handler + restore scroll
-                if (chatWindow._vvHandler && window.visualViewport) {
-                    window.visualViewport.removeEventListener('resize', chatWindow._vvHandler);
-                    window.visualViewport.removeEventListener('scroll', chatWindow._vvHandler);
-                    chatWindow._vvHandler = null;
-                }
-                chatWindow.style.height = '';
-                chatWindow.style.top = '';
+                // Mobile: restore scroll
                 if (chatWindow._scrollY !== undefined) {
-                    var scrollY = chatWindow._scrollY;
                     document.body.style.overflow = '';
-                    document.body.style.position = '';
-                    document.body.style.width = '';
-                    document.body.style.top = '';
                     document.documentElement.style.overflow = '';
-                    window.scrollTo(0, scrollY);
+                    window.scrollTo(0, chatWindow._scrollY);
                     chatWindow._scrollY = undefined;
                 }
             }
