@@ -1254,6 +1254,7 @@
         function startNewChat() {
             clearSession();
             messages = [];
+            _ratingShown = false;
 
             // Clear all message elements from the container (keep only typingEl)
             while (messagesContainer.firstChild !== typingEl) {
@@ -1263,6 +1264,68 @@
             // Show greeting
             addMessage(config.greeting, 'bot');
             input.focus();
+        }
+
+        // =====================================================================
+        // 3b. Conversation satisfaction rating prompt
+        // =====================================================================
+        var _ratingShown = false;
+
+        function showRatingPrompt() {
+            if (_ratingShown) return;
+            _ratingShown = true;
+            var isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            var ratingEl = document.createElement('div');
+            ratingEl.className = 'sambla-rating-prompt';
+            ratingEl.innerHTML = '<div style="text-align:center;padding:16px 12px;margin:8px;background:' + (isDarkMode ? '#1e293b' : '#f8fafc') + ';border-radius:14px;border:1px solid ' + (isDarkMode ? 'rgba(255,255,255,0.1)' : '#e2e8f0') + '">'
+                + '<p style="font-size:13px;font-weight:600;color:' + (isDarkMode ? '#e2e8f0' : '#334155') + ';margin:0 0 8px 0">Cum a fost conversația?</p>'
+                + '<div class="sambla-stars" style="display:flex;justify-content:center;gap:4px">'
+                + [1,2,3,4,5].map(function(n) {
+                    return '<button data-rating="' + n + '" style="background:none;border:none;font-size:24px;cursor:pointer;padding:4px;transition:transform 0.15s;color:' + (isDarkMode ? '#475569' : '#cbd5e1') + '" aria-label="' + n + ' stele">\u2605</button>';
+                }).join('')
+                + '</div>'
+                + '<p class="sambla-rate-thanks" style="display:none;font-size:12px;color:#10b981;margin:8px 0 0 0">Mul\u021bumim pentru feedback!</p>'
+                + '</div>';
+            messagesContainer.insertBefore(ratingEl, typingEl);
+
+            // Attach click handlers via event delegation
+            var starsContainer = ratingEl.querySelector('.sambla-stars');
+            starsContainer.addEventListener('click', function(e) {
+                var btn = e.target.closest('button[data-rating]');
+                if (!btn) return;
+                var ratingValue = parseInt(btn.getAttribute('data-rating'), 10);
+                // Visual feedback
+                var allBtns = starsContainer.querySelectorAll('button');
+                allBtns.forEach(function(s, i) {
+                    s.style.color = i < ratingValue ? '#f59e0b' : (isDarkMode ? '#475569' : '#cbd5e1');
+                    s.style.pointerEvents = 'none';
+                });
+                ratingEl.querySelector('.sambla-rate-thanks').style.display = 'block';
+
+                // Send to API
+                fetch(config.apiBase + '/api/v1/chatbot/' + config.channelId + '/rate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        rating: ratingValue,
+                        session_id: getSessionId(),
+                        conversation_id: getConversationId()
+                    })
+                }).catch(function() {});
+
+                // Track event
+                trackEvent('conversation_rated', {rating: ratingValue});
+            });
+
+            // Hover effects
+            starsContainer.addEventListener('mouseenter', function(e) {
+                if (e.target.tagName === 'BUTTON') e.target.style.transform = 'scale(1.2)';
+            }, true);
+            starsContainer.addEventListener('mouseleave', function(e) {
+                if (e.target.tagName === 'BUTTON') e.target.style.transform = 'scale(1)';
+            }, true);
+
+            scrollToBottom();
         }
 
         // =====================================================================
@@ -1543,6 +1606,7 @@
                 // If server says old session expired, show separator before the new response
                 if (data.session_expired) {
                     showSessionEnded();
+                    showRatingPrompt();
                     var btns = messagesContainer.querySelectorAll('.sambla-new-chat-btn');
                     btns.forEach(function(b) { b.style.display = 'none'; });
                 }
@@ -1673,6 +1737,7 @@
                                 }
                                 if (event.session_expired) {
                                     showSessionEnded();
+                                    showRatingPrompt();
                                     var btns = messagesContainer.querySelectorAll('.sambla-new-chat-btn');
                                     btns.forEach(function(b) { b.style.display = 'none'; });
                                 }

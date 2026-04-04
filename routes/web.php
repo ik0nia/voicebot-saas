@@ -201,6 +201,15 @@ Route::middleware('auth')->prefix('dashboard')->group(function () {
     Route::get('/conversii', [\App\Http\Controllers\Dashboard\CommerceAnalyticsController::class, 'index'])->name('dashboard.commerce.index');
 });
 
+// A/B Testing experiments routes (dashboard)
+Route::middleware('auth')->prefix('dashboard/boti/{bot}/experiments')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Dashboard\AbTestingController::class, 'index'])->name('dashboard.bots.experiments.index');
+    Route::post('/', [\App\Http\Controllers\Dashboard\AbTestingController::class, 'store'])->name('dashboard.bots.experiments.store');
+    Route::get('/{experiment}', [\App\Http\Controllers\Dashboard\AbTestingController::class, 'show'])->name('dashboard.bots.experiments.show');
+    Route::put('/{experiment}', [\App\Http\Controllers\Dashboard\AbTestingController::class, 'update'])->name('dashboard.bots.experiments.update');
+    Route::delete('/{experiment}', [\App\Http\Controllers\Dashboard\AbTestingController::class, 'destroy'])->name('dashboard.bots.experiments.destroy');
+});
+
 // Knowledge base routes (dashboard)
 Route::middleware('auth')->prefix('dashboard/boti/{bot}')->group(function () {
     Route::get('/knowledge', [KnowledgeController::class, 'index'])->name('dashboard.bots.knowledge.index');

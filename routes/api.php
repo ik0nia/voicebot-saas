@@ -62,6 +62,7 @@ Route::post('/v1/chatbot/{channel}/message-stream', [ChatbotApiController::class
 Route::get('/v1/chatbot/{channel}/config', [ChatbotApiController::class, 'config']);
 Route::get('/v1/chatbot/{channel}/products', [ChatbotApiController::class, 'searchProducts']);
 Route::post('/v1/chatbot/{channel}/feedback', [ChatbotApiController::class, 'feedback'])->middleware('throttle:30,1');
+Route::post('/v1/chatbot/{channel}/rate', [ChatbotApiController::class, 'rateConversation'])->middleware('throttle:10,1');
 
 // V2 Analytics, Capabilities & Lead capture (public, widget-facing)
 Route::post('/v1/chatbot/{channel}/events', [\App\Http\Controllers\Api\EventTrackingController::class, 'trackBatch']);

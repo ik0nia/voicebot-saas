@@ -21,6 +21,7 @@ use App\Services\ProductContextService;
 use App\Services\PromptGuardrails;
 use App\Services\TokenCounterService;
 use App\Models\BotPromptVersion;
+use App\Models\ConversationRating;
 use App\Models\RetrievalFeedback;
 use App\Models\Tenant;
 use Illuminate\Http\JsonResponse;
@@ -85,6 +86,35 @@ class ChatbotApiController extends Controller
         $detectedIntents = $preResult['detected_intents'];
         $pipelinesExecuted = $preResult['pipelines_executed'];
         $queryIntel = $preResult['query_intel'];
+
+        // A/B Testing: check for active experiments
+        $abVariant = app(\App\Services\AbTestingService::class)->getVariantForConversation($bot->id, $conversation->id);
+        if ($abVariant) {
+            switch ($abVariant['type']) {
+                case 'prompt':
+                    if (isset($abVariant['config']['system_prompt'])) {
+                        $bot->system_prompt = $abVariant['config']['system_prompt'];
+                    }
+                    break;
+                case 'model':
+                    if (isset($abVariant['config']['model'])) {
+                        $bot->settings = array_merge($bot->settings ?? [], ['model_override' => $abVariant['config']['model']]);
+                    }
+                    break;
+                case 'policy':
+                    // Override conversation policy settings via bot settings
+                    if (!empty($abVariant['config'])) {
+                        $bot->settings = array_merge($bot->settings ?? [], ['policy_override' => $abVariant['config']]);
+                    }
+                    break;
+                case 'rag_config':
+                    // Override RAG settings via extra context or bot settings
+                    if (!empty($abVariant['config'])) {
+                        $bot->settings = array_merge($bot->settings ?? [], ['rag_override' => $abVariant['config']]);
+                    }
+                    break;
+            }
+        }
 
         // Generate AI response with cost tracking
         $aiResult = $this->generateAIResponse($bot, $conversation, $userMessage, $extraContext, $channel);
@@ -205,6 +235,16 @@ class ChatbotApiController extends Controller
                 $meta['last_product_cards'] = $products;
                 $conversation->update(['metadata' => $meta]);
             }
+        }
+
+        // A/B Testing: record metrics for this conversation
+        if ($abVariant) {
+            app(\App\Services\AbTestingService::class)->recordMetrics($conversation->id, [
+                'messages_count' => $conversation->messages_count,
+                'has_products' => !empty($products),
+                'lead_captured' => \App\Models\Lead::where('conversation_id', $conversation->id)->exists(),
+                'response_time_ms' => isset($aiResult['duration_ms']) ? $aiResult['duration_ms'] : 0,
+            ]);
         }
 
         return response()->json([
@@ -810,12 +850,39 @@ class ChatbotApiController extends Controller
         $prechatEmail = $preResult['prechat_email'];
         $prechatPhone = $preResult['prechat_phone'];
 
+        // A/B Testing: check for active experiments
+        $abVariant = app(\App\Services\AbTestingService::class)->getVariantForConversation($bot->id, $conversation->id);
+        if ($abVariant) {
+            switch ($abVariant['type']) {
+                case 'prompt':
+                    if (isset($abVariant['config']['system_prompt'])) {
+                        $bot->system_prompt = $abVariant['config']['system_prompt'];
+                    }
+                    break;
+                case 'model':
+                    if (isset($abVariant['config']['model'])) {
+                        $bot->settings = array_merge($bot->settings ?? [], ['model_override' => $abVariant['config']['model']]);
+                    }
+                    break;
+                case 'policy':
+                    if (!empty($abVariant['config'])) {
+                        $bot->settings = array_merge($bot->settings ?? [], ['policy_override' => $abVariant['config']]);
+                    }
+                    break;
+                case 'rag_config':
+                    if (!empty($abVariant['config'])) {
+                        $bot->settings = array_merge($bot->settings ?? [], ['rag_override' => $abVariant['config']]);
+                    }
+                    break;
+            }
+        }
+
         return new StreamedResponse(function () use (
             $bot, $channel, $conversation, $userMessage, $extraContext,
             $sessionId, $sessionToken, $sessionExpired, $products,
             $detectedIntents, $pipelinesExecuted, $queryIntel,
             $tenant, $pageContext, $prechatName, $prechatEmail, $prechatPhone,
-            $request
+            $request, $abVariant
         ) {
             try {
                 // 1. Send meta event first
@@ -1031,6 +1098,16 @@ class ChatbotApiController extends Controller
                         $meta['last_product_cards'] = $products;
                         $conversation->update(['metadata' => $meta]);
                     }
+                }
+
+                // A/B Testing: record metrics for this conversation
+                if ($abVariant) {
+                    app(\App\Services\AbTestingService::class)->recordMetrics($conversation->id, [
+                        'messages_count' => $conversation->messages_count,
+                        'has_products' => !empty($products),
+                        'lead_captured' => \App\Models\Lead::where('conversation_id', $conversation->id)->exists(),
+                        'response_time_ms' => $responseTimeMs ?? 0,
+                    ]);
                 }
 
                 // 5. Send done event
@@ -1648,5 +1725,48 @@ class ChatbotApiController extends Controller
         );
 
         return response()->json(['ok' => true]);
+    }
+
+    public function rateConversation(Request $request, int $channel): JsonResponse
+    {
+        $request->validate([
+            'rating' => 'required|integer|min:1|max:5',
+            'feedback' => 'nullable|string|max:1000',
+            'session_id' => 'required|string|max:255',
+            'conversation_id' => 'nullable|integer',
+        ]);
+
+        $channel = Channel::withoutGlobalScopes()->findOrFail($channel);
+        $bot = Bot::withoutGlobalScopes()->find($channel->bot_id);
+        if (!$bot) return response()->json(['error' => 'Bot not found'], 404);
+
+        // Find conversation
+        $conversation = null;
+        if ($request->conversation_id) {
+            $conversation = Conversation::withoutGlobalScopes()->find($request->conversation_id);
+        }
+        if (!$conversation && $request->session_id) {
+            $conversation = Conversation::withoutGlobalScopes()
+                ->where('channel_id', $channel->id)
+                ->where('external_conversation_id', $request->session_id)
+                ->latest()
+                ->first();
+        }
+
+        $rating = ConversationRating::create([
+            'tenant_id' => $bot->tenant_id,
+            'bot_id' => $bot->id,
+            'conversation_id' => $conversation?->id,
+            'session_id' => $request->session_id,
+            'rating' => $request->rating,
+            'feedback' => $request->feedback,
+            'rating_source' => 'widget',
+            'context' => [
+                'messages_count' => $conversation?->messages_count,
+                'primary_intent' => $conversation?->primary_intent,
+            ],
+        ]);
+
+        return response()->json(['success' => true, 'rating_id' => $rating->id]);
     }
 }
