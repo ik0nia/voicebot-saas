@@ -8,14 +8,15 @@ use Illuminate\Support\Facades\Cache;
 
 class GeminiContentService
 {
-    private string $apiKey;
-    private string $model;
-    private string $baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
+    private string $geminiApiKey;
+    private string $geminiBaseUrl = 'https://generativelanguage.googleapis.com/v1beta';
+    private string $textModel = 'gpt-4o-mini'; // OpenAI for text (better Romanian)
+    private string $imageModel;                  // Gemini for images (native generation)
 
     public function __construct()
     {
-        $this->apiKey = config('services.gemini.api_key', env('GEMINI_API_KEY', ''));
-        $this->model = config('services.gemini.model', env('GEMINI_MODEL', 'gemini-2.5-flash-preview-05-20'));
+        $this->geminiApiKey = config('services.gemini.api_key', env('GEMINI_API_KEY', ''));
+        $this->imageModel = env('GEMINI_IMAGE_MODEL', 'gemini-3.1-flash');
     }
 
     /**
@@ -58,7 +59,7 @@ class GeminiContentService
             'image_prompt' => $parsed['image_prompt'] ?? null,
             'title' => $parsed['title'] ?? null,
             'tokens_used' => $response['tokens_used'] ?? 0,
-            'model' => $this->model,
+            'model' => $this->textModel,
         ];
     }
 
@@ -156,7 +157,7 @@ class GeminiContentService
 
         try {
             // Use the image-capable model
-            $imageModel = env('GEMINI_IMAGE_MODEL', 'gemini-2.5-flash-preview-05-20');
+            $imageModel = $this->imageModel;
             $url = "{$this->baseUrl}/models/{$imageModel}:generateContent?key={$this->apiKey}";
 
             $response = Http::timeout(120)->post($url, [
@@ -248,40 +249,42 @@ class GeminiContentService
     }
 
     /**
-     * Core Gemini API call
+     * Core text generation via OpenAI GPT-4o-mini (better Romanian than Gemini)
      */
     private function callGemini(string $prompt, int $maxTokens = 2000): ?array
     {
-        if (empty($this->apiKey)) {
-            Log::error('GeminiContentService: API key not configured');
-            return null;
-        }
-
         try {
-            $url = "{$this->baseUrl}/models/{$this->model}:generateContent?key={$this->apiKey}";
-
-            $response = Http::timeout(60)->post($url, [
-                'contents' => [
-                    ['parts' => [['text' => $prompt]]]
+            $response = \OpenAI\Laravel\Facades\OpenAI::chat()->create([
+                'model' => $this->textModel,
+                'messages' => [
+                    ['role' => 'system', 'content' => 'Ești un expert în marketing digital și social media pentru branduri tech/SaaS. Generezi conținut creativ, engaging și optimizat per platformă. Răspunzi întotdeauna în formatul JSON cerut.'],
+                    ['role' => 'user', 'content' => $prompt],
                 ],
-                'generationConfig' => [
-                    'maxOutputTokens' => $maxTokens,
-                    'temperature' => 0.8,
-                ],
+                'max_tokens' => $maxTokens,
+                'temperature' => 0.8,
+                'response_format' => ['type' => 'json_object'],
             ]);
 
-            if (!$response->ok()) {
-                Log::error('Gemini API error', ['status' => $response->status(), 'body' => $response->body()]);
-                return null;
-            }
+            $text = $response->choices[0]->message->content ?? '';
+            $tokens = ($response->usage->promptTokens ?? 0) + ($response->usage->completionTokens ?? 0);
 
-            $data = $response->json();
-            $text = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
-            $tokens = ($data['usageMetadata']['promptTokenCount'] ?? 0) + ($data['usageMetadata']['candidatesTokenCount'] ?? 0);
+            // Track cost
+            $costCents = (($response->usage->promptTokens ?? 0) * 0.015 / 1000) + (($response->usage->completionTokens ?? 0) * 0.06 / 1000);
+            try {
+                \App\Models\AiApiMetric::create([
+                    'provider' => 'openai',
+                    'model' => $this->textModel,
+                    'input_tokens' => $response->usage->promptTokens ?? 0,
+                    'output_tokens' => $response->usage->completionTokens ?? 0,
+                    'cost_cents' => $costCents,
+                    'response_time_ms' => 0,
+                    'status' => 'success',
+                ]);
+            } catch (\Throwable $e) {}
 
             return ['text' => $text, 'tokens_used' => $tokens];
         } catch (\Throwable $e) {
-            Log::error('Gemini API exception', ['error' => $e->getMessage()]);
+            Log::error('OpenAI Social content exception', ['error' => $e->getMessage()]);
             return null;
         }
     }
