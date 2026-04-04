@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sambla — Audit Performanță & Plan de Optimizare</title>
+<link rel="preconnect" href="https://fonts.bunny.net">
+<link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800,900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--red-700:#991b1b;--red-500:#dc2626;--red-400:#f87171;--red-100:#fee2e2;--red-50:#fef2f2;--slate-900:#0f172a;--slate-800:#1e293b;--slate-700:#334155;--slate-600:#475569;--slate-500:#64748b;--slate-400:#94a3b8;--slate-300:#cbd5e1;--slate-200:#e2e8f0;--slate-100:#f1f5f9;--slate-50:#f8fafc;--emerald-500:#10b981;--emerald-100:#d1fae5;--amber-500:#f59e0b;--amber-100:#fef3c7;--blue-500:#3b82f6;--blue-100:#dbeafe;--purple-500:#8b5cf6;--grad:linear-gradient(135deg,var(--red-700),var(--red-500))}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,sans-serif;color:var(--slate-900);background:var(--slate-50);line-height:1.6}
+.container{max-width:1100px;margin:0 auto;padding:0 24px}
+
+/* Nav */
+.nav{position:sticky;top:0;z-index:100;background:rgba(15,23,42,0.97);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,0.06)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;height:56px}
+.nav-brand{color:#fff;font-weight:800;font-size:18px;text-decoration:none;display:flex;align-items:center;gap:8px}
+.nav-brand span{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-links{display:flex;gap:4px;list-style:none}
+.nav-links a{color:rgba(255,255,255,0.6);text-decoration:none;font-size:12px;font-weight:500;padding:6px 10px;border-radius:6px;transition:all 0.2s}
+.nav-links a:hover{color:#fff;background:rgba(255,255,255,0.08)}
+@media(max-width:768px){.nav-links{display:none}}
+
+/* Hero */
+.hero{background:var(--slate-900);padding:80px 0 60px;text-align:center}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(220,38,38,0.12);color:var(--red-400);border:1px solid rgba(220,38,38,0.2);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;margin-bottom:20px}
+.hero h1{font-size:clamp(28px,4vw,44px);font-weight:800;color:#fff;letter-spacing:-0.02em;margin-bottom:12px}
+.hero h1 em{font-style:normal;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:var(--slate-400);font-size:17px;max-width:600px;margin:0 auto 32px}
+.hero-metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;max-width:600px;margin:0 auto}
+@media(min-width:640px){.hero-metrics{grid-template-columns:repeat(4,1fr)}}
+.hm{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:16px 12px;text-align:center}
+.hm-val{font-size:clamp(22px,3vw,32px);font-weight:800;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hm-label{font-size:11px;color:var(--slate-400);margin-top:2px;text-transform:uppercase;letter-spacing:0.5px}
+
+/* Section */
+.section{padding:64px 0}
+.section-alt{background:#fff}
+.section-dark{background:var(--slate-900);color:#fff}
+.sh{text-align:center;margin-bottom:48px}
+.sh-tag{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--red-500);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.sh-title{font-size:clamp(24px,3.5vw,36px);font-weight:800;letter-spacing:-0.02em;margin-bottom:12px}
+.sh-desc{font-size:16px;color:var(--slate-500);max-width:600px;margin:0 auto}
+.section-dark .sh-desc{color:var(--slate-400)}
+
+/* Severity badge */
+.sev{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;text-transform:uppercase;letter-spacing:0.3px}
+.sev-critical{background:var(--red-100);color:var(--red-700)}
+.sev-high{background:var(--amber-100);color:#92400e}
+.sev-medium{background:var(--blue-100);color:#1e40af}
+.sev-low{background:var(--emerald-100);color:#065f46}
+
+/* Cards */
+.grid{display:grid;gap:20px}
+.g2{grid-template-columns:1fr}
+@media(min-width:768px){.g2{grid-template-columns:repeat(2,1fr)}}
+.g3{grid-template-columns:1fr}
+@media(min-width:640px){.g3{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:960px){.g3{grid-template-columns:repeat(3,1fr)}}
+.card{background:#fff;border:1px solid var(--slate-200);border-radius:16px;padding:24px;transition:all 0.3s}
+.card:hover{border-color:var(--red-200);box-shadow:0 8px 24px rgba(0,0,0,0.06);transform:translateY(-2px)}
+.section-dark .card{background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.08)}
+.card-icon{font-size:24px;margin-bottom:12px}
+.card-title{font-size:16px;font-weight:700;margin-bottom:6px}
+.card-desc{font-size:14px;color:var(--slate-600);line-height:1.7}
+.section-dark .card-desc{color:var(--slate-400)}
+.card-meta{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+
+/* Latency bar */
+.lat-bar{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--slate-100)}
+.lat-bar:last-child{border:none}
+.lat-label{font-size:13px;font-weight:600;min-width:180px;color:var(--slate-700)}
+.lat-track{flex:1;height:24px;background:var(--slate-100);border-radius:6px;overflow:hidden;position:relative}
+.lat-fill{height:100%;border-radius:6px;display:flex;align-items:center;padding:0 8px;font-size:11px;font-weight:700;color:#fff;min-width:fit-content}
+.lat-fill.green{background:#10b981}
+.lat-fill.yellow{background:#f59e0b}
+.lat-fill.orange{background:#f97316}
+.lat-fill.red{background:#ef4444}
+.lat-val{font-size:13px;font-weight:700;min-width:70px;text-align:right;color:var(--slate-700)}
+
+/* Table */
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-size:11px;font-weight:700;color:var(--slate-500);text-transform:uppercase;letter-spacing:0.5px;padding:10px 14px;border-bottom:2px solid var(--slate-200);white-space:nowrap}
+.tbl td{padding:12px 14px;border-bottom:1px solid var(--slate-100);vertical-align:top}
+.tbl tr:hover td{background:var(--red-50)}
+.section-dark .tbl th{color:var(--slate-400);border-color:rgba(255,255,255,0.1)}
+.section-dark .tbl td{border-color:rgba(255,255,255,0.06);color:var(--slate-300)}
+.section-dark .tbl tr:hover td{background:rgba(255,255,255,0.03)}
+
+/* Phase cards */
+.phase{border-radius:16px;overflow:hidden;border:1px solid var(--slate-200);margin-bottom:24px}
+.phase-header{padding:20px 24px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.phase-header h3{font-size:18px;font-weight:700}
+.phase-tag{font-size:12px;font-weight:700;padding:4px 12px;border-radius:8px}
+.phase-1 .phase-header{background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff}
+.phase-1 .phase-tag{background:rgba(255,255,255,0.2)}
+.phase-2 .phase-header{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff}
+.phase-2 .phase-tag{background:rgba(255,255,255,0.2)}
+.phase-3 .phase-header{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff}
+.phase-3 .phase-tag{background:rgba(255,255,255,0.2)}
+.phase-4 .phase-header{background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff}
+.phase-4 .phase-tag{background:rgba(255,255,255,0.2)}
+.phase-body{padding:24px;background:#fff}
+.phase-item{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--slate-100)}
+.phase-item:last-child{border:none}
+.phase-num{width:28px;height:28px;min-width:28px;border-radius:50%;background:var(--slate-100);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--slate-600)}
+.phase-item-title{font-size:14px;font-weight:600;margin-bottom:2px}
+.phase-item-desc{font-size:13px;color:var(--slate-500);line-height:1.6}
+.phase-item-impact{font-size:12px;font-weight:600;color:var(--emerald-500);margin-top:4px}
+
+/* Footer */
+.footer{background:var(--slate-900);padding:32px 0;text-align:center;border-top:1px solid var(--slate-800)}
+.footer p{color:var(--slate-500);font-size:13px}
+.footer a{color:var(--red-400);text-decoration:none}
+
+/* Responsive */
+@media(max-width:640px){.lat-label{min-width:100px;font-size:11px}.phase-body{padding:16px}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="/" class="nav-brand">Sambla <span>Performance Audit</span></a>
+    <ul class="nav-links">
+      <li><a href="#latency">Latenta</a></li>
+      <li><a href="#bottlenecks">Bottlenecks</a></li>
+      <li><a href="#rag">RAG Quality</a></li>
+      <li><a href="#caching">Caching</a></li>
+      <li><a href="#cost">Cost AI</a></li>
+      <li><a href="#plan">Plan Implementare</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-badge">AUDIT APRILIE 2026</div>
+    <h1>Audit Performanta &<br><em>Plan de Optimizare</em></h1>
+    <p>Analiza completa a latentei, calitatii RAG, eficientei AI si scalabilitatii — cu plan concret de implementare pe 4 faze.</p>
+    <div class="hero-metrics">
+      <div class="hm"><div class="hm-val">2.4s</div><div class="hm-label">Latenta medie chat</div></div>
+      <div class="hm"><div class="hm-val">6.6s</div><div class="hm-label">Cold start worst</div></div>
+      <div class="hm"><div class="hm-val">~40%</div><div class="hm-label">Potential reducere</div></div>
+      <div class="hm"><div class="hm-val">$0.42</div><div class="hm-label">Cost AI / zi</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- Latenta Chat -->
+<section class="section" id="latency">
+  <div class="container">
+    <div class="sh">
+      <div class="sh-tag">1. LATENTA CHAT</div>
+      <h2 class="sh-title">Anatomia unui raspuns — unde se pierde timpul</h2>
+      <p class="sh-desc">Breakdown per componenta a pipeline-ului de chat. LLM-ul e 60-80% din timp, dar pre-procesarea adauga 450-800ms inutile.</p>
+    </div>
+
+    <!-- Latency bars -->
+    <div style="max-width:800px;margin:0 auto">
+      <div class="lat-bar">
+        <div class="lat-label">LLM API Call</div>
+        <div class="lat-track"><div class="lat-fill red" style="width:65%">60-80%</div></div>
+        <div class="lat-val">2000-5000ms</div>
+      </div>
+      <div class="lat-bar">
+        <div class="lat-label">Knowledge RAG</div>
+        <div class="lat-track"><div class="lat-fill orange" style="width:25%">Embedding + Search</div></div>
+        <div class="lat-val">400-1500ms</div>
+      </div>
+      <div class="lat-bar">
+        <div class="lat-label">Product Search</div>
+        <div class="lat-track"><div class="lat-fill yellow" style="width:12%">SQL + Semantic</div></div>
+        <div class="lat-val">100-400ms</div>
+      </div>
+      <div class="lat-bar">
+        <div class="lat-label">Intent + Strategy</div>
+        <div class="lat-track"><div class="lat-fill yellow" style="width:10%">8 DB queries</div></div>
+        <div class="lat-val">100-300ms</div>
+      </div>
+      <div class="lat-bar">
+        <div class="lat-label">Prompt Build</div>
+        <div class="lat-track"><div class="lat-fill green" style="width:5%">Assembly</div></div>
+        <div class="lat-val">50-200ms</div>
+      </div>
+      <div class="lat-bar">
+        <div class="lat-label">Session + DB</div>
+        <div class="lat-track"><div class="lat-fill green" style="width:3%">Lookup + Save</div></div>
+        <div class="lat-val">30-60ms</div>
+      </div>
+    </div>
+
+    <div style="margin-top:32px;text-align:center">
+      <p style="font-size:14px;color:var(--slate-500)"><strong>Total tipic:</strong> ~2.4s | <strong>Worst case (cold start):</strong> 6.6s | <strong>Best case (cached):</strong> 0.15s</p>
+    </div>
+  </div>
+</section>
+
+<!-- Voice Latency -->
+<section class="section section-alt">
+  <div class="container">
+    <div class="sh">
+      <div class="sh-tag">2. LATENTA VOICE</div>
+      <h2 class="sh-title">Voce — de la vorbire la raspuns AI</h2>
+      <p class="sh-desc">Fiecare replica a utilizatorului trece prin context refresh secvential care adauga 1.5-3s. Critica pentru conversatie naturala.</p>
+    </div>
+
+    <div class="grid g2">
+      <div class="card">
+        <div class="card-icon">🔴</div>
+        <div class="card-title">Mid-call Context Refresh: 1.5-3s per replica</div>
+        <div class="card-desc">La fiecare replica, botul vocal cauta secvential: produse (300-800ms) + comenzi (500-3000ms) + knowledge RAG (1000-2000ms). Toate blocheaza raspunsul OpenAI.</div>
+        <div class="card-meta"><span class="sev sev-critical">CRITIC</span></div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔴</div>
+        <div class="card-title">ElevenLabs Cloned Voice: +2-3.5s</div>
+        <div class="card-desc">Vocea clonata adauga un round-trip extra la ElevenLabs API. Vocea nativa OpenAI streameaza direct — fara delay suplimentar.</div>
+        <div class="card-meta"><span class="sev sev-critical">CRITIC</span></div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🟡</div>
+        <div class="card-title">Embedding API per replica: 1-1.5s</div>
+        <div class="card-desc">Fiecare cautare in knowledge base necesita un embedding de la OpenAI (text-embedding-3-small). Cache miss = 1+ secunda.</div>
+        <div class="card-meta"><span class="sev sev-high">HIGH</span></div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🟢</div>
+        <div class="card-title">Session Creation: 0.5-1.5s (o singura data)</div>
+        <div class="card-desc">Initializarea sesiunii incarca produse, categorii, knowledge context + cerere token OpenAI. Se intampla doar la inceputul apelului.</div>
+        <div class="card-meta"><span class="sev sev-medium">MEDIUM</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Top Bottlenecks -->
+<section class="section section-dark" id="bottlenecks">
+  <div class="container">
+    <div class="sh">
+      <div class="sh-tag">3. TOP 10 BOTTLENECKS</div>
+      <h2 class="sh-title">Cele mai mari probleme de performanta</h2>
+      <p class="sh-desc">Ordonate dupa impact. Primele 5 acopera 80% din latenta.</p>
+    </div>
+
+    <table class="tbl">
+      <thead>
+        <tr><th>#</th><th>Problema</th><th>Impact</th><th>Solutie</th><th>Efort</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td><strong>Pipeline-uri secventiale</strong> — Knowledge + Products + Orders ruleaza serial</td><td><span class="sev sev-critical">-1.5s</span></td><td>Paralelizare cu Http::pool() sau Promise</td><td>4h</td></tr>
+        <tr><td>2</td><td><strong>No response streaming</strong> — userul asteapta intregul raspuns LLM</td><td><span class="sev sev-critical">-1-2s perceptual</span></td><td>SSE (Server-Sent Events) pentru chat</td><td>1zi</td></tr>
+        <tr><td>3</td><td><strong>Embedding API call pe cache miss</strong> — 400-600ms per cautare KB</td><td><span class="sev sev-high">-500ms</span></td><td>Pre-warm embeddings, query normalization</td><td>3h</td></tr>
+        <tr><td>4</td><td><strong>Duplicate work</strong> — Knowledge search, message history, intent detection executate de 2x</td><td><span class="sev sev-high">-200ms</span></td><td>Share results intre servicii</td><td>2h</td></tr>
+        <tr><td>5</td><td><strong>FrustrationDetector + StrategyEngine</strong> in calea critica (8 DB queries)</td><td><span class="sev sev-high">-150ms</span></td><td>Defer post-response sau cache</td><td>2h</td></tr>
+        <tr><td>6</td><td><strong>Dashboard N+1 queries</strong> — 21 queries intr-un loop pe 7 zile</td><td><span class="sev sev-high">-300ms pagina</span></td><td>Single GROUP BY query</td><td>1h</td></tr>
+        <tr><td>7</td><td><strong>Missing DB indexes</strong> — messages, chat_events, leads, callbacks</td><td><span class="sev sev-medium">-50-100ms</span></td><td>8 indexuri noi</td><td>30min</td></tr>
+        <tr><td>8</td><td><strong>Widget 94KB neminificat</strong> — 1.8s load pe 3G</td><td><span class="sev sev-medium">-1s load</span></td><td>Minify + lazy load features</td><td>2h</td></tr>
+        <tr><td>9</td><td><strong>No message virtualization</strong> — 200 mesaje = 2s render</td><td><span class="sev sev-medium">-1.8s render</span></td><td>Virtual scroll (render doar vizibile)</td><td>4h</td></tr>
+        <tr><td>10</td><td><strong>Cache coverage doar 30%</strong> — WC exists, policy, channels necache-uite</td><td><span class="sev sev-medium">-25% DB</span></td><td>6 cache-uri noi cu TTL standardizat</td><td>2h</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- RAG Quality -->
+<section class="section" id="rag">
+  <div class="container">
+    <div class="sh">
+      <div class="sh-tag">4. CALITATE RAG</div>
+      <h2 class="sh-title">Retrieval-Augmented Generation — unde se pierde calitatea</h2>
+      <p class="sh-desc">4 quick wins fara cod (doar config changes) care imbunatesc relevanta cu 15-20%.</p>
+    </div>
+
+    <div class="grid g2">
+      <div class="card">
+        <div class="card-icon">🎯</div>
+        <div class="card-title">Similarity Threshold: 0.55 &rarr; 0.62</div>
+        <div class="card-desc">Pragul curent (0.55) e prea permisiv — lasa rezultate cu relevanta slaba. La 0.62, creste precizia cu ~10-15% fara pierdere semnificativa de recall.</div>
+        <div class="card-meta"><span class="sev sev-high">HIGH IMPACT</span> <span class="sev sev-low">1 config change</span></div>
+      </div>
+      <div class="card">
+        <div class="card-icon">⚖️</div>
+        <div class="card-title">FTS Weight: 1.5 &rarr; 1.0</div>
+        <div class="card-desc">Full-text search are 50% mai multa influenta decat vector search. Asta biaseaza spre keyword matching in loc de intelegere semantica. Egalizarea la 1.0 ajuta queries conversationale.</div>
+        <div class="card-meta"><span class="sev sev-medium">MEDIUM IMPACT</span> <span class="sev sev-low">1 config change</span></div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔍</div>
+        <div class="card-title">Reranking Zone: 0.50-0.78 &rarr; 0.58-0.85</div>
+        <div class="card-desc">Zona actuala e prea larga. Sub 0.58 reranking-ul nu salveaza rezultate slabe. Peste 0.78, chiar si rezultatele bune pot beneficia de reranking. Snippet 350 &rarr; 600 chars.</div>
+        <div class="card-meta"><span class="sev sev-high">HIGH IMPACT</span> <span class="sev sev-low">3 config changes</span></div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔇</div>
+        <div class="card-title">Disable Parent-Child Retrieval</div>
+        <div class="card-desc">Chunk-urile adiacente adaugate fara re-ranking dilueaza contextul cu continut potential irelevant. Dezactivare reduce zgomotul si imbunatateste raspunsurile.</div>
+        <div class="card-meta"><span class="sev sev-medium">MEDIUM IMPACT</span> <span class="sev sev-low">1 config change</span></div>
+      </div>
+      <div class="card">
+        <div class="card-icon">📏</div>
+        <div class="card-title">Context Budget: 6000 &rarr; 8000 chars</div>
+        <div class="card-desc">6000 chars (1500 tokens) e strans pentru queries complexe. 8000 chars (2000 tokens) da mai mult spatiu fara depasirea bugetului total.</div>
+        <div class="card-meta"><span class="sev sev-medium">MEDIUM IMPACT</span> <span class="sev sev-low">1 config change</span></div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🇷🇴</div>
+        <div class="card-title">Enable LLM Query Rewrite (Romanian)</div>
+        <div class="card-desc">Rescrierea query-ului cu GPT-4o-mini inainte de cautare captureaza diminutive, sinonime si greseli de ortografie romanesti. Cost: ~80 tokens/query.</div>
+        <div class="card-meta"><span class="sev sev-medium">MEDIUM IMPACT</span> <span class="sev sev-low">1 config change</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Caching -->
+<section class="section section-alt" id="caching">
+  <div class="container">
+    <div class="sh">
+      <div class="sh-tag">5. CACHING</div>
+      <h2 class="sh-title">Strategie de caching — doar 30% acoperit</h2>
+      <p class="sh-desc">Redis e configurat dar subutilizat. 6 cache-uri noi pot reduce 25-35% din queries-urile la DB.</p>
+    </div>
+
+    <table class="tbl">
+      <thead><tr><th>Ce lipseste</th><th>Frecventa</th><th>TTL recomandat</th><th>Impact</th></tr></thead>
+      <tbody>
+        <tr><td><strong>WooCommerceProduct::exists()</strong></td><td>2x per mesaj</td><td>1 ora</td><td>-10-15% DB load</td></tr>
+        <tr><td><strong>ConversationPolicy lookup</strong></td><td>1x per mesaj</td><td>30 min</td><td>-5-8% DB queries</td></tr>
+        <tr><td><strong>Channel/Conversation existence</strong></td><td>4x per pagina dashboard</td><td>5 min</td><td>-8-12% dashboard</td></tr>
+        <tr><td><strong>Intent classification</strong></td><td>1x per mesaj</td><td>24 ore</td><td>Cache regex results</td></tr>
+        <tr><td><strong>Bot knowledge stats</strong></td><td>8 queries per bot show page</td><td>10 min</td><td>Consolidare 8&rarr;1 query</td></tr>
+        <tr><td><strong>Plan limit TTL</strong></td><td>Constant</td><td>5min &rarr; 30min</td><td>Reduce invalidation overhead</td></tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top:24px;padding:20px;background:var(--emerald-100);border-radius:12px;text-align:center">
+      <strong style="color:#065f46">Impact estimat:</strong> <span style="color:#065f46">25-35% reducere queries DB, ~$150-250/luna economii infrastructure</span>
+    </div>
+  </div>
+</section>
+
+<!-- Cost AI -->
+<section class="section" id="cost">
+  <div class="container">
+    <div class="sh">
+      <div class="sh-tag">6. COST AI</div>
+      <h2 class="sh-title">Eficienta LLM — $0.42/zi, 40% reducere posibila</h2>
+      <p class="sh-desc">Costurile sunt deja mici, dar exista potential de 40-50% reducere prin optimizari simple.</p>
+    </div>
+
+    <div class="grid g3">
+      <div class="card">
+        <div class="card-icon">📊</div>
+        <div class="card-title">Summary Threshold: 8 &rarr; 12</div>
+        <div class="card-desc">Sumarizarea conversatiei se activeaza la 8 mesaje. La 12, economisesti 40% din call-urile de summarization fara pierdere de context.</div>
+        <div class="card-meta"><span class="sev sev-low">5 min</span></div>
+      </div>
+      <div class="card">
+        <div class="card-icon">💰</div>
+        <div class="card-title">Skip KB pentru greetings</div>
+        <div class="card-desc">85% din mesaje triggereaza knowledge search. Saluturile, confirmarile si multumirile nu au nevoie de RAG. Skip = -20% embedding calls.</div>
+        <div class="card-meta"><span class="sev sev-low">2 ore</span></div>
+      </div>
+      <div class="card">
+        <div class="card-icon">⚡</div>
+        <div class="card-title">Response cache: 3min &rarr; 15min</div>
+        <div class="card-desc">Cache-ul de raspunsuri LLM (3 min TTL) e prea conservativ. La 15 min cu query normalization mai agresiva, hit rate creste de la 15% la 30%.</div>
+        <div class="card-meta"><span class="sev sev-low">2 ore</span></div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔄</div>
+        <div class="card-title">Soft fallback: gpt-4o &rarr; gpt-4o-mini</div>
+        <div class="card-desc">Cand gpt-4o esueaza, sistemul trece pe Claude (12-25x mai scump). Mai bine fallback pe gpt-4o-mini (acelasi provider, mult mai ieftin).</div>
+        <div class="card-meta"><span class="sev sev-low">1 ora</span></div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🗜️</div>
+        <div class="card-title">Reduce policy prompt bloat</div>
+        <div class="card-desc">PromptBuilder injecteaza politica conversationala completa chiar si cand e default. Injectie conditionala = -150-300 tokens/mesaj.</div>
+        <div class="card-meta"><span class="sev sev-low">1 ora</span></div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🌡️</div>
+        <div class="card-title">Temperature per intent</div>
+        <div class="card-desc">FAQ si order lookup = factual (temp 0.3). Recomandari = creativ (temp 0.7). Temperature fix de 0.6 e suboptimal pentru ambele.</div>
+        <div class="card-meta"><span class="sev sev-low">1 ora</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DB -->
+<section class="section section-dark">
+  <div class="container">
+    <div class="sh">
+      <div class="sh-tag">7. DATABASE</div>
+      <h2 class="sh-title">8 indexuri lipsa + N+1 queries</h2>
+    </div>
+
+    <table class="tbl">
+      <thead><tr><th>Tabel</th><th>Index lipsa</th><th>Impact</th></tr></thead>
+      <tbody>
+        <tr><td>messages</td><td><code>(conversation_id, created_at)</code></td><td>Dashboard N+1 fix</td></tr>
+        <tr><td>chat_events</td><td><code>(product_id, event_name, occurred_at)</code></td><td>Commerce analytics</td></tr>
+        <tr><td>chat_events</td><td><code>GIN (properties jsonb_ops)</code></td><td>JSON extraction x10</td></tr>
+        <tr><td>leads</td><td><code>(tenant_id, status, created_at)</code></td><td>Lead filtering</td></tr>
+        <tr><td>calls</td><td><code>(tenant_id, status, duration_seconds)</code></td><td>Analytics aggregation</td></tr>
+        <tr><td>conversations</td><td><code>(tenant_id, opportunity_score, created_at)</code></td><td>Opportunity page</td></tr>
+        <tr><td>bot_knowledge</td><td><code>(bot_id, status, title)</code></td><td>KB health checks</td></tr>
+        <tr><td>callback_requests</td><td><code>(tenant_id, status) partial</code></td><td>Callback filtering</td></tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top:16px;padding:16px 20px;background:rgba(255,255,255,0.05);border-radius:12px;border:1px solid rgba(255,255,255,0.1)">
+      <strong style="color:var(--red-400)">HNSW Index:</strong> <span style="color:var(--slate-300)">ef_construction=64 e prea mic. Recomandat: m=24, ef_construction=200 pentru recall &gt;95% pe RAG conversational.</span>
+    </div>
+  </div>
+</section>
+
+<!-- Widget -->
+<section class="section section-alt">
+  <div class="container">
+    <div class="sh">
+      <div class="sh-tag">8. WIDGET FRONTEND</div>
+      <h2 class="sh-title">Widget Chat — 94KB, memory leaks, no virtualization</h2>
+    </div>
+
+    <div class="grid g3">
+      <div class="card">
+        <div class="card-icon">📦</div>
+        <div class="card-title">Minify: 94KB &rarr; 35KB</div>
+        <div class="card-desc">Gzip: 20KB &rarr; 8KB. Reducere 60% in load time. Quick win cu terser.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">📜</div>
+        <div class="card-title">Virtual Scroll</div>
+        <div class="card-desc">200 mesaje = 2000ms render. Cu virtualizare: 200ms. Render doar 15 mesaje vizibile + buffer.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🧹</div>
+        <div class="card-title">Event Delegation</div>
+        <div class="card-desc">200+ event listeners cu 100 mesaje. Delegare pe container = 20 listeners. -85% memory.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">💾</div>
+        <div class="card-title">Batch localStorage</div>
+        <div class="card-desc">Fiecare mesaj salveaza intreg array-ul. Debounce la 3-5 mesaje = -80% writes.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🖼️</div>
+        <div class="card-title">Lazy-load Features</div>
+        <div class="card-desc">Core (20KB) + features (30KB) lazy. Initial load: -40-50% mai rapid.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">📐</div>
+        <div class="card-title">Regex Simplificat</div>
+        <div class="card-desc">Markdown lookbehind regex prea complex. Simplificare = -50ms per 10 mesaje.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Implementation Plan -->
+<section class="section" id="plan">
+  <div class="container">
+    <div class="sh">
+      <div class="sh-tag">PLAN DE IMPLEMENTARE</div>
+      <h2 class="sh-title">4 faze — de la quick wins la enterprise</h2>
+      <p class="sh-desc">Ordonat dupa impact/efort. Faza 1 se face in cateva ore si acopera 60% din castiguri.</p>
+    </div>
+
+    <!-- Phase 1 -->
+    <div class="phase phase-1">
+      <div class="phase-header">
+        <h3>Faza 1 — Quick Wins (2-4 ore)</h3>
+        <span class="phase-tag">~40% din castiguri</span>
+      </div>
+      <div class="phase-body">
+        <div class="phase-item">
+          <div class="phase-num">1</div>
+          <div><div class="phase-item-title">RAG Config Tuning (4 setari, 0 cod)</div>
+          <div class="phase-item-desc">similarity_threshold: 0.62, fts_weight: 1.0, parent_child: false, max_context_chars: 8000</div>
+          <div class="phase-item-impact">+15-20% relevanta raspunsuri</div></div>
+        </div>
+        <div class="phase-item">
+          <div class="phase-num">2</div>
+          <div><div class="phase-item-title">Summary threshold 8 &rarr; 12</div>
+          <div class="phase-item-desc">ConversationSummaryService::SUMMARIZE_AFTER = 12</div>
+          <div class="phase-item-impact">-40% summarization LLM calls</div></div>
+        </div>
+        <div class="phase-item">
+          <div class="phase-num">3</div>
+          <div><div class="phase-item-title">Response cache TTL: 3min &rarr; 15min</div>
+          <div class="phase-item-desc">ChatCompletionService cache TTL + query normalization agresiva</div>
+          <div class="phase-item-impact">Hit rate: 15% &rarr; 30%</div></div>
+        </div>
+        <div class="phase-item">
+          <div class="phase-num">4</div>
+          <div><div class="phase-item-title">8 indexuri database noi</div>
+          <div class="phase-item-desc">Migration cu 8 CREATE INDEX pe messages, chat_events, leads, calls, conversations, bot_knowledge, callbacks</div>
+          <div class="phase-item-impact">-30% query time pe dashboard + analytics</div></div>
+        </div>
+        <div class="phase-item">
+          <div class="phase-num">5</div>
+          <div><div class="phase-item-title">Move telemetry to queue</div>
+          <div class="phase-item-desc">AiApiMetric::create() dispatched async in loc de sincron</div>
+          <div class="phase-item-impact">-20-50ms per mesaj</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 2 -->
+    <div class="phase phase-2">
+      <div class="phase-header">
+        <h3>Faza 2 — Core Optimizations (1-2 zile)</h3>
+        <span class="phase-tag">~30% din castiguri</span>
+      </div>
+      <div class="phase-body">
+        <div class="phase-item">
+          <div class="phase-num">1</div>
+          <div><div class="phase-item-title">Paralelizare pipeline-uri (Knowledge + Products + Orders)</div>
+          <div class="phase-item-desc">Http::pool() sau Promise pattern in IntentOrchestratorService.execute(). Cel mai lent determina timpul total, nu suma lor.</div>
+          <div class="phase-item-impact">-1-2s per mesaj (chat), -1.5-2.5s per replica (voice)</div></div>
+        </div>
+        <div class="phase-item">
+          <div class="phase-num">2</div>
+          <div><div class="phase-item-title">Defer FrustrationDetector + StrategyEngine post-response</div>
+          <div class="phase-item-desc">Aceste servicii nu afecteaza raspunsul curent — pot rula dupa ce raspunsul e trimis. Salveaza 8 DB queries din calea critica.</div>
+          <div class="phase-item-impact">-150-300ms pre-LLM latency</div></div>
+        </div>
+        <div class="phase-item">
+          <div class="phase-num">3</div>
+          <div><div class="phase-item-title">6 cache-uri noi in Redis</div>
+          <div class="phase-item-desc">WC product exists, ConversationPolicy, Channel checks, Intent classification, KB stats consolidation, Plan limits TTL increase</div>
+          <div class="phase-item-impact">-25-35% DB queries</div></div>
+        </div>
+        <div class="phase-item">
+          <div class="phase-num">4</div>
+          <div><div class="phase-item-title">Skip KB search pentru greetings/thanks</div>
+          <div class="phase-item-desc">Daca intent = greeting sau thanks, skip embedding + RAG. Salveaza ~20% din embedding API calls.</div>
+          <div class="phase-item-impact">-500ms pentru mesaje simple</div></div>
+        </div>
+        <div class="phase-item">
+          <div class="phase-num">5</div>
+          <div><div class="phase-item-title">Share message history intre servicii</div>
+          <div class="phase-item-desc">Load messages o data in controller, pass ca parametru la IntentOrchestrator, FrustrationDetector, StrategyEngine.</div>
+          <div class="phase-item-impact">-3 DB queries duplicate per mesaj</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 3 -->
+    <div class="phase phase-3">
+      <div class="phase-header">
+        <h3>Faza 3 — Advanced (3-5 zile)</h3>
+        <span class="phase-tag">~20% din castiguri</span>
+      </div>
+      <div class="phase-body">
+        <div class="phase-item">
+          <div class="phase-num">1</div>
+          <div><div class="phase-item-title">SSE Streaming pentru chat</div>
+          <div class="phase-item-desc">Server-Sent Events: widget-ul primeste cuvinte pe masura ce LLM-ul le genereaza. Latenta perceputa: 100-200ms in loc de 2-5s.</div>
+          <div class="phase-item-impact">-1-2s latenta perceputa</div></div>
+        </div>
+        <div class="phase-item">
+          <div class="phase-num">2</div>
+          <div><div class="phase-item-title">Widget minify + lazy-load + virtual scroll</div>
+          <div class="phase-item-desc">Terser build, code split core/features, IntersectionObserver virtual scroll, event delegation, batch localStorage.</div>
+          <div class="phase-item-impact">-55% load time, -90% render time, -85% memory</div></div>
+        </div>
+        <div class="phase-item">
+          <div class="phase-num">3</div>
+          <div><div class="phase-item-title">HNSW index upgrade (m=24, ef_construction=200)</div>
+          <div class="phase-item-desc">Rebuild vector index cu parametri optimi pentru recall &gt;95%. Necesita reindex complet dar zero downtime.</div>
+          <div class="phase-item-impact">+5-10% RAG recall</div></div>
+        </div>
+        <div class="phase-item">
+          <div class="phase-num">4</div>
+          <div><div class="phase-item-title">Dashboard N+1 fix — consolidare queries</div>
+          <div class="phase-item-desc">21 queries in loop &rarr; 1-2 GROUP BY queries. BotController 8 cloned queries &rarr; 1 aggregation.</div>
+          <div class="phase-item-impact">-19 queries per dashboard load</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 4 -->
+    <div class="phase phase-4">
+      <div class="phase-header">
+        <h3>Faza 4 — Scale & Quality (1-2 saptamani)</h3>
+        <span class="phase-tag">~10% + monitoring</span>
+      </div>
+      <div class="phase-body">
+        <div class="phase-item">
+          <div class="phase-num">1</div>
+          <div><div class="phase-item-title">Reranking zone tuning (0.58-0.85) + snippet 600 chars</div>
+          <div class="phase-item-desc">Narrow uncertain zone + mai mult context pentru reranking LLM. A/B test vs control.</div>
+          <div class="phase-item-impact">+10% precizie RAG</div></div>
+        </div>
+        <div class="phase-item">
+          <div class="phase-num">2</div>
+          <div><div class="phase-item-title">Enable LLM query rewrite pentru romana</div>
+          <div class="phase-item-desc">Query expansion cu GPT-4o-mini captureaza diminutive, sinonime, greseli. Cost: 80 tokens/query.</div>
+          <div class="phase-item-impact">+10-15% recall pe queries conversationale</div></div>
+        </div>
+        <div class="phase-item">
+          <div class="phase-num">3</div>
+          <div><div class="phase-item-title">Cache monitoring dashboard</div>
+          <div class="phase-item-desc">Redis hit/miss/eviction rate per cache key. Identifica cache-uri ineficiente si ajusteaza TTL-uri.</div>
+          <div class="phase-item-impact">Data-driven caching decisions</div></div>
+        </div>
+        <div class="phase-item">
+          <div class="phase-num">4</div>
+          <div><div class="phase-item-title">A/B testing framework</div>
+          <div class="phase-item-desc">Testare prompt versions, model routing, RAG config. BotPromptVersion deja suporta weighted random.</div>
+          <div class="phase-item-impact">Data-driven quality improvement</div></div>
+        </div>
+        <div class="phase-item">
+          <div class="phase-num">5</div>
+          <div><div class="phase-item-title">Per-intent model routing + temperature</div>
+          <div class="phase-item-desc">Greetings/FAQ = fast model (temp 0.3). Comparatii complexe = smart model (temp 0.7). Conversation stickiness.</div>
+          <div class="phase-item-impact">-10% cost AI + mai buna consistenta</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Summary -->
+<section class="section section-dark">
+  <div class="container">
+    <div class="sh">
+      <div class="sh-tag">REZUMAT</div>
+      <h2 class="sh-title">Impact total estimat</h2>
+    </div>
+
+    <div class="hero-metrics" style="max-width:800px;margin:0 auto">
+      <div class="hm"><div class="hm-val">2.4s &rarr; 1.2s</div><div class="hm-label">Latenta chat medie</div></div>
+      <div class="hm"><div class="hm-val">-40%</div><div class="hm-label">Reducere cost AI</div></div>
+      <div class="hm"><div class="hm-val">+20%</div><div class="hm-label">Calitate raspunsuri</div></div>
+      <div class="hm"><div class="hm-val">-35%</div><div class="hm-label">DB queries</div></div>
+    </div>
+
+    <div style="text-align:center;margin-top:32px">
+      <p style="color:var(--slate-400);font-size:15px;max-width:600px;margin:0 auto">Faza 1 (quick wins) se poate implementa in 2-4 ore si acopera 40% din castiguri. Fazele 2-4 necesita 1-2 saptamani dar aduc platforma la nivel enterprise.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <p>&copy; 2026 Sambla. Performance audit generat automat. <a href="https://sambla.ro">sambla.ro</a> | <a href="/tech-audit.html">Tech Audit</a></p>
+  </div>
+</footer>
+
+<script>
+document.querySelectorAll('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click',e=>{e.preventDefault();document.querySelector(a.getAttribute('href'))?.scrollIntoView({behavior:'smooth'})});
+});
+const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.style.opacity='1';e.target.style.transform='translateY(0)'}})},{threshold:0.1});
+document.querySelectorAll('.card,.phase,.lat-bar,.hm').forEach(el=>{el.style.opacity='0';el.style.transform='translateY(16px)';el.style.transition='opacity 0.5s,transform 0.5s';obs.observe(el)});
+</script>
+</body>
+</html>
