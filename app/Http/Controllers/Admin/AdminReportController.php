@@ -16,14 +16,20 @@ use App\Models\KnowledgeAgentRun;
 use App\Models\KnowledgeConnector;
 use App\Models\Lead;
 use App\Models\Message;
+use App\Models\PhoneNumber;
 use App\Models\PurchaseAttribution;
+use App\Models\AbAssignment;
+use App\Models\AbExperiment;
+use App\Models\BotPromptVersion;
 use App\Models\Tenant;
 use App\Models\TenantInsight;
 use App\Models\UsageRecord;
 use App\Models\WebsiteScan;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
 
 class AdminReportController extends Controller
 {
@@ -55,6 +61,15 @@ class AdminReportController extends Controller
         // ─── Section 8: Webhook & Integration Health ───
         $integrationHealth = $this->getIntegrationHealth($now);
 
+        // ─── Section 9: Latency Breakdown ───
+        $latencyBreakdown = $this->getLatencyBreakdown($now);
+
+        // ─── Section 10: Workers & Queue Status ───
+        $workerStatus = $this->getWorkerStatus($now);
+
+        // ─── Section 11: A/B Testing Overview ───
+        $abTesting = $this->getAbTesting($now);
+
         return view('admin.reports', compact(
             'serviceHealth',
             'costAnalysis',
@@ -64,6 +79,9 @@ class AdminReportController extends Controller
             'profitability',
             'knowledgePipeline',
             'integrationHealth',
+            'latencyBreakdown',
+            'workerStatus',
+            'abTesting',
             'now'
         ));
     }
@@ -127,21 +145,25 @@ class AdminReportController extends Controller
             $currentHourStart = $now->copy()->startOfHour();
             $prevHourStart = $currentHourStart->copy()->subHour();
 
-            $hourlyErrors = AiApiMetric::withoutGlobalScopes()
+            $currentErrors = AiApiMetric::withoutGlobalScopes()
+                ->where('created_at', '>=', $currentHourStart)
+                ->selectRaw("provider, COUNT(*) as total, COUNT(*) FILTER (WHERE status != 'success') as errors")
+                ->groupBy('provider')
+                ->get()
+                ->keyBy('provider');
+
+            $previousErrors = AiApiMetric::withoutGlobalScopes()
                 ->where('created_at', '>=', $prevHourStart)
-                ->selectRaw("
-                    provider,
-                    CASE WHEN created_at >= ? THEN 'current' ELSE 'previous' END as period,
-                    COUNT(*) as total,
-                    COUNT(*) FILTER (WHERE status != 'success') as errors
-                ", [$currentHourStart])
-                ->groupByRaw("provider, CASE WHEN created_at >= ? THEN 'current' ELSE 'previous' END", [$currentHourStart])
-                ->get();
+                ->where('created_at', '<', $currentHourStart)
+                ->selectRaw("provider, COUNT(*) as total, COUNT(*) FILTER (WHERE status != 'success') as errors")
+                ->groupBy('provider')
+                ->get()
+                ->keyBy('provider');
 
             $errorTrends = [];
             foreach ($providers as $provider) {
-                $current = $hourlyErrors->where('provider', $provider)->where('period', 'current')->first();
-                $previous = $hourlyErrors->where('provider', $provider)->where('period', 'previous')->first();
+                $current = $currentErrors->get($provider);
+                $previous = $previousErrors->get($provider);
                 $currentRate = $current && $current->total > 0 ? round(($current->errors / $current->total) * 100, 1) : 0;
                 $previousRate = $previous && $previous->total > 0 ? round(($previous->errors / $previous->total) * 100, 1) : 0;
                 $errorTrends[$provider] = [
@@ -171,7 +193,23 @@ class AdminReportController extends Controller
         $data = ['error' => null];
 
         try {
-            // Daily cost breakdown last 30 days
+            $monthStart = $now->copy()->startOfMonth();
+            $lastMonthStart = $now->copy()->subMonth()->startOfMonth();
+            $lastMonthEnd = $now->copy()->subMonth()->endOfMonth();
+
+            // ── Phone number recurring costs (Telnyx) ──
+            $activePhoneNumbers = PhoneNumber::withoutGlobalScopes()->get();
+            $phoneNumberCostMonthly = (int) $activePhoneNumbers->sum('monthly_cost_cents');
+            $phoneNumberCount = $activePhoneNumbers->count();
+
+            // Prorated cost this month (days elapsed / days in month)
+            $daysInMonth = (int) $now->daysInMonth;
+            $daysElapsed = (int) $now->day;
+            $phoneCostThisMonth = round($phoneNumberCostMonthly * ($daysElapsed / $daysInMonth), 2);
+            $phoneCostLastMonth = (float) $phoneNumberCostMonthly; // full month
+            $phoneCostDaily = round($phoneNumberCostMonthly / $daysInMonth, 2);
+
+            // ── Daily cost breakdown last 30 days ──
             $aiCostDaily = AiApiMetric::withoutGlobalScopes()
                 ->where('created_at', '>=', $now->copy()->subDays(30))
                 ->selectRaw("DATE(created_at) as day, SUM(cost_cents) as ai_cost")
@@ -186,15 +224,27 @@ class AdminReportController extends Controller
                 ->pluck('voice_cost', 'day')
                 ->toArray();
 
+            $msgCostDaily = Conversation::withoutGlobalScopes()
+                ->where('created_at', '>=', $now->copy()->subDays(30))
+                ->selectRaw("DATE(created_at) as day, SUM(cost_cents) as msg_cost")
+                ->groupByRaw("DATE(created_at)")
+                ->pluck('msg_cost', 'day')
+                ->toArray();
+
             $dailyCosts = [];
             for ($i = 29; $i >= 0; $i--) {
                 $day = $now->copy()->subDays($i)->format('Y-m-d');
+                $ai = round((float) ($aiCostDaily[$day] ?? 0), 2);
+                $voice = round((float) ($voiceCostDaily[$day] ?? 0), 2);
+                $msg = round((float) ($msgCostDaily[$day] ?? 0), 2);
                 $dailyCosts[] = [
                     'day' => Carbon::parse($day)->format('d/m'),
                     'day_full' => $day,
-                    'ai_cost' => round((float) ($aiCostDaily[$day] ?? 0), 2),
-                    'voice_cost' => round((float) ($voiceCostDaily[$day] ?? 0), 2),
-                    'total' => round((float) ($aiCostDaily[$day] ?? 0) + (float) ($voiceCostDaily[$day] ?? 0), 2),
+                    'ai_cost' => $ai,
+                    'voice_cost' => $voice,
+                    'msg_cost' => $msg,
+                    'phone_cost' => $phoneCostDaily,
+                    'total' => round($ai + $voice + $msg + $phoneCostDaily, 2),
                 ];
             }
             $maxDailyCost = max(array_column($dailyCosts, 'total') ?: [1]);
@@ -202,9 +252,17 @@ class AdminReportController extends Controller
             $data['daily_costs'] = $dailyCosts;
             $data['max_daily_cost'] = $maxDailyCost > 0 ? $maxDailyCost : 1;
 
-            // Top 10 tenants by cost this month
-            $monthStart = $now->copy()->startOfMonth();
+            // ── Phone number details ──
+            $data['phone_numbers'] = $activePhoneNumbers->map(fn($p) => [
+                'number' => $p->number,
+                'friendly_name' => $p->friendly_name,
+                'monthly_cost_cents' => $p->monthly_cost_cents,
+                'status' => $p->status,
+                'provider' => $p->provider ?? 'telnyx',
+            ])->toArray();
+            $data['phone_monthly_total'] = $phoneNumberCostMonthly;
 
+            // ── Top 10 tenants by cost this month ──
             $topTenantAi = AiApiMetric::withoutGlobalScopes()
                 ->where('created_at', '>=', $monthStart)
                 ->whereNotNull('tenant_id')
@@ -221,13 +279,35 @@ class AdminReportController extends Controller
                 ->pluck('voice_cost', 'tenant_id')
                 ->toArray();
 
-            $allTenantIds = array_unique(array_merge(array_keys($topTenantAi), array_keys($topTenantVoice)));
+            $topTenantMsg = Conversation::withoutGlobalScopes()
+                ->where('created_at', '>=', $monthStart)
+                ->selectRaw("tenant_id, SUM(cost_cents) as msg_cost")
+                ->groupBy('tenant_id')
+                ->pluck('msg_cost', 'tenant_id')
+                ->toArray();
+
+            $topTenantPhones = PhoneNumber::withoutGlobalScopes()
+                ->selectRaw("tenant_id, SUM(monthly_cost_cents) as phone_cost")
+                ->groupBy('tenant_id')
+                ->pluck('phone_cost', 'tenant_id')
+                ->toArray();
+
+            $allTenantIds = array_unique(array_merge(
+                array_keys($topTenantAi), array_keys($topTenantVoice),
+                array_keys($topTenantMsg), array_keys($topTenantPhones)
+            ));
             $tenantCosts = [];
             foreach ($allTenantIds as $tid) {
+                $ai = round((float) ($topTenantAi[$tid] ?? 0), 2);
+                $voice = round((float) ($topTenantVoice[$tid] ?? 0), 2);
+                $msg = round((float) ($topTenantMsg[$tid] ?? 0), 2);
+                $phone = round((float) ($topTenantPhones[$tid] ?? 0) * ($daysElapsed / $daysInMonth), 2);
                 $tenantCosts[$tid] = [
-                    'ai_cost' => round((float) ($topTenantAi[$tid] ?? 0), 2),
-                    'voice_cost' => round((float) ($topTenantVoice[$tid] ?? 0), 2),
-                    'total' => round((float) ($topTenantAi[$tid] ?? 0) + (float) ($topTenantVoice[$tid] ?? 0), 2),
+                    'ai_cost' => $ai,
+                    'voice_cost' => $voice,
+                    'msg_cost' => $msg,
+                    'phone_cost' => $phone,
+                    'total' => round($ai + $voice + $msg + $phone, 2),
                 ];
             }
             uasort($tenantCosts, fn($a, $b) => $b['total'] <=> $a['total']);
@@ -244,11 +324,11 @@ class AdminReportController extends Controller
 
             $data['top_tenants'] = $topTenantsFormatted;
 
-            // Cost by AI model
+            // ── Cost by AI model ──
             $costByModel = AiApiMetric::withoutGlobalScopes()
                 ->where('created_at', '>=', $monthStart)
-                ->selectRaw("model, COUNT(*) as requests, SUM(cost_cents) as total_cost, SUM(input_tokens) as input_tokens, SUM(output_tokens) as output_tokens")
-                ->groupBy('model')
+                ->selectRaw("provider, model, COUNT(*) as requests, SUM(cost_cents) as total_cost, SUM(input_tokens) as input_tokens, SUM(output_tokens) as output_tokens")
+                ->groupBy('provider', 'model')
                 ->orderByRaw("SUM(cost_cents) DESC")
                 ->limit(15)
                 ->get()
@@ -256,29 +336,42 @@ class AdminReportController extends Controller
 
             $data['cost_by_model'] = $costByModel;
 
-            // Month-over-month comparison
+            // ── Month-over-month comparison ──
             $thisMonthAi = (float) AiApiMetric::withoutGlobalScopes()
-                ->where('created_at', '>=', $monthStart)
-                ->sum('cost_cents');
+                ->where('created_at', '>=', $monthStart)->sum('cost_cents');
             $thisMonthVoice = (float) Call::withoutGlobalScopes()
-                ->where('created_at', '>=', $monthStart)
-                ->sum('cost_cents');
-
-            $lastMonthStart = $now->copy()->subMonth()->startOfMonth();
-            $lastMonthEnd = $now->copy()->subMonth()->endOfMonth();
+                ->where('created_at', '>=', $monthStart)->sum('cost_cents');
+            $thisMonthMsg = (float) Conversation::withoutGlobalScopes()
+                ->where('created_at', '>=', $monthStart)->sum('cost_cents');
+            $thisMonthPhone = $phoneCostThisMonth;
+            $thisMonthTotal = $thisMonthAi + $thisMonthVoice + $thisMonthMsg + $thisMonthPhone;
 
             $lastMonthAi = (float) AiApiMetric::withoutGlobalScopes()
-                ->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])
-                ->sum('cost_cents');
+                ->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])->sum('cost_cents');
             $lastMonthVoice = (float) Call::withoutGlobalScopes()
-                ->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])
-                ->sum('cost_cents');
+                ->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])->sum('cost_cents');
+            $lastMonthMsg = (float) Conversation::withoutGlobalScopes()
+                ->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])->sum('cost_cents');
+            $lastMonthPhone = $phoneCostLastMonth;
+            $lastMonthTotal = $lastMonthAi + $lastMonthVoice + $lastMonthMsg + $lastMonthPhone;
 
             $data['mom'] = [
-                'this_month' => ['ai' => round($thisMonthAi, 2), 'voice' => round($thisMonthVoice, 2), 'total' => round($thisMonthAi + $thisMonthVoice, 2)],
-                'last_month' => ['ai' => round($lastMonthAi, 2), 'voice' => round($lastMonthVoice, 2), 'total' => round($lastMonthAi + $lastMonthVoice, 2)],
-                'change_pct' => ($lastMonthAi + $lastMonthVoice) > 0
-                    ? round((($thisMonthAi + $thisMonthVoice) - ($lastMonthAi + $lastMonthVoice)) / ($lastMonthAi + $lastMonthVoice) * 100, 1)
+                'this_month' => [
+                    'ai' => round($thisMonthAi, 2),
+                    'voice' => round($thisMonthVoice, 2),
+                    'msg' => round($thisMonthMsg, 2),
+                    'phone' => round($thisMonthPhone, 2),
+                    'total' => round($thisMonthTotal, 2),
+                ],
+                'last_month' => [
+                    'ai' => round($lastMonthAi, 2),
+                    'voice' => round($lastMonthVoice, 2),
+                    'msg' => round($lastMonthMsg, 2),
+                    'phone' => round($lastMonthPhone, 2),
+                    'total' => round($lastMonthTotal, 2),
+                ],
+                'change_pct' => $lastMonthTotal > 0
+                    ? round(($thisMonthTotal - $lastMonthTotal) / $lastMonthTotal * 100, 1)
                     : null,
             ];
 
@@ -614,7 +707,7 @@ class AdminReportController extends Controller
                 ->pluck('cost', 'tenant_id')
                 ->toArray();
 
-            // Voice cost per tenant
+            // Voice cost per tenant (calls)
             $voiceCostByTenant = Call::withoutGlobalScopes()
                 ->where('created_at', '>=', $monthStart)
                 ->whereNotNull('tenant_id')
@@ -623,10 +716,30 @@ class AdminReportController extends Controller
                 ->pluck('cost', 'tenant_id')
                 ->toArray();
 
+            // Message/conversation cost per tenant
+            $msgCostByTenant = Conversation::withoutGlobalScopes()
+                ->where('created_at', '>=', $monthStart)
+                ->selectRaw("tenant_id, SUM(cost_cents) as cost")
+                ->groupBy('tenant_id')
+                ->pluck('cost', 'tenant_id')
+                ->toArray();
+
+            // Phone number cost per tenant (prorated)
+            $daysInMonth = (int) $now->daysInMonth;
+            $daysElapsed = (int) $now->day;
+            $phoneCostByTenant = PhoneNumber::withoutGlobalScopes()
+                ->selectRaw("tenant_id, SUM(monthly_cost_cents) as cost")
+                ->groupBy('tenant_id')
+                ->pluck('cost', 'tenant_id')
+                ->map(fn($cost) => round((float) $cost * ($daysElapsed / $daysInMonth), 2))
+                ->toArray();
+
             $allTenantIds = array_unique(array_merge(
                 array_keys($revenueByTenant),
                 array_keys($aiCostByTenant),
-                array_keys($voiceCostByTenant)
+                array_keys($voiceCostByTenant),
+                array_keys($msgCostByTenant),
+                array_keys($phoneCostByTenant)
             ));
 
             $tenantNames = Tenant::whereIn('id', $allTenantIds)->pluck('name', 'id')->toArray();
@@ -639,7 +752,9 @@ class AdminReportController extends Controller
                 $revenue = round((float) ($revenueByTenant[$tid] ?? 0), 2);
                 $aiCost = round((float) ($aiCostByTenant[$tid] ?? 0), 2);
                 $voiceCost = round((float) ($voiceCostByTenant[$tid] ?? 0), 2);
-                $totalCost = $aiCost + $voiceCost;
+                $msgCost = round((float) ($msgCostByTenant[$tid] ?? 0), 2);
+                $phoneCost = round((float) ($phoneCostByTenant[$tid] ?? 0), 2);
+                $totalCost = $aiCost + $voiceCost + $msgCost + $phoneCost;
                 $margin = $revenue - $totalCost;
                 $marginPct = $revenue > 0 ? round(($margin / $revenue) * 100, 1) : ($totalCost > 0 ? -100 : 0);
 
@@ -652,6 +767,8 @@ class AdminReportController extends Controller
                     'revenue' => $revenue,
                     'ai_cost' => $aiCost,
                     'voice_cost' => $voiceCost,
+                    'msg_cost' => $msgCost,
+                    'phone_cost' => $phoneCost,
                     'total_cost' => $totalCost,
                     'margin' => $margin,
                     'margin_pct' => $marginPct,
@@ -822,5 +939,343 @@ class AdminReportController extends Controller
         }
 
         return $data;
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // Section 9: Latency Breakdown
+    // ─────────────────────────────────────────────────────────────────
+    private function getLatencyBreakdown(Carbon $now): array
+    {
+        $data = ['error' => null];
+
+        try {
+            // Per provider+model stats (last 7 days)
+            $perModel = AiApiMetric::withoutGlobalScopes()
+                ->where('created_at', '>=', $now->copy()->subDays(7))
+                ->selectRaw("
+                    provider,
+                    model,
+                    COUNT(*) as cnt,
+                    ROUND(AVG(response_time_ms)::numeric, 0) as avg_ms,
+                    ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY response_time_ms)::numeric, 0) as p50,
+                    ROUND(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY response_time_ms)::numeric, 0) as p95,
+                    ROUND(PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY response_time_ms)::numeric, 0) as p99,
+                    MAX(response_time_ms) as max_ms
+                ")
+                ->groupBy('provider', 'model')
+                ->orderByRaw("COUNT(*) DESC")
+                ->get()
+                ->map(fn($row) => [
+                    'provider' => $row->provider,
+                    'model' => $row->model,
+                    'cnt' => (int) $row->cnt,
+                    'avg_ms' => (int) $row->avg_ms,
+                    'p50' => (int) $row->p50,
+                    'p95' => (int) $row->p95,
+                    'p99' => (int) $row->p99,
+                    'max_ms' => (int) $row->max_ms,
+                ])
+                ->toArray();
+
+            $data['per_model'] = $perModel;
+
+            // Hourly latency trend (last 24h)
+            $hourlyTrend = AiApiMetric::withoutGlobalScopes()
+                ->where('created_at', '>=', $now->copy()->subHours(24))
+                ->selectRaw("
+                    date_trunc('hour', created_at) as hour,
+                    ROUND(AVG(response_time_ms)::numeric, 0) as avg_ms
+                ")
+                ->groupByRaw("date_trunc('hour', created_at)")
+                ->orderBy('hour')
+                ->get()
+                ->map(fn($row) => [
+                    'hour' => Carbon::parse($row->hour)->format('H:i'),
+                    'avg_ms' => (int) $row->avg_ms,
+                ])
+                ->toArray();
+
+            $data['hourly_trend'] = $hourlyTrend;
+            $data['max_hourly_ms'] = max(array_column($hourlyTrend, 'avg_ms') ?: [1]);
+
+            // Latency category distribution
+            $categories = DB::select("
+                SELECT
+                    CASE
+                        WHEN response_time_ms < 200 THEN 'fast'
+                        WHEN response_time_ms < 500 THEN 'normal'
+                        WHEN response_time_ms < 1000 THEN 'slow'
+                        ELSE 'very_slow'
+                    END as category,
+                    COUNT(*) as cnt
+                FROM ai_api_metrics
+                WHERE created_at >= ?
+                GROUP BY category
+            ", [$now->copy()->subDays(7)->toDateTimeString()]);
+
+            $categoryMap = ['fast' => 0, 'normal' => 0, 'slow' => 0, 'very_slow' => 0];
+            foreach ($categories as $cat) {
+                $categoryMap[$cat->category] = (int) $cat->cnt;
+            }
+            $categoryTotal = array_sum($categoryMap) ?: 1;
+
+            $data['categories'] = $categoryMap;
+            $data['category_total'] = $categoryTotal;
+
+        } catch (\Exception $e) {
+            $data['error'] = $e->getMessage();
+        }
+
+        return $data;
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // Section 10: Workers & Queue Status
+    // ─────────────────────────────────────────────────────────────────
+    private function getWorkerStatus(Carbon $now): array
+    {
+        $data = ['error' => null];
+
+        try {
+            // Horizon status
+            $data['horizon_status'] = Redis::get('horizon:status') ?? 'not running';
+            $masters = Redis::smembers('horizon:masters') ?? [];
+            $data['masters_count'] = count($masters);
+
+            // Supervisors
+            $supervisorKeys = Redis::smembers('horizon:supervisors') ?? [];
+            $supervisors = [];
+            foreach ($supervisorKeys as $s) {
+                $info = Redis::hmget('horizon:supervisor:' . $s, ['status', 'processes', 'queue', 'balance']);
+                $supervisors[] = [
+                    'name' => $s,
+                    'status' => $info[0] ?? 'unknown',
+                    'processes' => (int) ($info[1] ?? 0),
+                    'queue' => $info[2] ?? 'default',
+                    'balance' => $info[3] ?? 'simple',
+                ];
+            }
+            $data['supervisors'] = $supervisors;
+
+            // Queue sizes
+            $data['queue_sizes'] = [
+                'default' => (int) Redis::llen('queues:default'),
+                'high' => (int) Redis::llen('queues:high'),
+                'knowledge' => (int) Redis::llen('queues:knowledge'),
+            ];
+
+            // Workload from Horizon
+            try {
+                $workload = app(\Laravel\Horizon\Contracts\WorkloadRepository::class)->get();
+                $data['workload'] = collect($workload)->map(fn($w) => [
+                    'queue' => $w->name ?? $w->queue ?? '—',
+                    'length' => $w->length ?? 0,
+                    'wait' => $w->wait ?? 0,
+                    'processes' => $w->processes ?? 0,
+                ])->toArray();
+            } catch (\Exception $e) {
+                $data['workload'] = [];
+            }
+
+            // Horizon config
+            $data['horizon_config'] = config('horizon.environments.production', []);
+
+            // Failed jobs (last 24h)
+            $data['failed_jobs_24h'] = DB::table('failed_jobs')
+                ->where('failed_at', '>=', $now->copy()->subHours(24))
+                ->count();
+
+            // Jobs processed today (from AiApiMetric as proxy)
+            $data['jobs_processed_today'] = AiApiMetric::withoutGlobalScopes()
+                ->where('created_at', '>=', $now->copy()->startOfDay())
+                ->count();
+
+            // Job throughput last 6 hours
+            $throughput = AiApiMetric::withoutGlobalScopes()
+                ->where('created_at', '>=', $now->copy()->subHours(6))
+                ->selectRaw("date_trunc('hour', created_at) as hour, COUNT(*) as cnt")
+                ->groupByRaw("date_trunc('hour', created_at)")
+                ->orderBy('hour')
+                ->get()
+                ->map(fn($row) => [
+                    'hour' => Carbon::parse($row->hour)->format('H:i'),
+                    'cnt' => (int) $row->cnt,
+                ])
+                ->toArray();
+
+            $data['throughput'] = $throughput;
+            $data['max_throughput'] = max(array_column($throughput, 'cnt') ?: [1]);
+
+        } catch (\Exception $e) {
+            $data['error'] = $e->getMessage();
+        }
+
+        return $data;
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // Section 11: A/B Testing Overview
+    // ─────────────────────────────────────────────────────────────────
+    private function getAbTesting(Carbon $now): array
+    {
+        $data = ['error' => null];
+
+        try {
+            // All experiments with bot and assignment count
+            $experiments = AbExperiment::withoutGlobalScopes()
+                ->with('bot:id,name')
+                ->withCount('assignments')
+                ->orderByDesc('created_at')
+                ->limit(30)
+                ->get()
+                ->map(fn($exp) => [
+                    'id' => $exp->id,
+                    'name' => $exp->name,
+                    'bot_name' => $exp->bot->name ?? '—',
+                    'type' => $exp->type,
+                    'status' => $exp->status,
+                    'assignments_count' => $exp->assignments_count,
+                    'variants' => $exp->variants,
+                    'metric' => $exp->metric,
+                    'started_at' => $exp->started_at?->format('d/m/Y'),
+                    'ended_at' => $exp->ended_at?->format('d/m/Y'),
+                    'results' => $exp->results,
+                ])
+                ->toArray();
+
+            $data['experiments'] = $experiments;
+
+            // Assignment distribution per experiment
+            $assignmentDist = AbAssignment::selectRaw("experiment_id, variant_id, COUNT(*) as cnt")
+                ->groupBy('experiment_id', 'variant_id')
+                ->get()
+                ->groupBy('experiment_id')
+                ->map(fn($group) => $group->pluck('cnt', 'variant_id')->toArray())
+                ->toArray();
+
+            $data['assignment_distribution'] = $assignmentDist;
+
+            // BotPromptVersion stats
+            $promptVersionStats = BotPromptVersion::selectRaw("
+                    bot_id,
+                    COUNT(*) as version_count,
+                    SUM(CASE WHEN is_active THEN 1 ELSE 0 END) as active_count
+                ")
+                ->groupBy('bot_id')
+                ->get()
+                ->toArray();
+
+            $data['prompt_version_stats'] = $promptVersionStats;
+
+        } catch (\Exception $e) {
+            $data['error'] = $e->getMessage();
+        }
+
+        return $data;
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // Q&A Sampling Endpoint
+    // ─────────────────────────────────────────────────────────────────
+    public function sampleQA(Request $request): JsonResponse
+    {
+        try {
+            // Get 10 random inbound messages from last 7 days
+            $inboundMessages = Message::where('direction', 'inbound')
+                ->where('created_at', '>=', Carbon::now()->subDays(7))
+                ->whereNotNull('content')
+                ->where('content', '!=', '')
+                ->inRandomOrder()
+                ->limit(10)
+                ->get();
+
+            $pairs = [];
+
+            foreach ($inboundMessages as $inbound) {
+                // Get the next outbound message in the same conversation
+                $outbound = Message::where('conversation_id', $inbound->conversation_id)
+                    ->where('direction', 'outbound')
+                    ->where('id', '>', $inbound->id)
+                    ->orderBy('id')
+                    ->first();
+
+                if (!$outbound) {
+                    continue;
+                }
+
+                // Load conversation for bot name
+                $conversation = $inbound->conversation;
+                $botName = $conversation?->bot?->name ?? '—';
+
+                // Calculate quality score
+                $score = 0;
+                $breakdown = [];
+
+                // Response length (max 30 points)
+                $responseLen = mb_strlen($outbound->content ?? '');
+                $lengthScore = min(30, (int) ($responseLen / 10));
+                $score += $lengthScore;
+                $breakdown['length'] = $lengthScore;
+
+                // Has products in metadata (+20 points)
+                $outMeta = $outbound->metadata ?? [];
+                $hasProducts = !empty($outMeta['products'] ?? null);
+                $productScore = $hasProducts ? 20 : 0;
+                $score += $productScore;
+                $breakdown['products'] = $productScore;
+
+                // Response time (+20 points if < 3s)
+                $responseTimeSec = $outbound->created_at && $inbound->created_at
+                    ? $outbound->created_at->diffInSeconds($inbound->created_at)
+                    : null;
+                $timeScore = 0;
+                if ($responseTimeSec !== null) {
+                    if ($responseTimeSec < 3) {
+                        $timeScore = 20;
+                    } elseif ($responseTimeSec < 10) {
+                        $timeScore = 10;
+                    } elseif ($responseTimeSec < 30) {
+                        $timeScore = 5;
+                    }
+                }
+                $score += $timeScore;
+                $breakdown['response_time'] = $timeScore;
+
+                // Has detected intents (+15 points)
+                $hasIntents = !empty($outbound->detected_intents ?? $inbound->detected_intents ?? null);
+                $intentScore = $hasIntents ? 15 : 0;
+                $score += $intentScore;
+                $breakdown['intents'] = $intentScore;
+
+                // Has knowledge chunks used (+15 points)
+                $hasChunks = !empty($outbound->knowledge_chunks_used ?? null);
+                $chunkScore = $hasChunks ? 15 : 0;
+                $score += $chunkScore;
+                $breakdown['knowledge'] = $chunkScore;
+
+                $pairs[] = [
+                    'question' => $inbound->content,
+                    'answer' => $outbound->content,
+                    'bot_name' => $botName,
+                    'conversation_id' => $inbound->conversation_id,
+                    'response_time_sec' => $responseTimeSec,
+                    'score' => $score,
+                    'breakdown' => $breakdown,
+                    'created_at' => $inbound->created_at->format('d/m/Y H:i'),
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'pairs' => $pairs,
+                'count' => count($pairs),
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

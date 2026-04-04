@@ -299,6 +299,7 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
 
     // Reports
     Route::get('rapoarte', [AdminReportController::class, 'index'])->name('admin.reports.index');
+    Route::post('rapoarte/sample-qa', [AdminReportController::class, 'sampleQA'])->name('admin.reports.sample-qa');
 
     // System Health
     Route::get('/system', [\App\Http\Controllers\Admin\AdminSystemController::class, 'index'])->name('admin.system.index');

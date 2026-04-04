@@ -2,7 +2,7 @@
 @section('title', 'Control Center')
 @section('breadcrumb')<span class="text-white font-medium">Control Center</span>@endsection
 @section('content')
-<div class="space-y-8 max-w-[1400px]">
+<div class="space-y-8">
 
     {{-- ── Period selector ── --}}
     <div class="flex items-center justify-between flex-wrap gap-3">

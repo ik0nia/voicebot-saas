@@ -28,8 +28,314 @@
     </div>
 
     {{-- ============================================================= --}}
-    {{-- SECTION 1: SĂNĂTATE SERVICII EXTERNE --}}
+    {{-- LATENCY OVERVIEW (always visible, above tabs) --}}
     {{-- ============================================================= --}}
+    @if(!($latencyBreakdown['error'] ?? null))
+    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div class="px-6 py-3 border-b border-slate-100 flex items-center gap-3">
+            <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
+                <svg class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            </div>
+            <h2 class="text-sm font-semibold text-slate-900">Latency Overview</h2>
+            <span class="ml-auto text-[10px] text-slate-400">Ultimele 7 zile</span>
+        </div>
+        <div class="p-4 space-y-4">
+            {{-- Per model cards --}}
+            @if(count($latencyBreakdown['per_model'] ?? []) > 0)
+            <div class="flex gap-3 overflow-x-auto pb-1">
+                @foreach($latencyBreakdown['per_model'] as $lm)
+                <div class="bg-slate-50 rounded-lg p-3 border border-slate-100 min-w-[180px] shrink-0">
+                    <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">{{ $lm['provider'] }}/{{ Str::limit($lm['model'], 18) }}</p>
+                    <div class="flex items-baseline gap-2 mb-1">
+                        <span class="text-lg font-bold text-slate-900">{{ $lm['avg_ms'] }}<span class="text-xs font-normal text-slate-400">ms</span></span>
+                        <span class="text-[10px] text-slate-500">avg</span>
+                    </div>
+                    <div class="flex gap-3 text-[10px]">
+                        <span class="text-slate-500">p50: <span class="font-semibold text-slate-700">{{ $lm['p50'] }}</span></span>
+                        <span class="text-amber-600">p95: <span class="font-semibold">{{ $lm['p95'] }}</span></span>
+                        <span class="text-red-600">p99: <span class="font-semibold">{{ $lm['p99'] }}</span></span>
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-1">{{ number_format($lm['cnt']) }} cereri &bull; max: {{ number_format($lm['max_ms']) }}ms</p>
+                </div>
+                @endforeach
+            </div>
+            @endif
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {{-- Hourly trend (24h) mini sparkline --}}
+                @if(count($latencyBreakdown['hourly_trend'] ?? []) > 0)
+                <div>
+                    <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Latency medie pe oră (24h)</p>
+                    <div class="flex items-end gap-px h-12 bg-slate-50 rounded p-1 border border-slate-100">
+                        @foreach($latencyBreakdown['hourly_trend'] as $ht)
+                            @php
+                                $pct = $latencyBreakdown['max_hourly_ms'] > 0 ? ($ht['avg_ms'] / $latencyBreakdown['max_hourly_ms']) * 100 : 0;
+                                $barColor = $ht['avg_ms'] < 200 ? 'bg-green-400' : ($ht['avg_ms'] < 500 ? 'bg-cyan-400' : ($ht['avg_ms'] < 1000 ? 'bg-amber-400' : 'bg-red-500'));
+                            @endphp
+                            <div class="flex-1 {{ $barColor }} rounded-t-sm group relative cursor-pointer" style="height: {{ max($pct, 2) }}%">
+                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-slate-800 text-white text-[10px] rounded px-2 py-1 whitespace-nowrap z-10">
+                                    {{ $ht['hour'] }}: {{ $ht['avg_ms'] }}ms
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                    <div class="flex items-center gap-3 mt-1 text-[9px] text-slate-400">
+                        <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-sm bg-green-400"></span>&lt;200ms</span>
+                        <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-sm bg-cyan-400"></span>200-500ms</span>
+                        <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-sm bg-amber-400"></span>500ms-1s</span>
+                        <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-sm bg-red-500"></span>&gt;1s</span>
+                    </div>
+                </div>
+                @endif
+
+                {{-- Category distribution stacked bar --}}
+                <div>
+                    <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Distribuție latency (7 zile)</p>
+                    @php
+                        $cats = $latencyBreakdown['categories'] ?? ['fast' => 0, 'normal' => 0, 'slow' => 0, 'very_slow' => 0];
+                        $catTotal = $latencyBreakdown['category_total'] ?? 1;
+                        $fastPct = round(($cats['fast'] / $catTotal) * 100, 1);
+                        $normalPct = round(($cats['normal'] / $catTotal) * 100, 1);
+                        $slowPct = round(($cats['slow'] / $catTotal) * 100, 1);
+                        $verySlowPct = round(($cats['very_slow'] / $catTotal) * 100, 1);
+                    @endphp
+                    <div class="flex h-6 rounded-full overflow-hidden border border-slate-200">
+                        @if($fastPct > 0)<div class="bg-green-400 relative group cursor-pointer" style="width: {{ $fastPct }}%"><div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-slate-800 text-white text-[10px] rounded px-2 py-1 whitespace-nowrap z-10">Rapid (&lt;200ms): {{ number_format($cats['fast']) }} ({{ $fastPct }}%)</div></div>@endif
+                        @if($normalPct > 0)<div class="bg-cyan-400 relative group cursor-pointer" style="width: {{ $normalPct }}%"><div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-slate-800 text-white text-[10px] rounded px-2 py-1 whitespace-nowrap z-10">Normal (200-500ms): {{ number_format($cats['normal']) }} ({{ $normalPct }}%)</div></div>@endif
+                        @if($slowPct > 0)<div class="bg-amber-400 relative group cursor-pointer" style="width: {{ $slowPct }}%"><div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-slate-800 text-white text-[10px] rounded px-2 py-1 whitespace-nowrap z-10">Lent (500ms-1s): {{ number_format($cats['slow']) }} ({{ $slowPct }}%)</div></div>@endif
+                        @if($verySlowPct > 0)<div class="bg-red-500 relative group cursor-pointer" style="width: {{ $verySlowPct }}%"><div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-slate-800 text-white text-[10px] rounded px-2 py-1 whitespace-nowrap z-10">Foarte lent (&gt;1s): {{ number_format($cats['very_slow']) }} ({{ $verySlowPct }}%)</div></div>@endif
+                    </div>
+                    <div class="flex items-center gap-4 mt-2 text-[10px] text-slate-500">
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-green-400"></span>Rapid: {{ number_format($cats['fast']) }}</span>
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-cyan-400"></span>Normal: {{ number_format($cats['normal']) }}</span>
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-amber-400"></span>Lent: {{ number_format($cats['slow']) }}</span>
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-red-500"></span>F. Lent: {{ number_format($cats['very_slow']) }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @elseif($latencyBreakdown['error'] ?? null)
+    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">Latency: {{ $latencyBreakdown['error'] }}</div>
+    @endif
+
+    {{-- ============================================================= --}}
+    {{-- TAB NAVIGATION --}}
+    {{-- ============================================================= --}}
+    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div class="flex overflow-x-auto border-b border-slate-200" id="report-tabs">
+            @php
+                $tabs = [
+                    'costuri' => ['label' => 'Costuri', 'icon' => 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z'],
+                    'servicii' => ['label' => 'Servicii', 'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
+                    'utilizare' => ['label' => 'Utilizare', 'icon' => 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6'],
+                    'erori' => ['label' => 'Erori', 'icon' => 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z'],
+                    'handoff' => ['label' => 'Handoff', 'icon' => 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4'],
+                    'profit' => ['label' => 'Profit', 'icon' => 'M9 8h6m-5 0a3 3 0 110 6H9l3 3m-3-6h6m6 1a9 9 0 11-18 0 9 9 0 0118 0z'],
+                    'abtesting' => ['label' => 'A/B Testing', 'icon' => 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'],
+                    'knowledge' => ['label' => 'Knowledge', 'icon' => 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'],
+                    'integratii' => ['label' => 'Integrări', 'icon' => 'M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1'],
+                    'workers' => ['label' => 'Workers', 'icon' => 'M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01'],
+                ];
+            @endphp
+            @foreach($tabs as $tabId => $tab)
+                <button onclick="switchTab('{{ $tabId }}')"
+                    id="tab-btn-{{ $tabId }}"
+                    class="tab-btn flex items-center gap-2 px-5 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors
+                           {{ $loop->first ? 'border-indigo-600 text-indigo-700 bg-indigo-50/50' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50' }}">
+                    <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $tab['icon'] }}"/></svg>
+                    {{ $tab['label'] }}
+                </button>
+            @endforeach
+        </div>
+    </div>
+
+    {{-- ============================================================= --}}
+    {{-- TAB: COSTURI --}}
+    {{-- ============================================================= --}}
+    <div id="tab-costuri" class="tab-content">
+    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+                <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <h2 class="text-lg font-semibold text-slate-900">Analiză Costuri</h2>
+            <span class="ml-auto text-xs text-slate-400">AI + Conversații + Voice + Numere Telefon</span>
+        </div>
+        <div class="p-6">
+            @if($costAnalysis['error'])
+                <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{{ $costAnalysis['error'] }}</div>
+            @else
+                {{-- MoM comparison cards --}}
+                @php $mom = $costAnalysis['mom'] ?? []; @endphp
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Cost Luna Aceasta</p>
+                        <p class="text-3xl font-bold text-slate-900">{{ number_format(($mom['this_month']['total'] ?? 0) / 100, 2) }} <span class="text-base font-normal text-slate-400">RON</span></p>
+                        <div class="mt-3 space-y-1 text-xs">
+                            <div class="flex justify-between"><span class="text-slate-500">AI (API calls)</span><span class="font-medium text-slate-700">{{ number_format(($mom['this_month']['ai'] ?? 0) / 100, 2) }} RON</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Conversații</span><span class="font-medium text-slate-700">{{ number_format(($mom['this_month']['msg'] ?? 0) / 100, 2) }} RON</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Voice (apeluri)</span><span class="font-medium text-slate-700">{{ number_format(($mom['this_month']['voice'] ?? 0) / 100, 2) }} RON</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Numere telefon</span><span class="font-medium text-slate-700">{{ number_format(($mom['this_month']['phone'] ?? 0) / 100, 2) }} RON</span></div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Cost Luna Trecută</p>
+                        <p class="text-3xl font-bold text-slate-900">{{ number_format(($mom['last_month']['total'] ?? 0) / 100, 2) }} <span class="text-base font-normal text-slate-400">RON</span></p>
+                        <div class="mt-3 space-y-1 text-xs">
+                            <div class="flex justify-between"><span class="text-slate-500">AI (API calls)</span><span class="font-medium text-slate-700">{{ number_format(($mom['last_month']['ai'] ?? 0) / 100, 2) }} RON</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Conversații</span><span class="font-medium text-slate-700">{{ number_format(($mom['last_month']['msg'] ?? 0) / 100, 2) }} RON</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Voice (apeluri)</span><span class="font-medium text-slate-700">{{ number_format(($mom['last_month']['voice'] ?? 0) / 100, 2) }} RON</span></div>
+                            <div class="flex justify-between"><span class="text-slate-500">Numere telefon</span><span class="font-medium text-slate-700">{{ number_format(($mom['last_month']['phone'] ?? 0) / 100, 2) }} RON</span></div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Variație Lunară</p>
+                        @if($mom['change_pct'] !== null)
+                            <p class="text-3xl font-bold {{ $mom['change_pct'] > 0 ? 'text-red-600' : 'text-green-600' }}">
+                                {{ $mom['change_pct'] > 0 ? '+' : '' }}{{ number_format($mom['change_pct'], 1) }}%
+                            </p>
+                            <p class="text-xs text-slate-500 mt-2">{{ $mom['change_pct'] > 0 ? 'Creștere față de luna trecută' : 'Scădere față de luna trecută' }}</p>
+                        @else
+                            <p class="text-3xl font-bold text-slate-400">N/A</p>
+                            <p class="text-xs text-slate-500 mt-2">Nu există date luna trecută</p>
+                        @endif
+
+                        {{-- Phone numbers summary --}}
+                        @if(count($costAnalysis['phone_numbers'] ?? []) > 0)
+                            <div class="mt-4 pt-3 border-t border-slate-200">
+                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Numere Telefon Active</p>
+                                @foreach($costAnalysis['phone_numbers'] as $pn)
+                                    <div class="flex justify-between items-center text-xs mb-1">
+                                        <span class="text-slate-600 font-mono">{{ $pn['number'] }}</span>
+                                        <span class="font-medium text-slate-700">{{ number_format($pn['monthly_cost_cents'] / 100, 2) }} RON/lună</span>
+                                    </div>
+                                @endforeach
+                                <div class="flex justify-between items-center text-xs mt-2 pt-1 border-t border-slate-100 font-semibold">
+                                    <span class="text-slate-600">Total lunar numere</span>
+                                    <span class="text-slate-900">{{ number_format(($costAnalysis['phone_monthly_total'] ?? 0) / 100, 2) }} RON</span>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Daily cost chart (30 days) --}}
+                <div class="mb-6">
+                    <h4 class="text-sm font-medium text-slate-700 mb-3">Cost zilnic — ultimele 30 zile</h4>
+                    <div class="flex items-end gap-[2px] h-28 bg-slate-50 rounded-lg p-2 border border-slate-100">
+                        @foreach($costAnalysis['daily_costs'] as $dc)
+                            @php
+                                $pct = $costAnalysis['max_daily_cost'] > 0 ? ($dc['total'] / $costAnalysis['max_daily_cost']) * 100 : 0;
+                                $phonePct = $dc['total'] > 0 ? ($dc['phone_cost'] / $dc['total']) * $pct : 0;
+                                $voicePct = $dc['total'] > 0 ? ($dc['voice_cost'] / $dc['total']) * $pct : 0;
+                                $msgPct = $dc['total'] > 0 ? ($dc['msg_cost'] / $dc['total']) * $pct : 0;
+                                $aiPct = max($pct - $phonePct - $voicePct - $msgPct, 0);
+                            @endphp
+                            <div class="flex-1 flex flex-col justify-end group relative cursor-pointer min-w-[4px]" style="height: 100%">
+                                <div class="bg-blue-500 rounded-t-sm" style="height: {{ max($aiPct, 0) }}%"></div>
+                                <div class="bg-indigo-400" style="height: {{ max($msgPct, 0) }}%"></div>
+                                <div class="bg-purple-500" style="height: {{ max($voicePct, 0) }}%"></div>
+                                <div class="bg-amber-500" style="height: {{ max($phonePct, 0) }}%"></div>
+                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[11px] rounded-lg px-3 py-2 whitespace-nowrap z-20 shadow-lg">
+                                    <p class="font-semibold mb-1">{{ $dc['day'] }}</p>
+                                    <p>AI: {{ number_format($dc['ai_cost'] / 100, 3) }} RON</p>
+                                    <p>Conversații: {{ number_format($dc['msg_cost'] / 100, 3) }} RON</p>
+                                    <p>Voice: {{ number_format($dc['voice_cost'] / 100, 3) }} RON</p>
+                                    <p>Numere: {{ number_format($dc['phone_cost'] / 100, 2) }} RON</p>
+                                    <p class="font-semibold border-t border-slate-700 mt-1 pt-1">Total: {{ number_format($dc['total'] / 100, 2) }} RON</p>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                    <div class="flex items-center gap-4 mt-2 text-xs text-slate-500">
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-blue-500"></span>AI API</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-indigo-400"></span>Conversații</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-purple-500"></span>Voice</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-amber-500"></span>Numere Tel.</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {{-- Top 10 tenants by cost --}}
+                    <div>
+                        <h4 class="text-sm font-medium text-slate-700 mb-3">Top 10 Tenanți — Cost luna aceasta</h4>
+                        @if(count($costAnalysis['top_tenants'] ?? []) > 0)
+                            <div class="overflow-x-auto rounded-lg border border-slate-200">
+                                <table class="w-full text-sm">
+                                    <thead class="bg-slate-50">
+                                        <tr>
+                                            <th class="text-left px-3 py-2.5 text-xs font-semibold text-slate-600">Tenant</th>
+                                            <th class="text-right px-3 py-2.5 text-xs font-semibold text-slate-600">AI</th>
+                                            <th class="text-right px-3 py-2.5 text-xs font-semibold text-slate-600">Conv.</th>
+                                            <th class="text-right px-3 py-2.5 text-xs font-semibold text-slate-600">Voice</th>
+                                            <th class="text-right px-3 py-2.5 text-xs font-semibold text-slate-600">Tel.</th>
+                                            <th class="text-right px-3 py-2.5 text-xs font-semibold text-slate-600">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100">
+                                        @foreach($costAnalysis['top_tenants'] as $t)
+                                            <tr class="hover:bg-slate-50">
+                                                <td class="px-3 py-2 font-medium text-slate-800">{{ Str::limit($t['tenant_name'], 20) }}</td>
+                                                <td class="px-3 py-2 text-right text-slate-600 text-xs">{{ number_format($t['ai_cost'] / 100, 2) }}</td>
+                                                <td class="px-3 py-2 text-right text-slate-600 text-xs">{{ number_format(($t['msg_cost'] ?? 0) / 100, 2) }}</td>
+                                                <td class="px-3 py-2 text-right text-slate-600 text-xs">{{ number_format($t['voice_cost'] / 100, 2) }}</td>
+                                                <td class="px-3 py-2 text-right text-slate-600 text-xs">{{ number_format(($t['phone_cost'] ?? 0) / 100, 2) }}</td>
+                                                <td class="px-3 py-2 text-right font-bold text-slate-900">{{ number_format($t['total'] / 100, 2) }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @else
+                            <p class="text-sm text-slate-400">Nu există date.</p>
+                        @endif
+                    </div>
+
+                    {{-- Cost by AI model --}}
+                    <div>
+                        <h4 class="text-sm font-medium text-slate-700 mb-3">Cost per Model AI — luna aceasta</h4>
+                        @if(count($costAnalysis['cost_by_model'] ?? []) > 0)
+                            <div class="overflow-x-auto rounded-lg border border-slate-200">
+                                <table class="w-full text-sm">
+                                    <thead class="bg-slate-50">
+                                        <tr>
+                                            <th class="text-left px-3 py-2.5 text-xs font-semibold text-slate-600">Provider / Model</th>
+                                            <th class="text-right px-3 py-2.5 text-xs font-semibold text-slate-600">Cereri</th>
+                                            <th class="text-right px-3 py-2.5 text-xs font-semibold text-slate-600">Tokeni</th>
+                                            <th class="text-right px-3 py-2.5 text-xs font-semibold text-slate-600">Cost</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100">
+                                        @foreach($costAnalysis['cost_by_model'] as $m)
+                                            <tr class="hover:bg-slate-50">
+                                                <td class="px-3 py-2 text-slate-800 text-xs">
+                                                    <span class="font-medium">{{ $m['provider'] ?? '—' }}</span>
+                                                    <span class="text-slate-400">/</span>
+                                                    <span class="font-mono">{{ $m['model'] ?? '—' }}</span>
+                                                </td>
+                                                <td class="px-3 py-2 text-right text-slate-600">{{ number_format($m['requests']) }}</td>
+                                                <td class="px-3 py-2 text-right text-slate-600 text-xs">{{ number_format(($m['input_tokens'] ?? 0) + ($m['output_tokens'] ?? 0)) }}</td>
+                                                <td class="px-3 py-2 text-right font-bold text-slate-900">{{ number_format(($m['total_cost'] ?? 0) / 100, 3) }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @else
+                            <p class="text-sm text-slate-400">Nu există date.</p>
+                        @endif
+                    </div>
+                </div>
+            @endif
+        </div>
+    </div>
+    </div>
+
+    {{-- ============================================================= --}}
+    {{-- TAB: SERVICII --}}
+    {{-- ============================================================= --}}
+    <div id="tab-servicii" class="tab-content hidden">
     <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
             <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
@@ -107,154 +413,12 @@
             @endif
         </div>
     </div>
-
-    {{-- ============================================================= --}}
-    {{-- SECTION 2: ANALIZĂ COSTURI --}}
-    {{-- ============================================================= --}}
-    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <div class="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-                <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            </div>
-            <h2 class="text-lg font-semibold text-slate-900">Analiză Costuri</h2>
-        </div>
-        <div class="p-6">
-            @if($costAnalysis['error'])
-                <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{{ $costAnalysis['error'] }}</div>
-            @else
-                {{-- MoM comparison cards --}}
-                @php $mom = $costAnalysis['mom'] ?? []; @endphp
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
-                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Cost Luna Aceasta</p>
-                        <p class="text-2xl font-bold text-slate-900">{{ number_format(($mom['this_month']['total'] ?? 0) / 100, 2) }} <span class="text-sm font-normal text-slate-500">RON</span></p>
-                        <div class="flex items-center gap-2 mt-1 text-xs">
-                            <span class="text-slate-500">AI: {{ number_format(($mom['this_month']['ai'] ?? 0) / 100, 2) }}</span>
-                            <span class="text-slate-300">|</span>
-                            <span class="text-slate-500">Voice: {{ number_format(($mom['this_month']['voice'] ?? 0) / 100, 2) }}</span>
-                        </div>
-                    </div>
-                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
-                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Cost Luna Trecută</p>
-                        <p class="text-2xl font-bold text-slate-900">{{ number_format(($mom['last_month']['total'] ?? 0) / 100, 2) }} <span class="text-sm font-normal text-slate-500">RON</span></p>
-                        <div class="flex items-center gap-2 mt-1 text-xs">
-                            <span class="text-slate-500">AI: {{ number_format(($mom['last_month']['ai'] ?? 0) / 100, 2) }}</span>
-                            <span class="text-slate-300">|</span>
-                            <span class="text-slate-500">Voice: {{ number_format(($mom['last_month']['voice'] ?? 0) / 100, 2) }}</span>
-                        </div>
-                    </div>
-                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
-                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Variație Lunară</p>
-                        @if($mom['change_pct'] !== null)
-                            <p class="text-2xl font-bold {{ $mom['change_pct'] > 0 ? 'text-red-600' : 'text-green-600' }}">
-                                {{ $mom['change_pct'] > 0 ? '+' : '' }}{{ number_format($mom['change_pct'], 1) }}%
-                            </p>
-                            <p class="text-xs text-slate-500 mt-1">{{ $mom['change_pct'] > 0 ? 'Creștere față de luna trecută' : 'Scădere față de luna trecută' }}</p>
-                        @else
-                            <p class="text-2xl font-bold text-slate-400">N/A</p>
-                            <p class="text-xs text-slate-500 mt-1">Nu există date luna trecută</p>
-                        @endif
-                    </div>
-                </div>
-
-                {{-- Daily cost chart (30 days) --}}
-                <div class="mb-6">
-                    <h4 class="text-sm font-medium text-slate-700 mb-3">Cost zilnic — ultimele 30 zile (cenți)</h4>
-                    <div class="flex items-end gap-px h-24">
-                        @foreach($costAnalysis['daily_costs'] as $dc)
-                            @php
-                                $pct = $costAnalysis['max_daily_cost'] > 0 ? ($dc['total'] / $costAnalysis['max_daily_cost']) * 100 : 0;
-                                $aiPct = $dc['total'] > 0 ? ($dc['ai_cost'] / $dc['total']) * $pct : 0;
-                                $voicePct = $pct - $aiPct;
-                            @endphp
-                            <div class="flex-1 flex flex-col justify-end group relative cursor-pointer" style="height: 100%">
-                                <div class="bg-blue-500 rounded-t-sm" style="height: {{ max($aiPct, 0) }}%"></div>
-                                <div class="bg-purple-400" style="height: {{ max($voicePct, 0) }}%"></div>
-                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-slate-800 text-white text-[10px] rounded px-2 py-1 whitespace-nowrap z-10">
-                                    {{ $dc['day'] }}<br>
-                                    AI: {{ number_format($dc['ai_cost'] / 100, 2) }} RON<br>
-                                    Voice: {{ number_format($dc['voice_cost'] / 100, 2) }} RON<br>
-                                    Total: {{ number_format($dc['total'] / 100, 2) }} RON
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                    <div class="flex items-center gap-3 mt-2 text-[10px] text-slate-400">
-                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-blue-500"></span>AI</span>
-                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-purple-400"></span>Voice</span>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {{-- Top 10 tenants by cost --}}
-                    <div>
-                        <h4 class="text-sm font-medium text-slate-700 mb-3">Top 10 Tenanți — Cost luna aceasta</h4>
-                        @if(count($costAnalysis['top_tenants'] ?? []) > 0)
-                            <div class="overflow-hidden rounded-lg border border-slate-200">
-                                <table class="w-full text-sm">
-                                    <thead class="bg-slate-50">
-                                        <tr>
-                                            <th class="text-left px-3 py-2 text-xs font-semibold text-slate-500">Tenant</th>
-                                            <th class="text-right px-3 py-2 text-xs font-semibold text-slate-500">AI</th>
-                                            <th class="text-right px-3 py-2 text-xs font-semibold text-slate-500">Voice</th>
-                                            <th class="text-right px-3 py-2 text-xs font-semibold text-slate-500">Total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-slate-100">
-                                        @foreach($costAnalysis['top_tenants'] as $t)
-                                            <tr class="hover:bg-slate-50">
-                                                <td class="px-3 py-2 font-medium text-slate-700">{{ Str::limit($t['tenant_name'], 25) }}</td>
-                                                <td class="px-3 py-2 text-right text-slate-600">{{ number_format($t['ai_cost'] / 100, 2) }}</td>
-                                                <td class="px-3 py-2 text-right text-slate-600">{{ number_format($t['voice_cost'] / 100, 2) }}</td>
-                                                <td class="px-3 py-2 text-right font-semibold text-slate-900">{{ number_format($t['total'] / 100, 2) }}</td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        @else
-                            <p class="text-sm text-slate-400">Nu există date.</p>
-                        @endif
-                    </div>
-
-                    {{-- Cost by AI model --}}
-                    <div>
-                        <h4 class="text-sm font-medium text-slate-700 mb-3">Cost per Model AI — luna aceasta</h4>
-                        @if(count($costAnalysis['cost_by_model'] ?? []) > 0)
-                            <div class="overflow-hidden rounded-lg border border-slate-200">
-                                <table class="w-full text-sm">
-                                    <thead class="bg-slate-50">
-                                        <tr>
-                                            <th class="text-left px-3 py-2 text-xs font-semibold text-slate-500">Model</th>
-                                            <th class="text-right px-3 py-2 text-xs font-semibold text-slate-500">Cereri</th>
-                                            <th class="text-right px-3 py-2 text-xs font-semibold text-slate-500">Tokeni</th>
-                                            <th class="text-right px-3 py-2 text-xs font-semibold text-slate-500">Cost</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-slate-100">
-                                        @foreach($costAnalysis['cost_by_model'] as $m)
-                                            <tr class="hover:bg-slate-50">
-                                                <td class="px-3 py-2 font-medium text-slate-700 text-xs">{{ $m['model'] ?? '—' }}</td>
-                                                <td class="px-3 py-2 text-right text-slate-600">{{ number_format($m['requests']) }}</td>
-                                                <td class="px-3 py-2 text-right text-slate-600 text-xs">{{ number_format(($m['input_tokens'] ?? 0) + ($m['output_tokens'] ?? 0)) }}</td>
-                                                <td class="px-3 py-2 text-right font-semibold text-slate-900">{{ number_format(($m['total_cost'] ?? 0) / 100, 2) }}</td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        @else
-                            <p class="text-sm text-slate-400">Nu există date.</p>
-                        @endif
-                    </div>
-                </div>
-            @endif
-        </div>
     </div>
 
     {{-- ============================================================= --}}
-    {{-- SECTION 3: TENDINȚE UTILIZARE --}}
+    {{-- TAB: UTILIZARE --}}
     {{-- ============================================================= --}}
+    <div id="tab-utilizare" class="tab-content hidden">
     <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
             <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
@@ -362,13 +526,45 @@
                         </div>
                     </div>
                 </div>
+
+                {{-- Q&A Sampling Section --}}
+                <div class="mt-8 pt-6 border-t border-slate-200">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h4 class="text-sm font-semibold text-slate-700">Sampling Calitate Q&A</h4>
+                            <p class="text-xs text-slate-400 mt-0.5">Generează 10 perechi aleatoare Întrebare & Răspuns cu scor de calitate</p>
+                        </div>
+                        <button onclick="fetchQASamples()" id="qa-sample-btn"
+                            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            <span id="qa-sample-btn-text">Generează 10 Întrebări & Răspunsuri</span>
+                        </button>
+                    </div>
+
+                    {{-- Loading spinner --}}
+                    <div id="qa-loading" class="hidden flex items-center justify-center py-8">
+                        <svg class="animate-spin h-8 w-8 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span class="ml-3 text-sm text-slate-500">Se generează sample-urile...</span>
+                    </div>
+
+                    {{-- Results container --}}
+                    <div id="qa-results" class="hidden space-y-3"></div>
+
+                    {{-- Error container --}}
+                    <div id="qa-error" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm"></div>
+                </div>
             @endif
         </div>
     </div>
+    </div>
 
     {{-- ============================================================= --}}
-    {{-- SECTION 4: ANALIZĂ ERORI --}}
+    {{-- TAB: ERORI --}}
     {{-- ============================================================= --}}
+    <div id="tab-erori" class="tab-content hidden">
     <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
             <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center">
@@ -478,10 +674,12 @@
             @endif
         </div>
     </div>
+    </div>
 
     {{-- ============================================================= --}}
-    {{-- SECTION 5: HANDOFF & CALLBACK --}}
+    {{-- TAB: HANDOFF --}}
     {{-- ============================================================= --}}
+    <div id="tab-handoff" class="tab-content hidden">
     <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
             <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center">
@@ -659,10 +857,12 @@
             @endif
         </div>
     </div>
+    </div>
 
     {{-- ============================================================= --}}
-    {{-- SECTION 6: PROFITABILITATE PER TENANT --}}
+    {{-- TAB: PROFIT --}}
     {{-- ============================================================= --}}
+    <div id="tab-profit" class="tab-content hidden">
     <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
             <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
@@ -701,25 +901,29 @@
                         <table class="w-full text-sm">
                             <thead class="bg-slate-50">
                                 <tr>
-                                    <th class="text-left px-3 py-2 text-xs font-semibold text-slate-500">#</th>
-                                    <th class="text-left px-3 py-2 text-xs font-semibold text-slate-500">Tenant</th>
-                                    <th class="text-right px-3 py-2 text-xs font-semibold text-slate-500">Venituri</th>
-                                    <th class="text-right px-3 py-2 text-xs font-semibold text-slate-500">Cost AI</th>
-                                    <th class="text-right px-3 py-2 text-xs font-semibold text-slate-500">Cost Voice</th>
-                                    <th class="text-right px-3 py-2 text-xs font-semibold text-slate-500">Cost Total</th>
-                                    <th class="text-right px-3 py-2 text-xs font-semibold text-slate-500">Marjă</th>
-                                    <th class="text-right px-3 py-2 text-xs font-semibold text-slate-500">%</th>
+                                    <th class="text-left px-3 py-2.5 text-xs font-semibold text-slate-600">#</th>
+                                    <th class="text-left px-3 py-2.5 text-xs font-semibold text-slate-600">Tenant</th>
+                                    <th class="text-right px-3 py-2.5 text-xs font-semibold text-slate-600">Venituri</th>
+                                    <th class="text-right px-3 py-2.5 text-xs font-semibold text-slate-600">AI</th>
+                                    <th class="text-right px-3 py-2.5 text-xs font-semibold text-slate-600">Conv.</th>
+                                    <th class="text-right px-3 py-2.5 text-xs font-semibold text-slate-600">Voice</th>
+                                    <th class="text-right px-3 py-2.5 text-xs font-semibold text-slate-600">Tel.</th>
+                                    <th class="text-right px-3 py-2.5 text-xs font-semibold text-slate-600">Cost Total</th>
+                                    <th class="text-right px-3 py-2.5 text-xs font-semibold text-slate-600">Marjă</th>
+                                    <th class="text-right px-3 py-2.5 text-xs font-semibold text-slate-600">%</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
                                 @foreach($profitability['tenants'] as $idx => $pt)
                                     <tr class="hover:bg-slate-50">
                                         <td class="px-3 py-2 text-slate-400">{{ $idx + 1 }}</td>
-                                        <td class="px-3 py-2 font-medium text-slate-700">{{ Str::limit($pt['tenant_name'], 30) }}</td>
+                                        <td class="px-3 py-2 font-medium text-slate-800">{{ Str::limit($pt['tenant_name'], 25) }}</td>
                                         <td class="px-3 py-2 text-right text-emerald-700 font-medium">{{ number_format($pt['revenue'] / 100, 2) }}</td>
-                                        <td class="px-3 py-2 text-right text-slate-600">{{ number_format($pt['ai_cost'] / 100, 2) }}</td>
-                                        <td class="px-3 py-2 text-right text-slate-600">{{ number_format($pt['voice_cost'] / 100, 2) }}</td>
-                                        <td class="px-3 py-2 text-right text-red-600">{{ number_format($pt['total_cost'] / 100, 2) }}</td>
+                                        <td class="px-3 py-2 text-right text-slate-600 text-xs">{{ number_format($pt['ai_cost'] / 100, 2) }}</td>
+                                        <td class="px-3 py-2 text-right text-slate-600 text-xs">{{ number_format(($pt['msg_cost'] ?? 0) / 100, 2) }}</td>
+                                        <td class="px-3 py-2 text-right text-slate-600 text-xs">{{ number_format($pt['voice_cost'] / 100, 2) }}</td>
+                                        <td class="px-3 py-2 text-right text-slate-600 text-xs">{{ number_format(($pt['phone_cost'] ?? 0) / 100, 2) }}</td>
+                                        <td class="px-3 py-2 text-right text-red-600 font-medium">{{ number_format($pt['total_cost'] / 100, 2) }}</td>
                                         <td class="px-3 py-2 text-right font-semibold {{ $pt['margin'] >= 0 ? 'text-emerald-700' : 'text-red-700' }}">{{ number_format($pt['margin'] / 100, 2) }}</td>
                                         <td class="px-3 py-2 text-right">
                                             <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium {{ $pt['margin_pct'] >= 50 ? 'bg-emerald-100 text-emerald-800' : ($pt['margin_pct'] >= 0 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800') }}">
@@ -737,14 +941,16 @@
             @endif
         </div>
     </div>
+    </div>
 
     {{-- ============================================================= --}}
-    {{-- SECTION 7: KNOWLEDGE PIPELINE --}}
+    {{-- TAB: KNOWLEDGE --}}
     {{-- ============================================================= --}}
+    <div id="tab-knowledge" class="tab-content hidden">
     <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
             <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center">
-                <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+                <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
             </div>
             <h2 class="text-lg font-semibold text-slate-900">Knowledge Pipeline</h2>
         </div>
@@ -868,10 +1074,12 @@
             @endif
         </div>
     </div>
+    </div>
 
     {{-- ============================================================= --}}
-    {{-- SECTION 8: WEBHOOK & INTEGRATION HEALTH --}}
+    {{-- TAB: INTEGRĂRI --}}
     {{-- ============================================================= --}}
+    <div id="tab-integratii" class="tab-content hidden">
     <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
             <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center">
@@ -981,6 +1189,279 @@
             @endif
         </div>
     </div>
+    </div>
+
+    {{-- ============================================================= --}}
+    {{-- TAB: A/B TESTING --}}
+    {{-- ============================================================= --}}
+    <div id="tab-abtesting" class="tab-content hidden">
+    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-yellow-500 to-orange-600 flex items-center justify-center">
+                <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            </div>
+            <h2 class="text-lg font-semibold text-slate-900">A/B Testing</h2>
+        </div>
+        <div class="p-6">
+            @if($abTesting['error'] ?? null)
+                <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{{ $abTesting['error'] }}</div>
+            @elseif(count($abTesting['experiments'] ?? []) === 0)
+                <div class="text-center py-8">
+                    <svg class="w-12 h-12 text-slate-300 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    <p class="text-sm text-slate-500">Nu există experimente active.</p>
+                    <p class="text-xs text-slate-400 mt-1">Creați un experiment A/B din pagina de configurare a botului.</p>
+                </div>
+            @else
+                {{-- Experiments table --}}
+                <div class="overflow-x-auto rounded-lg border border-slate-200 mb-6">
+                    <table class="w-full text-sm">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="text-left px-3 py-2.5 text-xs font-semibold text-slate-600">Experiment</th>
+                                <th class="text-left px-3 py-2.5 text-xs font-semibold text-slate-600">Bot</th>
+                                <th class="text-left px-3 py-2.5 text-xs font-semibold text-slate-600">Tip</th>
+                                <th class="text-left px-3 py-2.5 text-xs font-semibold text-slate-600">Status</th>
+                                <th class="text-right px-3 py-2.5 text-xs font-semibold text-slate-600">Atribuiri</th>
+                                <th class="text-left px-3 py-2.5 text-xs font-semibold text-slate-600">Metrică</th>
+                                <th class="text-left px-3 py-2.5 text-xs font-semibold text-slate-600">Început</th>
+                                <th class="text-left px-3 py-2.5 text-xs font-semibold text-slate-600">Sfârșit</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            @foreach($abTesting['experiments'] as $exp)
+                                @php
+                                    $statusColors = match($exp['status'] ?? '') {
+                                        'running' => 'bg-green-100 text-green-800',
+                                        'paused' => 'bg-amber-100 text-amber-800',
+                                        'completed' => 'bg-blue-100 text-blue-800',
+                                        'draft' => 'bg-slate-100 text-slate-600',
+                                        default => 'bg-slate-100 text-slate-600',
+                                    };
+                                @endphp
+                                <tr class="hover:bg-slate-50">
+                                    <td class="px-3 py-2 font-medium text-slate-800">{{ Str::limit($exp['name'], 30) }}</td>
+                                    <td class="px-3 py-2 text-slate-600 text-xs">{{ Str::limit($exp['bot_name'], 20) }}</td>
+                                    <td class="px-3 py-2 text-xs text-slate-500">{{ $exp['type'] ?? '—' }}</td>
+                                    <td class="px-3 py-2">
+                                        <span class="inline-flex px-2 py-0.5 rounded text-[10px] font-medium {{ $statusColors }}">{{ $exp['status'] ?? '—' }}</span>
+                                    </td>
+                                    <td class="px-3 py-2 text-right font-semibold text-slate-900">{{ number_format($exp['assignments_count'] ?? 0) }}</td>
+                                    <td class="px-3 py-2 text-xs text-slate-500 font-mono">{{ $exp['metric'] ?? '—' }}</td>
+                                    <td class="px-3 py-2 text-xs text-slate-500">{{ $exp['started_at'] ?? '—' }}</td>
+                                    <td class="px-3 py-2 text-xs text-slate-500">{{ $exp['ended_at'] ?? '—' }}</td>
+                                </tr>
+
+                                {{-- Assignment distribution for this experiment --}}
+                                @if(!empty($abTesting['assignment_distribution'][$exp['id']] ?? []))
+                                    <tr class="bg-slate-50/50">
+                                        <td colspan="8" class="px-6 py-2">
+                                            <div class="flex items-center gap-4 text-[10px]">
+                                                <span class="text-slate-500 font-medium">Distribuție variante:</span>
+                                                @foreach($abTesting['assignment_distribution'][$exp['id']] as $variantId => $cnt)
+                                                    <span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-medium">Varianta {{ $variantId }}: {{ $cnt }}</span>
+                                                @endforeach
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endif
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+
+                {{-- Prompt version stats --}}
+                @if(count($abTesting['prompt_version_stats'] ?? []) > 0)
+                    <div>
+                        <h4 class="text-sm font-medium text-slate-700 mb-3">Versiuni Prompt per Bot</h4>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+                            @foreach($abTesting['prompt_version_stats'] as $pv)
+                                <div class="bg-slate-50 rounded-lg p-3 border border-slate-100 text-center">
+                                    <p class="text-[10px] text-slate-500">Bot #{{ $pv['bot_id'] }}</p>
+                                    <p class="text-lg font-bold text-slate-900">{{ $pv['version_count'] }}</p>
+                                    <p class="text-[10px] text-slate-400">{{ $pv['active_count'] }} active</p>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+            @endif
+        </div>
+    </div>
+    </div>
+
+    {{-- ============================================================= --}}
+    {{-- TAB: WORKERS --}}
+    {{-- ============================================================= --}}
+    <div id="tab-workers" class="tab-content hidden">
+    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-600 to-zinc-800 flex items-center justify-center">
+                <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg>
+            </div>
+            <h2 class="text-lg font-semibold text-slate-900">Workers & Cozi</h2>
+        </div>
+        <div class="p-6">
+            @if($workerStatus['error'] ?? null)
+                <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{{ $workerStatus['error'] }}</div>
+            @else
+                {{-- Horizon status + quick stats --}}
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
+                    {{-- Horizon status --}}
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Horizon</p>
+                        @php
+                            $horizonColor = match($workerStatus['horizon_status']) {
+                                'running' => 'bg-green-500',
+                                'paused' => 'bg-amber-500',
+                                default => 'bg-red-500',
+                            };
+                            $horizonLabel = match($workerStatus['horizon_status']) {
+                                'running' => 'Activ',
+                                'paused' => 'Pauză',
+                                default => 'Oprit',
+                            };
+                        @endphp
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full {{ $horizonColor }} animate-pulse"></span>
+                            <span class="text-lg font-bold text-slate-900">{{ $horizonLabel }}</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-1">{{ $workerStatus['masters_count'] ?? 0 }} master(s)</p>
+                    </div>
+
+                    {{-- Queue sizes --}}
+                    @foreach($workerStatus['queue_sizes'] ?? [] as $queueName => $size)
+                        @php
+                            $qColor = $size === 0 ? 'bg-green-50 border-green-100' : ($size <= 10 ? 'bg-amber-50 border-amber-100' : 'bg-red-50 border-red-100');
+                            $qText = $size === 0 ? 'text-green-900' : ($size <= 10 ? 'text-amber-900' : 'text-red-900');
+                            $qDot = $size === 0 ? 'bg-green-500' : ($size <= 10 ? 'bg-amber-500' : 'bg-red-500');
+                        @endphp
+                        <div class="{{ $qColor }} rounded-xl p-4 border">
+                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Coadă: {{ $queueName }}</p>
+                            <div class="flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full {{ $qDot }}"></span>
+                                <span class="text-lg font-bold {{ $qText }}">{{ number_format($size) }}</span>
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-1">joburi în așteptare</p>
+                        </div>
+                    @endforeach
+
+                    {{-- Failed jobs 24h --}}
+                    <div class="{{ ($workerStatus['failed_jobs_24h'] ?? 0) > 0 ? 'bg-red-50 border-red-100' : 'bg-green-50 border-green-100' }} rounded-xl p-4 border">
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Eșuate (24h)</p>
+                        <p class="text-lg font-bold {{ ($workerStatus['failed_jobs_24h'] ?? 0) > 0 ? 'text-red-900' : 'text-green-900' }}">{{ $workerStatus['failed_jobs_24h'] ?? 0 }}</p>
+                        <p class="text-[10px] text-slate-400 mt-1">joburi eșuate</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {{-- Supervisors --}}
+                    <div>
+                        <h4 class="text-sm font-medium text-slate-700 mb-3">Supervisori</h4>
+                        @if(count($workerStatus['supervisors'] ?? []) > 0)
+                            <div class="space-y-2">
+                                @foreach($workerStatus['supervisors'] as $sv)
+                                    @php
+                                        $svColor = match($sv['status']) {
+                                            'running' => 'border-green-200 bg-green-50/50',
+                                            'paused' => 'border-amber-200 bg-amber-50/50',
+                                            default => 'border-slate-200 bg-slate-50',
+                                        };
+                                        $svDot = match($sv['status']) {
+                                            'running' => 'bg-green-500',
+                                            'paused' => 'bg-amber-500',
+                                            default => 'bg-slate-400',
+                                        };
+                                    @endphp
+                                    <div class="rounded-lg p-3 border {{ $svColor }}">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <span class="w-2 h-2 rounded-full {{ $svDot }}"></span>
+                                            <span class="text-xs font-semibold text-slate-800 truncate">{{ Str::limit($sv['name'], 40) }}</span>
+                                        </div>
+                                        <div class="flex gap-4 text-[10px] text-slate-500">
+                                            <span>Procese: <span class="font-semibold text-slate-700">{{ $sv['processes'] }}</span></span>
+                                            <span>Coadă: <span class="font-semibold text-slate-700">{{ $sv['queue'] }}</span></span>
+                                            <span>Balans: <span class="font-semibold text-slate-700">{{ $sv['balance'] }}</span></span>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <p class="text-sm text-slate-400">Niciun supervisor activ.</p>
+                        @endif
+
+                        {{-- Horizon config --}}
+                        @if(!empty($workerStatus['horizon_config'] ?? []))
+                            <details class="mt-4 group">
+                                <summary class="text-xs font-medium text-slate-600 cursor-pointer hover:text-slate-800">
+                                    Configurare Horizon (production)
+                                    <svg class="inline w-3 h-3 ml-0.5 transform group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                                </summary>
+                                <div class="mt-2 bg-slate-50 rounded-lg p-3 border border-slate-200 text-[10px] font-mono text-slate-600 overflow-x-auto">
+                                    <pre>{{ json_encode($workerStatus['horizon_config'], JSON_PRETTY_PRINT) }}</pre>
+                                </div>
+                            </details>
+                        @endif
+                    </div>
+
+                    <div class="space-y-6">
+                        {{-- Job throughput chart (6h) --}}
+                        <div>
+                            <h4 class="text-sm font-medium text-slate-700 mb-3">
+                                Throughput Joburi (ultimele 6h)
+                                <span class="ml-2 text-xs font-normal text-slate-400">Procesate azi: {{ number_format($workerStatus['jobs_processed_today'] ?? 0) }}</span>
+                            </h4>
+                            @if(count($workerStatus['throughput'] ?? []) > 0)
+                                <div class="flex items-end gap-2 h-20 bg-slate-50 rounded-lg p-2 border border-slate-100">
+                                    @foreach($workerStatus['throughput'] as $tp)
+                                        @php $pct = ($workerStatus['max_throughput'] ?? 1) > 0 ? ($tp['cnt'] / $workerStatus['max_throughput']) * 100 : 0; @endphp
+                                        <div class="flex-1 bg-slate-700 rounded-t-sm group relative cursor-pointer" style="height: {{ max($pct, 2) }}%">
+                                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-slate-800 text-white text-[10px] rounded px-2 py-1 whitespace-nowrap z-10">
+                                                {{ $tp['hour'] }}: {{ number_format($tp['cnt']) }} joburi
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <p class="text-sm text-slate-400">Nu există date de throughput.</p>
+                            @endif
+                        </div>
+
+                        {{-- Workload table --}}
+                        <div>
+                            <h4 class="text-sm font-medium text-slate-700 mb-3">Workload Horizon</h4>
+                            @if(count($workerStatus['workload'] ?? []) > 0)
+                                <div class="overflow-hidden rounded-lg border border-slate-200">
+                                    <table class="w-full text-xs">
+                                        <thead class="bg-slate-50">
+                                            <tr>
+                                                <th class="text-left px-3 py-2 font-semibold text-slate-500">Coadă</th>
+                                                <th class="text-right px-3 py-2 font-semibold text-slate-500">Lungime</th>
+                                                <th class="text-right px-3 py-2 font-semibold text-slate-500">Așteptare (s)</th>
+                                                <th class="text-right px-3 py-2 font-semibold text-slate-500">Procese</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-100">
+                                            @foreach($workerStatus['workload'] as $wl)
+                                                <tr class="hover:bg-slate-50">
+                                                    <td class="px-3 py-2 font-medium text-slate-700 font-mono">{{ $wl['queue'] }}</td>
+                                                    <td class="px-3 py-2 text-right {{ ($wl['length'] ?? 0) > 10 ? 'text-red-600 font-semibold' : 'text-slate-600' }}">{{ $wl['length'] }}</td>
+                                                    <td class="px-3 py-2 text-right text-slate-600">{{ $wl['wait'] }}</td>
+                                                    <td class="px-3 py-2 text-right text-slate-600">{{ $wl['processes'] }}</td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            @else
+                                <p class="text-sm text-slate-400">Nu există date de workload.</p>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            @endif
+        </div>
+    </div>
+    </div>
 
     {{-- Footer --}}
     <div class="text-center text-xs text-slate-400 pb-4">
@@ -988,4 +1469,117 @@
     </div>
 
 </div>
+
+<script>
+function switchTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+    document.querySelectorAll('.tab-btn').forEach(el => {
+        el.classList.remove('border-indigo-600', 'text-indigo-700', 'bg-indigo-50/50');
+        el.classList.add('border-transparent', 'text-slate-500');
+    });
+    document.getElementById('tab-' + tabId).classList.remove('hidden');
+    const btn = document.getElementById('tab-btn-' + tabId);
+    btn.classList.add('border-indigo-600', 'text-indigo-700', 'bg-indigo-50/50');
+    btn.classList.remove('border-transparent', 'text-slate-500');
+}
+
+function fetchQASamples() {
+    const btn = document.getElementById('qa-sample-btn');
+    const btnText = document.getElementById('qa-sample-btn-text');
+    const loading = document.getElementById('qa-loading');
+    const results = document.getElementById('qa-results');
+    const errorDiv = document.getElementById('qa-error');
+
+    btn.disabled = true;
+    btnText.textContent = 'Se generează...';
+    loading.classList.remove('hidden');
+    results.classList.add('hidden');
+    results.innerHTML = '';
+    errorDiv.classList.add('hidden');
+
+    fetch('{{ route("admin.reports.sample-qa") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json',
+        },
+    })
+    .then(res => res.json())
+    .then(data => {
+        loading.classList.add('hidden');
+        btn.disabled = false;
+        btnText.textContent = 'Generează 10 Întrebări & Răspunsuri';
+
+        if (!data.success) {
+            errorDiv.textContent = data.error || 'Eroare necunoscută';
+            errorDiv.classList.remove('hidden');
+            return;
+        }
+
+        if (data.pairs.length === 0) {
+            errorDiv.textContent = 'Nu s-au găsit perechi Q&A în ultimele 7 zile.';
+            errorDiv.classList.remove('hidden');
+            return;
+        }
+
+        results.classList.remove('hidden');
+        data.pairs.forEach(function(pair, idx) {
+            const scoreColor = pair.score > 70 ? 'bg-green-100 text-green-800' : (pair.score >= 40 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800');
+            const answer = pair.answer && pair.answer.length > 200 ? pair.answer.substring(0, 200) + '...' : (pair.answer || '—');
+            const question = pair.question && pair.question.length > 200 ? pair.question.substring(0, 200) + '...' : (pair.question || '—');
+
+            const bd = pair.breakdown || {};
+            const breakdownHtml = [
+                '<span class="text-slate-500">Lungime:</span> ' + (bd.length || 0) + '/30',
+                '<span class="text-slate-500">Produse:</span> ' + (bd.products || 0) + '/20',
+                '<span class="text-slate-500">Timp:</span> ' + (bd.response_time || 0) + '/20',
+                '<span class="text-slate-500">Intenții:</span> ' + (bd.intents || 0) + '/15',
+                '<span class="text-slate-500">Knowledge:</span> ' + (bd.knowledge || 0) + '/15',
+            ].join(' &bull; ');
+
+            const card = document.createElement('div');
+            card.className = 'bg-slate-50 rounded-lg border border-slate-200 p-4';
+            card.innerHTML = `
+                <div class="flex items-start justify-between gap-3 mb-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold text-slate-400">#${idx + 1}</span>
+                        <span class="text-xs text-slate-500">${pair.bot_name}</span>
+                        <span class="text-[10px] text-slate-400">${pair.created_at}</span>
+                    </div>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${scoreColor}">
+                        ${pair.score}/100
+                    </span>
+                </div>
+                <div class="mb-2">
+                    <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">Întrebare</p>
+                    <p class="text-sm text-slate-800 bg-white rounded px-3 py-2 border border-slate-100">${escapeHtml(question)}</p>
+                </div>
+                <div class="mb-2">
+                    <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-0.5">Răspuns</p>
+                    <p class="text-sm text-slate-700 bg-white rounded px-3 py-2 border border-slate-100">${escapeHtml(answer)}</p>
+                </div>
+                <div class="flex items-center gap-2 text-[10px]">
+                    ${breakdownHtml}
+                    ${pair.response_time_sec !== null ? '<span class="ml-auto text-slate-400">' + pair.response_time_sec + 's răspuns</span>' : ''}
+                </div>
+            `;
+            results.appendChild(card);
+        });
+    })
+    .catch(err => {
+        loading.classList.add('hidden');
+        btn.disabled = false;
+        btnText.textContent = 'Generează 10 Întrebări & Răspunsuri';
+        errorDiv.textContent = 'Eroare de rețea: ' + err.message;
+        errorDiv.classList.remove('hidden');
+    });
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+</script>
 @endsection
