@@ -19,8 +19,8 @@
 
     @include('components.footer')
 
-    {{-- Chatbot widget: Sambla - Asistent Site (bot 34, channel 2) --}}
-    <script src="{{ rtrim(config('app.url'), '/') }}/widget/sambla-chat.min.js" data-channel-id="2" data-bot-name="Sambla AI" data-color="#991b1b" data-lang="ro" async defer></script>
+    {{-- Chatbot widget: Sambla - Asistent Site (bot #65, channel #1) --}}
+    <script src="{{ rtrim(config('app.url'), '/') }}/widget/sambla-chat.min.js" data-channel-id="1" data-bot-name="Sambla" data-color="#991b1b" data-lang="ro" data-greeting="Salut! 👋 Sunt Sambla, asistentul virtual al platformei. Pot să îți povestesc cum funcționează chatbot-ul și voicebot-ul nostru AI, sau să te ajut cu orice întrebare. Cu ce pot să te ajut?" async defer></script>
 
     @stack('scripts')
 </body>

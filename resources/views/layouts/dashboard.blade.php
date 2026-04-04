@@ -370,8 +370,8 @@
         </div>
     </div>
 
-    {{-- Chatbot widget: Sambla - Asistent Dashboard (bot 35, channel 3) --}}
-    <script src="{{ rtrim(config('app.url'), '/') }}/api/v1/chatbot/embed" data-channel-id="3" async defer></script>
+    {{-- Chatbot widget: Sambla - Asistent Dashboard (bot #66, channel #2) --}}
+    <script src="{{ rtrim(config('app.url'), '/') }}/widget/sambla-chat.min.js" data-channel-id="2" data-bot-name="Sambla Assistant" data-color="#991b1b" data-lang="ro" data-greeting="Salut! 👋 Sunt aici să te ajut cu configurarea platformei. Pot să te ghidez prin setarea botului, baza de cunoștințe, canale sau orice altceva din dashboard. Ce ai nevoie?" async defer></script>
 
     @stack('scripts')
 
