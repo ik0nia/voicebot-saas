@@ -15,20 +15,43 @@ class FrustrationDetectorService
     /**
      * Analyze frustration level for a conversation.
      *
+     * Results are cached for 2 minutes per conversation — frustration level
+     * doesn't change drastically between consecutive messages.
+     *
+     * @param Conversation $conversation
+     * @param string $currentMessage
+     * @param \Illuminate\Support\Collection|null $preloadedMessages Pre-loaded recent messages to avoid redundant queries
      * @return array{level: string, score: int, signals: array, recommendation: string}
      */
-    public function analyze(Conversation $conversation, string $currentMessage): array
+    public function analyze(Conversation $conversation, string $currentMessage, ?\Illuminate\Support\Collection $preloadedMessages = null): array
     {
+        $cacheKey = "frustration_{$conversation->id}";
+
+        // Check cache — frustration doesn't change drastically between messages
+        $cached = Cache::get($cacheKey);
+        if ($cached !== null) {
+            return $cached;
+        }
+
         $signals = [];
         $score = 0;
 
         // Signal 1: Repeated questions (user asks same thing differently)
-        $recentMessages = $conversation->messages()
-            ->where('direction', 'inbound')
-            ->orderByDesc('id')
-            ->take(6)
-            ->pluck('content')
-            ->toArray();
+        if ($preloadedMessages !== null) {
+            // Use pre-loaded messages — filter to inbound only, take 6
+            $recentMessages = $preloadedMessages
+                ->where('direction', 'inbound')
+                ->take(6)
+                ->pluck('content')
+                ->toArray();
+        } else {
+            $recentMessages = $conversation->messages()
+                ->where('direction', 'inbound')
+                ->orderByDesc('id')
+                ->take(6)
+                ->pluck('content')
+                ->toArray();
+        }
 
         if (count($recentMessages) >= 2) {
             $similarity = $this->checkRepetition($recentMessages);
@@ -108,12 +131,17 @@ class FrustrationDetectorService
             'low' => 'continue', // Normal conversation
         };
 
-        return [
+        $result = [
             'level' => $level,
             'score' => $score,
             'signals' => $signals,
             'recommendation' => $recommendation,
         ];
+
+        // Cache for 2 minutes — avoids recomputation on rapid follow-up messages
+        Cache::put($cacheKey, $result, now()->addMinutes(2));
+
+        return $result;
     }
 
     /**

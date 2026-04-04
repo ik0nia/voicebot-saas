@@ -206,14 +206,23 @@ class ChannelMessageService
             $plan = $orchestrator->plan($messageText, $conversation, $bot);
             $result = $orchestrator->execute($plan, $bot, $messageText, $conversation);
 
+            // ── Load messages ONCE for all services ──
+            // FrustrationDetector, StrategyEngine, SummaryService, and model routing
+            // all need recent messages — single query instead of 4 independent ones.
+            $recentMessages = Message::where('conversation_id', $conversation->id)
+                ->orderByDesc('id')
+                ->limit(30)
+                ->select('id', 'direction', 'content', 'content_type', 'sent_at', 'conversation_id', 'created_at')
+                ->get();
+
             // ── Adaptive Intelligence Layer ──
-            $frustration = app(FrustrationDetectorService::class)->analyze($conversation, $messageText);
+            $frustration = app(FrustrationDetectorService::class)->analyze($conversation, $messageText, $recentMessages);
             $queryIntelligence = app(QueryIntelligenceService::class)->classify($messageText, [
                 'last_intent' => ($conversation->metadata ?? [])['last_intent'] ?? null,
                 'message_count' => $conversation->messages_count ?? 0,
             ]);
             $strategy = app(ConversationStrategyEngine::class)->decide(
-                $conversation, $bot, $messageText, $queryIntelligence, $frustration
+                $conversation, $bot, $messageText, $queryIntelligence, $frustration, $recentMessages
             );
 
             // Save last intent for context continuity
@@ -251,14 +260,14 @@ class ChannelMessageService
 
             $systemPrompt = $builder->build();
 
-            // Build messages with summarization
+            // Build messages with summarization — reuse pre-loaded history
             $summaryService = app(\App\Services\ConversationSummaryService::class);
-            $messages = $summaryService->buildMessages($systemPrompt, $conversation, $messageText);
+            $messages = $summaryService->buildMessages($systemPrompt, $conversation, $messageText, $recentMessages);
 
-            // Route model
-            $history = $conversation->messages()->orderBy('created_at', 'desc')->take(20)->get()->reverse();
+            // Route model — reuse pre-loaded history (already in desc order, take 20)
+            $historyCount = min($recentMessages->count(), 20);
             $conversationCost = $conversation->cost_cents ?? 0;
-            $modelConfig = $this->chatModelRouter->route($messageText, count($history), $conversationCost);
+            $modelConfig = $this->chatModelRouter->route($messageText, $historyCount, $conversationCost);
 
             // Truncate history
             $tokenCounter = app(\App\Services\TokenCounterService::class);

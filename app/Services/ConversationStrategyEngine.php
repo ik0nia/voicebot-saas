@@ -6,6 +6,7 @@ use App\Models\Bot;
 use App\Models\Conversation;
 use App\Models\ConversationPolicy;
 use App\Models\WooCommerceProduct;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Decides conversation strategy based on:
@@ -21,6 +22,15 @@ class ConversationStrategyEngine
     /**
      * Analyze conversation state and return strategy directives.
      *
+     * Results are cached for 5 minutes per conversation+stage — strategy
+     * decisions change slowly as conversation progresses through stages.
+     *
+     * @param Conversation $conversation
+     * @param Bot $bot
+     * @param string $currentMessage
+     * @param array $queryIntelligence
+     * @param array $frustration
+     * @param \Illuminate\Support\Collection|null $preloadedMessages Pre-loaded recent messages to avoid redundant queries
      * @return array{stage: string, directives: array, cta: ?string, should_capture_lead: bool, prompt_modifier: string}
      */
     public function decide(
@@ -28,11 +38,20 @@ class ConversationStrategyEngine
         Bot $bot,
         string $currentMessage,
         array $queryIntelligence,
-        array $frustration
+        array $frustration,
+        ?\Illuminate\Support\Collection $preloadedMessages = null
     ): array {
         $messageCount = $conversation->messages_count ?? 0;
         $stage = $this->determineStage($messageCount, $conversation);
-        $engagement = $this->measureEngagement($conversation);
+
+        // Check cache — strategy decisions change slowly (early->mid->late)
+        $cacheKey = "strategy_{$conversation->id}_{$stage}";
+        $cached = Cache::get($cacheKey);
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        $engagement = $this->measureEngagement($conversation, $preloadedMessages);
         $policy = ConversationPolicy::where('bot_id', $bot->id)->where('is_active', true)->first();
         $hasProducts = WooCommerceProduct::where('bot_id', $bot->id)->exists();
         $queryType = $queryIntelligence['type'] ?? 'informational';
@@ -146,7 +165,7 @@ class ConversationStrategyEngine
             ? "\nSTRATEGIE CONVERSAȚIE:\n- " . implode("\n- ", $promptLines)
             : '';
 
-        return [
+        $result = [
             'stage' => $stage,
             'directives' => array_unique($directives),
             'cta' => $cta,
@@ -154,6 +173,11 @@ class ConversationStrategyEngine
             'prompt_modifier' => $promptModifier,
             'engagement' => $engagement,
         ];
+
+        // Cache for 5 minutes — strategy is stable within a conversation stage
+        Cache::put($cacheKey, $result, now()->addMinutes(5));
+
+        return $result;
     }
 
     private function determineStage(int $messageCount, Conversation $conversation): string
@@ -163,7 +187,7 @@ class ConversationStrategyEngine
         return 'late';
     }
 
-    private function measureEngagement(Conversation $conversation): array
+    private function measureEngagement(Conversation $conversation, ?\Illuminate\Support\Collection $preloadedMessages = null): array
     {
         $msgCount = $conversation->messages_count ?? 0;
 
@@ -171,10 +195,17 @@ class ConversationStrategyEngine
         $hasLead = \App\Models\Lead::where('conversation_id', $conversation->id)->exists();
 
         // Count substantive inbound messages (>10 chars, not just "da"/"ok")
-        $substantiveMessages = $conversation->messages()
-            ->where('direction', 'inbound')
-            ->whereRaw("LENGTH(content) > 10")
-            ->count();
+        if ($preloadedMessages !== null) {
+            $substantiveMessages = $preloadedMessages
+                ->where('direction', 'inbound')
+                ->filter(fn($m) => mb_strlen($m->content ?? '') > 10)
+                ->count();
+        } else {
+            $substantiveMessages = $conversation->messages()
+                ->where('direction', 'inbound')
+                ->whereRaw("LENGTH(content) > 10")
+                ->count();
+        }
 
         // Depth: how many real exchanges happened
         $depth = min(10, $substantiveMessages);

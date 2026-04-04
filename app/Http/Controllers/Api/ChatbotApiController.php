@@ -936,17 +936,21 @@ class ChatbotApiController extends Controller
             // Apply centralized anti-hallucination guardrails (ALWAYS LAST — highest priority)
             $systemPrompt = PromptGuardrails::apply($systemPrompt);
 
+            // Load messages ONCE — shared between summary service and model routing
+            $recentHistory = Message::where('conversation_id', $conversation->id)
+                ->orderByDesc('id')
+                ->limit(30)
+                ->get();
+
             // Build messages with automatic summarization for long conversations
             $summaryService = app(\App\Services\ConversationSummaryService::class);
-            $messages = $summaryService->buildMessages($systemPrompt, $conversation, $userMessage);
-
-            $history = Message::where('conversation_id', $conversation->id)->orderByDesc('id')->limit(20)->get();
+            $messages = $summaryService->buildMessages($systemPrompt, $conversation, $userMessage, $recentHistory);
 
             // Truncate history to fit within 95% of context window
             $router = app(ChatModelRouter::class);
             $modelConfig = $router->route(
                 $userMessage,
-                $history->count(),
+                min($recentHistory->count(), 20),
                 $conversation->cost_cents ?? 0,
             );
 

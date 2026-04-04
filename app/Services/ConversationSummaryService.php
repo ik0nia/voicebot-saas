@@ -21,16 +21,24 @@ class ConversationSummaryService
      * Returns messages with the system prompt, summarized older history (if applicable),
      * and the recent messages including the current user message.
      */
-    public function buildMessages(string $systemPrompt, Conversation $conversation, string $currentUserMessage): array
+    /**
+     * @param \Illuminate\Support\Collection|null $preloadedHistory Pre-loaded messages (desc order) to avoid redundant query
+     */
+    public function buildMessages(string $systemPrompt, Conversation $conversation, string $currentUserMessage, ?\Illuminate\Support\Collection $preloadedHistory = null): array
     {
         $messages = [['role' => 'system', 'content' => $systemPrompt]];
 
-        $history = Message::where('conversation_id', $conversation->id)
-            ->orderByDesc('id')
-            ->limit(30)
-            ->get()
-            ->reverse()
-            ->values();
+        if ($preloadedHistory !== null) {
+            // Use pre-loaded messages — they come in desc order, take 30, reverse to chronological
+            $history = $preloadedHistory->take(30)->reverse()->values();
+        } else {
+            $history = Message::where('conversation_id', $conversation->id)
+                ->orderByDesc('id')
+                ->limit(30)
+                ->get()
+                ->reverse()
+                ->values();
+        }
 
         // Exclude the current user message if it was already saved (last inbound)
         if ($history->isNotEmpty() && $history->last()->direction === 'inbound' && $history->last()->content === $currentUserMessage) {

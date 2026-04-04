@@ -50,9 +50,9 @@ class IntentOrchestratorService
             'complexity' => $queryComplexity ?? 'medium',
         ];
 
-        // Greeting/thanks — no data sources needed
+        // Greeting/thanks/followup — no data sources needed (skip expensive KB search)
         $intentNames = array_map(fn($i) => $i->name, $intents);
-        if (in_array('greeting', $intentNames) || in_array('thanks', $intentNames)) {
+        if (in_array('greeting', $intentNames) || in_array('thanks', $intentNames) || in_array('followup', $intentNames)) {
             return $decision;
         }
 
@@ -140,10 +140,25 @@ class IntentOrchestratorService
 
     /**
      * Execute all pipelines in the plan and merge results.
+     *
+     * Pipelines are executed in optimized order: fast DB-only pipelines first,
+     * then expensive API-dependent pipelines (knowledge/RAG) only if needed.
+     * This minimizes total latency by avoiding unnecessary slow calls.
      */
     public function execute(OrchestratorPlan $plan, Bot $bot, string $userMessage = '', ?Conversation $conversation = null): OrchestratorResult
     {
         $result = new OrchestratorResult();
+
+        // ── Fast path: greeting/thanks need zero pipelines ──
+        $intentNames = array_map(fn($i) => $i->name, $plan->intents);
+        if (in_array('greeting', $intentNames) || in_array('thanks', $intentNames)) {
+            foreach ($plan->pipelines as $pipeline) {
+                $pipeline->durationMs = 0;
+                $result->intentsExecuted[] = array_merge($pipeline->toArray(), ['skipped' => true, 'skip_reason' => 'greeting_or_thanks']);
+            }
+
+            return $this->postPipelineProcessing($result, $plan, $bot, $conversation);
+        }
 
         // Query complexity drives orchestration decisions
         $complexityService = app(QueryComplexityService::class);
@@ -154,43 +169,124 @@ class IntentOrchestratorService
         $decisionLogger = app(DecisionLoggerService::class);
         $decisionLogger->logDataSources($dataSources);
 
+        // ── Partition pipelines into fast (DB-only) and slow (API-dependent) tiers ──
+        // Fast tier (~5-50ms): order_lookup, new_order, product_search, category_browse, recommendation
+        // Slow tier (~200-600ms): knowledge (requires embedding API call for vector search)
+        $fastPipelines = [];
+        $slowPipelines = [];
+
         foreach ($plan->pipelines as $pipeline) {
-            // Skip pipelines not needed by decision logic
-            $skip = match ($pipeline->name) {
-                'knowledge' => !$dataSources['use_rag'],
-                'product_search' => !$dataSources['use_products'],
-                'recommendation' => !$dataSources['use_products'] && !($dataSources['use_semantic_products'] ?? false),
-                'category_browse' => false, // Never skip category browse
-                'new_order', 'order_lookup' => false, // Never skip order-related pipelines
-                default => false,
-            };
+            if ($pipeline->name === 'knowledge') {
+                $slowPipelines[] = $pipeline;
+            } else {
+                $fastPipelines[] = $pipeline;
+            }
+        }
+
+        // ── Execute fast DB-only pipelines first ──
+        foreach ($fastPipelines as $pipeline) {
+            $this->executePipeline($pipeline, $bot, $result, $dataSources, $userMessage, $conversation);
+        }
+
+        // ── Decide if slow pipelines are still needed based on fast pipeline results ──
+        foreach ($slowPipelines as $pipeline) {
+            $skip = $this->shouldSkipSlowPipeline($pipeline, $dataSources, $result);
 
             if ($skip) {
                 $pipeline->durationMs = 0;
-                $result->intentsExecuted[] = array_merge($pipeline->toArray(), ['skipped' => true]);
+                $result->intentsExecuted[] = array_merge($pipeline->toArray(), ['skipped' => true, 'skip_reason' => $skip]);
                 continue;
             }
 
-            $start = microtime(true);
-
-            try {
-                match ($pipeline->name) {
-                    'order_lookup' => $this->executeOrderLookup($bot->id, $pipeline, $result, $userMessage),
-                    'new_order' => $this->executeNewOrder($pipeline, $result, $conversation),
-                    'product_search' => $this->executeProductSearch($bot->id, $pipeline, $result),
-                    'category_browse' => $this->executeCategoryBrowse($bot->id, $pipeline, $result),
-                    'recommendation' => $this->executeRecommendation($bot->id, $pipeline, $result),
-                    'knowledge' => $this->executeKnowledge($bot->id, $pipeline, $result, $dataSources['rag_limit']),
-                    default => null,
-                };
-            } catch (\Throwable $e) {
-                Log::warning("IntentOrchestrator: pipeline {$pipeline->name} failed", ['error' => $e->getMessage()]);
-            }
-
-            $pipeline->durationMs = (int) ((microtime(true) - $start) * 1000);
-            $result->intentsExecuted[] = $pipeline->toArray();
+            $this->executePipeline($pipeline, $bot, $result, $dataSources, $userMessage, $conversation);
         }
 
+        return $this->postPipelineProcessing($result, $plan, $bot, $conversation);
+    }
+
+    /**
+     * Execute a single pipeline with timing, skip logic, and error handling.
+     */
+    private function executePipeline(
+        PipelineTask $pipeline,
+        Bot $bot,
+        OrchestratorResult $result,
+        array $dataSources,
+        string $userMessage,
+        ?Conversation $conversation,
+    ): void {
+        // Skip pipelines not needed by decision logic
+        $skip = match ($pipeline->name) {
+            'knowledge' => !$dataSources['use_rag'],
+            'product_search' => !$dataSources['use_products'],
+            'recommendation' => !$dataSources['use_products'] && !($dataSources['use_semantic_products'] ?? false),
+            'category_browse' => false,
+            'new_order', 'order_lookup' => false,
+            default => false,
+        };
+
+        if ($skip) {
+            $pipeline->durationMs = 0;
+            $result->intentsExecuted[] = array_merge($pipeline->toArray(), ['skipped' => true]);
+            return;
+        }
+
+        $start = microtime(true);
+
+        try {
+            match ($pipeline->name) {
+                'order_lookup' => $this->executeOrderLookup($bot->id, $pipeline, $result, $userMessage),
+                'new_order' => $this->executeNewOrder($pipeline, $result, $conversation),
+                'product_search' => $this->executeProductSearch($bot->id, $pipeline, $result),
+                'category_browse' => $this->executeCategoryBrowse($bot->id, $pipeline, $result),
+                'recommendation' => $this->executeRecommendation($bot->id, $pipeline, $result),
+                'knowledge' => $this->executeKnowledge($bot->id, $pipeline, $result, $dataSources['rag_limit']),
+                default => null,
+            };
+        } catch (\Throwable $e) {
+            Log::warning("IntentOrchestrator: pipeline {$pipeline->name} failed", ['error' => $e->getMessage()]);
+        }
+
+        $pipeline->durationMs = (int) ((microtime(true) - $start) * 1000);
+        $result->intentsExecuted[] = $pipeline->toArray();
+    }
+
+    /**
+     * Determine if a slow (API-dependent) pipeline can be skipped based on
+     * results already gathered from fast pipelines.
+     *
+     * @return string|false  Skip reason string, or false if pipeline should run.
+     */
+    private function shouldSkipSlowPipeline(PipelineTask $pipeline, array $dataSources, OrchestratorResult $result): string|false
+    {
+        if ($pipeline->name !== 'knowledge') {
+            return false;
+        }
+
+        // Already marked as not needed by decideDataSources
+        if (!$dataSources['use_rag']) {
+            return 'data_source_decision';
+        }
+
+        // Product search returned high-confidence results (>= 3 products) —
+        // knowledge context is unlikely to add value for product queries
+        if (count($result->products) >= 3 && empty($result->orderContext)) {
+            return 'sufficient_product_results';
+        }
+
+        return false;
+    }
+
+    /**
+     * Post-pipeline processing: lead scoring and handoff checks.
+     * Extracted to allow early-return paths (greeting/thanks) to still run this.
+     */
+    private function postPipelineProcessing(
+        OrchestratorResult $result,
+        OrchestratorPlan $plan,
+        Bot $bot,
+        ?Conversation $conversation,
+    ): OrchestratorResult {
         // ── Post-pipeline: Lead scoring ──
         if ($conversation) {
             try {
@@ -269,12 +365,16 @@ class IntentOrchestratorService
 
         $detected = $this->intentDetector->detect($message);
 
-        // Greeting / thanks — early return, skip everything else
+        // Greeting / thanks / followup — early return, skip everything else
+        // These simple intents don't need expensive KB search or product lookups
         if ($detected['is_greeting'] ?? false) {
             return [new DetectedIntent('greeting', 0.95, [], 1)];
         }
         if ($detected['is_thanks'] ?? false) {
             return [new DetectedIntent('thanks', 0.95, [], 1)];
+        }
+        if ($detected['is_followup'] ?? false) {
+            return [new DetectedIntent('followup', 0.90, [], 1)];
         }
 
         // ── Conversational context: follow-up to order-related bot prompts ──
