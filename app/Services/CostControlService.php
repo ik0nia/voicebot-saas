@@ -62,7 +62,11 @@ class CostControlService
     public function checkTenantDailyLimit(int $tenantId): bool
     {
         $key = "tenant_daily_cost_{$tenantId}_" . now()->format('Y-m-d');
-        $currentCents = (float) Cache::get($key, 0);
+        try {
+            $currentCents = (float) Cache::get($key, 0);
+        } catch (\Throwable $e) {
+            return true; // Allow request if cache unavailable
+        }
         $limit = self::DEFAULT_DAILY_LIMIT_CENTS;
 
         if ($currentCents >= $limit) {
@@ -82,9 +86,13 @@ class CostControlService
      */
     public function recordTenantCost(int $tenantId, float $costCents): void
     {
-        $key = "tenant_daily_cost_{$tenantId}_" . now()->format('Y-m-d');
-        $current = (float) Cache::get($key, 0);
-        Cache::put($key, $current + $costCents, now()->endOfDay());
+        try {
+            $key = "tenant_daily_cost_{$tenantId}_" . now()->format('Y-m-d');
+            $current = (float) Cache::get($key, 0);
+            Cache::put($key, $current + $costCents, now()->endOfDay());
+        } catch (\Throwable $e) {
+            // Cache write failed, continue without caching
+        }
     }
 
     /**

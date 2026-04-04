@@ -13,7 +13,7 @@ class ConversationSummaryService
     /**
      * After this many messages, older messages get summarized instead of sent in full.
      */
-    private const SUMMARIZE_AFTER = 8;
+    private const SUMMARIZE_AFTER = 12;
 
     /**
      * Build the messages array for a conversation, using summarization for long histories.

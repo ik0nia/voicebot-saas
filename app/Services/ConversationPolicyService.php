@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Bot;
 use App\Models\Channel;
 use App\Models\ConversationPolicy;
+use Illuminate\Support\Facades\Cache;
 
 class ConversationPolicyService
 {
@@ -31,10 +32,22 @@ class ConversationPolicyService
     {
         $merged = self::DEFAULTS;
 
-        $tenantPolicy = ConversationPolicy::where('tenant_id', $bot->tenant_id)->whereNull('bot_id')->first();
+        try {
+            $tenantPolicy = Cache::remember("policy_tenant_{$bot->tenant_id}", 1800, function() use ($bot) {
+                return ConversationPolicy::withoutGlobalScopes()->where('tenant_id', $bot->tenant_id)->whereNull('bot_id')->first();
+            });
+        } catch (\Throwable $e) {
+            $tenantPolicy = ConversationPolicy::where('tenant_id', $bot->tenant_id)->whereNull('bot_id')->first();
+        }
         if ($tenantPolicy) $merged = $this->merge($merged, $tenantPolicy->toArray());
 
-        $botPolicy = ConversationPolicy::where('tenant_id', $bot->tenant_id)->where('bot_id', $bot->id)->first();
+        try {
+            $botPolicy = Cache::remember("policy_bot_{$bot->id}", 1800, function() use ($bot) {
+                return ConversationPolicy::withoutGlobalScopes()->where('tenant_id', $bot->tenant_id)->where('bot_id', $bot->id)->first();
+            });
+        } catch (\Throwable $e) {
+            $botPolicy = ConversationPolicy::where('tenant_id', $bot->tenant_id)->where('bot_id', $bot->id)->first();
+        }
         if ($botPolicy) $merged = $this->merge($merged, $botPolicy->toArray());
 
         if ($channel && !empty($channel->config['policy_overrides'])) {

@@ -34,10 +34,13 @@ class ChatbotApiController extends Controller
 {
     public function config(Request $request, $channelId): JsonResponse
     {
-        $channel = Channel::withoutGlobalScopes()
-            ->where('id', $channelId)
-            ->where('is_active', true)
-            ->first();
+        try {
+            $channel = Cache::remember("channel_{$channelId}", 1800, function() use ($channelId) {
+                return Channel::withoutGlobalScopes()->where('id', $channelId)->where('is_active', true)->first();
+            });
+        } catch (\Throwable $e) {
+            $channel = Channel::withoutGlobalScopes()->where('id', $channelId)->where('is_active', true)->first();
+        }
 
         if (!$channel) {
             return response()->json(['error' => 'Canal invalid.'], 404);
@@ -56,10 +59,13 @@ class ChatbotApiController extends Controller
 
     public function message(Request $request, $channelId): JsonResponse
     {
-        $channel = Channel::withoutGlobalScopes()
-            ->where('id', $channelId)
-            ->where('is_active', true)
-            ->first();
+        try {
+            $channel = Cache::remember("channel_{$channelId}", 1800, function() use ($channelId) {
+                return Channel::withoutGlobalScopes()->where('id', $channelId)->where('is_active', true)->first();
+            });
+        } catch (\Throwable $e) {
+            $channel = Channel::withoutGlobalScopes()->where('id', $channelId)->where('is_active', true)->first();
+        }
 
         if (!$channel) {
             return response()->json(['error' => 'Canal invalid.'], 404);
@@ -416,7 +422,14 @@ class ChatbotApiController extends Controller
 
                 // If products NOT found or search skipped, inform the AI appropriately
                 if (empty($products)) {
-                    $hasProducts = WooCommerceProduct::where('bot_id', $bot->id)->exists();
+                    $hasProducts = false;
+                    try {
+                        $hasProducts = Cache::remember("bot_{$bot->id}_has_products", 3600, function() use ($bot) {
+                            return WooCommerceProduct::where('bot_id', $bot->id)->exists();
+                        });
+                    } catch (\Throwable $e) {
+                        $hasProducts = WooCommerceProduct::where('bot_id', $bot->id)->exists();
+                    }
                     if ($hasProducts && $shouldSearchProducts) {
                         $productContext = "\n\n[NU am găsit produse relevante pentru această întrebare. NU menționa produse.]";
                     }
@@ -830,7 +843,14 @@ class ChatbotApiController extends Controller
             $systemPrompt = Cache::remember("bot_system_prompt_{$bot->id}", now()->addMinutes(10), function () use ($bot, $promptVersion) {
                 $prompt = $promptVersion?->system_prompt ?? $bot->system_prompt ?? 'Ești un asistent virtual. Răspunde scurt și util.';
 
-                $hasProducts = WooCommerceProduct::where('bot_id', $bot->id)->exists();
+                $hasProducts = false;
+                try {
+                    $hasProducts = Cache::remember("bot_{$bot->id}_has_products", 3600, function() use ($bot) {
+                        return WooCommerceProduct::where('bot_id', $bot->id)->exists();
+                    });
+                } catch (\Throwable $e) {
+                    $hasProducts = WooCommerceProduct::where('bot_id', $bot->id)->exists();
+                }
                 if ($hasProducts) {
                     $prompt .= "\n\n"
                         . "Ești asistentul unui magazin online. REGULI STRICTE PRODUSE:"
@@ -853,7 +873,14 @@ class ChatbotApiController extends Controller
             $logger->set('skip_knowledge', $skipKnowledge);
 
             // Search Knowledge Base — skip for trivial messages
-            $hasProducts = WooCommerceProduct::where('bot_id', $bot->id)->exists();
+            $hasProducts = false;
+            try {
+                $hasProducts = Cache::remember("bot_{$bot->id}_has_products", 3600, function() use ($bot) {
+                    return WooCommerceProduct::where('bot_id', $bot->id)->exists();
+                });
+            } catch (\Throwable $e) {
+                $hasProducts = WooCommerceProduct::where('bot_id', $bot->id)->exists();
+            }
             $searchLimit = $bot->knowledge_search_limit ?? ($hasProducts ? 8 : 5);
 
             $knowledgeContext = '';

@@ -634,7 +634,7 @@ class KnowledgeSearchService
 
             $candidateList = '';
             foreach ($candidates as $i => $c) {
-                $snippet = mb_substr($c->content ?? '', 0, 350);
+                $snippet = mb_substr($c->content ?? '', 0, 600);
                 $candidateList .= "[{$i}] {$c->title}: {$snippet}\n";
             }
 

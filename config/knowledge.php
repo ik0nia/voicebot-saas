@@ -1,8 +1,8 @@
 <?php
 
 return [
-    'similarity_threshold' => (float) env('KNOWLEDGE_SIMILARITY_THRESHOLD', 0.55),
-    'fts_weight' => (float) env('KNOWLEDGE_FTS_WEIGHT', 1.5),
+    'similarity_threshold' => (float) env('KNOWLEDGE_SIMILARITY_THRESHOLD', 0.62),
+    'fts_weight' => (float) env('KNOWLEDGE_FTS_WEIGHT', 1.0),
     'max_context_chars' => (int) env('KNOWLEDGE_MAX_CONTEXT_CHARS', 8000),
     'embedding_model' => env('KNOWLEDGE_EMBEDDING_MODEL', 'text-embedding-3-small'),
     'cache_ttl_hours' => (int) env('KNOWLEDGE_CACHE_TTL_HOURS', 24),
@@ -75,8 +75,8 @@ return [
         // Conditional reranking: only rerank in the "uncertain zone"
         // Skip reranking if top similarity is above max_threshold (confident enough)
         // Skip reranking if top similarity is below min_threshold (too poor to help)
-        'min_threshold' => (float) env('KNOWLEDGE_RERANKING_MIN', 0.50),
-        'max_threshold' => (float) env('KNOWLEDGE_RERANKING_MAX', 0.78),
+        'min_threshold' => (float) env('KNOWLEDGE_RERANKING_MIN', 0.58),
+        'max_threshold' => (float) env('KNOWLEDGE_RERANKING_MAX', 0.85),
     ],
 
     // Source-type specific chunk sizes (in tokens)

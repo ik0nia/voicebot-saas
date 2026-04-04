@@ -126,8 +126,12 @@ class ChatModelRouter
         $minRequests = $config['min_requests'] ?? 5;
         $failThreshold = $config['fail_rate_threshold'] ?? 0.8;
 
-        $failures = (int) Cache::get("routing_cb_{$provider}_fail", 0);
-        $successes = (int) Cache::get("routing_cb_{$provider}_ok", 0);
+        try {
+            $failures = (int) Cache::get("routing_cb_{$provider}_fail", 0);
+            $successes = (int) Cache::get("routing_cb_{$provider}_ok", 0);
+        } catch (\Throwable $e) {
+            return false;
+        }
         $total = $failures + $successes;
 
         if ($total < $minRequests) {
@@ -139,18 +143,26 @@ class ChatModelRouter
 
     public function recordSuccess(string $provider): void
     {
-        $window = config('routing.circuit_breaker.window_minutes', 5);
-        $key = "routing_cb_{$provider}_ok";
-        Cache::increment($key);
-        Cache::put($key, (int) Cache::get($key, 0), now()->addMinutes($window));
+        try {
+            $window = config('routing.circuit_breaker.window_minutes', 5);
+            $key = "routing_cb_{$provider}_ok";
+            Cache::increment($key);
+            Cache::put($key, (int) Cache::get($key, 0), now()->addMinutes($window));
+        } catch (\Throwable $e) {
+            // Cache write failed, continue without caching
+        }
     }
 
     public function recordFailure(string $provider): void
     {
-        $window = config('routing.circuit_breaker.window_minutes', 5);
-        $key = "routing_cb_{$provider}_fail";
-        Cache::increment($key);
-        Cache::put($key, (int) Cache::get($key, 0), now()->addMinutes($window));
+        try {
+            $window = config('routing.circuit_breaker.window_minutes', 5);
+            $key = "routing_cb_{$provider}_fail";
+            Cache::increment($key);
+            Cache::put($key, (int) Cache::get($key, 0), now()->addMinutes($window));
+        } catch (\Throwable $e) {
+            // Cache write failed, continue without caching
+        }
     }
 
     /**

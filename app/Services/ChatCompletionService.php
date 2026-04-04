@@ -107,7 +107,11 @@ class ChatCompletionService
         if (!$skipCache && $botId) {
             $normalizer = app(QueryNormalizerService::class);
             $cacheKey = $normalizer->cacheKey($botId, $lastContent);
-            $cached = Cache::get($cacheKey);
+            try {
+                $cached = Cache::get($cacheKey);
+            } catch (\Throwable $e) {
+                $cached = null;
+            }
             if ($cached) {
                 return $cached;
             }
@@ -141,7 +145,11 @@ class ChatCompletionService
 
                 $this->recordSuccess($provider);
                 if ($cacheKey) {
-                    Cache::put($cacheKey, $result, now()->addMinutes(3));
+                    try {
+                        Cache::put($cacheKey, $result, now()->addMinutes(10));
+                    } catch (\Throwable $e) {
+                        // Cache write failed, continue without caching
+                    }
                 }
                 return $result;
 
@@ -185,7 +193,11 @@ class ChatCompletionService
                 $this->recordSuccess($fallbackProvider);
 
                 if ($cacheKey) {
-                    Cache::put($cacheKey, $result, now()->addMinutes(3));
+                    try {
+                        Cache::put($cacheKey, $result, now()->addMinutes(10));
+                    } catch (\Throwable $e) {
+                        // Cache write failed, continue without caching
+                    }
                 }
                 return $result;
 
@@ -447,8 +459,12 @@ class ChatCompletionService
 
     private function isCircuitOpen(string $provider): bool
     {
-        $failures = (int) Cache::get("circuit_{$provider}_failures", 0);
-        $successes = (int) Cache::get("circuit_{$provider}_successes", 0);
+        try {
+            $failures = (int) Cache::get("circuit_{$provider}_failures", 0);
+            $successes = (int) Cache::get("circuit_{$provider}_successes", 0);
+        } catch (\Throwable $e) {
+            return false;
+        }
         $total = $failures + $successes;
 
         if ($total < 5) {
@@ -460,16 +476,24 @@ class ChatCompletionService
 
     private function recordFailure(string $provider): void
     {
-        $key = "circuit_{$provider}_failures";
-        Cache::increment($key);
-        Cache::put($key, (int) Cache::get($key, 0), now()->addMinutes(5));
+        try {
+            $key = "circuit_{$provider}_failures";
+            Cache::increment($key);
+            Cache::put($key, (int) Cache::get($key, 0), now()->addMinutes(5));
+        } catch (\Throwable $e) {
+            // Cache write failed, continue without caching
+        }
     }
 
     private function recordSuccess(string $provider): void
     {
-        $key = "circuit_{$provider}_successes";
-        Cache::increment($key);
-        Cache::put($key, (int) Cache::get($key, 0), now()->addMinutes(5));
+        try {
+            $key = "circuit_{$provider}_successes";
+            Cache::increment($key);
+            Cache::put($key, (int) Cache::get($key, 0), now()->addMinutes(5));
+        } catch (\Throwable $e) {
+            // Cache write failed, continue without caching
+        }
     }
 
     /**
@@ -480,6 +504,8 @@ class ChatCompletionService
         float $costCents, int $responseTimeMs, string $status, ?string $errorType,
         ?int $botId, ?int $tenantId,
     ): void {
+        // TODO: Dispatch to a queued job (e.g. RecordAiApiMetric) instead of synchronous insert
+        // to avoid adding DB latency to every LLM response path.
         try {
             AiApiMetric::create([
                 'provider' => $provider,
