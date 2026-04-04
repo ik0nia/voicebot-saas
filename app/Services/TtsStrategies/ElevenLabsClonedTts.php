@@ -12,6 +12,8 @@ class ElevenLabsClonedTts implements TtsOutputStrategy
 
     public function __construct(
         private string $voiceId,
+        private ?int $botId = null,
+        private ?int $tenantId = null,
     ) {
         $this->elevenLabs = app(ElevenLabsService::class);
     }
@@ -33,7 +35,7 @@ class ElevenLabsClonedTts implements TtsOutputStrategy
         }
 
         try {
-            $audioBase64 = $this->elevenLabs->synthesize($this->voiceId, $text);
+            $audioBase64 = $this->elevenLabs->synthesize($this->voiceId, $text, 'ulaw_8000', $this->botId, $this->tenantId);
 
             if (!$audioBase64) {
                 Log::warning('ElevenLabsClonedTts: synthesize returned null', [

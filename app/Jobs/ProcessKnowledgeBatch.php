@@ -155,14 +155,58 @@ class ProcessKnowledgeBatch implements ShouldQueue
      */
     private function generateEmbedding(string $text): ?array
     {
+        $model = config('knowledge.embedding_model', 'text-embedding-3-small');
+        $startTime = microtime(true);
+
         try {
             $response = OpenAI::embeddings()->create([
-                'model' => config('knowledge.embedding_model', 'text-embedding-3-small'),
+                'model' => $model,
                 'input' => $text,
             ]);
 
+            $responseTimeMs = (int) ((microtime(true) - $startTime) * 1000);
+            $totalTokens = $response->usage->totalTokens ?? 0;
+            // text-embedding-3-small: $0.02/1M tokens = 0.000002 cents/token
+            $costCents = $totalTokens * 0.000002;
+
+            try {
+                \App\Models\AiApiMetric::create([
+                    'provider' => 'openai',
+                    'model' => $model,
+                    'input_tokens' => $totalTokens,
+                    'output_tokens' => 0,
+                    'cost_cents' => $costCents,
+                    'response_time_ms' => $responseTimeMs,
+                    'status' => 'success',
+                    'error_type' => null,
+                    'bot_id' => $this->botId,
+                    'tenant_id' => \App\Models\Bot::where('id', $this->botId)->value('tenant_id'),
+                ]);
+            } catch (\Exception $e) {
+                Log::warning('Failed to record API metric', ['error' => $e->getMessage()]);
+            }
+
             return $response->embeddings[0]->embedding;
         } catch (\Throwable $e) {
+            $responseTimeMs = (int) ((microtime(true) - $startTime) * 1000);
+
+            try {
+                \App\Models\AiApiMetric::create([
+                    'provider' => 'openai',
+                    'model' => $model,
+                    'input_tokens' => 0,
+                    'output_tokens' => 0,
+                    'cost_cents' => 0,
+                    'response_time_ms' => $responseTimeMs,
+                    'status' => 'error',
+                    'error_type' => get_class($e),
+                    'bot_id' => $this->botId,
+                    'tenant_id' => \App\Models\Bot::where('id', $this->botId)->value('tenant_id'),
+                ]);
+            } catch (\Exception $metricEx) {
+                Log::warning('Failed to record API metric', ['error' => $metricEx->getMessage()]);
+            }
+
             Log::error('ProcessKnowledgeBatch: embedding failed', ['error' => $e->getMessage()]);
             return null;
         }

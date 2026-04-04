@@ -63,6 +63,8 @@ class AnalyzeCallSentiment implements ShouldQueue
             return;
         }
 
+        $startTime = microtime(true);
+
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $apiKey,
             'Content-Type' => 'application/json',
@@ -87,12 +89,54 @@ class AnalyzeCallSentiment implements ShouldQueue
             'temperature' => 0,
         ]);
 
+        $responseTimeMs = (int) ((microtime(true) - $startTime) * 1000);
+
         if (!$response->successful()) {
             Log::error('AnalyzeCallSentiment: OpenAI API error', [
                 'call_id' => $this->callId,
                 'status' => $response->status(),
             ]);
+
+            try {
+                \App\Models\AiApiMetric::create([
+                    'provider' => 'openai',
+                    'model' => 'gpt-4o-mini',
+                    'input_tokens' => 0,
+                    'output_tokens' => 0,
+                    'cost_cents' => 0,
+                    'response_time_ms' => $responseTimeMs,
+                    'status' => 'error',
+                    'error_type' => 'http_' . $response->status(),
+                    'bot_id' => $call->bot_id ?? null,
+                    'tenant_id' => $call->tenant_id ?? null,
+                ]);
+            } catch (\Exception $e) {
+                Log::warning('Failed to record API metric', ['error' => $e->getMessage()]);
+            }
+
             throw new \RuntimeException("OpenAI API returned {$response->status()}");
+        }
+
+        $inputTokens = $response->json('usage.prompt_tokens', 0);
+        $outputTokens = $response->json('usage.completion_tokens', 0);
+        // gpt-4o-mini: input $0.15/1M tokens, output $0.60/1M tokens
+        $costCents = ($inputTokens * 0.015 / 1000) + ($outputTokens * 0.06 / 1000);
+
+        try {
+            \App\Models\AiApiMetric::create([
+                'provider' => 'openai',
+                'model' => 'gpt-4o-mini',
+                'input_tokens' => $inputTokens,
+                'output_tokens' => $outputTokens,
+                'cost_cents' => $costCents,
+                'response_time_ms' => $responseTimeMs,
+                'status' => 'success',
+                'error_type' => null,
+                'bot_id' => $call->bot_id ?? null,
+                'tenant_id' => $call->tenant_id ?? null,
+            ]);
+        } catch (\Exception $e) {
+            Log::warning('Failed to record API metric', ['error' => $e->getMessage()]);
         }
 
         $content = trim($response->json('choices.0.message.content', ''));

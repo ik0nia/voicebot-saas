@@ -68,6 +68,8 @@ class RunKnowledgeAgent implements ShouldQueue
             $temperature = $agent->temperature ?? 0.7;
             $maxTokens = $agent->max_tokens ?? 4000;
 
+            $apiStartTime = microtime(true);
+
             $response = OpenAI::chat()->create([
                 'model' => $modelToUse,
                 'messages' => [
@@ -78,9 +80,37 @@ class RunKnowledgeAgent implements ShouldQueue
                 'temperature' => $temperature,
             ]);
 
+            $apiResponseTimeMs = (int) ((microtime(true) - $apiStartTime) * 1000);
+
             $content = $response->choices[0]->message->content;
             $finishReason = $response->choices[0]->finishReason ?? null;
             $tokensUsed = $response->usage->totalTokens ?? 0;
+
+            $inputTokens = $response->usage->promptTokens ?? 0;
+            $outputTokens = $response->usage->completionTokens ?? 0;
+            // Cost depends on model
+            $costCents = match(true) {
+                str_contains($modelToUse, 'gpt-4o-mini') => ($inputTokens * 0.015 / 1000) + ($outputTokens * 0.06 / 1000),
+                str_contains($modelToUse, 'gpt-4o') => ($inputTokens * 0.25 / 1000) + ($outputTokens * 1.0 / 1000),
+                default => ($inputTokens * 0.015 / 1000) + ($outputTokens * 0.06 / 1000),
+            };
+
+            try {
+                \App\Models\AiApiMetric::create([
+                    'provider' => 'openai',
+                    'model' => $modelToUse,
+                    'input_tokens' => $inputTokens,
+                    'output_tokens' => $outputTokens,
+                    'cost_cents' => $costCents,
+                    'response_time_ms' => $apiResponseTimeMs,
+                    'status' => 'success',
+                    'error_type' => null,
+                    'bot_id' => $this->run->bot_id,
+                    'tenant_id' => $this->run->bot?->tenant_id,
+                ]);
+            } catch (\Exception $metricEx) {
+                Log::warning('Failed to record API metric', ['error' => $metricEx->getMessage()]);
+            }
 
             $metadata = $this->run->metadata ?? [];
             if ($finishReason === 'length') {
@@ -113,6 +143,26 @@ class RunKnowledgeAgent implements ShouldQueue
                 app(PlanLimitService::class)->recordTokensUsed($tenant, $tokensUsed);
             }
         } catch (\Exception $e) {
+            $errorResponseTimeMs = isset($apiStartTime) ? (int) ((microtime(true) - $apiStartTime) * 1000) : 0;
+            $errorModel = $modelToUse ?? (isset($agent) ? ($agent->model ?? 'gpt-4o-mini') : 'gpt-4o-mini');
+
+            try {
+                \App\Models\AiApiMetric::create([
+                    'provider' => 'openai',
+                    'model' => $errorModel,
+                    'input_tokens' => 0,
+                    'output_tokens' => 0,
+                    'cost_cents' => 0,
+                    'response_time_ms' => $errorResponseTimeMs,
+                    'status' => 'error',
+                    'error_type' => get_class($e),
+                    'bot_id' => $this->run->bot_id,
+                    'tenant_id' => $this->run->bot?->tenant_id,
+                ]);
+            } catch (\Exception $metricEx) {
+                Log::warning('Failed to record API metric', ['error' => $metricEx->getMessage()]);
+            }
+
             Log::error('Knowledge agent run failed', [
                 'run_id' => $this->run->id,
                 'agent_slug' => $this->run->agent_slug,
@@ -123,7 +173,7 @@ class RunKnowledgeAgent implements ShouldQueue
             $this->run->update([
                 'status' => 'failed',
                 'generated_content' => 'A apărut o eroare la generarea conținutului. Vă rugăm să încercați din nou.',
-                'model_used' => $modelToUse ?? (isset($agent) ? ($agent->model ?? 'gpt-4o-mini') : 'gpt-4o-mini'),
+                'model_used' => $errorModel,
             ]);
 
             throw $e;

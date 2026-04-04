@@ -91,15 +91,15 @@ class ConversationSummaryService
         $messageIds = $olderMessages->pluck('id')->toArray();
         $cacheKey = "conv_summary_{$conversation->id}_" . md5(implode(',', $messageIds));
 
-        return Cache::remember($cacheKey, now()->addHours(2), function () use ($olderMessages) {
-            return $this->generateSummary($olderMessages);
+        return Cache::remember($cacheKey, now()->addHours(2), function () use ($olderMessages, $conversation) {
+            return $this->generateSummary($olderMessages, $conversation->bot_id ?? null, $conversation->tenant_id ?? null);
         });
     }
 
     /**
      * Call LLM to generate a concise summary of conversation messages.
      */
-    private function generateSummary($messages): ?string
+    private function generateSummary($messages, ?int $botId = null, ?int $tenantId = null): ?string
     {
         if ($messages->isEmpty()) {
             return null;
@@ -110,6 +110,8 @@ class ConversationSummaryService
             $role = $msg->direction === 'inbound' ? 'Client' : 'Asistent';
             $transcript .= "{$role}: {$msg->content}\n";
         }
+
+        $startTime = microtime(true);
 
         try {
             $response = OpenAI::chat()->create([
@@ -128,9 +130,52 @@ class ConversationSummaryService
                 ],
             ]);
 
+            $responseTimeMs = (int) ((microtime(true) - $startTime) * 1000);
+
+            $inputTokens = $response->usage->promptTokens ?? 0;
+            $outputTokens = $response->usage->completionTokens ?? 0;
+            // gpt-4o-mini: input $0.15/1M tokens, output $0.60/1M tokens
+            $costCents = ($inputTokens * 0.015 / 1000) + ($outputTokens * 0.06 / 1000);
+
+            try {
+                \App\Models\AiApiMetric::create([
+                    'provider' => 'openai',
+                    'model' => 'gpt-4o-mini',
+                    'input_tokens' => $inputTokens,
+                    'output_tokens' => $outputTokens,
+                    'cost_cents' => $costCents,
+                    'response_time_ms' => $responseTimeMs,
+                    'status' => 'success',
+                    'error_type' => null,
+                    'bot_id' => $botId,
+                    'tenant_id' => $tenantId,
+                ]);
+            } catch (\Exception $e) {
+                Log::warning('Failed to record API metric', ['error' => $e->getMessage()]);
+            }
+
             $summary = trim($response->choices[0]->message->content ?? '');
             return !empty($summary) ? $summary : null;
         } catch (\Throwable $e) {
+            $responseTimeMs = (int) ((microtime(true) - $startTime) * 1000);
+
+            try {
+                \App\Models\AiApiMetric::create([
+                    'provider' => 'openai',
+                    'model' => 'gpt-4o-mini',
+                    'input_tokens' => 0,
+                    'output_tokens' => 0,
+                    'cost_cents' => 0,
+                    'response_time_ms' => $responseTimeMs,
+                    'status' => 'error',
+                    'error_type' => get_class($e),
+                    'bot_id' => $botId,
+                    'tenant_id' => $tenantId,
+                ]);
+            } catch (\Exception $metricEx) {
+                Log::warning('Failed to record API metric', ['error' => $metricEx->getMessage()]);
+            }
+
             Log::warning('ConversationSummaryService: summary generation failed', [
                 'conversation_messages' => $messages->count(),
                 'error' => $e->getMessage(),

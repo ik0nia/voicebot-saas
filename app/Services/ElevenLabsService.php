@@ -27,12 +27,14 @@ class ElevenLabsService
     /**
      * Create a cloned voice from an audio file.
      */
-    public function createVoice(string $name, string $audioFilePath, string $description = ''): ?array
+    public function createVoice(string $name, string $audioFilePath, string $description = '', ?int $botId = null, ?int $tenantId = null): ?array
     {
         if (!$this->isConfigured()) {
             Log::error('ElevenLabs: API key not configured');
             return null;
         }
+
+        $startTime = microtime(true);
 
         try {
             $response = Http::withHeaders([
@@ -44,12 +46,49 @@ class ElevenLabsService
                 'description' => $description ?: "Cloned voice: {$name}",
             ]);
 
+            $responseTimeMs = (int) ((microtime(true) - $startTime) * 1000);
+
             if ($response->successful()) {
                 $data = $response->json();
+
+                try {
+                    \App\Models\AiApiMetric::create([
+                        'provider' => 'elevenlabs',
+                        'model' => 'voice-cloning',
+                        'input_tokens' => 0,
+                        'output_tokens' => 0,
+                        'cost_cents' => 10.0, // ~$0.10 per clone
+                        'response_time_ms' => $responseTimeMs,
+                        'status' => 'success',
+                        'error_type' => null,
+                        'bot_id' => $botId,
+                        'tenant_id' => $tenantId,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::warning('Failed to record API metric', ['error' => $e->getMessage()]);
+                }
+
                 return [
                     'voice_id' => $data['voice_id'],
                     'name' => $name,
                 ];
+            }
+
+            try {
+                \App\Models\AiApiMetric::create([
+                    'provider' => 'elevenlabs',
+                    'model' => 'voice-cloning',
+                    'input_tokens' => 0,
+                    'output_tokens' => 0,
+                    'cost_cents' => 0,
+                    'response_time_ms' => $responseTimeMs,
+                    'status' => 'error',
+                    'error_type' => 'http_' . $response->status(),
+                    'bot_id' => $botId,
+                    'tenant_id' => $tenantId,
+                ]);
+            } catch (\Exception $e) {
+                Log::warning('Failed to record API metric', ['error' => $e->getMessage()]);
             }
 
             Log::error('ElevenLabs createVoice failed', [
@@ -58,6 +97,25 @@ class ElevenLabsService
             ]);
             return null;
         } catch (\Exception $e) {
+            $responseTimeMs = (int) ((microtime(true) - $startTime) * 1000);
+
+            try {
+                \App\Models\AiApiMetric::create([
+                    'provider' => 'elevenlabs',
+                    'model' => 'voice-cloning',
+                    'input_tokens' => 0,
+                    'output_tokens' => 0,
+                    'cost_cents' => 0,
+                    'response_time_ms' => $responseTimeMs,
+                    'status' => 'error',
+                    'error_type' => get_class($e),
+                    'bot_id' => $botId,
+                    'tenant_id' => $tenantId,
+                ]);
+            } catch (\Exception $metricEx) {
+                Log::warning('Failed to record API metric', ['error' => $metricEx->getMessage()]);
+            }
+
             Log::error('ElevenLabs createVoice exception', ['error' => $e->getMessage()]);
             return null;
         }
@@ -87,7 +145,7 @@ class ElevenLabsService
     /**
      * Synthesize text to speech. Returns base64-encoded g711_ulaw audio.
      */
-    public function synthesize(string $voiceId, string $text, string $outputFormat = 'ulaw_8000'): ?string
+    public function synthesize(string $voiceId, string $text, string $outputFormat = 'ulaw_8000', ?int $botId = null, ?int $tenantId = null): ?string
     {
         if (!$this->isConfigured() || empty($text)) {
             return null;
@@ -95,6 +153,8 @@ class ElevenLabsService
 
         $stability = (float) PlatformSetting::get('elevenlabs_stability', 0.7);
         $similarityBoost = (float) PlatformSetting::get('elevenlabs_similarity_boost', 0.75);
+        $charCount = mb_strlen($text);
+        $startTime = microtime(true);
 
         try {
             $response = Http::withHeaders([
@@ -112,8 +172,47 @@ class ElevenLabsService
                 ]
             );
 
+            $responseTimeMs = (int) ((microtime(true) - $startTime) * 1000);
+
             if ($response->successful()) {
+                // ElevenLabs TTS: ~$0.30/1000 chars = 0.03 cents/char
+                $costCents = $charCount * 0.03;
+
+                try {
+                    \App\Models\AiApiMetric::create([
+                        'provider' => 'elevenlabs',
+                        'model' => 'tts',
+                        'input_tokens' => 0,
+                        'output_tokens' => $charCount,
+                        'cost_cents' => $costCents,
+                        'response_time_ms' => $responseTimeMs,
+                        'status' => 'success',
+                        'error_type' => null,
+                        'bot_id' => $botId,
+                        'tenant_id' => $tenantId,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::warning('Failed to record API metric', ['error' => $e->getMessage()]);
+                }
+
                 return base64_encode($response->body());
+            }
+
+            try {
+                \App\Models\AiApiMetric::create([
+                    'provider' => 'elevenlabs',
+                    'model' => 'tts',
+                    'input_tokens' => 0,
+                    'output_tokens' => $charCount,
+                    'cost_cents' => 0,
+                    'response_time_ms' => $responseTimeMs,
+                    'status' => 'error',
+                    'error_type' => 'http_' . $response->status(),
+                    'bot_id' => $botId,
+                    'tenant_id' => $tenantId,
+                ]);
+            } catch (\Exception $e) {
+                Log::warning('Failed to record API metric', ['error' => $e->getMessage()]);
             }
 
             Log::error('ElevenLabs synthesize failed', [
@@ -122,6 +221,25 @@ class ElevenLabsService
             ]);
             return null;
         } catch (\Exception $e) {
+            $responseTimeMs = (int) ((microtime(true) - $startTime) * 1000);
+
+            try {
+                \App\Models\AiApiMetric::create([
+                    'provider' => 'elevenlabs',
+                    'model' => 'tts',
+                    'input_tokens' => 0,
+                    'output_tokens' => $charCount,
+                    'cost_cents' => 0,
+                    'response_time_ms' => $responseTimeMs,
+                    'status' => 'error',
+                    'error_type' => get_class($e),
+                    'bot_id' => $botId,
+                    'tenant_id' => $tenantId,
+                ]);
+            } catch (\Exception $metricEx) {
+                Log::warning('Failed to record API metric', ['error' => $metricEx->getMessage()]);
+            }
+
             Log::error('ElevenLabs synthesize exception', ['error' => $e->getMessage()]);
             return null;
         }
@@ -130,7 +248,7 @@ class ElevenLabsService
     /**
      * Synthesize with streaming - yields base64 audio chunks.
      */
-    public function synthesizeStream(string $voiceId, string $text, string $outputFormat = 'ulaw_8000'): \Generator
+    public function synthesizeStream(string $voiceId, string $text, string $outputFormat = 'ulaw_8000', ?int $botId = null, ?int $tenantId = null): \Generator
     {
         if (!$this->isConfigured() || empty($text)) {
             return;
@@ -138,6 +256,8 @@ class ElevenLabsService
 
         $stability = (float) PlatformSetting::get('elevenlabs_stability', 0.7);
         $similarityBoost = (float) PlatformSetting::get('elevenlabs_similarity_boost', 0.75);
+        $charCount = mb_strlen($text);
+        $startTime = microtime(true);
 
         try {
             $response = Http::withHeaders([
@@ -157,7 +277,29 @@ class ElevenLabsService
                 ]
             );
 
+            $responseTimeMs = (int) ((microtime(true) - $startTime) * 1000);
+
             if ($response->successful()) {
+                // ElevenLabs TTS: ~$0.30/1000 chars = 0.03 cents/char
+                $costCents = $charCount * 0.03;
+
+                try {
+                    \App\Models\AiApiMetric::create([
+                        'provider' => 'elevenlabs',
+                        'model' => 'tts',
+                        'input_tokens' => 0,
+                        'output_tokens' => $charCount,
+                        'cost_cents' => $costCents,
+                        'response_time_ms' => $responseTimeMs,
+                        'status' => 'success',
+                        'error_type' => null,
+                        'bot_id' => $botId,
+                        'tenant_id' => $tenantId,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::warning('Failed to record API metric', ['error' => $e->getMessage()]);
+                }
+
                 $body = $response->toPsrResponse()->getBody();
                 $buffer = '';
                 $chunkSize = 8000; // ~1 second of ulaw_8000
@@ -176,12 +318,48 @@ class ElevenLabsService
                     yield base64_encode($buffer);
                 }
             } else {
+                try {
+                    \App\Models\AiApiMetric::create([
+                        'provider' => 'elevenlabs',
+                        'model' => 'tts',
+                        'input_tokens' => 0,
+                        'output_tokens' => $charCount,
+                        'cost_cents' => 0,
+                        'response_time_ms' => $responseTimeMs,
+                        'status' => 'error',
+                        'error_type' => 'http_' . $response->status(),
+                        'bot_id' => $botId,
+                        'tenant_id' => $tenantId,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::warning('Failed to record API metric', ['error' => $e->getMessage()]);
+                }
+
                 Log::error('ElevenLabs synthesizeStream failed', [
                     'status' => $response->status(),
                     'voice_id' => $voiceId,
                 ]);
             }
         } catch (\Exception $e) {
+            $responseTimeMs = (int) ((microtime(true) - $startTime) * 1000);
+
+            try {
+                \App\Models\AiApiMetric::create([
+                    'provider' => 'elevenlabs',
+                    'model' => 'tts',
+                    'input_tokens' => 0,
+                    'output_tokens' => $charCount,
+                    'cost_cents' => 0,
+                    'response_time_ms' => $responseTimeMs,
+                    'status' => 'error',
+                    'error_type' => get_class($e),
+                    'bot_id' => $botId,
+                    'tenant_id' => $tenantId,
+                ]);
+            } catch (\Exception $metricEx) {
+                Log::warning('Failed to record API metric', ['error' => $metricEx->getMessage()]);
+            }
+
             Log::error('ElevenLabs synthesizeStream exception', ['error' => $e->getMessage()]);
         }
     }

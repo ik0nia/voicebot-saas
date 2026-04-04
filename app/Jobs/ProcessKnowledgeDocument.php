@@ -506,12 +506,39 @@ class ProcessKnowledgeDocument implements ShouldQueue
     {
         $results = [];
         $model = $this->getEmbeddingModel();
+        $botId = $this->knowledge->bot_id ?? null;
+        $tenantId = $this->knowledge->bot?->tenant_id ?? null;
 
         foreach (array_chunk($chunks, 100) as $batch) {
+            $batchStartTime = microtime(true);
+
             $response = OpenAI::embeddings()->create([
                 'model' => $model,
                 'input' => $batch,
             ]);
+
+            $batchResponseTimeMs = (int) ((microtime(true) - $batchStartTime) * 1000);
+
+            $totalTokens = $response->usage->totalTokens ?? 0;
+            // text-embedding-3-small: $0.02/1M tokens = 0.000002 cents/token
+            $costCents = $totalTokens * 0.000002;
+
+            try {
+                \App\Models\AiApiMetric::create([
+                    'provider' => 'openai',
+                    'model' => $model,
+                    'input_tokens' => $totalTokens,
+                    'output_tokens' => 0,
+                    'cost_cents' => $costCents,
+                    'response_time_ms' => $batchResponseTimeMs,
+                    'status' => 'success',
+                    'error_type' => null,
+                    'bot_id' => $botId,
+                    'tenant_id' => $tenantId,
+                ]);
+            } catch (\Exception $e) {
+                Log::warning('Failed to record API metric', ['error' => $e->getMessage()]);
+            }
 
             foreach ($response->embeddings as $item) {
                 $results[] = $item->embedding;
