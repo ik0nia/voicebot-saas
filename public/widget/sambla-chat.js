@@ -389,6 +389,12 @@
             .sambla-header-name { font-size: 16px; font-weight: 700; line-height: 1.3; }\
             .sambla-header-status { font-size: 11px; opacity: 0.65; display: flex; align-items: center; gap: 5px; }\
             .sambla-header-status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #4ade80; display: inline-block; }\
+            .sambla-header-close {\
+                background: rgba(255,255,255,0.15); border: none; color: #fff; width: 32px; height: 32px;\
+                border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;\
+                transition: background 0.2s; flex-shrink: 0; padding: 0; margin-left: 8px;\
+            }\
+            .sambla-header-close:hover { background: rgba(255,255,255,0.25); }\
             .sambla-powered {\
                 font-size: 10px; text-align: center; padding: 2px 0;\
                 color: rgba(255,255,255,0.7); background: #7f1d1d;\
@@ -639,6 +645,11 @@
                         <div class="sambla-header-name">' + sanitizeHtml(config.botName) + '</div>\
                         <div class="sambla-header-status">' + t('online') + '</div>\
                     </div>\
+                    <button class="sambla-header-close" aria-label="' + t('closeChat') + '">\
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">\
+                            <path d="M18 6L6 18M6 6l12 12"/>\
+                        </svg>\
+                    </button>\
                 </div>\
                 <div class="sambla-powered">' + t('poweredBy') + ' <a href="https://sambla.ro" target="_blank" rel="noopener">Sambla</a></div>\
                 <div class="sambla-offline-banner" role="alert">' + t('offlineQueued') + '</div>\
@@ -2132,6 +2143,14 @@
         // Event listeners
         bubble.addEventListener('click', toggleChat);
         bubble.setAttribute('aria-expanded', 'false');
+
+        var closeBtn = root.querySelector('.sambla-header-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (isOpen) toggleChat();
+            });
+        }
 
         sendBtn.addEventListener('click', sendMessage);
 
