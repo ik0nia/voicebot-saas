@@ -614,10 +614,9 @@
                     max-height: none !important; max-width: none !important;\
                     border-radius: 0 !important; border: none !important;\
                     box-shadow: none !important; z-index: 2147483647 !important;\
-                    padding-top: env(safe-area-inset-top, 0px);\
                 }\
-                .sambla-window .sambla-header { border-radius: 0; flex-shrink: 0; }\
-                .sambla-window .sambla-messages { flex: 1; min-height: 0; overflow-y: auto; }\
+                .sambla-window .sambla-header { border-radius: 0; flex-shrink: 0; padding-top: calc(8px + env(safe-area-inset-top, 0px)); }\
+                .sambla-window .sambla-messages { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }\
                 .sambla-window .sambla-input-area {\
                     padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;\
                     flex-shrink: 0 !important;\
@@ -1464,47 +1463,14 @@
                 // Flush offline queue
                 flushOfflineQueue();
 
-                // Mobile: iOS keyboard handling
+                // Mobile: prevent background scroll
                 if (window.innerWidth <= 440) {
                     chatWindow._scrollY = window.scrollY;
-                    // Prevent background scroll via touch
-                    chatWindow._touchBlocker = function(e) {
-                        // Allow scroll inside messages container
-                        var t = e.target;
-                        while (t && t !== chatWindow) {
-                            if (t.classList && t.classList.contains('sambla-messages')) return;
-                            t = t.parentElement;
-                        }
-                        e.preventDefault();
-                    };
-                    document.addEventListener('touchmove', chatWindow._touchBlocker, { passive: false });
-
-                    // Resize to visual viewport (handles iOS keyboard)
-                    if (window.visualViewport) {
-                        chatWindow._vvResize = function() {
-                            var h = window.visualViewport.height;
-                            chatWindow.style.height = h + 'px';
-                            chatWindow.style.top = window.visualViewport.offsetTop + 'px';
-                        };
-                        window.visualViewport.addEventListener('resize', chatWindow._vvResize);
-                        window.visualViewport.addEventListener('scroll', chatWindow._vvResize);
-                        chatWindow._vvResize();
-                    }
+                    window.scrollTo(0, 0);
                 }
             } else {
                 bubble.focus();
-                // Mobile: cleanup
-                if (chatWindow._touchBlocker) {
-                    document.removeEventListener('touchmove', chatWindow._touchBlocker);
-                    chatWindow._touchBlocker = null;
-                }
-                if (chatWindow._vvResize && window.visualViewport) {
-                    window.visualViewport.removeEventListener('resize', chatWindow._vvResize);
-                    window.visualViewport.removeEventListener('scroll', chatWindow._vvResize);
-                    chatWindow._vvResize = null;
-                }
-                chatWindow.style.height = '';
-                chatWindow.style.top = '';
+                // Mobile: restore scroll
                 if (chatWindow._scrollY !== undefined) {
                     window.scrollTo(0, chatWindow._scrollY);
                     chatWindow._scrollY = undefined;
@@ -2162,11 +2128,13 @@
 
         sendBtn.addEventListener('click', sendMessage);
 
-        // iOS: scroll messages to bottom when keyboard appears
+        // iOS: keep input visible when keyboard appears
         input.addEventListener('focus', function() {
             if (window.innerWidth <= 440) {
-                setTimeout(function() { scrollToBottom(); }, 300);
-                setTimeout(function() { scrollToBottom(); }, 600);
+                setTimeout(function() {
+                    input.scrollIntoView({ block: 'end', behavior: 'smooth' });
+                    scrollToBottom();
+                }, 400);
             }
         });
 
