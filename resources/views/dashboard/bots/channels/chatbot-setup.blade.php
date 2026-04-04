@@ -205,7 +205,7 @@
             attrs += ' data-position="' + position + '"';
         }
 
-        var code = '<script src="https://sambla.ro/widget/sambla-chat.js" ' + attrs + '><\/script>';
+        var code = '<script src="https://sambla.ro/widget/sambla-chat.min.js" ' + attrs + '><\/script>';
         document.getElementById('embed-code').textContent = code;
     }
 

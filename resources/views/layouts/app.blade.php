@@ -20,7 +20,7 @@
     @include('components.footer')
 
     {{-- Chatbot widget: Sambla - Asistent Site (bot 34, channel 2) --}}
-    <script src="{{ rtrim(config('app.url'), '/') }}/widget/sambla-chat.js" data-channel-id="2" data-bot-name="Sambla AI" data-color="#991b1b" data-lang="ro" async defer></script>
+    <script src="{{ rtrim(config('app.url'), '/') }}/widget/sambla-chat.min.js" data-channel-id="2" data-bot-name="Sambla AI" data-color="#991b1b" data-lang="ro" async defer></script>
 
     @stack('scripts')
 </body>

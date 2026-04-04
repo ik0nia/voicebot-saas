@@ -5,7 +5,7 @@
     var scriptTag = document.currentScript || (function() {
         var scripts = document.getElementsByTagName('script');
         for (var i = scripts.length - 1; i >= 0; i--) {
-            if (scripts[i].src && scripts[i].src.indexOf('sambla-chat.js') !== -1) {
+            if (scripts[i].src && (scripts[i].src.indexOf('sambla-chat.min.js') !== -1 || scripts[i].src.indexOf('sambla-chat.js') !== -1)) {
                 return scripts[i];
             }
         }
@@ -228,6 +228,13 @@
             var toSave = msgs.slice(-config.maxMessages);
             localStorage.setItem(MESSAGES_KEY, JSON.stringify(toSave));
         } catch(e) {}
+    }
+
+    // Debounced version — only writes to localStorage every 2 seconds
+    var _saveTimeout = null;
+    function saveMessagesDebounced(msgs) {
+        if (_saveTimeout) clearTimeout(_saveTimeout);
+        _saveTimeout = setTimeout(function() { saveMessages(msgs); }, 2000);
     }
 
     // =========================================================================
@@ -835,7 +842,7 @@
             if (status) msgData.receipt = status;
             messages.push(msgData);
             enforceMessageLimit();
-            saveMessages(messages);
+            saveMessagesDebounced(messages);
 
             // Wrapper — conține bubble + timestamp separat
             var wrapEl = document.createElement('div');
@@ -896,7 +903,7 @@
 
                     // Save to local state
                     msgData.feedback = newRating === 0 ? undefined : newRating;
-                    saveMessages(messages);
+                    saveMessagesDebounced(messages);
 
                     if (newRating === 0) return; // No API call for un-rating
 
@@ -959,7 +966,7 @@
             for (var i = messages.length - 1; i >= 0; i--) {
                 if (messages[i].sender === 'user') {
                     messages[i].receipt = status;
-                    saveMessages(messages);
+                    saveMessagesDebounced(messages);
                     break;
                 }
             }
@@ -979,9 +986,150 @@
         }
 
         function scrollToBottom() {
-            setTimeout(function() {
+            requestAnimationFrame(function() {
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            }, 50);
+            });
+        }
+
+        // =====================================================================
+        // SSE Streaming helpers
+        // =====================================================================
+
+        /**
+         * Create an empty bot message bubble in the chat and return the inner
+         * message element so its content can be updated progressively.
+         */
+        function createBotMessageElement() {
+            var ts = new Date().toISOString();
+
+            var wrapEl = document.createElement('div');
+            wrapEl.className = 'sambla-msg-wrap bot';
+            wrapEl.setAttribute('role', 'article');
+
+            var msgEl = document.createElement('div');
+            msgEl.className = 'sambla-msg bot';
+            msgEl.innerHTML = '';
+            wrapEl.appendChild(msgEl);
+
+            var timeEl = document.createElement('div');
+            timeEl.className = 'time';
+            timeEl.innerHTML = formatTime(ts);
+            wrapEl.appendChild(timeEl);
+
+            messagesContainer.insertBefore(wrapEl, typingEl);
+            scrollToBottom();
+
+            // Stash the wrap & time elements so we can enrich them later
+            msgEl._wrapEl = wrapEl;
+            msgEl._timeEl = timeEl;
+            msgEl._ts = ts;
+            return msgEl;
+        }
+
+        /**
+         * Update the text content of a bot message element created by
+         * createBotMessageElement(). Applies the same markdown rendering
+         * pipeline used by addMessage().
+         */
+        function updateMessageText(msgEl, text) {
+            var html = escapeHtml(text);
+            html = renderMarkdown(html);
+            msgEl.innerHTML = html;
+            scrollToBottom();
+        }
+
+        /**
+         * Finalise a streaming bot message so it is persisted in local
+         * history with full metadata (products, messageId, feedback, etc.).
+         */
+        function finaliseStreamMessage(msgEl, text, products, messageId) {
+            var ts = msgEl._ts || new Date().toISOString();
+            var msgData = { text: text, sender: 'bot', time: ts };
+            if (products && products.length > 0) msgData.products = products;
+            if (messageId) msgData.messageId = messageId;
+            messages.push(msgData);
+            enforceMessageLimit();
+            saveMessagesDebounced(messages);
+
+            // Link previews
+            renderLinkPreviews(text, msgEl);
+
+            // Feedback (same 30 % logic as addMessage)
+            if (messageId && Math.random() < 0.3) {
+                msgData.showFeedback = true;
+                var feedbackEl = document.createElement('div');
+                feedbackEl.className = 'sambla-feedback';
+                var thumbUp = document.createElement('button');
+                thumbUp.className = 'sambla-feedback-btn';
+                thumbUp.innerHTML = '&#128077;';
+                thumbUp.setAttribute('aria-label', 'Răspuns util');
+                thumbUp.setAttribute('title', 'Răspuns util');
+                var thumbDown = document.createElement('button');
+                thumbDown.className = 'sambla-feedback-btn';
+                thumbDown.innerHTML = '&#128078;';
+                thumbDown.setAttribute('aria-label', 'Răspuns neutil');
+                thumbDown.setAttribute('title', 'Răspuns neutil');
+
+                thumbUp.addEventListener('click', function() {
+                    var newRating = thumbUp.classList.contains('active-up') ? 0 : 1;
+                    thumbUp.classList.toggle('active-up');
+                    thumbDown.classList.remove('active-down');
+                    msgData.feedback = newRating === 0 ? undefined : newRating;
+                    saveMessages(messages);
+                    if (newRating === 0) return;
+                    try {
+                        fetch(config.apiBase + '/api/v1/chatbot/' + config.channelId + '/feedback', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                            body: JSON.stringify({
+                                message_id: messageId,
+                                conversation_id: getConversationId(),
+                                rating: 1,
+                                session_id: getSessionId(),
+                                session_token: getSessionToken()
+                            })
+                        });
+                    } catch(e) {}
+                    trackEvent('message_feedback', { rating: 1, message_id: messageId });
+                });
+                thumbDown.addEventListener('click', function() {
+                    var newRating = thumbDown.classList.contains('active-down') ? 0 : -1;
+                    thumbDown.classList.toggle('active-down');
+                    thumbUp.classList.remove('active-up');
+                    msgData.feedback = newRating === 0 ? undefined : newRating;
+                    saveMessages(messages);
+                    if (newRating === 0) return;
+                    try {
+                        fetch(config.apiBase + '/api/v1/chatbot/' + config.channelId + '/feedback', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                            body: JSON.stringify({
+                                message_id: messageId,
+                                conversation_id: getConversationId(),
+                                rating: -1,
+                                session_id: getSessionId(),
+                                session_token: getSessionToken()
+                            })
+                        });
+                    } catch(e) {}
+                    trackEvent('message_feedback', { rating: -1, message_id: messageId });
+                });
+
+                feedbackEl.appendChild(thumbUp);
+                feedbackEl.appendChild(thumbDown);
+                msgEl._wrapEl.appendChild(feedbackEl);
+            }
+
+            // Sound notification when minimised
+            if (!isOpen && playNotificationSound) {
+                playNotificationSound();
+                unreadCount++;
+                badgeEl.textContent = unreadCount > 9 ? '9+' : String(unreadCount);
+                badgeEl.classList.add('show');
+            }
+
+            announce(config.botName + ': ' + stripAllHtml(text).substring(0, 200));
+            scrollToBottom();
         }
 
         // =====================================================================
@@ -989,6 +1137,7 @@
         // =====================================================================
         var _eventQueue = [];
         var _eventFlushTimer = null;
+        var _impressionsSent = {};
 
         function trackEvent(eventName, data) {
             try {
@@ -1070,6 +1219,8 @@
                 });
             }
             if (_eventQueue.length > 0) { _flushEvents(); }
+            // Flush any pending debounced message save
+            if (_saveTimeout) { clearTimeout(_saveTimeout); saveMessages(messages); }
         });
         var _sessionStartTime = Date.now();
         var _messageCount = 0;
@@ -1337,7 +1488,12 @@
 
             input.value = '';
             input.style.height = 'auto';
-            doSendMessage(text);
+            // Try SSE streaming if browser supports ReadableStream, else classic
+            if (window.ReadableStream) {
+                sendMessageStream(text);
+            } else {
+                doSendMessage(text);
+            }
         }
 
         function doSendMessage(text) {
@@ -1409,6 +1565,167 @@
             .finally(function() {
                 isSending = false;
                 sendBtn.disabled = false;
+            });
+        }
+
+        // =====================================================================
+        // SSE Streaming send - progressive bot response via ReadableStream
+        // =====================================================================
+        function sendMessageStream(text) {
+            // Update activity timestamp
+            try { localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString()); } catch(e) {}
+
+            addMessage(text, 'user', null, null, 'sent');
+            _messageCount++;
+            trackEvent('message_sent', { length: text.length, streaming: true });
+            isSending = true;
+            sendBtn.disabled = true;
+            showTyping();
+
+            var payload = {
+                message: text,
+                session_id: getSessionId(),
+                session_token: getSessionToken(),
+                page_context: getPageContext()
+            };
+
+            try {
+                var prechatData = JSON.parse(localStorage.getItem(PRECHAT_KEY) || 'null');
+                if (prechatData) {
+                    payload.prechat_name = prechatData.name;
+                    payload.prechat_email = prechatData.email;
+                    payload.prechat_phone = prechatData.phone;
+                }
+            } catch(e) {}
+
+            var streamUrl = config.apiBase + '/api/v1/chatbot/' + config.channelId + '/message-stream';
+            var botText = '';
+
+            fetch(streamUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'text/event-stream'
+                },
+                body: JSON.stringify(payload)
+            }).then(function(response) {
+                if (!response.ok || !response.body) {
+                    // Fallback: reset state, re-send via classic path
+                    hideTyping();
+                    isSending = false;
+                    sendBtn.disabled = false;
+                    // Remove user message we already added (doSendMessage will re-add)
+                    if (messages.length > 0 && messages[messages.length - 1].sender === 'user') {
+                        messages.pop();
+                        saveMessages(messages);
+                        var lastWrap = messagesContainer.querySelectorAll('.sambla-msg-wrap.user');
+                        if (lastWrap.length > 0) {
+                            var lw = lastWrap[lastWrap.length - 1];
+                            if (lw.parentNode) lw.parentNode.removeChild(lw);
+                        }
+                    }
+                    doSendMessage(text);
+                    return;
+                }
+
+                updateLastUserReceipt('delivered');
+
+                var reader = response.body.getReader();
+                var decoder = new TextDecoder();
+                var buffer = '';
+                var msgEl = null;
+                var products = [];
+                var streamMessageId = null;
+
+                function processChunk(result) {
+                    if (result.done) {
+                        hideTyping();
+                        if (msgEl) {
+                            finaliseStreamMessage(msgEl, botText, products.length > 0 ? products : null, streamMessageId);
+                            if (products.length > 0) {
+                                renderProductCards(products);
+                            }
+                        } else if (botText) {
+                            addMessage(botText, 'bot');
+                        }
+                        trackEvent('message_received', { hasProducts: products.length > 0, streaming: true });
+                        isSending = false;
+                        sendBtn.disabled = false;
+                        return;
+                    }
+
+                    buffer += decoder.decode(result.value, { stream: true });
+                    var lines = buffer.split('\n\n');
+                    buffer = lines.pop();
+
+                    lines.forEach(function(line) {
+                        if (!line || line.indexOf('data: ') === -1) return;
+                        var dataIdx = line.indexOf('data: ');
+                        var json = line.substring(dataIdx + 6).trim();
+                        if (json === '[DONE]') return;
+
+                        try {
+                            var event = JSON.parse(json);
+
+                            if (event.type === 'meta') {
+                                if (event.session_id) {
+                                    setSession(event.session_id, event.session_token, event.conversation_id);
+                                }
+                                if (event.session_expired) {
+                                    showSessionEnded();
+                                    var btns = messagesContainer.querySelectorAll('.sambla-new-chat-btn');
+                                    btns.forEach(function(b) { b.style.display = 'none'; });
+                                }
+                            } else if (event.type === 'delta') {
+                                if (!msgEl) {
+                                    hideTyping();
+                                    msgEl = createBotMessageElement();
+                                }
+                                botText += event.content || '';
+                                updateMessageText(msgEl, botText);
+                            } else if (event.type === 'products') {
+                                products = event.products || [];
+                            } else if (event.type === 'done') {
+                                streamMessageId = event.message_id || null;
+                            } else if (event.type === 'error') {
+                                hideTyping();
+                                if (!msgEl) {
+                                    addMessage(event.message || t('errorMessage'), 'bot');
+                                }
+                            }
+                        } catch(e) {
+                            // Ignore malformed JSON chunks
+                        }
+                    });
+
+                    return reader.read().then(processChunk);
+                }
+
+                return reader.read().then(processChunk);
+            }).catch(function(err) {
+                hideTyping();
+                if (botText) {
+                    // Partial text exists - keep it, show error separately
+                    addMessage(t('errorMessage'), 'bot');
+                    trackEvent('error', { type: 'stream_failed', error: String(err).substring(0, 200) });
+                    console.error('[Sambla Chat] Stream error:', err);
+                    isSending = false;
+                    sendBtn.disabled = false;
+                } else {
+                    // No partial text - full fallback to classic send
+                    if (messages.length > 0 && messages[messages.length - 1].sender === 'user') {
+                        messages.pop();
+                        saveMessages(messages);
+                        var lastWrap = messagesContainer.querySelectorAll('.sambla-msg-wrap.user');
+                        if (lastWrap.length > 0) {
+                            var lw = lastWrap[lastWrap.length - 1];
+                            if (lw.parentNode) lw.parentNode.removeChild(lw);
+                        }
+                    }
+                    isSending = false;
+                    sendBtn.disabled = false;
+                    doSendMessage(text);
+                }
             });
         }
 
@@ -1507,10 +1824,13 @@
             wrap.setAttribute('aria-label', 'Products');
 
             products.forEach(function(p, index) {
-                trackEvent('product_impression', {
-                    product_id: p.id, product_name: (p.name || '').substring(0, 80),
-                    price: p.price, position: index
-                });
+                if (!_impressionsSent[p.id]) {
+                    _impressionsSent[p.id] = true;
+                    trackEvent('product_impression', {
+                        product_id: p.id, product_name: (p.name || '').substring(0, 80),
+                        price: p.price, position: index
+                    });
+                }
 
                 var card = document.createElement('div');
                 card.style.cssText = 'width:100%;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.04);cursor:pointer;transition:box-shadow 0.2s,transform 0.15s;display:flex;flex-direction:row;align-items:stretch;';
@@ -1610,7 +1930,7 @@
             });
 
             messagesContainer.insertBefore(wrap, typingEl);
-            setTimeout(function() { messagesContainer.scrollTop = messagesContainer.scrollHeight; }, 100);
+            requestAnimationFrame(function() { messagesContainer.scrollTop = messagesContainer.scrollHeight; });
         }
 
         // ─── V2: Add to cart handler ───
@@ -1788,7 +2108,7 @@
                             thumbUp.classList.toggle('active-up');
                             thumbDown.classList.remove('active-down');
                             msgRef.feedback = wasActive ? undefined : 1;
-                            saveMessages(messages);
+                            saveMessagesDebounced(messages);
                             if (!wasActive) {
                                 try {
                                     fetch(config.apiBase + '/api/v1/chatbot/' + config.channelId + '/feedback', {
@@ -1805,7 +2125,7 @@
                             thumbDown.classList.toggle('active-down');
                             thumbUp.classList.remove('active-up');
                             msgRef.feedback = wasActive ? undefined : -1;
-                            saveMessages(messages);
+                            saveMessagesDebounced(messages);
                             if (!wasActive) {
                                 try {
                                     fetch(config.apiBase + '/api/v1/chatbot/' + config.channelId + '/feedback', {

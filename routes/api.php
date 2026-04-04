@@ -58,6 +58,7 @@ Route::get('/v1/chatbot/{channel}/frame', [\App\Http\Controllers\Api\ChatbotEmbe
 
 // Public chatbot widget API (no auth required)
 Route::post('/v1/chatbot/{channel}/message', [ChatbotApiController::class, 'message']);
+Route::post('/v1/chatbot/{channel}/message-stream', [ChatbotApiController::class, 'messageStream']);
 Route::get('/v1/chatbot/{channel}/config', [ChatbotApiController::class, 'config']);
 Route::get('/v1/chatbot/{channel}/products', [ChatbotApiController::class, 'searchProducts']);
 Route::post('/v1/chatbot/{channel}/feedback', [ChatbotApiController::class, 'feedback'])->middleware('throttle:30,1');

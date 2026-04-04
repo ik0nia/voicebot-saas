@@ -29,6 +29,8 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
+use OpenAI\Laravel\Facades\OpenAI;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ChatbotApiController extends Controller
 {
@@ -59,385 +61,30 @@ class ChatbotApiController extends Controller
 
     public function message(Request $request, $channelId): JsonResponse
     {
-        try {
-            $channel = Cache::remember("channel_{$channelId}", 1800, function() use ($channelId) {
-                return Channel::withoutGlobalScopes()->where('id', $channelId)->where('is_active', true)->first();
-            });
-        } catch (\Throwable $e) {
-            $channel = Channel::withoutGlobalScopes()->where('id', $channelId)->where('is_active', true)->first();
-        }
+        // ── Pre-processing (shared with messageStream) ──
+        $preResult = $this->preprocessMessage($request, $channelId);
 
-        if (!$channel) {
-            return response()->json(['error' => 'Canal invalid.'], 404);
-        }
-
-        $validated = $request->validate([
-            'message' => 'required|string|max:2000',
-            'session_id' => 'nullable|string|max:255',
-            'session_token' => 'nullable|string|max:255',
-            'prechat_name' => 'nullable|string|max:255',
-            'prechat_email' => 'nullable|string|max:255',
-            'prechat_phone' => 'nullable|string|max:255',
-            'page_context' => 'nullable|array',
-            'page_context.page_url' => 'nullable|string|max:2000',
-            'page_context.page_title' => 'nullable|string|max:500',
-            'page_context.page_path' => 'nullable|string|max:500',
-            'page_context.time_on_page' => 'nullable|integer|min:0',
-            'page_context.referrer' => 'nullable|string|max:2000',
-        ]);
-
-        $userMessage = $validated['message'];
-        $sessionId = $validated['session_id'] ?? null;
-        $sessionToken = $validated['session_token'] ?? null;
-        $prechatName = $validated['prechat_name'] ?? null;
-        $prechatEmail = $validated['prechat_email'] ?? null;
-        $prechatPhone = $validated['prechat_phone'] ?? null;
-        $pageContext = $validated['page_context'] ?? null;
-
-        // Rate limiting: 30 messages per minute per IP+channel (IP cannot be rotated like session_id)
-        $rateLimitKey = 'chatbot:msg:' . $request->ip() . ':' . $channelId;
-        if (RateLimiter::tooManyAttempts($rateLimitKey, 30)) {
-            return response()->json(['error' => 'Prea multe mesaje. Încercați din nou în câteva secunde.'], 429);
-        }
-        RateLimiter::hit($rateLimitKey, 60);
-
-        $bot = Bot::withoutGlobalScopes()->find($channel->bot_id);
-
-        if (!$bot || !$bot->is_active) {
-            return response()->json(['error' => 'Bot inactiv.'], 403);
-        }
-
-        // Check message limit
-        $tenant = Tenant::find($bot->tenant_id);
-        if ($tenant) {
-            $limitCheck = app(PlanLimitService::class)->canSendMessage($tenant);
-            if (!$limitCheck->allowed) {
-                return response()->json([
-                    'error' => 'Limita de mesaje a fost atinsă. Contactați administratorul pentru upgrade.',
-                    'limit_reached' => true,
-                ], 429);
+        if (isset($preResult['error'])) {
+            $response = ['error' => $preResult['error']];
+            if ($preResult['error'] === 'Limita de mesaje a fost atinsă. Contactați administratorul pentru upgrade.') {
+                $response['limit_reached'] = true;
             }
+            return response()->json($response, $preResult['status']);
         }
 
-        // Find or create conversation
-        // Only allow resuming an existing session if the client provides a valid HMAC token
-        $conversation = null;
-        $sessionExpired = false;
-        if ($sessionId && $sessionToken) {
-            $expectedToken = hash_hmac('sha256', $sessionId . $channelId, config('app.key'));
-            if (hash_equals($expectedToken, $sessionToken)) {
-                $conversation = Conversation::where('channel_id', $channel->id)
-                    ->where('external_conversation_id', $sessionId)
-                    ->where('status', 'active')
-                    ->first();
-
-                // Check if session expired (10 minutes of inactivity)
-                if ($conversation) {
-                    $lastMessage = $conversation->messages()->latest('id')->first();
-                    $lastActivity = $lastMessage ? $lastMessage->created_at : $conversation->created_at;
-
-                    if ($lastActivity->diffInMinutes(now()) >= 10) {
-                        // V2: Track session_ended + derive outcomes for the expired session
-                        $expiredConvId = $conversation->id;
-                        $conversation->update([
-                            'status' => 'completed',
-                            'ended_at' => $lastActivity,
-                        ]);
-
-                        // Dispatch outcome derivation for the completed session
-                        \App\Jobs\DeriveConversationOutcomes::dispatch($expiredConvId)
-                            ->delay(now()->addSeconds(5));
-
-                        $conversation = null;
-                        $sessionExpired = true;
-                    }
-                }
-            }
-            // Invalid token: silently fall through to create a new conversation
-        }
-
-        if (!$conversation) {
-            $sessionId = Str::uuid()->toString();
-            $sessionToken = hash_hmac('sha256', $sessionId . $channelId, config('app.key'));
-            $conversation = Conversation::create([
-                'tenant_id' => $bot->tenant_id,
-                'bot_id' => $bot->id,
-                'channel_id' => $channel->id,
-                'external_conversation_id' => $sessionId,
-                'contact_identifier' => $request->ip(),
-                'visitor_id' => $request->input('visitor_id'),
-                'status' => 'active',
-                'metadata' => [
-                    'user_agent' => $request->userAgent(),
-                    'origin' => $request->header('Origin', ''),
-                ],
-                'started_at' => now(),
-            ]);
-
-            // V2: Track session start
-            $eventService = app(ConversationEventService::class);
-            $eventCtx = $eventService->buildContext($bot->tenant_id, $bot->id, $channel->id, $conversation->id, $sessionId);
-            $eventService->track(EventTaxonomy::SESSION_STARTED, [
-                'visitor_id' => $request->input('visitor_id'),
-                'user_agent' => $request->userAgent(),
-            ], array_merge($eventCtx, [
-                'idempotency_key' => $eventService->idempotencyKey((string) $conversation->id, 'session_started'),
-            ]));
-
-            // Save greeting as first message so it appears in transcripts
-            $channelConfig = $channel->config ?? [];
-            $greetingText = $channelConfig['greeting'] ?? 'Bună! Cu ce te pot ajuta?';
-            Message::create([
-                'conversation_id' => $conversation->id,
-                'direction' => 'outbound',
-                'content' => $greetingText,
-                'content_type' => 'text',
-                'sent_at' => now(),
-            ]);
-            $conversation->increment('messages_count');
-        }
-
-        // Save user message with page context for observability
-        Message::create([
-            'conversation_id' => $conversation->id,
-            'direction' => 'inbound',
-            'content' => $userMessage,
-            'content_type' => 'text',
-            'metadata' => $pageContext ? ['page_context' => $pageContext] : null,
-            'sent_at' => now(),
-        ]);
-
-        $conversation->increment('messages_count');
-        $conversation->update(['last_activity_at' => now()]);
-
-        // ── Fix A: Create lead immediately from prechat form data ──
-        // If the widget sent prechat fields with real contact info, create the lead now
-        // instead of waiting for regex extraction from messages.
-        if ($prechatEmail || $prechatPhone) {
-            $this->tryCreatePrechatLead($bot, $conversation, $prechatName, $prechatEmail, $prechatPhone);
-        }
-
-        // =====================================================================
-        // INTENT DETECTION & PIPELINE EXECUTION
-        // Orchestrator is now the DEFAULT for all bots.
-        // Opt-out: set bot.settings.legacy_pipeline = true (safety net)
-        // =====================================================================
-        $useOrchestrator = !($bot->settings['legacy_pipeline'] ?? false);
-        $products = [];
-        $extraContext = '';
-        $detectedIntents = null;
-        $pipelinesExecuted = null;
-        $queryIntel = [];
-
-        if ($useOrchestrator) {
-            try {
-                $orchestrator = app(\App\Services\IntentOrchestratorService::class);
-                $plan = $orchestrator->plan($userMessage, $conversation, $bot);
-                $orchestratorResult = $orchestrator->execute($plan, $bot, $userMessage, $conversation);
-
-                $products = $orchestratorResult->products;
-                $extraContext = $orchestratorResult->getMergedContext();
-                $detectedIntents = array_map(fn($i) => $i->toArray(), $plan->intents);
-                $pipelinesExecuted = $orchestratorResult->intentsExecuted;
-
-                // Populate $queryIntel from orchestrator intents so the post-response
-                // product relevance gate works correctly. Without this, $queryIntel
-                // stays [] and $effectiveQueryType falls to 'unknown', which can
-                // incorrectly suppress product cards.
-                $intentNameToQueryType = [
-                    'product_search' => 'transactional',
-                    'category_recommendation' => 'category_recommendation',
-                    'new_order_intent' => 'transactional',
-                    'existing_order_lookup' => 'informational',
-                    'comparison' => 'comparison',
-                    'knowledge_query' => 'informational',
-                    'greeting' => 'greeting',
-                    'thanks' => 'greeting',
-                    'complaint' => 'complaint',
-                    'lead_intent' => 'informational',
-                    'quote_intent' => 'exploratory',
-                    'handoff_intent' => 'informational',
-                ];
-                $primaryIntent = $plan->intents[0] ?? null;
-                if ($primaryIntent) {
-                    $queryIntel = [
-                        'type' => $intentNameToQueryType[$primaryIntent->name] ?? 'unknown',
-                        'source' => 'orchestrator',
-                        'intent_name' => $primaryIntent->name,
-                        'confidence' => $primaryIntent->confidence,
-                    ];
-                }
-            } catch (\Throwable $e) {
-                // Orchestrator failed — fall back to legacy pipeline
-                Log::warning('Orchestrator failed, falling back to legacy', [
-                    'bot_id' => $bot->id, 'error' => $e->getMessage(),
-                ]);
-                $useOrchestrator = false; // trigger legacy below
-            }
-        }
-
-        if (!$useOrchestrator) {
-            // ── Legacy pipeline ──
-            $intentService = app(IntentDetectionService::class);
-            $intents = $intentService->detect($userMessage);
-
-            $orderContext = '';
-            $productContext = '';
-
-            // ── Conversational context: detect follow-up to order lookup prompt ──
-            // If the bot just asked for order number/email/phone and user responds
-            // with just an identifier, treat it as an order lookup continuation.
-            if (!($intents['is_order_query'] ?? false) && !($intents['is_new_order_intent'] ?? false)) {
-                $recentBotMessage = Message::where('conversation_id', $conversation->id)
-                    ->where('direction', 'outbound')
-                    ->orderByDesc('id')
-                    ->value('content');
-
-                if ($recentBotMessage && (
-                    str_contains($recentBotMessage, 'numărul comenzii') ||
-                    str_contains($recentBotMessage, 'numarul comenzii') ||
-                    str_contains($recentBotMessage, 'număr de comandă') ||
-                    str_contains($recentBotMessage, 'emailul') ||
-                    str_contains($recentBotMessage, 'telefonul') ||
-                    str_contains($recentBotMessage, 'email') ||
-                    str_contains($recentBotMessage, 'nr. comenzii') ||
-                    str_contains($recentBotMessage, 'verifica statusul')
-                )) {
-                    $orderLookup = app(\App\Services\OrderLookupService::class);
-                    $orderParams = $orderLookup->extractOrderParams($userMessage);
-                    if (!empty($orderParams)) {
-                        // Force into order lookup flow
-                        $intents['is_order_query'] = true;
-                    }
-                }
-            }
-
-            // NEW ORDER INTENT — completely separate from order lookup
-            if ($intents['is_new_order_intent'] ?? false) {
-                $lastProduct = ($conversation->metadata ?? [])['last_product_context'] ?? null;
-                $lastProductCards = ($conversation->metadata ?? [])['last_product_cards'] ?? null;
-                $orderContext = "\n\n[INTENȚIE: COMANDĂ NOUĂ — Clientul vrea să PLASEZE o comandă."
-                    . "\nNU cere număr de comandă. NU cere email pentru verificare. Ajută-l să comande.";
-                if ($lastProduct) {
-                    $orderContext .= "\nProdusul discutat anterior: {$lastProduct['name']} — {$lastProduct['price']} {$lastProduct['currency']}."
-                        . "\nFolosește ACEST produs ca referință implicită.";
-                }
-                $orderContext .= "]";
-
-                // Use previously discussed products if available, otherwise search
-                if (!empty($lastProductCards)) {
-                    $products = $lastProductCards;
-                    $productContext = "\n\n[" . count($products) . " produse discutate anterior afișate ca carduri. Acestea sunt produsele despre care clientul vorbea.]";
-                } else {
-                    $products = $this->searchProductCards($bot->id, $userMessage);
-                    if (!empty($products)) {
-                        $productContext = "\n\n[" . count($products) . " produse relevante afișate ca carduri.]";
-                    }
-                }
-            }
-            // EXISTING ORDER LOOKUP — support flow
-            elseif ($intents['is_order_query'] ?? false) {
-                $orderLookup = app(\App\Services\OrderLookupService::class);
-                $orderParams = $orderLookup->detectOrderQuery($userMessage);
-
-                if ($orderParams === null) {
-                    $recentBotMessage = Message::where('conversation_id', $conversation->id)
-                        ->where('direction', 'outbound')
-                        ->orderByDesc('id')
-                        ->value('content');
-
-                    if ($recentBotMessage && (
-                        str_contains($recentBotMessage, 'numărul comenzii') ||
-                        str_contains($recentBotMessage, 'numarul comenzii') ||
-                        str_contains($recentBotMessage, 'număr de comandă') ||
-                        str_contains($recentBotMessage, 'emailul') ||
-                        str_contains($recentBotMessage, 'telefonul')
-                    )) {
-                        $orderParams = $orderLookup->extractOrderParams($userMessage);
-                    }
-                }
-
-                if ($orderParams !== null) {
-                    $orderResult = $orderLookup->lookup($bot->id, $orderParams);
-                    if ($orderResult['found']) {
-                        $orderContext = "\n\n[INFORMAȚII COMANDĂ - răspunde pe baza acestor date]\n";
-                        foreach ($orderResult['orders'] as $o) {
-                            $orderContext .= "Comanda #{$o['number']} | Status: {$o['status']} | Data: {$o['date']} | Total: {$o['total']}";
-                            $orderContext .= " | Plata: {$o['payment_method']} | Livrare: {$o['shipping_method']}";
-                            if ($o['tracking']) $orderContext .= " | AWB: {$o['tracking']}";
-                            if (!empty($o['tracking_url'])) $orderContext .= " | Tracking: {$o['tracking_url']}";
-                            $orderContext .= " | Produse: " . collect($o['items'])->map(fn($i) => "{$i['name']} x{$i['quantity']}")->implode(', ');
-                            $orderContext .= "\n";
-                        }
-                    } elseif (empty($orderParams['order_number']) && empty($orderParams['email']) && empty($orderParams['phone'])) {
-                        $orderContext = "\n\n[Clientul întreabă de o comandă dar nu a dat numărul. Cere-i numărul comenzii, emailul sau telefonul.]";
-                    } else {
-                        $orderContext = "\n\n[{$orderResult['message']}]";
-                    }
-                }
-            }
-
-            $isRecommendation = $intents['is_category_recommendation'] ?? false;
-
-            if (($intents['is_order_query'] ?? false) || ($intents['is_new_order_intent'] ?? false)) {
-                // Order-related — skip product search (already handled above for new_order)
-            } elseif ($isRecommendation) {
-                $recommendationService = app(\App\Services\RecommendationService::class);
-                $concept = $intentService->extractRecommendationConcept($userMessage);
-                if ($concept && $recommendationService->hasConcept($concept)) {
-                    $recommendation = $recommendationService->recommend($bot->id, $concept, 2);
-                    $products = array_map(fn($r) => app(\App\Services\ProductSearchService::class)->toCardArray($r), $recommendation['products']);
-                    if (!empty($products)) {
-                        $subQueryList = implode(', ', $recommendation['sub_queries']);
-                        $productContext = "\n\n[Clientul a cerut recomandări pentru \"{$concept}\". Am găsit " . count($products) . " produse din categoriile: {$subQueryList}. Produsele se afișează ca carduri.]";
-                    } else {
-                        $productContext = "\n\n[Nu am găsit produse pentru \"{$concept}\". Sugerează contactarea magazinului.]";
-                    }
-                } else {
-                    $productContext = "\n\n[Clientul cere recomandări generale. Întreabă ce anume dorește să facă.]";
-                }
-            } else {
-                // Use query intelligence to decide if products are appropriate
-                $queryIntel = app(\App\Services\QueryIntelligenceService::class)->classify($userMessage);
-                $queryType = $queryIntel['type'] ?? 'informational';
-
-                // STRICT product gating: only show products when intent clearly supports it
-                $shouldSearchProducts = in_array($queryType, ['transactional', 'comparison', 'exploratory']);
-
-                // Never show products for: complaints, greetings, vague, or pure informational queries
-                // Informational queries (policies, hours, processes) should NOT trigger product cards
-
-                if ($shouldSearchProducts) {
-                    // Skip for short generic conversational messages
-                    $wordCount = str_word_count($userMessage);
-                    $isGenericChat = $wordCount <= 5 && preg_match('/^(cum|ce|de ce|cine|unde|cand|cat|poti|puteti|ajut|help|info|detalii)\b/iu', trim($userMessage));
-
-                    if (!$isGenericChat) {
-                        $products = $this->searchProductCards($bot->id, $userMessage);
-                        if (!empty($products)) {
-                            $productContext = "\n\n[Am găsit " . count($products) . " produse relevante ca carduri. NU le enumera în text.]";
-                        }
-                    }
-                }
-
-                // If products NOT found or search skipped, inform the AI appropriately
-                if (empty($products)) {
-                    $hasProducts = false;
-                    try {
-                        $hasProducts = Cache::remember("bot_{$bot->id}_has_products", 3600, function() use ($bot) {
-                            return WooCommerceProduct::where('bot_id', $bot->id)->exists();
-                        });
-                    } catch (\Throwable $e) {
-                        $hasProducts = WooCommerceProduct::where('bot_id', $bot->id)->exists();
-                    }
-                    if ($hasProducts && $shouldSearchProducts) {
-                        $productContext = "\n\n[NU am găsit produse relevante pentru această întrebare. NU menționa produse.]";
-                    }
-                }
-            }
-
-            $extraContext = $orderContext . $productContext;
-        }
+        $channel = $preResult['channel'];
+        $bot = $preResult['bot'];
+        $tenant = $preResult['tenant'];
+        $conversation = $preResult['conversation'];
+        $sessionId = $preResult['session_id'];
+        $sessionToken = $preResult['session_token'];
+        $sessionExpired = $preResult['session_expired'];
+        $userMessage = $preResult['user_message'];
+        $products = $preResult['products'];
+        $extraContext = $preResult['extra_context'];
+        $detectedIntents = $preResult['detected_intents'];
+        $pipelinesExecuted = $preResult['pipelines_executed'];
+        $queryIntel = $preResult['query_intel'];
 
         // Generate AI response with cost tracking
         $aiResult = $this->generateAIResponse($bot, $conversation, $userMessage, $extraContext, $channel);
@@ -1126,6 +773,803 @@ class ChatbotApiController extends Controller
         $products = array_map(fn($r) => $productSearch->toCardArray($r), $results);
 
         return response()->json(['products' => $products]);
+    }
+
+    /**
+     * Stream a chat response via Server-Sent Events.
+     * Same logic as message() but returns a StreamedResponse with incremental deltas.
+     */
+    public function messageStream(Request $request, $channelId): StreamedResponse
+    {
+        // ── Pre-processing: identical to message() ──
+        $preResult = $this->preprocessMessage($request, $channelId);
+
+        // If preprocessing returned an error, stream it as an SSE error event
+        if (isset($preResult['error'])) {
+            return new StreamedResponse(function () use ($preResult) {
+                $this->sendSSE('error', ['message' => $preResult['error']]);
+            }, $preResult['status'] ?? 400, $this->sseHeaders());
+        }
+
+        // Extract all variables from preprocessing
+        $channel = $preResult['channel'];
+        $bot = $preResult['bot'];
+        $tenant = $preResult['tenant'];
+        $conversation = $preResult['conversation'];
+        $sessionId = $preResult['session_id'];
+        $sessionToken = $preResult['session_token'];
+        $sessionExpired = $preResult['session_expired'];
+        $userMessage = $preResult['user_message'];
+        $products = $preResult['products'];
+        $extraContext = $preResult['extra_context'];
+        $detectedIntents = $preResult['detected_intents'];
+        $pipelinesExecuted = $preResult['pipelines_executed'];
+        $queryIntel = $preResult['query_intel'];
+        $pageContext = $preResult['page_context'];
+        $prechatName = $preResult['prechat_name'];
+        $prechatEmail = $preResult['prechat_email'];
+        $prechatPhone = $preResult['prechat_phone'];
+
+        return new StreamedResponse(function () use (
+            $bot, $channel, $conversation, $userMessage, $extraContext,
+            $sessionId, $sessionToken, $sessionExpired, $products,
+            $detectedIntents, $pipelinesExecuted, $queryIntel,
+            $tenant, $pageContext, $prechatName, $prechatEmail, $prechatPhone,
+            $request
+        ) {
+            try {
+                // 1. Send meta event first
+                $this->sendSSE('meta', [
+                    'session_id' => $sessionId,
+                    'session_token' => $sessionToken,
+                    'conversation_id' => $conversation->id,
+                    'session_expired' => $sessionExpired,
+                ]);
+
+                // 2. Send products event (before text) if we have product cards
+                if (!empty($products)) {
+                    $this->sendSSE('products', ['products' => $products]);
+                }
+
+                // 3. Build prompt (same as generateAIResponse)
+                $promptData = $this->buildPromptForStream($bot, $conversation, $userMessage, $extraContext, $channel);
+                $messages = $promptData['messages'];
+                $modelConfig = $promptData['model_config'];
+
+                // 4. Stream LLM response
+                $provider = $modelConfig['provider'] ?? 'openai';
+                $model = $modelConfig['model'];
+                $maxTokens = $modelConfig['max_tokens'] ?? 500;
+                $temperature = $modelConfig['temperature'] ?? 0.6;
+
+                $fullContent = '';
+                $startTime = microtime(true);
+
+                if ($provider === 'openai') {
+                    $stream = OpenAI::chat()->createStreamed([
+                        'model' => $model,
+                        'messages' => $messages,
+                        'max_tokens' => $maxTokens,
+                        'temperature' => $temperature,
+                    ]);
+
+                    foreach ($stream as $response) {
+                        $delta = $response->choices[0]?->delta?->content ?? '';
+                        if ($delta !== '') {
+                            $fullContent .= $delta;
+                            $this->sendSSE('delta', ['content' => $delta]);
+                        }
+                    }
+                } else {
+                    // Anthropic streaming
+                    $anthropicKey = \App\Models\PlatformSetting::get('anthropic_api_key')
+                        ?: config('services.anthropic.api_key', env('ANTHROPIC_API_KEY'));
+
+                    if (empty($anthropicKey)) {
+                        // Fallback to OpenAI
+                        $provider = 'openai';
+                        $model = 'gpt-4o';
+                        $stream = OpenAI::chat()->createStreamed([
+                            'model' => $model,
+                            'messages' => $messages,
+                            'max_tokens' => $maxTokens,
+                            'temperature' => $temperature,
+                        ]);
+
+                        foreach ($stream as $response) {
+                            $delta = $response->choices[0]?->delta?->content ?? '';
+                            if ($delta !== '') {
+                                $fullContent .= $delta;
+                                $this->sendSSE('delta', ['content' => $delta]);
+                            }
+                        }
+                    } else {
+                        $client = \Anthropic::factory()
+                            ->withApiKey($anthropicKey)
+                            ->withHttpHeader('timeout', '60')
+                            ->make();
+
+                        $system = '';
+                        $anthropicMessages = [];
+                        foreach ($messages as $msg) {
+                            if ($msg['role'] === 'system') {
+                                $system .= ($system ? "\n\n" : '') . $msg['content'];
+                            } else {
+                                $anthropicMessages[] = ['role' => $msg['role'], 'content' => $msg['content']];
+                            }
+                        }
+
+                        $stream = $client->messages()->createStreamed([
+                            'model' => $model,
+                            'max_tokens' => $maxTokens,
+                            'temperature' => $temperature,
+                            'system' => $system,
+                            'messages' => $anthropicMessages,
+                        ]);
+
+                        foreach ($stream as $response) {
+                            if ($response->type === 'content_block_delta') {
+                                $delta = $response->delta->text ?? '';
+                                if ($delta !== '') {
+                                    $fullContent .= $delta;
+                                    $this->sendSSE('delta', ['content' => $delta]);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                $responseTimeMs = (int) ((microtime(true) - $startTime) * 1000);
+
+                // ── Post-response product relevance gate (same as message()) ──
+                $botResponse = $fullContent;
+                if (!empty($products)) {
+                    $hasPositiveProductMention = preg_match('/(?:recoman|suger[aă]m|am găsit|avem|iată|produse?\s+(?:potrivit|relevant|disponibil)|poți\s+comanda|adaugă\s+în\s+coș)/iu', $botResponse);
+                    $hasNegativeProductMention = preg_match('/(?:nu\s+am\s+(?:găsit|gasit)|nu\s+avem|indisponibil|nu\s+(?:știu|stiu)|nu\s+pot\s+(?:găsi|gasi))/iu', $botResponse);
+
+                    $effectiveQueryType = $queryIntel['type']
+                        ?? (is_array($detectedIntents) && isset($detectedIntents[0]['name']) ? $detectedIntents[0]['name'] : null)
+                        ?? 'unknown';
+
+                    $isExplicitProductIntent = in_array($effectiveQueryType, [
+                        'transactional', 'product_search', 'category_recommendation', 'comparison', 'exploratory',
+                    ]);
+
+                    if ($isExplicitProductIntent) {
+                        if ($hasNegativeProductMention && !empty($products)) {
+                            // Note: for streaming, the text is already sent. We can't unsend it.
+                            // The product cards were already sent before text, so they'll show.
+                        }
+                    } elseif ($hasNegativeProductMention || !$hasPositiveProductMention) {
+                        $products = []; // Suppress — but cards already sent. Send a clear event.
+                        $this->sendSSE('products', ['products' => []]);
+                    }
+                }
+
+                // ── Post-processing: save messages, track events (same as message()) ──
+                $aiResult = [
+                    'content' => $fullContent,
+                    'model' => $model,
+                    'provider' => $provider,
+                    'input_tokens' => 0,  // Not available in streaming mode
+                    'output_tokens' => 0,
+                    'cost_cents' => 0,
+                ];
+
+                $botMessage = Message::create([
+                    'conversation_id' => $conversation->id,
+                    'direction' => 'outbound',
+                    'content' => $fullContent,
+                    'content_type' => 'text',
+                    'ai_model' => $model,
+                    'ai_provider' => $provider,
+                    'input_tokens' => 0,
+                    'output_tokens' => 0,
+                    'cost_cents' => 0,
+                    'metadata' => !empty($products) ? ['products' => $products] : null,
+                    'detected_intents' => $detectedIntents,
+                    'pipelines_executed' => $pipelinesExecuted,
+                    'sent_at' => now(),
+                ]);
+
+                $conversation->increment('messages_count');
+                $conversation->update(['last_activity_at' => now()]);
+                $channel = $conversation->channel ?? \App\Models\Channel::withoutGlobalScopes()->find($conversation->channel_id);
+                if ($channel) {
+                    $channel->update(['last_activity_at' => now()]);
+                }
+
+                // Track message usage
+                if ($tenant) {
+                    app(PlanLimitService::class)->recordMessage($tenant);
+                }
+
+                // Auto-extract lead from chat messages
+                $this->tryExtractChatLead($bot, $conversation, $userMessage, $products);
+
+                // V2: Track analytics events
+                $eventService = app(ConversationEventService::class);
+                $eventCtx = $eventService->buildContext($bot->tenant_id, $bot->id, $conversation->channel_id, $conversation->id, $sessionId);
+                $msgIdx = (string) $conversation->messages_count;
+
+                $eventService->track(EventTaxonomy::MESSAGE_SENT, [
+                    'message_length' => mb_strlen($userMessage),
+                ], array_merge($eventCtx, [
+                    'idempotency_key' => $eventService->idempotencyKey((string) $conversation->id, 'msg_sent', $msgIdx),
+                ]));
+
+                $eventService->track(EventTaxonomy::MESSAGE_REPLIED, [
+                    'model' => $model,
+                    'provider' => $provider,
+                    'input_tokens' => 0,
+                    'output_tokens' => 0,
+                    'cost_cents' => 0,
+                    'has_products' => !empty($products),
+                    'products_count' => count($products),
+                ], array_merge($eventCtx, [
+                    'idempotency_key' => $eventService->idempotencyKey((string) $conversation->id, 'msg_replied', $msgIdx),
+                ]));
+
+                if (!empty($products)) {
+                    $eventService->track(EventTaxonomy::PRODUCTS_RETURNED, [
+                        'count' => count($products),
+                        'product_ids' => array_column($products, 'id'),
+                        'query' => mb_substr($userMessage, 0, 200),
+                    ], array_merge($eventCtx, [
+                        'idempotency_key' => $eventService->idempotencyKey((string) $conversation->id, 'products_returned', $msgIdx),
+                    ]));
+
+                    $firstProduct = $products[0] ?? null;
+                    if ($firstProduct) {
+                        $meta = $conversation->metadata ?? [];
+                        $meta['last_product_context'] = [
+                            'id' => $firstProduct['id'] ?? null,
+                            'name' => $firstProduct['name'] ?? '',
+                            'price' => $firstProduct['price'] ?? '',
+                            'currency' => $firstProduct['currency'] ?? 'RON',
+                        ];
+                        $meta['last_product_cards'] = $products;
+                        $conversation->update(['metadata' => $meta]);
+                    }
+                }
+
+                // 5. Send done event
+                $this->sendSSE('done', ['message_id' => $botMessage->id]);
+
+            } catch (\Throwable $e) {
+                Log::error('messageStream failed', [
+                    'error' => $e->getMessage(),
+                    'bot_id' => $bot->id ?? null,
+                ]);
+                $this->sendSSE('error', ['message' => 'A apărut o eroare. Te rog încearcă din nou.']);
+            }
+        }, 200, $this->sseHeaders());
+    }
+
+    /**
+     * Shared pre-processing logic for message() and messageStream().
+     * Returns an array with all the data needed for response generation, or an error array.
+     */
+    private function preprocessMessage(Request $request, $channelId): array
+    {
+        try {
+            $channel = Cache::remember("channel_{$channelId}", 1800, function() use ($channelId) {
+                return Channel::withoutGlobalScopes()->where('id', $channelId)->where('is_active', true)->first();
+            });
+        } catch (\Throwable $e) {
+            $channel = Channel::withoutGlobalScopes()->where('id', $channelId)->where('is_active', true)->first();
+        }
+
+        if (!$channel) {
+            return ['error' => 'Canal invalid.', 'status' => 404];
+        }
+
+        $validated = $request->validate([
+            'message' => 'required|string|max:2000',
+            'session_id' => 'nullable|string|max:255',
+            'session_token' => 'nullable|string|max:255',
+            'prechat_name' => 'nullable|string|max:255',
+            'prechat_email' => 'nullable|string|max:255',
+            'prechat_phone' => 'nullable|string|max:255',
+            'page_context' => 'nullable|array',
+            'page_context.page_url' => 'nullable|string|max:2000',
+            'page_context.page_title' => 'nullable|string|max:500',
+            'page_context.page_path' => 'nullable|string|max:500',
+            'page_context.time_on_page' => 'nullable|integer|min:0',
+            'page_context.referrer' => 'nullable|string|max:2000',
+        ]);
+
+        $userMessage = $validated['message'];
+        $sessionId = $validated['session_id'] ?? null;
+        $sessionToken = $validated['session_token'] ?? null;
+        $prechatName = $validated['prechat_name'] ?? null;
+        $prechatEmail = $validated['prechat_email'] ?? null;
+        $prechatPhone = $validated['prechat_phone'] ?? null;
+        $pageContext = $validated['page_context'] ?? null;
+
+        // Rate limiting
+        $rateLimitKey = 'chatbot:msg:' . $request->ip() . ':' . $channelId;
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 30)) {
+            return ['error' => 'Prea multe mesaje. Încercați din nou în câteva secunde.', 'status' => 429];
+        }
+        RateLimiter::hit($rateLimitKey, 60);
+
+        $bot = Bot::withoutGlobalScopes()->find($channel->bot_id);
+
+        if (!$bot || !$bot->is_active) {
+            return ['error' => 'Bot inactiv.', 'status' => 403];
+        }
+
+        // Check message limit
+        $tenant = Tenant::find($bot->tenant_id);
+        if ($tenant) {
+            $limitCheck = app(PlanLimitService::class)->canSendMessage($tenant);
+            if (!$limitCheck->allowed) {
+                return ['error' => 'Limita de mesaje a fost atinsă. Contactați administratorul pentru upgrade.', 'status' => 429];
+            }
+        }
+
+        // Find or create conversation
+        $conversation = null;
+        $sessionExpired = false;
+        if ($sessionId && $sessionToken) {
+            $expectedToken = hash_hmac('sha256', $sessionId . $channelId, config('app.key'));
+            if (hash_equals($expectedToken, $sessionToken)) {
+                $conversation = Conversation::where('channel_id', $channel->id)
+                    ->where('external_conversation_id', $sessionId)
+                    ->where('status', 'active')
+                    ->first();
+
+                if ($conversation) {
+                    $lastMessage = $conversation->messages()->latest('id')->first();
+                    $lastActivity = $lastMessage ? $lastMessage->created_at : $conversation->created_at;
+
+                    if ($lastActivity->diffInMinutes(now()) >= 10) {
+                        $expiredConvId = $conversation->id;
+                        $conversation->update([
+                            'status' => 'completed',
+                            'ended_at' => $lastActivity,
+                        ]);
+
+                        \App\Jobs\DeriveConversationOutcomes::dispatch($expiredConvId)
+                            ->delay(now()->addSeconds(5));
+
+                        $conversation = null;
+                        $sessionExpired = true;
+                    }
+                }
+            }
+        }
+
+        if (!$conversation) {
+            $sessionId = Str::uuid()->toString();
+            $sessionToken = hash_hmac('sha256', $sessionId . $channelId, config('app.key'));
+            $conversation = Conversation::create([
+                'tenant_id' => $bot->tenant_id,
+                'bot_id' => $bot->id,
+                'channel_id' => $channel->id,
+                'external_conversation_id' => $sessionId,
+                'contact_identifier' => $request->ip(),
+                'visitor_id' => $request->input('visitor_id'),
+                'status' => 'active',
+                'metadata' => [
+                    'user_agent' => $request->userAgent(),
+                    'origin' => $request->header('Origin', ''),
+                ],
+                'started_at' => now(),
+            ]);
+
+            // V2: Track session start
+            $eventService = app(ConversationEventService::class);
+            $eventCtx = $eventService->buildContext($bot->tenant_id, $bot->id, $channel->id, $conversation->id, $sessionId);
+            $eventService->track(EventTaxonomy::SESSION_STARTED, [
+                'visitor_id' => $request->input('visitor_id'),
+                'user_agent' => $request->userAgent(),
+            ], array_merge($eventCtx, [
+                'idempotency_key' => $eventService->idempotencyKey((string) $conversation->id, 'session_started'),
+            ]));
+
+            // Save greeting as first message
+            $channelConfig = $channel->config ?? [];
+            $greetingText = $channelConfig['greeting'] ?? 'Bună! Cu ce te pot ajuta?';
+            Message::create([
+                'conversation_id' => $conversation->id,
+                'direction' => 'outbound',
+                'content' => $greetingText,
+                'content_type' => 'text',
+                'sent_at' => now(),
+            ]);
+            $conversation->increment('messages_count');
+        }
+
+        // Save user message
+        Message::create([
+            'conversation_id' => $conversation->id,
+            'direction' => 'inbound',
+            'content' => $userMessage,
+            'content_type' => 'text',
+            'metadata' => $pageContext ? ['page_context' => $pageContext] : null,
+            'sent_at' => now(),
+        ]);
+
+        $conversation->increment('messages_count');
+        $conversation->update(['last_activity_at' => now()]);
+
+        // Create lead from prechat form data
+        if ($prechatEmail || $prechatPhone) {
+            $this->tryCreatePrechatLead($bot, $conversation, $prechatName, $prechatEmail, $prechatPhone);
+        }
+
+        // ── Intent detection & pipeline execution ──
+        $products = [];
+        $extraContext = '';
+        $detectedIntents = null;
+        $pipelinesExecuted = null;
+        $queryIntel = [];
+
+        $useOrchestrator = !($bot->settings['legacy_pipeline'] ?? false);
+
+        if ($useOrchestrator) {
+            try {
+                $orchestrator = app(\App\Services\IntentOrchestratorService::class);
+                $plan = $orchestrator->plan($userMessage, $conversation, $bot);
+                $orchestratorResult = $orchestrator->execute($plan, $bot, $userMessage, $conversation);
+
+                $products = $orchestratorResult->products;
+                $extraContext = $orchestratorResult->getMergedContext();
+                $detectedIntents = array_map(fn($i) => $i->toArray(), $plan->intents);
+                $pipelinesExecuted = $orchestratorResult->intentsExecuted;
+
+                $intentNameToQueryType = [
+                    'product_search' => 'transactional',
+                    'category_recommendation' => 'category_recommendation',
+                    'new_order_intent' => 'transactional',
+                    'existing_order_lookup' => 'informational',
+                    'comparison' => 'comparison',
+                    'knowledge_query' => 'informational',
+                    'greeting' => 'greeting',
+                    'thanks' => 'greeting',
+                    'complaint' => 'complaint',
+                    'lead_intent' => 'informational',
+                    'quote_intent' => 'exploratory',
+                    'handoff_intent' => 'informational',
+                ];
+                $primaryIntent = $plan->intents[0] ?? null;
+                if ($primaryIntent) {
+                    $queryIntel = [
+                        'type' => $intentNameToQueryType[$primaryIntent->name] ?? 'unknown',
+                        'source' => 'orchestrator',
+                        'intent_name' => $primaryIntent->name,
+                        'confidence' => $primaryIntent->confidence,
+                    ];
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Orchestrator failed, falling back to legacy', [
+                    'bot_id' => $bot->id, 'error' => $e->getMessage(),
+                ]);
+                $useOrchestrator = false;
+            }
+        }
+
+        if (!$useOrchestrator) {
+            // Legacy pipeline (identical to message())
+            $intentService = app(IntentDetectionService::class);
+            $intents = $intentService->detect($userMessage);
+
+            $orderContext = '';
+            $productContext = '';
+
+            if (!($intents['is_order_query'] ?? false) && !($intents['is_new_order_intent'] ?? false)) {
+                $recentBotMessage = Message::where('conversation_id', $conversation->id)
+                    ->where('direction', 'outbound')
+                    ->orderByDesc('id')
+                    ->value('content');
+
+                if ($recentBotMessage && (
+                    str_contains($recentBotMessage, 'numărul comenzii') ||
+                    str_contains($recentBotMessage, 'numarul comenzii') ||
+                    str_contains($recentBotMessage, 'număr de comandă') ||
+                    str_contains($recentBotMessage, 'emailul') ||
+                    str_contains($recentBotMessage, 'telefonul') ||
+                    str_contains($recentBotMessage, 'email') ||
+                    str_contains($recentBotMessage, 'nr. comenzii') ||
+                    str_contains($recentBotMessage, 'verifica statusul')
+                )) {
+                    $orderLookup = app(\App\Services\OrderLookupService::class);
+                    $orderParams = $orderLookup->extractOrderParams($userMessage);
+                    if (!empty($orderParams)) {
+                        $intents['is_order_query'] = true;
+                    }
+                }
+            }
+
+            if ($intents['is_new_order_intent'] ?? false) {
+                $lastProduct = ($conversation->metadata ?? [])['last_product_context'] ?? null;
+                $lastProductCards = ($conversation->metadata ?? [])['last_product_cards'] ?? null;
+                $orderContext = "\n\n[INTENȚIE: COMANDĂ NOUĂ — Clientul vrea să PLASEZE o comandă."
+                    . "\nNU cere număr de comandă. NU cere email pentru verificare. Ajută-l să comande.";
+                if ($lastProduct) {
+                    $orderContext .= "\nProdusul discutat anterior: {$lastProduct['name']} — {$lastProduct['price']} {$lastProduct['currency']}."
+                        . "\nFolosește ACEST produs ca referință implicită.";
+                }
+                $orderContext .= "]";
+
+                if (!empty($lastProductCards)) {
+                    $products = $lastProductCards;
+                    $productContext = "\n\n[" . count($products) . " produse discutate anterior afișate ca carduri. Acestea sunt produsele despre care clientul vorbea.]";
+                } else {
+                    $products = $this->searchProductCards($bot->id, $userMessage);
+                    if (!empty($products)) {
+                        $productContext = "\n\n[" . count($products) . " produse relevante afișate ca carduri.]";
+                    }
+                }
+            } elseif ($intents['is_order_query'] ?? false) {
+                $orderLookup = app(\App\Services\OrderLookupService::class);
+                $orderParams = $orderLookup->detectOrderQuery($userMessage);
+
+                if ($orderParams === null) {
+                    $recentBotMessage = Message::where('conversation_id', $conversation->id)
+                        ->where('direction', 'outbound')
+                        ->orderByDesc('id')
+                        ->value('content');
+
+                    if ($recentBotMessage && (
+                        str_contains($recentBotMessage, 'numărul comenzii') ||
+                        str_contains($recentBotMessage, 'numarul comenzii') ||
+                        str_contains($recentBotMessage, 'număr de comandă') ||
+                        str_contains($recentBotMessage, 'emailul') ||
+                        str_contains($recentBotMessage, 'telefonul')
+                    )) {
+                        $orderParams = $orderLookup->extractOrderParams($userMessage);
+                    }
+                }
+
+                if ($orderParams !== null) {
+                    $orderResult = $orderLookup->lookup($bot->id, $orderParams);
+                    if ($orderResult['found']) {
+                        $orderContext = "\n\n[INFORMAȚII COMANDĂ - răspunde pe baza acestor date]\n";
+                        foreach ($orderResult['orders'] as $o) {
+                            $orderContext .= "Comanda #{$o['number']} | Status: {$o['status']} | Data: {$o['date']} | Total: {$o['total']}";
+                            $orderContext .= " | Plata: {$o['payment_method']} | Livrare: {$o['shipping_method']}";
+                            if ($o['tracking']) $orderContext .= " | AWB: {$o['tracking']}";
+                            if (!empty($o['tracking_url'])) $orderContext .= " | Tracking: {$o['tracking_url']}";
+                            $orderContext .= " | Produse: " . collect($o['items'])->map(fn($i) => "{$i['name']} x{$i['quantity']}")->implode(', ');
+                            $orderContext .= "\n";
+                        }
+                    } elseif (empty($orderParams['order_number']) && empty($orderParams['email']) && empty($orderParams['phone'])) {
+                        $orderContext = "\n\n[Clientul întreabă de o comandă dar nu a dat numărul. Cere-i numărul comenzii, emailul sau telefonul.]";
+                    } else {
+                        $orderContext = "\n\n[{$orderResult['message']}]";
+                    }
+                }
+            }
+
+            $isRecommendation = $intents['is_category_recommendation'] ?? false;
+
+            if (($intents['is_order_query'] ?? false) || ($intents['is_new_order_intent'] ?? false)) {
+                // Order-related — skip product search
+            } elseif ($isRecommendation) {
+                $recommendationService = app(\App\Services\RecommendationService::class);
+                $concept = $intentService->extractRecommendationConcept($userMessage);
+                if ($concept && $recommendationService->hasConcept($concept)) {
+                    $recommendation = $recommendationService->recommend($bot->id, $concept, 2);
+                    $products = array_map(fn($r) => app(\App\Services\ProductSearchService::class)->toCardArray($r), $recommendation['products']);
+                    if (!empty($products)) {
+                        $subQueryList = implode(', ', $recommendation['sub_queries']);
+                        $productContext = "\n\n[Clientul a cerut recomandări pentru \"{$concept}\". Am găsit " . count($products) . " produse din categoriile: {$subQueryList}. Produsele se afișează ca carduri.]";
+                    } else {
+                        $productContext = "\n\n[Nu am găsit produse pentru \"{$concept}\". Sugerează contactarea magazinului.]";
+                    }
+                } else {
+                    $productContext = "\n\n[Clientul cere recomandări generale. Întreabă ce anume dorește să facă.]";
+                }
+            } else {
+                $queryIntel = app(\App\Services\QueryIntelligenceService::class)->classify($userMessage);
+                $queryType = $queryIntel['type'] ?? 'informational';
+                $shouldSearchProducts = in_array($queryType, ['transactional', 'comparison', 'exploratory']);
+
+                if ($shouldSearchProducts) {
+                    $wordCount = str_word_count($userMessage);
+                    $isGenericChat = $wordCount <= 5 && preg_match('/^(cum|ce|de ce|cine|unde|cand|cat|poti|puteti|ajut|help|info|detalii)\b/iu', trim($userMessage));
+
+                    if (!$isGenericChat) {
+                        $products = $this->searchProductCards($bot->id, $userMessage);
+                        if (!empty($products)) {
+                            $productContext = "\n\n[Am găsit " . count($products) . " produse relevante ca carduri. NU le enumera în text.]";
+                        }
+                    }
+                }
+
+                if (empty($products)) {
+                    $hasProducts = false;
+                    try {
+                        $hasProducts = Cache::remember("bot_{$bot->id}_has_products", 3600, function() use ($bot) {
+                            return WooCommerceProduct::where('bot_id', $bot->id)->exists();
+                        });
+                    } catch (\Throwable $e) {
+                        $hasProducts = WooCommerceProduct::where('bot_id', $bot->id)->exists();
+                    }
+                    if ($hasProducts && $shouldSearchProducts) {
+                        $productContext = "\n\n[NU am găsit produse relevante pentru această întrebare. NU menționa produse.]";
+                    }
+                }
+            }
+
+            $extraContext = $orderContext . $productContext;
+        }
+
+        return [
+            'channel' => $channel,
+            'bot' => $bot,
+            'tenant' => $tenant,
+            'conversation' => $conversation,
+            'session_id' => $sessionId,
+            'session_token' => $sessionToken,
+            'session_expired' => $sessionExpired,
+            'user_message' => $userMessage,
+            'products' => $products,
+            'extra_context' => $extraContext,
+            'detected_intents' => $detectedIntents,
+            'pipelines_executed' => $pipelinesExecuted,
+            'query_intel' => $queryIntel,
+            'page_context' => $pageContext,
+            'prechat_name' => $prechatName,
+            'prechat_email' => $prechatEmail,
+            'prechat_phone' => $prechatPhone,
+        ];
+    }
+
+    /**
+     * Build the prompt and model config for streaming (mirrors generateAIResponse logic).
+     * Returns ['messages' => [...], 'model_config' => [...]]
+     */
+    private function buildPromptForStream(Bot $bot, Conversation $conversation, string $userMessage, string $extraContext = '', ?Channel $channel = null): array
+    {
+        $intentService = app(IntentDetectionService::class);
+        $tokenCounter = app(TokenCounterService::class);
+
+        $promptVersion = BotPromptVersion::selectForBot($bot->id);
+
+        $systemPrompt = Cache::remember("bot_system_prompt_{$bot->id}", now()->addMinutes(10), function () use ($bot, $promptVersion) {
+            $prompt = $promptVersion?->system_prompt ?? $bot->system_prompt ?? 'Ești un asistent virtual. Răspunde scurt și util.';
+
+            $hasProducts = false;
+            try {
+                $hasProducts = Cache::remember("bot_{$bot->id}_has_products", 3600, function() use ($bot) {
+                    return WooCommerceProduct::where('bot_id', $bot->id)->exists();
+                });
+            } catch (\Throwable $e) {
+                $hasProducts = WooCommerceProduct::where('bot_id', $bot->id)->exists();
+            }
+            if ($hasProducts) {
+                $prompt .= "\n\n"
+                    . "Ești asistentul unui magazin online. REGULI STRICTE PRODUSE:"
+                    . "\n- Când contextul conține '[CARDURI PRODUSE' sau '[PRODUSE RECOMANDATE', înseamnă că PRODUSELE AU FOST GĂSITE și se afișează automat ca carduri vizuale sub mesajul tău."
+                    . "\n- Când produse SUNT găsite (carduri), spune SCURT: 'Iată ce am găsit:' sau 'Uite câteva opțiuni potrivite:' — fără a enumera produse în text."
+                    . "\n- NU enumera produse în text. NU scrie nume de produse, prețuri sau liste. Cardurile le arată automat."
+                    . "\n- DOAR când contextul conține explicit '[NU s-au găsit produse relevante]' poți spune că nu ai găsit. Altfel, PRESUPUNE că produsele sunt afișate."
+                    . "\n- Dacă întrebarea NU e despre produse (livrare, retur, contact, etc.), răspunde la întrebare FĂRĂ a menționa produse."
+                    . "\n- NU inventa produse, prețuri sau specificații. Răspunde doar din datele furnizate."
+                    . "\n- Fii natural, concis și util.";
+            }
+
+            return $prompt;
+        });
+
+        // Knowledge search
+        $intents = $intentService->detect($userMessage);
+        $skipKnowledge = $intentService->shouldSkipKnowledge($userMessage);
+
+        $hasProducts = false;
+        try {
+            $hasProducts = Cache::remember("bot_{$bot->id}_has_products", 3600, function() use ($bot) {
+                return WooCommerceProduct::where('bot_id', $bot->id)->exists();
+            });
+        } catch (\Throwable $e) {
+            $hasProducts = WooCommerceProduct::where('bot_id', $bot->id)->exists();
+        }
+        $searchLimit = $bot->knowledge_search_limit ?? ($hasProducts ? 8 : 5);
+
+        $knowledgeContext = '';
+        if (!$skipKnowledge) {
+            try {
+                $searchService = app(KnowledgeSearchService::class);
+                $knowledgeContext = $searchService->buildContext($bot->id, $userMessage, $searchLimit);
+            } catch (\Exception $e) {
+                Log::warning('Knowledge search failed for chatbot stream', ['bot_id' => $bot->id, 'error' => $e->getMessage()]);
+            }
+        }
+
+        if (!empty($knowledgeContext)) {
+            $systemPrompt .= "\n\n" . $knowledgeContext;
+        }
+        if (!empty($extraContext)) {
+            $systemPrompt .= $extraContext;
+        }
+
+        // Inject last product context
+        $lastProduct = ($conversation->metadata ?? [])['last_product_context'] ?? null;
+        if ($lastProduct) {
+            $systemPrompt .= "\n\nPRODUS DISCUTAT ANTERIOR: {$lastProduct['name']} — {$lastProduct['price']} {$lastProduct['currency']}"
+                . "\nDacă clientul face referire la \"ăla\", \"acela\", \"produsul\", sau vrea să comande fără a specifica — folosește ACEST produs.";
+        }
+
+        // Order intent rules
+        $systemPrompt .= "\n\nREGULI COMENZI:"
+            . "\n- Dacă clientul vrea să PLASEZE o comandă nouă: ajută-l. NU cere număr de comandă. NU cere email pentru verificare."
+            . "\n- Dacă clientul vrea să VERIFICE o comandă existentă: cere-i numărul comenzii sau emailul."
+            . "\n- \"Vreau să comand\" = comandă NOUĂ. \"Unde e comanda mea\" = verificare EXISTENTĂ.";
+
+        // V2: Conversation policies
+        if (!empty($bot->settings['v2_policies'])) {
+            try {
+                $policyService = app(\App\Services\ConversationPolicyService::class);
+                $policy = $policyService->getPolicy($bot, $channel ?? null);
+                $policyInstructions = $policyService->toPromptInstructions($policy);
+                if (!empty($policyInstructions)) {
+                    $systemPrompt .= "\n\n" . $policyInstructions;
+                }
+            } catch (\Throwable $e) {
+                Log::warning('ConversationPolicy injection failed in stream', [
+                    'bot_id' => $bot->id, 'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        // Guardrails
+        $systemPrompt = PromptGuardrails::apply($systemPrompt);
+
+        // Build messages with summarization
+        $recentHistory = Message::where('conversation_id', $conversation->id)
+            ->orderByDesc('id')
+            ->limit(30)
+            ->get();
+
+        $summaryService = app(\App\Services\ConversationSummaryService::class);
+        $messages = $summaryService->buildMessages($systemPrompt, $conversation, $userMessage, $recentHistory);
+
+        // Model routing
+        $router = app(ChatModelRouter::class);
+        $modelConfig = $router->route(
+            $userMessage,
+            min($recentHistory->count(), 20),
+            $conversation->cost_cents ?? 0,
+        );
+
+        // Token truncation
+        $maxTokens = \App\Models\ModelPricing::getMaxTokens($modelConfig['model']);
+        $messages = $tokenCounter->truncateHistory($messages, (int) ($maxTokens * 0.95));
+
+        return [
+            'messages' => $messages,
+            'model_config' => $modelConfig,
+        ];
+    }
+
+    /**
+     * Send a single SSE event.
+     */
+    private function sendSSE(string $type, array $data): void
+    {
+        $data['type'] = $type;
+        echo "data: " . json_encode($data, JSON_UNESCAPED_UNICODE) . "\n\n";
+        if (ob_get_level() > 0) {
+            ob_flush();
+        }
+        flush();
+    }
+
+    /**
+     * Standard SSE response headers.
+     */
+    private function sseHeaders(): array
+    {
+        return [
+            'Content-Type' => 'text/event-stream',
+            'Cache-Control' => 'no-cache',
+            'X-Accel-Buffering' => 'no',
+            'Connection' => 'keep-alive',
+        ];
     }
 
     public function feedback(Request $request, $channelId): JsonResponse

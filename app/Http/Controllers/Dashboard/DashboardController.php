@@ -58,14 +58,28 @@ class DashboardController extends Controller
         $conversationsToday = Conversation::withoutGlobalScopes()->whereDate('created_at', today())->count();
         $messagesToday = Message::whereDate('created_at', today())->count();
 
-        // Last 7 days chart
-        $chartData = collect(range(6, 0))->map(function ($daysAgo) {
-            $date = now()->subDays($daysAgo);
+        // Last 7 days chart (3 queries with GROUP BY instead of 21)
+        $startDate = now()->subDays(6)->startOfDay();
+        $callsByDay = Call::withoutGlobalScopes()
+            ->where('created_at', '>=', $startDate)
+            ->selectRaw("DATE(created_at) as date, COUNT(*) as cnt")
+            ->groupByRaw("DATE(created_at)")
+            ->pluck('cnt', 'date');
+        $messagesByDay = Message::where('created_at', '>=', $startDate)
+            ->selectRaw("DATE(created_at) as date, COUNT(*) as cnt")
+            ->groupByRaw("DATE(created_at)")
+            ->pluck('cnt', 'date');
+        $usersByDay = User::where('created_at', '>=', $startDate)
+            ->selectRaw("DATE(created_at) as date, COUNT(*) as cnt")
+            ->groupByRaw("DATE(created_at)")
+            ->pluck('cnt', 'date');
+        $chartData = collect(range(6, 0))->map(function ($daysAgo) use ($callsByDay, $messagesByDay, $usersByDay) {
+            $date = now()->subDays($daysAgo)->format('Y-m-d');
             return [
-                'date' => $date->format('D d'),
-                'calls' => Call::withoutGlobalScopes()->whereDate('created_at', $date)->count(),
-                'messages' => Message::whereDate('created_at', $date)->count(),
-                'users' => User::whereDate('created_at', $date)->count(),
+                'date' => now()->subDays($daysAgo)->format('D d'),
+                'calls' => $callsByDay[$date] ?? 0,
+                'messages' => $messagesByDay[$date] ?? 0,
+                'users' => $usersByDay[$date] ?? 0,
             ];
         });
 
@@ -124,10 +138,10 @@ class DashboardController extends Controller
         $leadsTotal = Lead::count();
         $leadsNew = Lead::where('pipeline_stage', 'new')->count();
 
-        $conversationIds = Conversation::pluck('id');
-        $messagesToday = Message::whereIn('conversation_id', $conversationIds)->whereDate('created_at', today())->count();
+        $conversationSubquery = Conversation::select('id');
+        $messagesToday = Message::whereIn('conversation_id', $conversationSubquery)->whereDate('created_at', today())->count();
         $totalConversations = Conversation::count();
-        $totalMessages = Message::whereIn('conversation_id', $conversationIds)->count();
+        $totalMessages = Message::whereIn('conversation_id', $conversationSubquery)->count();
 
         $callsToday = Call::whereDate('created_at', today())->count();
         $minutesToday = Call::whereDate('created_at', today())->sum('duration_seconds') / 60;
@@ -140,46 +154,48 @@ class DashboardController extends Controller
         $addToCartToday = (clone $commerceBase)->where('event_name', 'add_to_cart_success')->whereDate('created_at', today())->count();
         $productClicksToday = (clone $commerceBase)->where('event_name', 'product_click')->whereDate('created_at', today())->count();
 
-        // ── Bot health cards ──
-        $bots = Bot::with(['knowledge', 'channels', 'knowledgeConnectors'])->get();
+        // ── Bot health cards (uses withCount to avoid loading all knowledge rows) ──
+        $bots = Bot::with(['channels', 'knowledgeConnectors'])
+            ->withCount([
+                'knowledge as kb_total',
+                'knowledge as kb_ready' => fn($q) => $q->where('status', 'ready'),
+                'knowledge as kb_failed' => fn($q) => $q->where('status', 'failed'),
+                'knowledge as kb_pending' => fn($q) => $q->whereIn('status', ['pending', 'processing']),
+                'conversations as recent_conversations' => fn($q) => $q->where('created_at', '>=', now()->subDays(7)),
+            ])->get();
+
         $botHealth = $bots->map(function ($bot) {
-            $kbTotal = $bot->knowledge->count();
-            $kbReady = $bot->knowledge->where('status', 'ready')->count();
-            $kbFailed = $bot->knowledge->where('status', 'failed')->count();
-            $kbPending = $bot->knowledge->whereIn('status', ['pending', 'processing'])->count();
             $activeChannels = $bot->channels->where('is_active', true)->count();
             $hasGreeting = !empty($bot->greeting_message);
             $hasPrompt = !empty($bot->system_prompt);
-            $hasConnector = $bot->knowledgeConnectors->isNotEmpty();
-            $recentConvs = Conversation::where('bot_id', $bot->id)->where('created_at', '>=', now()->subDays(7))->count();
 
             // Calculate health score
             $issues = [];
             if (!$hasPrompt) $issues[] = 'Lipseste system prompt';
             if (!$hasGreeting) $issues[] = 'Lipseste mesajul de intampinare';
-            if ($kbTotal === 0) $issues[] = 'Knowledge base gol';
-            if ($kbFailed > 0) $issues[] = $kbFailed . ' documente esuate';
+            if ($bot->kb_total === 0) $issues[] = 'Knowledge base gol';
+            if ($bot->kb_failed > 0) $issues[] = $bot->kb_failed . ' documente esuate';
             if ($activeChannels === 0) $issues[] = 'Niciun canal activ';
 
             $healthScore = 100;
             $healthScore -= (!$hasPrompt ? 30 : 0);
             $healthScore -= (!$hasGreeting ? 10 : 0);
-            $healthScore -= ($kbTotal === 0 ? 25 : 0);
-            $healthScore -= ($kbFailed > 0 ? 15 : 0);
+            $healthScore -= ($bot->kb_total === 0 ? 25 : 0);
+            $healthScore -= ($bot->kb_failed > 0 ? 15 : 0);
             $healthScore -= ($activeChannels === 0 ? 20 : 0);
 
             return [
                 'bot' => $bot,
                 'health_score' => max(0, $healthScore),
                 'issues' => $issues,
-                'kb_total' => $kbTotal,
-                'kb_ready' => $kbReady,
-                'kb_failed' => $kbFailed,
-                'kb_pending' => $kbPending,
+                'kb_total' => $bot->kb_total,
+                'kb_ready' => $bot->kb_ready,
+                'kb_failed' => $bot->kb_failed,
+                'kb_pending' => $bot->kb_pending,
                 'active_channels' => $activeChannels,
                 'has_greeting' => $hasGreeting,
                 'has_prompt' => $hasPrompt,
-                'recent_conversations' => $recentConvs,
+                'recent_conversations' => $bot->recent_conversations,
             ];
         })->sortBy('health_score')->values();
 
@@ -205,14 +221,28 @@ class DashboardController extends Controller
             ]);
         }
 
-        // ── 7-day chart ──
-        $chartData = collect(range(6, 0))->map(function ($daysAgo) use ($conversationIds) {
-            $date = now()->subDays($daysAgo);
+        // ── 7-day chart (3 queries with GROUP BY instead of 21) ──
+        $startDate = now()->subDays(6)->startOfDay();
+        $convsByDay = Conversation::where('created_at', '>=', $startDate)
+            ->selectRaw("DATE(created_at) as date, COUNT(*) as cnt")
+            ->groupByRaw("DATE(created_at)")
+            ->pluck('cnt', 'date');
+        $msgsByDay = Message::whereIn('conversation_id', $conversationSubquery)
+            ->where('created_at', '>=', $startDate)
+            ->selectRaw("DATE(created_at) as date, COUNT(*) as cnt")
+            ->groupByRaw("DATE(created_at)")
+            ->pluck('cnt', 'date');
+        $leadsByDay = Lead::where('created_at', '>=', $startDate)
+            ->selectRaw("DATE(created_at) as date, COUNT(*) as cnt")
+            ->groupByRaw("DATE(created_at)")
+            ->pluck('cnt', 'date');
+        $chartData = collect(range(6, 0))->map(function ($daysAgo) use ($convsByDay, $msgsByDay, $leadsByDay) {
+            $date = now()->subDays($daysAgo)->format('Y-m-d');
             return [
-                'date' => $date->format('D d'),
-                'conversations' => Conversation::whereDate('created_at', $date)->count(),
-                'messages' => Message::whereIn('conversation_id', $conversationIds)->whereDate('created_at', $date)->count(),
-                'leads' => Lead::whereDate('created_at', $date)->count(),
+                'date' => now()->subDays($daysAgo)->format('D d'),
+                'conversations' => $convsByDay[$date] ?? 0,
+                'messages' => $msgsByDay[$date] ?? 0,
+                'leads' => $leadsByDay[$date] ?? 0,
             ];
         });
 
