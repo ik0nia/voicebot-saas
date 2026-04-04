@@ -1456,7 +1456,10 @@
                     showPrechatForm();
                 } else {
                     scrollToBottom();
-                    setTimeout(function() { input.focus(); }, 100);
+                    // Don't auto-focus on mobile — opens keyboard and hides messages
+                    if (window.innerWidth > 440) {
+                        setTimeout(function() { input.focus(); }, 100);
+                    }
                 }
 
                 // Flush offline queue
