@@ -211,6 +211,21 @@ class GeminiContentService
             file_put_contents($storagePath, base64_decode($imageData));
 
             $publicUrl = rtrim(config('app.url'), '/') . '/' . $filename;
+            $tokens = ($data['usageMetadata']['promptTokenCount'] ?? 0) + ($data['usageMetadata']['candidatesTokenCount'] ?? 0);
+
+            // Track image generation cost
+            try {
+                \App\Models\AiApiMetric::create([
+                    'provider' => 'google',
+                    'model' => $imageModel,
+                    'input_tokens' => $data['usageMetadata']['promptTokenCount'] ?? 0,
+                    'output_tokens' => $data['usageMetadata']['candidatesTokenCount'] ?? 0,
+                    'cost_cents' => $tokens * 0.01 / 1000, // Estimated Gemini cost
+                    'response_time_ms' => 0,
+                    'status' => 'success',
+                    'error_type' => 'social_image',
+                ]);
+            } catch (\Throwable $e) {}
 
             return [
                 'url' => $publicUrl,
@@ -220,6 +235,19 @@ class GeminiContentService
             ];
         } catch (\Throwable $e) {
             Log::error('Gemini Image exception', ['error' => $e->getMessage()]);
+            // Track failed image generation
+            try {
+                \App\Models\AiApiMetric::create([
+                    'provider' => 'google',
+                    'model' => $this->imageModel,
+                    'input_tokens' => 0,
+                    'output_tokens' => 0,
+                    'cost_cents' => 0,
+                    'response_time_ms' => 0,
+                    'status' => 'error',
+                    'error_type' => 'social_image',
+                ]);
+            } catch (\Throwable $me) {}
             return null;
         }
     }
@@ -279,6 +307,7 @@ class GeminiContentService
                     'cost_cents' => $costCents,
                     'response_time_ms' => 0,
                     'status' => 'success',
+                    'error_type' => 'social_text',
                 ]);
             } catch (\Throwable $e) {}
 

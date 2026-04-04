@@ -104,6 +104,48 @@ class AdminSystemController extends Controller
             $aiHealth['error'] = $e->getMessage();
         }
 
+        // 3b. SOCIAL MEDIA COSTS (separate from chat AI)
+        $socialCosts = [];
+        try {
+            $socialCosts['text_today'] = \App\Models\AiApiMetric::withoutGlobalScopes()
+                ->whereDate('created_at', today())
+                ->where('error_type', 'social_text')
+                ->sum('cost_cents') / 100;
+            $socialCosts['text_7d'] = \App\Models\AiApiMetric::withoutGlobalScopes()
+                ->where('created_at', '>=', now()->subDays(7))
+                ->where('error_type', 'social_text')
+                ->sum('cost_cents') / 100;
+            $socialCosts['text_calls_7d'] = \App\Models\AiApiMetric::withoutGlobalScopes()
+                ->where('created_at', '>=', now()->subDays(7))
+                ->where('error_type', 'social_text')
+                ->where('status', 'success')
+                ->count();
+            $socialCosts['image_today'] = \App\Models\AiApiMetric::withoutGlobalScopes()
+                ->whereDate('created_at', today())
+                ->where('error_type', 'social_image')
+                ->sum('cost_cents') / 100;
+            $socialCosts['image_7d'] = \App\Models\AiApiMetric::withoutGlobalScopes()
+                ->where('created_at', '>=', now()->subDays(7))
+                ->where('error_type', 'social_image')
+                ->sum('cost_cents') / 100;
+            $socialCosts['image_calls_7d'] = \App\Models\AiApiMetric::withoutGlobalScopes()
+                ->where('created_at', '>=', now()->subDays(7))
+                ->where('error_type', 'social_image')
+                ->where('status', 'success')
+                ->count();
+            $socialCosts['total_today'] = $socialCosts['text_today'] + $socialCosts['image_today'];
+            $socialCosts['total_7d'] = $socialCosts['text_7d'] + $socialCosts['image_7d'];
+            $socialCosts['posts_published'] = \App\Models\SocialPost::where('status', 'published')
+                ->where('created_at', '>=', now()->subDays(7))
+                ->count();
+            $socialCosts['posts_scheduled'] = \App\Models\SocialPost::where('status', 'scheduled')->count();
+
+            // Exclude social costs from main AI health total
+            $aiHealth['chat_cost_today'] = ($aiHealth['total_cost_today'] ?? 0) - $socialCosts['total_today'];
+        } catch (\Throwable $e) {
+            $socialCosts['error'] = $e->getMessage();
+        }
+
         // 4. KNOWLEDGE BASE HEALTH
         $kbHealth = [];
         try {
@@ -226,7 +268,7 @@ class AdminSystemController extends Controller
         }
 
         return view('admin.system', compact(
-            'infra', 'queues', 'aiHealth', 'kbHealth', 'metrics',
+            'infra', 'queues', 'aiHealth', 'socialCosts', 'kbHealth', 'metrics',
             'searchQuality', 'ratings', 'experiments', 'errors'
         ));
     }

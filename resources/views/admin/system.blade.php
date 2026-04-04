@@ -291,6 +291,62 @@
     </div>
 
     {{-- ============================================================= --}}
+    {{-- 4b. SOCIAL MEDIA COSTS --}}
+    {{-- ============================================================= --}}
+    <div>
+        <h2 class="text-lg font-bold text-slate-900 mb-3">Social Media AI Costs</h2>
+        @if(!empty($socialCosts['error']))
+            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{{ $socialCosts['error'] }}</div>
+        @else
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                <div class="bg-purple-50 rounded-lg p-4 border border-purple-100">
+                    <p class="text-2xl font-bold text-purple-700">${{ number_format($socialCosts['total_today'] ?? 0, 4) }}</p>
+                    <p class="text-xs text-purple-600 mt-1">Cost social azi</p>
+                </div>
+                <div class="bg-purple-50 rounded-lg p-4 border border-purple-100">
+                    <p class="text-2xl font-bold text-purple-700">${{ number_format($socialCosts['total_7d'] ?? 0, 4) }}</p>
+                    <p class="text-xs text-purple-600 mt-1">Cost social 7 zile</p>
+                </div>
+                <div class="bg-blue-50 rounded-lg p-4 border border-blue-100">
+                    <p class="text-2xl font-bold text-blue-700">{{ $socialCosts['posts_published'] ?? 0 }}</p>
+                    <p class="text-xs text-blue-600 mt-1">Publicate (7 zile)</p>
+                </div>
+                <div class="bg-amber-50 rounded-lg p-4 border border-amber-100">
+                    <p class="text-2xl font-bold text-amber-700">{{ $socialCosts['posts_scheduled'] ?? 0 }}</p>
+                    <p class="text-xs text-amber-600 mt-1">Programate</p>
+                </div>
+            </div>
+            <table class="w-full text-sm border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-200">
+                        <th class="text-left py-2 px-3 text-xs font-semibold text-slate-500 uppercase">Tip</th>
+                        <th class="text-right py-2 px-3 text-xs font-semibold text-slate-500 uppercase">Apeluri 7d</th>
+                        <th class="text-right py-2 px-3 text-xs font-semibold text-slate-500 uppercase">Cost azi</th>
+                        <th class="text-right py-2 px-3 text-xs font-semibold text-slate-500 uppercase">Cost 7d</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="border-b border-slate-100">
+                        <td class="py-2 px-3 font-medium">📝 Text (GPT-4o-mini)</td>
+                        <td class="py-2 px-3 text-right">{{ $socialCosts['text_calls_7d'] ?? 0 }}</td>
+                        <td class="py-2 px-3 text-right">${{ number_format($socialCosts['text_today'] ?? 0, 4) }}</td>
+                        <td class="py-2 px-3 text-right">${{ number_format($socialCosts['text_7d'] ?? 0, 4) }}</td>
+                    </tr>
+                    <tr class="border-b border-slate-100">
+                        <td class="py-2 px-3 font-medium">🖼️ Imagini (Gemini 3.1 Flash)</td>
+                        <td class="py-2 px-3 text-right">{{ $socialCosts['image_calls_7d'] ?? 0 }}</td>
+                        <td class="py-2 px-3 text-right">${{ number_format($socialCosts['image_today'] ?? 0, 4) }}</td>
+                        <td class="py-2 px-3 text-right">${{ number_format($socialCosts['image_7d'] ?? 0, 4) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+            @if(($aiHealth['chat_cost_today'] ?? null) !== null)
+                <p class="text-xs text-slate-500 mt-3">💬 Cost chat AI azi (fără social): ${{ number_format($aiHealth['chat_cost_today'], 4) }}</p>
+            @endif
+        @endif
+    </div>
+
+    {{-- ============================================================= --}}
     {{-- 5. KNOWLEDGE BASE HEALTH --}}
     {{-- ============================================================= --}}
     <div>
