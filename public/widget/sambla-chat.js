@@ -1448,8 +1448,48 @@
 
                 // Flush offline queue
                 flushOfflineQueue();
+
+                // Mobile: lock body scroll when chat is open
+                if (window.innerWidth <= 440) {
+                    document.body.style.overflow = 'hidden';
+                    document.body.style.position = 'fixed';
+                    document.body.style.width = '100%';
+                    document.body.style.top = '-' + window.scrollY + 'px';
+                    chatWindow._scrollY = window.scrollY;
+                }
+
+                // Mobile keyboard resize handler (iOS Safari)
+                if (window.visualViewport && window.innerWidth <= 440) {
+                    if (!chatWindow._vvHandler) {
+                        chatWindow._vvHandler = function() {
+                            var vv = window.visualViewport;
+                            chatWindow.style.height = vv.height + 'px';
+                            chatWindow.style.maxHeight = vv.height + 'px';
+                            scrollToBottom();
+                        };
+                        window.visualViewport.addEventListener('resize', chatWindow._vvHandler);
+                        window.visualViewport.addEventListener('scroll', chatWindow._vvHandler);
+                    }
+                }
             } else {
                 bubble.focus();
+                // Remove viewport handler
+                if (chatWindow._vvHandler && window.visualViewport) {
+                    window.visualViewport.removeEventListener('resize', chatWindow._vvHandler);
+                    window.visualViewport.removeEventListener('scroll', chatWindow._vvHandler);
+                    chatWindow._vvHandler = null;
+                    chatWindow.style.height = '';
+                    chatWindow.style.maxHeight = '';
+                }
+                // Mobile: restore body scroll
+                if (window.innerWidth <= 440) {
+                    var scrollY = chatWindow._scrollY || 0;
+                    document.body.style.overflow = '';
+                    document.body.style.position = '';
+                    document.body.style.width = '';
+                    document.body.style.top = '';
+                    window.scrollTo(0, scrollY);
+                }
             }
         }
 
