@@ -15,7 +15,7 @@ class GeminiContentService
     public function __construct()
     {
         $this->apiKey = config('services.gemini.api_key', env('GEMINI_API_KEY', ''));
-        $this->model = config('services.gemini.model', env('GEMINI_MODEL', 'gemini-2.0-flash'));
+        $this->model = config('services.gemini.model', env('GEMINI_MODEL', 'gemini-2.5-flash-preview-05-20'));
     }
 
     /**
@@ -139,6 +139,112 @@ class GeminiContentService
 
         $response = $this->callGemini($prompt);
         return $this->extractJson($response['text'] ?? '') ?: [];
+    }
+
+    /**
+     * Generate an image using Gemini's native image generation.
+     * Uses gemini-2.0-flash with responseModalities including IMAGE.
+     *
+     * @return string|null Base64 image data or null on failure
+     */
+    public function generateImage(string $prompt, string $aspectRatio = '1:1'): ?array
+    {
+        if (empty($this->apiKey)) {
+            Log::error('GeminiContentService: API key not configured');
+            return null;
+        }
+
+        try {
+            // Use the image-capable model
+            $imageModel = env('GEMINI_IMAGE_MODEL', 'gemini-2.5-flash-preview-05-20');
+            $url = "{$this->baseUrl}/models/{$imageModel}:generateContent?key={$this->apiKey}";
+
+            $response = Http::timeout(120)->post($url, [
+                'contents' => [
+                    ['parts' => [['text' => "Generate a professional, modern image for a social media post. Style: clean, tech/SaaS aesthetic, red and dark theme (#991b1b brand color). {$prompt}"]]]
+                ],
+                'generationConfig' => [
+                    'responseModalities' => ['TEXT', 'IMAGE'],
+                    'maxOutputTokens' => 1024,
+                ],
+            ]);
+
+            if (!$response->ok()) {
+                Log::error('Gemini Image API error', ['status' => $response->status(), 'body' => mb_substr($response->body(), 0, 500)]);
+                return null;
+            }
+
+            $data = $response->json();
+            $parts = $data['candidates'][0]['content']['parts'] ?? [];
+
+            $imageData = null;
+            $mimeType = null;
+            $altText = '';
+
+            foreach ($parts as $part) {
+                if (isset($part['inlineData'])) {
+                    $imageData = $part['inlineData']['data'] ?? null;
+                    $mimeType = $part['inlineData']['mimeType'] ?? 'image/png';
+                }
+                if (isset($part['text'])) {
+                    $altText = $part['text'];
+                }
+            }
+
+            if (!$imageData) {
+                Log::warning('Gemini Image: no image in response', ['parts_count' => count($parts)]);
+                return null;
+            }
+
+            // Save to public storage
+            $extension = $mimeType === 'image/jpeg' ? 'jpg' : 'png';
+            $filename = 'social/' . date('Y/m') . '/' . uniqid('img_') . '.' . $extension;
+            $storagePath = public_path($filename);
+
+            // Ensure directory exists
+            $dir = dirname($storagePath);
+            if (!is_dir($dir)) {
+                mkdir($dir, 0755, true);
+            }
+
+            file_put_contents($storagePath, base64_decode($imageData));
+
+            $publicUrl = rtrim(config('app.url'), '/') . '/' . $filename;
+
+            return [
+                'url' => $publicUrl,
+                'path' => $filename,
+                'mime_type' => $mimeType,
+                'alt_text' => $altText,
+            ];
+        } catch (\Throwable $e) {
+            Log::error('Gemini Image exception', ['error' => $e->getMessage()]);
+            return null;
+        }
+    }
+
+    /**
+     * Generate a complete post with text + image
+     */
+    public function generatePostWithImage(string $platform, string $topic, array $styleGuidelines = [], string $language = 'ro'): array
+    {
+        // Step 1: Generate text content
+        $post = $this->generatePost($platform, $topic, $styleGuidelines, $language);
+
+        if (isset($post['error'])) {
+            return $post;
+        }
+
+        // Step 2: Generate image using the image_prompt from step 1
+        $imagePrompt = $post['image_prompt'] ?? "Professional social media visual about: {$topic}";
+        $image = $this->generateImage($imagePrompt);
+
+        if ($image) {
+            $post['image_url'] = $image['url'];
+            $post['image_path'] = $image['path'];
+        }
+
+        return $post;
     }
 
     /**

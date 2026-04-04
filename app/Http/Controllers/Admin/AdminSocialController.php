@@ -45,9 +45,9 @@ class AdminSocialController extends Controller
             $content = $result['content'] ?? '';
             $metadata = ['title' => $result['title'] ?? '', 'meta_description' => $result['meta_description'] ?? ''];
         } else {
-            $result = $gemini->generatePost($validated['platform'], $validated['topic'], $schedule?->style_guidelines ?? []);
+            $result = $gemini->generatePostWithImage($validated['platform'], $validated['topic'], $schedule?->style_guidelines ?? []);
             $content = $result['content'] ?? '';
-            $metadata = ['topic' => $validated['topic']];
+            $metadata = ['topic' => $validated['topic'], 'image_path' => $result['image_path'] ?? null];
         }
 
         $post = SocialPost::create([
@@ -57,6 +57,7 @@ class AdminSocialController extends Controller
             'post_type' => $validated['platform'] === 'blog' ? 'blog_article' : 'post',
             'content' => $content,
             'hashtags' => $result['hashtags'] ?? $result['tags'] ?? [],
+            'image_url' => $result['image_url'] ?? null,
             'image_prompt' => $result['image_prompt'] ?? null,
             'metadata' => $metadata + ['model' => $result['model'] ?? 'gemini'],
             'ai_tokens_used' => $result['tokens_used'] ?? 0,

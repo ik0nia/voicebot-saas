@@ -47,7 +47,7 @@ class GenerateScheduledPosts implements ShouldQueue
                 }
 
                 try {
-                    $result = $gemini->generatePost(
+                    $result = $gemini->generatePostWithImage(
                         $schedule->platform,
                         $topic,
                         $schedule->style_guidelines ?? [],
@@ -68,11 +68,13 @@ class GenerateScheduledPosts implements ShouldQueue
                         'post_type' => 'post',
                         'content' => $result['content'] ?? '',
                         'hashtags' => $result['hashtags'] ?? [],
+                        'image_url' => $result['image_url'] ?? null,
                         'image_prompt' => $result['image_prompt'] ?? null,
                         'metadata' => [
                             'topic' => $topic,
                             'model' => $result['model'] ?? 'gemini',
                             'style_ref' => $schedule->style_guidelines ? 'custom' : 'default',
+                            'image_path' => $result['image_path'] ?? null,
                         ],
                         'ai_tokens_used' => $result['tokens_used'] ?? 0,
                         'scheduled_at' => $scheduledAt,
