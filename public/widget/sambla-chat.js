@@ -1464,18 +1464,48 @@
                 // Flush offline queue
                 flushOfflineQueue();
 
-                // Mobile: lock body scroll
+                // Mobile: iOS keyboard handling
                 if (window.innerWidth <= 440) {
                     chatWindow._scrollY = window.scrollY;
-                    document.body.style.overflow = 'hidden';
-                    document.documentElement.style.overflow = 'hidden';
+                    // Prevent background scroll via touch
+                    chatWindow._touchBlocker = function(e) {
+                        // Allow scroll inside messages container
+                        var t = e.target;
+                        while (t && t !== chatWindow) {
+                            if (t.classList && t.classList.contains('sambla-messages')) return;
+                            t = t.parentElement;
+                        }
+                        e.preventDefault();
+                    };
+                    document.addEventListener('touchmove', chatWindow._touchBlocker, { passive: false });
+
+                    // Resize to visual viewport (handles iOS keyboard)
+                    if (window.visualViewport) {
+                        chatWindow._vvResize = function() {
+                            var h = window.visualViewport.height;
+                            chatWindow.style.height = h + 'px';
+                            chatWindow.style.top = window.visualViewport.offsetTop + 'px';
+                        };
+                        window.visualViewport.addEventListener('resize', chatWindow._vvResize);
+                        window.visualViewport.addEventListener('scroll', chatWindow._vvResize);
+                        chatWindow._vvResize();
+                    }
                 }
             } else {
                 bubble.focus();
-                // Mobile: restore scroll
+                // Mobile: cleanup
+                if (chatWindow._touchBlocker) {
+                    document.removeEventListener('touchmove', chatWindow._touchBlocker);
+                    chatWindow._touchBlocker = null;
+                }
+                if (chatWindow._vvResize && window.visualViewport) {
+                    window.visualViewport.removeEventListener('resize', chatWindow._vvResize);
+                    window.visualViewport.removeEventListener('scroll', chatWindow._vvResize);
+                    chatWindow._vvResize = null;
+                }
+                chatWindow.style.height = '';
+                chatWindow.style.top = '';
                 if (chatWindow._scrollY !== undefined) {
-                    document.body.style.overflow = '';
-                    document.documentElement.style.overflow = '';
                     window.scrollTo(0, chatWindow._scrollY);
                     chatWindow._scrollY = undefined;
                 }
@@ -2131,6 +2161,14 @@
         }
 
         sendBtn.addEventListener('click', sendMessage);
+
+        // iOS: scroll messages to bottom when keyboard appears
+        input.addEventListener('focus', function() {
+            if (window.innerWidth <= 440) {
+                setTimeout(function() { scrollToBottom(); }, 300);
+                setTimeout(function() { scrollToBottom(); }, 600);
+            }
+        });
 
         input.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
