@@ -606,21 +606,13 @@
             \
             .sambla-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }\
             \
+            .sambla-mobile-overlay {\
+                display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;\
+                z-index: 2147483647; background: #fff;\
+            }\
+            .sambla-mobile-overlay.open { display: flex; flex-direction: column; }\
             @media (max-width: 440px) {\
-                .sambla-window {\
-                    position: fixed !important;\
-                    top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;\
-                    width: 100% !important; height: 100% !important;\
-                    max-height: none !important; max-width: none !important;\
-                    border-radius: 0 !important; border: none !important;\
-                    box-shadow: none !important; z-index: 2147483647 !important;\
-                }\
-                .sambla-window .sambla-header { border-radius: 0; flex-shrink: 0; padding-top: calc(8px + env(safe-area-inset-top, 0px)); }\
-                .sambla-window .sambla-messages { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }\
-                .sambla-window .sambla-input-area {\
-                    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;\
-                    flex-shrink: 0 !important;\
-                }\
+                .sambla-window.open { display: none !important; }\
                 .sambla-bubble { bottom: calc(16px + env(safe-area-inset-bottom, 0px)); right: 16px; }\
             }\
         ';
@@ -681,6 +673,15 @@
         var headerName = root.querySelector('.sambla-header-name');
         var headerStatus = root.querySelector('.sambla-header-status');
         var offlineBanner = root.querySelector('.sambla-offline-banner');
+
+        // Mobile overlay — lives in document.body (outside Shadow DOM) for iOS keyboard compat
+        var mobileOverlay = null;
+        if (window.innerWidth <= 440) {
+            mobileOverlay = document.createElement('div');
+            mobileOverlay.className = 'sambla-mobile-overlay';
+            mobileOverlay.style.cssText = 'display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;height:100dvh;z-index:2147483647;background:#fff;flex-direction:column;overflow:hidden';
+            document.body.appendChild(mobileOverlay);
+        }
 
         var messages = [];
         var isOpen = false;
@@ -1463,17 +1464,41 @@
                 // Flush offline queue
                 flushOfflineQueue();
 
-                // Mobile: prevent background scroll
-                if (window.innerWidth <= 440) {
+                // Mobile: move chat into body-level overlay (fixes iOS keyboard)
+                if (window.innerWidth <= 440 && mobileOverlay) {
                     chatWindow._scrollY = window.scrollY;
+                    mobileOverlay.appendChild(chatWindow);
+                    mobileOverlay.classList.add('open');
+                    chatWindow.style.position = 'relative';
+                    chatWindow.style.width = '100%';
+                    chatWindow.style.height = '100%';
+                    chatWindow.style.maxHeight = 'none';
+                    chatWindow.style.borderRadius = '0';
+                    chatWindow.style.border = 'none';
+                    chatWindow.style.boxShadow = 'none';
+                    chatWindow.style.bottom = 'auto';
+                    chatWindow.style.right = 'auto';
                     window.scrollTo(0, 0);
                 }
             } else {
                 bubble.focus();
-                // Mobile: restore scroll
-                if (chatWindow._scrollY !== undefined) {
-                    window.scrollTo(0, chatWindow._scrollY);
-                    chatWindow._scrollY = undefined;
+                // Mobile: move chat back to shadow DOM
+                if (mobileOverlay && mobileOverlay.classList.contains('open')) {
+                    mobileOverlay.classList.remove('open');
+                    root.appendChild(chatWindow);
+                    chatWindow.style.position = '';
+                    chatWindow.style.width = '';
+                    chatWindow.style.height = '';
+                    chatWindow.style.maxHeight = '';
+                    chatWindow.style.borderRadius = '';
+                    chatWindow.style.border = '';
+                    chatWindow.style.boxShadow = '';
+                    chatWindow.style.bottom = '';
+                    chatWindow.style.right = '';
+                    if (chatWindow._scrollY !== undefined) {
+                        window.scrollTo(0, chatWindow._scrollY);
+                        chatWindow._scrollY = undefined;
+                    }
                 }
             }
         }
@@ -2118,23 +2143,27 @@
         bubble.addEventListener('click', toggleChat);
         bubble.setAttribute('aria-expanded', 'false');
 
-        var closeBtn = root.querySelector('.sambla-header-close');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                if (isOpen) toggleChat();
-            });
+        // Close button — use event delegation since element may move between DOM roots
+        function handleCloseClick(e) {
+            var t = e.target;
+            while (t) {
+                if (t.classList && t.classList.contains('sambla-header-close')) {
+                    e.stopPropagation();
+                    if (isOpen) toggleChat();
+                    return;
+                }
+                t = t.parentElement;
+            }
         }
+        root.addEventListener('click', handleCloseClick);
+        if (mobileOverlay) mobileOverlay.addEventListener('click', handleCloseClick);
 
         sendBtn.addEventListener('click', sendMessage);
 
         // iOS: keep input visible when keyboard appears
         input.addEventListener('focus', function() {
-            if (window.innerWidth <= 440) {
-                setTimeout(function() {
-                    input.scrollIntoView({ block: 'end', behavior: 'smooth' });
-                    scrollToBottom();
-                }, 400);
+            if (window.innerWidth <= 440 && mobileOverlay && mobileOverlay.classList.contains('open')) {
+                setTimeout(function() { scrollToBottom(); }, 300);
             }
         });
 
