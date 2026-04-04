@@ -381,6 +381,20 @@
                     </div>
                 </div>
 
+                {{-- Phone number cost --}}
+                <div class="mt-6 pt-5 border-t border-slate-200">
+                    <h3 class="text-sm font-semibold text-slate-900 mb-1">Cost lunar numere de telefon</h3>
+                    <p class="text-xs text-slate-500 mb-3">Prețul implicit facturat clienților per număr de telefon pe lună. Poate fi suprascris per tenant.</p>
+                    <div class="w-48">
+                        <label for="phone_number_monthly_cost_lei" class="block text-sm font-medium text-slate-700">Cost lunar (lei)</label>
+                        <input type="number" name="phone_number_monthly_cost_lei" id="phone_number_monthly_cost_lei"
+                               value="{{ old('phone_number_monthly_cost_lei', $settings['telnyx']['phone_number_monthly_cost_lei'] ?? '27') }}"
+                               min="0" step="0.01"
+                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors"
+                               required>
+                    </div>
+                </div>
+
                 <div class="flex justify-end pt-2">
                     <button type="submit"
                             class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-colors">

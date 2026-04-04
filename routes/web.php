@@ -136,6 +136,7 @@ Route::middleware('auth')->prefix('dashboard/numere')->group(function () {
     Route::put('/{phoneNumber}', [PhoneNumberController::class, 'update'])->name('dashboard.numbers.update');
     Route::delete('/{phoneNumber}', [PhoneNumberController::class, 'destroy'])->name('dashboard.numbers.destroy');
     Route::patch('/{phoneNumber}/toggle', [PhoneNumberController::class, 'toggleActive'])->name('dashboard.numbers.toggle');
+    Route::post('/sync-statuses', [PhoneNumberController::class, 'syncStatuses'])->name('dashboard.numbers.syncStatuses');
 });
 
 // Team routes (dashboard)
@@ -321,4 +322,5 @@ Route::prefix('webhook/telnyx')
     ->group(function () {
         Route::post('/voice', [TelnyxWebhookController::class, 'handleVoice'])->name('webhook.telnyx.voice');
         Route::post('/status', [TelnyxWebhookController::class, 'handleStatus'])->name('webhook.telnyx.status');
+        Route::post('/number-order', [TelnyxWebhookController::class, 'handleNumberOrder'])->name('webhook.telnyx.numberOrder');
     });

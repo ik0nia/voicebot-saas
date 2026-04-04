@@ -24,13 +24,25 @@
             <h1 class="text-2xl font-bold text-slate-900">Numere de telefon</h1>
             <p class="mt-1 text-sm text-slate-500">Gestionează numerele de telefon asociate boților tăi.</p>
         </div>
-        <button onclick="document.getElementById('add-number-modal').classList.remove('hidden')"
-                class="inline-flex items-center justify-center gap-2 rounded-lg bg-red-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 transition-colors">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-            Adaugă număr
-        </button>
+        <div class="flex items-center gap-2">
+            <form method="POST" action="{{ route('dashboard.numbers.syncStatuses') }}">
+                @csrf
+                <button type="submit"
+                        class="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition-colors">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Sincronizează
+                </button>
+            </form>
+            <button onclick="document.getElementById('add-number-modal').classList.remove('hidden')"
+                    class="inline-flex items-center justify-center gap-2 rounded-lg bg-red-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 transition-colors">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                Adaugă număr
+            </button>
+        </div>
     </div>
 
     {{-- Summary cards --}}
@@ -38,6 +50,11 @@
         $totalNumbers = $numbers->total();
         $activeNumbers = App\Models\PhoneNumber::where('is_active', true)->count();
         $totalCostCents = App\Models\PhoneNumber::sum('monthly_cost_cents');
+
+        // Cost per number: tenant override > platform setting > 27 lei
+        $tenant = auth()->user()->tenant;
+        $phoneNumberCostLei = $tenant?->plan_overrides['phone_number_monthly_cost_lei']
+            ?? App\Models\PlatformSetting::get('phone_number_monthly_cost_lei', 27);
     @endphp
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <x-dashboard.stat-card
@@ -403,7 +420,7 @@
                                 (num.capabilities && num.capabilities.sms ? '<span class="text-xs text-blue-600 font-medium">SMS</span>' : '') +
                             '</div>' +
                         '</div>' +
-                        '<span class="text-sm font-medium text-slate-500">27 lei/lună</span>' +
+                        '<span class="text-sm font-medium text-slate-500">' + {{ json_encode(number_format((float)$phoneNumberCostLei, 2, ',', '.')) }} + ' lei/lună</span>' +
                     '</label>';
                 list.appendChild(div);
             });

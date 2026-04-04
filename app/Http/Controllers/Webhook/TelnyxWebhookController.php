@@ -243,4 +243,50 @@ class TelnyxWebhookController extends Controller
 
         return response('OK', 200);
     }
+
+    public function handleNumberOrder(Request $request)
+    {
+        $payload = $request->input('data.payload', []);
+        $eventType = $request->input('data.event_type');
+
+        Log::info('TelnyxWebhook: number order event', ['event_type' => $eventType, 'payload' => $payload]);
+
+        if (!in_array($eventType, ['number_order.phone_number.enabled', 'number_order.complete'])) {
+            return response('OK', 200);
+        }
+
+        // When a specific phone number is enabled
+        if ($eventType === 'number_order.phone_number.enabled') {
+            $number = $payload['phone_number'] ?? null;
+            $status = $payload['status'] ?? null;
+
+            if ($number && $status === 'enabled') {
+                $phoneNumber = PhoneNumber::withoutGlobalScopes()->where('number', $number)->first();
+                if ($phoneNumber && $phoneNumber->status === PhoneNumber::STATUS_PENDING) {
+                    $phoneNumber->update([
+                        'status' => PhoneNumber::STATUS_ACTIVE,
+                        'is_active' => true,
+                    ]);
+                    Log::info('TelnyxWebhook: phone number activated', ['number' => $number]);
+                }
+            }
+        }
+
+        // When the entire order completes
+        if ($eventType === 'number_order.complete') {
+            $orderId = $payload['id'] ?? null;
+            if ($orderId) {
+                PhoneNumber::withoutGlobalScopes()
+                    ->where('telnyx_order_id', $orderId)
+                    ->where('status', PhoneNumber::STATUS_PENDING)
+                    ->update([
+                        'status' => PhoneNumber::STATUS_ACTIVE,
+                        'is_active' => true,
+                    ]);
+                Log::info('TelnyxWebhook: number order completed', ['order_id' => $orderId]);
+            }
+        }
+
+        return response('OK', 200);
+    }
 }

@@ -91,11 +91,17 @@ class AdminSettingsController extends Controller
             'telnyx_connection_id' => 'required|string|max:255',
             'telnyx_public_key' => 'required|string|max:255',
             'telnyx_webhook_url' => 'required|url|max:255',
+            'phone_number_monthly_cost_lei' => 'required|numeric|min:0',
         ]);
+
+        $costLei = $validated['phone_number_monthly_cost_lei'];
+        unset($validated['phone_number_monthly_cost_lei']);
 
         foreach ($validated as $key => $value) {
             PlatformSetting::set($key, $value, 'string', 'telnyx');
         }
+
+        PlatformSetting::set('phone_number_monthly_cost_lei', $costLei, 'float', 'telnyx');
 
         return back()->with('success', 'Setările Telnyx au fost actualizate.');
     }

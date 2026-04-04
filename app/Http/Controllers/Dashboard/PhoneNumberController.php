@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Dashboard;
 use App\Http\Controllers\Controller;
 use App\Models\PhoneNumber;
 use App\Models\Bot;
+use App\Models\PlatformSetting;
+use App\Models\Tenant;
 use App\Services\TelnyxService;
 use Illuminate\Http\Request;
 
@@ -12,6 +14,25 @@ class PhoneNumberController extends Controller
 {
     public function index()
     {
+        // Auto-sync pending numbers with Telnyx on page load
+        $pendingNumbers = PhoneNumber::where('status', PhoneNumber::STATUS_PENDING)
+            ->where('provider', 'telnyx')
+            ->get();
+
+        if ($pendingNumbers->isNotEmpty()) {
+            $service = app(TelnyxService::class);
+            foreach ($pendingNumbers as $number) {
+                try {
+                    $telnyxStatus = $service->getNumberStatus($number->number);
+                    if ($telnyxStatus === 'active') {
+                        $number->update(['status' => PhoneNumber::STATUS_ACTIVE, 'is_active' => true]);
+                    }
+                } catch (\Exception $e) {
+                    // Silently skip - don't block page load
+                }
+            }
+        }
+
         $numbers = PhoneNumber::with('bot')->latest()->paginate(20);
         $bots = Bot::where('is_active', true)->orderBy('name')->get();
 
@@ -44,7 +65,12 @@ class PhoneNumberController extends Controller
         ]);
 
         $validated['tenant_id'] = auth()->user()->tenant_id;
-        $validated['monthly_cost_cents'] = $request->get('monthly_cost_cents', 2700); // 27 lei/lună
+
+        // Cost: tenant override > platform setting > 27 lei default
+        $tenant = Tenant::find($validated['tenant_id']);
+        $tenantCostLei = $tenant?->plan_overrides['phone_number_monthly_cost_lei'] ?? null;
+        $platformCostLei = $tenantCostLei ?? PlatformSetting::get('phone_number_monthly_cost_lei', 27);
+        $validated['monthly_cost_cents'] = (int) round($platformCostLei * 100);
 
         // If provider is telnyx, purchase the number
         if (($validated['provider'] ?? 'telnyx') === 'telnyx') {
@@ -121,5 +147,30 @@ class PhoneNumberController extends Controller
     {
         $phoneNumber->update(['is_active' => !$phoneNumber->is_active]);
         return back()->with('success', $phoneNumber->is_active ? 'Număr activat.' : 'Număr dezactivat.');
+    }
+
+    public function syncStatuses()
+    {
+        $service = app(TelnyxService::class);
+        $numbers = PhoneNumber::where('provider', 'telnyx')->get();
+        $synced = 0;
+
+        foreach ($numbers as $number) {
+            $telnyxStatus = $service->getNumberStatus($number->number);
+
+            if ($telnyxStatus === 'active' && $number->status !== PhoneNumber::STATUS_ACTIVE) {
+                $number->update(['status' => PhoneNumber::STATUS_ACTIVE, 'is_active' => true]);
+                $synced++;
+            } elseif ($telnyxStatus === 'pending' && $number->status === PhoneNumber::STATUS_ACTIVE) {
+                $number->update(['status' => PhoneNumber::STATUS_PENDING, 'is_active' => false]);
+                $synced++;
+            }
+        }
+
+        $message = $synced > 0
+            ? "Statusul a fost sincronizat pentru {$synced} numere."
+            : 'Toate numerele sunt deja sincronizate.';
+
+        return back()->with('success', $message);
     }
 }

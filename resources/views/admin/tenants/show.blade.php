@@ -175,6 +175,7 @@
                             <option value="custom_price_annual">custom_price_annual (€)</option>
                             <option value="overage_cost_per_message">overage_cost_per_message (€)</option>
                             <option value="overage_cost_per_minute">overage_cost_per_minute (€)</option>
+                            <option value="phone_number_monthly_cost_lei">phone_number_monthly_cost_lei (lei)</option>
                         </optgroup>
                     </select>
                 </div>

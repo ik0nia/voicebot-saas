@@ -170,6 +170,50 @@ class TelnyxService
         }
     }
 
+    /**
+     * Check if a phone number exists and is active on Telnyx.
+     * Returns: 'active', 'pending', 'not_found'
+     */
+    public function getNumberStatus(string $phoneNumber): string
+    {
+        try {
+            $response = $this->request()->get('/phone_numbers', [
+                'filter[phone_number]' => $phoneNumber,
+            ]);
+
+            if ($response->failed() || empty($response->json('data'))) {
+                // Number not found on Telnyx - might be in an order still
+                return 'pending';
+            }
+
+            $status = $response->json('data.0.status');
+
+            return $status === 'active' ? 'active' : 'pending';
+        } catch (\Exception $e) {
+            Log::warning('TelnyxService: getNumberStatus failed', ['number' => $phoneNumber, 'error' => $e->getMessage()]);
+            return 'pending';
+        }
+    }
+
+    /**
+     * Check order status for a number order.
+     */
+    public function getOrderStatus(string $orderId): ?string
+    {
+        try {
+            $response = $this->request()->get("/number_orders/{$orderId}");
+
+            if ($response->failed()) {
+                return null;
+            }
+
+            return $response->json('data.status');
+        } catch (\Exception $e) {
+            Log::warning('TelnyxService: getOrderStatus failed', ['order_id' => $orderId, 'error' => $e->getMessage()]);
+            return null;
+        }
+    }
+
     public function generateMediaStreamTexml(string $botId, string $callId): string
     {
         $host = config('app.url_host', 'sambla.ro');
