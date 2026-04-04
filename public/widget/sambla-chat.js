@@ -600,8 +600,15 @@
             .sambla-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }\
             \
             @media (max-width: 440px) {\
-                .sambla-window { width: calc(100vw - 16px); right: 8px; left: 8px; bottom: 172px; height: calc(100vh - 192px); }\
-                .sambla-bubble { bottom: 12px; right: 12px; }\
+                .sambla-window {\
+                    width: 100vw !important; height: 100vh !important;\
+                    max-height: 100vh !important; max-width: 100vw !important;\
+                    right: 0 !important; left: 0 !important; bottom: 0 !important; top: 0 !important;\
+                    border-radius: 0 !important; border: none !important;\
+                    box-shadow: none !important; z-index: 2147483647 !important;\
+                }\
+                .sambla-window .sambla-header { border-radius: 0; }\
+                .sambla-bubble { bottom: 16px; right: 16px; }\
             }\
         ';
 
