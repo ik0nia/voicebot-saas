@@ -17,6 +17,7 @@ use App\Http\Controllers\Dashboard\SettingsController;
 use App\Http\Controllers\Dashboard\TeamController;
 use App\Http\Controllers\Admin\AdminReportController;
 use App\Http\Controllers\Admin\AdminSettingsController;
+use App\Http\Controllers\Admin\AdminSocialController;
 use App\Http\Controllers\Webhook\FacebookWebhookController;
 use App\Http\Controllers\Webhook\InstagramWebhookController;
 use App\Http\Controllers\Webhook\TelnyxWebhookController;
@@ -308,6 +309,24 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
     Route::post('/system/clear-failed', [\App\Http\Controllers\Admin\AdminSystemController::class, 'clearFailedJobs'])->name('admin.system.clearFailed');
     Route::post('/system/reprocess-kb', [\App\Http\Controllers\Admin\AdminSystemController::class, 'reprocessFailedKnowledge'])->name('admin.system.reprocessKb');
     Route::post('/system/clear-caches', [\App\Http\Controllers\Admin\AdminSystemController::class, 'clearAllCaches'])->name('admin.system.clearCaches');
+
+    // Social Media Management
+    Route::prefix('social')->name('admin.social.')->group(function () {
+        Route::get('/', [AdminSocialController::class, 'index'])->name('index');
+        Route::post('/generate', [AdminSocialController::class, 'generate'])->name('generate');
+        Route::get('/post/{post}/edit', [AdminSocialController::class, 'edit'])->name('edit');
+        Route::put('/post/{post}', [AdminSocialController::class, 'update'])->name('update');
+        Route::post('/post/{post}/publish', [AdminSocialController::class, 'publish'])->name('publish');
+        Route::delete('/post/{post}', [AdminSocialController::class, 'destroy'])->name('destroy');
+        Route::post('/generate-bio', [AdminSocialController::class, 'generateBio'])->name('generateBio');
+        Route::get('/style', [AdminSocialController::class, 'styleTraining'])->name('style');
+        Route::post('/style/add', [AdminSocialController::class, 'addStyleExample'])->name('style.add');
+        Route::post('/style/{preference}/review', [AdminSocialController::class, 'reviewStyle'])->name('style.review');
+        Route::get('/accounts', [AdminSocialController::class, 'accounts'])->name('accounts');
+        Route::post('/accounts', [AdminSocialController::class, 'saveAccount'])->name('accounts.save');
+        Route::get('/schedule', [AdminSocialController::class, 'schedule'])->name('schedule');
+        Route::post('/schedule', [AdminSocialController::class, 'saveSchedule'])->name('schedule.save');
+    });
 });
 
 // WhatsApp webhooks
