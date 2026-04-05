@@ -189,6 +189,32 @@ class AdminSocialController extends Controller
         );
     }
 
+    // === API KEYS ===
+
+    public function saveApiKeys(Request $request)
+    {
+        $validated = $request->validate([
+            'gemini_api_key' => 'nullable|string|max:255',
+            'gemini_image_model' => 'nullable|string|max:100',
+        ]);
+
+        if (!empty($validated['gemini_api_key']) && $validated['gemini_api_key'] !== '••••••••••') {
+            \DB::table('settings')->updateOrInsert(
+                ['key' => 'gemini_api_key'],
+                ['value' => encrypt($validated['gemini_api_key'])]
+            );
+        }
+
+        if (!empty($validated['gemini_image_model'])) {
+            \DB::table('settings')->updateOrInsert(
+                ['key' => 'gemini_image_model'],
+                ['value' => $validated['gemini_image_model']]
+            );
+        }
+
+        return back()->with('success', 'API Keys salvate.');
+    }
+
     // === ACCOUNTS ===
 
     public function accounts()

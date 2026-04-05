@@ -45,17 +45,29 @@ class RealtimeSession
     /** @var FillingMessageService Filling messages for latency masking. */
     private FillingMessageService $fillingService;
 
+    /** @var ConversationStateService Server-side turn context for follow-ups. */
+    private ConversationStateService $conversationState;
+
+    /** @var FillingAudioCacheService Pre-cached filling audio for cloned voices. */
+    private FillingAudioCacheService $fillingAudioCache;
+
     /** @var float|null Timestamp when the last user transcript was received (for latency tracking). */
     private ?float $lastUserTranscriptAt = null;
 
     /** @var bool Whether a filling message has been sent for the current response cycle. */
     private bool $fillingSentForCurrentResponse = false;
 
+    /** @var int Number of filling messages sent in the current response cycle. */
+    private int $fillingCount = 0;
+
     /** @var string|null The last user transcript text (for context preservation on interrupt). */
     private ?string $pendingUserTranscript = null;
 
     /** @var string|null Cached context that was being prepared when filling was sent. */
     private ?string $pendingContext = null;
+
+    /** @var string|null Detected intent for current transcript (for smart thresholds). */
+    private ?string $currentIntent = null;
 
     public function __construct(Bot $bot, Call $call, ?TtsOutputStrategy $ttsStrategy = null)
     {
@@ -77,6 +89,8 @@ class RealtimeSession
         $this->ttsStrategy = $ttsStrategy ?? new OpenAiNativeTts();
         $this->hasProducts = \App\Models\WooCommerceProduct::where('bot_id', $this->bot->id)->exists();
         $this->fillingService = new FillingMessageService();
+        $this->conversationState = new ConversationStateService();
+        $this->fillingAudioCache = new FillingAudioCacheService();
     }
 
     public function getTtsStrategy(): TtsOutputStrategy
@@ -511,13 +525,27 @@ class RealtimeSession
                 // Track timing for filling message decision
                 $this->lastUserTranscriptAt = microtime(true);
                 $this->fillingSentForCurrentResponse = false;
+                $this->fillingCount = 0;
                 $this->pendingUserTranscript = $transcript;
+
+                // Detect intent early for smart thresholds
+                $this->currentIntent = $this->fillingService->detectIntent($transcript, $this->hasProducts);
+                $thresholds = $this->fillingService->getThresholds($this->currentIntent);
+
+                // Check for follow-up from previous turn
+                $callId = (string) $this->call->id;
+                $followUp = $this->conversationState->detectFollowUp($callId, $transcript);
 
                 // Refresh context based on what the user said.
                 // Brand/category navigation first (fast DB lookup), then product search, then knowledge.
                 try {
                     $context = '';
                     $foundProducts = false;
+
+                    // Inject follow-up context if detected
+                    if ($followUp) {
+                        $context .= $this->conversationState->buildFollowUpContext($followUp);
+                    }
 
                     // Brand/category navigation — fast DB lookup, guides user step-by-step
                     if ($this->hasProducts) {
@@ -587,21 +615,28 @@ class RealtimeSession
 
                     // Check if we should send a filling message before the slow knowledge search
                     $elapsedMs = (microtime(true) - $this->lastUserTranscriptAt) * 1000;
-                    if ($elapsedMs > 800 && !$this->fillingSentForCurrentResponse) {
-                        // Product search + order lookup already took >800ms
+                    $earlyThreshold = $thresholds['early'];
+                    if ($earlyThreshold !== null && $elapsedMs > $earlyThreshold && !$this->fillingSentForCurrentResponse) {
+                        // Product search + order lookup already took too long
                         // Knowledge search will add more — send filling now
                         $this->fillingSentForCurrentResponse = true;
+                        $this->fillingCount = 1;
                         $this->pendingContext = $context; // Save partial context
 
                         Log::debug("RealtimeSession: sending filling message for call {$this->call->id}", [
                             'elapsed_ms' => round($elapsedMs),
+                            'intent' => $this->currentIntent,
+                            'threshold' => $earlyThreshold,
                             'transcript' => mb_substr($transcript, 0, 50),
                         ]);
+
+                        // Record turn in conversation state
+                        $this->recordTurnState($callId, $transcript, $context, $foundProducts);
 
                         return $this->fillingService->buildFillingResponse(
                             $this->bot,
                             $transcript,
-                            (string) $this->call->id,
+                            $callId,
                             $this->hasProducts
                         );
                     }
@@ -620,23 +655,33 @@ class RealtimeSession
 
                     // Check again after knowledge search
                     $totalElapsedMs = (microtime(true) - $this->lastUserTranscriptAt) * 1000;
-                    if ($totalElapsedMs > 1500 && !$this->fillingSentForCurrentResponse) {
+                    $lateThreshold = $thresholds['late'];
+                    if ($lateThreshold !== null && $totalElapsedMs > $lateThreshold && !$this->fillingSentForCurrentResponse) {
                         $this->fillingSentForCurrentResponse = true;
+                        $this->fillingCount = 1;
 
                         Log::debug("RealtimeSession: sending filling message (post-knowledge) for call {$this->call->id}", [
                             'elapsed_ms' => round($totalElapsedMs),
+                            'intent' => $this->currentIntent,
+                            'threshold' => $lateThreshold,
                         ]);
 
                         // Store context for injection after filling response completes
                         $this->pendingContext = $context;
 
+                        // Record turn in conversation state
+                        $this->recordTurnState($callId, $transcript, $context, $foundProducts);
+
                         return $this->fillingService->buildFillingResponse(
                             $this->bot,
                             $transcript,
-                            (string) $this->call->id,
+                            $callId,
                             $this->hasProducts
                         );
                     }
+
+                    // Record turn in conversation state (normal path, no filling)
+                    $this->recordTurnState($callId, $transcript, $context, $foundProducts);
 
                     if ($context && $context !== $this->conversationContext) {
                         $this->conversationContext = $context;
@@ -712,6 +757,7 @@ class RealtimeSession
                 $context = $this->pendingContext;
 
                 // Complete knowledge search if it was skipped during filling
+                $knowledgeSearchStart = microtime(true);
                 if ($this->pendingUserTranscript) {
                     try {
                         $knowledgeContext = $this->knowledgeService->buildContext(
@@ -727,10 +773,36 @@ class RealtimeSession
                     }
                 }
 
+                // Escalating filling: if knowledge search took too long and this was
+                // only the first filling, send a second "mai o clipă" message
+                $knowledgeElapsed = (microtime(true) - $knowledgeSearchStart) * 1000;
+                $totalElapsed = $this->lastUserTranscriptAt
+                    ? (microtime(true) - $this->lastUserTranscriptAt) * 1000
+                    : 0;
+
+                if ($this->fillingCount === 1 && $totalElapsed > 4000) {
+                    // Still too slow — send escalation filling before the real answer
+                    $this->fillingCount = 2;
+
+                    Log::debug("RealtimeSession: sending escalation filling for call {$this->call->id}", [
+                        'total_elapsed_ms' => round($totalElapsed),
+                        'knowledge_ms' => round($knowledgeElapsed),
+                    ]);
+
+                    // Keep pendingContext for next response.done cycle
+                    $this->pendingContext = $context;
+
+                    return $this->fillingService->buildEscalationResponse(
+                        $this->bot,
+                        (string) $this->call->id
+                    );
+                }
+
                 $userTranscript = $this->pendingUserTranscript;
                 $this->pendingContext = null;
                 $this->pendingUserTranscript = null;
                 $this->fillingSentForCurrentResponse = false;
+                $this->fillingCount = 0;
 
                 if ($context && $context !== $this->conversationContext) {
                     $this->conversationContext = $context;
@@ -925,6 +997,48 @@ class RealtimeSession
     }
 
     // -----------------------------------------------------------------
+    //  Conversation state helpers
+    // -----------------------------------------------------------------
+
+    /**
+     * Record the current turn's data in ConversationStateService.
+     */
+    private function recordTurnState(string $callId, string $transcript, string $context, bool $foundProducts): void
+    {
+        try {
+            $turnData = [
+                'intent' => $this->currentIntent,
+                'transcript' => $transcript,
+            ];
+
+            // Extract product info for follow-up resolution
+            if ($foundProducts && preg_match_all('/- (.+?):\s+([\d.,]+)\s+(\w+)/u', $context, $matches, PREG_SET_ORDER)) {
+                $turnData['products'] = array_map(fn($m) => [
+                    'name' => $m[1],
+                    'price' => $m[2],
+                    'currency' => $m[3],
+                ], array_slice($matches, 0, 10));
+            }
+
+            // Extract category from navigation context
+            if (preg_match('/Clientul întreabă despre categoria:\s*(.+)/u', $context, $m)) {
+                $turnData['category'] = trim($m[1]);
+            }
+
+            // Extract brand from navigation context
+            if (preg_match('/Clientul întreabă despre brandul:\s*(.+)/u', $context, $m)) {
+                $turnData['brand'] = trim($m[1]);
+            }
+
+            $this->conversationState->recordUserTurn($callId, $turnData);
+        } catch (\Throwable $e) {
+            Log::debug("RealtimeSession: failed to record turn state for call {$callId}", [
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    // -----------------------------------------------------------------
     //  Token usage tracking
     // -----------------------------------------------------------------
 
@@ -996,8 +1110,10 @@ class RealtimeSession
                 AnalyzeCallSentiment::dispatch($this->call->id)->delay(now()->addSeconds(15));
             }
 
-            // Clean up filling message history for this call
-            $this->fillingService->resetCall((string) $this->call->id);
+            // Clean up per-call state
+            $callId = (string) $this->call->id;
+            $this->fillingService->resetCall($callId);
+            $this->conversationState->resetCall($callId);
         } catch (\Throwable $e) {
             Log::error("RealtimeSession: failed to end session for call {$this->call->id}", [
                 'error' => $e->getMessage(),

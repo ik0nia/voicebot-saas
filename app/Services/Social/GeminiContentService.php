@@ -13,10 +13,18 @@ class GeminiContentService
     private string $textModel = 'gpt-4o-mini'; // OpenAI for text (better Romanian)
     private string $imageModel;                  // Gemini for images (native generation)
 
+    // Vertex AI config for image generation via service account
+    private string $vertexProjectId = 'gen-lang-client-0096953872';
+    private string $vertexImageModel = 'gemini-3.1-flash-image-preview';
+    private string $serviceAccountPath;
+
     public function __construct()
     {
-        $this->geminiApiKey = config('services.gemini.api_key', env('GEMINI_API_KEY', ''));
-        $this->imageModel = env('GEMINI_IMAGE_MODEL', 'gemini-3.1-flash');
+        $dbKey = \DB::table('settings')->where('key', 'gemini_api_key')->value('value');
+        $this->geminiApiKey = $dbKey ? decrypt($dbKey) : config('services.gemini.api_key', '');
+        $this->imageModel = \DB::table('settings')->where('key', 'gemini_image_model')->value('value')
+            ?: env('GEMINI_IMAGE_MODEL', 'gemini-3.1-flash');
+        $this->serviceAccountPath = storage_path('app/google-service-account.json');
     }
 
     /**
@@ -143,35 +151,77 @@ class GeminiContentService
     }
 
     /**
-     * Generate an image using Gemini's native image generation.
-     * Uses gemini-2.0-flash with responseModalities including IMAGE.
+     * Generate an image using Vertex AI Gemini 3.1 Flash Image Preview.
+     * Uses OAuth2 service account authentication.
      *
-     * @return string|null Base64 image data or null on failure
+     * @return array|null Image data array or null on failure
      */
-    public function generateImage(string $prompt, string $aspectRatio = '1:1'): ?array
+    public function generateImage(string $prompt, string $aspectRatio = '1:1', ?string $style = null): ?array
     {
-        if (empty($this->apiKey)) {
-            Log::error('GeminiContentService: API key not configured');
-            return null;
-        }
-
         try {
-            // Use the image-capable model
-            $imageModel = $this->imageModel;
-            $url = "{$this->baseUrl}/models/{$imageModel}:generateContent?key={$this->apiKey}";
+            $accessToken = $this->getVertexAccessToken();
+            if (!$accessToken) {
+                Log::error('GeminiContentService: Failed to obtain Vertex AI access token');
+                return null;
+            }
 
-            $response = Http::timeout(120)->post($url, [
-                'contents' => [
-                    ['parts' => [['text' => "Generate a professional, modern image for a social media post. Style: clean, tech/SaaS aesthetic, red and dark theme (#991b1b brand color). {$prompt}"]]]
-                ],
-                'generationConfig' => [
-                    'responseModalities' => ['TEXT', 'IMAGE'],
-                    'maxOutputTokens' => 1024,
-                ],
-            ]);
+            $url = "https://aiplatform.googleapis.com/v1/projects/{$this->vertexProjectId}/locations/global/publishers/google/models/{$this->vertexImageModel}:generateContent";
+
+            // Pick style preset — random if not specified
+            $styles = config('social-image-styles');
+            if (!$style || !isset($styles[$style])) {
+                $style = array_rand($styles);
+            }
+            $preset = $styles[$style];
+
+            // Always use the dark logo (white text) — works on any background with a backing shape
+            $logoFile = public_path('images/social/logo-dark.png');
+            $logoBase64 = file_exists($logoFile) ? base64_encode(file_get_contents($logoFile)) : null;
+
+            $parts = [];
+
+            // Add logo as reference image
+            if ($logoBase64) {
+                $parts[] = [
+                    'inline_data' => [
+                        'mime_type' => 'image/png',
+                        'data' => $logoBase64,
+                    ]
+                ];
+            }
+
+            $stylePrompt = $preset['prompt'];
+
+            $parts[] = ['text' => "Generate a professional social media graphic with EXACT aspect ratio {$aspectRatio} (this is critical — the image MUST be {$aspectRatio}, portrait orientation if 3:4). "
+                . "BRAND LOGO: Use the attached logo EXACTLY as provided — place it as a stamp/watermark in a visible corner (top-left preferred). Place a small dark semi-transparent rounded rectangle behind the logo so it's always readable regardless of background color. Do NOT redraw or recreate the logo text. "
+                . "VISUAL STYLE ({$preset['name']}): {$stylePrompt} "
+                . "TEXT RULES: All text on the graphic MUST be in Romanian. Keep text very short — use punchy CTA phrases, max 5-7 words per line. "
+                . "CONTENT: {$prompt}"];
+
+            $startTime = microtime(true);
+
+            $response = Http::timeout(300)
+                ->withHeaders(['Authorization' => "Bearer {$accessToken}"])
+                ->post($url, [
+                    'contents' => [
+                        [
+                            'role' => 'user',
+                            'parts' => $parts,
+                        ]
+                    ],
+                    'generationConfig' => [
+                        'responseModalities' => ['TEXT', 'IMAGE'],
+                    ],
+                ]);
+
+            $responseTimeMs = (int) ((microtime(true) - $startTime) * 1000);
 
             if (!$response->ok()) {
-                Log::error('Gemini Image API error', ['status' => $response->status(), 'body' => mb_substr($response->body(), 0, 500)]);
+                Log::error('Vertex AI Image API error', [
+                    'status' => $response->status(),
+                    'body' => mb_substr($response->body(), 0, 500),
+                ]);
+                $this->trackImageMetric('error', 0, 0, 0, $responseTimeMs);
                 return null;
             }
 
@@ -193,7 +243,8 @@ class GeminiContentService
             }
 
             if (!$imageData) {
-                Log::warning('Gemini Image: no image in response', ['parts_count' => count($parts)]);
+                Log::warning('Vertex AI Image: no image in response', ['parts_count' => count($parts)]);
+                $this->trackImageMetric('error', 0, 0, 0, $responseTimeMs);
                 return null;
             }
 
@@ -202,7 +253,6 @@ class GeminiContentService
             $filename = 'social/' . date('Y/m') . '/' . uniqid('img_') . '.' . $extension;
             $storagePath = public_path($filename);
 
-            // Ensure directory exists
             $dir = dirname($storagePath);
             if (!is_dir($dir)) {
                 mkdir($dir, 0755, true);
@@ -211,21 +261,10 @@ class GeminiContentService
             file_put_contents($storagePath, base64_decode($imageData));
 
             $publicUrl = rtrim(config('app.url'), '/') . '/' . $filename;
-            $tokens = ($data['usageMetadata']['promptTokenCount'] ?? 0) + ($data['usageMetadata']['candidatesTokenCount'] ?? 0);
+            $inputTokens = $data['usageMetadata']['promptTokenCount'] ?? 0;
+            $outputTokens = $data['usageMetadata']['candidatesTokenCount'] ?? 0;
 
-            // Track image generation cost
-            try {
-                \App\Models\AiApiMetric::create([
-                    'provider' => 'google',
-                    'model' => $imageModel,
-                    'input_tokens' => $data['usageMetadata']['promptTokenCount'] ?? 0,
-                    'output_tokens' => $data['usageMetadata']['candidatesTokenCount'] ?? 0,
-                    'cost_cents' => $tokens * 0.01 / 1000, // Estimated Gemini cost
-                    'response_time_ms' => 0,
-                    'status' => 'success',
-                    'error_type' => 'social_image',
-                ]);
-            } catch (\Throwable $e) {}
+            $this->trackImageMetric('success', $inputTokens, $outputTokens, ($inputTokens + $outputTokens) * 0.01 / 1000, $responseTimeMs);
 
             return [
                 'url' => $publicUrl,
@@ -234,22 +273,90 @@ class GeminiContentService
                 'alt_text' => $altText,
             ];
         } catch (\Throwable $e) {
-            Log::error('Gemini Image exception', ['error' => $e->getMessage()]);
-            // Track failed image generation
-            try {
-                \App\Models\AiApiMetric::create([
-                    'provider' => 'google',
-                    'model' => $this->imageModel,
-                    'input_tokens' => 0,
-                    'output_tokens' => 0,
-                    'cost_cents' => 0,
-                    'response_time_ms' => 0,
-                    'status' => 'error',
-                    'error_type' => 'social_image',
-                ]);
-            } catch (\Throwable $me) {}
+            Log::error('Vertex AI Image exception', ['error' => $e->getMessage()]);
+            $this->trackImageMetric('error', 0, 0, 0, 0);
             return null;
         }
+    }
+
+    /**
+     * Get OAuth2 access token for Vertex AI using service account JWT.
+     * Tokens are cached for 55 minutes (they expire after 60).
+     */
+    private function getVertexAccessToken(): ?string
+    {
+        return Cache::remember('vertex_ai_access_token', 3300, function () {
+            if (!file_exists($this->serviceAccountPath)) {
+                Log::error('Google service account file not found', ['path' => $this->serviceAccountPath]);
+                return null;
+            }
+
+            $sa = json_decode(file_get_contents($this->serviceAccountPath), true);
+            $now = time();
+
+            // Build JWT
+            $header = $this->base64UrlEncode(json_encode(['alg' => 'RS256', 'typ' => 'JWT']));
+            $claims = $this->base64UrlEncode(json_encode([
+                'iss' => $sa['client_email'],
+                'scope' => 'https://www.googleapis.com/auth/cloud-platform',
+                'aud' => $sa['token_uri'],
+                'iat' => $now,
+                'exp' => $now + 3600,
+            ]));
+
+            $signingInput = "{$header}.{$claims}";
+            $privateKey = openssl_pkey_get_private($sa['private_key']);
+            if (!$privateKey) {
+                Log::error('Failed to parse service account private key');
+                return null;
+            }
+
+            openssl_sign($signingInput, $signature, $privateKey, OPENSSL_ALGO_SHA256);
+            $jwt = "{$signingInput}." . $this->base64UrlEncode($signature);
+
+            // Exchange JWT for access token
+            $response = Http::asForm()->post($sa['token_uri'], [
+                'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+                'assertion' => $jwt,
+            ]);
+
+            if (!$response->ok()) {
+                Log::error('Google OAuth2 token exchange failed', [
+                    'status' => $response->status(),
+                    'body' => mb_substr($response->body(), 0, 500),
+                ]);
+                return null;
+            }
+
+            return $response->json('access_token');
+        });
+    }
+
+    /**
+     * Base64 URL-safe encoding (no padding).
+     */
+    private function base64UrlEncode(string $data): string
+    {
+        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+    }
+
+    /**
+     * Track image generation metrics.
+     */
+    private function trackImageMetric(string $status, int $inputTokens, int $outputTokens, float $costCents, int $responseTimeMs): void
+    {
+        try {
+            \App\Models\AiApiMetric::create([
+                'provider' => 'google',
+                'model' => $this->vertexImageModel,
+                'input_tokens' => $inputTokens,
+                'output_tokens' => $outputTokens,
+                'cost_cents' => $costCents,
+                'response_time_ms' => $responseTimeMs,
+                'status' => $status,
+                'error_type' => 'social_image',
+            ]);
+        } catch (\Throwable $e) {}
     }
 
     /**
@@ -266,7 +373,15 @@ class GeminiContentService
 
         // Step 2: Generate image using the image_prompt from step 1
         $imagePrompt = $post['image_prompt'] ?? "Professional social media visual about: {$topic}";
-        $image = $this->generateImage($imagePrompt);
+
+        // Platform-specific aspect ratios
+        $aspectRatio = match($platform) {
+            'facebook', 'instagram' => '3:4',
+            'blog' => '16:9',
+            default => '1:1',
+        };
+
+        $image = $this->generateImage($imagePrompt, $aspectRatio);
 
         if ($image) {
             $post['image_url'] = $image['url'];

@@ -234,7 +234,18 @@ class MediaStreamHandler
             ) {
                 $text = $event['text'] ?? $event['transcript'] ?? '';
                 if ($text) {
-                    $result = $this->session->getTtsStrategy()->handleTextResponse($text, $this->streamSid);
+                    $ttsStrategy = $this->session->getTtsStrategy();
+
+                    // Use progressive streaming if supported — yields multiple audio actions
+                    if ($ttsStrategy->supportsStreaming()) {
+                        return [
+                            'action' => 'stream_audio_to_telnyx',
+                            'generator' => $ttsStrategy->handleTextResponseStreaming($text, $this->streamSid),
+                        ];
+                    }
+
+                    // Fallback to single-shot synthesis
+                    $result = $ttsStrategy->handleTextResponse($text, $this->streamSid);
                     if ($result) {
                         return $result;
                     }

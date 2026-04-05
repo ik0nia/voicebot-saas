@@ -293,6 +293,40 @@ class FillingMessageService
     ];
 
     /**
+     * Adaptive latency thresholds per intent (milliseconds).
+     *
+     * Some intents are predictably fast (order without data) and don't need
+     * filling. Others are predictably slow (knowledge/technical) and should
+     * trigger filling earlier.
+     *
+     * 'early' = threshold after product search (before knowledge search)
+     * 'late'  = threshold after knowledge search completes
+     * null    = skip filling for this intent
+     *
+     * @var array<string, array{early: int|null, late: int|null}>
+     */
+    private const INTENT_THRESHOLDS = [
+        self::INTENT_PRODUCT_SEARCH => ['early' => 800,  'late' => 1500],
+        self::INTENT_BRAND_LOOKUP   => ['early' => 600,  'late' => 1200],
+        self::INTENT_CATEGORY_BROWSE => ['early' => 600, 'late' => 1200],
+        self::INTENT_PRICE_CHECK    => ['early' => 800,  'late' => 1500],
+        self::INTENT_STOCK_CHECK    => ['early' => 800,  'late' => 1500],
+        self::INTENT_ORDER_STATUS   => ['early' => null,  'late' => 2000], // Orders are fast DB lookups, rarely need filling
+        self::INTENT_GENERAL        => ['early' => 1000, 'late' => 2000],
+        self::INTENT_TECHNICAL      => ['early' => 400,  'late' => 1000], // Knowledge-heavy, fill early
+    ];
+
+    /**
+     * Get the latency thresholds for a given intent.
+     *
+     * @return array{early: int|null, late: int|null}
+     */
+    public function getThresholds(string $intent): array
+    {
+        return self::INTENT_THRESHOLDS[$intent] ?? self::INTENT_THRESHOLDS[self::INTENT_GENERAL];
+    }
+
+    /**
      * Keywords that help detect query intent for choosing the right filling category.
      */
     private const INTENT_KEYWORDS = [
@@ -470,6 +504,35 @@ class FillingMessageService
     }
 
     /**
+     * Escalation messages — used when the first filling wasn't enough (>3-4s total).
+     * These are softer, reassuring follow-ups.
+     *
+     * @var array{formal: string[], informal: string[]}
+     */
+    private const ESCALATION_MESSAGES = [
+        'formal' => [
+            'Mai am nevoie de o clipă, verific toate detaliile.',
+            'Vă mulțumesc pentru răbdare, termin de verificat.',
+            'Încă un moment, mă asigur că informațiile sunt corecte.',
+            'Vă rog să mai așteptați puțin, aproape am terminat.',
+            'Mai o secundă, finalizez verificarea.',
+            'Mulțumesc pentru așteptare, verific ultimele detalii.',
+            'Aproape am terminat, mai o clipă vă rog.',
+            'Vă mulțumesc că așteptați, revin imediat cu răspunsul.',
+        ],
+        'informal' => [
+            'Mai o clipă, aproape am terminat.',
+            'Mulțumesc de răbdare, verific ultimele detalii.',
+            'Stai puțin, mai am nevoie de o secundă.',
+            'Aproape gata, mai verific ceva.',
+            'Mai o secundă, finalizez.',
+            'Mulțumesc că aștepți, revin imediat.',
+            'Aproape am terminat, stai o clipă.',
+            'Mai un moment, termin de verificat.',
+        ],
+    ];
+
+    /**
      * Build the response.create payload for OpenAI Realtime to speak a filling message.
      *
      * @param Bot    $bot        The bot
@@ -490,6 +553,48 @@ class FillingMessageService
                 'instructions' => 'Spune exact următorul text, natural și calm, fără să adaugi nimic: "' . str_replace('"', '\\"', $message) . '"',
             ],
         ];
+    }
+
+    /**
+     * Build an escalation filling response (second/third filling for very slow queries).
+     */
+    public function buildEscalationResponse(Bot $bot, string $callId): array
+    {
+        $tone = $this->detectTone($bot);
+        $messages = self::ESCALATION_MESSAGES[$tone];
+
+        // Dedup against used messages
+        $usedHashes = $this->usedMessages[$callId] ?? [];
+        $available = array_filter($messages, fn($m) => !in_array(md5($m), $usedHashes, true));
+        if (empty($available)) {
+            $available = $messages;
+        }
+
+        $message = $available[array_rand($available)];
+        $this->usedMessages[$callId][] = md5($message);
+
+        return [
+            'type' => 'response.create',
+            'response' => [
+                'modalities' => ['text', 'audio'],
+                'instructions' => 'Spune exact următorul text, natural și calm, fără să adaugi nimic: "' . str_replace('"', '\\"', $message) . '"',
+            ],
+        ];
+    }
+
+    /**
+     * Get the raw text of an escalation message (for audio caching).
+     */
+    public function getEscalationMessage(Bot $bot, string $callId): string
+    {
+        $tone = $this->detectTone($bot);
+        $messages = self::ESCALATION_MESSAGES[$tone];
+        $usedHashes = $this->usedMessages[$callId] ?? [];
+        $available = array_filter($messages, fn($m) => !in_array(md5($m), $usedHashes, true));
+        if (empty($available)) {
+            $available = $messages;
+        }
+        return $available[array_rand($available)];
     }
 
     /**

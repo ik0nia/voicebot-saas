@@ -28,6 +28,39 @@
         </div>
     </div>
 
+    {{-- API Keys Settings --}}
+    <div class="bg-white rounded-xl border border-slate-200 p-6">
+        <div class="flex items-center gap-2 mb-4">
+            <svg class="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+            <h2 class="text-lg font-semibold text-slate-900">API Keys</h2>
+        </div>
+        <form method="POST" action="{{ route('admin.social.apikeys.save') }}" class="space-y-4">
+            @csrf
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Gemini API Key</label>
+                    @php
+                        $hasGeminiKey = DB::table('settings')->where('key', 'gemini_api_key')->exists();
+                    @endphp
+                    <input type="password" name="gemini_api_key" value="{{ $hasGeminiKey ? '••••••••••' : '' }}" placeholder="AIza..."
+                           class="w-full rounded-lg border-slate-300 text-sm focus:border-red-500 focus:ring-red-500"
+                           onfocus="if(this.value==='••••••••••')this.value=''">
+                    <p class="text-xs text-slate-400 mt-1">Pentru generarea de imagini. <a href="https://aistudio.google.com/apikey" target="_blank" class="text-red-600 hover:underline">Obtine cheie</a> @if($hasGeminiKey)<span class="text-green-600">&#10003; Configurata</span>@endif</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Gemini Image Model</label>
+                    <input type="text" name="gemini_image_model" value="{{ DB::table('settings')->where('key', 'gemini_image_model')->value('value') ?: 'gemini-3.1-flash' }}" placeholder="gemini-3.1-flash"
+                           class="w-full rounded-lg border-slate-300 text-sm focus:border-red-500 focus:ring-red-500">
+                    <p class="text-xs text-slate-400 mt-1">Modelul Gemini pentru imagini</p>
+                </div>
+            </div>
+            <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                Salveaza API Keys
+            </button>
+        </form>
+    </div>
+
     @php
         $platforms = [
             'facebook' => ['label' => 'Facebook', 'color' => 'blue', 'icon' => 'M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z'],

@@ -324,6 +324,7 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
         Route::post('/style/{preference}/review', [AdminSocialController::class, 'reviewStyle'])->name('style.review');
         Route::get('/accounts', [AdminSocialController::class, 'accounts'])->name('accounts');
         Route::post('/accounts', [AdminSocialController::class, 'saveAccount'])->name('accounts.save');
+        Route::post('/apikeys', [AdminSocialController::class, 'saveApiKeys'])->name('apikeys.save');
         Route::get('/schedule', [AdminSocialController::class, 'schedule'])->name('schedule');
         Route::post('/schedule', [AdminSocialController::class, 'saveSchedule'])->name('schedule.save');
     });

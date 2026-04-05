@@ -20,4 +20,15 @@ class OpenAiNativeTts implements TtsOutputStrategy
     {
         return null; // Audio comes directly from OpenAI
     }
+
+    public function supportsStreaming(): bool
+    {
+        return false;
+    }
+
+    public function handleTextResponseStreaming(string $text, string $streamSid): \Generator
+    {
+        return; // Not used — audio comes from OpenAI
+        yield; // Make it a valid generator
+    }
 }
