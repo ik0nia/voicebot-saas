@@ -11,6 +11,7 @@ use App\Models\Transcript;
 use App\Models\CallEvent;
 use App\Services\TtsStrategies\OpenAiNativeTts;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Manages a single OpenAI Realtime session tied to a phone call.
@@ -41,6 +42,21 @@ class RealtimeSession
     /** @var bool Whether we're waiting for session.updated before sending the greeting. */
     private bool $pendingGreeting = false;
 
+    /** @var FillingMessageService Filling messages for latency masking. */
+    private FillingMessageService $fillingService;
+
+    /** @var float|null Timestamp when the last user transcript was received (for latency tracking). */
+    private ?float $lastUserTranscriptAt = null;
+
+    /** @var bool Whether a filling message has been sent for the current response cycle. */
+    private bool $fillingSentForCurrentResponse = false;
+
+    /** @var string|null The last user transcript text (for context preservation on interrupt). */
+    private ?string $pendingUserTranscript = null;
+
+    /** @var string|null Cached context that was being prepared when filling was sent. */
+    private ?string $pendingContext = null;
+
     public function __construct(Bot $bot, Call $call, ?TtsOutputStrategy $ttsStrategy = null)
     {
         // Tenant isolation: ensure Bot and Call belong to the same tenant
@@ -60,6 +76,7 @@ class RealtimeSession
         $this->knowledgeService = new KnowledgeSearchService();
         $this->ttsStrategy = $ttsStrategy ?? new OpenAiNativeTts();
         $this->hasProducts = \App\Models\WooCommerceProduct::where('bot_id', $this->bot->id)->exists();
+        $this->fillingService = new FillingMessageService();
     }
 
     public function getTtsStrategy(): TtsOutputStrategy
@@ -162,6 +179,41 @@ class RealtimeSession
 
         $language = $this->bot->language ?? 'română';
 
+        // Add category tree context for guided navigation
+        if ($this->hasProducts) {
+            try {
+                $categoryContext = \App\Models\WooCommerceCategory::toChatContext($this->bot->id);
+                if ($categoryContext) {
+                    $base .= "\n\n=== CATEGORII DISPONIBILE ===\n" . $categoryContext . "\n=== SFÂRȘIT CATEGORII ===";
+                }
+            } catch (\Throwable $e) {
+                // silently skip
+            }
+
+            $base .= "\n\n=== NAVIGARE INTELIGENTĂ PRODUSE ==="
+                . "\nCând clientul întreabă de un BRAND/PRODUCĂTOR:"
+                . "\n- Spune-i ce categorii de produse avem de la acel brand."
+                . "\n- Întreabă-l ce categorie îl interesează pentru a-i arăta produsele potrivite."
+                . "\n- Exemplu: 'Da, avem produse Ceresit în mai multe categorii: adezivi, chituri și hidroizolații. Ce vă interesează?'"
+                . "\n"
+                . "\nCând clientul întreabă de o CATEGORIE de produse (ex: polistiren, adeziv, glet):"
+                . "\n- Spune-i ce tipuri/subcategorii sunt disponibile."
+                . "\n- Menționează brand-urile disponibile dacă sunt relevante."
+                . "\n- Întreabă ce tip anume caută sau ce utilizare are în vedere."
+                . "\n- Exemplu: 'Avem mai multe tipuri de polistiren: expandat, extrudat și grafitat. Ce grosime și tip vă interesează?'"
+                . "\n"
+                . "\nPRINCIPIU: Ghidează clientul PAS CU PAS prin opțiuni. Nu încerca să dai tot dintr-o dată."
+                . "\nMai bine 2-3 schimburi scurte de replici decât un răspuns lung și confuz."
+                . "\n=== SFÂRȘIT NAVIGARE ===";
+        }
+
+        $base .= "\n\n=== MESAJE DE AȘTEPTARE ==="
+            . "\nUneori vei primi instrucțiuni să spui un mesaj scurt de așteptare (ex: 'O clipă, verific...')."
+            . "\nDupă ce spui mesajul de așteptare, vei primi context actualizat cu informațiile căutate."
+            . "\nRăspunde IMEDIAT cu informațiile primite, fără să repeți salutul sau mesajul de așteptare."
+            . "\nConversația trebuie să curgă natural: așteptare → răspuns cu informații."
+            . "\n=== SFÂRȘIT MESAJE AȘTEPTARE ===";
+
         $base .= "\n\nReguli importante:";
         $base .= "\n- Răspunde natural și concis în limba {$language}.";
         $base .= "\n- Dacă nu știi răspunsul, oferă-te să transferi apelul la un operator uman.";
@@ -242,6 +294,20 @@ class RealtimeSession
         $base .= "\n\n" . $knowledgeContext;
 
         $language = $this->bot->language ?? 'română';
+
+        // Add category navigation instructions for product bots
+        if ($this->hasProducts) {
+            $base .= "\n\n=== NAVIGARE INTELIGENTĂ PRODUSE ==="
+                . "\nCând clientul întreabă de un BRAND: spune categoriile disponibile și întreabă ce îl interesează."
+                . "\nCând clientul întreabă de o CATEGORIE: spune tipurile/brand-urile și întreabă ce caută mai exact."
+                . "\nGhidează PAS CU PAS. Mai bine 2-3 replici scurte decât un răspuns lung."
+                . "\n=== SFÂRȘIT NAVIGARE ===";
+        }
+
+        $base .= "\n\n=== MESAJE DE AȘTEPTARE ==="
+            . "\nDupă un mesaj de așteptare, răspunde IMEDIAT cu informațiile primite, fără repetiții."
+            . "\n=== SFÂRȘIT MESAJE AȘTEPTARE ===";
+
         $base .= "\n\nRăspunde natural și concis în limba {$language}. Fii politicos și profesional.";
 
         // V2: Lead capture vocal
@@ -373,6 +439,27 @@ class RealtimeSession
                     'type'        => 'speech.started',
                     'occurred_at' => now(),
                 ]);
+
+                // If user interrupts during a filling message, preserve the pending context
+                // so the next response still has the information that was being loaded.
+                if ($this->fillingSentForCurrentResponse && $this->pendingContext) {
+                    Log::debug("RealtimeSession: user interrupted filling for call {$this->call->id}, preserving pending context");
+                    // Context will be injected when the interrupted response.done fires
+                }
+
+                // Predictive cache warming: pre-load brand/category data while user speaks
+                // so that when transcription completes, the search is near-instant.
+                if ($this->hasProducts) {
+                    try {
+                        $navService = app(CategoryNavigationService::class);
+                        // These methods cache internally — calling them warms the cache
+                        // if it's not already warm, with no wasted work if it is.
+                        $navService->detectBrandQuery($this->bot->id, '');
+                        $navService->detectCategoryQuery($this->bot->id, '');
+                    } catch (\Throwable $e) {
+                        // Silent — cache warming is best-effort
+                    }
+                }
             }
 
             if ($type === 'input_audio_buffer.committed') {
@@ -421,13 +508,33 @@ class RealtimeSession
                     ]);
                 }
 
+                // Track timing for filling message decision
+                $this->lastUserTranscriptAt = microtime(true);
+                $this->fillingSentForCurrentResponse = false;
+                $this->pendingUserTranscript = $transcript;
+
                 // Refresh context based on what the user said.
-                // Product search first (fast, DB-only), then knowledge search if needed.
+                // Brand/category navigation first (fast DB lookup), then product search, then knowledge.
                 try {
                     $context = '';
                     $foundProducts = false;
 
-                    // Product search FIRST — fast trigram query, no external API calls
+                    // Brand/category navigation — fast DB lookup, guides user step-by-step
+                    if ($this->hasProducts) {
+                        try {
+                            $navService = app(CategoryNavigationService::class);
+                            $navContext = $navService->buildNavigationContext($this->bot->id, $transcript);
+                            if ($navContext) {
+                                $context .= $navContext;
+                            }
+                        } catch (\Throwable $e) {
+                            Log::debug("RealtimeSession: category navigation failed for call {$this->call->id}", [
+                                'error' => $e->getMessage(),
+                            ]);
+                        }
+                    }
+
+                    // Product search — fast trigram query, no external API calls
                     if ($this->hasProducts) {
                         try {
                             $productSearch = app(ProductSearchService::class);
@@ -478,6 +585,27 @@ class RealtimeSession
                         Log::debug("RealtimeSession: order lookup failed for call {$this->call->id}", ['error' => $e->getMessage()]);
                     }
 
+                    // Check if we should send a filling message before the slow knowledge search
+                    $elapsedMs = (microtime(true) - $this->lastUserTranscriptAt) * 1000;
+                    if ($elapsedMs > 800 && !$this->fillingSentForCurrentResponse) {
+                        // Product search + order lookup already took >800ms
+                        // Knowledge search will add more — send filling now
+                        $this->fillingSentForCurrentResponse = true;
+                        $this->pendingContext = $context; // Save partial context
+
+                        Log::debug("RealtimeSession: sending filling message for call {$this->call->id}", [
+                            'elapsed_ms' => round($elapsedMs),
+                            'transcript' => mb_substr($transcript, 0, 50),
+                        ]);
+
+                        return $this->fillingService->buildFillingResponse(
+                            $this->bot,
+                            $transcript,
+                            (string) $this->call->id,
+                            $this->hasProducts
+                        );
+                    }
+
                     // Knowledge search — uses OpenAI embedding API (slower).
                     // If products were found, use fewer results to keep context lean.
                     $knowledgeLimit = $foundProducts ? 4 : 8;
@@ -488,6 +616,26 @@ class RealtimeSession
                     );
                     if ($knowledgeContext) {
                         $context = $knowledgeContext . $context;
+                    }
+
+                    // Check again after knowledge search
+                    $totalElapsedMs = (microtime(true) - $this->lastUserTranscriptAt) * 1000;
+                    if ($totalElapsedMs > 1500 && !$this->fillingSentForCurrentResponse) {
+                        $this->fillingSentForCurrentResponse = true;
+
+                        Log::debug("RealtimeSession: sending filling message (post-knowledge) for call {$this->call->id}", [
+                            'elapsed_ms' => round($totalElapsedMs),
+                        ]);
+
+                        // Store context for injection after filling response completes
+                        $this->pendingContext = $context;
+
+                        return $this->fillingService->buildFillingResponse(
+                            $this->bot,
+                            $transcript,
+                            (string) $this->call->id,
+                            $this->hasProducts
+                        );
                     }
 
                     if ($context && $context !== $this->conversationContext) {
@@ -557,6 +705,45 @@ class RealtimeSession
 
             // V2: Try to extract lead data from conversation transcripts
             $this->tryExtractVoiceLead();
+
+            // V3: If a filling message just finished and we have pending context,
+            // inject the context now so the next AI response has full information.
+            if ($this->fillingSentForCurrentResponse && $this->pendingContext) {
+                $context = $this->pendingContext;
+
+                // Complete knowledge search if it was skipped during filling
+                if ($this->pendingUserTranscript) {
+                    try {
+                        $knowledgeContext = $this->knowledgeService->buildContext(
+                            $this->bot->id,
+                            $this->pendingUserTranscript,
+                            $this->hasProducts ? 4 : 8
+                        );
+                        if ($knowledgeContext && !str_contains($context, $knowledgeContext)) {
+                            $context = $knowledgeContext . $context;
+                        }
+                    } catch (\Throwable $e) {
+                        Log::debug("RealtimeSession: deferred knowledge search failed for call {$this->call->id}");
+                    }
+                }
+
+                $this->pendingContext = null;
+                $this->pendingUserTranscript = null;
+                $this->fillingSentForCurrentResponse = false;
+
+                if ($context && $context !== $this->conversationContext) {
+                    $this->conversationContext = $context;
+
+                    Log::debug("RealtimeSession: injecting deferred context after filling for call {$this->call->id}");
+
+                    return [
+                        'type' => 'session.update',
+                        'session' => [
+                            'instructions' => $this->buildInstructionsWithContext($context),
+                        ],
+                    ];
+                }
+            }
         }
 
         return null;
@@ -800,6 +987,9 @@ class RealtimeSession
             if (!$this->call->sentiment_label) {
                 AnalyzeCallSentiment::dispatch($this->call->id)->delay(now()->addSeconds(15));
             }
+
+            // Clean up filling message history for this call
+            $this->fillingService->resetCall((string) $this->call->id);
         } catch (\Throwable $e) {
             Log::error("RealtimeSession: failed to end session for call {$this->call->id}", [
                 'error' => $e->getMessage(),
