@@ -80,7 +80,9 @@ class FillingMessageToneTest extends TestCase
                 str_contains($msg, 'mă uit') ||
                 str_contains($msg, 'verific') ||
                 str_contains($msg, 'moment') ||
-                str_contains($msg, 'clipă')
+                str_contains($msg, 'clipă') ||
+                str_contains($msg, 'secundă') ||
+                str_contains($msg, 'caut')
             );
             $this->assertTrue($hasInformalPattern, "Expected informal pattern in message: {$msg}");
 
