@@ -727,6 +727,7 @@ class RealtimeSession
                     }
                 }
 
+                $userTranscript = $this->pendingUserTranscript;
                 $this->pendingContext = null;
                 $this->pendingUserTranscript = null;
                 $this->fillingSentForCurrentResponse = false;
@@ -734,12 +735,19 @@ class RealtimeSession
                 if ($context && $context !== $this->conversationContext) {
                     $this->conversationContext = $context;
 
-                    Log::debug("RealtimeSession: injecting deferred context after filling for call {$this->call->id}");
+                    Log::debug("RealtimeSession: triggering response after filling for call {$this->call->id}");
 
+                    // Send response.create with updated context so the AI speaks immediately.
+                    // A plain session.update would NOT trigger a response — the user would
+                    // hear the filling message and then silence. By using response.create
+                    // with the context in instructions, the AI generates the real answer.
                     return [
-                        'type' => 'session.update',
-                        'session' => [
-                            'instructions' => $this->buildInstructionsWithContext($context),
+                        'type' => 'response.create',
+                        'response' => [
+                            'modalities' => $this->ttsStrategy->getModalities(),
+                            'instructions' => $this->buildInstructionsWithContext($context)
+                                . "\n\n[CONTEXT ACTUALIZAT - Clientul a întrebat: \"" . str_replace('"', '\\"', $userTranscript ?? '') . "\""
+                                . "\nRăspunde ACUM cu informațiile din context. NU repeta mesajul de așteptare. Răspunde direct și concis.]",
                         ],
                     ];
                 }
