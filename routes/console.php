@@ -28,7 +28,9 @@ Schedule::call(function () {
 Schedule::command('social:cleanup-stuck --minutes=10')->everyFifteenMinutes();
 Schedule::command('social:purge-deleted --days=7')->dailyAt('03:30');
 
-// Keep the draft review queue topped up to 100+ (generates 30+ if low)
-Schedule::command('social:ensure-drafts --min=100 --target=130')
-    ->everyFifteenMinutes()
+// Keep the draft review queue topped up. Runs every 10 min and dispatches
+// up to 5 queued jobs per tick (one group each), spaced 90s apart, so
+// generation happens slowly on the redis worker instead of bursting.
+Schedule::command('social:ensure-drafts --min=80 --target=120 --per-tick=5 --spacing=90')
+    ->everyTenMinutes()
     ->withoutOverlapping();
