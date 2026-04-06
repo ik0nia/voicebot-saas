@@ -343,14 +343,22 @@ class AdminSocialController extends Controller
         return back()->with('success', 'Post trimis la publicare!');
     }
 
-    // Delete post (JSON-aware)
+    // Soft-delete post (JSON-aware). Restorable via POST /restore within the retention window.
     public function destroy(Request $request, SocialPost $post)
     {
-        $post->delete();
+        $post->delete(); // soft delete
         if ($request->expectsJson() || $request->wantsJson()) {
-            return response()->json(['ok' => true]);
+            return response()->json(['ok' => true, 'id' => $post->id]);
         }
         return back()->with('success', 'Post sters.');
+    }
+
+    // Restore a soft-deleted post (undo button in toast).
+    public function restore(int $id)
+    {
+        $post = SocialPost::onlyTrashed()->findOrFail($id);
+        $post->restore();
+        return response()->json(['ok' => true, 'id' => $post->id]);
     }
 
     // Duplicate a post as a new draft

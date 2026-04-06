@@ -324,6 +324,7 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
         Route::post('/post/{post}/reject', [AdminSocialController::class, 'reject'])->name('reject');
         Route::post('/post/{post}/variant/{variant}/use', [AdminSocialController::class, 'useVariant'])->name('useVariant');
         Route::delete('/post/{post}', [AdminSocialController::class, 'destroy'])->name('destroy');
+        Route::post('/post/{id}/restore', [AdminSocialController::class, 'restore'])->name('restore');
         Route::post('/bulk', [AdminSocialController::class, 'bulk'])->name('bulk');
         Route::post('/generate-bio', [AdminSocialController::class, 'generateBio'])->name('generateBio');
         Route::get('/style', [AdminSocialController::class, 'styleTraining'])->name('style');

@@ -631,19 +631,27 @@
 
     async function deletePost() {
         if (!currentId) return;
-        if (!confirm('Ștergi postarea?')) return;
         const id = currentId;
         try {
             const res = await fetch(`/admin/social/post/${id}`, {
                 method: 'DELETE', headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
             });
             if (!res.ok && !res.redirected) throw new Error('Eroare');
-            toast('Șters');
             const row = document.querySelector(`.post-row[data-post-id="${id}"]`);
-            if (row) row.remove();
-            const next = postIds[postIds.indexOf(id) + 1] || postIds[postIds.indexOf(id) - 1];
+            if (row) row.style.display = 'none';
+            const idx = postIds.indexOf(id);
+            const next = postIds[idx + 1] || postIds[idx - 1];
             closePanel();
             if (next) openPost(next);
+            toast('Șters', {
+                undo: async () => {
+                    const r = await fetch(`/admin/social/post/${id}/restore`, {
+                        method: 'POST', headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                    });
+                    if (r.ok) { if (row) row.style.display = ''; toast('Restaurat'); }
+                },
+                duration: 6000,
+            });
         } catch (e) { toast(e.message); }
     }
 
@@ -664,11 +672,21 @@
             });
             const data = await res.json();
             if (!data.ok) throw new Error(data.error || 'Eroare');
-            toast('Refuzat (învață)');
-            document.querySelector(`.post-row[data-post-id="${id}"]`)?.remove();
-            const next = postIds[postIds.indexOf(id) + 1] || postIds[postIds.indexOf(id) - 1];
+            const row = document.querySelector(`.post-row[data-post-id="${id}"]`);
+            if (row) row.style.display = 'none';
+            const idx = postIds.indexOf(id);
+            const next = postIds[idx + 1] || postIds[idx - 1];
             closePanel();
             if (next) openPost(next);
+            toast('Refuzat — Sambla învață din asta', {
+                undo: async () => {
+                    const r = await fetch(`/admin/social/post/${id}/restore`, {
+                        method: 'POST', headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                    });
+                    if (r.ok) { if (row) row.style.display = ''; toast('Restaurat'); }
+                },
+                duration: 6000,
+            });
         } catch (e) { toast(e.message); }
     }
 
