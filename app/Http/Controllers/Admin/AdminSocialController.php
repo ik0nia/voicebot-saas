@@ -785,7 +785,7 @@ class AdminSocialController extends Controller
     public function saveSchedule(Request $request)
     {
         $validated = $request->validate([
-            'platform' => 'required|in:facebook,instagram,blog',
+            'platform' => 'required|in:facebook,instagram,blog,social',
             'is_active' => 'boolean',
             'posts_per_day' => 'integer|min:1|max:5',
             'posting_times' => 'nullable|string',
@@ -794,17 +794,27 @@ class AdminSocialController extends Controller
             'blog_frequency_days' => 'integer|min:1|max:30',
         ]);
 
-        SocialSchedule::updateOrCreate(
-            ['platform' => $validated['platform']],
-            [
-                'is_active' => $request->boolean('is_active'),
-                'posts_per_day' => $validated['posts_per_day'] ?? 1,
-                'posting_times' => $validated['posting_times'] ? array_map('trim', explode(',', $validated['posting_times'])) : ['10:00'],
-                'topics' => $validated['topics'] ? array_map('trim', explode(',', $validated['topics'])) : [],
-                'auto_blog' => $request->boolean('auto_blog'),
-                'blog_frequency_days' => $validated['blog_frequency_days'] ?? 3,
-            ]
-        );
+        // 'social' is a synthetic UI key meaning "Facebook + Instagram"
+        // — every social post group is fanned out to BOTH platforms, so
+        // their schedules must stay in sync. Until we ever decouple them
+        // we just write the same row twice. (TODO: migrate to a single
+        // shared schedule row when product needs diverge.)
+        $targetPlatforms = $validated['platform'] === 'social'
+            ? ['facebook', 'instagram']
+            : [$validated['platform']];
+
+        $payload = [
+            'is_active' => $request->boolean('is_active'),
+            'posts_per_day' => $validated['posts_per_day'] ?? 1,
+            'posting_times' => $validated['posting_times'] ? array_map('trim', explode(',', $validated['posting_times'])) : ['10:00'],
+            'topics' => $validated['topics'] ? array_map('trim', explode(',', $validated['topics'])) : [],
+            'auto_blog' => $request->boolean('auto_blog'),
+            'blog_frequency_days' => $validated['blog_frequency_days'] ?? 3,
+        ];
+
+        foreach ($targetPlatforms as $p) {
+            SocialSchedule::updateOrCreate(['platform' => $p], $payload);
+        }
 
         return back()->with('success', 'Programare actualizata.');
     }

@@ -29,19 +29,28 @@
     </div>
 
     @php
+        // FB and IG always travel together (same post group, fan-out at
+        // generation time). The form below saves to BOTH at once via the
+        // synthetic 'social' platform key, handled in saveSchedule().
         $platformConfigs = [
-            'facebook' => ['label' => 'Facebook', 'color' => 'blue'],
-            'instagram' => ['label' => 'Instagram', 'color' => 'pink'],
+            'social' => ['label' => 'Facebook + Instagram', 'color' => 'red'],
             'blog' => ['label' => 'Blog', 'color' => 'slate'],
         ];
     @endphp
 
     @foreach($platformConfigs as $platformKey => $pConfig)
-        @php $schedule = $schedules[$platformKey] ?? null; @endphp
+        @php
+            // For the synthetic 'social' card, read facebook's row as the
+            // canonical source — saveSchedule keeps both rows in sync.
+            $schedule = $schedules[$platformKey === 'social' ? 'facebook' : $platformKey] ?? null;
+        @endphp
         <div class="bg-white rounded-xl border border-slate-200 p-6">
             <form method="POST" action="{{ route('admin.social.schedule.save') }}">
                 @csrf
                 <input type="hidden" name="platform" value="{{ $platformKey }}">
+                @if($platformKey === 'social')
+                    <p class="text-xs text-slate-500 -mt-2 mb-4">Aceeași programare se aplică pe Facebook și Instagram — orice postare generată ajunge pe ambele.</p>
+                @endif
 
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-lg font-semibold text-slate-900">{{ $pConfig['label'] }}</h2>
