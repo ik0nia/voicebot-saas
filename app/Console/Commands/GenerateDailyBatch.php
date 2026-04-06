@@ -162,7 +162,7 @@ class GenerateDailyBatch extends Command
             $scheduledAt = $startTime->copy()->addMinutes($interval * ($i + 1));
             $this->components->task(
                 "Post " . ($i + 1) . "/{$count} @ {$scheduledAt->format('H:i')} — {$topicData['visual_text']}",
-                function () use ($i, $topicData, $scheduledAt, $gemini, $fbAccount, $igAccount, $platformOption, $dryRun, &$created) {
+                function () use ($i, $topicData, $scheduledAt, $gemini, $fbAccount, $igAccount, $platformOption, $dryRun, $draftsOnly, &$created) {
                     // Generate text content
                     $textResult = $this->generateText($gemini, $topicData);
                     if (!$textResult) return false;
