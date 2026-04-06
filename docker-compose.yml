@@ -26,6 +26,29 @@ services:
           - app
       coolify: {}
 
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: voicebot-migrate
+    restart: "no"
+    command: sh -c "php artisan migrate --force && php artisan view:clear"
+    volumes:
+      - /var/www/voicebot-saas:/var/www/html
+      - app-storage:/var/www/html/storage
+    env_file:
+      - .env
+    environment:
+      TZ: Europe/Bucharest
+    depends_on:
+      app:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=false"
+    networks:
+      default: {}
+      coolify: {}
+
   nginx:
     build:
       context: .
@@ -41,6 +64,8 @@ services:
     depends_on:
       app:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.voicebot.rule=Host(`sambla.ro`)"
