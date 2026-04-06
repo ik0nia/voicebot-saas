@@ -27,3 +27,8 @@ Schedule::call(function () {
 // Social media: cleanup posts stuck in 'publishing' state (worker crash recovery)
 Schedule::command('social:cleanup-stuck --minutes=10')->everyFifteenMinutes();
 Schedule::command('social:purge-deleted --days=7')->dailyAt('03:30');
+
+// Keep the draft review queue topped up to 100+ (generates 30+ if low)
+Schedule::command('social:ensure-drafts --min=100 --target=130')
+    ->everyFifteenMinutes()
+    ->withoutOverlapping();

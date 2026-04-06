@@ -331,6 +331,51 @@ class AdminSocialController extends Controller
         return redirect()->route('admin.social.index')->with('success', 'Post actualizat!');
     }
 
+    /**
+     * Approve a draft: assign it to the next free slot in the schedule config
+     * for its platform. Spreads posts across days based on posting_times and
+     * posts_per_day from SocialSchedule.
+     */
+    public function approve(SocialPost $post)
+    {
+        $schedule = SocialSchedule::where('platform', $post->platform)->first();
+        $times = collect($schedule?->posting_times ?? ['09:00', '13:00', '18:00'])
+            ->filter()->values();
+        if ($times->isEmpty()) $times = collect(['09:00', '13:00', '18:00']);
+
+        // Walk forward day by day, trying each posting time, until we find a
+        // free slot (no other scheduled post on that platform within 30 min).
+        $now = now();
+        $found = null;
+        for ($day = 0; $day < 180 && !$found; $day++) {
+            $date = $now->copy()->addDays($day);
+            foreach ($times as $time) {
+                [$h, $m] = array_pad(explode(':', $time), 2, '00');
+                $slot = $date->copy()->setTime((int) $h, (int) $m, 0);
+                if ($slot->lte($now)) continue; // skip past slots
+                $collision = SocialPost::where('platform', $post->platform)
+                    ->whereIn('status', ['scheduled', 'publishing'])
+                    ->whereBetween('scheduled_at', [$slot->copy()->subMinutes(30), $slot->copy()->addMinutes(30)])
+                    ->exists();
+                if (!$collision) { $found = $slot; break; }
+            }
+        }
+        if (!$found) {
+            return response()->json(['error' => 'Nu am găsit un slot liber în următoarele 180 de zile.'], 409);
+        }
+
+        $post->update([
+            'status' => 'scheduled',
+            'scheduled_at' => $found,
+        ]);
+
+        return response()->json([
+            'ok' => true,
+            'scheduled_at' => $found->format('Y-m-d\TH:i'),
+            'scheduled_human' => $found->translatedFormat('l d M, H:i'),
+        ]);
+    }
+
     // Publish immediately (JSON-aware)
     public function publish(Request $request, SocialPost $post)
     {

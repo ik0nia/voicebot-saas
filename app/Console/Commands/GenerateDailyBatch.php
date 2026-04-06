@@ -16,6 +16,7 @@ class GenerateDailyBatch extends Command
                             {--from=09:00 : Earliest posting time HH:MM (only enforced for future dates)}
                             {--until=20:00 : Schedule posts until this time (HH:MM)}
                             {--platform=both : facebook, instagram, or both}
+                            {--drafts : Create posts as drafts with no scheduled_at (for review queue)}
                             {--dry-run : Preview without creating}';
 
     protected $description = 'Generate a batch of scheduled social media posts with CTA-focused images';
@@ -104,6 +105,7 @@ class GenerateDailyBatch extends Command
         $untilTime = $this->option('until');
         $platformOption = $this->option('platform');
         $dryRun = $this->option('dry-run');
+        $draftsOnly = (bool) $this->option('drafts');
 
         $fbAccount = SocialAccount::where('platform', 'facebook')->where('is_active', true)->first();
         $igAccount = SocialAccount::where('platform', 'instagram')->where('is_active', true)->first();
@@ -136,7 +138,13 @@ class GenerateDailyBatch extends Command
         $this->newLine();
 
         $gemini = app(GeminiContentService::class);
-        $topics = collect($this->ctaTopics)->shuffle()->take($count)->values();
+        // Cycle through topics if count > topic count (with re-shuffle each cycle).
+        $allTopics = collect($this->ctaTopics);
+        $topics = collect();
+        while ($topics->count() < $count) {
+            $topics = $topics->concat($allTopics->shuffle());
+        }
+        $topics = $topics->take($count)->values();
 
         $created = 0;
         foreach ($topics as $i => $topicData) {
@@ -157,19 +165,23 @@ class GenerateDailyBatch extends Command
                         return true;
                     }
 
+                    $postStatus = $draftsOnly ? 'draft' : 'scheduled';
+                    $fbScheduled = $draftsOnly ? null : $scheduledAt;
+                    $igScheduled = $draftsOnly ? null : $scheduledAt->copy()->addMinutes(5);
+
                     // Create Facebook post
                     if (in_array($platformOption, ['both', 'facebook']) && $fbAccount) {
                         SocialPost::create([
                             'social_account_id' => $fbAccount->id,
                             'platform' => 'facebook',
-                            'status' => 'scheduled',
+                            'status' => $postStatus,
                             'post_type' => 'post',
                             'content' => $textResult['content'],
                             'hashtags' => $textResult['hashtags'] ?? [],
                             'image_url' => $image['url'] ?? null,
                             'image_prompt' => $topicData['image_concept'],
                             'metadata' => ['topic' => $topicData['topic'], 'cta' => $topicData['cta']],
-                            'scheduled_at' => $scheduledAt,
+                            'scheduled_at' => $fbScheduled,
                             'ai_tokens_used' => $textResult['tokens_used'] ?? 0,
                         ]);
                         $created++;
@@ -180,14 +192,14 @@ class GenerateDailyBatch extends Command
                         SocialPost::create([
                             'social_account_id' => $igAccount->id,
                             'platform' => 'instagram',
-                            'status' => 'scheduled',
+                            'status' => $postStatus,
                             'post_type' => 'post',
                             'content' => $textResult['content'],
                             'hashtags' => $textResult['hashtags'] ?? [],
                             'image_url' => $image['url'] ?? null,
                             'image_prompt' => $topicData['image_concept'],
                             'metadata' => ['topic' => $topicData['topic'], 'cta' => $topicData['cta']],
-                            'scheduled_at' => $scheduledAt->copy()->addMinutes(5), // 5 min after FB
+                            'scheduled_at' => $igScheduled,
                             'ai_tokens_used' => 0,
                         ]);
                         $created++;

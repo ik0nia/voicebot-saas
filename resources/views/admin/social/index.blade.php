@@ -57,7 +57,7 @@
     <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
         @foreach([
             ['label' => 'Total', 'value' => $stats['total_posts'], 'color' => 'text-slate-900', 'status' => null],
-            ['label' => 'Draft', 'value' => $stats['draft'], 'color' => 'text-slate-700', 'status' => 'draft'],
+            ['label' => 'De review', 'value' => $stats['draft'], 'color' => $stats['draft'] < 100 ? 'text-amber-600' : 'text-slate-700', 'status' => 'draft'],
             ['label' => 'Programate', 'value' => $stats['scheduled'], 'color' => 'text-blue-600', 'status' => 'scheduled'],
             ['label' => 'Publicate', 'value' => $stats['published'], 'color' => 'text-green-600', 'status' => 'published'],
             ['label' => 'Eșuate', 'value' => $stats['failed'], 'color' => 'text-red-600', 'status' => 'failed'],
@@ -181,12 +181,11 @@
             @endif
         </div>
 
-        {{-- RIGHT: side panel (desktop sticky; mobile fixed bottom sheet, toggled by JS) --}}
+        {{-- RIGHT: side panel (desktop sticky flex column; mobile fixed bottom sheet) --}}
         <aside id="postPanel"
-               class="lg:sticky lg:top-4 lg:w-[560px] lg:shrink-0 lg:flex lg:flex-col
-                      hidden lg:block
+               class="hidden lg:flex lg:flex-col lg:sticky lg:top-4 lg:w-[560px] lg:shrink-0
                       fixed inset-x-0 bottom-0 lg:inset-auto z-40
-                      bg-white lg:rounded-xl lg:border lg:border-slate-200 lg:shadow-sm
+                      bg-white lg:rounded-xl lg:border lg:border-slate-200 lg:shadow-xl
                       max-h-[92vh] lg:max-h-[calc(100vh-7rem)] overflow-hidden">
             {{-- Empty state --}}
             <div id="panelEmpty" class="flex-1 flex items-center justify-center p-10 text-center text-sm text-slate-400">
@@ -201,8 +200,8 @@
             <div id="panelContent" class="hidden flex-1 overflow-y-auto">
                 {{-- Sticky header --}}
                 <div class="sticky top-0 bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-2 z-10">
-                    <button type="button" onclick="closePanel()" class="lg:hidden p-1 text-slate-400 hover:text-slate-700" aria-label="Închide">
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    <button type="button" data-close-panel class="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg" aria-label="Închide">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                     <span id="panel-platform" class="px-2 py-0.5 text-xs font-semibold rounded-full bg-slate-100 text-slate-700"></span>
                     <span id="panel-status" class="px-2 py-0.5 text-xs font-semibold rounded-full"></span>
@@ -297,10 +296,12 @@
                         <button type="button" onclick="duplicatePost()" class="px-3 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-50">📋 Duplică</button>
                         <button type="button" onclick="showRejectForm()" class="px-3 py-2 text-xs font-medium text-red-700 bg-white border border-red-300 rounded hover:bg-red-50">❌ Refuză</button>
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button type="button" onclick="deletePost()" class="px-3 py-2.5 text-sm font-semibold text-white bg-slate-700 rounded hover:bg-slate-800">🗑️ Șterge</button>
-                        <button type="button" onclick="publishNow()" id="btn-publish" class="px-3 py-2.5 text-sm font-semibold text-white bg-green-600 rounded hover:bg-green-700">🚀 Publică acum</button>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" onclick="deletePost()" class="px-2 py-2.5 text-xs font-semibold text-white bg-slate-700 rounded hover:bg-slate-800">🗑️ Șterge</button>
+                        <button type="button" onclick="publishNow()" id="btn-publish" class="px-2 py-2.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-50">Publică acum</button>
+                        <button type="button" onclick="approvePost()" id="btn-approve" class="px-2 py-2.5 text-sm font-bold text-white bg-green-600 rounded hover:bg-green-700">✓ Aprobă →</button>
                     </div>
+                    <p id="panel-next-slot" class="text-[11px] text-slate-500 text-center">—</p>
 
                     {{-- Reject form (inline) --}}
                     <div id="reject-form" class="hidden bg-red-50 border border-red-200 rounded p-3 space-y-2">
@@ -335,7 +336,7 @@
             <dt><kbd class="px-1.5 py-0.5 font-mono bg-slate-100 border rounded">j</kbd> / <kbd class="px-1.5 py-0.5 font-mono bg-slate-100 border rounded">↓</kbd></dt><dd class="text-slate-600">Post următor</dd>
             <dt><kbd class="px-1.5 py-0.5 font-mono bg-slate-100 border rounded">k</kbd> / <kbd class="px-1.5 py-0.5 font-mono bg-slate-100 border rounded">↑</kbd></dt><dd class="text-slate-600">Post anterior</dd>
             <dt><kbd class="px-1.5 py-0.5 font-mono bg-slate-100 border rounded">e</kbd></dt><dd class="text-slate-600">Editează textul</dd>
-            <dt><kbd class="px-1.5 py-0.5 font-mono bg-slate-100 border rounded">a</kbd></dt><dd class="text-slate-600">Publică acum</dd>
+            <dt><kbd class="px-1.5 py-0.5 font-mono bg-slate-100 border rounded">a</kbd></dt><dd class="text-slate-600">Aprobă (→ swipe dreapta pe mobil)</dd>
             <dt><kbd class="px-1.5 py-0.5 font-mono bg-slate-100 border rounded">r</kbd></dt><dd class="text-slate-600">Refuză</dd>
             <dt><kbd class="px-1.5 py-0.5 font-mono bg-slate-100 border rounded">⌫</kbd></dt><dd class="text-slate-600">Șterge (cu confirmare)</dd>
             <dt><kbd class="px-1.5 py-0.5 font-mono bg-slate-100 border rounded">Esc</kbd></dt><dd class="text-slate-600">Închide panel</dd>
@@ -347,6 +348,16 @@
 
 @push('scripts')
 <script>
+// ==== DEBUG: visible JS error banner (so the user can screenshot issues) ====
+window.addEventListener('error', (e) => {
+    const b = document.getElementById('jsErrorBanner');
+    if (!b) return;
+    b.classList.remove('hidden');
+    b.textContent = 'JS error: ' + (e.message || e.error) + ' @ ' + (e.filename || '') + ':' + (e.lineno || '');
+});
+</script>
+<div id="jsErrorBanner" class="hidden fixed top-0 inset-x-0 z-[100] bg-red-600 text-white text-xs px-3 py-2 font-mono"></div>
+<script>
 (() => {
     const csrf = document.getElementById('socialRoot').dataset.csrf;
     const postIds = Array.from(document.querySelectorAll('.post-row')).map(r => +r.dataset.postId);
@@ -355,7 +366,7 @@
     let currentData = null;
     let autosaveTimer = null;
     let rejectCategory = 'other';
-    let lastSwipeX = null;
+    let lastTextBeforeRegen = null;
 
     const $ = (id) => document.getElementById(id);
     const platformLabels = { facebook: 'Facebook', instagram: 'Instagram', blog: 'Blog' };
@@ -587,7 +598,6 @@
         }
     }
 
-    let lastTextBeforeRegen = null;
     async function regenText() {
         if (!currentId) return;
         $('btn-regen-txt').disabled = true;
@@ -653,6 +663,36 @@
         toast('Duplicat — reîncarc');
         setTimeout(() => location.href = `?post=${data.id}`, 500);
     }
+
+    async function approvePost() {
+        if (!currentId) return;
+        await flushAutosave();
+        const id = currentId;
+        const btn = $('btn-approve');
+        btn.disabled = true;
+        const oldText = btn.textContent;
+        btn.textContent = '...';
+        try {
+            const res = await fetch(`/admin/social/post/${id}/approve`, {
+                method: 'POST', headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Eroare');
+            toast('Aprobat → ' + (data.scheduled_human || data.scheduled_at));
+            // Hide row, advance to next
+            const row = document.querySelector(`.post-row[data-post-id="${id}"]`);
+            if (row) row.style.display = 'none';
+            const idx = postIds.indexOf(id);
+            const next = postIds[idx + 1] || postIds[idx - 1];
+            if (next) openPost(next); else closePanel();
+        } catch (e) {
+            toast(e.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = oldText;
+        }
+    }
+    window.approvePost = approvePost;
 
     async function publishNow() {
         if (!currentId) return;
@@ -809,32 +849,68 @@
         if (e.key === 'j' || e.key === 'ArrowDown') { e.preventDefault(); navPost(1); }
         else if (e.key === 'k' || e.key === 'ArrowUp') { e.preventDefault(); navPost(-1); }
         else if (e.key === 'e' && currentId) { e.preventDefault(); $('panel-content').focus(); }
-        else if (e.key === 'a' && currentId) { e.preventDefault(); publishNow(); }
+        else if (e.key === 'a' && currentId) { e.preventDefault(); approvePost(); }
         else if (e.key === 'r' && currentId) { e.preventDefault(); showRejectForm(); }
     });
 
-    // ---------- Swipe gestures on mobile list rows ----------
+    // ---------- Swipe on list rows (same semantics as swipe on panel) ----------
     document.querySelectorAll('.post-row').forEach(row => {
-        let startX = null;
-        row.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; }, { passive: true });
+        let startX = null, startY = null;
+        row.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+        }, { passive: true });
         row.addEventListener('touchend', (e) => {
             if (startX === null) return;
             const dx = e.changedTouches[0].clientX - startX;
-            startX = null;
+            const dy = e.changedTouches[0].clientY - startY;
+            startX = startY = null;
+            if (Math.abs(dx) < 60 || Math.abs(dy) > 50) return;
             const id = +row.dataset.postId;
-            if (dx > 80) { openPost(id); setTimeout(publishNow, 200); }
-            else if (dx < -80) { openPost(id); setTimeout(showRejectForm, 200); }
+            if (dx > 60) { openPost(id); setTimeout(() => approvePost(), 250); }
+            else if (dx < -60) { openPost(id); setTimeout(() => showRejectForm(), 250); }
         }, { passive: true });
     });
 
-    // ---------- Click delegation fallback (robust if inline onclick is blocked/stale) ----------
+    // ---------- Click delegation (handles both row clicks AND close button) ----------
     document.addEventListener('click', (e) => {
+        // Panel close button (works regardless of inline onclick)
+        if (e.target.closest('[data-close-panel]')) {
+            e.preventDefault();
+            closePanel();
+            return;
+        }
+        // Row click → open panel
         const row = e.target.closest('.post-row');
-        if (!row) return;
-        if (e.target.closest('input,button,a')) return;
-        const id = +row.dataset.postId;
-        if (id) openPost(id, e);
+        if (row && !e.target.closest('input,button,a')) {
+            const id = +row.dataset.postId;
+            if (id) openPost(id, e);
+        }
     });
+
+    // ---------- Panel-level swipe gestures (when open: left/right navigate, down closes) ----------
+    (function() {
+        const panel = $('postPanel');
+        let sx = null, sy = null;
+        panel.addEventListener('touchstart', (e) => {
+            if (e.touches.length !== 1) return;
+            sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+        }, { passive: true });
+        panel.addEventListener('touchend', (e) => {
+            if (sx === null) return;
+            const dx = e.changedTouches[0].clientX - sx;
+            const dy = e.changedTouches[0].clientY - sy;
+            sx = sy = null;
+            // Don't interpret as swipe if it was a small movement (tap) or vertical scroll
+            if (Math.abs(dx) < 60 && Math.abs(dy) < 80) return;
+            if (Math.abs(dx) > Math.abs(dy)) {
+                // Horizontal swipe
+                if (dx > 60 && currentId) { approvePost(); }
+                else if (dx < -60 && currentId) { showRejectForm(); }
+            } else if (dy > 80) {
+                closePanel();
+            }
+        }, { passive: true });
+    })();
 
     // ---------- Boot ----------
     // Expose the small handful we need from HTML attributes.

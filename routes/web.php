@@ -318,6 +318,7 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
         Route::patch('/post/{post}', [AdminSocialController::class, 'patch'])->name('patch');
         Route::put('/post/{post}', [AdminSocialController::class, 'update'])->name('update');
         Route::post('/post/{post}/publish', [AdminSocialController::class, 'publish'])->name('publish');
+        Route::post('/post/{post}/approve', [AdminSocialController::class, 'approve'])->name('approve');
         Route::post('/post/{post}/duplicate', [AdminSocialController::class, 'duplicate'])->name('duplicate');
         Route::post('/post/{post}/regenerate-image', [AdminSocialController::class, 'regenerateImage'])->name('regenerateImage');
         Route::post('/post/{post}/regenerate-text', [AdminSocialController::class, 'regenerateText'])->name('regenerateText');
