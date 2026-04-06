@@ -260,22 +260,51 @@ class GenerateDailyBatch extends Command
         return self::SUCCESS;
     }
 
+    /**
+     * Five distinct hook patterns. Picked randomly per post so the feed
+     * doesn't feel like the same template on repeat. Each pattern is
+     * spelled out so GPT stays on rails instead of defaulting to vague
+     * "punchy opening" prose.
+     */
+    private array $hookPatterns = [
+        'question' => "Începe cu o întrebare directă care lovește o frustrare reală a owner-ului/managerului (ex: 'Cât te costă un client care sună la 22:00 și nu răspunde nimeni?'). Nu întrebări retorice generice.",
+        'stat' => "Începe cu o cifră surprinzătoare sau contrainutitivă (procent, sumă în lei/euro, timp). Cifra trebuie să fie plauzibilă, nu inventată grotesc.",
+        'story' => "Începe cu un micro-scenariu concret, 1-2 propoziții: 'Vineri seara. Client pe site-ul tău de 4 minute. Niciun răspuns. Pleacă.' Ton cinematic, prezent.",
+        'contrarian' => "Începe cu o afirmație care contrazice un clișeu popular ('Nu, AI-ul NU îți va înlocui echipa de suport. Dar...'). Construiește tensiune, apoi reașază.",
+        'insight' => "Începe cu un adevăr nespus pe care doar cineva care a trăit problema îl știe ('Cei mai mulți clienți pierduți nu se plâng niciodată — pleacă în tăcere.'). Empatic, observațional.",
+    ];
+
     private function generateText(GeminiContentService $gemini, array $topicData): ?array
     {
         $avoidance = \App\Models\SocialRejection::buildAvoidancePrompt('facebook');
+        $hookKey = array_rand($this->hookPatterns);
+        $hookInstruction = $this->hookPatterns[$hookKey];
+
         $prompt = ($avoidance ? $avoidance . "\n\n" : '')
-            . "Generează un post social media SCURT și PUTERNIC pentru Facebook/Instagram.\n\n"
-            . "SUBIECT: {$topicData['topic']}\n\n"
+            . "Scrii un post de social media pentru Sambla, pe Facebook/Instagram. Publicul e antreprenori și manageri români (IMM, e-commerce, servicii). Vorbesc românește zilnic, nu consumă conținut de marketing în engleză.\n\n"
+            . "SUBIECT: {$topicData['topic']}\n"
             . "CALL TO ACTION: {$topicData['cta']}\n\n"
-            . "REGULI:\n"
-            . "- Max 150 cuvinte\n"
-            . "- Primul rând: hook puternic (întrebare sau statistică)\n"
-            . "- Ton: profesional dar accesibil, direct\n"
-            . "- Termină cu CTA clar: {$topicData['cta']} → sambla.ro\n"
-            . "- Limba: română\n"
-            . "- Emoji-uri: moderate (2-4 per post)\n"
-            . "- NU folosi hashtag-uri\n\n"
-            . "BRAND: Sambla — platformă românească de AI conversațional (chatbot + voicebot) pentru business-uri.\n\n"
+            . "PATTERN DE HOOK ({$hookKey}): {$hookInstruction}\n\n"
+            . "STRUCTURĂ:\n"
+            . "1. Hook (1-2 rânduri, după pattern-ul de mai sus).\n"
+            . "2. Tensiune — expune problema concret, nu abstract. Dă un exemplu palpabil din viața unui business românesc.\n"
+            . "3. Rezolvare — cum intră Sambla în scenă. O propoziție, nu un pitch.\n"
+            . "4. CTA-ul clar: {$topicData['cta']} → sambla.ro\n\n"
+            . "TON:\n"
+            . "- Scrii ca un om, nu ca un copywriter. Propoziții scurte, naturale.\n"
+            . "- EVITĂ absolut: 'revoluționar', 'inovator', 'game-changer', 'soluție completă', 'scalabilă', 'next-level', 'transformă modul în care', 'puterea AI-ului', expresii din decks corporate.\n"
+            . "- EVITĂ anglicismele gratuite (game-changer, must-have, insights, engagement) când există echivalent românesc.\n"
+            . "- Nu promite minuni. Subpromite, nu suprapromite.\n"
+            . "- Dacă menționezi prețuri/procente, să fie plauzibile.\n\n"
+            . "FORMAT:\n"
+            . "- Max 120 cuvinte total.\n"
+            . "- Emoji: 0-2, folosite doar dacă adaugă sens (nu decorativ).\n"
+            . "- Fără hashtag-uri.\n"
+            . "- Paragrafe scurte, cu spațiu între ele (citeste-se pe mobil).\n\n"
+            . "BRAND SAMBLA:\n"
+            . "- Platformă românească (hosting RO, GDPR, echipă din RO) de AI conversațional: chatbot + voicebot.\n"
+            . "- Personalitate: direct, practic, anti-BS, ușor contrar. Nu 'silicon-valley hype'.\n"
+            . "- Vorbește ca un fondator care construiește, nu ca un agent de vânzări.\n\n"
             . 'Returnează JSON: {"content": "textul postării"}';
 
         try {
@@ -305,24 +334,42 @@ class GenerateDailyBatch extends Command
         }
     }
 
+    /**
+     * Five distinct visual aesthetics. Picked randomly so the grid doesn't
+     * look like the same minimal-white-icon template on repeat. Each one
+     * is a complete stylistic brief — not just a keyword.
+     */
+    private array $visualStyles = [
+        'editorial_photo' => "Editorial photography style. Real scene, cinematic lighting, shallow depth of field. Think high-end business magazine cover (Fast Company, Wired). Natural colors, one red accent object in frame. Human element if possible (hands, silhouette, workspace). NO illustrations, NO icons. Photo must look believable.",
+        'flat_illustration' => "Flat vector illustration, thick lines, 2-color palette (white + Sambla red #dc2626, maybe one muted grey). Large shapes, no gradients, playful but premium. Think Stripe/Linear marketing site illustrations. Generous negative space.",
+        'isometric_3d' => "Isometric 3D render, soft ambient occlusion, pastel tones with red (#dc2626) as the single saturated accent. Clean geometric objects arranged in a small diorama. Think Apple keynote slides. Soft shadows, no harsh lighting.",
+        'abstract_geometric' => "Abstract geometric composition. Bold shapes (circles, rectangles, arrows) in a rhythmic layout. Limited palette: off-white background, black, Sambla red. Swiss design / Bauhaus feel. Strong hierarchy, mathematical precision.",
+        'product_mockup' => "Realistic device mockup (phone OR laptop screen) showing a simple clean chat/voice interface. Soft studio lighting, neutral background, subtle reflections. One red accent element. Think Apple product photography. No visible text on screen beyond 1-2 short UI labels.",
+    ];
+
     private function generateCtaImage(GeminiContentService $gemini, array $topicData): ?array
     {
         $imageRejections = \App\Models\SocialRejection::query()
             ->whereIn('reason_category', ['image', 'visual', 'design'])
             ->latest()->limit(10)->pluck('feedback')->filter()->unique()->take(5)->implode(' | ');
-        $avoidLine = $imageRejections ? "AVOID (user rejected past images for): {$imageRejections}. " : '';
-        $prompt = $avoidLine . "Create a MINIMAL social media graphic. "
-            . "CRITICAL RULES: "
-            . "- MAXIMUM 3-5 words of text on the ENTIRE image. Only show: '{$topicData['visual_text']}' "
-            . "- DO NOT add paragraphs, sentences, or descriptions as text on the image "
-            . "- DO NOT write the CTA text on the image "
-            . "- The image should be 90% VISUAL, 10% text "
-            . "- Use ONE strong visual metaphor/icon as the hero element "
-            . "VISUAL: {$topicData['image_concept']} "
-            . "BRAND: Include the Sambla logo (attached) in top-left corner with dark backing "
-            . "COLORS: White/light background, red (#dc2626) accents only "
-            . "STYLE: Apple-level minimalism, premium, clean, lots of whitespace "
-            . "ASPECT: Portrait format for social media feed";
+        $avoidLine = $imageRejections ? "CRITICAL - AVOID what user rejected before: {$imageRejections}. " : '';
+
+        $styleKey = array_rand($this->visualStyles);
+        $styleBrief = $this->visualStyles[$styleKey];
+
+        $prompt = $avoidLine
+            . "Create a premium social media graphic for Sambla (Romanian AI platform). "
+            . "STYLE ({$styleKey}): {$styleBrief} "
+            . "SUBJECT METAPHOR: {$topicData['image_concept']} "
+            . "TEXT ON IMAGE: Maximum 3 words total, displayed cleanly as a headline: '{$topicData['visual_text']}'. "
+            . "STRICT TEXT RULES: "
+            . "- DO NOT write sentences, paragraphs, CTAs, URLs, or descriptions on the image. "
+            . "- DO NOT write the topic explanation on the image. "
+            . "- If text appears, it's only the 3-word headline above. "
+            . "BRAND LOGO: Place the Sambla logo (attached reference) in a top corner, sized small, with a subtle dark backing so it's readable on any background. "
+            . "COMPOSITION: Strong focal point, clear visual hierarchy, feels designed (not AI-slop). Generous whitespace. Premium, not busy. "
+            . "FORBIDDEN: stock photo clichés (handshakes, smiling people pointing at laptops), generic chat bubbles floating in space, cluttered 'infographic' layouts, gradient rainbows, fake testimonials, random startup buzzwords on screen. "
+            . "ASPECT: 3:4 portrait for social feed.";
 
         return $gemini->generateImage($prompt, '3:4');
     }
