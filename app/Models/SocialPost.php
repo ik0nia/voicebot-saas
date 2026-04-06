@@ -13,6 +13,7 @@ class SocialPost extends Model
     use SoftDeletes;
 
     protected $fillable = [
+        'group_id',
         'social_account_id',
         'platform',
         'status',
@@ -48,6 +49,40 @@ class SocialPost extends Model
     public function socialAccount(): BelongsTo
     {
         return $this->belongsTo(SocialAccount::class);
+    }
+
+    public function group(): BelongsTo
+    {
+        return $this->belongsTo(SocialPostGroup::class, 'group_id');
+    }
+
+    /**
+     * Siblings = other posts in the same group. Returns an empty collection
+     * if this post is ungrouped (legacy).
+     */
+    public function siblings()
+    {
+        if (!$this->group_id) {
+            return collect();
+        }
+        return self::where('group_id', $this->group_id)
+            ->where('id', '!=', $this->id)
+            ->get();
+    }
+
+    /**
+     * "Feed siblings" = group members of the same post_type (feed posts, not story).
+     * Used to keep FB+IG in sync when editing/regenerating.
+     */
+    public function feedSiblings()
+    {
+        if (!$this->group_id || $this->post_type !== 'post') {
+            return collect();
+        }
+        return self::where('group_id', $this->group_id)
+            ->where('post_type', 'post')
+            ->where('id', '!=', $this->id)
+            ->get();
     }
 
     public function variants(): HasMany

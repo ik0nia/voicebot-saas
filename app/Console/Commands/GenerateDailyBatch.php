@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\SocialAccount;
 use App\Models\SocialPost;
+use App\Models\SocialPostGroup;
 use App\Services\Social\GeminiContentService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
@@ -169,9 +170,30 @@ class GenerateDailyBatch extends Command
                     $fbScheduled = $draftsOnly ? null : $scheduledAt;
                     $igScheduled = $draftsOnly ? null : $scheduledAt->copy()->addMinutes(5);
 
+                    // Every 3rd post idea also gets a Story (9:16) child.
+                    // Uses a simple modulo on the iteration index for deterministic cadence.
+                    $includeStory = ($i % 3 === 0);
+                    $storyImage = null;
+                    if ($includeStory) {
+                        $storyImage = $this->generateStoryImage($gemini, $topicData);
+                    }
+
+                    // Create the group that binds all children together.
+                    $group = SocialPostGroup::create([
+                        'topic' => mb_substr($topicData['topic'], 0, 240),
+                        'cta' => $topicData['cta'] ?? null,
+                        'status' => $postStatus === 'scheduled' ? 'scheduled' : 'draft',
+                        'has_story' => $includeStory && $storyImage,
+                        'metadata' => [
+                            'visual_text' => $topicData['visual_text'] ?? null,
+                            'image_concept' => $topicData['image_concept'] ?? null,
+                        ],
+                    ]);
+
                     // Create Facebook post
                     if (in_array($platformOption, ['both', 'facebook']) && $fbAccount) {
                         SocialPost::create([
+                            'group_id' => $group->id,
                             'social_account_id' => $fbAccount->id,
                             'platform' => 'facebook',
                             'status' => $postStatus,
@@ -190,6 +212,7 @@ class GenerateDailyBatch extends Command
                     // Create Instagram post (only if we have an image)
                     if (in_array($platformOption, ['both', 'instagram']) && $igAccount && $image) {
                         SocialPost::create([
+                            'group_id' => $group->id,
                             'social_account_id' => $igAccount->id,
                             'platform' => 'instagram',
                             'status' => $postStatus,
@@ -200,6 +223,27 @@ class GenerateDailyBatch extends Command
                             'image_prompt' => $topicData['image_concept'],
                             'metadata' => ['topic' => $topicData['topic'], 'cta' => $topicData['cta']],
                             'scheduled_at' => $igScheduled,
+                            'ai_tokens_used' => 0,
+                        ]);
+                        $created++;
+                    }
+
+                    // Story child (IG only, 9:16). Scheduled slightly later to
+                    // avoid hammering Meta's API; draft if we're buffering.
+                    if ($includeStory && $storyImage && $igAccount && in_array($platformOption, ['both', 'instagram'])) {
+                        $storyScheduled = $draftsOnly ? null : $scheduledAt->copy()->addMinutes(10);
+                        SocialPost::create([
+                            'group_id' => $group->id,
+                            'social_account_id' => $igAccount->id,
+                            'platform' => 'instagram',
+                            'status' => $postStatus,
+                            'post_type' => 'story',
+                            'content' => $textResult['content'],
+                            'hashtags' => [],
+                            'image_url' => $storyImage['url'] ?? null,
+                            'image_prompt' => $this->storyPrompt($topicData),
+                            'metadata' => ['topic' => $topicData['topic'], 'cta' => $topicData['cta'], 'story' => true],
+                            'scheduled_at' => $storyScheduled,
                             'ai_tokens_used' => 0,
                         ]);
                         $created++;
@@ -281,5 +325,21 @@ class GenerateDailyBatch extends Command
             . "ASPECT: Portrait format for social media feed";
 
         return $gemini->generateImage($prompt, '3:4');
+    }
+
+    private function storyPrompt(array $topicData): string
+    {
+        return "Create a MINIMAL Instagram STORY graphic (9:16 portrait). "
+            . "HEADLINE (max 3 words): '{$topicData['visual_text']}' "
+            . "VISUAL: {$topicData['image_concept']} "
+            . "- Full-bleed vertical composition, large central visual element, generous top/bottom safe zones "
+            . "- Sambla logo (attached) in top-left with dark backing "
+            . "- White/light background, red (#dc2626) accents only "
+            . "- Premium, Apple-level minimalism, no long text blocks";
+    }
+
+    private function generateStoryImage(GeminiContentService $gemini, array $topicData): ?array
+    {
+        return $gemini->generateImage($this->storyPrompt($topicData), '9:16');
     }
 }

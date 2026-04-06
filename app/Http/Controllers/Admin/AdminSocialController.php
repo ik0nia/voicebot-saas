@@ -72,12 +72,49 @@ class AdminSocialController extends Controller
         $accounts = SocialAccount::all();
         $schedules = SocialSchedule::all();
 
-        // Mobile swipe deck: load next 12 drafts (oldest first so reviewer works through the backlog).
-        $deck = SocialPost::where('status', 'draft')
+        // Mobile swipe deck: 1 card per group (feed post, FB preferred), with
+        // legacy ungrouped drafts still appearing individually.
+        $groupedDeck = SocialPost::query()
+            ->where('status', 'draft')
+            ->where('post_type', 'post')
+            ->whereNotNull('image_url')
+            ->whereNotNull('group_id')
+            ->orderByRaw("CASE WHEN platform = 'facebook' THEN 0 ELSE 1 END")
+            ->orderBy('id', 'asc')
+            ->get()
+            ->unique('group_id')
+            ->take(12);
+
+        $legacyDeck = SocialPost::query()
+            ->where('status', 'draft')
+            ->whereNull('group_id')
             ->whereNotNull('image_url')
             ->orderBy('id', 'asc')
-            ->limit(12)
+            ->limit(12 - $groupedDeck->count())
             ->get();
+
+        $deck = $groupedDeck->concat($legacyDeck)->values();
+
+        // Attach a `fanout_label` attribute for the view ("FB+IG" or "FB+IG+Story")
+        $groupIds = $deck->pluck('group_id')->filter()->unique()->all();
+        $siblings = $groupIds
+            ? SocialPost::whereIn('group_id', $groupIds)->get()->groupBy('group_id')
+            : collect();
+        $deck = $deck->map(function ($p) use ($siblings) {
+            if (!$p->group_id) {
+                $p->fanout_label = strtoupper(substr($p->platform, 0, 2));
+                return $p;
+            }
+            $group = $siblings[$p->group_id] ?? collect();
+            $platforms = $group->pluck('platform')->unique()->all();
+            $hasStory = $group->contains(fn($q) => $q->post_type === 'story');
+            $parts = [];
+            if (in_array('facebook', $platforms)) $parts[] = 'FB';
+            if (in_array('instagram', $platforms)) $parts[] = 'IG';
+            if ($hasStory) $parts[] = 'Story';
+            $p->fanout_label = implode('+', $parts) ?: 'FB';
+            return $p;
+        });
 
         return view('admin.social.index', compact('posts', 'accounts', 'schedules', 'stats', 'deck'));
     }
@@ -124,6 +161,20 @@ class AdminSocialController extends Controller
     {
         $post->load(['variants' => fn($q) => $q->orderByDesc('id')->limit(10), 'rejections' => fn($q) => $q->orderByDesc('id')->limit(5)]);
 
+        $fanout = [];
+        if ($post->group_id) {
+            $fanout = SocialPost::where('group_id', $post->group_id)
+                ->orderBy('id')
+                ->get()
+                ->map(fn($s) => [
+                    'id' => $s->id,
+                    'platform' => $s->platform,
+                    'post_type' => $s->post_type,
+                    'status' => $s->status,
+                    'is_self' => $s->id === $post->id,
+                ])->values()->all();
+        }
+
         return response()->json([
             'id' => $post->id,
             'platform' => $post->platform,
@@ -141,6 +192,8 @@ class AdminSocialController extends Controller
             'regen_count' => (int) ($post->regen_count ?? 0),
             'updated_at' => $post->updated_at?->toIso8601String(),
             'is_editable' => in_array($post->status, ['draft', 'scheduled', 'failed']),
+            'group_id' => $post->group_id,
+            'fanout' => $fanout,
             'variants' => $post->variants->map(fn($v) => [
                 'id' => $v->id,
                 'kind' => $v->kind,
@@ -155,6 +208,34 @@ class AdminSocialController extends Controller
                 'created_at' => $r->created_at?->diffForHumans(),
             ])->values(),
         ]);
+    }
+
+    /**
+     * Find next free slot for a given platform, starting from `$from`.
+     * Walks posting_times day-by-day and avoids 30-min collisions with
+     * other scheduled/publishing posts on the same platform.
+     */
+    private function findNextSlotForPlatform(string $platform, ?\Carbon\Carbon $from = null): ?\Carbon\Carbon
+    {
+        $schedule = SocialSchedule::where('platform', $platform)->first();
+        $times = collect($schedule?->posting_times ?? ['09:00', '13:00', '18:00'])->filter()->values();
+        if ($times->isEmpty()) $times = collect(['09:00', '13:00', '18:00']);
+
+        $start = $from ?? now();
+        for ($day = 0; $day < 180; $day++) {
+            $date = $start->copy()->addDays($day);
+            foreach ($times as $time) {
+                [$h, $m] = array_pad(explode(':', $time), 2, '00');
+                $slot = $date->copy()->setTime((int) $h, (int) $m, 0);
+                if ($slot->lte($start)) continue;
+                $collision = SocialPost::where('platform', $platform)
+                    ->whereIn('status', ['scheduled', 'publishing'])
+                    ->whereBetween('scheduled_at', [$slot->copy()->subMinutes(30), $slot->copy()->addMinutes(30)])
+                    ->exists();
+                if (!$collision) return $slot;
+            }
+        }
+        return null;
     }
 
     // Partial JSON update with optimistic concurrency via updated_at.
@@ -183,6 +264,15 @@ class AdminSocialController extends Controller
         }
         if ($dirty) {
             $post->update($dirty);
+
+            // Cascade text edits to feed siblings (FB<->IG keep in sync).
+            // We intentionally DO NOT cascade scheduled_at (each platform has
+            // its own slot) or post_type (story stays story).
+            if (array_key_exists('content', $dirty)) {
+                foreach ($post->feedSiblings() as $sibling) {
+                    $sibling->update(['content' => $dirty['content']]);
+                }
+            }
         }
 
         return response()->json([
@@ -226,6 +316,25 @@ class AdminSocialController extends Controller
             'image_prompt' => $prompt,
             'regen_count' => ($post->regen_count ?? 0) + 1,
         ]);
+
+        // Cascade to feed siblings (FB<->IG same image). Story children keep
+        // their own 9:16 graphic and are NOT touched here.
+        foreach ($post->feedSiblings() as $sibling) {
+            if ($sibling->image_url) {
+                SocialPostVariant::create([
+                    'social_post_id' => $sibling->id,
+                    'kind' => 'image',
+                    'image_url' => $sibling->image_url,
+                    'image_prompt' => $sibling->image_prompt,
+                    'is_active' => false,
+                ]);
+            }
+            $sibling->update([
+                'image_url' => $image['url'],
+                'image_prompt' => $prompt,
+                'regen_count' => ($sibling->regen_count ?? 0) + 1,
+            ]);
+        }
 
         return response()->json([
             'image_url' => $post->image_url,
@@ -287,6 +396,23 @@ class AdminSocialController extends Controller
                 'regen_count' => ($post->regen_count ?? 0) + 1,
             ]);
 
+            // Cascade new text to ALL siblings in group (feed + story share the copy).
+            foreach ($post->siblings() as $sibling) {
+                if ($sibling->content) {
+                    SocialPostVariant::create([
+                        'social_post_id' => $sibling->id,
+                        'kind' => 'text',
+                        'content' => $sibling->content,
+                        'hashtags' => $sibling->hashtags ?? [],
+                        'is_active' => false,
+                    ]);
+                }
+                $sibling->update([
+                    'content' => $parsed['content'],
+                    'hashtags' => [],
+                ]);
+            }
+
             return response()->json([
                 'content' => $post->content,
                 'hashtags' => [],
@@ -305,19 +431,29 @@ class AdminSocialController extends Controller
             'feedback' => 'nullable|string|max:1000',
         ]);
 
-        SocialRejection::create([
-            'social_post_id' => $post->id,
-            'platform' => $post->platform,
-            'reason_category' => $validated['reason_category'] ?? 'other',
-            'feedback' => $validated['feedback'] ?? null,
-            'content_snapshot' => $post->content,
-            'image_url' => $post->image_url,
-            'image_prompt' => $post->image_prompt,
-            'topic' => $post->metadata['topic'] ?? null,
-            'hashtags' => $post->hashtags,
-        ]);
+        // Reject cascades to every sibling so one refusal kills the whole idea.
+        // We store a rejection record against each so the avoidance prompt
+        // gets the full picture per platform.
+        $targets = collect([$post])->concat($post->siblings());
+        foreach ($targets as $t) {
+            SocialRejection::create([
+                'social_post_id' => $t->id,
+                'platform' => $t->platform,
+                'reason_category' => $validated['reason_category'] ?? 'other',
+                'feedback' => $validated['feedback'] ?? null,
+                'content_snapshot' => $t->content,
+                'image_url' => $t->image_url,
+                'image_prompt' => $t->image_prompt,
+                'topic' => $t->metadata['topic'] ?? null,
+                'hashtags' => $t->hashtags,
+            ]);
+            $t->delete();
+        }
 
-        $post->delete();
+        if ($post->group_id) {
+            $post->group?->update(['status' => 'rejected']);
+            $post->group?->delete();
+        }
 
         return response()->json(['ok' => true]);
     }
@@ -348,41 +484,40 @@ class AdminSocialController extends Controller
      */
     public function approve(SocialPost $post)
     {
-        $schedule = SocialSchedule::where('platform', $post->platform)->first();
-        $times = collect($schedule?->posting_times ?? ['09:00', '13:00', '18:00'])
-            ->filter()->values();
-        if ($times->isEmpty()) $times = collect(['09:00', '13:00', '18:00']);
+        // Collect everything we need to schedule: this post + all group siblings
+        // (if any). Legacy ungrouped posts = single-member list.
+        $targets = collect([$post])->concat($post->siblings());
 
-        // Walk forward day by day, trying each posting time, until we find a
-        // free slot (no other scheduled post on that platform within 30 min).
-        $now = now();
-        $found = null;
-        for ($day = 0; $day < 180 && !$found; $day++) {
-            $date = $now->copy()->addDays($day);
-            foreach ($times as $time) {
-                [$h, $m] = array_pad(explode(':', $time), 2, '00');
-                $slot = $date->copy()->setTime((int) $h, (int) $m, 0);
-                if ($slot->lte($now)) continue; // skip past slots
-                $collision = SocialPost::where('platform', $post->platform)
-                    ->whereIn('status', ['scheduled', 'publishing'])
-                    ->whereBetween('scheduled_at', [$slot->copy()->subMinutes(30), $slot->copy()->addMinutes(30)])
-                    ->exists();
-                if (!$collision) { $found = $slot; break; }
+        $scheduled = [];
+        foreach ($targets as $t) {
+            // Each platform gets its own slot. Stories are pushed a bit after
+            // the feed post on the same day by starting their search +15min later.
+            $from = $t->post_type === 'story' ? now()->addMinutes(15) : now();
+            $slot = $this->findNextSlotForPlatform($t->platform, $from);
+            if (!$slot) {
+                return response()->json([
+                    'error' => "Nu am găsit slot liber pentru {$t->platform} ({$t->post_type}).",
+                ], 409);
             }
-        }
-        if (!$found) {
-            return response()->json(['error' => 'Nu am găsit un slot liber în următoarele 180 de zile.'], 409);
+            $t->update(['status' => 'scheduled', 'scheduled_at' => $slot]);
+            $scheduled[] = [
+                'platform' => $t->platform,
+                'post_type' => $t->post_type,
+                'at' => $slot->format('Y-m-d\TH:i'),
+            ];
         }
 
-        $post->update([
-            'status' => 'scheduled',
-            'scheduled_at' => $found,
-        ]);
+        if ($post->group_id) {
+            $post->group->update(['status' => 'scheduled']);
+        }
 
+        // Return the primary post's slot for UI continuity, plus the full list.
+        $primary = collect($scheduled)->firstWhere('platform', $post->platform) ?? $scheduled[0];
         return response()->json([
             'ok' => true,
-            'scheduled_at' => $found->format('Y-m-d\TH:i'),
-            'scheduled_human' => $found->translatedFormat('l d M, H:i'),
+            'scheduled_at' => $primary['at'],
+            'scheduled_human' => \Carbon\Carbon::parse($primary['at'])->translatedFormat('l d M, H:i'),
+            'fanout' => $scheduled,
         ]);
     }
 

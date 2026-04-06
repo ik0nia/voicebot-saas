@@ -132,10 +132,7 @@
                         <div class="relative bg-slate-900" style="height: 60%;">
                             <img src="{{ $post->image_url }}" alt="" class="absolute inset-0 w-full h-full object-contain" draggable="false">
                             <div class="absolute top-3 left-3 flex gap-1">
-                                <span class="px-2 py-0.5 text-[10px] font-bold rounded-full text-white {{ ['facebook' => 'bg-blue-600', 'instagram' => 'bg-pink-600', 'blog' => 'bg-slate-700'][$post->platform] ?? 'bg-slate-700' }}">{{ ['facebook' => 'FB', 'instagram' => 'IG', 'blog' => 'BLOG'][$post->platform] ?? $post->platform }}</span>
-                                @if($post->post_type === 'story')
-                                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-500 text-white">STORY</span>
-                                @endif
+                                <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-slate-900/80 text-white backdrop-blur">{{ $post->fanout_label ?? 'FB' }}</span>
                             </div>
                         </div>
                     @endif
@@ -265,6 +262,7 @@
                         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                     <span id="panel-platform" class="px-2 py-0.5 text-xs font-semibold rounded-full bg-slate-100 text-slate-700"></span>
+                    <span id="panel-fanout" class="hidden px-2 py-0.5 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-700" title="Postare de grup"></span>
                     <span id="panel-status" class="px-2 py-0.5 text-xs font-semibold rounded-full"></span>
                     <span id="panel-saved" class="text-[11px] text-slate-400 ml-auto">—</span>
                     <div class="flex items-center gap-1">
@@ -574,6 +572,21 @@ window.addEventListener('error', (e) => {
         if (d.error_message) {
             $('panel-error-wrap').classList.remove('hidden');
             $('panel-error').textContent = d.error_message;
+        }
+
+        // Fanout badge: show "FB+IG" / "FB+IG+Story" when this is a group post
+        const fo = $('panel-fanout');
+        if (d.fanout && d.fanout.length > 1) {
+            const platforms = [...new Set(d.fanout.map(p => p.platform))];
+            const hasStory = d.fanout.some(p => p.post_type === 'story');
+            const parts = [];
+            if (platforms.includes('facebook')) parts.push('FB');
+            if (platforms.includes('instagram')) parts.push('IG');
+            if (hasStory) parts.push('Story');
+            fo.textContent = '🔗 ' + parts.join('+');
+            fo.classList.remove('hidden');
+        } else {
+            fo.classList.add('hidden');
         }
 
         // Prompt (editable)
