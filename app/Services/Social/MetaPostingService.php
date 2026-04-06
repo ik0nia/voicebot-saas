@@ -12,6 +12,42 @@ class MetaPostingService
     private string $graphUrl = 'https://graph.facebook.com/v21.0';
 
     /**
+     * Verify that a post's image URL is still accessible before sending it to Meta.
+     * If it's 404/403/etc, regenerate the image in-place so we don't fail the publish
+     * over an expired CDN link.
+     */
+    private function ensureImageAvailable(SocialPost $post): bool
+    {
+        if (empty($post->image_url)) return true;
+
+        try {
+            $head = Http::timeout(10)->head($post->image_url);
+            if ($head->successful()) return true;
+            Log::warning('Image URL not reachable before publish, regenerating', [
+                'post_id' => $post->id, 'status' => $head->status(),
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Image HEAD check threw, regenerating', [
+                'post_id' => $post->id, 'error' => $e->getMessage(),
+            ]);
+        }
+
+        try {
+            $gemini = app(GeminiContentService::class);
+            $aspect = $post->post_type === 'story' ? '9:16' : '3:4';
+            $prompt = $post->image_prompt ?? ($post->metadata['topic'] ?? 'Sambla AI');
+            $image = $gemini->generateImage($prompt, $aspect);
+            if ($image && !empty($image['url'])) {
+                $post->update(['image_url' => $image['url']]);
+                return true;
+            }
+        } catch (\Throwable $e) {
+            Log::error('Image regen on stale URL failed', ['post_id' => $post->id, 'error' => $e->getMessage()]);
+        }
+        return false;
+    }
+
+    /**
      * Publish a post to Facebook page
      */
     public function publishToFacebook(SocialPost $post, SocialAccount $account): bool
@@ -29,6 +65,7 @@ class MetaPostingService
 
             // If has image, use photos endpoint
             if ($post->image_url) {
+                $this->ensureImageAvailable($post);
                 $response = Http::timeout(30)->post(
                     "{$this->graphUrl}/{$account->platform_id}/photos",
                     array_merge($params, ['url' => $post->image_url])
@@ -78,7 +115,8 @@ class MetaPostingService
         }
 
         try {
-            // Step 1: Create media container
+            // Step 1: Create media container (pre-publish image availability check)
+            $this->ensureImageAvailable($post);
             $caption = $post->content;
 
             $container = Http::timeout(30)->post("{$this->graphUrl}/{$account->platform_id}/media", [

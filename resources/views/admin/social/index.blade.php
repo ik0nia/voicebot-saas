@@ -121,9 +121,13 @@
                     </label>
                     <span class="text-xs text-slate-500">{{ $posts->total() }} postări</span>
                 </div>
-                <div id="bulkBar" class="hidden items-center gap-2">
+                <div id="bulkBar" class="hidden items-center gap-2 flex-wrap">
                     <span id="bulkCount" class="text-xs font-semibold text-slate-700">0 selectate</span>
                     <button type="button" onclick="bulkAction('publish')" class="px-2 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700">Publică</button>
+                    <div class="flex items-center gap-1">
+                        <input type="datetime-local" id="bulkRescheduleAt" class="rounded border-slate-300 text-xs px-2 py-1">
+                        <button type="button" onclick="bulkAction('reschedule')" class="px-2 py-1 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700">Mută</button>
+                    </div>
                     <button type="button" onclick="bulkAction('delete')" class="px-2 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700">Șterge</button>
                 </div>
             </div>
@@ -233,7 +237,11 @@
 
                     {{-- Content editor --}}
                     <div>
-                        <label class="text-xs font-semibold text-slate-500 uppercase">Text postare</label>
+                        <div class="flex items-center justify-between">
+                            <label class="text-xs font-semibold text-slate-500 uppercase">Text postare</label>
+                            <button id="panel-undo-text" type="button" onclick="undoTextRegen()" class="hidden text-[11px] text-amber-600 hover:text-amber-800">↶ revino la text-ul anterior</button>
+                        </div>
+                        <div id="panel-text-diff" class="hidden mt-1 text-xs text-slate-500 bg-amber-50 border border-amber-200 rounded p-2 leading-relaxed"></div>
                         <textarea id="panel-content" rows="8"
                                   class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-red-500 focus:ring-red-500"
                                   placeholder="Textul postării..."></textarea>
@@ -402,6 +410,9 @@
         $('panel-image').removeAttribute('src');
         $('panel-image-wrap').classList.add('hidden');
         $('panel-content').value = '';
+        $('panel-text-diff').classList.add('hidden');
+        $('panel-undo-text').classList.add('hidden');
+        lastTextBeforeRegen = null;
         $('panel-saved').textContent = 'Se încarcă...';
         $('panel-error-wrap').classList.add('hidden');
         $('panel-external-wrap').classList.add('hidden');
@@ -576,10 +587,12 @@
         }
     }
 
+    let lastTextBeforeRegen = null;
     async function regenText() {
         if (!currentId) return;
         $('btn-regen-txt').disabled = true;
         const prev = $('panel-content').value;
+        lastTextBeforeRegen = prev;
         $('panel-content').value = 'Se generează text nou...';
         $('panel-content').disabled = true;
         try {
@@ -589,8 +602,9 @@
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Eroare');
             $('panel-content').value = data.content;
+            renderTextDiff(prev, data.content);
+            $('panel-undo-text').classList.remove('hidden');
             toast('Text nou');
-            openPost(currentId);
         } catch (e) {
             $('panel-content').value = prev;
             toast(e.message);
@@ -599,6 +613,35 @@
             $('panel-content').disabled = false;
         }
     }
+
+    // Word-level diff: highlights words in NEW that didn't appear in OLD.
+    // Purely client-side, no dependencies. Good enough for short social posts.
+    function renderTextDiff(oldText, newText) {
+        const oldWords = new Set((oldText || '').toLowerCase().split(/\s+/).filter(Boolean));
+        const escape = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const highlighted = (newText || '').split(/(\s+)/).map(token => {
+            if (/^\s+$/.test(token)) return token;
+            const key = token.toLowerCase().replace(/[.,!?;:()"]/g, '');
+            if (!key) return escape(token);
+            return oldWords.has(key)
+                ? escape(token)
+                : `<mark class="bg-amber-200 rounded px-0.5">${escape(token)}</mark>`;
+        }).join('');
+        const el = $('panel-text-diff');
+        el.innerHTML = '<b class="text-amber-700">Modificări:</b> ' + highlighted;
+        el.classList.remove('hidden');
+    }
+
+    async function undoTextRegen() {
+        if (lastTextBeforeRegen === null || !currentId) return;
+        const restored = lastTextBeforeRegen;
+        $('panel-content').value = restored;
+        $('panel-text-diff').classList.add('hidden');
+        $('panel-undo-text').classList.add('hidden');
+        lastTextBeforeRegen = null;
+        scheduleAutosave();
+    }
+    window.undoTextRegen = undoTextRegen;
 
     async function duplicatePost() {
         if (!currentId) return;
@@ -728,11 +771,17 @@
     async function bulkAction(action) {
         const ids = Array.from(document.querySelectorAll('.post-check:checked')).map(c => +c.value);
         if (!ids.length) return;
+        const payload = { action, ids };
+        if (action === 'reschedule') {
+            const when = $('bulkRescheduleAt').value;
+            if (!when) { toast('Alege data și ora pentru mutare'); return; }
+            payload.scheduled_at = when;
+        }
         if (action === 'delete' && !confirm(`Ștergi ${ids.length} postări?`)) return;
         const res = await fetch('/admin/social/bulk', {
             method: 'POST',
             headers: { 'X-CSRF-TOKEN': csrf, 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ action, ids }),
+            body: JSON.stringify(payload),
         });
         const data = await res.json();
         if (res.ok) {
