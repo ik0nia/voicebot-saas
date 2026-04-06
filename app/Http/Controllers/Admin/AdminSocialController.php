@@ -244,10 +244,13 @@ class AdminSocialController extends Controller
         $topic = $post->metadata['topic'] ?? $request->input('topic', 'Sambla AI assistant');
         $cta = $post->metadata['cta'] ?? 'Află mai multe → sambla.ro';
         $avoidance = SocialRejection::buildAvoidancePrompt($post->platform);
+        $instructions = trim((string) $request->input('instructions', ''));
 
         $prompt = "Generează un post social media SCURT și PUTERNIC pentru {$post->platform}.\n\n"
             . "SUBIECT: {$topic}\n"
             . "CALL TO ACTION: {$cta}\n\n"
+            . "TEXT CURENT (de îmbunătățit):\n{$post->content}\n\n"
+            . ($instructions !== '' ? "INSTRUCȚIUNI SPECIFICE DE LA USER (prioritate maximă):\n{$instructions}\n\n" : '')
             . "REGULI:\n- Max 150 cuvinte\n- Primul rând: hook puternic\n- Ton: profesional dar accesibil\n- Limba: română\n- Emoji-uri moderate (2-4)\n- Termină cu CTA clar\n- NU folosi hashtag-uri\n\n"
             . ($avoidance ? "\n{$avoidance}\n\n" : '')
             . 'Returnează JSON: {"content": "textul postării"}';

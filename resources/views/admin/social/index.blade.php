@@ -323,10 +323,28 @@
                         </div>
                     </div>
 
-                    {{-- Image prompt readonly --}}
-                    <details id="panel-prompt-wrap">
-                        <summary class="text-xs font-semibold text-slate-500 uppercase cursor-pointer">Prompt imagine</summary>
-                        <p id="panel-image-prompt" class="mt-1 text-xs text-slate-600 bg-slate-50 border border-slate-200 p-2 rounded font-mono"></p>
+                    {{-- Image prompt editable + regen with custom prompt --}}
+                    <details id="panel-prompt-wrap" open>
+                        <summary class="text-xs font-semibold text-slate-500 uppercase cursor-pointer">Prompt imagine (editabil)</summary>
+                        <textarea id="panel-image-prompt" rows="3"
+                                  class="mt-1 w-full rounded-lg border-slate-300 text-xs font-mono focus:border-red-500 focus:ring-red-500"
+                                  placeholder="Ce să conțină imaginea... (ex: birou modern, laptop, culori calde)"></textarea>
+                        <button type="button" onclick="regenImage()" id="btn-regen-img-prompt"
+                                class="mt-1 w-full px-3 py-2 text-xs font-semibold text-white bg-slate-800 rounded hover:bg-slate-900 disabled:opacity-50">
+                            🖼️ Generează imagine nouă cu acest prompt
+                        </button>
+                    </details>
+
+                    {{-- Text regen instructions --}}
+                    <details class="mt-2">
+                        <summary class="text-xs font-semibold text-slate-500 uppercase cursor-pointer">Instrucțiuni text nou</summary>
+                        <textarea id="panel-text-instructions" rows="2"
+                                  class="mt-1 w-full rounded-lg border-slate-300 text-xs focus:border-red-500 focus:ring-red-500"
+                                  placeholder="Ex: mai scurt, ton mai entuziast, menționează prețul..."></textarea>
+                        <button type="button" onclick="regenText()"
+                                class="mt-1 w-full px-3 py-2 text-xs font-semibold text-white bg-slate-800 rounded hover:bg-slate-900 disabled:opacity-50">
+                            ✏️ Regenerează textul
+                        </button>
                     </details>
 
                     {{-- External link --}}
@@ -558,8 +576,10 @@ window.addEventListener('error', (e) => {
             $('panel-error').textContent = d.error_message;
         }
 
-        // Prompt
-        $('panel-image-prompt').textContent = d.image_prompt || '—';
+        // Prompt (editable)
+        $('panel-image-prompt').value = d.image_prompt || '';
+        $('panel-image-prompt').readOnly = !d.is_editable;
+        $('panel-text-instructions').value = '';
 
         // External
         if (d.external_url) {
@@ -642,8 +662,11 @@ window.addEventListener('error', (e) => {
         $('btn-regen-img').disabled = true;
         $('panel-image-loading').classList.remove('hidden');
         try {
+            const customPrompt = ($('panel-image-prompt').value || '').trim();
             const res = await fetch(`/admin/social/post/${currentId}/regenerate-image`, {
-                method: 'POST', headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json', 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: customPrompt }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Eroare');
@@ -667,8 +690,11 @@ window.addEventListener('error', (e) => {
         $('panel-content').value = 'Se generează text nou...';
         $('panel-content').disabled = true;
         try {
+            const instructions = ($('panel-text-instructions').value || '').trim();
             const res = await fetch(`/admin/social/post/${currentId}/regenerate-text`, {
-                method: 'POST', headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json', 'Content-Type': 'application/json' },
+                body: JSON.stringify({ instructions }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Eroare');
