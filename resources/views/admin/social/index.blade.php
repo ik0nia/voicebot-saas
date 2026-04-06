@@ -827,6 +827,15 @@
         }, { passive: true });
     });
 
+    // ---------- Click delegation fallback (robust if inline onclick is blocked/stale) ----------
+    document.addEventListener('click', (e) => {
+        const row = e.target.closest('.post-row');
+        if (!row) return;
+        if (e.target.closest('input,button,a')) return;
+        const id = +row.dataset.postId;
+        if (id) openPost(id, e);
+    });
+
     // ---------- Boot ----------
     // Expose the small handful we need from HTML attributes.
     window.openPost = openPost;
