@@ -4,7 +4,7 @@
 //   - /admin/social navigation: network-first, fallback to cache, then offline page
 //   - Everything else: network pass-through
 
-const VERSION = 'sambla-social-v2';
+const VERSION = 'sambla-social-v3';
 const STATIC_CACHE = `${VERSION}-static`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 const OFFLINE_URL = '/offline.html';
@@ -52,24 +52,16 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  // Navigation → network-first, cached fallback, then offline page
+  // Navigation → /admin/social is ALWAYS fresh, bypass SW caching entirely
+  // to avoid stale HTML/JS after deploys. Other navigations pass through.
   if (req.mode === 'navigate') {
-    event.respondWith(
-      fetch(req)
-        .then((res) => {
-          // Only cache /admin/social navigations
-          if (url.pathname.startsWith('/admin/social')) {
-            const copy = res.clone();
-            caches.open(RUNTIME_CACHE).then((c) => c.put(req, copy));
-          }
-          return res;
-        })
-        .catch(async () => {
-          const cached = await caches.match(req);
-          if (cached) return cached;
-          return caches.match(OFFLINE_URL);
-        })
-    );
+    if (url.pathname.startsWith('/admin/social')) {
+      event.respondWith(
+        fetch(req).catch(() => caches.match(OFFLINE_URL))
+      );
+      return;
+    }
+    // Default: no SW interception for other navigations
     return;
   }
 
