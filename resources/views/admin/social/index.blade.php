@@ -175,7 +175,7 @@
 
                 {{-- Action buttons (only when editable) --}}
                 <div id="modal-actions" class="hidden border-t border-slate-200 pt-4 space-y-3">
-                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         <button type="button" onclick="regenImage()" class="px-3 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">
                             🖼️ Imagine nouă
                         </button>
@@ -184,6 +184,9 @@
                         </button>
                         <button type="button" onclick="showRejectForm()" class="px-3 py-2.5 text-sm font-medium text-red-700 bg-white border border-red-300 rounded-lg hover:bg-red-50">
                             ❌ Refuză & învață
+                        </button>
+                        <button type="button" onclick="deletePost()" class="px-3 py-2.5 text-sm font-semibold text-white bg-red-600 border border-red-600 rounded-lg hover:bg-red-700">
+                            🗑️ Șterge
                         </button>
                     </div>
 
@@ -344,6 +347,23 @@ async function confirmReject() {
             location.reload();
         } else {
             alert(data.error || 'Eroare');
+        }
+    } catch (e) { alert('Eroare: ' + e.message); }
+}
+async function deletePost() {
+    if (!currentPostId) return;
+    if (!confirm('Sigur vrei să ștergi postarea? Acțiunea nu poate fi anulată.')) return;
+    try {
+        const res = await fetch(`/admin/social/post/${currentPostId}`, {
+            method: 'DELETE',
+            headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+        });
+        if (res.ok || res.redirected) {
+            closeSocialPost();
+            location.reload();
+        } else {
+            const data = await res.json().catch(() => ({}));
+            alert(data.error || 'Eroare la ștergere');
         }
     } catch (e) { alert('Eroare: ' + e.message); }
 }
