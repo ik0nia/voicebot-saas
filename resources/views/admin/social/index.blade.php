@@ -177,12 +177,13 @@
             @endif
         </div>
 
-        {{-- RIGHT: slide-over panel (desktop: always visible sticky; mobile: fixed drawer) --}}
+        {{-- RIGHT: side panel (desktop sticky; mobile fixed bottom sheet, toggled by JS) --}}
         <aside id="postPanel"
-               class="hidden lg:sticky lg:top-4 lg:block lg:w-[520px] lg:shrink-0
+               class="lg:sticky lg:top-4 lg:w-[560px] lg:shrink-0 lg:flex lg:flex-col
+                      hidden lg:block
                       fixed inset-x-0 bottom-0 lg:inset-auto z-40
                       bg-white lg:rounded-xl lg:border lg:border-slate-200 lg:shadow-sm
-                      max-h-[90vh] lg:max-h-[calc(100vh-8rem)] overflow-hidden flex flex-col">
+                      max-h-[92vh] lg:max-h-[calc(100vh-7rem)] overflow-hidden">
             {{-- Empty state --}}
             <div id="panelEmpty" class="flex-1 flex items-center justify-center p-10 text-center text-sm text-slate-400">
                 <div>
@@ -213,10 +214,12 @@
                 </div>
 
                 <div class="p-4 space-y-4">
-                    {{-- Image --}}
-                    <div id="panel-image-wrap" class="relative bg-slate-100 rounded-lg overflow-hidden hidden">
-                        <img id="panel-image" src="" alt="" class="w-full max-h-80 object-contain bg-slate-900">
-                        <div id="panel-image-loading" class="hidden absolute inset-0 flex items-center justify-center bg-white/80 text-sm text-slate-600">
+                    {{-- Image: neutral canvas, centered, respects native aspect ratio --}}
+                    <div id="panel-image-wrap" class="relative hidden">
+                        <div class="flex items-center justify-center bg-slate-50 rounded-lg border border-slate-200 overflow-hidden" style="min-height: 180px;">
+                            <img id="panel-image" src="" alt="" class="block max-w-full max-h-[55vh] h-auto w-auto object-contain">
+                        </div>
+                        <div id="panel-image-loading" class="hidden absolute inset-0 flex items-center justify-center bg-white/85 rounded-lg text-sm text-slate-600">
                             <svg class="animate-spin w-5 h-5 mr-2 text-slate-500" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" opacity=".25"/><path fill="currentColor" d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"/></svg>
                             Se generează...
                         </div>
@@ -390,6 +393,8 @@
         // Highlight row
         document.querySelectorAll('.post-row').forEach(r => r.classList.toggle('bg-blue-50', +r.dataset.postId === id));
 
+        // Show panel on mobile (desktop is always visible)
+        $('postPanel').classList.remove('hidden');
         $('panelEmpty').classList.add('hidden');
         $('panelContent').classList.remove('hidden');
 
@@ -428,8 +433,13 @@
         currentId = null;
         currentData = null;
         syncUrl(null);
-        $('panelEmpty').classList.remove('hidden');
-        $('panelContent').classList.add('hidden');
+        // On mobile, fully hide the panel; on desktop, show the empty state.
+        if (window.innerWidth < 1024) {
+            $('postPanel').classList.add('hidden');
+        } else {
+            $('panelEmpty').classList.remove('hidden');
+            $('panelContent').classList.add('hidden');
+        }
         document.querySelectorAll('.post-row').forEach(r => r.classList.remove('bg-blue-50'));
     }
 
