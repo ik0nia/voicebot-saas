@@ -129,13 +129,22 @@ class GenerateDailyBatch extends Command
             $startTime = $now;
         }
 
+        // For draft buffer generation we don't actually schedule anything,
+        // so the time window is irrelevant — just give it a sane fake span
+        // so the rest of the loop doesn't divide by zero. This unblocks
+        // generation in the evening / night when the default 09:00-20:00
+        // window is already in the past.
+        if ($draftsOnly && $endTime->lte($startTime)) {
+            $endTime = $startTime->copy()->addMinutes(max(60, $count * 5));
+        }
+
         if ($endTime->lte($startTime)) {
             $this->error("End time {$untilTime} is before start time {$startTime->format('H:i')} on {$targetDate->toDateString()}.");
             return self::FAILURE;
         }
 
         $minutesAvailable = $startTime->diffInMinutes($endTime);
-        $interval = (int) floor($minutesAvailable / $count);
+        $interval = (int) floor($minutesAvailable / max(1, $count));
 
         $this->info("Generating {$count} posts on {$targetDate->toDateString()}, every ~{$interval} min from {$startTime->format('H:i')} to {$endTime->format('H:i')}");
         $this->newLine();
