@@ -23,82 +23,84 @@ class GenerateDailyBatch extends Command
     protected $description = 'Generate a batch of scheduled social media posts with CTA-focused images';
 
     /**
-     * CTA-focused post topics — each one promotes Sambla with a clear call-to-action
+     * Tiny seed list of REAL Sambla features (mirrors home.blade.php).
+     * Used only as raw material — every topic, CTA and visual concept
+     * is generated FRESH by the AI on each call so the feed never repeats.
      */
-    private array $ctaTopics = [
-        [
-            'topic' => 'Chatbot-ul care nu doarme niciodată. Clienții tăi primesc răspunsuri instant, 24/7, chiar și la 3 dimineața. Zero timpi de așteptare.',
-            'cta' => 'Încearcă gratuit',
-            'image_concept' => 'A glowing chat bubble icon floating above a sleeping city at night, warm ambient light from the chat bubble, clean minimal composition',
-            'visual_text' => 'Sambla — 24/7',
-        ],
-        [
-            'topic' => 'Setup în 10 minute, fără o linie de cod. Încarci documentele, personalizezi răspunsurile, și ești live. Atât de simplu.',
-            'cta' => 'Începe acum — 10 minute',
-            'image_concept' => 'A minimal timer/stopwatch showing 10 minutes with a green checkmark, clean white background, one red accent element',
-            'visual_text' => '10 min setup',
-        ],
-        [
-            'topic' => 'Voicebot-ul Sambla răspunde la telefon exact ca un angajat real. Voce naturală, înțelege context, vorbește română nativă.',
-            'cta' => 'Ascultă demo-ul',
-            'image_concept' => 'A modern smartphone with sound waves emanating from it in red gradient, minimal clean background, professional',
-            'visual_text' => 'Sambla Voice',
-        ],
-        [
-            'topic' => 'Transformă vizitatorii site-ului în clienți. Chatbot-ul Sambla califică lead-uri automat și le trimite echipei tale de vânzări.',
-            'cta' => 'Crește-ți vânzările',
-            'image_concept' => 'An upward arrow made of small chat bubbles, showing growth/conversion, red and white color scheme, minimal',
-            'visual_text' => '+42% conversii',
-        ],
-        [
-            'topic' => 'Anti-halucinare: AI-ul Sambla răspunde DOAR din datele tale. Nu inventează prețuri, nu promite ce nu poate livra.',
-            'cta' => 'Vezi cum funcționează',
-            'image_concept' => 'A shield icon with a checkmark inside, representing trust and accuracy, clean minimal design with red accent',
-            'visual_text' => '100% acurat',
-        ],
-        [
-            'topic' => 'Integrare WooCommerce: chatbot-ul verifică stocuri, recomandă produse și ajută la checkout. Vânzări 24/7 pe pilot automat.',
-            'cta' => 'Conectează magazinul',
-            'image_concept' => 'A shopping cart icon connected to a chat bubble with a subtle link/chain, ecommerce meets AI, clean modern',
-            'visual_text' => 'Shop + AI',
-        ],
-        [
-            'topic' => 'GDPR compliant din prima zi. Date izolate per client, hosting 100% în România, fără transfer de date în afara UE.',
-            'cta' => 'Află mai multe',
-            'image_concept' => 'A padlock icon with EU stars and Romanian flag colors subtly integrated, trust and security theme, minimal clean',
-            'visual_text' => 'GDPR ready',
-        ],
-        [
-            'topic' => 'Reduce costurile de suport cu 40%. Un singur chatbot Sambla face treaba a 3 agenți. Fără concedii, fără pauze.',
-            'cta' => 'Calculează economiile',
-            'image_concept' => 'A simple downward cost arrow next to an upward quality arrow, showing cost reduction with quality increase, red accents on white',
-            'visual_text' => '-40% costuri',
-        ],
-        [
-            'topic' => 'Analytics în timp real: vezi ce întreabă clienții, ce îi frustrează, unde pierzi vânzări. Transformă conversațiile în insight-uri.',
-            'cta' => 'Descoperă insight-urile',
-            'image_concept' => 'A clean dashboard mockup showing simple bar charts and a magnifying glass, data analytics theme, modern minimal',
-            'visual_text' => 'Smart analytics',
-        ],
-        [
-            'topic' => 'Planuri de la 99€/lună. Fără contracte pe termen lung, fără costuri ascunse. Anulezi oricând. Începi cu trial gratuit.',
-            'cta' => 'Începe gratuit',
-            'image_concept' => 'A price tag showing 99€ with a "start free" badge, inviting and clean, red and white, minimal premium feel',
-            'visual_text' => 'De la 99€/lună',
-        ],
-        [
-            'topic' => 'Sambla învață din fiecare conversație. Cu cât vorbește mai mult cu clienții tăi, cu atât devine mai bun. Auto-îmbunătățire continuă.',
-            'cta' => 'Vezi evoluția AI',
-            'image_concept' => 'A brain icon connected to ascending dots/nodes showing learning progression, AI growth theme, clean red accents',
-            'visual_text' => 'AI care învață',
-        ],
-        [
-            'topic' => 'Migrezi de la alt chatbot? Sambla importă baza de cunoștințe existentă în câteva minute. Tranziție fără downtime.',
-            'cta' => 'Migrează acum',
-            'image_concept' => 'Two chat bubbles with an arrow between them showing migration/transition, seamless and simple, clean design',
-            'visual_text' => 'Easy switch',
-        ],
+    private array $featureSeeds = [
+        'Bază de cunoștințe inteligentă: încarci PDF, DOCX, CSV sau link de site, AI-ul citește și organizează singur.',
+        'Voicebot cu voce naturală în română, numere RO, transcriere live, sentiment analizat în timpul apelului.',
+        'Chat widget premium: dark mode, carduri produse, link preview, asistență proactivă pe pagini de produs.',
+        'Integrare WooCommerce nativă: căutare semantică, verificare stoc live, add-to-cart din chat, tracking AWB.',
+        'Pipeline de lead-uri: captare automată, scoring, stadii nou → contactat → calificat → programat → câștigat.',
+        'Programări și callback-uri pe pilot automat: verifică agenda, confirmă, trimite reminder.',
+        'Anti-halucinare: răspunde DOAR din datele tale, nu inventează prețuri sau termene.',
+        'Detectează întrebările fără răspuns și generează FAQ-uri automat ca să închidă gap-urile.',
+        'Sentiment analizat live: alertă instant când un client e supărat sau foarte mulțumit.',
+        'Escaladare inteligentă la operator uman când conversația devine prea complexă sau sensibilă.',
+        'Voce + Chat, același creier: clientul începe pe site, continuă la telefon, contextul se păstrează.',
+        'Dashboard live cu health score per bot, gap analysis, recomandări automate de conținut.',
+        'Hosting 100% în România, GDPR by default, date izolate per cont, fără transfer în afara UE.',
+        'Setup în minute, fără cod: încarci documentele, personalizezi tonul, ești live.',
+        'Funcționează 24/7, zero pauze, zero clienți pierduți pentru că „nu a răspuns nimeni".',
+        'Migrare ușoară de pe alt chatbot: importăm baza de cunoștințe existentă fără downtime.',
+        'Reduce munca repetitivă a echipei: status comandă, retururi, FAQ-uri — toate automate.',
+        'Răspunsuri cu surse: arată din ce document provine fiecare informație. Verificabil, nu black-box.',
     ];
+
+    /**
+     * Ask the AI for ONE fresh post idea built around two random feature
+     * seeds. Returns the same shape the rest of the pipeline expects.
+     */
+    private function generateTopicIdea(): ?array
+    {
+        $seeds = collect($this->featureSeeds)->shuffle()->take(2)->values()->all();
+        $seedsBlock = "- " . implode("\n- ", $seeds);
+
+        $prompt = "Ești copywriter pentru Sambla, platformă românească de chatbot și voicebot AI pentru afaceri mici și mijlocii (e-commerce, servicii). Audiența: antreprenori și manageri români care nu sunt tehnici. Tonul: prietenos, cald, direct, fără jargon corporate.\n\n"
+            . "Inspiră-te din UNA dintre aceste funcționalități reale (poți combina două dacă se leagă natural):\n{$seedsBlock}\n\n"
+            . "Generează o IDEE NOUĂ și concretă de postare. Pune accent pe BENEFICIUL pentru proprietarul afacerii (timp câștigat, clienți câștigați, bani economisiți, liniște), nu pe descrieri tehnice. Fără clișee.\n\n"
+            . "Returnează DOAR JSON valid, exact în acest format:\n"
+            . '{"topic":"o propoziție-două care descriu unghiul postării — concret, nu generic","cta":"un îndemn scurt în română (2-4 cuvinte)","visual_text":"1-3 cuvinte SCURTE și UZUALE în română (fără cratimă, fără cifre lungi, fără termeni tehnici); ceva ce orice om înțelege instant — ex: «mai mulți clienți», «zero stres», «răspunde mereu»","image_concept":"o scenă vizuală bogată (în engleză, pentru generatorul de imagini): mediu real, mockup de device, diorama 3D sau ilustrație flat — descrie mediul, lumina, obiectele. NICIODATĂ «simple icon on white background», «minimal flat icon», «clean white with one icon». Vrem scene cu profunzime și caracter."}';
+
+        try {
+            $response = \OpenAI\Laravel\Facades\OpenAI::chat()->create([
+                'model' => 'gpt-4o-mini',
+                'messages' => [
+                    ['role' => 'system', 'content' => 'Generezi idei de postări social media pentru un brand românesc de AI conversațional. Răspunzi exclusiv în JSON valid, în limba română pentru text și engleză pentru image_concept.'],
+                    ['role' => 'user', 'content' => $prompt],
+                ],
+                'max_tokens' => 500,
+                'temperature' => 0.95,
+                'response_format' => ['type' => 'json_object'],
+            ]);
+
+            $raw = $response->choices[0]->message->content ?? '';
+            $parsed = json_decode($raw, true) ?: [];
+
+            if (empty($parsed['topic']) || empty($parsed['cta'])) {
+                return null;
+            }
+
+            // Hard cap visual_text to 3 short words — graphics fail with
+            // longer strings and we want catchy, not paragraphs.
+            $visualText = trim((string) ($parsed['visual_text'] ?? ''));
+            $words = preg_split('/\s+/', $visualText) ?: [];
+            if (count($words) > 3) {
+                $visualText = implode(' ', array_slice($words, 0, 3));
+            }
+
+            return [
+                'topic' => $parsed['topic'],
+                'cta' => $parsed['cta'],
+                'visual_text' => $visualText ?: 'mai mulți clienți',
+                'image_concept' => $parsed['image_concept'] ?? 'A warm cinematic editorial photo of a Romanian small business owner happy at their desk, soft window light, depth of field.',
+            ];
+        } catch (\Throwable $e) {
+            $this->warn("  Topic idea generation failed: {$e->getMessage()}");
+            return null;
+        }
+    }
 
     public function handle(): int
     {
@@ -139,20 +141,19 @@ class GenerateDailyBatch extends Command
         $this->newLine();
 
         $gemini = app(GeminiContentService::class);
-        // Cycle through topics if count > topic count (with re-shuffle each cycle).
-        $allTopics = collect($this->ctaTopics);
-        $topics = collect();
-        while ($topics->count() < $count) {
-            $topics = $topics->concat($allTopics->shuffle());
-        }
-        $topics = $topics->take($count)->values();
 
         $created = 0;
-        foreach ($topics as $i => $topicData) {
+        for ($i = 0; $i < $count; $i++) {
+            $topicData = $this->generateTopicIdea();
+            if (!$topicData) {
+                $this->warn("Skipping post " . ($i + 1) . ": topic idea generation failed");
+                continue;
+            }
+
             $scheduledAt = $startTime->copy()->addMinutes($interval * ($i + 1));
             $this->components->task(
                 "Post " . ($i + 1) . "/{$count} @ {$scheduledAt->format('H:i')} — {$topicData['visual_text']}",
-                function () use ($topicData, $scheduledAt, $gemini, $fbAccount, $igAccount, $platformOption, $dryRun, &$created) {
+                function () use ($i, $topicData, $scheduledAt, $gemini, $fbAccount, $igAccount, $platformOption, $dryRun, &$created) {
                     // Generate text content
                     $textResult = $this->generateText($gemini, $topicData);
                     if (!$textResult) return false;
@@ -281,31 +282,34 @@ class GenerateDailyBatch extends Command
         $hookInstruction = $this->hookPatterns[$hookKey];
 
         $prompt = ($avoidance ? $avoidance . "\n\n" : '')
-            . "Scrii un post de social media pentru Sambla, pe Facebook/Instagram. Publicul e antreprenori și manageri români (IMM, e-commerce, servicii). Vorbesc românește zilnic, nu consumă conținut de marketing în engleză.\n\n"
+            . "Scrii un post de social media pentru Sambla, pe Facebook/Instagram. Publicul: antreprenori și manageri români din IMM, e-commerce, servicii — oameni ocupați, NU tehnici. Vorbesc românește zilnic.\n\n"
             . "SUBIECT: {$topicData['topic']}\n"
             . "CALL TO ACTION: {$topicData['cta']}\n\n"
             . "PATTERN DE HOOK ({$hookKey}): {$hookInstruction}\n\n"
-            . "STRUCTURĂ:\n"
-            . "1. Hook (1-2 rânduri, după pattern-ul de mai sus).\n"
-            . "2. Tensiune — expune problema concret, nu abstract. Dă un exemplu palpabil din viața unui business românesc.\n"
-            . "3. Rezolvare — cum intră Sambla în scenă. O propoziție, nu un pitch.\n"
-            . "4. CTA-ul clar: {$topicData['cta']} → sambla.ro\n\n"
+            . "STRUCTURĂ (fiecare element pe RÂNDUL LUI, cu LINIE GOALĂ între blocuri ca să respire pe mobil):\n"
+            . "1. Hook scurt (1-2 rânduri).\n"
+            . "2. Problema reală: un exemplu palpabil din viața unui business românesc, în 2-3 rânduri scurte.\n"
+            . "3. Cum ajută Sambla — DOAR în limbaj prietenos, NU tehnic. Spune CE CÂȘTIGĂ omul (timp, clienți, liniște, bani), nu CUM funcționează tehnologia. Maxim 2 rânduri.\n"
+            . "4. (Opțional) O listă scurtă de 2-3 beneficii concrete, fiecare pe rândul lui, cu un emoji la început (ex: ✅ răspunde și noaptea / 🧘 echipa ta respiră / 💰 lead-uri captate singur).\n"
+            . "5. CTA prietenos: {$topicData['cta']} → sambla.ro\n\n"
             . "TON:\n"
-            . "- Scrii ca un om, nu ca un copywriter. Propoziții scurte, naturale.\n"
-            . "- EVITĂ absolut: 'revoluționar', 'inovator', 'game-changer', 'soluție completă', 'scalabilă', 'next-level', 'transformă modul în care', 'puterea AI-ului', expresii din decks corporate.\n"
-            . "- EVITĂ anglicismele gratuite (game-changer, must-have, insights, engagement) când există echivalent românesc.\n"
-            . "- Nu promite minuni. Subpromite, nu suprapromite.\n"
-            . "- Dacă menționezi prețuri/procente, să fie plauzibile.\n\n"
-            . "FORMAT:\n"
-            . "- Max 120 cuvinte total.\n"
-            . "- Emoji: 0-2, folosite doar dacă adaugă sens (nu decorativ).\n"
-            . "- Fără hashtag-uri.\n"
-            . "- Paragrafe scurte, cu spațiu între ele (citeste-se pe mobil).\n\n"
-            . "BRAND SAMBLA:\n"
-            . "- Platformă românească (hosting RO, GDPR, echipă din RO) de AI conversațional: chatbot + voicebot.\n"
-            . "- Personalitate: direct, practic, anti-BS, ușor contrar. Nu 'silicon-valley hype'.\n"
-            . "- Vorbește ca un fondator care construiește, nu ca un agent de vânzări.\n\n"
-            . 'Returnează JSON: {"content": "textul postării"}';
+            . "- Cald, prietenos, conversațional. Ca și cum i-ai povesti unui prieten antreprenor.\n"
+            . "- Propoziții scurte. Cuvinte UZUALE în română — orice cuvânt rar sau tehnic îl înlocuiești cu unul simplu.\n"
+            . "- Pune BENEFICIUL în prim-plan, nu funcționalitatea.\n"
+            . "- INTERZIS: «revoluționar», «inovator», «game-changer», «soluție completă», «scalabil», «next-level», «transformă modul în care», «puterea AI-ului», «empowering», «insights», «engagement», «leverage», «seamless», anglicisme gratuite, jargon corporate.\n"
+            . "- Subpromite, nu suprapromite. Plauzibil.\n\n"
+            . "FORMAT VIZUAL (foarte important — postul trebuie să arate ‘airy’ pe mobil):\n"
+            . "- Max 110 cuvinte total.\n"
+            . "- Emoji: 4-7 emoji-uri, distribuite natural prin text — NU înghesuite la final. Folosește emoji care au sens (📞 ☎️ 💬 💼 🛒 ⏰ 🌙 ✅ 🧠 🤝 🚀 🎯 ⚡ 💡 🇷🇴). Nu decorativ pur.\n"
+            . "- Paragrafe foarte scurte (1-3 rânduri), separate prin LINIE GOALĂ (\\n\\n).\n"
+            . "- Lista de beneficii cu emoji la început, fiecare pe linie nouă.\n"
+            . "- FĂRĂ hashtag-uri (zero, nici măcar la final).\n"
+            . "- FĂRĂ link-uri brute, doar mențiunea «sambla.ro» în CTA.\n\n"
+            . "BRAND SAMBLA (folosește, nu cita textual):\n"
+            . "- Platformă românească (hosting în România, GDPR, echipă RO) de chatbot și voicebot AI.\n"
+            . "- Funcționalități reale pe care le poți menționa NETEHNIC: răspunde 24/7, învață din documentele tale (PDF, contracte, FAQ-uri), preia apeluri telefonice cu voce naturală, captează lead-uri, programări automate, integrare cu magazinul WooCommerce, alertă când un client e supărat, escaladare la om când e cazul.\n"
+            . "- Vorbește ca un fondator prietenos, nu ca un agent de vânzări.\n\n"
+            . 'Returnează DOAR JSON: {"content": "textul postării cu \\n\\n între paragrafe"}';
 
         try {
             $response = \OpenAI\Laravel\Facades\OpenAI::chat()->create([
@@ -340,11 +344,12 @@ class GenerateDailyBatch extends Command
      * is a complete stylistic brief — not just a keyword.
      */
     private array $visualStyles = [
-        'editorial_photo' => "Editorial photography style. Real scene, cinematic lighting, shallow depth of field. Think high-end business magazine cover (Fast Company, Wired). Natural colors, one red accent object in frame. Human element if possible (hands, silhouette, workspace). NO illustrations, NO icons. Photo must look believable.",
-        'flat_illustration' => "Flat vector illustration, thick lines, 2-color palette (white + Sambla red #dc2626, maybe one muted grey). Large shapes, no gradients, playful but premium. Think Stripe/Linear marketing site illustrations. Generous negative space.",
-        'isometric_3d' => "Isometric 3D render, soft ambient occlusion, pastel tones with red (#dc2626) as the single saturated accent. Clean geometric objects arranged in a small diorama. Think Apple keynote slides. Soft shadows, no harsh lighting.",
-        'abstract_geometric' => "Abstract geometric composition. Bold shapes (circles, rectangles, arrows) in a rhythmic layout. Limited palette: off-white background, black, Sambla red. Swiss design / Bauhaus feel. Strong hierarchy, mathematical precision.",
-        'product_mockup' => "Realistic device mockup (phone OR laptop screen) showing a simple clean chat/voice interface. Soft studio lighting, neutral background, subtle reflections. One red accent element. Think Apple product photography. No visible text on screen beyond 1-2 short UI labels.",
+        'editorial_photo' => "Editorial photography, magazine-cover quality. Real scene with depth — workspace, café, shop, home office. Cinematic lighting, golden hour or soft window light, shallow depth of field, natural colors with ONE red accent object (a phone, a notebook, a chair). Human presence implied through hands, silhouette, half-frame face. Believable, lived-in. NEVER icons or vectors.",
+        'flat_illustration' => "Bold flat vector illustration, thick confident lines, 3-color palette (off-white + Sambla red #dc2626 + slate #1e293b). Characters with personality, real props (laptops, phones, packages, calendars). Stripe/Notion marketing-illustration quality. Generous negative space. Playful but premium. NEVER simple icons floating.",
+        'isometric_3d' => "Isometric 3D render of a small inhabited diorama — a tiny shop interior, a desk with monitors, a mini call-center, a cozy office. Soft ambient occlusion, pastel base tones with red (#dc2626) as the single saturated accent on one hero object. Multiple props, depth, perspective. Apple-keynote / Vectary quality. NEVER a single icon on empty background.",
+        'abstract_geometric' => "Bauhaus-style abstract geometric composition. Layered overlapping shapes with rhythm — bold circles, arcs, rectangles, diagonal lines. Off-white background, deep slate, Sambla red. Swiss-design hierarchy with one strong focal point. Designed, not random. Mathematical precision. NEVER a centered icon.",
+        'product_mockup' => "Photorealistic device mockup in a real environment — a phone in a hand at a café, a laptop on a wooden desk with coffee and plant, a desk phone in a warm office. Screen shows a subtle clean Sambla chat or voice UI with red accent. Soft studio + ambient lighting, depth of field, lifestyle product photography, not floating-on-white.",
+        'cinematic_workspace' => "Cinematic over-shoulder workspace shot. Real Romanian small-business setting — a flower shop, a small clinic, a boutique, a workshop. Owner working on a laptop or phone, soft warm light, shallow focus, one red accent in frame (a mug, a notebook). Documentary, lifestyle, believable. NEVER staged stock photo.",
     ];
 
     private function generateCtaImage(GeminiContentService $gemini, array $topicData): ?array
@@ -352,23 +357,20 @@ class GenerateDailyBatch extends Command
         $imageRejections = \App\Models\SocialRejection::query()
             ->whereIn('reason_category', ['image', 'visual', 'design'])
             ->latest()->limit(10)->pluck('feedback')->filter()->unique()->take(5)->implode(' | ');
-        $avoidLine = $imageRejections ? "CRITICAL - AVOID what user rejected before: {$imageRejections}. " : '';
+        $avoidLine = $imageRejections ? "CRITICAL — AVOID what user rejected before: {$imageRejections}. " : '';
 
         $styleKey = array_rand($this->visualStyles);
         $styleBrief = $this->visualStyles[$styleKey];
 
         $prompt = $avoidLine
-            . "Create a premium social media graphic for Sambla (Romanian AI platform). "
+            . "Create a premium 3:4 social media graphic for Sambla (Romanian AI chat & voice bot platform). "
             . "STYLE ({$styleKey}): {$styleBrief} "
-            . "SUBJECT METAPHOR: {$topicData['image_concept']} "
-            . "TEXT ON IMAGE: Maximum 3 words total, displayed cleanly as a headline: '{$topicData['visual_text']}'. "
-            . "STRICT TEXT RULES: "
-            . "- DO NOT write sentences, paragraphs, CTAs, URLs, or descriptions on the image. "
-            . "- DO NOT write the topic explanation on the image. "
-            . "- If text appears, it's only the 3-word headline above. "
-            . "BRAND LOGO: Place the Sambla logo (attached reference) in a top corner, sized small, with a subtle dark backing so it's readable on any background. "
-            . "COMPOSITION: Strong focal point, clear visual hierarchy, feels designed (not AI-slop). Generous whitespace. Premium, not busy. "
-            . "FORBIDDEN: stock photo clichés (handshakes, smiling people pointing at laptops), generic chat bubbles floating in space, cluttered 'infographic' layouts, gradient rainbows, fake testimonials, random startup buzzwords on screen. "
+            . "SUBJECT: {$topicData['image_concept']} "
+            . "TEXT ON IMAGE — VERY STRICT: Render EXACTLY this short Romanian phrase, MAX 3 words: '{$topicData['visual_text']}'. "
+            . "Display it clean and large as a single headline. NO other text, NO sentences, NO URLs, NO CTAs, NO topic explanation, NO captions. If you can't render Romanian diacritics cleanly, SKIP TEXT ENTIRELY rather than show garbled letters. "
+            . "BRAND LOGO: Place the Sambla logo (attached reference) in a top corner, sized small, with a subtle backing so it stays readable. "
+            . "COMPOSITION: Strong focal point, clear hierarchy, feels designed (not AI-slop). Generous whitespace. Premium, not busy. "
+            . "ABSOLUTELY FORBIDDEN: a single simple icon centered on a white/empty background; minimalist clip-art; cliché stock photos (handshakes, people in suits pointing at laptops, smiling diverse team); generic floating chat bubbles in empty space; cluttered 'infographic' layouts; gradient rainbows; fake testimonials; random startup buzzwords on screen. "
             . "ASPECT: 3:4 portrait for social feed.";
 
         return $gemini->generateImage($prompt, '3:4');
@@ -376,13 +378,18 @@ class GenerateDailyBatch extends Command
 
     private function storyPrompt(array $topicData): string
     {
-        return "Create a MINIMAL Instagram STORY graphic (9:16 portrait). "
-            . "HEADLINE (max 3 words): '{$topicData['visual_text']}' "
-            . "VISUAL: {$topicData['image_concept']} "
-            . "- Full-bleed vertical composition, large central visual element, generous top/bottom safe zones "
-            . "- Sambla logo (attached) in top-left with dark backing "
-            . "- White/light background, red (#dc2626) accents only "
-            . "- Premium, Apple-level minimalism, no long text blocks";
+        $styleKey = array_rand($this->visualStyles);
+        $styleBrief = $this->visualStyles[$styleKey];
+
+        return "Create a 9:16 vertical Instagram STORY graphic for Sambla (Romanian AI chat & voice bot platform). "
+            . "STYLE ({$styleKey}): {$styleBrief} "
+            . "SUBJECT: {$topicData['image_concept']} "
+            . "TEXT — VERY STRICT: Render EXACTLY this short Romanian phrase, MAX 3 words: '{$topicData['visual_text']}'. "
+            . "One clean headline, NO other text, NO captions, NO URLs. If diacritics can't be rendered cleanly, SKIP TEXT entirely. "
+            . "Full-bleed vertical composition, large hero element, generous top/bottom safe zones (Instagram UI overlays). "
+            . "Sambla logo (attached) in top corner with subtle backing. "
+            . "ABSOLUTELY FORBIDDEN: a single icon on white background, clip-art minimalism, stock-photo clichés, garbled text. "
+            . "ASPECT: 9:16 portrait, premium editorial quality.";
     }
 
     private function generateStoryImage(GeminiContentService $gemini, array $topicData): ?array
