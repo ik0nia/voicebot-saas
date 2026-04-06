@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SocialPost extends Model
 {
@@ -25,6 +26,7 @@ class SocialPost extends Model
         'published_at',
         'error_message',
         'ai_tokens_used',
+        'regen_count',
     ];
 
     protected function casts(): array
@@ -43,6 +45,16 @@ class SocialPost extends Model
     public function socialAccount(): BelongsTo
     {
         return $this->belongsTo(SocialAccount::class);
+    }
+
+    public function variants(): HasMany
+    {
+        return $this->hasMany(SocialPostVariant::class)->latest();
+    }
+
+    public function rejections(): HasMany
+    {
+        return $this->hasMany(SocialRejection::class);
     }
 
     /* ── Scopes ── */

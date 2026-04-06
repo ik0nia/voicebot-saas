@@ -315,13 +315,16 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
         Route::get('/', [AdminSocialController::class, 'index'])->name('index');
         Route::post('/generate', [AdminSocialController::class, 'generate'])->name('generate');
         Route::get('/post/{post}', [AdminSocialController::class, 'show'])->name('show');
-        Route::get('/post/{post}/edit', [AdminSocialController::class, 'edit'])->name('edit');
+        Route::patch('/post/{post}', [AdminSocialController::class, 'patch'])->name('patch');
         Route::put('/post/{post}', [AdminSocialController::class, 'update'])->name('update');
         Route::post('/post/{post}/publish', [AdminSocialController::class, 'publish'])->name('publish');
+        Route::post('/post/{post}/duplicate', [AdminSocialController::class, 'duplicate'])->name('duplicate');
         Route::post('/post/{post}/regenerate-image', [AdminSocialController::class, 'regenerateImage'])->name('regenerateImage');
         Route::post('/post/{post}/regenerate-text', [AdminSocialController::class, 'regenerateText'])->name('regenerateText');
         Route::post('/post/{post}/reject', [AdminSocialController::class, 'reject'])->name('reject');
+        Route::post('/post/{post}/variant/{variant}/use', [AdminSocialController::class, 'useVariant'])->name('useVariant');
         Route::delete('/post/{post}', [AdminSocialController::class, 'destroy'])->name('destroy');
+        Route::post('/bulk', [AdminSocialController::class, 'bulk'])->name('bulk');
         Route::post('/generate-bio', [AdminSocialController::class, 'generateBio'])->name('generateBio');
         Route::get('/style', [AdminSocialController::class, 'styleTraining'])->name('style');
         Route::post('/style/add', [AdminSocialController::class, 'addStyleExample'])->name('style.add');

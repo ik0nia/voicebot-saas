@@ -125,9 +125,22 @@ class MetaPostingService
             ]);
 
             if ($publish->ok() && $publish->json('id')) {
+                $igId = $publish->json('id');
+                // Fetch permalink for a clickable "View on platform" link.
+                $permalink = null;
+                try {
+                    $meta = Http::timeout(10)->get("{$this->graphUrl}/{$igId}", [
+                        'fields' => 'permalink',
+                        'access_token' => $account->access_token,
+                    ]);
+                    $permalink = $meta->json('permalink');
+                } catch (\Throwable $e) {
+                    // Non-fatal; fall back to null.
+                }
                 $post->update([
                     'status' => 'published',
-                    'external_post_id' => $publish->json('id'),
+                    'external_post_id' => $igId,
+                    'external_url' => $permalink,
                     'published_at' => now(),
                 ]);
                 return true;

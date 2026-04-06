@@ -23,3 +23,6 @@ Schedule::call(function () {
         dispatch(new \App\Jobs\AutoPublishSocialPost($post->id));
     }
 })->everyFiveMinutes();
+
+// Social media: cleanup posts stuck in 'publishing' state (worker crash recovery)
+Schedule::command('social:cleanup-stuck --minutes=10')->everyFifteenMinutes();

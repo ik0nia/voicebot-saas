@@ -4,7 +4,7 @@
 //   - /admin/social navigation: network-first, fallback to cache, then offline page
 //   - Everything else: network pass-through
 
-const VERSION = 'sambla-social-v1';
+const VERSION = 'sambla-social-v2';
 const STATIC_CACHE = `${VERSION}-static`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 const OFFLINE_URL = '/offline.html';

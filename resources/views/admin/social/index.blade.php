@@ -4,236 +4,349 @@
 @section('breadcrumb', 'Social Media Management')
 
 @section('content')
-<div class="space-y-6">
+@php
+    $statusColors = [
+        'draft'      => 'bg-slate-100 text-slate-700',
+        'scheduled'  => 'bg-blue-100 text-blue-700',
+        'publishing' => 'bg-amber-100 text-amber-700',
+        'published'  => 'bg-green-100 text-green-700',
+        'failed'     => 'bg-red-100 text-red-700',
+    ];
+    $platformIcon = ['facebook' => 'FB', 'instagram' => 'IG', 'blog' => 'Blog'];
+    $platformBg = ['facebook' => 'bg-blue-600', 'instagram' => 'bg-pink-600', 'blog' => 'bg-slate-600'];
+
+    // Group posts by scheduled/published day for a Gmail/Buffer-style inbox.
+    $grouped = $posts->getCollection()->groupBy(function ($p) {
+        $dt = $p->scheduled_at ?? $p->published_at ?? $p->created_at;
+        if (!$dt) return '—';
+        if ($dt->isToday()) return 'Astăzi';
+        if ($dt->isYesterday()) return 'Ieri';
+        if ($dt->isTomorrow()) return 'Mâine';
+        if ($dt->isCurrentWeek()) return $dt->translatedFormat('l');
+        return $dt->translatedFormat('d M Y');
+    });
+@endphp
+
+<div class="relative" id="socialRoot" data-csrf="{{ csrf_token() }}">
 
     @if(session('success'))
-        <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg text-sm">{{ session('success') }}</div>
+        <div class="mb-4 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg text-sm">{{ session('success') }}</div>
     @endif
 
-    {{-- Page header --}}
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    {{-- Header --}}
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-5">
         <div>
             <h1 class="text-2xl font-bold text-slate-900">Social Media</h1>
-            <p class="text-sm text-slate-500 mt-1">Apasă pe orice postare pentru a o vedea, regenera sau respinge</p>
+            <p class="text-sm text-slate-500 mt-0.5">
+                <kbd class="px-1.5 py-0.5 text-[10px] font-mono bg-slate-100 border border-slate-200 rounded">j</kbd>
+                <kbd class="px-1.5 py-0.5 text-[10px] font-mono bg-slate-100 border border-slate-200 rounded">k</kbd>
+                navigare ·
+                <kbd class="px-1.5 py-0.5 text-[10px] font-mono bg-slate-100 border border-slate-200 rounded">e</kbd> editează ·
+                <kbd class="px-1.5 py-0.5 text-[10px] font-mono bg-slate-100 border border-slate-200 rounded">a</kbd> publică ·
+                <kbd class="px-1.5 py-0.5 text-[10px] font-mono bg-slate-100 border border-slate-200 rounded">?</kbd> ajutor
+            </p>
         </div>
         <div class="flex flex-wrap gap-2">
-            <a href="{{ route('admin.social.style') }}" class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">Style</a>
-            <a href="{{ route('admin.social.accounts') }}" class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">Conturi</a>
-            <a href="{{ route('admin.social.schedule') }}" class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">Programare</a>
+            <a href="{{ route('admin.social.style') }}" class="px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">Style</a>
+            <a href="{{ route('admin.social.accounts') }}" class="px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">Conturi</a>
+            <a href="{{ route('admin.social.schedule') }}" class="px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">Programare</a>
         </div>
     </div>
 
-    {{-- Stats cards --}}
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <a href="{{ route('admin.social.index') }}" class="bg-white rounded-xl border border-slate-200 p-4 hover:border-slate-400">
-            <h3 class="text-xs font-semibold text-slate-500 uppercase">Total</h3>
-            <p class="text-2xl font-bold text-slate-900 mt-1">{{ $stats['total_posts'] }}</p>
-        </a>
-        <a href="{{ route('admin.social.index', ['status' => 'published']) }}" class="bg-white rounded-xl border border-slate-200 p-4 hover:border-green-400">
-            <h3 class="text-xs font-semibold text-slate-500 uppercase">Publicate</h3>
-            <p class="text-2xl font-bold text-green-600 mt-1">{{ $stats['published'] }}</p>
-        </a>
-        <a href="{{ route('admin.social.index', ['status' => 'scheduled']) }}" class="bg-white rounded-xl border border-slate-200 p-4 hover:border-blue-400">
-            <h3 class="text-xs font-semibold text-slate-500 uppercase">Programate</h3>
-            <p class="text-2xl font-bold text-blue-600 mt-1">{{ $stats['scheduled'] }}</p>
-        </a>
-        <a href="{{ route('admin.social.index', ['status' => 'failed']) }}" class="bg-white rounded-xl border border-slate-200 p-4 hover:border-red-400">
-            <h3 class="text-xs font-semibold text-slate-500 uppercase">Eșuate</h3>
-            <p class="text-2xl font-bold text-red-600 mt-1">{{ $stats['failed'] }}</p>
-        </a>
-        <div class="bg-white rounded-xl border border-slate-200 p-4">
-            <h3 class="text-xs font-semibold text-slate-500 uppercase">Azi</h3>
-            <p class="text-2xl font-bold text-slate-900 mt-1">{{ $stats['today'] }}</p>
-        </div>
+    {{-- Stat chips row --}}
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
+        @foreach([
+            ['label' => 'Total', 'value' => $stats['total_posts'], 'color' => 'text-slate-900', 'status' => null],
+            ['label' => 'Draft', 'value' => $stats['draft'], 'color' => 'text-slate-700', 'status' => 'draft'],
+            ['label' => 'Programate', 'value' => $stats['scheduled'], 'color' => 'text-blue-600', 'status' => 'scheduled'],
+            ['label' => 'Publicate', 'value' => $stats['published'], 'color' => 'text-green-600', 'status' => 'published'],
+            ['label' => 'Eșuate', 'value' => $stats['failed'], 'color' => 'text-red-600', 'status' => 'failed'],
+        ] as $chip)
+            <a href="{{ route('admin.social.index', $chip['status'] ? ['status' => $chip['status']] : []) }}"
+               class="bg-white rounded-lg border border-slate-200 px-3 py-2 hover:border-slate-400 flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-500 uppercase">{{ $chip['label'] }}</span>
+                <span class="text-lg font-bold {{ $chip['color'] }}">{{ $chip['value'] }}</span>
+            </a>
+        @endforeach
     </div>
+
+    {{-- Toolbar: search + filters + generate --}}
+    <form method="GET" action="{{ route('admin.social.index') }}" class="bg-white rounded-xl border border-slate-200 p-3 mb-4 flex flex-wrap items-center gap-2">
+        <input type="text" name="q" value="{{ request('q') }}" placeholder="Caută în text, prompt..."
+               class="flex-1 min-w-[180px] rounded-lg border-slate-300 text-sm focus:border-red-500 focus:ring-red-500">
+        <select name="platform" class="rounded-lg border-slate-300 text-sm">
+            <option value="">Toate platformele</option>
+            @foreach(['facebook','instagram','blog'] as $p)
+                <option value="{{ $p }}" @selected(request('platform')===$p)>{{ ucfirst($p) }}</option>
+            @endforeach
+        </select>
+        <select name="status" class="rounded-lg border-slate-300 text-sm">
+            <option value="">Orice status</option>
+            @foreach(['draft','scheduled','publishing','published','failed'] as $s)
+                <option value="{{ $s }}" @selected(request('status')===$s)>{{ ucfirst($s) }}</option>
+            @endforeach
+        </select>
+        <input type="date" name="from" value="{{ request('from') }}" class="rounded-lg border-slate-300 text-sm" title="De la">
+        <input type="date" name="to" value="{{ request('to') }}" class="rounded-lg border-slate-300 text-sm" title="Până la">
+        <button type="submit" class="px-3 py-2 text-sm font-medium text-white bg-slate-800 rounded-lg hover:bg-slate-900">Filtrează</button>
+        @if(request()->hasAny(['q','platform','status','from','to']))
+            <a href="{{ route('admin.social.index') }}" class="px-3 py-2 text-sm text-slate-500 hover:text-slate-800">Resetează</a>
+        @endif
+    </form>
 
     {{-- Quick generate --}}
-    <div class="bg-white rounded-xl border border-slate-200 p-4 sm:p-6">
-        <h2 class="text-base font-semibold text-slate-900 mb-3">Generează postare nouă</h2>
-        <form method="POST" action="{{ route('admin.social.generate') }}" class="flex flex-col sm:flex-row gap-2">
+    <details class="bg-white rounded-xl border border-slate-200 p-4 mb-4" {{ request('new') ? 'open' : '' }}>
+        <summary class="cursor-pointer text-sm font-semibold text-slate-900">➕ Generează postare nouă</summary>
+        <form method="POST" action="{{ route('admin.social.generate') }}" class="mt-3 flex flex-col sm:flex-row gap-2">
             @csrf
-            <select name="platform" class="rounded-lg border-slate-300 text-sm focus:border-red-500 focus:ring-red-500 w-full sm:w-36">
+            <select name="platform" class="rounded-lg border-slate-300 text-sm w-full sm:w-36">
                 <option value="facebook">Facebook</option>
                 <option value="instagram">Instagram</option>
                 <option value="blog">Blog</option>
             </select>
-            <input type="text" name="topic" placeholder="Subiect..." required class="flex-1 rounded-lg border-slate-300 text-sm focus:border-red-500 focus:ring-red-500">
+            <input type="text" name="topic" placeholder="Subiect..." required class="flex-1 rounded-lg border-slate-300 text-sm">
             <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">Generează</button>
         </form>
-    </div>
+    </details>
 
-    {{-- Posts grid (mobile cards + desktop table feel) --}}
-    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <div class="px-4 sm:px-6 py-3 border-b border-slate-200 flex items-center justify-between">
-            <h2 class="text-base font-semibold text-slate-900">Postări</h2>
-            <span class="text-xs text-slate-500">{{ $posts->total() }} total</span>
+    {{-- Main split-pane layout --}}
+    <div class="flex gap-4 items-start">
+        {{-- LEFT: grouped list --}}
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden flex-1 min-w-0">
+            <div class="px-4 py-2.5 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-white z-10">
+                <div class="flex items-center gap-3">
+                    <label class="flex items-center gap-1.5 text-xs text-slate-500">
+                        <input type="checkbox" id="selectAll" class="rounded border-slate-300">
+                        Selectează tot
+                    </label>
+                    <span class="text-xs text-slate-500">{{ $posts->total() }} postări</span>
+                </div>
+                <div id="bulkBar" class="hidden items-center gap-2">
+                    <span id="bulkCount" class="text-xs font-semibold text-slate-700">0 selectate</span>
+                    <button type="button" onclick="bulkAction('publish')" class="px-2 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700">Publică</button>
+                    <button type="button" onclick="bulkAction('delete')" class="px-2 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700">Șterge</button>
+                </div>
+            </div>
+
+            <ul class="divide-y divide-slate-100" id="postList">
+                @forelse($grouped as $groupLabel => $groupPosts)
+                    <li class="bg-slate-50 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{{ $groupLabel }}</li>
+                    @foreach($groupPosts as $post)
+                        <li class="post-row group" data-post-id="{{ $post->id }}">
+                            <div class="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 cursor-pointer relative" onclick="openPost({{ $post->id }}, event)">
+                                <input type="checkbox" class="post-check rounded border-slate-300 shrink-0" value="{{ $post->id }}" onclick="event.stopPropagation(); updateBulk();">
+
+                                <div class="shrink-0 w-14 h-14 rounded-lg overflow-hidden bg-slate-100 border border-slate-200 relative">
+                                    @if($post->image_url)
+                                        <img src="{{ $post->image_url }}" alt="" class="w-full h-full object-cover" loading="lazy">
+                                    @else
+                                        <div class="w-full h-full flex items-center justify-center text-slate-300 text-[10px]">no img</div>
+                                    @endif
+                                    <span class="absolute bottom-0 left-0 px-1 py-0.5 text-[9px] font-bold text-white {{ $platformBg[$post->platform] ?? 'bg-slate-600' }} rounded-tr">{{ $platformIcon[$post->platform] ?? $post->platform }}</span>
+                                </div>
+
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 mb-0.5">
+                                        <span class="inline-flex px-1.5 py-0.5 text-[10px] font-semibold rounded {{ $statusColors[$post->status] ?? 'bg-slate-100' }}">{{ strtoupper($post->status) }}</span>
+                                        @if($post->post_type === 'story')
+                                            <span class="inline-flex px-1.5 py-0.5 text-[10px] font-semibold rounded bg-purple-100 text-purple-700">STORY</span>
+                                        @endif
+                                        @if(($post->regen_count ?? 0) > 0)
+                                            <span class="inline-flex px-1.5 py-0.5 text-[10px] text-amber-700" title="Regenerări">↻{{ $post->regen_count }}</span>
+                                        @endif
+                                        <span class="text-[11px] text-slate-400 ml-auto">
+                                            @if($post->status === 'published' && $post->published_at)
+                                                {{ $post->published_at->format('H:i') }}
+                                            @elseif($post->scheduled_at)
+                                                {{ $post->scheduled_at->format('H:i') }}
+                                            @endif
+                                        </span>
+                                    </div>
+                                    <p class="text-sm text-slate-700 line-clamp-1">{{ \Illuminate\Support\Str::limit($post->content, 120) }}</p>
+                                </div>
+                            </div>
+                        </li>
+                    @endforeach
+                @empty
+                    <li class="px-6 py-10 text-center text-sm text-slate-400">Niciun post. Generează primul din butonul de sus.</li>
+                @endforelse
+            </ul>
+
+            @if($posts->hasPages())
+                <div class="px-4 py-3 border-t border-slate-200">{{ $posts->onEachSide(1)->links() }}</div>
+            @endif
         </div>
 
-        <ul class="divide-y divide-slate-100">
-            @forelse($posts as $post)
-                @php
-                    $statusColors = [
-                        'draft' => 'bg-slate-100 text-slate-700',
-                        'scheduled' => 'bg-blue-100 text-blue-700',
-                        'publishing' => 'bg-amber-100 text-amber-700',
-                        'published' => 'bg-green-100 text-green-700',
-                        'failed' => 'bg-red-100 text-red-700',
-                    ];
-                    $platformIcon = ['facebook' => 'FB', 'instagram' => 'IG', 'blog' => 'Blog'][$post->platform] ?? $post->platform;
-                    $platformBg = ['facebook' => 'bg-blue-600', 'instagram' => 'bg-pink-600', 'blog' => 'bg-slate-600'][$post->platform] ?? 'bg-slate-600';
-                @endphp
-                <li>
-                    <button type="button" onclick="openSocialPost({{ $post->id }})" class="w-full flex items-center gap-3 px-4 sm:px-6 py-3 hover:bg-slate-50 text-left">
-                        {{-- Thumbnail --}}
-                        <div class="shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden bg-slate-100 border border-slate-200 relative">
-                            @if($post->image_url)
-                                <img src="{{ $post->image_url }}" alt="" class="w-full h-full object-cover" loading="lazy">
-                            @else
-                                <div class="w-full h-full flex items-center justify-center text-slate-300 text-xs">no image</div>
-                            @endif
-                            <span class="absolute bottom-0.5 left-0.5 px-1 py-0.5 text-[9px] font-bold text-white {{ $platformBg }} rounded">{{ $platformIcon }}</span>
-                        </div>
-                        {{-- Content --}}
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="inline-flex px-2 py-0.5 text-[10px] font-semibold rounded-full {{ $statusColors[$post->status] ?? 'bg-slate-100' }}">{{ strtoupper($post->status) }}</span>
-                                @if($post->post_type === 'story')
-                                    <span class="inline-flex px-2 py-0.5 text-[10px] font-semibold rounded-full bg-purple-100 text-purple-700">STORY</span>
-                                @endif
-                                <span class="text-[11px] text-slate-500">
-                                    @if($post->status === 'published' && $post->published_at)
-                                        Publicat {{ $post->published_at->format('d.m H:i') }}
-                                    @elseif($post->scheduled_at)
-                                        {{ $post->scheduled_at->isPast() ? 'Programat' : 'Va apărea' }} {{ $post->scheduled_at->format('d.m H:i') }}
-                                    @endif
-                                </span>
-                            </div>
-                            <p class="text-sm text-slate-700 line-clamp-2">{{ \Illuminate\Support\Str::limit($post->content, 140) }}</p>
-                        </div>
-                        <svg class="hidden sm:block w-5 h-5 text-slate-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-                    </button>
-                </li>
-            @empty
-                <li class="px-6 py-12 text-center text-slate-500">Nicio postare. Generează prima!</li>
-            @endforelse
-        </ul>
+        {{-- RIGHT: slide-over panel (desktop: always visible sticky; mobile: fixed drawer) --}}
+        <aside id="postPanel"
+               class="hidden lg:sticky lg:top-4 lg:block lg:w-[520px] lg:shrink-0
+                      fixed inset-x-0 bottom-0 lg:inset-auto z-40
+                      bg-white lg:rounded-xl lg:border lg:border-slate-200 lg:shadow-sm
+                      max-h-[90vh] lg:max-h-[calc(100vh-8rem)] overflow-hidden flex flex-col">
+            {{-- Empty state --}}
+            <div id="panelEmpty" class="flex-1 flex items-center justify-center p-10 text-center text-sm text-slate-400">
+                <div>
+                    <div class="text-3xl mb-2">👈</div>
+                    Selectează o postare din stânga.<br>
+                    <span class="text-xs mt-2 block">sau folosește <kbd class="px-1 py-0.5 text-[10px] bg-slate-100 border rounded">j</kbd>/<kbd class="px-1 py-0.5 text-[10px] bg-slate-100 border rounded">k</kbd></span>
+                </div>
+            </div>
 
-        @if($posts->hasPages())
-            <div class="px-4 sm:px-6 py-3 border-t border-slate-200">{{ $posts->links() }}</div>
-        @endif
+            {{-- Loaded state --}}
+            <div id="panelContent" class="hidden flex-1 overflow-y-auto">
+                {{-- Sticky header --}}
+                <div class="sticky top-0 bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-2 z-10">
+                    <button type="button" onclick="closePanel()" class="lg:hidden p-1 text-slate-400 hover:text-slate-700" aria-label="Închide">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                    <span id="panel-platform" class="px-2 py-0.5 text-xs font-semibold rounded-full bg-slate-100 text-slate-700"></span>
+                    <span id="panel-status" class="px-2 py-0.5 text-xs font-semibold rounded-full"></span>
+                    <span id="panel-saved" class="text-[11px] text-slate-400 ml-auto">—</span>
+                    <div class="flex items-center gap-1">
+                        <button type="button" onclick="navPost(-1)" class="p-1 text-slate-400 hover:text-slate-700" title="Anterior (k)" aria-label="Anterior">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                        </button>
+                        <button type="button" onclick="navPost(1)" class="p-1 text-slate-400 hover:text-slate-700" title="Următor (j)" aria-label="Următor">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-4 space-y-4">
+                    {{-- Image --}}
+                    <div id="panel-image-wrap" class="relative bg-slate-100 rounded-lg overflow-hidden hidden">
+                        <img id="panel-image" src="" alt="" class="w-full max-h-80 object-contain bg-slate-900">
+                        <div id="panel-image-loading" class="hidden absolute inset-0 flex items-center justify-center bg-white/80 text-sm text-slate-600">
+                            <svg class="animate-spin w-5 h-5 mr-2 text-slate-500" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" opacity=".25"/><path fill="currentColor" d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"/></svg>
+                            Se generează...
+                        </div>
+                    </div>
+
+                    {{-- Error message --}}
+                    <div id="panel-error-wrap" class="hidden">
+                        <p class="text-xs font-semibold text-red-700 uppercase">Eroare publicare</p>
+                        <p id="panel-error" class="mt-1 text-xs text-red-700 bg-red-50 border border-red-200 p-2 rounded"></p>
+                    </div>
+
+                    {{-- Content editor --}}
+                    <div>
+                        <label class="text-xs font-semibold text-slate-500 uppercase">Text postare</label>
+                        <textarea id="panel-content" rows="8"
+                                  class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-red-500 focus:ring-red-500"
+                                  placeholder="Textul postării..."></textarea>
+                    </div>
+
+                    {{-- Schedule --}}
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs font-semibold text-slate-500 uppercase">Programat pentru</label>
+                            <input type="datetime-local" id="panel-scheduled" class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-red-500 focus:ring-red-500">
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-slate-500 uppercase">Tip</label>
+                            <select id="panel-post-type" class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-red-500 focus:ring-red-500">
+                                <option value="post">Post</option>
+                                <option value="story">Story</option>
+                                <option value="reel">Reel</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {{-- Image prompt readonly --}}
+                    <details id="panel-prompt-wrap">
+                        <summary class="text-xs font-semibold text-slate-500 uppercase cursor-pointer">Prompt imagine</summary>
+                        <p id="panel-image-prompt" class="mt-1 text-xs text-slate-600 bg-slate-50 border border-slate-200 p-2 rounded font-mono"></p>
+                    </details>
+
+                    {{-- External link --}}
+                    <div id="panel-external-wrap" class="hidden">
+                        <a id="panel-external" href="#" target="_blank" rel="noopener" class="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800">
+                            Vezi pe platformă →
+                        </a>
+                    </div>
+
+                    {{-- Variants --}}
+                    <div id="panel-variants-wrap" class="hidden">
+                        <p class="text-xs font-semibold text-slate-500 uppercase mb-1">Versiuni anterioare</p>
+                        <div id="panel-variants" class="flex flex-wrap gap-1"></div>
+                    </div>
+
+                    {{-- Past rejections --}}
+                    <div id="panel-rejections-wrap" class="hidden">
+                        <p class="text-xs font-semibold text-slate-500 uppercase mb-1">Refuzuri anterioare</p>
+                        <ul id="panel-rejections" class="text-xs text-slate-600 space-y-0.5"></ul>
+                    </div>
+                </div>
+
+                {{-- Sticky footer actions --}}
+                <div class="sticky bottom-0 bg-white border-t border-slate-200 px-4 py-3 space-y-2">
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" onclick="regenImage()" id="btn-regen-img" class="px-3 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50">🖼️ Imagine nouă</button>
+                        <button type="button" onclick="regenText()" id="btn-regen-txt" class="px-3 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50">✏️ Text nou</button>
+                        <button type="button" onclick="duplicatePost()" class="px-3 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-50">📋 Duplică</button>
+                        <button type="button" onclick="showRejectForm()" class="px-3 py-2 text-xs font-medium text-red-700 bg-white border border-red-300 rounded hover:bg-red-50">❌ Refuză</button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" onclick="deletePost()" class="px-3 py-2.5 text-sm font-semibold text-white bg-slate-700 rounded hover:bg-slate-800">🗑️ Șterge</button>
+                        <button type="button" onclick="publishNow()" id="btn-publish" class="px-3 py-2.5 text-sm font-semibold text-white bg-green-600 rounded hover:bg-green-700">🚀 Publică acum</button>
+                    </div>
+
+                    {{-- Reject form (inline) --}}
+                    <div id="reject-form" class="hidden bg-red-50 border border-red-200 rounded p-3 space-y-2">
+                        <div class="flex flex-wrap gap-1">
+                            @foreach(['text' => 'Text', 'tone' => 'Ton', 'length' => 'Lungime', 'image' => 'Imagine', 'topic' => 'Subiect', 'other' => 'Altceva'] as $val => $label)
+                                <button type="button" data-cat="{{ $val }}" onclick="setRejectCategory('{{ $val }}', this)" class="reject-chip px-2 py-1 text-[11px] font-medium border border-red-300 text-red-700 rounded-full hover:bg-red-100">{{ $label }}</button>
+                            @endforeach
+                        </div>
+                        <textarea id="reject-feedback" rows="2" placeholder="Ce nu merge? (opțional)" class="w-full text-xs rounded border-red-300 focus:border-red-500 focus:ring-red-500"></textarea>
+                        <div class="flex gap-2">
+                            <button type="button" onclick="confirmReject()" class="flex-1 px-3 py-1.5 text-xs font-semibold text-white bg-red-600 rounded hover:bg-red-700">Confirmă</button>
+                            <button type="button" onclick="document.getElementById('reject-form').classList.add('hidden')" class="px-3 py-1.5 text-xs text-slate-600">Anulează</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
     </div>
 </div>
 
-{{-- Modal --}}
-<div id="postModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-modal="true">
-    <div class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm" onclick="closeSocialPost()"></div>
-    <div class="relative min-h-screen flex items-start sm:items-center justify-center p-0 sm:p-4">
-        <div class="relative bg-white w-full sm:max-w-3xl sm:rounded-2xl shadow-2xl min-h-screen sm:min-h-0 sm:my-8">
-            {{-- Header --}}
-            <div class="sticky top-0 z-10 bg-white border-b border-slate-200 px-4 sm:px-6 py-3 flex items-center justify-between sm:rounded-t-2xl">
-                <div class="flex items-center gap-2">
-                    <span id="modal-platform" class="px-2 py-0.5 text-xs font-semibold rounded-full bg-slate-100 text-slate-700"></span>
-                    <span id="modal-status" class="px-2 py-0.5 text-xs font-semibold rounded-full"></span>
-                    <span id="modal-time" class="text-xs text-slate-500"></span>
-                </div>
-                <button type="button" onclick="closeSocialPost()" class="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
+{{-- Toast --}}
+<div id="toast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-sm px-4 py-2 rounded-lg shadow-lg flex items-center gap-3">
+    <span id="toast-msg"></span>
+    <button id="toast-undo" type="button" class="hidden text-amber-300 font-semibold hover:text-amber-200">Anulează</button>
+</div>
 
-            <div class="p-4 sm:p-6 space-y-5">
-                {{-- Image --}}
-                <div id="modal-image-wrap" class="relative bg-slate-100 rounded-xl overflow-hidden">
-                    <img id="modal-image" src="" alt="" class="w-full max-h-[60vh] object-contain bg-slate-900">
-                    <div id="modal-image-loading" class="hidden absolute inset-0 flex items-center justify-center bg-white/80">
-                        <div class="text-sm text-slate-600">Se generează imagine nouă…</div>
-                    </div>
-                </div>
-
-                {{-- Text content --}}
-                <div>
-                    <label class="text-xs font-semibold text-slate-500 uppercase">Text</label>
-                    <p id="modal-content" class="mt-2 text-slate-800 whitespace-pre-wrap text-sm leading-relaxed"></p>
-                </div>
-
-                <div>
-                    <label class="text-xs font-semibold text-slate-500 uppercase">Hashtag-uri</label>
-                    <p id="modal-hashtags" class="mt-2 text-sm text-blue-600"></p>
-                </div>
-
-                <div id="modal-error-wrap" class="hidden">
-                    <label class="text-xs font-semibold text-red-500 uppercase">Eroare</label>
-                    <p id="modal-error" class="mt-2 text-sm text-red-700 bg-red-50 p-3 rounded-lg"></p>
-                </div>
-
-                {{-- External link for published --}}
-                <div id="modal-external-wrap" class="hidden">
-                    <a id="modal-external" href="#" target="_blank" class="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700">
-                        Vezi pe platformă →
-                    </a>
-                </div>
-
-                {{-- Action buttons (only when editable) --}}
-                <div id="modal-actions" class="hidden border-t border-slate-200 pt-4 space-y-3">
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        <button type="button" onclick="regenImage()" class="px-3 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">
-                            🖼️ Imagine nouă
-                        </button>
-                        <button type="button" onclick="regenText()" class="px-3 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">
-                            ✏️ Text nou
-                        </button>
-                        <button type="button" onclick="showRejectForm()" class="px-3 py-2.5 text-sm font-medium text-red-700 bg-white border border-red-300 rounded-lg hover:bg-red-50">
-                            ❌ Refuză & învață
-                        </button>
-                        <button type="button" onclick="deletePost()" class="px-3 py-2.5 text-sm font-semibold text-white bg-red-600 border border-red-600 rounded-lg hover:bg-red-700">
-                            🗑️ Șterge
-                        </button>
-                    </div>
-
-                    {{-- Reject form --}}
-                    <div id="reject-form" class="hidden bg-red-50 border border-red-200 rounded-lg p-4 space-y-3">
-                        <p class="text-sm font-semibold text-red-900">Ce nu îți place? (Sambla va învăța din asta)</p>
-                        <div class="flex flex-wrap gap-2">
-                            @foreach(['text' => 'Text slab', 'tone' => 'Ton greșit', 'length' => 'Prea lung/scurt', 'image' => 'Imagine urâtă', 'topic' => 'Subiect prost', 'hashtags' => 'Hashtag-uri', 'other' => 'Altceva'] as $val => $label)
-                                <button type="button" onclick="setRejectCategory('{{ $val }}', this)" class="reject-chip px-3 py-1.5 text-xs font-medium border border-red-300 text-red-700 rounded-full hover:bg-red-100">{{ $label }}</button>
-                            @endforeach
-                        </div>
-                        <textarea id="reject-feedback" rows="2" placeholder="Detalii (opțional)..." class="w-full text-sm rounded-lg border-red-300 focus:border-red-500 focus:ring-red-500"></textarea>
-                        <div class="flex gap-2">
-                            <button type="button" onclick="confirmReject()" class="flex-1 px-3 py-2 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700">Confirmă & șterge</button>
-                            <button type="button" onclick="document.getElementById('reject-form').classList.add('hidden')" class="px-3 py-2 text-sm text-slate-600 hover:text-slate-900">Anulează</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+{{-- Shortcuts help overlay --}}
+<div id="helpOverlay" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onclick="if(event.target===this)this.classList.add('hidden')">
+    <div class="bg-white rounded-xl max-w-md w-full p-6">
+        <h2 class="text-lg font-bold text-slate-900 mb-3">Scurtături tastatură</h2>
+        <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+            <dt><kbd class="px-1.5 py-0.5 font-mono bg-slate-100 border rounded">j</kbd> / <kbd class="px-1.5 py-0.5 font-mono bg-slate-100 border rounded">↓</kbd></dt><dd class="text-slate-600">Post următor</dd>
+            <dt><kbd class="px-1.5 py-0.5 font-mono bg-slate-100 border rounded">k</kbd> / <kbd class="px-1.5 py-0.5 font-mono bg-slate-100 border rounded">↑</kbd></dt><dd class="text-slate-600">Post anterior</dd>
+            <dt><kbd class="px-1.5 py-0.5 font-mono bg-slate-100 border rounded">e</kbd></dt><dd class="text-slate-600">Editează textul</dd>
+            <dt><kbd class="px-1.5 py-0.5 font-mono bg-slate-100 border rounded">a</kbd></dt><dd class="text-slate-600">Publică acum</dd>
+            <dt><kbd class="px-1.5 py-0.5 font-mono bg-slate-100 border rounded">r</kbd></dt><dd class="text-slate-600">Refuză</dd>
+            <dt><kbd class="px-1.5 py-0.5 font-mono bg-slate-100 border rounded">⌫</kbd></dt><dd class="text-slate-600">Șterge (cu confirmare)</dd>
+            <dt><kbd class="px-1.5 py-0.5 font-mono bg-slate-100 border rounded">Esc</kbd></dt><dd class="text-slate-600">Închide panel</dd>
+            <dt><kbd class="px-1.5 py-0.5 font-mono bg-slate-100 border rounded">?</kbd></dt><dd class="text-slate-600">Acest ajutor</dd>
+        </dl>
+        <button type="button" onclick="document.getElementById('helpOverlay').classList.add('hidden')" class="mt-4 w-full px-3 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg">Închide</button>
     </div>
 </div>
 
 @push('scripts')
 <script>
-let currentPostId = null;
-let rejectCategory = 'other';
-const csrf = document.querySelector('meta[name="csrf-token"]').content;
+(() => {
+    const csrf = document.getElementById('socialRoot').dataset.csrf;
+    const postIds = Array.from(document.querySelectorAll('.post-row')).map(r => +r.dataset.postId);
+    let currentId = null;
+    let currentFetchAbort = null;
+    let currentData = null;
+    let autosaveTimer = null;
+    let rejectCategory = 'other';
+    let lastSwipeX = null;
 
-async function openSocialPost(id) {
-    currentPostId = id;
-    document.getElementById('postModal').classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-    document.getElementById('reject-form').classList.add('hidden');
-    document.getElementById('modal-error-wrap').classList.add('hidden');
-    document.getElementById('modal-content').textContent = 'Se încarcă...';
-
-    try {
-        const res = await fetch(`/admin/social/post/${id}`, { headers: { 'Accept': 'application/json' } });
-        const data = await res.json();
-        renderPost(data);
-    } catch (e) {
-        document.getElementById('modal-content').textContent = 'Eroare la încărcare: ' + e.message;
-    }
-}
-
-function renderPost(data) {
+    const $ = (id) => document.getElementById(id);
     const platformLabels = { facebook: 'Facebook', instagram: 'Instagram', blog: 'Blog' };
     const statusColors = {
         draft: 'bg-slate-100 text-slate-700',
@@ -243,130 +356,423 @@ function renderPost(data) {
         failed: 'bg-red-100 text-red-700',
     };
 
-    document.getElementById('modal-platform').textContent = platformLabels[data.platform] || data.platform;
-    const st = document.getElementById('modal-status');
-    st.textContent = (data.status || '').toUpperCase();
-    st.className = 'px-2 py-0.5 text-xs font-semibold rounded-full ' + (statusColors[data.status] || 'bg-slate-100');
-    document.getElementById('modal-time').textContent = data.published_at ? ('Publicat ' + data.published_at) : (data.scheduled_at ? ('Programat ' + data.scheduled_at) : '');
-    document.getElementById('modal-content').textContent = data.content || '(fără text)';
-    document.getElementById('modal-hashtags').textContent = (data.hashtags || []).map(h => h.startsWith('#') ? h : '#' + h).join(' ');
+    // ---------- Toast ----------
+    let toastTimer = null;
+    function toast(msg, { undo = null, duration = 3500 } = {}) {
+        const t = $('toast'), m = $('toast-msg'), u = $('toast-undo');
+        m.textContent = msg;
+        if (undo) {
+            u.classList.remove('hidden');
+            u.onclick = () => { undo(); hideToast(); };
+        } else {
+            u.classList.add('hidden');
+            u.onclick = null;
+        }
+        t.classList.remove('hidden');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(hideToast, duration);
+    }
+    function hideToast() { $('toast').classList.add('hidden'); }
 
-    const img = document.getElementById('modal-image');
-    const wrap = document.getElementById('modal-image-wrap');
-    if (data.image_url) {
-        img.src = data.image_url;
-        wrap.classList.remove('hidden');
-    } else {
-        wrap.classList.add('hidden');
+    // ---------- URL sync ----------
+    function syncUrl(id) {
+        const url = new URL(location.href);
+        if (id) url.searchParams.set('post', id); else url.searchParams.delete('post');
+        history.replaceState(null, '', url);
     }
 
-    if (data.error_message) {
-        document.getElementById('modal-error-wrap').classList.remove('hidden');
-        document.getElementById('modal-error').textContent = data.error_message;
-    } else {
-        document.getElementById('modal-error-wrap').classList.add('hidden');
+    // ---------- Open / close panel ----------
+    async function openPost(id, ev) {
+        if (ev && ev.target.closest('input,button,a')) return;
+        currentId = id;
+        syncUrl(id);
+
+        // Highlight row
+        document.querySelectorAll('.post-row').forEach(r => r.classList.toggle('bg-blue-50', +r.dataset.postId === id));
+
+        $('panelEmpty').classList.add('hidden');
+        $('panelContent').classList.remove('hidden');
+
+        // Instantly clear stale state so we never flash the previous post's image.
+        $('panel-image').removeAttribute('src');
+        $('panel-image-wrap').classList.add('hidden');
+        $('panel-content').value = '';
+        $('panel-saved').textContent = 'Se încarcă...';
+        $('panel-error-wrap').classList.add('hidden');
+        $('panel-external-wrap').classList.add('hidden');
+        $('panel-variants-wrap').classList.add('hidden');
+        $('panel-rejections-wrap').classList.add('hidden');
+        $('reject-form').classList.add('hidden');
+        $('reject-feedback').value = '';
+        rejectCategory = 'other';
+        document.querySelectorAll('.reject-chip').forEach(b => b.classList.remove('bg-red-600','text-white'));
+
+        // Abort any in-flight fetch from a previous post.
+        if (currentFetchAbort) currentFetchAbort.abort();
+        currentFetchAbort = new AbortController();
+        const reqId = id;
+
+        try {
+            const res = await fetch(`/admin/social/post/${id}`, { signal: currentFetchAbort.signal, headers: { Accept: 'application/json' } });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+            if (reqId !== currentId) return; // user moved on, drop stale response
+            render(data);
+        } catch (e) {
+            if (e.name === 'AbortError') return;
+            $('panel-saved').textContent = 'Eroare la încărcare';
+        }
     }
 
-    if (data.external_url) {
-        document.getElementById('modal-external-wrap').classList.remove('hidden');
-        document.getElementById('modal-external').href = data.external_url;
-    } else {
-        document.getElementById('modal-external-wrap').classList.add('hidden');
+    function closePanel() {
+        currentId = null;
+        currentData = null;
+        syncUrl(null);
+        $('panelEmpty').classList.remove('hidden');
+        $('panelContent').classList.add('hidden');
+        document.querySelectorAll('.post-row').forEach(r => r.classList.remove('bg-blue-50'));
     }
 
-    document.getElementById('modal-actions').classList.toggle('hidden', !data.is_editable);
-}
+    function render(d) {
+        currentData = d;
 
-function closeSocialPost() {
-    document.getElementById('postModal').classList.add('hidden');
-    document.body.style.overflow = '';
-    currentPostId = null;
-}
+        $('panel-platform').textContent = platformLabels[d.platform] ?? d.platform;
+        const st = $('panel-status');
+        st.textContent = (d.status || '').toUpperCase();
+        st.className = 'px-2 py-0.5 text-xs font-semibold rounded-full ' + (statusColors[d.status] || 'bg-slate-100');
+        $('panel-saved').textContent = 'Salvat';
 
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSocialPost(); });
+        $('panel-content').value = d.content ?? '';
+        $('panel-content').readOnly = !d.is_editable;
+        $('panel-scheduled').value = d.scheduled_at ?? '';
+        $('panel-scheduled').disabled = !d.is_editable;
+        $('panel-post-type').value = d.post_type ?? 'post';
+        $('panel-post-type').disabled = !d.is_editable;
 
-async function regenImage() {
-    if (!currentPostId) return;
-    document.getElementById('modal-image-loading').classList.remove('hidden');
-    try {
-        const res = await fetch(`/admin/social/post/${currentPostId}/regenerate-image`, {
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+        // Image
+        const img = $('panel-image'), wrap = $('panel-image-wrap');
+        if (d.image_url) {
+            img.src = d.image_url + (d.image_url.includes('?') ? '&' : '?') + '_=' + Date.now();
+            wrap.classList.remove('hidden');
+        } else {
+            wrap.classList.add('hidden');
+        }
+        $('panel-image-loading').classList.add('hidden');
+
+        // Error
+        if (d.error_message) {
+            $('panel-error-wrap').classList.remove('hidden');
+            $('panel-error').textContent = d.error_message;
+        }
+
+        // Prompt
+        $('panel-image-prompt').textContent = d.image_prompt || '—';
+
+        // External
+        if (d.external_url) {
+            $('panel-external-wrap').classList.remove('hidden');
+            $('panel-external').href = d.external_url;
+        }
+
+        // Variants
+        const vwrap = $('panel-variants-wrap'), vlist = $('panel-variants');
+        if (d.variants && d.variants.length) {
+            vwrap.classList.remove('hidden');
+            vlist.innerHTML = d.variants.map(v => `
+                <button type="button" onclick="useVariant(${v.id})" class="flex items-center gap-1 px-2 py-1 text-[11px] bg-slate-100 hover:bg-slate-200 rounded border border-slate-200" title="${(v.content||'').replace(/"/g,'&quot;').slice(0,80)}">
+                    ${v.kind === 'image' ? '🖼️' : '✏️'} ${v.created_at}
+                </button>
+            `).join('');
+        } else {
+            vwrap.classList.add('hidden');
+        }
+
+        // Rejections
+        const rwrap = $('panel-rejections-wrap'), rlist = $('panel-rejections');
+        if (d.rejections && d.rejections.length) {
+            rwrap.classList.remove('hidden');
+            rlist.innerHTML = d.rejections.map(r => `<li>• <b>${r.reason_category ?? 'other'}</b>: ${r.feedback ?? ''} <span class="text-slate-400">(${r.created_at})</span></li>`).join('');
+        } else {
+            rwrap.classList.add('hidden');
+        }
+
+        // Publish button only if editable
+        $('btn-publish').disabled = !d.is_editable;
+    }
+
+    // ---------- Autosave (content, scheduled_at, post_type) ----------
+    function scheduleAutosave() {
+        if (!currentData?.is_editable) return;
+        $('panel-saved').textContent = 'Se salvează...';
+        clearTimeout(autosaveTimer);
+        autosaveTimer = setTimeout(flushAutosave, 700);
+    }
+
+    async function flushAutosave() {
+        if (!currentId || !currentData) return;
+        clearTimeout(autosaveTimer);
+        const payload = {
+            content: $('panel-content').value,
+            scheduled_at: $('panel-scheduled').value || null,
+            post_type: $('panel-post-type').value,
+            updated_at: currentData.updated_at,
+        };
+        try {
+            const res = await fetch(`/admin/social/post/${currentId}`, {
+                method: 'PATCH',
+                headers: { 'X-CSRF-TOKEN': csrf, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            if (res.status === 409) {
+                const data = await res.json();
+                $('panel-saved').textContent = 'Conflict — reîncarc';
+                toast('Postarea a fost modificată în altă parte, reîncarc.');
+                openPost(currentId);
+                return;
+            }
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+            currentData.updated_at = data.updated_at;
+            $('panel-saved').textContent = 'Salvat';
+        } catch (e) {
+            $('panel-saved').textContent = 'Eroare salvare';
+        }
+    }
+
+    $('panel-content').addEventListener('input', scheduleAutosave);
+    $('panel-scheduled').addEventListener('change', scheduleAutosave);
+    $('panel-post-type').addEventListener('change', scheduleAutosave);
+
+    // ---------- Actions ----------
+    async function regenImage() {
+        if (!currentId) return;
+        $('btn-regen-img').disabled = true;
+        $('panel-image-loading').classList.remove('hidden');
+        try {
+            const res = await fetch(`/admin/social/post/${currentId}/regenerate-image`, {
+                method: 'POST', headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Eroare');
+            $('panel-image').src = data.image_url + '?_=' + Date.now();
+            $('panel-image-wrap').classList.remove('hidden');
+            toast('Imagine nouă');
+            openPost(currentId); // reload to fetch fresh variants
+        } catch (e) {
+            toast(e.message);
+        } finally {
+            $('btn-regen-img').disabled = false;
+            $('panel-image-loading').classList.add('hidden');
+        }
+    }
+
+    async function regenText() {
+        if (!currentId) return;
+        $('btn-regen-txt').disabled = true;
+        const prev = $('panel-content').value;
+        $('panel-content').value = 'Se generează text nou...';
+        $('panel-content').disabled = true;
+        try {
+            const res = await fetch(`/admin/social/post/${currentId}/regenerate-text`, {
+                method: 'POST', headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Eroare');
+            $('panel-content').value = data.content;
+            toast('Text nou');
+            openPost(currentId);
+        } catch (e) {
+            $('panel-content').value = prev;
+            toast(e.message);
+        } finally {
+            $('btn-regen-txt').disabled = false;
+            $('panel-content').disabled = false;
+        }
+    }
+
+    async function duplicatePost() {
+        if (!currentId) return;
+        const res = await fetch(`/admin/social/post/${currentId}/duplicate`, {
+            method: 'POST', headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
         });
         const data = await res.json();
-        if (data.image_url) {
-            document.getElementById('modal-image').src = data.image_url + '?t=' + Date.now();
-        } else {
-            alert(data.error || 'Eroare');
-        }
-    } catch (e) { alert('Eroare: ' + e.message); }
-    document.getElementById('modal-image-loading').classList.add('hidden');
-}
+        if (!res.ok) { toast('Eroare la duplicare'); return; }
+        toast('Duplicat — reîncarc');
+        setTimeout(() => location.href = `?post=${data.id}`, 500);
+    }
 
-async function regenText() {
-    if (!currentPostId) return;
-    const el = document.getElementById('modal-content');
-    const old = el.textContent;
-    el.textContent = 'Se generează text nou...';
-    try {
-        const res = await fetch(`/admin/social/post/${currentPostId}/regenerate-text`, {
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+    async function publishNow() {
+        if (!currentId) return;
+        await flushAutosave();
+        $('btn-publish').disabled = true;
+        try {
+            const res = await fetch(`/admin/social/post/${currentId}/publish`, {
+                method: 'POST', headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+            });
+            if (!res.ok) throw new Error('Eroare publicare');
+            toast('Publicat → în coadă');
+            // Advance to next post for fast queue clearing
+            setTimeout(() => navPost(1), 500);
+        } catch (e) {
+            toast(e.message);
+            $('btn-publish').disabled = false;
+        }
+    }
+
+    async function deletePost() {
+        if (!currentId) return;
+        if (!confirm('Ștergi postarea?')) return;
+        const id = currentId;
+        try {
+            const res = await fetch(`/admin/social/post/${id}`, {
+                method: 'DELETE', headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+            });
+            if (!res.ok && !res.redirected) throw new Error('Eroare');
+            toast('Șters');
+            const row = document.querySelector(`.post-row[data-post-id="${id}"]`);
+            if (row) row.remove();
+            const next = postIds[postIds.indexOf(id) + 1] || postIds[postIds.indexOf(id) - 1];
+            closePanel();
+            if (next) openPost(next);
+        } catch (e) { toast(e.message); }
+    }
+
+    function showRejectForm() { $('reject-form').classList.remove('hidden'); }
+    function setRejectCategory(cat, btn) {
+        rejectCategory = cat;
+        document.querySelectorAll('.reject-chip').forEach(b => b.classList.remove('bg-red-600','text-white'));
+        btn.classList.add('bg-red-600','text-white');
+    }
+    async function confirmReject() {
+        if (!currentId) return;
+        const id = currentId;
+        try {
+            const res = await fetch(`/admin/social/post/${id}/reject`, {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': csrf, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ reason_category: rejectCategory, feedback: $('reject-feedback').value }),
+            });
+            const data = await res.json();
+            if (!data.ok) throw new Error(data.error || 'Eroare');
+            toast('Refuzat (învață)');
+            document.querySelector(`.post-row[data-post-id="${id}"]`)?.remove();
+            const next = postIds[postIds.indexOf(id) + 1] || postIds[postIds.indexOf(id) - 1];
+            closePanel();
+            if (next) openPost(next);
+        } catch (e) { toast(e.message); }
+    }
+
+    async function useVariant(variantId) {
+        if (!currentId) return;
+        const res = await fetch(`/admin/social/post/${currentId}/variant/${variantId}/use`, {
+            method: 'POST', headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
         });
-        const data = await res.json();
-        if (data.content) {
-            el.textContent = data.content;
-            document.getElementById('modal-hashtags').textContent = (data.hashtags || []).map(h => h.startsWith('#') ? h : '#' + h).join(' ');
-        } else {
-            el.textContent = old;
-            alert(data.error || 'Eroare');
-        }
-    } catch (e) { el.textContent = old; alert('Eroare: ' + e.message); }
-}
+        if (res.ok) { toast('Versiune restaurată'); openPost(currentId); }
+    }
 
-function showRejectForm() {
-    document.getElementById('reject-form').classList.remove('hidden');
-}
-function setRejectCategory(cat, btn) {
-    rejectCategory = cat;
-    document.querySelectorAll('.reject-chip').forEach(b => b.classList.remove('bg-red-600', 'text-white'));
-    btn.classList.add('bg-red-600', 'text-white');
-}
-async function confirmReject() {
-    if (!currentPostId) return;
-    const fb = document.getElementById('reject-feedback').value;
-    try {
-        const res = await fetch(`/admin/social/post/${currentPostId}/reject`, {
+    // ---------- Navigation ----------
+    function navPost(delta) {
+        if (!postIds.length) return;
+        const i = currentId ? postIds.indexOf(currentId) : -1;
+        const next = postIds[Math.max(0, Math.min(postIds.length - 1, i + delta))];
+        if (next && next !== currentId) {
+            flushAutosave().finally(() => openPost(next));
+        }
+    }
+
+    // ---------- Bulk ----------
+    function updateBulk() {
+        const checks = document.querySelectorAll('.post-check:checked');
+        const bar = $('bulkBar');
+        if (checks.length) {
+            bar.classList.remove('hidden');
+            bar.classList.add('flex');
+        } else {
+            bar.classList.add('hidden');
+            bar.classList.remove('flex');
+        }
+        $('bulkCount').textContent = `${checks.length} selectate`;
+    }
+    $('selectAll').addEventListener('change', (e) => {
+        document.querySelectorAll('.post-check').forEach(c => c.checked = e.target.checked);
+        updateBulk();
+    });
+    async function bulkAction(action) {
+        const ids = Array.from(document.querySelectorAll('.post-check:checked')).map(c => +c.value);
+        if (!ids.length) return;
+        if (action === 'delete' && !confirm(`Ștergi ${ids.length} postări?`)) return;
+        const res = await fetch('/admin/social/bulk', {
             method: 'POST',
             headers: { 'X-CSRF-TOKEN': csrf, 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ reason_category: rejectCategory, feedback: fb }),
+            body: JSON.stringify({ action, ids }),
         });
         const data = await res.json();
-        if (data.ok) {
-            closeSocialPost();
-            location.reload();
-        } else {
-            alert(data.error || 'Eroare');
+        if (res.ok) {
+            toast(`${action}: ${data.count} postări`);
+            setTimeout(() => location.reload(), 600);
+        } else toast('Eroare bulk');
+    }
+
+    // ---------- Keyboard shortcuts ----------
+    document.addEventListener('keydown', (e) => {
+        // Don't intercept while typing in inputs (except global ones)
+        const tag = (e.target.tagName || '').toLowerCase();
+        const inField = tag === 'textarea' || tag === 'input' || tag === 'select';
+
+        if (e.key === '?' && !inField) { e.preventDefault(); $('helpOverlay').classList.toggle('hidden'); return; }
+        if (e.key === 'Escape') {
+            if (!$('helpOverlay').classList.contains('hidden')) { $('helpOverlay').classList.add('hidden'); return; }
+            if (inField) { e.target.blur(); return; }
+            closePanel(); return;
         }
-    } catch (e) { alert('Eroare: ' + e.message); }
-}
-async function deletePost() {
-    if (!currentPostId) return;
-    if (!confirm('Sigur vrei să ștergi postarea? Acțiunea nu poate fi anulată.')) return;
-    try {
-        const res = await fetch(`/admin/social/post/${currentPostId}`, {
-            method: 'DELETE',
-            headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
-        });
-        if (res.ok || res.redirected) {
-            closeSocialPost();
-            location.reload();
-        } else {
-            const data = await res.json().catch(() => ({}));
-            alert(data.error || 'Eroare la ștergere');
+        if (inField && !(e.metaKey || e.ctrlKey)) return;
+        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && inField) {
+            e.preventDefault(); flushAutosave(); return;
         }
-    } catch (e) { alert('Eroare: ' + e.message); }
-}
+        if (e.key === 'j' || e.key === 'ArrowDown') { e.preventDefault(); navPost(1); }
+        else if (e.key === 'k' || e.key === 'ArrowUp') { e.preventDefault(); navPost(-1); }
+        else if (e.key === 'e' && currentId) { e.preventDefault(); $('panel-content').focus(); }
+        else if (e.key === 'a' && currentId) { e.preventDefault(); publishNow(); }
+        else if (e.key === 'r' && currentId) { e.preventDefault(); showRejectForm(); }
+    });
+
+    // ---------- Swipe gestures on mobile list rows ----------
+    document.querySelectorAll('.post-row').forEach(row => {
+        let startX = null;
+        row.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; }, { passive: true });
+        row.addEventListener('touchend', (e) => {
+            if (startX === null) return;
+            const dx = e.changedTouches[0].clientX - startX;
+            startX = null;
+            const id = +row.dataset.postId;
+            if (dx > 80) { openPost(id); setTimeout(publishNow, 200); }
+            else if (dx < -80) { openPost(id); setTimeout(showRejectForm, 200); }
+        }, { passive: true });
+    });
+
+    // ---------- Boot ----------
+    // Expose the small handful we need from HTML attributes.
+    window.openPost = openPost;
+    window.closePanel = closePanel;
+    window.regenImage = regenImage;
+    window.regenText = regenText;
+    window.duplicatePost = duplicatePost;
+    window.publishNow = publishNow;
+    window.deletePost = deletePost;
+    window.showRejectForm = showRejectForm;
+    window.setRejectCategory = setRejectCategory;
+    window.confirmReject = confirmReject;
+    window.useVariant = useVariant;
+    window.navPost = navPost;
+    window.updateBulk = updateBulk;
+    window.bulkAction = bulkAction;
+
+    // Deep-link: open post from ?post=
+    const initial = new URLSearchParams(location.search).get('post');
+    if (initial && postIds.includes(+initial)) {
+        openPost(+initial);
+    }
+})();
 </script>
 @endpush
 @endsection

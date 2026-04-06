@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SocialPost;
+use App\Models\SocialPostVariant;
 use App\Models\SocialAccount;
 use App\Models\SocialSchedule;
 use App\Models\SocialStylePreference;
 use App\Models\SocialRejection;
 use App\Services\Social\GeminiContentService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use OpenAI\Laravel\Facades\OpenAI;
 
 class AdminSocialController extends Controller
@@ -17,27 +19,58 @@ class AdminSocialController extends Controller
     // Dashboard with overview
     public function index(Request $request)
     {
-        $query = SocialPost::query();
+        $query = SocialPost::query()->with('socialAccount');
+
         if ($status = $request->get('status')) {
             $query->where('status', $status);
         }
         if ($platform = $request->get('platform')) {
             $query->where('platform', $platform);
         }
-        $posts = $query->orderByRaw("CASE WHEN status='scheduled' THEN 0 WHEN status='draft' THEN 1 WHEN status='failed' THEN 2 ELSE 3 END")
-            ->orderBy('scheduled_at', 'asc')
-            ->orderByDesc('id')
-            ->paginate(30)
-            ->withQueryString();
+        if ($q = trim((string) $request->get('q', ''))) {
+            $query->where(function ($w) use ($q) {
+                $w->where('content', 'ILIKE', "%{$q}%")
+                  ->orWhere('image_prompt', 'ILIKE', "%{$q}%");
+            });
+        }
+        if ($from = $request->get('from')) {
+            $query->where(function ($w) use ($from) {
+                $w->where('scheduled_at', '>=', $from)
+                  ->orWhere('published_at', '>=', $from);
+            });
+        }
+        if ($to = $request->get('to')) {
+            $query->where(function ($w) use ($to) {
+                $w->where('scheduled_at', '<=', $to)
+                  ->orWhere('published_at', '<=', $to);
+            });
+        }
+
+        // Deterministic ordering: "active" bucket (draft, scheduled, failed) first
+        // with nearest scheduled_at at top, then the rest by newest published/created.
+        $activeStatuses = ['scheduled', 'draft', 'failed', 'publishing'];
+        $query->orderByRaw("CASE WHEN status IN ('scheduled','draft','failed','publishing') THEN 0 ELSE 1 END")
+              ->orderByRaw('COALESCE(scheduled_at, published_at, created_at) ASC NULLS LAST')
+              ->orderByDesc('id');
+
+        $posts = $query->paginate(50)->withQueryString();
+
+        // Single-query stats via GROUP BY
+        $counts = SocialPost::query()
+            ->select('status', DB::raw('count(*) as c'))
+            ->groupBy('status')
+            ->pluck('c', 'status');
+        $stats = [
+            'total_posts' => (int) $counts->sum(),
+            'draft' => (int) ($counts['draft'] ?? 0),
+            'scheduled' => (int) ($counts['scheduled'] ?? 0),
+            'published' => (int) ($counts['published'] ?? 0),
+            'failed' => (int) ($counts['failed'] ?? 0),
+            'today' => (int) SocialPost::whereDate('published_at', today())->count(),
+        ];
+
         $accounts = SocialAccount::all();
         $schedules = SocialSchedule::all();
-        $stats = [
-            'total_posts' => SocialPost::count(),
-            'published' => SocialPost::where('status', 'published')->count(),
-            'scheduled' => SocialPost::where('status', 'scheduled')->count(),
-            'failed' => SocialPost::where('status', 'failed')->count(),
-            'today' => SocialPost::whereDate('published_at', today())->count(),
-        ];
 
         return view('admin.social.index', compact('posts', 'accounts', 'schedules', 'stats'));
     }
@@ -76,18 +109,14 @@ class AdminSocialController extends Controller
             'ai_tokens_used' => $result['tokens_used'] ?? 0,
         ]);
 
-        return redirect()->route('admin.social.edit', $post)->with('success', 'Post generat cu succes!');
+        return redirect()->route('admin.social.index', ['post' => $post->id])->with('success', 'Post generat cu succes!');
     }
 
-    // Edit a post before publishing
-    public function edit(SocialPost $post)
-    {
-        return view('admin.social.edit', compact('post'));
-    }
-
-    // Return single post as JSON for the modal viewer
+    // Return single post as JSON for the side panel viewer
     public function show(SocialPost $post)
     {
+        $post->load(['variants' => fn($q) => $q->orderByDesc('id')->limit(10), 'rejections' => fn($q) => $q->orderByDesc('id')->limit(5)]);
+
         return response()->json([
             'id' => $post->id,
             'platform' => $post->platform,
@@ -98,18 +127,68 @@ class AdminSocialController extends Controller
             'image_url' => $post->image_url,
             'image_prompt' => $post->image_prompt,
             'metadata' => $post->metadata ?? [],
-            'scheduled_at' => $post->scheduled_at?->format('Y-m-d H:i'),
-            'published_at' => $post->published_at?->format('Y-m-d H:i'),
+            'scheduled_at' => $post->scheduled_at?->format('Y-m-d\TH:i'),
+            'published_at' => $post->published_at?->format('Y-m-d\TH:i'),
             'external_url' => $post->external_url,
             'error_message' => $post->error_message,
-            'is_editable' => in_array($post->status, ['draft', 'scheduled']),
+            'regen_count' => (int) ($post->regen_count ?? 0),
+            'updated_at' => $post->updated_at?->toIso8601String(),
+            'is_editable' => in_array($post->status, ['draft', 'scheduled', 'failed']),
+            'variants' => $post->variants->map(fn($v) => [
+                'id' => $v->id,
+                'kind' => $v->kind,
+                'content' => $v->content,
+                'image_url' => $v->image_url,
+                'image_prompt' => $v->image_prompt,
+                'created_at' => $v->created_at?->diffForHumans(),
+            ])->values(),
+            'rejections' => $post->rejections->map(fn($r) => [
+                'reason_category' => $r->reason_category,
+                'feedback' => $r->feedback,
+                'created_at' => $r->created_at?->diffForHumans(),
+            ])->values(),
         ]);
     }
 
-    // Regenerate the image for a post (different style/seed). Optional ?prompt= override.
+    // Partial JSON update with optimistic concurrency via updated_at.
+    public function patch(Request $request, SocialPost $post)
+    {
+        $validated = $request->validate([
+            'content' => 'nullable|string|max:10000',
+            'scheduled_at' => 'nullable|date',
+            'status' => 'nullable|in:draft,scheduled',
+            'post_type' => 'nullable|in:post,story,reel,blog_article',
+            'updated_at' => 'nullable|string',
+        ]);
+
+        if (!empty($validated['updated_at']) && $post->updated_at?->toIso8601String() !== $validated['updated_at']) {
+            return response()->json([
+                'error' => 'Postarea a fost modificată între timp. Reîncarcă.',
+                'current_updated_at' => $post->updated_at?->toIso8601String(),
+            ], 409);
+        }
+
+        $dirty = [];
+        foreach (['content', 'scheduled_at', 'status', 'post_type'] as $k) {
+            if (array_key_exists($k, $validated) && $validated[$k] !== null) {
+                $dirty[$k] = $validated[$k];
+            }
+        }
+        if ($dirty) {
+            $post->update($dirty);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'updated_at' => $post->fresh()->updated_at->toIso8601String(),
+        ]);
+    }
+
+    // Regenerate the image for a post. Stores result as a variant AND promotes it to active
+    // so the UI can also show recent variants and let the reviewer switch back.
     public function regenerateImage(Request $request, SocialPost $post)
     {
-        if (!in_array($post->status, ['draft', 'scheduled'])) {
+        if (!in_array($post->status, ['draft', 'scheduled', 'failed'])) {
             return response()->json(['error' => 'Postarea nu mai poate fi modificată.'], 422);
         }
 
@@ -124,18 +203,34 @@ class AdminSocialController extends Controller
             return response()->json(['error' => 'Generarea imaginii a eșuat.'], 500);
         }
 
+        // Snapshot previous image as an inactive variant before overwriting.
+        if ($post->image_url) {
+            SocialPostVariant::create([
+                'social_post_id' => $post->id,
+                'kind' => 'image',
+                'image_url' => $post->image_url,
+                'image_prompt' => $post->image_prompt,
+                'is_active' => false,
+            ]);
+        }
+
         $post->update([
             'image_url' => $image['url'],
             'image_prompt' => $prompt,
+            'regen_count' => ($post->regen_count ?? 0) + 1,
         ]);
 
-        return response()->json(['image_url' => $post->image_url, 'image_prompt' => $post->image_prompt]);
+        return response()->json([
+            'image_url' => $post->image_url,
+            'image_prompt' => $post->image_prompt,
+            'regen_count' => $post->regen_count,
+        ]);
     }
 
     // Regenerate the text content for a post, keeping topic + tone, learning from rejections
     public function regenerateText(Request $request, SocialPost $post)
     {
-        if (!in_array($post->status, ['draft', 'scheduled'])) {
+        if (!in_array($post->status, ['draft', 'scheduled', 'failed'])) {
             return response()->json(['error' => 'Postarea nu mai poate fi modificată.'], 422);
         }
 
@@ -165,12 +260,28 @@ class AdminSocialController extends Controller
             if (empty($parsed['content'])) {
                 return response()->json(['error' => 'Generarea textului a eșuat.'], 500);
             }
+            // Snapshot previous text as an inactive variant.
+            if ($post->content) {
+                SocialPostVariant::create([
+                    'social_post_id' => $post->id,
+                    'kind' => 'text',
+                    'content' => $post->content,
+                    'hashtags' => $post->hashtags ?? [],
+                    'is_active' => false,
+                ]);
+            }
+
             $post->update([
                 'content' => $parsed['content'],
                 'hashtags' => [],
+                'regen_count' => ($post->regen_count ?? 0) + 1,
             ]);
 
-            return response()->json(['content' => $post->content, 'hashtags' => []]);
+            return response()->json([
+                'content' => $post->content,
+                'hashtags' => [],
+                'regen_count' => $post->regen_count,
+            ]);
         } catch (\Throwable $e) {
             return response()->json(['error' => 'OpenAI: ' . $e->getMessage()], 500);
         }
@@ -220,21 +331,108 @@ class AdminSocialController extends Controller
         return redirect()->route('admin.social.index')->with('success', 'Post actualizat!');
     }
 
-    // Publish immediately
-    public function publish(SocialPost $post)
+    // Publish immediately (JSON-aware)
+    public function publish(Request $request, SocialPost $post)
     {
         $post->update(['status' => 'scheduled', 'scheduled_at' => now()]);
         dispatch(new \App\Jobs\AutoPublishSocialPost($post->id));
 
+        if ($request->expectsJson() || $request->wantsJson()) {
+            return response()->json(['ok' => true]);
+        }
         return back()->with('success', 'Post trimis la publicare!');
     }
 
-    // Delete post
-    public function destroy(SocialPost $post)
+    // Delete post (JSON-aware)
+    public function destroy(Request $request, SocialPost $post)
     {
         $post->delete();
-
+        if ($request->expectsJson() || $request->wantsJson()) {
+            return response()->json(['ok' => true]);
+        }
         return back()->with('success', 'Post sters.');
+    }
+
+    // Duplicate a post as a new draft
+    public function duplicate(SocialPost $post)
+    {
+        $new = $post->replicate(['external_post_id', 'external_url', 'published_at', 'error_message']);
+        $new->status = 'draft';
+        $new->scheduled_at = null;
+        $new->regen_count = 0;
+        $new->save();
+
+        return response()->json(['id' => $new->id]);
+    }
+
+    // Promote a stored variant back to the active content of the post.
+    public function useVariant(Request $request, SocialPost $post, SocialPostVariant $variant)
+    {
+        abort_unless($variant->social_post_id === $post->id, 404);
+
+        if ($variant->kind === 'text' || $variant->kind === 'both') {
+            // Snapshot current text before swap
+            SocialPostVariant::create([
+                'social_post_id' => $post->id,
+                'kind' => 'text',
+                'content' => $post->content,
+                'hashtags' => $post->hashtags ?? [],
+                'is_active' => false,
+            ]);
+            $post->content = $variant->content;
+            $post->hashtags = $variant->hashtags ?? [];
+        }
+        if ($variant->kind === 'image' || $variant->kind === 'both') {
+            SocialPostVariant::create([
+                'social_post_id' => $post->id,
+                'kind' => 'image',
+                'image_url' => $post->image_url,
+                'image_prompt' => $post->image_prompt,
+                'is_active' => false,
+            ]);
+            $post->image_url = $variant->image_url;
+            $post->image_prompt = $variant->image_prompt;
+        }
+        $post->save();
+
+        return response()->json(['ok' => true]);
+    }
+
+    // Bulk actions: delete, reschedule, publish
+    public function bulk(Request $request)
+    {
+        $validated = $request->validate([
+            'action' => 'required|in:delete,reschedule,publish',
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer',
+            'scheduled_at' => 'nullable|date',
+        ]);
+
+        $posts = SocialPost::whereIn('id', $validated['ids']);
+        $count = 0;
+
+        switch ($validated['action']) {
+            case 'delete':
+                $count = $posts->count();
+                $posts->delete();
+                break;
+            case 'reschedule':
+                abort_unless(!empty($validated['scheduled_at']), 422, 'scheduled_at required');
+                $count = $posts->update([
+                    'scheduled_at' => $validated['scheduled_at'],
+                    'status' => 'scheduled',
+                ]);
+                break;
+            case 'publish':
+                foreach ($posts->get() as $p) {
+                    $p->update(['status' => 'scheduled', 'scheduled_at' => now()]);
+                    dispatch(new \App\Jobs\AutoPublishSocialPost($p->id));
+                    $count++;
+                }
+                break;
+        }
+
+        return response()->json(['ok' => true, 'count' => $count]);
     }
 
     // Generate bio
