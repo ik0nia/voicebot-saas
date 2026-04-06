@@ -80,9 +80,6 @@ class MetaPostingService
         try {
             // Step 1: Create media container
             $caption = $post->content;
-            if (!empty($post->hashtags)) {
-                $caption .= "\n\n" . collect($post->hashtags)->map(fn($t) => "#{$t}")->implode(' ');
-            }
 
             $container = Http::timeout(30)->post("{$this->graphUrl}/{$account->platform_id}/media", [
                 'image_url' => $post->image_url,

@@ -36,7 +36,7 @@ class GeminiContentService
 
         $platformRules = match($platform) {
             'facebook' => "Post Facebook: 100-300 cuvinte, poate fi mai lung. Ton conversațional. Include CTA. Poate avea link-uri. Emoji-uri moderate.",
-            'instagram' => "Caption Instagram: 50-150 cuvinte. Vizual, emoțional. Include 10-15 hashtag-uri relevante. Emoji-uri abundant. Fără link-uri în text.",
+            'instagram' => "Caption Instagram: 50-150 cuvinte. Vizual, emoțional. Emoji-uri abundant. Fără link-uri în text. Nu folosi hashtag-uri.",
             'blog' => "Articol blog: 500-1000 cuvinte. SEO-friendly. Include H2/H3 headings. Ton profesional dar accesibil. Paragraf introductiv captivant.",
             default => "Post social media: 100-200 cuvinte.",
         };
@@ -49,7 +49,7 @@ class GeminiContentService
             . ($styleContext ? "STIL DORIT:\n{$styleContext}\n\n" : "")
             . "LIMBA: {$language}\n\n"
             . "Returnează JSON cu structura:\n"
-            . '{"content": "textul postării", "hashtags": ["tag1", "tag2"], "image_prompt": "prompt scurt în engleză pentru generarea unei imagini potrivite", "title": "titlu (doar pentru blog)"}';
+            . '{"content": "textul postării", "image_prompt": "prompt scurt în engleză pentru generarea unei imagini potrivite", "title": "titlu (doar pentru blog)"}';
 
         $response = $this->callGemini($prompt);
 
@@ -63,7 +63,7 @@ class GeminiContentService
 
         return [
             'content' => $parsed['content'] ?? $text,
-            'hashtags' => $parsed['hashtags'] ?? [],
+            'hashtags' => [],
             'image_prompt' => $parsed['image_prompt'] ?? null,
             'title' => $parsed['title'] ?? null,
             'tokens_used' => $response['tokens_used'] ?? 0,
@@ -174,9 +174,11 @@ class GeminiContentService
             }
             $preset = $styles[$style];
 
-            // Always use the dark logo (white text) — works on any background with a backing shape
-            $logoFile = public_path('images/social/logo-dark.png');
-            $logoBase64 = file_exists($logoFile) ? base64_encode(file_get_contents($logoFile)) : null;
+            // Randomly include the logo (~40% of graphics) — when included, use the light
+            // variant (black "Sambla" wordmark) on a solid white pill so it reads cleanly.
+            $includeLogo = random_int(1, 100) <= 40;
+            $logoFile = public_path('images/social/logo-light.png');
+            $logoBase64 = ($includeLogo && file_exists($logoFile)) ? base64_encode(file_get_contents($logoFile)) : null;
 
             $parts = [];
 
@@ -192,8 +194,12 @@ class GeminiContentService
 
             $stylePrompt = $preset['prompt'];
 
-            $parts[] = ['text' => "Generate a professional social media graphic with EXACT aspect ratio {$aspectRatio} (this is critical — the image MUST be {$aspectRatio}, portrait orientation if 3:4). "
-                . "BRAND LOGO: Use the attached logo EXACTLY as provided — place it as a stamp/watermark in a visible corner (top-left preferred). Place a small dark semi-transparent rounded rectangle behind the logo so it's always readable regardless of background color. Do NOT redraw or recreate the logo text. "
+            $brandLine = $logoBase64
+                ? "BRAND LOGO: Use the attached logo EXACTLY as provided — place it as a stamp in a visible corner (vary the corner). Place a solid WHITE rounded rectangle directly behind the logo so the black 'Sambla' wordmark is crisp and perfectly legible. Do NOT redraw, recolor or recreate the logo text. "
+                : "BRAND: Do NOT add any logo, wordmark, or brand text to this image. Keep it purely visual. ";
+
+            $parts[] = ['text' => "Generate a professional social media graphic with EXACT aspect ratio {$aspectRatio} (this is critical — the image MUST be {$aspectRatio}, portrait orientation if 3:4, vertical 9:16 for stories). "
+                . $brandLine
                 . "VISUAL STYLE ({$preset['name']}): {$stylePrompt} "
                 . "TEXT RULES: All text on the graphic MUST be in Romanian. Keep text very short — use punchy CTA phrases, max 5-7 words per line. "
                 . "CONTENT: {$prompt}"];

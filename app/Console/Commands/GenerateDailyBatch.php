@@ -217,9 +217,10 @@ class GenerateDailyBatch extends Command
             . "- Ton: profesional dar accesibil, direct\n"
             . "- Termină cu CTA clar: {$topicData['cta']} → sambla.ro\n"
             . "- Limba: română\n"
-            . "- Emoji-uri: moderate (2-4 per post)\n\n"
+            . "- Emoji-uri: moderate (2-4 per post)\n"
+            . "- NU folosi hashtag-uri\n\n"
             . "BRAND: Sambla — platformă românească de AI conversațional (chatbot + voicebot) pentru business-uri.\n\n"
-            . 'Returnează JSON: {"content": "textul postării", "hashtags": ["tag1", "tag2", "tag3"]}';
+            . 'Returnează JSON: {"content": "textul postării"}';
 
         try {
             $response = \OpenAI\Laravel\Facades\OpenAI::chat()->create([
@@ -239,7 +240,7 @@ class GenerateDailyBatch extends Command
 
             return [
                 'content' => $parsed['content'] ?? $text,
-                'hashtags' => $parsed['hashtags'] ?? [],
+                'hashtags' => [],
                 'tokens_used' => $tokens,
             ];
         } catch (\Throwable $e) {
