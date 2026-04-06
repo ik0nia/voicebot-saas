@@ -72,7 +72,14 @@ class AdminSocialController extends Controller
         $accounts = SocialAccount::all();
         $schedules = SocialSchedule::all();
 
-        return view('admin.social.index', compact('posts', 'accounts', 'schedules', 'stats'));
+        // Mobile swipe deck: load next 12 drafts (oldest first so reviewer works through the backlog).
+        $deck = SocialPost::where('status', 'draft')
+            ->whereNotNull('image_url')
+            ->orderBy('id', 'asc')
+            ->limit(12)
+            ->get();
+
+        return view('admin.social.index', compact('posts', 'accounts', 'schedules', 'stats', 'deck'));
     }
 
     // Generate a new post with Gemini

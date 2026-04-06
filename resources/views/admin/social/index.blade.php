@@ -109,7 +109,68 @@
         </form>
     </details>
 
-    {{-- Main split-pane layout --}}
+    {{-- MOBILE ONLY: Tinder-style card deck for reviewing drafts --}}
+    @if($deck->count() > 0)
+    <div id="cardDeck" class="lg:hidden mb-4 select-none">
+        <div class="flex items-center justify-between mb-2 px-1">
+            <h2 class="text-sm font-bold text-slate-900">Review rapid</h2>
+            <span id="deckCount" class="text-xs text-slate-500">{{ $deck->count() }} drafturi</span>
+        </div>
+        <div id="deckArea" class="relative" style="height: 65vh;">
+            @foreach($deck as $i => $post)
+                @php
+                    $depth = min($i, 3);
+                    $scale = 1 - $depth * 0.04;
+                    $offset = $depth * 8;
+                @endphp
+                <div class="social-card absolute inset-0 bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col touch-none"
+                     data-post-id="{{ $post->id }}"
+                     data-idx="{{ $i }}"
+                     style="z-index: {{ 100 - $i }}; transform: scale({{ $scale }}) translateY({{ $offset }}px); transition: transform 0.25s ease, opacity 0.25s ease;">
+                    {{-- Image --}}
+                    @if($post->image_url)
+                        <div class="relative bg-slate-900" style="height: 60%;">
+                            <img src="{{ $post->image_url }}" alt="" class="absolute inset-0 w-full h-full object-contain" draggable="false">
+                            <div class="absolute top-3 left-3 flex gap-1">
+                                <span class="px-2 py-0.5 text-[10px] font-bold rounded-full text-white {{ ['facebook' => 'bg-blue-600', 'instagram' => 'bg-pink-600', 'blog' => 'bg-slate-700'][$post->platform] ?? 'bg-slate-700' }}">{{ ['facebook' => 'FB', 'instagram' => 'IG', 'blog' => 'BLOG'][$post->platform] ?? $post->platform }}</span>
+                                @if($post->post_type === 'story')
+                                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-500 text-white">STORY</span>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+                    {{-- Text --}}
+                    <div class="p-4 flex-1 overflow-y-auto">
+                        <p class="text-sm text-slate-800 whitespace-pre-wrap leading-relaxed">{{ $post->content }}</p>
+                    </div>
+                    {{-- Swipe labels --}}
+                    <div class="card-label-approve pointer-events-none absolute top-6 left-4 px-3 py-1 rounded-lg border-4 border-green-500 text-green-500 text-2xl font-black opacity-0" style="transform: rotate(-15deg);">APROBĂ</div>
+                    <div class="card-label-reject pointer-events-none absolute top-6 right-4 px-3 py-1 rounded-lg border-4 border-red-500 text-red-500 text-2xl font-black opacity-0" style="transform: rotate(15deg);">REFUZĂ</div>
+                </div>
+            @endforeach
+            <div id="deckEmpty" class="hidden absolute inset-0 flex items-center justify-center text-center">
+                <div class="text-slate-500">
+                    <div class="text-4xl mb-2">🎉</div>
+                    <p class="text-sm font-semibold">Ai terminat!</p>
+                    <p class="text-xs mt-1">Se vor genera mai multe la următorul cron.</p>
+                    <button type="button" onclick="location.reload()" class="mt-3 px-3 py-1.5 text-xs bg-slate-800 text-white rounded-lg">Reîncarcă</button>
+                </div>
+            </div>
+        </div>
+        {{-- Action buttons below cards --}}
+        <div class="flex items-center justify-center gap-4 mt-4">
+            <button type="button" id="btn-card-reject" aria-label="Refuză"
+                    class="w-16 h-16 rounded-full bg-white border-2 border-red-400 text-red-500 text-3xl shadow-lg active:scale-90 transition flex items-center justify-center">✕</button>
+            <button type="button" id="btn-card-detail" aria-label="Detalii"
+                    class="h-12 px-4 rounded-full bg-slate-800 text-white text-xs font-semibold shadow active:scale-95 transition">Detalii</button>
+            <button type="button" id="btn-card-approve" aria-label="Aprobă"
+                    class="w-16 h-16 rounded-full bg-white border-2 border-green-500 text-green-600 text-3xl shadow-lg active:scale-90 transition flex items-center justify-center">♥</button>
+        </div>
+        <p class="mt-2 text-center text-[11px] text-slate-400">Trage card-ul → dreapta aprobă, stânga refuză</p>
+    </div>
+    @endif
+
+    {{-- Main split-pane layout (desktop + mobile list fallback) --}}
     <div class="flex gap-4 items-start">
         {{-- LEFT: grouped list --}}
         <div class="bg-white rounded-xl border border-slate-200 overflow-hidden flex-1 min-w-0">
@@ -934,6 +995,174 @@ window.addEventListener('error', (e) => {
     if (initial && postIds.includes(+initial)) {
         openPost(+initial);
     }
+
+    // ============================================================
+    // Tinder-style card deck (mobile only)
+    // ============================================================
+    (function initCardDeck() {
+        const area = document.getElementById('deckArea');
+        if (!area) return;
+        const cards = Array.from(area.querySelectorAll('.social-card'));
+        if (!cards.length) return;
+        const countEl = document.getElementById('deckCount');
+        const emptyEl = document.getElementById('deckEmpty');
+
+        function remaining() {
+            return cards.filter(c => !c.classList.contains('gone'));
+        }
+        function topCard() { return remaining()[0] || null; }
+
+        function refreshStack() {
+            const rem = remaining();
+            if (countEl) countEl.textContent = rem.length + ' drafturi';
+            if (!rem.length && emptyEl) emptyEl.classList.remove('hidden');
+            // Re-stack the visible cards
+            rem.forEach((c, i) => {
+                if (i === 0) {
+                    c.style.zIndex = 100;
+                    c.style.transform = '';
+                } else {
+                    const depth = Math.min(i, 3);
+                    c.style.zIndex = 100 - i;
+                    c.style.transform = `scale(${1 - depth * 0.04}) translateY(${depth * 8}px)`;
+                }
+                c.style.opacity = '1';
+            });
+        }
+
+        async function handleAction(card, direction) {
+            if (!card || card.classList.contains('gone')) return;
+            const id = +card.dataset.postId;
+            // Fly the card off
+            const x = direction > 0 ? window.innerWidth * 1.5 : -window.innerWidth * 1.5;
+            const rot = direction > 0 ? 25 : -25;
+            card.style.transition = 'transform 0.35s ease-out, opacity 0.35s';
+            card.style.transform = `translate(${x}px, 40px) rotate(${rot}deg)`;
+            card.style.opacity = '0';
+
+            setTimeout(() => {
+                card.classList.add('gone');
+                card.style.display = 'none';
+                refreshStack();
+            }, 350);
+
+            try {
+                if (direction > 0) {
+                    const res = await fetch(`/admin/social/post/${id}/approve`, {
+                        method: 'POST', headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                    });
+                    const data = await res.json();
+                    if (res.ok) toast('✓ Aprobat → ' + (data.scheduled_human || ''));
+                    else throw new Error(data.error || 'Eroare');
+                } else {
+                    // Soft delete with undo
+                    const res = await fetch(`/admin/social/post/${id}`, {
+                        method: 'DELETE', headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                    });
+                    if (res.ok) {
+                        toast('Refuzat', {
+                            undo: async () => {
+                                await fetch(`/admin/social/post/${id}/restore`, {
+                                    method: 'POST', headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                                });
+                                // Bring card back
+                                card.classList.remove('gone');
+                                card.style.display = '';
+                                card.style.transition = 'none';
+                                card.style.transform = '';
+                                card.style.opacity = '1';
+                                requestAnimationFrame(refreshStack);
+                                toast('Restaurat');
+                            },
+                            duration: 6000,
+                        });
+                    }
+                }
+            } catch (e) {
+                toast(e.message);
+                // Put the card back if the request failed
+                card.classList.remove('gone');
+                card.style.display = '';
+                card.style.transition = 'none';
+                card.style.transform = '';
+                card.style.opacity = '1';
+                requestAnimationFrame(refreshStack);
+            }
+        }
+
+        // Attach drag to each card
+        cards.forEach(card => {
+            let startX = 0, startY = 0, dx = 0, dy = 0, dragging = false, pointerId = null;
+            const approveLabel = card.querySelector('.card-label-approve');
+            const rejectLabel = card.querySelector('.card-label-reject');
+
+            card.addEventListener('pointerdown', (e) => {
+                if (card !== topCard()) return;
+                // Don't start drag if touching a scroll area (text block)
+                if (e.target.closest('.overflow-y-auto')) return;
+                dragging = true;
+                pointerId = e.pointerId;
+                startX = e.clientX; startY = e.clientY; dx = 0; dy = 0;
+                try { card.setPointerCapture(e.pointerId); } catch (_) {}
+                card.style.transition = 'none';
+                e.preventDefault();
+            });
+
+            card.addEventListener('pointermove', (e) => {
+                if (!dragging || e.pointerId !== pointerId) return;
+                dx = e.clientX - startX;
+                dy = e.clientY - startY;
+                const rot = dx / 20;
+                card.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot}deg)`;
+                if (approveLabel) approveLabel.style.opacity = dx > 0 ? Math.min(1, dx / 100) : 0;
+                if (rejectLabel) rejectLabel.style.opacity = dx < 0 ? Math.min(1, -dx / 100) : 0;
+            });
+
+            const endDrag = (e) => {
+                if (!dragging) return;
+                dragging = false;
+                try { card.releasePointerCapture(pointerId); } catch (_) {}
+                pointerId = null;
+                card.style.transition = 'transform 0.25s ease, opacity 0.25s ease';
+                if (approveLabel) approveLabel.style.opacity = 0;
+                if (rejectLabel) rejectLabel.style.opacity = 0;
+
+                const threshold = 100;
+                if (dx > threshold) handleAction(card, 1);
+                else if (dx < -threshold) handleAction(card, -1);
+                else card.style.transform = '';
+            };
+            card.addEventListener('pointerup', endDrag);
+            card.addEventListener('pointercancel', endDrag);
+            card.addEventListener('pointerleave', (e) => {
+                if (dragging && e.pointerId === pointerId) endDrag(e);
+            });
+
+            // Tap → open detail panel (only if no drag happened)
+            card.addEventListener('click', (e) => {
+                if (Math.abs(dx) > 10 || Math.abs(dy) > 10) return;
+                if (e.target.closest('button')) return;
+                const id = +card.dataset.postId;
+                if (id) openPost(id);
+            });
+        });
+
+        // Button triggers
+        document.getElementById('btn-card-approve')?.addEventListener('click', () => {
+            const c = topCard();
+            if (c) handleAction(c, 1);
+        });
+        document.getElementById('btn-card-reject')?.addEventListener('click', () => {
+            const c = topCard();
+            if (c) handleAction(c, -1);
+        });
+        document.getElementById('btn-card-detail')?.addEventListener('click', () => {
+            const c = topCard();
+            if (c) openPost(+c.dataset.postId);
+        });
+
+        refreshStack();
+    })();
 })();
 </script>
 @endpush
