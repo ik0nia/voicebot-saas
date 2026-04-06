@@ -314,9 +314,13 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
     Route::prefix('social')->name('admin.social.')->group(function () {
         Route::get('/', [AdminSocialController::class, 'index'])->name('index');
         Route::post('/generate', [AdminSocialController::class, 'generate'])->name('generate');
+        Route::get('/post/{post}', [AdminSocialController::class, 'show'])->name('show');
         Route::get('/post/{post}/edit', [AdminSocialController::class, 'edit'])->name('edit');
         Route::put('/post/{post}', [AdminSocialController::class, 'update'])->name('update');
         Route::post('/post/{post}/publish', [AdminSocialController::class, 'publish'])->name('publish');
+        Route::post('/post/{post}/regenerate-image', [AdminSocialController::class, 'regenerateImage'])->name('regenerateImage');
+        Route::post('/post/{post}/regenerate-text', [AdminSocialController::class, 'regenerateText'])->name('regenerateText');
+        Route::post('/post/{post}/reject', [AdminSocialController::class, 'reject'])->name('reject');
         Route::delete('/post/{post}', [AdminSocialController::class, 'destroy'])->name('destroy');
         Route::post('/generate-bio', [AdminSocialController::class, 'generateBio'])->name('generateBio');
         Route::get('/style', [AdminSocialController::class, 'styleTraining'])->name('style');

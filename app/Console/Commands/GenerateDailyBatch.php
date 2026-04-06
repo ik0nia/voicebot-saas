@@ -12,6 +12,8 @@ class GenerateDailyBatch extends Command
 {
     protected $signature = 'social:generate-batch
                             {count=10 : Number of posts to generate}
+                            {--date= : Date YYYY-MM-DD (default today)}
+                            {--from=09:00 : Earliest posting time HH:MM (only enforced for future dates)}
                             {--until=20:00 : Schedule posts until this time (HH:MM)}
                             {--platform=both : facebook, instagram, or both}
                             {--dry-run : Preview without creating}';
@@ -110,17 +112,27 @@ class GenerateDailyBatch extends Command
             $this->warn('Not all accounts configured. Using available ones.');
         }
 
+        $dateOpt = $this->option('date');
+        $fromTime = $this->option('from');
+        $targetDate = $dateOpt ? Carbon::parse($dateOpt)->startOfDay() : Carbon::today();
+        $endTime = $targetDate->copy()->setTimeFromTimeString($untilTime);
+        $startTime = $targetDate->copy()->setTimeFromTimeString($fromTime);
         $now = Carbon::now();
-        $endTime = Carbon::today()->setTimeFromTimeString($untilTime);
-        if ($endTime->lte($now)) {
-            $this->error("End time {$untilTime} is in the past.");
+
+        // For today, never schedule in the past
+        if ($targetDate->isToday() && $startTime->lt($now)) {
+            $startTime = $now;
+        }
+
+        if ($endTime->lte($startTime)) {
+            $this->error("End time {$untilTime} is before start time {$startTime->format('H:i')} on {$targetDate->toDateString()}.");
             return self::FAILURE;
         }
 
-        $minutesAvailable = $now->diffInMinutes($endTime);
+        $minutesAvailable = $startTime->diffInMinutes($endTime);
         $interval = (int) floor($minutesAvailable / $count);
 
-        $this->info("Generating {$count} posts, scheduled every ~{$interval} min until {$untilTime}");
+        $this->info("Generating {$count} posts on {$targetDate->toDateString()}, every ~{$interval} min from {$startTime->format('H:i')} to {$endTime->format('H:i')}");
         $this->newLine();
 
         $gemini = app(GeminiContentService::class);
@@ -128,7 +140,7 @@ class GenerateDailyBatch extends Command
 
         $created = 0;
         foreach ($topics as $i => $topicData) {
-            $scheduledAt = $now->copy()->addMinutes($interval * ($i + 1));
+            $scheduledAt = $startTime->copy()->addMinutes($interval * ($i + 1));
             $this->components->task(
                 "Post " . ($i + 1) . "/{$count} @ {$scheduledAt->format('H:i')} — {$topicData['visual_text']}",
                 function () use ($topicData, $scheduledAt, $gemini, $fbAccount, $igAccount, $platformOption, $dryRun, &$created) {
@@ -194,7 +206,9 @@ class GenerateDailyBatch extends Command
 
     private function generateText(GeminiContentService $gemini, array $topicData): ?array
     {
-        $prompt = "Generează un post social media SCURT și PUTERNIC pentru Facebook/Instagram.\n\n"
+        $avoidance = \App\Models\SocialRejection::buildAvoidancePrompt('facebook');
+        $prompt = ($avoidance ? $avoidance . "\n\n" : '')
+            . "Generează un post social media SCURT și PUTERNIC pentru Facebook/Instagram.\n\n"
             . "SUBIECT: {$topicData['topic']}\n\n"
             . "CALL TO ACTION: {$topicData['cta']}\n\n"
             . "REGULI:\n"
@@ -236,7 +250,11 @@ class GenerateDailyBatch extends Command
 
     private function generateCtaImage(GeminiContentService $gemini, array $topicData): ?array
     {
-        $prompt = "Create a MINIMAL social media graphic. "
+        $imageRejections = \App\Models\SocialRejection::query()
+            ->whereIn('reason_category', ['image', 'visual', 'design'])
+            ->latest()->limit(10)->pluck('feedback')->filter()->unique()->take(5)->implode(' | ');
+        $avoidLine = $imageRejections ? "AVOID (user rejected past images for): {$imageRejections}. " : '';
+        $prompt = $avoidLine . "Create a MINIMAL social media graphic. "
             . "CRITICAL RULES: "
             . "- MAXIMUM 3-5 words of text on the ENTIRE image. Only show: '{$topicData['visual_text']}' "
             . "- DO NOT add paragraphs, sentences, or descriptions as text on the image "

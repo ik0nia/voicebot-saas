@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 class MetaPostingService
 {
-    private string $graphUrl = 'https://graph.facebook.com/v19.0';
+    private string $graphUrl = 'https://graph.facebook.com/v21.0';
 
     /**
      * Publish a post to Facebook page
@@ -141,6 +141,73 @@ class MetaPostingService
             return false;
         } catch (\Throwable $e) {
             $post->update(['status' => 'failed', 'error_message' => $e->getMessage()]);
+            return false;
+        }
+    }
+
+    /**
+     * Publish to Instagram as Story (image only, no caption)
+     */
+    public function publishToInstagramStory(SocialPost $post, SocialAccount $account): bool
+    {
+        if (empty($account->access_token) || empty($account->platform_id) || empty($post->image_url)) {
+            Log::warning('Instagram story skipped - missing config or image', ['post_id' => $post->id]);
+            return false;
+        }
+
+        try {
+            // Step 1: Create story container
+            $container = Http::timeout(30)->post("{$this->graphUrl}/{$account->platform_id}/media", [
+                'image_url' => $post->image_url,
+                'media_type' => 'STORIES',
+                'access_token' => $account->access_token,
+            ]);
+
+            if (!$container->ok() || !$container->json('id')) {
+                Log::error('Instagram story container failed', ['post_id' => $post->id, 'error' => $container->body()]);
+                return false;
+            }
+
+            $containerId = $container->json('id');
+
+            // Step 2: Wait for processing
+            $ready = false;
+            for ($i = 0; $i < 10; $i++) {
+                sleep(3);
+                $status = Http::timeout(10)->get("{$this->graphUrl}/{$containerId}", [
+                    'fields' => 'status_code',
+                    'access_token' => $account->access_token,
+                ]);
+                if ($status->json('status_code') === 'FINISHED') {
+                    $ready = true;
+                    break;
+                }
+                if ($status->json('status_code') === 'ERROR') {
+                    Log::error('Instagram story processing error', ['post_id' => $post->id]);
+                    return false;
+                }
+            }
+
+            if (!$ready) {
+                Log::error('Instagram story processing timeout', ['post_id' => $post->id]);
+                return false;
+            }
+
+            // Step 3: Publish story
+            $publish = Http::timeout(30)->post("{$this->graphUrl}/{$account->platform_id}/media_publish", [
+                'creation_id' => $containerId,
+                'access_token' => $account->access_token,
+            ]);
+
+            if ($publish->ok() && $publish->json('id')) {
+                Log::info('Instagram story published', ['post_id' => $post->id, 'story_id' => $publish->json('id')]);
+                return true;
+            }
+
+            Log::error('Instagram story publish failed', ['post_id' => $post->id, 'error' => $publish->body()]);
+            return false;
+        } catch (\Throwable $e) {
+            Log::error('Instagram story exception', ['post_id' => $post->id, 'error' => $e->getMessage()]);
             return false;
         }
     }

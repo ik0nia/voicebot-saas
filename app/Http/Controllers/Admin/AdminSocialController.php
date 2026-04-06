@@ -7,15 +7,28 @@ use App\Models\SocialPost;
 use App\Models\SocialAccount;
 use App\Models\SocialSchedule;
 use App\Models\SocialStylePreference;
+use App\Models\SocialRejection;
 use App\Services\Social\GeminiContentService;
 use Illuminate\Http\Request;
+use OpenAI\Laravel\Facades\OpenAI;
 
 class AdminSocialController extends Controller
 {
     // Dashboard with overview
-    public function index()
+    public function index(Request $request)
     {
-        $posts = SocialPost::latest()->paginate(20);
+        $query = SocialPost::query();
+        if ($status = $request->get('status')) {
+            $query->where('status', $status);
+        }
+        if ($platform = $request->get('platform')) {
+            $query->where('platform', $platform);
+        }
+        $posts = $query->orderByRaw("CASE WHEN status='scheduled' THEN 0 WHEN status='draft' THEN 1 WHEN status='failed' THEN 2 ELSE 3 END")
+            ->orderBy('scheduled_at', 'asc')
+            ->orderByDesc('id')
+            ->paginate(30)
+            ->withQueryString();
         $accounts = SocialAccount::all();
         $schedules = SocialSchedule::all();
         $stats = [
@@ -70,6 +83,121 @@ class AdminSocialController extends Controller
     public function edit(SocialPost $post)
     {
         return view('admin.social.edit', compact('post'));
+    }
+
+    // Return single post as JSON for the modal viewer
+    public function show(SocialPost $post)
+    {
+        return response()->json([
+            'id' => $post->id,
+            'platform' => $post->platform,
+            'post_type' => $post->post_type,
+            'status' => $post->status,
+            'content' => $post->content,
+            'hashtags' => $post->hashtags ?? [],
+            'image_url' => $post->image_url,
+            'image_prompt' => $post->image_prompt,
+            'metadata' => $post->metadata ?? [],
+            'scheduled_at' => $post->scheduled_at?->format('Y-m-d H:i'),
+            'published_at' => $post->published_at?->format('Y-m-d H:i'),
+            'external_url' => $post->external_url,
+            'error_message' => $post->error_message,
+            'is_editable' => in_array($post->status, ['draft', 'scheduled']),
+        ]);
+    }
+
+    // Regenerate the image for a post (different style/seed). Optional ?prompt= override.
+    public function regenerateImage(Request $request, SocialPost $post)
+    {
+        if (!in_array($post->status, ['draft', 'scheduled'])) {
+            return response()->json(['error' => 'Postarea nu mai poate fi modificată.'], 422);
+        }
+
+        $promptOverride = trim((string) $request->input('prompt', ''));
+        $prompt = $promptOverride !== '' ? $promptOverride : ($post->image_prompt ?? ($post->metadata['topic'] ?? 'Sambla AI assistant'));
+
+        $gemini = app(GeminiContentService::class);
+        $image = $gemini->generateImage($prompt, '3:4');
+
+        if (!$image || empty($image['url'])) {
+            return response()->json(['error' => 'Generarea imaginii a eșuat.'], 500);
+        }
+
+        $post->update([
+            'image_url' => $image['url'],
+            'image_prompt' => $prompt,
+        ]);
+
+        return response()->json(['image_url' => $post->image_url, 'image_prompt' => $post->image_prompt]);
+    }
+
+    // Regenerate the text content for a post, keeping topic + tone, learning from rejections
+    public function regenerateText(Request $request, SocialPost $post)
+    {
+        if (!in_array($post->status, ['draft', 'scheduled'])) {
+            return response()->json(['error' => 'Postarea nu mai poate fi modificată.'], 422);
+        }
+
+        $topic = $post->metadata['topic'] ?? $request->input('topic', 'Sambla AI assistant');
+        $cta = $post->metadata['cta'] ?? 'Află mai multe → sambla.ro';
+        $avoidance = SocialRejection::buildAvoidancePrompt($post->platform);
+
+        $prompt = "Generează un post social media SCURT și PUTERNIC pentru {$post->platform}.\n\n"
+            . "SUBIECT: {$topic}\n"
+            . "CALL TO ACTION: {$cta}\n\n"
+            . "REGULI:\n- Max 150 cuvinte\n- Primul rând: hook puternic\n- Ton: profesional dar accesibil\n- Limba: română\n- Emoji-uri moderate (2-4)\n- Termină cu CTA clar\n\n"
+            . ($avoidance ? "\n{$avoidance}\n\n" : '')
+            . 'Returnează JSON: {"content": "textul postării", "hashtags": ["tag1","tag2","tag3"]}';
+
+        try {
+            $response = OpenAI::chat()->create([
+                'model' => 'gpt-4o-mini',
+                'messages' => [
+                    ['role' => 'system', 'content' => 'Ești expert în social media marketing pentru SaaS B2B. Răspunzi în JSON.'],
+                    ['role' => 'user', 'content' => $prompt],
+                ],
+                'max_tokens' => 500,
+                'temperature' => 0.9,
+                'response_format' => ['type' => 'json_object'],
+            ]);
+            $parsed = json_decode($response->choices[0]->message->content ?? '{}', true) ?: [];
+            if (empty($parsed['content'])) {
+                return response()->json(['error' => 'Generarea textului a eșuat.'], 500);
+            }
+            $post->update([
+                'content' => $parsed['content'],
+                'hashtags' => $parsed['hashtags'] ?? $post->hashtags,
+            ]);
+
+            return response()->json(['content' => $post->content, 'hashtags' => $post->hashtags]);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'OpenAI: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // Reject a post: store feedback in social_rejections, then delete the post
+    public function reject(Request $request, SocialPost $post)
+    {
+        $validated = $request->validate([
+            'reason_category' => 'nullable|string|max:50',
+            'feedback' => 'nullable|string|max:1000',
+        ]);
+
+        SocialRejection::create([
+            'social_post_id' => $post->id,
+            'platform' => $post->platform,
+            'reason_category' => $validated['reason_category'] ?? 'other',
+            'feedback' => $validated['feedback'] ?? null,
+            'content_snapshot' => $post->content,
+            'image_url' => $post->image_url,
+            'image_prompt' => $post->image_prompt,
+            'topic' => $post->metadata['topic'] ?? null,
+            'hashtags' => $post->hashtags,
+        ]);
+
+        $post->delete();
+
+        return response()->json(['ok' => true]);
     }
 
     // Update post content

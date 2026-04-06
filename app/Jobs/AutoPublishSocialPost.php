@@ -34,15 +34,22 @@ class AutoPublishSocialPost implements ShouldQueue
             ->where('is_active', true)
             ->first();
 
+        $metaService = app(MetaPostingService::class);
+
         $success = match ($post->platform) {
-            'facebook' => $account ? app(MetaPostingService::class)->publishToFacebook($post, $account) : false,
-            'instagram' => $account ? app(MetaPostingService::class)->publishToInstagram($post, $account) : false,
+            'facebook' => $account ? $metaService->publishToFacebook($post, $account) : false,
+            'instagram' => $account ? $metaService->publishToInstagram($post, $account) : false,
             'blog' => app(BlogPostService::class)->publish($post),
             default => false,
         };
 
         if (!$success && $post->status !== 'failed') {
             $post->update(['status' => 'failed', 'error_message' => 'No active account for ' . $post->platform]);
+        }
+
+        // Also share to Instagram Story if post_type is 'story' or randomly for regular IG posts
+        if ($success && $post->platform === 'instagram' && $post->post_type === 'story' && $account) {
+            $metaService->publishToInstagramStory($post, $account);
         }
     }
 }
