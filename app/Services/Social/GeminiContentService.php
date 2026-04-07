@@ -185,11 +185,12 @@ class GeminiContentService
             }
             $preset = $styles[$style];
 
-            // Randomly include the logo (~40% of graphics) — when included, use the light
-            // variant (black "Sambla" wordmark) on a solid white pill so it reads cleanly.
-            $includeLogo = random_int(1, 100) <= 40;
+            // Always attach the real logo as a reference image. The previous
+            // 40%-of-the-time strategy let Gemini fabricate its own fake
+            // "Sambla" wordmarks on the other 60% of generations. Sending
+            // the real PNG every time anchors the model on our actual mark.
             $logoFile = public_path('images/social/logo-light.png');
-            $logoBase64 = ($includeLogo && file_exists($logoFile)) ? base64_encode(file_get_contents($logoFile)) : null;
+            $logoBase64 = file_exists($logoFile) ? base64_encode(file_get_contents($logoFile)) : null;
 
             $parts = [];
 
