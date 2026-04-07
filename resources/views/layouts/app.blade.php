@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="@yield('meta_description', 'Sambla - Agenți AI multi-canal pentru afacerea ta. Automatizează comunicarea pe telefon, WhatsApp, Facebook, Instagram și chatbot web cu inteligență artificială.')">
     <title>@yield('title', 'Sambla - Agenți AI Multi-Canal pentru Afacerea Ta')</title>
+
+    {{-- Favicon — SVG version of the Sambla logo, served from CDN --}}
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/logo-icon.svg') }}">
+    <meta name="theme-color" content="#991b1b">
     {{-- Open early TCP+TLS connection to the CDN so the first asset request lands fast. --}}
     <link rel="preconnect" href="https://cdn.sambla.ro" crossorigin>
     <link rel="dns-prefetch" href="https://cdn.sambla.ro">

@@ -35,9 +35,9 @@
                 <div class="lg:col-span-4">
                     <a href="/" class="inline-flex items-center mb-5 group">
                         @if(file_exists(public_path('images/logo-dark.svg')))
-                            <img src="/images/logo-dark.svg" alt="Sambla" class="h-16 w-auto shrink-0">
+                            <img src="{{ asset('images/logo-dark.svg') }}" width="170" height="64" alt="Sambla" class="h-16 w-auto shrink-0">
                         @elseif(file_exists(public_path('images/logo-dark.png')))
-                            <img src="/images/logo-dark.png" alt="Sambla" class="h-16 w-auto shrink-0">
+                            <img src="{{ asset('images/logo-dark.png') }}" width="170" height="64" alt="Sambla" class="h-16 w-auto shrink-0">
                         @else
                             <svg width="36" height="36" viewBox="0 0 36 36" fill="none" class="shrink-0"><rect width="36" height="36" rx="10" fill="#991b1b"/><path d="M18 6L28 18L18 30L8 18Z" fill="white" fill-opacity="0.15"/><path d="M18 10L24 18L18 26L12 18Z" fill="white" fill-opacity="0.3"/><path d="M18 14L20.5 18L18 22L15.5 18Z" fill="white"/></svg>
                             <span class="text-xl font-extrabold text-white ml-3">Sambla</span>

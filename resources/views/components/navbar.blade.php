@@ -4,10 +4,10 @@
             {{-- Logo — se schimbă între light și dark --}}
             <a href="/" class="flex items-center shrink-0">
                 @if(file_exists(public_path('images/logo-dark.svg')) && file_exists(public_path('images/logo-light.svg')))
-                    <img src="/images/logo-dark.svg" alt="Sambla" class="h-14 w-auto shrink-0 nav-logo-dark">
-                    <img src="/images/logo-light.svg" alt="Sambla" class="h-14 w-auto shrink-0 nav-logo-light hidden">
+                    <img src="{{ asset('images/logo-dark.svg') }}" alt="Sambla" width="170" height="56" class="h-14 w-auto shrink-0 nav-logo-dark">
+                    <img src="{{ asset('images/logo-light.svg') }}" alt="Sambla" width="170" height="56" class="h-14 w-auto shrink-0 nav-logo-light hidden">
                 @elseif(file_exists(public_path('images/logo-light.svg')))
-                    <img src="/images/logo-light.svg" alt="Sambla" class="h-14 w-auto shrink-0">
+                    <img src="{{ asset('images/logo-light.svg') }}" alt="Sambla" width="170" height="56" class="h-14 w-auto shrink-0">
                 @else
                     <svg width="30" height="30" viewBox="0 0 36 36" fill="none"><rect width="36" height="36" rx="10" fill="#991b1b"/><path d="M18 6L28 18L18 30L8 18Z" fill="white" fill-opacity="0.15"/><path d="M18 10L24 18L18 26L12 18Z" fill="white" fill-opacity="0.3"/><path d="M18 14L20.5 18L18 22L15.5 18Z" fill="white"/></svg>
                     <span class="nav-text text-xl font-bold tracking-tight ml-2.5" style="color: white;">Sambla</span>
