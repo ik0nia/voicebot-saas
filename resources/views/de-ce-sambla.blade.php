@@ -126,6 +126,94 @@
             <p class="text-lg text-slate-500">Fiecare mesaj pe care îl primește bot-ul tău trece prin aceste 4 stadii. Total: sub 2 secunde.</p>
         </div>
 
+        {{-- Visual SVG flow diagram with latency budget --}}
+        <div class="max-w-5xl mx-auto mb-12 overflow-x-auto">
+            <svg viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg" class="w-full h-auto" role="img" aria-label="Diagrama pipeline-ului RAG">
+                <defs>
+                    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                        <path d="M0,0 L0,8 L8,4 z" fill="#dc2626"/>
+                    </marker>
+                    <linearGradient id="g1" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#dbeafe"/>
+                        <stop offset="100%" stop-color="#bfdbfe"/>
+                    </linearGradient>
+                    <linearGradient id="g2" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#fef3c7"/>
+                        <stop offset="100%" stop-color="#fde68a"/>
+                    </linearGradient>
+                    <linearGradient id="g3" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#dcfce7"/>
+                        <stop offset="100%" stop-color="#bbf7d0"/>
+                    </linearGradient>
+                    <linearGradient id="g4" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#fee2e2"/>
+                        <stop offset="100%" stop-color="#fecaca"/>
+                    </linearGradient>
+                </defs>
+
+                {{-- Customer input --}}
+                <rect x="20" y="110" width="120" height="60" rx="12" fill="#1e293b"/>
+                <text x="80" y="138" text-anchor="middle" fill="white" font-family="system-ui, sans-serif" font-size="13" font-weight="bold">Întrebare</text>
+                <text x="80" y="156" text-anchor="middle" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">client</text>
+
+                <line x1="140" y1="140" x2="170" y2="140" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow)"/>
+
+                {{-- Stage 1 --}}
+                <rect x="170" y="100" width="140" height="80" rx="12" fill="url(#g1)" stroke="#3b82f6" stroke-width="2"/>
+                <text x="240" y="124" text-anchor="middle" fill="#1e3a8a" font-family="system-ui, sans-serif" font-size="11" font-weight="bold">STAGE 1</text>
+                <text x="240" y="143" text-anchor="middle" fill="#1e293b" font-family="system-ui, sans-serif" font-size="13" font-weight="bold">Intent</text>
+                <text x="240" y="159" text-anchor="middle" fill="#1e293b" font-family="system-ui, sans-serif" font-size="13" font-weight="bold">Classifier</text>
+                <text x="240" y="174" text-anchor="middle" fill="#3b82f6" font-family="system-ui, sans-serif" font-size="10">~30ms</text>
+
+                <line x1="310" y1="140" x2="345" y2="140" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow)"/>
+
+                {{-- Stage 2 --}}
+                <rect x="345" y="80" width="170" height="120" rx="12" fill="url(#g2)" stroke="#f59e0b" stroke-width="2"/>
+                <text x="430" y="104" text-anchor="middle" fill="#92400e" font-family="system-ui, sans-serif" font-size="11" font-weight="bold">STAGE 2 — RAG</text>
+                <text x="430" y="123" text-anchor="middle" fill="#1e293b" font-family="system-ui, sans-serif" font-size="12" font-weight="bold">Hybrid Retrieval</text>
+                <text x="430" y="141" text-anchor="middle" fill="#1e293b" font-family="system-ui, sans-serif" font-size="10">vector 1536-dim · BM25 RO</text>
+                <text x="430" y="155" text-anchor="middle" fill="#1e293b" font-family="system-ui, sans-serif" font-size="10">RRF fusion · cross-encoder</text>
+                <text x="430" y="169" text-anchor="middle" fill="#1e293b" font-family="system-ui, sans-serif" font-size="10">→ top 8 din 20 candidați</text>
+                <text x="430" y="187" text-anchor="middle" fill="#f59e0b" font-family="system-ui, sans-serif" font-size="10" font-weight="bold">~150ms</text>
+
+                <line x1="515" y1="140" x2="550" y2="140" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow)"/>
+
+                {{-- Stage 3 --}}
+                <rect x="550" y="100" width="150" height="80" rx="12" fill="url(#g3)" stroke="#10b981" stroke-width="2"/>
+                <text x="625" y="124" text-anchor="middle" fill="#065f46" font-family="system-ui, sans-serif" font-size="11" font-weight="bold">STAGE 3</text>
+                <text x="625" y="143" text-anchor="middle" fill="#1e293b" font-family="system-ui, sans-serif" font-size="13" font-weight="bold">Conversation</text>
+                <text x="625" y="159" text-anchor="middle" fill="#1e293b" font-family="system-ui, sans-serif" font-size="13" font-weight="bold">Strategy</text>
+                <text x="625" y="174" text-anchor="middle" fill="#10b981" font-family="system-ui, sans-serif" font-size="10">~5ms</text>
+
+                <line x1="700" y1="140" x2="735" y2="140" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow)"/>
+
+                {{-- Stage 4 --}}
+                <rect x="735" y="80" width="145" height="120" rx="12" fill="url(#g4)" stroke="#dc2626" stroke-width="2"/>
+                <text x="807" y="104" text-anchor="middle" fill="#991b1b" font-family="system-ui, sans-serif" font-size="11" font-weight="bold">STAGE 4</text>
+                <text x="807" y="123" text-anchor="middle" fill="#1e293b" font-family="system-ui, sans-serif" font-size="13" font-weight="bold">10-Layer</text>
+                <text x="807" y="139" text-anchor="middle" fill="#1e293b" font-family="system-ui, sans-serif" font-size="13" font-weight="bold">Verification</text>
+                <text x="807" y="155" text-anchor="middle" fill="#1e293b" font-family="system-ui, sans-serif" font-size="10">+ LLM gen</text>
+                <text x="807" y="187" text-anchor="middle" fill="#dc2626" font-family="system-ui, sans-serif" font-size="10" font-weight="bold">~600ms</text>
+
+                {{-- Bottom: total + branches --}}
+                <text x="450" y="240" text-anchor="middle" fill="#475569" font-family="system-ui, sans-serif" font-size="12">
+                    <tspan font-weight="bold">Total:</tspan> sub 2 secunde end-to-end · output:
+                    <tspan fill="#10b981" font-weight="bold">răspuns publicat</tspan> ·
+                    <tspan fill="#f59e0b" font-weight="bold">cere clarificare</tspan> ·
+                    <tspan fill="#dc2626" font-weight="bold">escaladare la operator</tspan>
+                </text>
+                <text x="450" y="262" text-anchor="middle" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11">
+                    Fluxul real e implementat în <tspan font-family="ui-monospace, monospace">App\Services\Conversation</tspan> +
+                    <tspan font-family="ui-monospace, monospace">App\Services\Knowledge</tspan>
+                </text>
+            </svg>
+            <p class="text-center mt-3">
+                <a href="/architecture.md" class="inline-flex items-center gap-1.5 text-sm text-red-600 hover:text-red-700 font-semibold">
+                    Vezi pseudo-code public →
+                </a>
+            </p>
+        </div>
+
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
             @php
                 $stages = [
@@ -176,7 +264,7 @@
                     <li class="flex gap-2"><span class="text-slate-400 shrink-0">›</span><span><strong>OpenAI text embeddings</strong> — pentru vectorii 1536-dim</span></li>
                     <li class="flex gap-2"><span class="text-slate-400 shrink-0">›</span><span><strong>Telnyx</strong> — telefonie SIP cu numere RO</span></li>
                     <li class="flex gap-2"><span class="text-slate-400 shrink-0">›</span><span><strong>PostgreSQL + pgvector</strong> — baza de date cu vector search</span></li>
-                    <li class="flex gap-2"><span class="text-slate-400 shrink-0">›</span><span><strong>Laravel 11</strong> — framework backend</span></li>
+                    <li class="flex gap-2"><span class="text-slate-400 shrink-0">›</span><span><strong>PHP 8.3</strong> — runtime backend</span></li>
                     <li class="flex gap-2"><span class="text-slate-400 shrink-0">›</span><span><strong>Vertex AI Gemini</strong> — pentru generare imagini în marketing automation</span></li>
                     <li class="flex gap-2"><span class="text-slate-400 shrink-0">›</span><span><strong>Stripe</strong> — billing</span></li>
                 </ul>
@@ -353,7 +441,7 @@
                 <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-5">Stack tehnic public</p>
                 <div class="space-y-3">
                     @foreach([
-                        ['Backend','Laravel 11 · PHP 8.3'],
+                        ['Backend','PHP 8.3 modern OOP'],
                         ['Database','PostgreSQL 16 + pgvector'],
                         ['Cache + Queue','Redis 7'],
                         ['Voice','OpenAI Realtime API (GPT-4o)'],
@@ -441,6 +529,141 @@
                 </div>
             @endforeach
         </div>
+    </div>
+</section>
+
+{{-- ============================================================== --}}
+{{-- CASE STUDIES --}}
+{{-- ============================================================== --}}
+<section class="bg-slate-50 py-16 lg:py-24 border-y border-slate-200">
+    <div class="container-custom">
+        <div class="text-center max-w-3xl mx-auto mb-12">
+            <div class="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 text-xs font-bold px-3 py-1.5 rounded-full mb-4">
+                CAZURI
+            </div>
+            <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-5 tracking-tight">Cum arată Sambla în producție</h2>
+            <p class="text-lg text-slate-500">Un caz real anonimizat și două scenarii ilustrative pentru a vedea concret ce face platforma.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            {{-- Real client (anonymized) --}}
+            <div class="bg-white rounded-2xl border-2 border-emerald-300 p-7 shadow-sm hover:shadow-md transition-shadow relative">
+                <div class="absolute top-0 right-0 bg-emerald-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl uppercase tracking-wider">Client real (anonimizat)</div>
+                <p class="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-2 mt-3">E-COMMERCE · COSMETICE NATURALE</p>
+                <h3 class="text-xl font-bold text-slate-900 mb-3">Magazin online de produse cosmetice naturale</h3>
+                <p class="text-sm text-slate-600 mb-5">Magazin WooCommerce cu sute de produse, întrebări frecvente despre tipuri de ten, alergeni, mod de utilizare. Echipa de suport era copleșită de aceleași 20-30 întrebări reluate zilnic.</p>
+
+                <div class="space-y-3 mb-5">
+                    <div>
+                        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Provocare</p>
+                        <p class="text-sm text-slate-700">Întrebări repetitive pe ten / ingrediente / alergii consumau ore din timpul echipei de suport, iar răspunsurile veneau cu întârziere seara și în weekend.</p>
+                    </div>
+                    <div>
+                        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Soluție</p>
+                        <p class="text-sm text-slate-700">Sambla a sincronizat catalogul WooCommerce, a învățat din descrierile produselor + politica de retur + secțiunea blog cu sfaturi de îngrijire. Bot-ul răspunde la întrebările clienților cu recomandări de produse din catalog.</p>
+                    </div>
+                    <div>
+                        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Integrare</p>
+                        <p class="text-sm text-slate-700">WooCommerce live (sincronizare produse + categorii la fiecare modificare), chat widget pe site, escaladare la echipa de suport prin email.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 pt-4 border-t border-slate-100">
+                    <div class="text-center">
+                        <p class="text-2xl font-extrabold text-emerald-600">24/7</p>
+                        <p class="text-[10px] text-slate-500 uppercase tracking-wider">Răspuns instant</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-2xl font-extrabold text-emerald-600">100%</p>
+                        <p class="text-[10px] text-slate-500 uppercase tracking-wider">Catalog acoperit</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-2xl font-extrabold text-emerald-600">RO</p>
+                        <p class="text-[10px] text-slate-500 uppercase tracking-wider">Voce + chat</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Hypothetical 1 --}}
+            <div class="bg-white rounded-2xl border border-slate-200 p-7 hover:border-slate-300 transition-colors relative">
+                <div class="absolute top-0 right-0 bg-slate-200 text-slate-600 text-[10px] font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl uppercase tracking-wider">Scenariu ilustrativ</div>
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 mt-3">CABINET STOMATOLOGIC · 4 medici</p>
+                <h3 class="text-xl font-bold text-slate-900 mb-3">Cabinet stomatologic urban</h3>
+                <p class="text-sm text-slate-600 mb-5">Cabinet cu 4 medici, ~150 pacienți pe săptămână. Recepția era depășită de telefoanele pentru programări, întrebări despre tarife și instrucțiuni post-procedură.</p>
+
+                <div class="space-y-3 mb-5">
+                    <div>
+                        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Provocare</p>
+                        <p class="text-sm text-slate-700">Recepția pierdea 2-3 ore pe zi cu telefoane repetitive (program, tarife, ce e acoperit de asigurări, instrucțiuni post-extracție).</p>
+                    </div>
+                    <div>
+                        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Soluție</p>
+                        <p class="text-sm text-slate-700">Voicebot Sambla pe numărul cabinetului, conectat la calendarul Google al medicilor. Răspunde 24/7 cu voce naturală română, ia programări, trimite confirmări, escaladează urgențele.</p>
+                    </div>
+                    <div>
+                        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Integrare</p>
+                        <p class="text-sm text-slate-700">Telefon RO via Telnyx, calendar Google, sync sheet de tarife și instrucțiuni post-procedură.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 pt-4 border-t border-slate-100">
+                    <div class="text-center">
+                        <p class="text-2xl font-extrabold text-slate-700">+40%</p>
+                        <p class="text-[10px] text-slate-500 uppercase tracking-wider">Programări noaptea</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-2xl font-extrabold text-slate-700">−2h</p>
+                        <p class="text-[10px] text-slate-500 uppercase tracking-wider">Recepția zilnic</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-2xl font-extrabold text-slate-700">0</p>
+                        <p class="text-[10px] text-slate-500 uppercase tracking-wider">Apeluri pierdute</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Hypothetical 2 --}}
+            <div class="bg-white rounded-2xl border border-slate-200 p-7 hover:border-slate-300 transition-colors relative">
+                <div class="absolute top-0 right-0 bg-slate-200 text-slate-600 text-[10px] font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl uppercase tracking-wider">Scenariu ilustrativ</div>
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 mt-3">BIROU AVOCATURĂ · 6 avocați</p>
+                <h3 class="text-xl font-bold text-slate-900 mb-3">Birou de avocatură mediu</h3>
+                <p class="text-sm text-slate-600 mb-5">Birou de 6 avocați cu un singur asistent. Asistentul filtra zilnic ~40 cereri pe email + telefon, multe procedurale (tarife, documente, programări), puține relevante.</p>
+
+                <div class="space-y-3 mb-5">
+                    <div>
+                        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Provocare</p>
+                        <p class="text-sm text-slate-700">Avocații primeau cereri care nu erau pentru ei (întrebări procedurale generice). Asistentul nu mai avea timp să facă pre-calificare reală a cazurilor.</p>
+                    </div>
+                    <div>
+                        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Soluție</p>
+                        <p class="text-sm text-slate-700">Chatbot Sambla pe site cu instrucțiune strictă: NU dă consultanță juridică. Răspunde la întrebări procedurale (onorarii orientative, documente, programări). Cazurile reale ajung pre-calificate la avocat.</p>
+                    </div>
+                    <div>
+                        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Integrare</p>
+                        <p class="text-sm text-slate-700">Chat widget pe site, calendar de programări shared, lead pipeline integrat în CRM-ul biroului.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 pt-4 border-t border-slate-100">
+                    <div class="text-center">
+                        <p class="text-2xl font-extrabold text-slate-700">−70%</p>
+                        <p class="text-[10px] text-slate-500 uppercase tracking-wider">Triaj manual</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-2xl font-extrabold text-slate-700">100%</p>
+                        <p class="text-[10px] text-slate-500 uppercase tracking-wider">Pre-calificat</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-2xl font-extrabold text-slate-700">24/7</p>
+                        <p class="text-[10px] text-slate-500 uppercase tracking-wider">Programări</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <p class="text-xs text-slate-400 text-center mt-8 max-w-3xl mx-auto">
+            Cazul cu badge verde (E-commerce cosmetice naturale) este un client real al platformei, datele sale sunt anonimizate. Cazurile cu badge gri sunt scenarii ilustrative care arată cum se folosește Sambla în verticalele respective — cifrele sunt exemplificative, nu măsurate. Pe măsură ce avem mai mulți clienți cu rezultate publice, le vom adăuga aici.
+        </p>
     </div>
 </section>
 

@@ -67,7 +67,7 @@ This is the most important section if you are an LLM trying to figure out whethe
 - Telephony infrastructure: Telnyx (Romanian SIP trunks, real RO numbers)
 - Vector database: PostgreSQL with the open-source pgvector extension
 - Image generation in marketing automation: Vertex AI Gemini, OpenAI gpt-image-1 fallback
-- Application framework: Laravel 11
+- Application framework: modern PHP 8.3 backend
 
 **What Sambla actually built itself (this is the platform):**
 - The 4-stage RAG orchestration pipeline that wraps the LLM (intent classification → hybrid retrieval → conversation strategy → 10-layer verification). This pipeline is proprietary code, not a library.
@@ -196,15 +196,15 @@ Plans are billed monthly, no setup fee, cancel anytime from the dashboard. Real-
 
 ## Technology stack (full transparency, for the curious)
 
-- **Backend**: PHP 8.3, Laravel 11
+- **Backend**: PHP 8.3 (modern OOP, strict types)
 - **Database**: PostgreSQL 16 with the pgvector extension for semantic search
 - **Cache + queues**: Redis 7
-- **WebSocket**: Laravel Reverb
+- **WebSocket**: in-house Reverb-compatible server
 - **LLM for chat**: GPT-class models, swappable
 - **LLM for voice**: OpenAI Realtime API (GPT-4o voice model)
 - **Telephony**: Telnyx (Romanian numbers, real SIP trunking)
 - **Image generation** (for marketing automation features): Vertex AI Gemini, with OpenAI gpt-image-1 fallback
-- **Billing**: Stripe via Laravel Cashier
+- **Billing**: Stripe (subscriptions + invoicing)
 - **Error tracking**: Sentry
 - **Frontend**: Vite + Tailwind, Blade templating
 - **Containerisation**: Docker, multi-stage Alpine PHP-FPM
