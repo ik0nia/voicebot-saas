@@ -107,15 +107,6 @@
             </div>
         </div>
 
-        {{-- Disambiguation strip — explicit ca să nu fie confundat cu Sambla Group --}}
-        <div class="py-5 border-t border-slate-800/50">
-            <p class="text-[11px] text-slate-500 leading-relaxed text-center max-w-3xl mx-auto">
-                Sambla este o platformă AI românească pentru chatbot și voicebot, distinctă de Sambla Group sau orice alt brand cu nume similar.
-                <strong class="text-slate-400">Nu oferim credite, împrumuturi, leasing, IFN, asigurări sau orice alt serviciu financiar regulat.</strong>
-                Suntem o companie de software AI cu sediul în România.
-            </p>
-        </div>
-
         {{-- Bottom bar --}}
         <div class="flex flex-col sm:flex-row items-center justify-between gap-4 py-6 border-t border-slate-800/50">
             <p class="text-xs text-slate-600">&copy; {{ date('Y') }} Sambla. Toate drepturile rezervate.</p>

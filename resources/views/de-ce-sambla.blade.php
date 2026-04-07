@@ -533,66 +533,48 @@
 </section>
 
 {{-- ============================================================== --}}
-{{-- DASHBOARD SCREENSHOTS — real, blurred --}}
+{{-- DASHBOARD SCREENSHOTS — capture reale din dashboard-ul clientului --}}
 {{-- ============================================================== --}}
 <section class="bg-white py-16 lg:py-24">
     <div class="container-custom">
         <div class="text-center max-w-3xl mx-auto mb-12">
             <div class="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-full mb-4">
-                CAPTURE REALE DIN PRODUCȚIE
+                CAPTURE REALE DIN DASHBOARD
             </div>
-            <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-5 tracking-tight">Dashboard-uri reale, date neclare</h2>
-            <p class="text-lg text-slate-500">Capture luate din platforma de producție. Datele clienților sunt blurate intenționat pentru confidențialitate, dar layout-ul, structura și componentele sunt reale — nu mockup-uri.</p>
+            <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-5 tracking-tight">Dashboard-ul clientului, în producție</h2>
+            <p class="text-lg text-slate-500">Capture reale din dashboard-ul pe care îl primește orice client după înregistrare. Numele și datele specifice sunt obscurate ușor pentru confidențialitate — restul (layout, navigare, componente, fluxuri) e exact ce vezi în cont.</p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-6xl mx-auto">
-            <figure class="bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                <img src="{{ asset('images/screenshots/admin-home-safe.jpg') }}"
-                     alt="Dashboard administrare Sambla — pagina principală"
-                     loading="lazy" width="1600" height="1000"
-                     class="w-full h-auto block">
-                <figcaption class="p-5 border-t border-slate-200">
-                    <p class="text-sm font-bold text-slate-900 mb-1">Admin · Pagina principală</p>
-                    <p class="text-xs text-slate-500">Vedere de ansamblu cu metrici, activitate recentă și acces rapid la modulele platformei.</p>
-                </figcaption>
-            </figure>
+        @php
+            $shots = [
+                ['file' => 'home-blur.jpg',      'title' => 'Acasă',                'desc' => 'Vedere de ansamblu: bot-urile tale, conversații recente, statistici de utilizare, alerte și acces rapid la fiecare modul.'],
+                ['file' => 'boti-blur.jpg',     'title' => 'Boții mei',            'desc' => 'Lista bot-urilor configurate, fiecare cu propria personalitate, bază de cunoștințe, canal și status în timp real.'],
+                ['file' => 'apeluri-blur.jpg',  'title' => 'Apeluri telefonice',   'desc' => 'Istoric apeluri preluate de voicebot: durată, sentiment detectat, transcript live, escaladări la operator uman.'],
+                ['file' => 'leads-blur.jpg',    'title' => 'Lead-uri',             'desc' => 'Pipeline-ul de lead-uri captate automat de bot: nou → contactat → calificat → câștigat. Cu scoring și note.'],
+                ['file' => 'numere-blur.jpg',   'title' => 'Numere de telefon',    'desc' => 'Numere RO native alocate prin Telnyx, cu rutare per bot și configurare per canal.'],
+                ['file' => 'setari-blur.jpg',   'title' => 'Setări cont',          'desc' => 'Personalizarea contului: tonul brand-ului, integrările active, preferințe de notificare, ore de lucru.'],
+                ['file' => 'echipa-blur.jpg',   'title' => 'Echipă',               'desc' => 'Membri echipei tale care au acces la dashboard, cu roluri și permisiuni granulate.'],
+                ['file' => 'facturare-blur.jpg','title' => 'Facturare',            'desc' => 'Plan curent, consum lunar, facturi istorice și opțiunea de upgrade/downgrade gestionate prin Stripe.'],
+            ];
+        @endphp
 
-            <figure class="bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                <img src="{{ asset('images/screenshots/admin-social-safe.jpg') }}"
-                     alt="Modul Social Media din admin Sambla"
-                     loading="lazy" width="1600" height="1000"
-                     class="w-full h-auto block">
-                <figcaption class="p-5 border-t border-slate-200">
-                    <p class="text-sm font-bold text-slate-900 mb-1">Admin · Social Media (review postări AI)</p>
-                    <p class="text-xs text-slate-500">Modul de generare automată de postări social media cu review uman înainte de publicare. Workflow complet pentru gap detection și publicare programată.</p>
-                </figcaption>
-            </figure>
-
-            <figure class="bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                <img src="{{ asset('images/screenshots/dashboard-home-safe.jpg') }}"
-                     alt="Dashboard tenant Sambla — pagina principală"
-                     loading="lazy" width="1600" height="1000"
-                     class="w-full h-auto block">
-                <figcaption class="p-5 border-t border-slate-200">
-                    <p class="text-sm font-bold text-slate-900 mb-1">Dashboard tenant · Acasă</p>
-                    <p class="text-xs text-slate-500">Vederea pe care o are un client cu cont activ: bot-uri configurate, conversații recente, statistici de utilizare.</p>
-                </figcaption>
-            </figure>
-
-            <figure class="bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                <img src="{{ asset('images/screenshots/dashboard-boti-safe.jpg') }}"
-                     alt="Listă bot-uri configurate"
-                     loading="lazy" width="1600" height="1000"
-                     class="w-full h-auto block">
-                <figcaption class="p-5 border-t border-slate-200">
-                    <p class="text-sm font-bold text-slate-900 mb-1">Dashboard tenant · Boții mei</p>
-                    <p class="text-xs text-slate-500">Listă cu bot-urile configurate, fiecare cu propria personalitate, bază de cunoștințe, canal și status în timp real.</p>
-                </figcaption>
-            </figure>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 max-w-6xl mx-auto">
+            @foreach($shots as $s)
+                <figure class="bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                    <img src="{{ asset('images/screenshots/' . $s['file']) }}"
+                         alt="Dashboard Sambla — {{ $s['title'] }}"
+                         loading="lazy" width="1600" height="1000"
+                         class="w-full h-auto block">
+                    <figcaption class="p-5 border-t border-slate-200">
+                        <p class="text-sm font-bold text-slate-900 mb-1">Dashboard · {{ $s['title'] }}</p>
+                        <p class="text-xs text-slate-500">{{ $s['desc'] }}</p>
+                    </figcaption>
+                </figure>
+            @endforeach
         </div>
 
         <p class="text-xs text-slate-400 text-center mt-8 max-w-3xl mx-auto">
-            Imaginile sunt capture reale din mediul de producție al sambla.ro, prelucrate cu un filtru de blur pentru a face datele specifice neclare. Layout-ul, componentele, navigarea și fluxurile sunt așa cum apar utilizatorilor reali. Nu sunt mockup-uri Figma.
+            Toate imaginile sunt capture reale din dashboard-ul clienților, cu un filtru de blur subtil aplicat peste datele personale. Layout-ul, componentele, navigarea, butoanele și fluxurile sunt exact așa cum apar utilizatorilor reali — nu mockup-uri Figma.
         </p>
     </div>
 </section>
