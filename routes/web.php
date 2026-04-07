@@ -35,41 +35,46 @@ Route::middleware('guest')->group(function () {
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
 
 // Landing pages
-Route::get('/', function () {
-    return view('home');
-});
+// Public landing pages — wrapped in PublicPageCache so anonymous
+// visitors get a 5-minute browser cache instead of Laravel's default
+// no-cache. Authenticated users skip the cache automatically.
+Route::middleware(\App\Http\Middleware\PublicPageCache::class)->group(function () {
+    Route::get('/', function () {
+        return view('home');
+    });
 
-Route::get('/functionalitati', function () {
-    return view('functionalitati');
-});
+    Route::get('/functionalitati', function () {
+        return view('functionalitati');
+    });
 
-Route::get('/preturi', function () {
-    try {
-        $webchatPlans = \App\Models\Plan::active()->webchat()->orderBy('sort_order')->get();
-        $voicePlans = \App\Models\Plan::active()->voice()->orderBy('sort_order')->get();
-    } catch (\Exception $e) {
-        $webchatPlans = collect();
-        $voicePlans = collect();
-    }
-    return view('preturi', compact('webchatPlans', 'voicePlans'));
-});
+    Route::get('/preturi', function () {
+        try {
+            $webchatPlans = \App\Models\Plan::active()->webchat()->orderBy('sort_order')->get();
+            $voicePlans = \App\Models\Plan::active()->voice()->orderBy('sort_order')->get();
+        } catch (\Exception $e) {
+            $webchatPlans = collect();
+            $voicePlans = collect();
+        }
+        return view('preturi', compact('webchatPlans', 'voicePlans'));
+    });
 
-Route::get('/despre', function () {
-    return view('despre');
-});
+    Route::get('/despre', function () {
+        return view('despre');
+    });
 
-Route::get('/blog', function () {
-    return view('blog');
-});
+    Route::get('/blog', function () {
+        return view('blog');
+    });
 
-Route::get('/contact', function () {
-    return view('contact');
-});
+    Route::get('/contact', function () {
+        return view('contact');
+    });
 
-// Legal pages (GDPR compliance)
-Route::view('/termeni', 'legal.termeni')->name('legal.termeni');
-Route::view('/confidentialitate', 'legal.confidentialitate')->name('legal.confidentialitate');
-Route::view('/cookie-uri', 'legal.cookie-uri')->name('legal.cookie-uri');
+    // Legal pages (GDPR compliance)
+    Route::view('/termeni', 'legal.termeni')->name('legal.termeni');
+    Route::view('/confidentialitate', 'legal.confidentialitate')->name('legal.confidentialitate');
+    Route::view('/cookie-uri', 'legal.cookie-uri')->name('legal.cookie-uri');
+});
 
 // Chatbot embed routes are in routes/api.php under /chatbot prefix (no auth/session middleware)
 
