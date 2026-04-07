@@ -58,7 +58,7 @@ ARG VITE_REVERB_SCHEME
 ARG VITE_APP_NAME=Sambla
 ENV NODE_OPTIONS="--max-old-space-size=1024"
 RUN if [ -f package.json ]; then \
-        npm install --no-audit --no-fund --silent --omit=optional && \
+        npm install --no-audit --no-fund --silent && \
         npm run build && \
         rm -rf node_modules; \
     fi
