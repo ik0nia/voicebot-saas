@@ -46,6 +46,23 @@ COPY . .
 # Layer 3: Post-install steps
 RUN composer dump-autoload --optimize --no-dev --ignore-platform-reqs --no-scripts
 
+# Layer 4: Vite asset build — runs at image build time so the bundle ALWAYS
+# reflects the env vars Coolify injects via build args. Without this step,
+# /public/build/ is whatever the host happened to have at COPY time, which
+# led to a stale bundle pointing the Reverb client at the raw origin IP and
+# port 8001 even after we corrected the runtime env vars.
+ARG VITE_REVERB_APP_KEY
+ARG VITE_REVERB_HOST
+ARG VITE_REVERB_PORT
+ARG VITE_REVERB_SCHEME
+ARG VITE_APP_NAME=Sambla
+ENV NODE_OPTIONS="--max-old-space-size=1024"
+RUN if [ -f package.json ]; then \
+        npm install --no-audit --no-fund --silent --omit=optional && \
+        npm run build && \
+        rm -rf node_modules; \
+    fi
+
 RUN chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 

@@ -43,7 +43,7 @@ class PublicPageCache
         }
 
         // 5 minute browser cache + revalidate. Cloudflare can extend this
-        // further at the edge via a page rule when proxied.
+        // further at the edge via the cache rule we configured.
         $response->headers->set('Cache-Control', 'public, max-age=300, must-revalidate');
         $response->headers->set('Vary', 'Accept-Encoding, Cookie');
 
