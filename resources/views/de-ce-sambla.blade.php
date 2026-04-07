@@ -29,14 +29,19 @@
         <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="why-motif" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse"><path d="M40 12 L52 24 L40 36 L28 24 Z" fill="#991b1b"/><rect x="38" y="2" width="4" height="8" fill="#991b1b"/><rect x="38" y="38" width="4" height="8" fill="#991b1b"/></pattern></defs><rect width="100%" height="100%" fill="url(#why-motif)"/></svg>
     </div>
     <div class="absolute top-10 right-0 w-[350px] h-[350px] bg-red-900/20 rounded-full blur-[100px]"></div>
+    <div class="absolute -bottom-20 -left-10 w-[300px] h-[300px] bg-red-800/10 rounded-full blur-[100px]"></div>
     <div class="container-custom text-center relative z-10">
-        <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-6 animate-fade-in">
-            Mai mult decât un chatbot.<br>
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white mb-6 animate-fade-in">
+            <span class="block">Mai mult decât un chatbot.</span>
             <span class="bg-gradient-to-r from-red-400 via-red-300 to-amber-300 bg-clip-text text-transparent">Un agent AI care înțelege afacerea ta.</span>
         </h1>
-        <p class="text-lg md:text-xl text-slate-400 max-w-3xl mx-auto animate-fade-in">
+        <p class="text-lg md:text-xl text-slate-400 max-w-3xl mx-auto animate-fade-in mb-8">
             Vorbește pe înțelesul clienților tăi în română, citește din documentele tale reale, preia apeluri telefonice, învață ce nu știe și escaladează la operator când e nevoie. Construit, antrenat și hostat în România.
         </p>
+        <div class="flex flex-col sm:flex-row gap-3 justify-center animate-fade-in">
+            <a href="/register" class="btn-primary">Începe gratuit</a>
+            <a href="/preturi" class="btn-secondary">Vezi prețuri</a>
+        </div>
     </div>
 </section>
 <x-motif-border />
@@ -44,64 +49,87 @@
 {{-- ============================================================== --}}
 {{-- CATEGORICAL COMPARISON TABLE --}}
 {{-- ============================================================== --}}
-<section class="bg-slate-50 py-16 lg:py-24">
+<section class="bg-slate-50 section-padding">
     <div class="container-custom">
         <div class="text-center max-w-3xl mx-auto mb-12">
             <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-5 tracking-tight">Față de ce mai există pe piață</h2>
             <p class="text-lg text-slate-500">Patru categorii de „soluții AI" cu care suntem comparați des. Vezi exact unde ne diferențiem.</p>
         </div>
 
+        @php
+            // Compact SVG icon helpers — same look on every OS, no emoji.
+            $iconYes = '<svg class="inline w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>';
+            $iconNo  = '<svg class="inline w-5 h-5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>';
+            $iconWarn= '<svg class="inline w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>';
+            $iconDash= '<span class="text-slate-300">—</span>';
+            // Each cell is [type, label]; type one of: yes / no / warn / dash
+            $rows = [
+                ['Răspunde la întrebări neașteptate',                ['no'], ['yes'], ['warn','limitat'], ['yes']],
+                ['Citește PDF/DOCX/CSV-uri reale',                   ['no'], ['warn','doar manual'], ['no'], ['yes','ingest auto']],
+                ['RAG real cu hybrid search',                        ['no'], ['no'], ['no'], ['yes','vector + full-text RO']],
+                ['AI reranker pentru relevanță',                     ['no'], ['no'], ['no'], ['yes','cross-encoder']],
+                ['Anti-halucinare cu 10 straturi',                   ['dash'], ['no'], ['dash'], ['yes']],
+                ['Cite source pentru fiecare răspuns',               ['dash'], ['warn','uneori'], ['dash'], ['yes','document + chunk']],
+                ['Voce nativă română (intonație + diacritice)',      ['dash'], ['dash'], ['warn','TTS sandwich'], ['yes','GPT-4o Realtime']],
+                ['Multi-canal cu același creier',                    ['warn','1-2 canale'], ['no'], ['no'], ['yes','5 canale']],
+                ['Detectare frustrare live + escaladare',            ['no'], ['no'], ['warn','doar text'], ['yes','text + voce']],
+                ['Setup sub 1 oră, fără cod',                        ['warn','manual'], ['warn','dev needed'], ['no','săptămâni'], ['yes','wizard']],
+                ['Hosting fizic în România',                         ['dash'], ['no','US/EU-West'], ['dash'], ['yes','servere RO']],
+                ['GDPR by default, izolare per cont',                ['dash'], ['no'], ['warn'], ['yes','row-level']],
+                ['Învață din întrebările fără răspuns',              ['no'], ['no'], ['no'], ['yes','FAQ generation']],
+                ['Integrare WooCommerce nativă',                     ['warn','plugin terț'], ['no'], ['no'], ['yes','stoc + cart']],
+                ['Suport în română de la oameni reali',              ['dash'], ['dash'], ['warn'], ['yes','echipă RO']],
+            ];
+            $renderCell = function($cell) use ($iconYes,$iconNo,$iconWarn,$iconDash) {
+                $type = $cell[0];
+                $label = $cell[1] ?? '';
+                $icon = match($type) { 'yes'=>$iconYes, 'no'=>$iconNo, 'warn'=>$iconWarn, default=>$iconDash };
+                return $icon . ($label ? '<span class="block text-[11px] text-slate-500 mt-1">'.e($label).'</span>' : '');
+            };
+        @endphp
+
         <div class="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0">
-            <table class="w-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden text-sm">
+            <table class="min-w-[760px] w-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden text-sm">
                 <thead>
                     <tr class="bg-slate-900 text-white">
-                        <th class="px-4 py-4 text-left font-bold w-[24%]">Capabilitate</th>
-                        <th class="px-4 py-4 text-center font-bold">Chatbot scriptat<br><span class="text-xs font-normal text-slate-300">flowchart-uri</span></th>
-                        <th class="px-4 py-4 text-center font-bold">Wrapper GPT<br><span class="text-xs font-normal text-slate-300">«custom GPT»</span></th>
-                        <th class="px-4 py-4 text-center font-bold">Call-center clasic<br><span class="text-xs font-normal text-slate-300">IVR + STT</span></th>
-                        <th class="px-4 py-4 text-center font-bold bg-red-700">Sambla</th>
+                        <th class="px-4 py-4 text-left font-bold w-[28%]">Capabilitate</th>
+                        <th class="px-3 py-4 text-center font-bold w-[18%]">
+                            <span class="block">Chatbot scriptat</span>
+                            <span class="block text-[11px] font-normal text-slate-300 mt-0.5">flowchart-uri</span>
+                        </th>
+                        <th class="px-3 py-4 text-center font-bold w-[18%]">
+                            <span class="block">Wrapper GPT</span>
+                            <span class="block text-[11px] font-normal text-slate-300 mt-0.5">„custom GPT"</span>
+                        </th>
+                        <th class="px-3 py-4 text-center font-bold w-[18%]">
+                            <span class="block">Call-center clasic</span>
+                            <span class="block text-[11px] font-normal text-slate-300 mt-0.5">IVR + STT</span>
+                        </th>
+                        <th class="px-3 py-4 text-center font-bold bg-red-700 w-[18%]">Sambla</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
-                    @php
-                        $rows = [
-                            ['Răspunde la întrebări neașteptate', '❌', '✅', '⚠️ limitat', '✅'],
-                            ['Citește PDF/DOCX/CSV-uri reale', '❌', '⚠️ doar prin upload manual', '❌', '✅ ingest automat'],
-                            ['RAG real cu hybrid search', '❌', '❌', '❌', '✅ vector + full-text RO'],
-                            ['AI reranker pentru relevanță', '❌', '❌', '❌', '✅ cross-encoder peste 20 candidați'],
-                            ['Anti-halucinare cu 10 straturi', '—', '❌', '—', '✅'],
-                            ['Cite source pentru fiecare răspuns', '—', '⚠️ uneori', '—', '✅ document + chunk'],
-                            ['Voce nativă română (intonație + diacritice)', '—', '—', '⚠️ TTS sandwich', '✅ GPT-4o Realtime'],
-                            ['Multi-canal cu același creier', '⚠️ doar 1-2 canale', '❌', '❌', '✅ web + voice + WA + FB + IG'],
-                            ['Detectare frustrare live + escaladare', '❌', '❌', '⚠️ doar pe text', '✅ text și voce'],
-                            ['Setup sub 1 oră, fără cod', '⚠️ flowchart manual', '⚠️ dev needed', '❌ săptămâni', '✅ wizard'],
-                            ['Hosting fizic în România', '—', '❌ US/EU-West', '—', '✅ servere RO'],
-                            ['GDPR by default, izolare per cont', '—', '❌', '⚠️', '✅ row-level isolation'],
-                            ['Învață din întrebările fără răspuns', '❌', '❌', '❌', '✅ FAQ generation'],
-                            ['Integrare WooCommerce nativă', '⚠️ plugin terț', '❌', '❌', '✅ produse + stoc + cart'],
-                            ['Suport în română de la oameni reali', '—', '—', '⚠️', '✅ echipă RO'],
-                        ];
-                    @endphp
                     @foreach($rows as $r)
                         <tr class="hover:bg-slate-50">
                             <td class="px-4 py-3 text-slate-700 font-medium">{{ $r[0] }}</td>
-                            <td class="px-4 py-3 text-center text-slate-500">{{ $r[1] }}</td>
-                            <td class="px-4 py-3 text-center text-slate-500">{{ $r[2] }}</td>
-                            <td class="px-4 py-3 text-center text-slate-500">{{ $r[3] }}</td>
-                            <td class="px-4 py-3 text-center bg-red-50 font-bold text-red-700">{{ $r[4] }}</td>
+                            <td class="px-3 py-3 text-center align-middle">{!! $renderCell($r[1]) !!}</td>
+                            <td class="px-3 py-3 text-center align-middle">{!! $renderCell($r[2]) !!}</td>
+                            <td class="px-3 py-3 text-center align-middle">{!! $renderCell($r[3]) !!}</td>
+                            <td class="px-3 py-3 text-center align-middle bg-red-50">{!! $renderCell($r[4]) !!}</td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
         </div>
-        <p class="text-xs text-slate-400 mt-4 text-center">Comparațiile sunt categoriale. Sambla nu se compară cu un brand anume, ci cu tipul general de produs.</p>
+        <p class="text-xs text-slate-500 mt-4 text-center lg:hidden">Glisează lateral pentru a vedea tot tabelul →</p>
+        <p class="text-xs text-slate-500 mt-4 text-center">Comparațiile sunt categoriale. Sambla nu se compară cu un brand anume, ci cu tipul general de produs.</p>
     </div>
 </section>
 
 {{-- ============================================================== --}}
 {{-- 4-STAGE RAG PIPELINE --}}
 {{-- ============================================================== --}}
-<section class="bg-white py-16 lg:py-24">
+<section class="bg-white section-padding">
     <div class="container-custom">
         <div class="text-center max-w-3xl mx-auto mb-12">
             <div class="inline-flex items-center gap-2 bg-amber-50 text-amber-700 text-xs font-bold px-3 py-1.5 rounded-full mb-4">
@@ -112,8 +140,9 @@
         </div>
 
         {{-- Visual SVG flow diagram with latency budget --}}
-        <div class="max-w-5xl mx-auto mb-12 overflow-x-auto">
-            <svg viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg" class="w-full h-auto" role="img" aria-label="Diagrama pipeline-ului RAG">
+        <p class="text-xs text-slate-500 text-center mb-3 lg:hidden">Glisează lateral pentru a vedea diagrama →</p>
+        <div class="max-w-5xl mx-auto mb-12 overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0">
+            <svg viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg" class="w-full h-auto min-w-[760px]" role="img" aria-label="Diagrama pipeline-ului RAG">
                 <defs>
                     <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
                         <path d="M0,0 L0,8 L8,4 z" fill="#dc2626"/>
@@ -199,7 +228,7 @@
             </p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             @php
                 $stages = [
                     ['1','Înțelegere intenție','Clasifică mesajul ca informațional, tranzacțional sau reclamație. Schimbă strategia bot-ului în consecință.','bg-blue-50','text-blue-700','border-blue-200'],
@@ -224,7 +253,7 @@
 {{-- ============================================================== --}}
 {{-- HONEST DISCLOSURE — ce folosim vs ce am construit --}}
 {{-- ============================================================== --}}
-<section class="bg-slate-50 py-16 lg:py-24 border-y border-slate-200">
+<section class="bg-slate-50 section-padding border-y border-slate-200">
     <div class="container-custom">
         <div class="text-center max-w-3xl mx-auto mb-12">
             <div class="inline-flex items-center gap-2 bg-slate-200 text-slate-700 text-xs font-bold px-3 py-1.5 rounded-full mb-4">
@@ -253,7 +282,7 @@
                     <li class="flex gap-2"><span class="text-slate-400 shrink-0">›</span><span><strong>Vertex AI Gemini</strong> — pentru generare imagini în marketing automation</span></li>
                     <li class="flex gap-2"><span class="text-slate-400 shrink-0">›</span><span><strong>Stripe</strong> — billing</span></li>
                 </ul>
-                <p class="text-xs text-slate-400 mt-5 italic">Nu pretindem că am construit aceste lucruri. Le folosim, ca orice produs serios.</p>
+                <p class="text-xs text-slate-500 mt-5 italic">Nu pretindem că am construit aceste lucruri. Le folosim, ca orice produs serios.</p>
             </div>
 
             {{-- Am construit --}}
@@ -294,7 +323,7 @@
 {{-- ============================================================== --}}
 {{-- HALUCINARE — onest --}}
 {{-- ============================================================== --}}
-<section class="bg-white py-16 lg:py-24">
+<section class="bg-white section-padding">
     <div class="container-custom">
         <div class="max-w-3xl mx-auto">
             <div class="text-center mb-10">
@@ -329,7 +358,7 @@
 {{-- ============================================================== --}}
 {{-- 10 ANTI-HALLUCINATION LAYERS --}}
 {{-- ============================================================== --}}
-<section class="bg-slate-950 py-16 lg:py-24">
+<section class="bg-slate-950 section-padding">
     <div class="container-custom">
         <div class="text-center max-w-3xl mx-auto mb-12">
             <div class="inline-flex items-center gap-2 bg-emerald-950/50 border border-emerald-800/50 text-emerald-300 text-xs font-bold px-3 py-1.5 rounded-full mb-4 backdrop-blur">
@@ -369,16 +398,18 @@
         </div>
     </div>
 </section>
+<x-motif-border />
 
 {{-- ============================================================== --}}
 {{-- ROMANIA ADVANTAGE --}}
 {{-- ============================================================== --}}
-<section class="bg-white py-16 lg:py-24">
+<section class="bg-white section-padding">
     <div class="container-custom">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
                 <div class="inline-flex items-center gap-2 bg-red-50 text-red-700 text-xs font-bold px-3 py-1.5 rounded-full mb-4">
-                    🇷🇴 BUILT IN ROMANIA
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+                    BUILT IN ROMANIA
                 </div>
                 <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-6 tracking-tight">De ce contează că suntem din România</h2>
                 <p class="text-lg text-slate-500 mb-6">Pentru afaceri românești, hosting-ul și echipa locală nu sunt detaliu — sunt avantaj competitiv direct.</p>
@@ -434,7 +465,7 @@
                         ['Search','Hybrid: vector 1536-dim + full-text BM25 + AI reranker'],
                         ['Image gen','Vertex AI Gemini'],
                         ['CDN','Cloudflare cu Brotli, HTTP/3, edge cache'],
-                        ['Hosting','Servere fizice 🇷🇴 RO']
+                        ['Hosting','Servere fizice în România']
                     ] as $row)
                         <div class="flex justify-between items-baseline gap-4 pb-2 border-b border-slate-800 last:border-b-0">
                             <span class="text-xs font-bold text-slate-500 uppercase tracking-wider shrink-0">{{ $row[0] }}</span>
@@ -450,7 +481,7 @@
 {{-- ============================================================== --}}
 {{-- WHAT SAMBLA IS NOT --}}
 {{-- ============================================================== --}}
-<section class="bg-slate-50 py-16 lg:py-24">
+<section class="bg-slate-50 section-padding">
     <div class="container-custom">
         <div class="max-w-4xl mx-auto">
             <div class="text-center mb-12">
@@ -490,13 +521,13 @@
 {{-- ============================================================== --}}
 {{-- METRICS (placeholder values — replace with real once available) --}}
 {{-- ============================================================== --}}
-<section class="bg-white py-16 lg:py-24 border-t border-slate-100">
+<section class="bg-white section-padding border-t border-slate-100">
     <div class="container-custom">
         <div class="text-center max-w-3xl mx-auto mb-12">
             <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-5 tracking-tight">Cifrele care contează</h2>
             <p class="text-lg text-slate-500">Performanță reală a pipeline-ului, măsurată în producție.</p>
         </div>
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto">
             @foreach([
                 ['<2s','Latency end-to-end','RAG complet: clasificare → search → strategy → generare'],
                 ['1536','Dimensiuni vector','Embeddings stocate în pgvector pentru similaritate semantică'],
@@ -505,7 +536,7 @@
                 ['8','Chunks per query','Aleși din 20 de candidați rerankate'],
                 ['5','Canale unificate','Web + voice + WhatsApp + FB + IG cu un singur context'],
                 ['~10min','Setup live','De la cont nou la bot pe site-ul clientului'],
-                ['100%','Hosting 🇷🇴','Servere fizice în România, zero date în afara UE'],
+                ['100%','Hosting RO','Servere fizice în România, zero date în afara UE'],
             ] as $m)
                 <div class="bg-gradient-to-br from-slate-50 to-white rounded-2xl border border-slate-200 p-6 text-center">
                     <p class="text-3xl lg:text-4xl font-extrabold text-slate-900 mb-1">{{ $m[0] }}</p>
@@ -520,7 +551,7 @@
 {{-- ============================================================== --}}
 {{-- DASHBOARD SCREENSHOTS — capture reale din dashboard-ul clientului --}}
 {{-- ============================================================== --}}
-<section class="bg-white py-16 lg:py-24">
+<section class="bg-slate-50 section-padding">
     <div class="container-custom">
         <div class="text-center max-w-3xl mx-auto mb-12">
             <div class="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-full mb-4">
@@ -543,7 +574,7 @@
             ];
         @endphp
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 max-w-6xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
             @foreach($shots as $s)
                 <figure class="bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                     <img src="{{ asset('images/screenshots/' . $s['file']) }}"
@@ -558,7 +589,7 @@
             @endforeach
         </div>
 
-        <p class="text-xs text-slate-400 text-center mt-8 max-w-3xl mx-auto">
+        <p class="text-xs text-slate-500 text-center mt-8 max-w-3xl mx-auto">
             Toate imaginile sunt capture reale din dashboard-ul clienților, cu un filtru de blur subtil aplicat peste datele personale. Layout-ul, componentele, navigarea, butoanele și fluxurile sunt exact așa cum apar utilizatorilor reali — nu mockup-uri Figma.
         </p>
     </div>
@@ -567,7 +598,7 @@
 {{-- ============================================================== --}}
 {{-- CASE STUDIES --}}
 {{-- ============================================================== --}}
-<section class="bg-slate-50 py-16 lg:py-24 border-y border-slate-200">
+<section class="bg-white section-padding">
     <div class="container-custom">
         <div class="text-center max-w-3xl mx-auto mb-12">
             <div class="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 text-xs font-bold px-3 py-1.5 rounded-full mb-4">
@@ -577,7 +608,7 @@
             <p class="text-lg text-slate-500">Un caz real anonimizat și două scenarii ilustrative pentru a vedea concret ce face platforma.</p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {{-- Real client (anonymized) --}}
             <div class="bg-white rounded-2xl border-2 border-emerald-300 p-7 shadow-sm hover:shadow-md transition-shadow relative">
                 <div class="absolute top-0 right-0 bg-emerald-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl uppercase tracking-wider">Client real (anonimizat)</div>
@@ -693,7 +724,7 @@
             </div>
         </div>
 
-        <p class="text-xs text-slate-400 text-center mt-8 max-w-3xl mx-auto">
+        <p class="text-xs text-slate-500 text-center mt-8 max-w-3xl mx-auto">
             Cazul cu badge verde (E-commerce cosmetice naturale) este un client real al platformei, datele sale sunt anonimizate. Cazurile cu badge gri sunt scenarii ilustrative care arată cum se folosește Sambla în verticalele respective — cifrele sunt exemplificative, nu măsurate. Pe măsură ce avem mai mulți clienți cu rezultate publice, le vom adăuga aici.
         </p>
     </div>
