@@ -176,18 +176,20 @@ class GeminiContentService
     public function generateImage(string $prompt, string $aspectRatio = '1:1', ?string $style = null): ?array
     {
         // Wrap the caller's brief with the canonical rules so both providers
-        // (OpenAI primary, Vertex fallback) see the exact same instructions.
+        // see the exact same instructions.
         $wrapped = $this->imageRulesPreamble() . $prompt;
 
-        // OpenAI first (gpt-image-1) — better text rendering and faster than
-        // Vertex AI. Vertex only as a fallback when OpenAI fails.
-        $openaiResult = $this->generateImageOpenAi($wrapped, $aspectRatio);
-        if ($openaiResult) {
-            return $openaiResult;
+        // Vertex AI FIRST — it accepts our real logo PNG as a reference
+        // image, so the brand mark renders correctly. OpenAI gpt-image-1
+        // can't accept reference images and tends to fabricate fake "Sambla"
+        // wordmarks, so we only fall back to it when Vertex is unavailable.
+        $vertexResult = $this->generateImageVertex($wrapped, $aspectRatio, $style);
+        if ($vertexResult) {
+            return $vertexResult;
         }
 
-        Log::warning('OpenAI image generation failed, falling back to Vertex AI', ['aspect' => $aspectRatio]);
-        return $this->generateImageVertex($wrapped, $aspectRatio, $style);
+        Log::warning('Vertex AI failed, falling back to OpenAI', ['aspect' => $aspectRatio]);
+        return $this->generateImageOpenAi($wrapped, $aspectRatio);
     }
 
     private function generateImageVertex(string $prompt, string $aspectRatio = '1:1', ?string $style = null): ?array
@@ -338,6 +340,14 @@ class GeminiContentService
                 '16:9', '4:3', '3:2' => '1536x1024',
                 default              => '1024x1024',
             };
+
+            // OpenAI gpt-image-1 cannot receive reference images, so any
+            // "Sambla" mark it draws is fabricated. Hammer this into the
+            // prompt as the FIRST and LAST instruction so it has zero
+            // ambiguity. We composite the real logo separately when needed.
+            $openaiGuard = "ABSOLUTE RULE — READ FIRST: this image must contain ZERO brand marks. Do NOT draw, render, type, or imply the word 'Sambla' anywhere on the image. Do NOT invent any wordmark, logo, badge, brand stamp, watermark, or 'AI brand' element. Do NOT put any company-looking text in any corner. Leave the top-right corner completely empty (no shapes, no text, no decoration) — a real logo will be composited there separately. If you are tempted to draw a logo or brand text, STOP and replace it with empty whitespace. ";
+            $openaiGuardEnd = "\n\nFINAL REMINDER: ZERO brand text on this image. ZERO 'Sambla' marks. ZERO invented logos. Top-right corner = empty whitespace.";
+            $prompt = $openaiGuard . $prompt . $openaiGuardEnd;
 
             $startTime = microtime(true);
 
