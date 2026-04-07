@@ -111,10 +111,18 @@ class BackfillSocialImages extends Command
 
     private function buildPrompt(SocialPost $post, string $aspect): ?string
     {
-        // If we already stored a full prompt, just use it as-is.
+        // The strict no-people / Romanian-text-on-graphic rules that MUST
+        // be appended to every prompt regardless of where it came from.
+        // Without this suffix, legacy stored prompts (which often described
+        // people in cafés / offices) bypassed the new graphics-first rules.
+        $rulesSuffix = " STRICT OVERRIDE — DEFAULT NO PEOPLE: ignore any earlier instruction to include humans. Replace any human subject with a typography poster, device mockup, isometric diorama, abstract geometric composition, paper collage, or data visualization. People are forbidden by default. ROMANIAN TEXT: any on-image headline must be in Romanian with proper diacritics (ă â î ș ț), large and centered, as the visual hero. FORBIDDEN: stock photos of people, smiling teams, handshakes, suits pointing at laptops, faces of any kind.";
+
+        // If we already stored a full prompt, REUSE its subject but rewrap
+        // it with the new graphics-first rules so legacy "people" prompts
+        // don't slip through.
         $stored = trim((string) $post->image_prompt);
         if (mb_strlen($stored) > 60) {
-            return $stored;
+            return $stored . $rulesSuffix;
         }
 
         $meta = $post->metadata ?? [];
