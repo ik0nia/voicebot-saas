@@ -228,21 +228,21 @@
             </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             @php
                 $stages = [
-                    ['1','Înțelegere intenție','Clasifică mesajul ca informațional, tranzacțional sau reclamație. Schimbă strategia bot-ului în consecință.','bg-blue-50','text-blue-700','border-blue-200'],
-                    ['2','Hybrid Search RAG','Vector search 1536-dim + full-text românesc cu stemming, fuzionate. AI reranker peste 20 candidați → top 8 chunks.','bg-amber-50','text-amber-700','border-amber-200'],
-                    ['3','Strategie conversație','Începutul conversației înțelege nevoia. Mijlocul recomandă. Finalul cere lead/escaladare. Diferit per stadiu.','bg-emerald-50','text-emerald-700','border-emerald-200'],
-                    ['4','Verificare 10 straturi','Răspunsul generat trece prin 10 verificări înainte să ajungă la client. Anti-halucinare e ultimul filtru.','bg-red-50','text-red-700','border-red-200'],
+                    ['1','Înțelegere intenție','Clasifică mesajul ca informațional, tranzacțional sau reclamație. Schimbă strategia bot-ului în consecință.'],
+                    ['2','Hybrid Search RAG','Vector search 1536-dim + full-text românesc cu stemming, fuzionate. AI reranker peste 20 candidați → top 8 chunks.'],
+                    ['3','Strategie conversație','Începutul conversației înțelege nevoia. Mijlocul recomandă. Finalul cere lead/escaladare. Diferit per stadiu.'],
+                    ['4','Verificare 10 straturi','Răspunsul generat trece prin 10 verificări înainte să ajungă la client. Anti-halucinare e ultimul filtru.'],
                 ];
             @endphp
             @foreach($stages as $s)
-                <div class="bg-white rounded-2xl border-2 {{ $s[5] }} p-6 hover:shadow-lg transition-shadow">
-                    <div class="w-12 h-12 rounded-xl {{ $s[3] }} flex items-center justify-center mb-4">
-                        <span class="text-xl font-extrabold {{ $s[4] }}">{{ $s[0] }}</span>
+                <div class="p-6 lg:p-8 rounded-2xl bg-white border border-slate-100 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 relative">
+                    <div class="absolute -top-4 left-6 lg:left-8 w-9 h-9 rounded-xl bg-gradient-to-br from-red-700 to-red-600 flex items-center justify-center shadow-lg shadow-red-900/20">
+                        <span class="text-sm font-extrabold text-white">{{ $s[0] }}</span>
                     </div>
-                    <h3 class="text-lg font-bold text-slate-900 mb-2">{{ $s[1] }}</h3>
+                    <h3 class="text-lg font-bold text-slate-900 mb-3 mt-3">{{ $s[1] }}</h3>
                     <p class="text-sm text-slate-600 leading-relaxed">{{ $s[2] }}</p>
                 </div>
             @endforeach
