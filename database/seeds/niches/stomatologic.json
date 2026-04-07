@@ -1,0 +1,47 @@
+{
+  "slug": "cabinete-stomatologice",
+  "name": "Cabinete stomatologice",
+  "vertical_label": "Stomatologie",
+  "color_theme": "emerald",
+  "hero_eyebrow": "AGENT AI PENTRU CABINETE STOMATOLOGICE",
+  "hero_title": "Recepția care nu te oprește din lucru",
+  "hero_subtitle": "Un agent AI care preia apeluri 24/7, ia programări direct în calendarul cabinetului, răspunde la întrebări despre tarife și asigurări, și escaladează urgențele la tine. Tu te concentrezi pe pacient, nu pe telefon.",
+  "problem_title": "Problema reală pe care o rezolvăm",
+  "problem_text": "Știi exact cum sună: ești cu mâinile în gura unui pacient, cu freza pornită, și telefonul de la recepție sună a treia oară în ultimele zece minute. Asistenta lasă aspiratorul, fuge să răspundă, iar tu pierzi ritmul intervenției. Între timp, alți doi pacienți au sunat, n-au primit răspuns și au format deja numărul cabinetului din colț. În medie, un cabinet stomatologic din România pierde între 2 și 4 ore pe zi doar cu telefoane: 'Cât costă o detartraj?', 'Lucrați cu CASS?', 'Aveți loc mâine?', 'Cât e o fațetă?'. Aceleași 15 întrebări, repetate de 30 de ori pe zi. Apoi vine seara: telefonul nu mai e preluat după ora 19:00 și în weekend e închis. Pacientul cu durere de măsea de sâmbătă dimineața nu te așteaptă până luni — sună la următorul cabinet din Google și nu se mai întoarce niciodată. La asta se adaugă no-show-urile: 1 din 5 pacienți uită pur și simplu de programare, pentru că nimeni nu are timp să sune să confirme cu o zi înainte. Rezultatul? Sloturi goale în agendă, recepție epuizată, medici frustrați și venituri pierdute pe care nici nu le mai numeri.",
+  "solution_title": "Cum funcționează Sambla pentru cabinetul tău",
+  "solution_text": "Sambla este un agent AI vocal care răspunde la numărul cabinetului tău exact așa cum ar face-o o recepționeră experimentată — doar că nu obosește, nu pleacă în pauză și lucrează 24 din 24. Îl antrenăm pe lista ta de servicii și tarife (consultație, detartraj, obturații, endodonție, implanturi, ortodonție, albire), pe orarul medicilor și pe regulile cabinetului. Se conectează direct la Google Calendar al fiecărui medic, vede sloturile libere în timp real și face programarea pe loc, în timpul apelului. Trimite automat confirmare prin SMS și un reminder cu 24 de ore înainte, ceea ce reduce no-show-urile cu până la 50%. Răspunde calm și clar la întrebări despre prețuri, despre ce decontează CASS, despre asigurările private cu care lucrezi și despre ce trebuie să aducă pacientul la prima vizită. Dacă cineva sună noaptea cu o durere acută sau o traumă dentară, agentul recunoaște urgența, oferă instrucțiuni de prim ajutor și sună imediat medicul de gardă pe care l-ai stabilit. Toate datele stau pe servere din România, conform GDPR pentru date medicale, iar tu vezi fiecare conversație în panoul de control.",
+  "benefits": [
+    {"title": "Programări 24/7 fără să sune nimeni la recepție", "description": "Pacienții își fac singuri programare la 23:00 sau duminica dimineața, direct pe telefon. Agentul vede calendarul medicilor în timp real și rezervă slotul pe loc."},
+    {"title": "Reminder automat cu 24h înainte (no-show -50%)", "description": "SMS și apel de confirmare cu o zi înainte de programare. Pacienții uită mai greu, iar tu îți păstrezi agenda plină fără efort din partea echipei."},
+    {"title": "Răspunde la întrebări despre CASS și asigurări private", "description": "Agentul știe ce decontează CASS, cu ce asigurări private lucrezi și care sunt tarifele pentru fiecare procedură. Recepția nu mai repetă aceleași explicații de 30 de ori pe zi."},
+    {"title": "Triere urgențe vs. rutină pre-cabinet", "description": "Distinge între o durere acută, o traumă dentară post-accident și o programare de rutină. Urgențele sunt escaladate imediat la medicul de gardă, restul intră în agendă normal."},
+    {"title": "Instrucțiuni post-procedură automate", "description": "După o extracție sau o intervenție chirurgicală, agentul poate suna pacientul a doua zi să verifice cum se simte și să reamintească regulile (fără clătit, fără fumat, când să ia antibioticul)."},
+    {"title": "Multilingv: română și engleză pentru pacienți expat", "description": "Răspunde fluent în română și în engleză, ideal pentru cabinete din București, Cluj sau Timișoara cu pacienți internaționali. Fără accent robotic, fără traduceri stângace."}
+  ],
+  "demo_messages": [
+    {"role": "user", "text": "Bună, vreau să programez o consultație pentru o durere de măsea. Aveți loc joi după-masa?"},
+    {"role": "bot", "text": "Salut! Bineînțeles, vă ajut imediat. Joi, 16 aprilie, am două sloturi disponibile cu Dr. Popescu: 14:30 sau 16:00. Care vă convine mai bine?"},
+    {"role": "user", "text": "16:00, vă rog. Și cât costă o consultație?"},
+    {"role": "bot", "text": "Consultația standard cu radiografie este 150 de lei. Dacă aveți asigurare CASS, consultația de bază este decontată, iar pentru tratament veți avea o co-plată în funcție de procedură. V-am rezervat slotul de joi, 16 aprilie, ora 16:00, cu Dr. Popescu. Aveți alergii sau urmați tratamente medicamentoase pe care să le notez în fișă?"},
+    {"role": "user", "text": "Nu, nimic special. Mulțumesc."},
+    {"role": "bot", "text": "Perfect, programarea este confirmată. Vă trimit acum un SMS cu detaliile, iar miercuri veți primi un reminder. Dacă durerea se intensifică până atunci, sunați-ne oricând. Vă așteptăm cu drag la cabinet!"}
+  ],
+  "social_proof_text": "Sambla este construit, antrenat și hostat în România pentru cabinete medicale și stomatologice care vor să nu mai piardă pacienți la telefon — fără să crească echipa de recepție.",
+  "cta_primary_text": "Începe gratuit",
+  "cta_primary_href": "/register",
+  "cta_secondary_text": "Vorbește cu noi",
+  "cta_secondary_href": "/contact",
+  "icon_svg": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 5.5c-1.5-1.2-3-2-4.5-2C5 3.5 3.5 5.5 3.5 8c0 2 .5 3.5 1 5.5.4 1.6.6 3 1 4.5.3 1.2.8 2.5 1.8 2.5s1.4-1.2 1.7-2.5c.3-1.2.5-2.8 1-4 .2-.5.6-.9 1-.9s.8.4 1 .9c.5 1.2.7 2.8 1 4 .3 1.3.7 2.5 1.7 2.5s1.5-1.3 1.8-2.5c.4-1.5.6-2.9 1-4.5.5-2 1-3.5 1-5.5 0-2.5-1.5-4.5-4-4.5-1.5 0-3 .8-4.5 2z'/></svg>",
+  "faq": [
+    {"question": "Înlocuiește bot-ul recepția?", "answer": "Nu, o ajută. Recepționera ta rămâne pentru pacienții din cabinet, pentru cazurile sensibile și pentru relația umană directă. Sambla preia volumul mare de apeluri repetitive — programări, întrebări de tarif, confirmări — astfel încât echipa ta să aibă timp să se ocupe de oamenii care sunt deja acolo."},
+    {"question": "Cum funcționează cu programările pe Google Calendar?", "answer": "Conectăm agentul la calendarele Google ale medicilor din cabinet. El vede în timp real ce sloturi sunt libere, ține cont de durata fiecărei proceduri (o consultație nu durează cât o endodonție) și creează evenimentul direct în calendar, cu numele și telefonul pacientului. Modificările și anulările se sincronizează automat."},
+    {"question": "Răspunde și pacienților vorbitori de engleză?", "answer": "Da. Agentul detectează automat limba în care vorbește pacientul și răspunde fluent în română sau engleză, fără accent robotic. Este ideal pentru cabinetele din marile orașe, unde aveți pacienți expat sau turiști care caută servicii dentare."},
+    {"question": "Cum se ocupă de urgențele dentare?", "answer": "Agentul este antrenat să recunoască semnele unei urgențe — durere acută severă, traumă dentară, hemoragie, abces. În aceste cazuri, oferă instrucțiuni de prim ajutor, nu programează la rând și sună imediat medicul de gardă pe care l-ai configurat. Tu decizi cine este de gardă și în ce intervale."},
+    {"question": "Este conform GDPR pentru date medicale?", "answer": "Da. Toate conversațiile, înregistrările și datele pacienților sunt stocate pe servere din România, criptate, cu acces restricționat. Avem contract de prelucrare a datelor (DPA) gata de semnat, iar pacienții sunt informați la începutul apelului că discuția poate fi procesată de un asistent AI."},
+    {"question": "Cât durează setup-ul pentru cabinetul meu?", "answer": "În medie, între 3 și 5 zile lucrătoare. Ne trimiți lista ta de servicii și tarife, ne dai acces la Google Calendar al medicilor, stabilim regulile pentru urgențe și mesajul de întâmpinare. Facem împreună câteva apeluri de test, ajustăm tonul și expresiile, iar apoi îl pornim pe numărul cabinetului."}
+  ],
+  "meta_title": "Agent AI și chatbot pentru cabinet stomatologic | Sambla — programări 24/7 în limba română",
+  "meta_description": "Agent AI care preia apeluri telefonice și mesaje pentru cabinetul tău stomatologic 24/7. Programări automate, reminder, răspuns la întrebări despre tarife și asigurări. Construit în România, GDPR compliant.",
+  "sort_order": 10,
+  "is_active": true
+}

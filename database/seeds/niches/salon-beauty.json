@@ -1,0 +1,49 @@
+{
+  "slug": "salon-beauty",
+  "name": "Saloane beauty, coafor și estetică",
+  "vertical_label": "Beauty",
+  "color_theme": "rose",
+  "hero_eyebrow": "AGENT AI PENTRU SALOANE",
+  "hero_title": "Asistenta ta virtuală care preia rezervări 24/7 ✨",
+  "hero_subtitle": "Un agent AI super dulce care răspunde clientelor tale pe Instagram, WhatsApp și la telefon, le programează direct în calendarul stilistului potrivit și îți ține agenda plină. Tu te concentrezi pe creație, ea se ocupă de restul. 💅",
+  "problem_title": "De ce pierzi cliente fără să-ți dai seama",
+  "problem_text": "Hai să fim sincere: cele mai multe dintre clientele tale decid că vor o programare seara, pe la 22:00, când stau în pat și răsfoiesc Instagram-ul. Văd un reel cu un balayage superb, intră în DM-ul tău și scriu 'Hey, cât costă șuvițele și aveți loc sâmbătă?'. Dar tu dormi, salonul e închis, iar dimineața când deschizi telefonul ai 14 mesaje necitite. Jumătate dintre ele și-au făcut deja programare în altă parte. În timpul zilei e și mai rău: telefonul sună exact când ai mâinile pline de vopsea sau de gel, iar fata de la recepție (dacă ai una) explică pentru a 30-a oară diferența dintre o manichiură simplă și una semipermanentă. Nimeni nu mai răspunde la jumătate din apeluri. Și apoi vin no-show-urile: cliente care uită de programare, care nu confirmă, care anulează în ultima clipă pe WhatsApp dar mesajul ajunge prea târziu. Un slot pierdut sâmbătă la prânz înseamnă 200-400 de lei aruncați pe geam. Adună-le pe luni întregi și vezi câți bani pleacă în neant doar pentru că nu există cineva care să răspundă mereu, calm și cu zâmbetul pe buze. 🌸",
+  "solution_title": "Cum te ajută Sambla să nu mai pierzi nicio clientă",
+  "solution_text": "Sambla este o asistentă virtuală super prietenoasă care răspunde non-stop pe toate canalele unde îți cauți clientele: Instagram DM, WhatsApp Business, Facebook Messenger și telefonul salonului. O antrenăm pe lista ta de servicii (tuns, vopsit, balayage, șuvițe, manichiură simplă, semipermanentă, gel, pedichiură, sprâncene, gene, tratamente faciale) și pe prețurile reale, ca să nu mai existe surprize. Se conectează la Google Calendar sau la Google Sheet-ul tău de programări, vede exact ce are liber fiecare stilistă în parte și face rezervarea pe loc, în timpul conversației. Trimite automat un reminder drăguț cu 24h înainte ('Hey Andra, te așteptăm mâine la 11:00 cu Bianca pentru balayage 💕') și unul la oră fixă cu o oră înainte. Recomandă pachete inteligent: dacă cineva întreabă de manichiură semipermanentă, sugerează combo cu pedichiură la preț preferențial. Răspunde la toate întrebările repetitive — prețuri, durată, ce să aducă, dacă lucrați cu părul foarte deteriorat — și escaladează doar cazurile speciale (alergii, reclamații, cliente VIP) direct către tine. ✨",
+  "benefits": [
+    {"title": "💅 Rezervări non-stop, inclusiv noaptea pe Insta", "description": "Clientele tale rezervă singure la 23:00 când văd un reel pe Instagram. Botul răspunde instant în DM, întreabă ce serviciu vor și le bagă în calendar pe loc."},
+    {"title": "📅 Sincronizat per stilist cu Google Calendar", "description": "Fiecare stilistă are calendarul ei. Botul știe cine face balayage, cine face nails, cine e liberă sâmbătă și rezervă exact la persoana potrivită, fără suprapuneri."},
+    {"title": "🌸 Reminder dulce cu 24h înainte (no-show -60%)", "description": "Mesaj prietenos pe WhatsApp cu o zi înainte și încă unul cu o oră înainte. Clientele uită mai greu, iar agenda ta rămâne plină frumos."},
+    {"title": "✨ Recomandă pachete și upsell natural", "description": "Dacă o clientă cere doar manichiură, botul îi sugerează cu drag și pedichiura la combo. Crește valoarea medie a comenzii fără să fie insistent."},
+    {"title": "💆 Răspunsuri instant la prețuri și durată", "description": "Cât costă un balayage pe păr lung? Cât durează? Ce diferență e între gel și semipermanent? Botul răspunde calm și clar, exact ca o recepționeră experimentată."},
+    {"title": "⏰ Escaladare doar pentru cazuri speciale", "description": "Pentru alergii, reclamații sau cliente VIP care vor să vorbească direct cu tine, botul te anunță imediat. Restul îl rezolvă singur cu zâmbetul pe buze."}
+  ],
+  "demo_messages": [
+    {"role": "user", "text": "Bunaaa 💕 vreau sa imi fac niste suvite si o manichiura semipermanenta sambata, aveti loc?"},
+    {"role": "bot", "text": "Heey, ce dragă ești! ✨ Sigur că da, te ajut imediat. Pentru sâmbătă, 11 aprilie, am liber cu Bianca la șuvițe la 10:30 sau 13:00, iar imediat după îți pot programa și manichiura semipermanentă cu Andreea. Care oră ți-ar conveni mai bine? 🌸"},
+    {"role": "user", "text": "10:30 e perfect! Cat costa in total?"},
+    {"role": "bot", "text": "Super alegere! 💅 Pentru păr mediu, șuvițele cu Bianca sunt 320 lei, iar manichiura semipermanentă cu Andreea este 110 lei. Total 430 lei, cam 3 ore în salon cu totul. Dacă vrei, îți pot adăuga și o pedichiură semipermanentă în pachet la 90 lei în loc de 110 — merge perfect împreună. Vrei să o adaug? 💆"},
+    {"role": "user", "text": "Da, hai sa o pun si pe aia. Ce trebuie sa aduc?"},
+    {"role": "bot", "text": "Yass, alegere de zile mari! 🌸 Nu trebuie să aduci absolut nimic, doar buna dispoziție. Te rezerv pentru sâmbătă, 11 aprilie, ora 10:30 — șuvițe + manichiură + pedichiură semipermanentă, total 410 lei. Îți trimit acum confirmarea pe WhatsApp și vineri primești un reminder dulce. Te așteptăm cu drag! 💕✨"},
+    {"role": "user", "text": "Mersi mult, esti adorabila!"},
+    {"role": "bot", "text": "Awww, mulțumesc frumos! 💕 Pe sâmbătă atunci, abia așteptăm să te răsfățăm! 💅✨"}
+  ],
+  "social_proof_text": "Sambla este construit cu drag în România pentru saloanele de beauty, coafor și nails care vor să nu mai piardă nicio clientă pe Instagram sau la telefon — și să aibă în sfârșit timp pentru creație, nu pentru mesaje. 🌸",
+  "cta_primary_text": "Începe gratuit",
+  "cta_primary_href": "/register",
+  "cta_secondary_text": "Vorbește cu noi",
+  "cta_secondary_href": "/contact",
+  "icon_svg": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><circle cx='6' cy='7' r='2.5'/><circle cx='6' cy='17' r='2.5'/><line x1='8' y1='8.5' x2='20' y2='15.5'/><line x1='8' y1='15.5' x2='20' y2='8.5'/></svg>",
+  "faq": [
+    {"question": "Botul poate programa mai multe servicii deodată?", "answer": "Bineînțeles! Dacă o clientă vrea șuvițe + manichiură + pedichiură în aceeași vizită, botul caută sloturi consecutive la stilistele potrivite și le rezervă în lanț, ținând cont de durata fiecărui serviciu. Totul într-o singură conversație, fără bătăi de cap. 💕"},
+    {"question": "Cum gestionează anulările și reprogramările?", "answer": "Foarte simplu — clientele pot anula sau reprograma direct prin WhatsApp sau Instagram, oricând. Botul eliberează imediat slotul în calendar, oferă alte date disponibile și, dacă vrei, poți seta o politică de anulare (ex: anulările cu mai puțin de 24h trimit notificare la tine). Tu decizi regulile. 🌸"},
+    {"question": "Știe prețurile corecte pentru fiecare lungime de păr?", "answer": "Da, îl antrenăm pe grila ta exactă. Tarifele pentru păr scurt, mediu, lung și extra-lung, diferențele pentru vopsea unicoloră vs. balayage, prețuri pentru sprâncene cu henna sau cu ceară — tot ce ai în meniu. Nu inventează niciodată prețuri, iar dacă o clientă întreabă ceva specific care necesită evaluare în salon, spune frumos că stilista va confirma la locul faptei."},
+    {"question": "Funcționează pe Instagram DM?", "answer": "Da, și e canalul nostru preferat pentru saloane! ✨ Conectăm botul la Instagram Business al salonului tău și răspunde instant în DM, exact ca o recepționeră super activă. Asta înseamnă că rezervările vin direct din reels și story-uri, fără să mai pierzi mesajele primite noaptea sau în weekend."},
+    {"question": "Se conectează la calendarul stilistelor mele?", "answer": "Da, lucrăm cu Google Calendar (cel mai popular în saloane), Google Sheets sau cu sistemul tău intern de programări dacă ai unul. Fiecare stilistă are calendarul ei separat, cu orarul ei și cu pauzele setate, iar botul vede totul în timp real și nu suprapune niciodată două programări."},
+    {"question": "Cât durează să fie gata pentru salonul meu?", "answer": "În medie 3-5 zile lucrătoare. Ne trimiți lista de servicii cu prețuri și durate, ne dai acces la calendarele stilistelor, stabilim împreună tonul (cât de prietenos, cu sau fără emoji-uri 💕) și facem câteva conversații de test. După aprobarea ta, îl pornim pe Instagram, WhatsApp și telefon în aceeași zi."}
+  ],
+  "meta_title": "Agent AI și chatbot pentru salon beauty, coafor și nails | Sambla — rezervări 24/7",
+  "meta_description": "Asistentă virtuală AI care preia rezervări non-stop pe Instagram DM, WhatsApp și telefon pentru salonul tău de beauty, coafor sau nails. Sincronizat cu calendarul stilistelor, reminder automat, mai puține no-show-uri. Construit în România. ✨",
+  "sort_order": 50,
+  "is_active": true
+}

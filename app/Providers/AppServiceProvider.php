@@ -39,6 +39,10 @@ class AppServiceProvider extends ServiceProvider
     {
         View::composer('layouts.dashboard', TranscriptSidebarComposer::class);
 
+        View::composer('home', function ($view) {
+            $view->with('niches', \App\Models\Niche::where('is_active', true)->orderBy('sort_order')->get());
+        });
+
         // ============================================================
         // DATABASE PROTECTION — 3 LAYERS (BULLETPROOF)
         // ============================================================

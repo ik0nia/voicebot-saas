@@ -1,0 +1,47 @@
+{
+  "slug": "agentii-imobiliare",
+  "name": "Agenții imobiliare",
+  "vertical_label": "Imobiliare",
+  "color_theme": "indigo",
+  "hero_eyebrow": "AGENT AI PENTRU AGENȚII IMOBILIARE",
+  "hero_title": "Lead-urile ajung la agent deja calificate",
+  "hero_subtitle": "Bot-ul răspunde la întrebările despre proprietățile din portofoliu, programează vizionări direct în calendarul agentului și pre-califică fiecare cerere după buget, zonă, tip de imobil și urgență — astfel încât agenții să discute doar cu cumpărători reali.",
+  "problem_title": "Agenții pierd ore întregi cu lead-uri care nu cumpără niciodată",
+  "problem_text": "Într-o agenție imobiliară activă, fiecare anunț bun aduce zeci de telefoane pe zi. Problema e că majoritatea celor care sună nu sunt cumpărători serioși: unii vor doar să afle prețul exact pentru curiozitate, alții întreabă de un apartament care s-a vândut acum două săptămâni dar e încă listat pe portaluri, iar o parte importantă caută ceva complet în afara bugetului lor. Agenții ajung să petreacă jumătate din zi explicând la telefon detalii care există deja în anunț — etaj, suprafață, an construcție, dotări, comision — în loc să fie pe teren, la vizionări reale, cu cumpărători decisi. Programarea vizionărilor se face manual, prin schimburi nesfârșite de mesaje („puteți miercuri la 16?”, „nu, joi la 18?”, „atunci vineri dimineață?”), iar suprapunerile pe calendarul agentului sunt frecvente. Mai rău, lead-urile care vin seara sau în weekend, când nu răspunde nimeni la birou, ajung la următoarea agenție care răspunde mai repede — pierdute fără ca cineva să le vadă vreodată. Iar când cineva întreabă insistent de o proprietate deja vândută, agentul trebuie să explice politicos că nu mai e disponibilă și să încerce să propună altceva — un proces ineficient care consumă timp și încredere.",
+  "solution_title": "Un agent AI care preia cererile, califică și programează vizionări",
+  "solution_text": "Sambla instalează pe site-ul agenției și pe WhatsApp Business un asistent AI conectat live la portofoliul de proprietăți. Bot-ul știe în orice moment ce e disponibil, ce e rezervat și ce s-a vândut — fără să mai trimită clienți către oferte expirate. Când cineva întreabă de un apartament anume, primește instant detaliile relevante (suprafață, etaj, dotări, comision, cheltuieli întreținere) și este invitat la o conversație structurată de calificare: care este bugetul maxim, ce zone sunt acceptabile, ce tip de imobil caută (apartament, casă, teren), pentru ce orizont de timp și dacă are nevoie de credit. Doar după ce aceste date sunt confirmate, bot-ul propune sloturi reale din calendarul agentului responsabil de proprietate și fixează vizionarea direct, cu confirmare pe email și SMS. Lead-urile care nu se potrivesc primesc recomandări alternative din portofoliu — păstrate în sistem pentru follow-up. Cele care trec de filtru ajung la agent cu un rezumat clar: nume, contact, buget, zonă preferată, tip imobil, urgență. Agenții nu mai pierd timp cu apeluri exploratorii și se prezintă la fiecare vizionare cu o imagine completă a cumpărătorului.",
+  "benefits": [
+    {"title": "🔑 Pre-calificare automată după buget și zonă", "description": "Bot-ul colectează structurat bugetul maxim, zonele acceptate, tipul de imobil și urgența înainte ca agentul să fie implicat. Doar lead-urile reale ajung la telefon."},
+    {"title": "🏠 Sync live cu portofoliul de proprietăți", "description": "Integrare cu CRM-ul agenției (sau import periodic). Bot-ul nu propune niciodată proprietăți vândute sau rezervate și poate sugera alternative similare din stoc."},
+    {"title": "📍 Vizionări programate direct în calendar", "description": "Bot-ul vede disponibilitatea reală a fiecărui agent și fixează vizionarea într-un slot liber, cu confirmare pe email și SMS pentru ambele părți."},
+    {"title": "Răspunde la întrebări despre proprietăți 24/7", "description": "Detalii despre suprafață, compartimentare, comision, cheltuieli, an construcție — disponibile instant, inclusiv seara și în weekend, când concurența nu mai răspunde."},
+    {"title": "Recuperare lead-uri cu follow-up automat", "description": "Cumpărătorii care nu găsesc acum ce caută rămân în sistem. Când apare o proprietate care se potrivește criteriilor lor, primesc notificare automată."},
+    {"title": "Hosting în România și conformitate GDPR", "description": "Datele cumpărătorilor și ale proprietarilor rămân pe servere din România. Acord de prelucrare (DPA) și retenție configurabilă conform politicii agenției."}
+  ],
+  "demo_messages": [
+    {"role": "user", "text": "Bună ziua, am văzut anunțul cu apartamentul de 3 camere din Floreasca. Mai este disponibil?"},
+    {"role": "bot", "text": "Bună ziua! Da, apartamentul din Floreasca, 3 camere, 78 mp, etaj 4/8, este în continuare disponibil. Prețul afișat este 189.000 EUR, comision standard 2%. Pentru a vă propune o vizionare în condiții bune, îmi puteți confirma câteva detalii? Care este bugetul maxim pe care îl aveți în vedere?"},
+    {"role": "user", "text": "Până în 200.000 EUR. Caut ceva în nordul Bucureștiului, de preferat Floreasca, Aviatorilor sau Primăverii. Am nevoie să mă mut în maxim 3 luni."},
+    {"role": "bot", "text": "Mulțumesc. Achiziția este cu credit ipotecar sau cash? Și aveți deja pre-aprobare bancară, dacă este vorba de credit?"},
+    {"role": "user", "text": "Credit, am pre-aprobare de la BCR pentru 180.000 EUR, restul avans propriu."},
+    {"role": "bot", "text": "Perfect, datele sunt complete. Vă pot programa o vizionare cu domnul agent Mihai Popescu, care se ocupă de această proprietate. Am disponibil joi 10 aprilie la ora 17:00 sau vineri 11 aprilie la 11:00. Care variantă vă convine? Voi trimite confirmarea pe email și SMS."}
+  ],
+  "social_proof_text": "Agenții imobiliare din București, Cluj și Brașov folosesc Sambla pentru a filtra cererile și a programa vizionări fără intervenție manuală. În medie, agenții recuperează peste 12 ore pe săptămână din apeluri exploratorii și ajung la o rată de conversie vizionare-ofertă cu peste 30% mai mare, pentru că discută doar cu cumpărători calificați.",
+  "cta_primary_text": "Începe gratuit",
+  "cta_primary_href": "/register",
+  "cta_secondary_text": "Vorbește cu noi",
+  "cta_secondary_href": "/contact",
+  "icon_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 11 12 4l9 7\"/><path d=\"M5 10v10h14V10\"/><path d=\"M10 20v-6h4v6\"/></svg>",
+  "faq": [
+    {"question": "Se integrează cu CRM-ul nostru imobiliar?", "answer": "Da. Avem conectori pentru cele mai folosite CRM-uri imobiliare din România (inclusiv soluții personalizate cu API REST). Bot-ul citește live portofoliul, statusul fiecărei proprietăți și agentul responsabil, astfel încât nu propune niciodată oferte expirate."},
+    {"question": "Cum se face programarea vizionărilor în calendar?", "answer": "Conectăm bot-ul la Google Calendar sau Outlook al fiecărui agent. Bot-ul vede sloturile libere, ține cont de timpul de deplasare între vizionări și fixează direct întâlnirea, cu confirmare automată pe email și SMS pentru cumpărător și agent."},
+    {"question": "Ce se întâmplă dacă un cumpărător anulează sau nu se prezintă?", "answer": "Bot-ul gestionează anulările prin link în confirmarea de email/SMS. La anulare, sloul se eliberează automat în calendar și agentul primește notificare. Pentru no-show, sistemul marchează lead-ul și poate trimite un follow-up automat după 24 de ore."},
+    {"question": "Funcționează pentru agenții cu mai mulți agenți și birouri?", "answer": "Da. Fiecare agent are propria disponibilitate și propriul portofoliu, iar bot-ul rutează cererile către agentul responsabil de proprietatea respectivă sau de zona în care caută cumpărătorul. Funcționează identic pentru agenții cu un singur birou sau cu rețele multi-locație."},
+    {"question": "Cum este protejată confidențialitatea datelor cumpărătorilor?", "answer": "Hosting în România, criptare la transport și la repaus, acces restricționat per agent, retenție configurabilă și acord de prelucrare a datelor (DPA) conform GDPR. Datele nu sunt transmise către terți și nu sunt folosite pentru antrenarea modelelor."},
+    {"question": "Cât durează implementarea?", "answer": "Între 5 și 10 zile lucrătoare. Ne dați acces la portofoliul de proprietăți (export sau API), programul agenților și criteriile de calificare. Noi configurăm bot-ul, îl testăm pe câteva proprietăți reale și îl punem live pe site și WhatsApp."}
+  ],
+  "meta_title": "Agent AI pentru agenție imobiliară | Sambla — calificare lead-uri și programări vizionări",
+  "meta_description": "Chatbot imobiliare care răspunde la întrebări despre proprietăți, califică lead-urile (buget, zonă, tip imobil) și programează vizionări direct în calendarul agentului. Hosting RO, GDPR.",
+  "sort_order": 60,
+  "is_active": true
+}

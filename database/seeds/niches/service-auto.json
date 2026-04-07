@@ -1,0 +1,101 @@
+{
+  "slug": "service-auto",
+  "name": "Service auto și ateliere mecanice",
+  "vertical_label": "Service auto",
+  "color_theme": "amber",
+  "tone": "friendly",
+  "hero_eyebrow": "AGENT AI PENTRU SERVICE AUTO",
+  "hero_title": "Mecanicul tău nu mai trebuie să răspundă la telefon 🔧",
+  "hero_subtitle": "Sambla preia apelurile când ești sub mașină cu cheia în mână. Răspunde la întrebări despre tarife, programări ITP, status reparații și piese în stoc, fără să-ți întrerupă lucrul.",
+  "problem_title": "Telefonul sună exact când ai mâinile pline de vaselină",
+  "problem_text": "Hai să fim sinceri: într-un service auto, telefonul nu sună niciodată la momentul potrivit. Ești sub o Dacia cu suspensia desfăcută, ai cheia tubulară într-o mână și un șurub blocat în cealaltă, iar telefonul începe să zbârnâie. \"Cât costă schimbatul de plăcuțe la un Golf 6?\" Sau: \"Pot să vin azi la ITP?\" Sau: \"Mi-e gata mașina?\" Tu ești singurul care știe răspunsul, dar nu poți răspunde acum. Ridici capul, înjuri puțin, iei telefonul cu mănușile murdare și pierzi 3 minute din ritm. Sau, mai rău, nu răspunzi deloc — și clientul sună la următorul service din listă. Pierzi o programare. Pierzi un client. Pierzi bani. Plus că ai și clienți care te sună de 4 ori într-o zi să întrebe dacă mașina e gata, deși le-ai zis clar că o termini joi. Iar pentru ITP-uri și revizii planificate, jumătate din lume nu te prinde la telefon și ajunge să-și facă programarea în altă parte. Atelierul merge, dar comunicarea cu clienții e un haos permanent — și tu ești cel care plătește cu nervii și cu timpul.",
+  "solution_title": "Un agent AI care vorbește cu clienții cât tu lucrezi",
+  "solution_text": "Sambla e un voicebot pe care îl pui pe numărul service-ului. Răspunde imediat, 24/7, cu o voce naturală în română, și se descurcă cu fix lucrurile care îți fură timpul: îți spune clientului tarife orientative pentru lucrările uzuale (schimbat plăcuțe, ulei, filtre, distribuție), îi face programare la ITP, revizie sau inspecție direct în calendarul tău, îi spune dacă piesa pe care o caută e în stoc și verifică status-ul reparației pentru cei care sună să întrebe \"e gata mașina?\". Tu îi dai lista de prețuri orientative, intervalul de programare, lista de piese — și el le folosește. Dacă clientul are o întrebare tehnică reală (\"de ce face zgomot din față când frânez?\"), bot-ul nu inventează nimic: îți lasă mesaj cu numele, numărul și problema, ca să-l suni tu când ieși de sub mașină. Mecanicul rămâne expertul. Sambla e doar unealta care îți filtrează apelurile și îți păstrează clienții.",
+  "benefits": [
+    {
+      "title": "Răspunde la \"cât costă?\" 🔧",
+      "text": "Tarife orientative pentru lucrările uzuale, spuse clar, fără ca tu să mai ridici telefonul."
+    },
+    {
+      "title": "Programări ITP automate 🚗",
+      "text": "Clientul își rezervă slot pentru ITP, revizie sau inspecție direct prin telefon, în calendarul tău."
+    },
+    {
+      "title": "Status reparație live ⚙️",
+      "text": "\"E gata mașina?\" — bot-ul verifică în sistem și răspunde fără să te întrerupă din lucru."
+    },
+    {
+      "title": "Verifică stocul de piese",
+      "text": "Spune clientului dacă plăcuțele, filtrul sau uleiul pe care le caută sunt în atelier sau trebuie comandate."
+    },
+    {
+      "title": "Nu pierzi clienți după program",
+      "text": "Sună cineva sâmbătă seara? Bot-ul îi face programare pentru luni dimineață, nu fuge la concurență."
+    },
+    {
+      "title": "Escaladare doar pe tehnic",
+      "text": "Întrebări complicate de diagnostic ajung la tine sub formă de mesaj cu nume și număr — îți alegi când suni."
+    }
+  ],
+  "demo_messages": [
+    {
+      "role": "client",
+      "text": "Salut, cât m-ar costa să schimb plăcuțele la un Golf 6, 1.6 TDI?"
+    },
+    {
+      "role": "bot",
+      "text": "Salut! Pentru un Golf 6 1.6 TDI, schimbat plăcuțe față cu manoperă e undeva între 350 și 450 de lei, depinde de marca plăcuțelor. Dacă vrei și spate, mai pui vreo 300. Vrei să-ți fac o programare?"
+    },
+    {
+      "role": "client",
+      "text": "Da, ai loc mâine?"
+    },
+    {
+      "role": "bot",
+      "text": "Mâine am liber la 10:30 sau la 14:00. Care îți convine?"
+    },
+    {
+      "role": "client",
+      "text": "10:30 e perfect. Și apropo, plăcuțele alea le aveți pe stoc sau trebuie comandate?"
+    },
+    {
+      "role": "bot",
+      "text": "Verific acum... da, avem pe stoc plăcuțe Bosch și TRW pentru modelul tău. Te trec mâine la 10:30. Pe ce nume fac programarea?"
+    }
+  ],
+  "social_proof_text": "Service-uri auto din toată țara folosesc Sambla ca să nu mai piardă programări când mecanicul e sub mașină.",
+  "cta_title": "Lasă-l pe Sambla să răspundă la telefon",
+  "cta_text": "Tu ocupă-te de mașini. Bot-ul se ocupă de apeluri, programări ITP și întrebări despre tarife.",
+  "cta_button": "Vreau demo gratuit",
+  "icon_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z\"/></svg>",
+  "faq": [
+    {
+      "q": "Bot-ul dă diagnostic tehnic clienților?",
+      "a": "Nu. Sambla nu face diagnoză și nu inventează cauze pentru zgomote sau probleme. Pentru orice întrebare tehnică, lasă mesaj cu numele și numărul clientului ca să suni tu. Mecanicul rămâne expertul."
+    },
+    {
+      "q": "Pot să-i dau lista mea de tarife orientative?",
+      "a": "Da, exact așa funcționează. Tu pui în sistem prețurile pentru lucrările uzuale (plăcuțe, ulei, filtre, distribuție, ITP) și bot-ul le folosește când îl întreabă cineva."
+    },
+    {
+      "q": "Face programări direct în calendar?",
+      "a": "Da. Se conectează la calendarul tău și rezervă slot-uri pentru ITP, revizie, inspecție sau lucrări programate, în funcție de disponibilitatea pe care o setezi."
+    },
+    {
+      "q": "Știe să verifice dacă o piesă e pe stoc?",
+      "a": "Dacă ai un sistem de gestiune sau un fișier cu stocul, da. Îl conectăm și bot-ul răspunde clienților dacă piesa e în atelier sau trebuie comandată."
+    },
+    {
+      "q": "Cum verifică status-ul unei reparații?",
+      "a": "Se uită după numărul de înmatriculare sau numele clientului în sistemul tău și îi spune dacă mașina e în lucru, gata de ridicat sau așteaptă piese."
+    },
+    {
+      "q": "Câte apeluri poate prelua simultan?",
+      "a": "Câte vrei. Dacă sună 5 oameni în același timp, le răspunde la toți 5. Nu mai pierzi niciun client pentru că era ocupat."
+    }
+  ],
+  "meta_title": "Agent AI pentru service auto - voicebot programări ITP și tarife | Sambla",
+  "meta_description": "Chatbot AI pentru service mecanic și atelier auto. Răspunde la întrebări despre tarife, programări ITP, status reparație și stoc piese, fără să întrerupă mecanicul din lucru.",
+  "sort_order": 40,
+  "is_active": true
+}

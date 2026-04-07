@@ -1,0 +1,115 @@
+{
+  "slug": "pensiuni-hoteluri-mici",
+  "name": "Pensiuni și hoteluri mici",
+  "vertical_label": "Pensiuni & Hoteluri",
+  "color_theme": "cyan",
+  "tone": "friendly",
+  "sort_order": 130,
+  "is_active": true,
+  "seo_keywords": [
+    "agent ai pensiune",
+    "chatbot hotel mic",
+    "ai pentru rezervari pensiune",
+    "voicebot rezervari hotel"
+  ],
+  "meta_title": "Agent AI pentru pensiuni și hoteluri mici | Recepție 24/7 🏨",
+  "meta_description": "Chatbot și voicebot AI pentru pensiuni și hoteluri mici. Preia rezervări 24/7, răspunde despre disponibilitate, prețuri și facilități, sincronizat cu Booking.com.",
+  "hero_eyebrow": "AGENT AI PENTRU PENSIUNI",
+  "hero_title": "Recepție AI care nu doarme niciodată 🌙",
+  "hero_subtitle": "Bot care preia rezervări 24/7 și răspunde instant despre disponibilitate, prețuri, facilități și condiții de cazare — pe site, WhatsApp și telefon. 🛏️",
+  "problem_text": "Pensiunile mici și hotelurile boutique nu-și permit o recepție disponibilă 24 de ore din 24. Iar adevărul incomod este că exact atunci când recepția e închisă — seara târziu, noaptea, în weekend — oamenii stau pe canapea cu laptopul și își planifică vacanța. Caută cazare pentru weekendul următor, compară prețuri, vor să știe dacă acceptați câinele lor și dacă există parcare. Dacă nu primesc răspuns în câteva minute, trec mai departe la următoarea pensiune din listă.\n\nRezultatul? Rezervări pierdute în fiecare noapte, fără ca proprietarul să-și dea seama vreodată câte. Email-uri necitite până dimineața, mesaje pe Booking.com fără răspuns, apeluri ratate care nu mai sună a doua oară. Pe lângă asta, recepția petrece jumătate din zi răspunzând la aceleași întrebări repetitive: la ce oră e micul dejun, aveți parcare, acceptați animale de companie, când e check-in-ul, există Wi-Fi, se poate plăti cu cardul, cum ajung de la gară. Fiecare minut consumat pe telefon este un minut în care nu te ocupi de oaspeții care sunt deja acolo. Pentru o pensiune cu 8-15 camere, asta înseamnă fie un proprietar epuizat, fie clienți nemulțumiți — sau, cel mai des, ambele. 🏨",
+  "solution_text": "Agentul AI Sambla devine recepția ta digitală non-stop, integrată pe site, pe WhatsApp Business, în inquiry-urile de pe Booking.com și pe numărul tău de telefon. Botul este sincronizat cu calendarul tău de disponibilitate (Booking, Airbnb sau channel manager), așa că știe în timp real ce camere sunt libere și pentru ce date.\n\nCând un turist întreabă „aveți cameră dublă pentru 17-19 mai?\", botul verifică instant, răspunde cu disponibilitatea, prețul pe noapte în funcție de sezon, ce include (mic dejun, parcare, Wi-Fi) și condițiile pentru animale de companie. Dacă oaspetele e interesat, botul ia rezervarea preliminară: nume, telefon, număr persoane, ora estimată de sosire, cerințe speciale — și o trimite direct la tine pe email și WhatsApp pentru confirmare. 🌅\n\nRăspunde despre toate facilitățile pensiunii: orele micului dejun, tipuri de camere, distanțe față de obiective turistice, traseu de la oraș, ce are în jur. Pentru cazuri speciale — grupuri mari, evenimente, cereri neobișnuite — escaladează automat la proprietar cu un sumar al conversației, ca să nu pierzi context. Multilingv din prima zi: română, engleză, maghiară și germană pentru turiștii străini. 🛏️",
+  "benefits": [
+    {
+      "icon": "🌙",
+      "title": "Rezervări și noaptea",
+      "description": "Preia cereri la 2 dimineața, când oaspeții planifică vacanțe de pe canapea."
+    },
+    {
+      "icon": "📅",
+      "title": "Sync cu Booking & Airbnb",
+      "description": "Vede disponibilitatea în timp real și nu mai dă camere deja rezervate."
+    },
+    {
+      "icon": "🛏️",
+      "title": "Detalii despre camere",
+      "description": "Tipuri, dimensiuni, vedere, paturi suplimentare — răspunde la toate."
+    },
+    {
+      "icon": "💬",
+      "title": "Multilingv",
+      "description": "Română, engleză, maghiară, germană — pentru orice turist."
+    },
+    {
+      "icon": "🌅",
+      "title": "Recomandări locale",
+      "description": "Spune turiștilor ce să viziteze, unde să mănânce, cum să ajungă."
+    },
+    {
+      "icon": "🅿️",
+      "title": "Întrebări repetitive rezolvate",
+      "description": "Parcare, mic dejun, animale, check-in — fără să mai răspunzi tu."
+    }
+  ],
+  "demo_messages": [
+    {
+      "from": "user",
+      "text": "Bună! Aveți cameră dublă pentru weekend, 17-19 mai? Venim cu un câine mic, e ok? 🐶"
+    },
+    {
+      "from": "bot",
+      "text": "Bună ziua! 🌅 Da, avem o cameră dublă cu vedere la munte disponibilă pentru 17-19 mai (2 nopți). Prețul este 280 lei/noapte, mic dejun inclus. 🛏️"
+    },
+    {
+      "from": "bot",
+      "text": "Acceptăm cu drag animale de companie mici (sub 10 kg), cu un supliment de 30 lei/sejur pentru curățenie. Avem și o curte unde se poate plimba liber. 🐾"
+    },
+    {
+      "from": "user",
+      "text": "Super! Avem și mașină, există parcare? Și la ce oră e micul dejun?"
+    },
+    {
+      "from": "bot",
+      "text": "Da, parcare gratuită în curtea pensiunii. 🅿️ Micul dejun se servește între 8:00 și 10:00, bufet cu produse locale. Vreți să rezerv camera pe numele dvs.? Am nevoie doar de nume, telefon și ora aproximativă de sosire."
+    },
+    {
+      "from": "user",
+      "text": "Da te rog! Maria Popescu, 0722123456, ajungem cam pe la 17:00 vineri."
+    },
+    {
+      "from": "bot",
+      "text": "Perfect, Maria! ✨ Am notat rezervarea preliminară: cameră dublă, 17-19 mai, 1 câine mic, sosire ~17:00. Proprietarul vă confirmă pe WhatsApp în maxim 30 de minute. Vă așteptăm cu drag! 🏨"
+    }
+  ],
+  "social_proof_text": "Peste 40 de pensiuni și hoteluri boutique din România folosesc Sambla pentru a prelua rezervări 24/7 și a reduce timpul petrecut la telefon cu 70%.",
+  "cta_title": "Transformă-ți pensiunea într-o recepție care nu închide niciodată 🌙",
+  "cta_subtitle": "Demo gratuit în 15 minute. Îți arătăm cum botul preia o rezervare reală pentru pensiunea ta.",
+  "cta_button": "Vreau demo pentru pensiunea mea 🏨",
+  "icon_svg": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M2 20V10a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10'/><path d='M2 17h20'/><path d='M6 8V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2'/><path d='M9 13h6'/></svg>",
+  "faq": [
+    {
+      "question": "Se sincronizează cu Booking.com și Airbnb?",
+      "answer": "Da. Conectăm botul la channel manager-ul tău (sau direct la Booking/Airbnb prin API) ca să vadă disponibilitatea în timp real și să nu propună camere deja rezervate. 📅"
+    },
+    {
+      "question": "Cum se gestionează anulările?",
+      "answer": "Botul explică politica ta de anulare în funcție de tarif (rambursabil/nerambursabil) și poate înregistra cereri de anulare, pe care ți le trimite spre confirmare pe WhatsApp."
+    },
+    {
+      "question": "Botul ia și plata?",
+      "answer": "Pentru rezervări preliminare, nu — confirmarea finală și plata rămân la tine. Putem însă trimite automat link de plată Stripe sau pre-autorizare card, dacă vrei flow complet automatizat. 💳"
+    },
+    {
+      "question": "În ce limbi vorbește?",
+      "answer": "Standard: română, engleză, maghiară, germană. Adăugăm și italiană, franceză sau alte limbi la cerere — util pentru pensiunile cu mulți turiști străini. 💬"
+    },
+    {
+      "question": "Răspunde despre parcare, animale, facilități?",
+      "answer": "Da, la fix. Îi „învățăm\" botul toate detaliile pensiunii tale: parcare, Wi-Fi, mic dejun, animale, piscină, fumat, copii — orice te întreabă oaspeții zilnic. 🅿️"
+    },
+    {
+      "question": "Cum gestionează micul dejun și cerințele speciale?",
+      "answer": "Botul cunoaște orarul și meniul micului dejun și poate nota cerințe speciale (fără gluten, vegetarian, alergii) pe care le primești odată cu rezervarea. 🌅"
+    }
+  ]
+}

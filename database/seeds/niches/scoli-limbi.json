@@ -1,0 +1,119 @@
+{
+  "slug": "scoli-limbi-straine",
+  "name": "Școli de limbi și centre de cursuri",
+  "vertical_label": "Educație",
+  "color_theme": "cyan",
+  "tone": "friendly",
+  "sort_order": 90,
+  "is_active": true,
+  "seo_keywords": [
+    "agent ai pentru scoala limbi",
+    "chatbot centru cursuri",
+    "ai pentru scoala engleza germana",
+    "voicebot inscriere cursuri"
+  ],
+  "hero_eyebrow": "AGENT AI PENTRU ȘCOLI DE LIMBI",
+  "hero_title": "Răspunsul la întrebările cursanților, fără să suni înapoi 📚",
+  "hero_subtitle": "Un bot prietenos care răspunde despre programe, niveluri, prețuri, programează testarea de plasament și verifică statusul înscrierii — non-stop, pe site și WhatsApp. 🌍",
+  "problem_text": "Orice școală de limbi străine sau centru de cursuri primește zilnic între 20 și 30 de cereri de informații, iar majoritatea sună aproape identic: „Ce niveluri aveți la engleză?”, „Când începe următoarea grupă de germană?”, „Cât costă un modul intensiv?”, „Când e următoarea testare de plasament?”, „Ce documente îmi trebuie pentru înscriere?”, „Pot face cursul online sau doar la sediu?”. Secretariatul ridică telefonul, răspunde la WhatsApp, scrie email-uri, completează tabele Excel cu intenții de înscriere și, în paralel, încearcă să gestioneze cursanții deja activi care vin pentru plată, materiale sau adeverințe. Pur și simplu nu mai face față. Rezultatul? Apeluri pierdute la orele de vârf, mesaje pe Facebook care primesc răspuns abia a doua zi și formulare de contact uitate în inbox peste weekend. Iar în domeniul ăsta, viteza contează enorm: un părinte care caută curs de engleză pentru copil sau un adult care vrea să se înscrie la germană B1 înainte de o relocare nu așteaptă 24 de ore. Dacă nu primește răspuns rapid, deschide alt tab, găsește un alt centru și abandonează interesul pentru școala ta. Practic, plătești marketing ca să atragi oameni interesați și apoi îi pierzi pentru că nu ai cine să le răspundă în primele 10 minute.",
+  "solution_text": "Agentul AI se integrează pe site și pe WhatsApp Business și învață complet oferta școlii tale: toate limbile predate, nivelurile A1–C2 conform CEFR, formatele disponibile (intensiv, semi-intensiv, lejer, weekend, online sau fizic la sediu), prețurile pe modul, calendarul grupelor noi, locația sediului, parcările din zonă și politica de anulare. Răspunde imediat, în limba română naturală și prietenoasă, oricărui vizitator care întreabă despre cursuri — fie că e ora 9 dimineața sau 11 noaptea. Mai mult de atât, programează automat testarea de plasament în slot-urile libere din calendarul școlii, înregistrează intențiile de înscriere cu nume, telefon, limbă dorită și nivel estimat, și trimite confirmări automate pe WhatsApp. Pentru întrebări mai delicate — discount-uri pentru grupuri, cursuri corporate, certificări internaționale, situații speciale ✏️ — escaladează elegant conversația către coordonatorul academic și îi transmite un rezumat clar al discuției, ca acesta să sune înapoi pregătit. Secretariatul rămâne să se ocupe doar de cursanții activi și de situațiile complexe, iar tu nu mai pierzi nici un lead venit din Google Ads sau Facebook pentru că nu a răspuns nimeni la timp.",
+  "benefits": [
+    {
+      "icon": "📚",
+      "title": "Cunoaște toată oferta",
+      "description": "Limbi, niveluri A1–C2, formate intensiv/lejer, prețuri pe modul — totul învățat o dată și aplicat în fiecare conversație."
+    },
+    {
+      "icon": "🌍",
+      "title": "Răspunde pe site și WhatsApp",
+      "description": "Un singur bot pe toate canalele, cu același ton prietenos și aceleași informații actualizate."
+    },
+    {
+      "icon": "⏰",
+      "title": "Disponibil 24/7",
+      "description": "Cursanții întreabă seara după program sau în weekend. Botul răspunde imediat și nu pierzi leadul."
+    },
+    {
+      "icon": "📅",
+      "title": "Programează testarea de plasament",
+      "description": "Verifică sloturile libere, propune ore, confirmă pe WhatsApp și trimite reminder înainte de întâlnire."
+    },
+    {
+      "icon": "✅",
+      "title": "Înregistrează intențiile de înscriere",
+      "description": "Captează nume, telefon, limbă, nivel și format dorit. Coordonatorul primește lista gata structurată."
+    },
+    {
+      "icon": "🎓",
+      "title": "Escaladare elegantă",
+      "description": "Pentru cursuri corporate, certificări sau situații speciale, transferă conversația cu rezumat către coordonator."
+    }
+  ],
+  "demo_messages": [
+    {
+      "sender": "user",
+      "text": "Bună! Mă interesează un curs de germană, cred că sunt B1. Ce opțiuni am?"
+    },
+    {
+      "sender": "bot",
+      "text": "Salut! 📚 Mă bucur că te interesează germana. Pentru nivel B1 avem trei variante: intensiv (3 ședințe/săpt, 6 săptămâni), semi-intensiv (2 ședințe/săpt, 10 săptămâni) și lejer de weekend. Le poți face online sau fizic la sediul din centru. Vrei să-ți spun prețurile pentru fiecare?"
+    },
+    {
+      "sender": "user",
+      "text": "Da, și aș vrea fizic. Cât costă intensivul?"
+    },
+    {
+      "sender": "bot",
+      "text": "Pentru germană B1 intensiv, fizic la sediu: 1.450 lei modulul de 6 săptămâni, materiale incluse. 🌍 Înainte să te înscriem oficial, facem o testare scurtă de plasament (gratuită, 30 minute) ca să confirmăm nivelul. Vrei să o programăm? Am liber joi 10 aprilie la 17:00 sau sâmbătă 12 aprilie la 11:00."
+    },
+    {
+      "sender": "user",
+      "text": "Sâmbătă la 11 e perfect."
+    },
+    {
+      "sender": "bot",
+      "text": "Super! ✅ Te-am programat sâmbătă 12 aprilie, ora 11:00, la sediul din Str. Universității nr. 12. Îți trimit acum confirmarea pe WhatsApp și un reminder vineri seara. Pe ce nume să o trec și ce număr de telefon folosești?"
+    },
+    {
+      "sender": "user",
+      "text": "Andrei Popescu, 0722 123 456. Mulțumesc!"
+    },
+    {
+      "sender": "bot",
+      "text": "Gata, Andrei! 🎓 Confirmarea pleacă acum. Ne vedem sâmbătă, succes la testare! Dacă mai ai întrebări până atunci, scrie-mi oricând."
+    }
+  ],
+  "social_proof_text": "Școli de limbi din București, Cluj și Iași folosesc deja agentul AI ca să răspundă instant la întrebările cursanților și să umple grupele noi fără ore suplimentare la secretariat. ✏️",
+  "cta_title": "Gata să nu mai pierzi cursanți pentru că n-a răspuns nimeni la timp? 📚",
+  "cta_subtitle": "Configurăm agentul cu oferta ta completă în mai puțin de o săptămână. Tu te concentrezi pe predare, botul se ocupă de întrebări și programări.",
+  "cta_button": "Vreau demo pentru școala mea",
+  "icon_svg": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M2 4.5C2 4.5 5 3 8 3s4 1.5 4 1.5v15S10 18 8 18s-6 1.5-6 1.5v-15z'/><path d='M22 4.5C22 4.5 19 3 16 3s-4 1.5-4 1.5v15s2-1.5 4-1.5 6 1.5 6 1.5v-15z'/><path d='M12 4.5v15'/></svg>",
+  "faq": [
+    {
+      "question": "Cât durează să configurați botul cu oferta noastră?",
+      "answer": "În medie 4-7 zile lucrătoare. Avem nevoie de catalogul de cursuri, prețurile, calendarul grupelor și politica de înscriere. Restul facem noi."
+    },
+    {
+      "question": "Botul cunoaște diferența dintre niveluri (A1, A2, B1 etc.)?",
+      "answer": "Da, e antrenat pe scala CEFR și știe să recomande nivelul potrivit pe baza descrierilor pe care le dă cursantul. Pentru confirmare, propune testarea de plasament."
+    },
+    {
+      "question": "Funcționează și pentru cursuri online, nu doar fizice?",
+      "answer": "Sigur. Botul gestionează ambele formate, explică diferențele și programează testarea fie pe Zoom, fie la sediu, în funcție de preferință."
+    },
+    {
+      "question": "Ce se întâmplă dacă cineva întreabă ceva la care botul nu știe să răspundă?",
+      "answer": "Escaladează politicos către coordonatorul academic, transmite rezumatul conversației și datele de contact, ca să primească răspuns într-un interval scurt."
+    },
+    {
+      "question": "Pot actualiza prețurile sau orarul fără să vă contactez?",
+      "answer": "Da. Ai un panou de administrare unde modifici cursurile, prețurile, sloturile pentru testare și calendarul grupelor. Botul preia schimbările imediat."
+    },
+    {
+      "question": "Se integrează cu WhatsApp Business?",
+      "answer": "Da, avem integrare oficială WhatsApp Business API. Cursanții pot conversa cu botul direct din WhatsApp, iar tu vezi tot istoricul în panou."
+    }
+  ],
+  "meta_title": "Agent AI pentru școli de limbi străine și centre de cursuri | Sambla",
+  "meta_description": "Chatbot și voicebot pentru școli de limbi: răspunde despre niveluri A1-C2, prețuri, programează testarea de plasament și înregistrează înscrieri 24/7."
+}

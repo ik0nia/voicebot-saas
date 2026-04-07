@@ -1,0 +1,112 @@
+{
+  "slug": "firme-curatenie",
+  "name": "Firme de curățenie și servicii la domiciliu",
+  "vertical_label": "Curățenie",
+  "color_theme": "teal",
+  "tone": "friendly",
+  "sort_order": 110,
+  "is_active": true,
+  "seo_keywords": [
+    "agent ai firma curatenie",
+    "chatbot servicii curatenie",
+    "ai pentru servicii la domiciliu",
+    "rezervari curatenie online"
+  ],
+  "meta_title": "Agent AI pentru firme de curățenie - Programări automate 24/7 | Sambla",
+  "meta_description": "Bot AI care preia comenzi pentru firma ta de curățenie: calculează oferta pe metru pătrat, programează echipele și răspunde clienților chiar și când ești pe teren. 🧹",
+  "hero_eyebrow": "AGENT AI PENTRU FIRME DE CURĂȚENIE",
+  "hero_title": "Programări fără să prinzi telefonul în mijlocul curățeniei 🧹",
+  "hero_subtitle": "Un bot prietenos care preia comenzi, răspunde despre tarife per metru pătrat, programări și zone deservite - chiar și când echipa ta freacă geamuri la etajul 5. ✨",
+  "problem_text": "Realitatea unei firme de curățenie e simplă: ești mereu pe teren. Echipa freacă, aspiră, lustruiește - iar telefonul sună exact când ai mâinile pline de detergent sau ești în mijlocul unei curățenii post-construcție unde nu se aude nimic de la aspirator. Între timp, un client potențial vrea rapid o estimare pentru un apartament de 60mp și, dacă nu primește răspuns în 5 minute, deschide următorul rezultat din Google și sună la concurență. \n\nApoi vin întrebările repetitive: „Cât costă o curățenie generală pentru 3 camere?\", „Veniți și în Pipera?\", „Pot programa pentru sâmbătă dimineață?\", „Aduceți voi materialele?\". Răspunzi la aceleași lucruri de zece ori pe zi, între două intervenții, iar seara îți dai seama că ai trei mesaje nepreluate pe WhatsApp și două apeluri pierdute de la oameni care voiau exact serviciul tău. \n\nMai sunt și cazurile speciale: cineva vrea curățenie post-construcție urgent, altcineva caută abonament lunar pentru birou, iar o doamnă întreabă dacă faceți și covoare. Fiecare cerere are nuanțe diferite, iar tu nu ai timp să stai pe telefon o oră ca să închei o programare de 250 de lei. Așa pierzi clienți buni doar pentru că nu poți fi în două locuri în același timp - pe teren și la telefon.",
+  "solution_text": "Botul AI Sambla devine recepționera ta digitală, disponibilă 24/7 pe site, WhatsApp și Facebook Messenger. Calculează automat oferta pe baza unui chestionar simplu și prietenos: tipul serviciului (standard, generală, post-construcție, abonament), numărul de metri pătrați, numărul de camere, frecvența dorită și eventuale extra-uri (geamuri exterioare, frigider, cuptor). În câteva secunde, clientul primește o estimare clară și un slot disponibil. \n\nProgramările intră direct în calendarul echipei tale, cu toate detaliile: adresă, cod interfon, preferințe (fără parfum, există animale, cheia la vecini), tip de serviciu și durată estimată. Nu mai e nevoie să transcrii nimic pe hârtie sau să suni înapoi pentru confirmări. \n\nPentru cazurile speciale - apartamente foarte mari, clădiri de birouri, situații post-incendiu sau cerințe atipice - botul escaladează automat conversația către tine sau coordonatorul de tură, cu un rezumat al discuției. Tu intervii doar când e cu adevărat nevoie. \n\nÎn plus, botul trimite confirmări automate, reminder-e cu o zi înainte și solicită feedback după intervenție - iar recenziile bune ajung direct pe Google. Echipa ta se concentrează pe ce știe să facă mai bine: să lase casele clienților strălucitoare. 🏠",
+  "benefits": [
+    {
+      "icon": "📅",
+      "title": "Programări direct în calendar",
+      "description": "Sloturile libere se rezervă singure, fără apeluri telefonice și fără dublări de programări."
+    },
+    {
+      "icon": "🧹",
+      "title": "Ofertă instant pe metru pătrat",
+      "description": "Botul calculează prețul pentru curățenie standard, generală sau post-construcție în timp real."
+    },
+    {
+      "icon": "💰",
+      "title": "Mai multe comenzi închise",
+      "description": "Clienții primesc răspuns în secunde, nu a doua zi - rata de conversie crește vizibil."
+    },
+    {
+      "icon": "🏠",
+      "title": "Detalii complete pentru echipă",
+      "description": "Adresă, cod interfon, animale, preferințe - totul ajunge la echipa de teren înainte să sune la ușă."
+    },
+    {
+      "icon": "⏰",
+      "title": "Disponibil 24/7",
+      "description": "Răspunde și seara, și în weekend, când oamenii au timp să caute o firmă de curățenie."
+    },
+    {
+      "icon": "✨",
+      "title": "Recenzii Google mai multe",
+      "description": "Cere feedback automat după intervenție și îi îndrumă pe clienții mulțumiți să lase recenzie."
+    }
+  ],
+  "demo_messages": [
+    {
+      "from": "client",
+      "text": "Bună! Vreau o curățenie generală pentru un apartament cu 3 camere, în Floreasca."
+    },
+    {
+      "from": "bot",
+      "text": "Salut! 🧹 Mă bucur că ne scrii. Pentru un apartament de 3 camere îmi spui te rog aproximativ câți metri pătrați are și dacă vrei să includem și geamurile exterioare?"
+    },
+    {
+      "from": "client",
+      "text": "Are vreo 75 mp și da, geamurile sunt prioritare."
+    },
+    {
+      "from": "bot",
+      "text": "Mulțumesc! Pentru 75 mp, curățenie generală + geamuri exterioare, oferta este 480 lei și durează aproximativ 4-5 ore. Materialele și echipamentele sunt incluse. ✨ Am liber joi 9 aprilie la 09:00 sau vineri 10 aprilie la 13:00. Care variantă îți convine?"
+    },
+    {
+      "from": "client",
+      "text": "Joi la 9 e perfect. Avem și o pisică, sper că nu e o problemă."
+    },
+    {
+      "from": "bot",
+      "text": "Niciun fel de problemă, echipa noastră iubește pisicile! 🏠 Am rezervat joi 9 aprilie, ora 09:00. Îmi lași te rog adresa exactă, codul de interfon și un număr de telefon pentru confirmare? Trimit reminder cu o zi înainte."
+    }
+  ],
+  "social_proof_text": "Peste 80 de firme de curățenie din România folosesc Sambla pentru programări automate și ofertare instant. Clienții lor primesc răspuns în mai puțin de 30 de secunde, iar echipele de teren se ocupă doar de ce contează: să lase casele impecabile. 🧹",
+  "cta_eyebrow": "GATA SĂ AUTOMATIZEZI PROGRAMĂRILE?",
+  "cta_title": "Lasă botul să răspundă la telefon cât tu lustruiești geamuri ✨",
+  "cta_subtitle": "Configurăm împreună serviciile, tarifele și zonele deservite. În mai puțin de o zi ai un agent AI gata să preia comenzi pe site, WhatsApp și Facebook.",
+  "cta_button_text": "Vreau demo gratuit",
+  "icon_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M19.5 3.5 16 7l-1.5-1.5L18 2z\"/><path d=\"m14.5 5.5 4 4\"/><path d=\"M13 7 7 13l-3 1 1-3 6-6\"/><path d=\"M4 20h16\"/><path d=\"M6 20l1-4h10l1 4\"/><path d=\"M9 16v4M12 16v4M15 16v4\"/></svg>",
+  "faq": [
+    {
+      "question": "În ce zone sunt deservite programările?",
+      "answer": "Botul cunoaște exact zonele tale de acoperire (sectoare, cartiere, orașe limitrofe) și refuză politicos cererile din afara lor, sugerând eventual o listă de așteptare. Tu configurezi totul în panou."
+    },
+    {
+      "question": "Cum se face plata?",
+      "answer": "Botul îi explică clientului opțiunile pe care le oferi: numerar la final, transfer bancar, card la fața locului sau plată online în avans. Poți activa și plata anticipată pentru programări mari, cum ar fi cele post-construcție."
+    },
+    {
+      "question": "Ce se întâmplă dacă un client vrea să anuleze?",
+      "answer": "Botul gestionează anulările conform politicii tale (de ex. gratuit cu 24 de ore înainte) și eliberează automat slotul. Dacă e o anulare în ultimul moment, te anunță instant ca să poți reprograma altă echipă."
+    },
+    {
+      "question": "Pot oferi servicii recurente / abonamente?",
+      "answer": "Da. Botul propune frecvențe (săptămânal, bi-săptămânal, lunar) cu reducerile aferente și creează automat toate programările recurente în calendar. Reminder-ele se trimit înainte de fiecare vizită."
+    },
+    {
+      "question": "Materialele și echipamentele sunt incluse în preț?",
+      "answer": "Botul comunică exact ce ai stabilit tu: în general detergenți, mopuri, aspirator profesional și lavete sunt incluse, iar dacă există extra-uri (cum ar fi soluție specială pentru parchet) le menționează clar în ofertă."
+    },
+    {
+      "question": "Cum tratează cererile speciale, gen post-incendiu sau curățenie post-construcție?",
+      "answer": "Pentru situații care necesită evaluare la fața locului sau ofertă personalizată, botul colectează informațiile esențiale (suprafață, fotografii, urgență) și escaladează imediat conversația către tine sau coordonator, cu un rezumat clar."
+    }
+  ]
+}

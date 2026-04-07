@@ -76,7 +76,20 @@ Route::middleware(\App\Http\Middleware\PublicPageCache::class)->group(function (
     Route::view('/termeni', 'legal.termeni')->name('legal.termeni');
     Route::view('/confidentialitate', 'legal.confidentialitate')->name('legal.confidentialitate');
     Route::view('/cookie-uri', 'legal.cookie-uri')->name('legal.cookie-uri');
+
+    // Niche landing pages (public, cached)
+    Route::get('/pentru/{niche:slug}', function (\App\Models\Niche $niche) {
+        abort_unless($niche->is_active, 404);
+        return view('landing.niche', [
+            'niche' => $niche,
+            'theme' => \App\Support\NicheTheme::get($niche->color_theme),
+        ]);
+    })->name('public.niche');
 });
+
+// Niche lead capture (POST — outside PublicPageCache so CSRF + flash work normally)
+Route::post('/pentru/{niche:slug}/lead', [\App\Http\Controllers\NicheLandingController::class, 'storeLead'])
+    ->name('public.niche.lead');
 
 // Chatbot embed routes are in routes/api.php under /chatbot prefix (no auth/session middleware)
 
@@ -321,6 +334,11 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
     Route::post('/system/clear-failed', [\App\Http\Controllers\Admin\AdminSystemController::class, 'clearFailedJobs'])->name('admin.system.clearFailed');
     Route::post('/system/reprocess-kb', [\App\Http\Controllers\Admin\AdminSystemController::class, 'reprocessFailedKnowledge'])->name('admin.system.reprocessKb');
     Route::post('/system/clear-caches', [\App\Http\Controllers\Admin\AdminSystemController::class, 'clearAllCaches'])->name('admin.system.clearCaches');
+
+    // Niches CRUD
+    Route::resource('niches', \App\Http\Controllers\Admin\AdminNicheController::class)->except(['show'])->names('admin.niches');
+    Route::post('niches/{niche}/toggle', [\App\Http\Controllers\Admin\AdminNicheController::class, 'toggle'])->name('admin.niches.toggle');
+    Route::post('niches/reorder', [\App\Http\Controllers\Admin\AdminNicheController::class, 'reorder'])->name('admin.niches.reorder');
 
     // Social Media Management
     Route::prefix('social')->name('admin.social.')->group(function () {

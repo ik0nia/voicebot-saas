@@ -1,0 +1,111 @@
+{
+  "slug": "clinici-veterinare",
+  "name": "Clinici veterinare",
+  "vertical_label": "Veterinar",
+  "color_theme": "emerald",
+  "tone": "friendly",
+  "sort_order": 120,
+  "is_active": true,
+  "seo_keywords": [
+    "agent ai clinica veterinara",
+    "chatbot cabinet veterinar",
+    "ai pentru veterinar",
+    "programari veterinar online"
+  ],
+  "meta_title": "Agent AI pentru clinici veterinare | Programari 24/7 - Sambla",
+  "meta_description": "Chatbot AI pentru cabinete veterinare: preia programari, raspunde despre vaccinari, tarife si ce sa aduci la consultatie. Escaladeaza urgentele catre medic. 🐾",
+  "hero_eyebrow": "AGENT AI PENTRU CLINICI VETERINARE",
+  "hero_title": "Programări 24/7 pentru pacienții tăi blănoși 🐾",
+  "hero_subtitle": "Un asistent AI care preia programări, răspunde despre vaccinuri, tarife și ce să aduci la consultație și escaladează urgențele direct către echipa ta. Tu te ocupi de animale, botul de telefon.",
+  "problem_text": "Într-o clinică veterinară aglomerată, telefonul nu se oprește niciodată. Sună stăpâni care vor să programeze vaccinul anual al câinelui, alții întreabă cât costă deparazitarea pisicii, alții vor să știe dacă pot veni cu iepurașul mâine la 14:00 sau cum se îngrijește pansamentul după sterilizare. Între timp, tu ești cu mâinile în mănuși sterile, în mijlocul unei intervenții, iar asistenta jonglează cu trei apeluri simultan și un câine care tremură în brațele stăpânului în sala de așteptare. Programările se pierd pe post-it-uri, oamenii sună de mai multe ori pentru aceeași informație, iar recenziile pe Google încep să menționeze că „nu răspunde nimeni la telefon”. Și mai grav: în zgomotul ăsta de întrebări de rutină, riști să ratezi un apel cu adevărat urgent — un câine care a mâncat ciocolată, o pisică ce nu mai respiră bine, un cățel lovit de mașină. Părinții de animale sunt anxioși, vor răspunsuri rapide și empatice, iar timpul tău și al echipei medicale este prea valoros ca să fie consumat de programări de rutină pe care le-ar putea gestiona oricine — sau, mai bine, un asistent AI care nu obosește niciodată.",
+  "solution_text": "Sambla pune un agent AI prietenos pe site-ul clinicii tale, pe pagina de Instagram și pe WhatsApp Business, disponibil 24/7. Botul învață schema completă de vaccinare pentru câini, pisici și animale exotice, lista ta de tarife, programul clinicii, instrucțiunile post-operatorii standard și ce trebuie să aducă stăpânul la prima consultație (carnet de sănătate, analize anterioare, mostră etc.). Când cineva vrea o programare, botul propune sloturile libere și o introduce direct în calendarul clinicii — fără să mai sune asistenta. Răspunde calm și empatic la întrebări frecvente: „Când fac rapelul antirabic?”, „Cât costă o castrare la motan?”, „Pot să-i dau apă după operație?”. Dar partea cea mai importantă: Sambla nu joacă rolul de medic veterinar. Diagnosticul rămâne mereu la tine. Dacă un stăpân scrie „câinele meu vomită sânge”, „pisica nu mai respiră”, „a mâncat antigel” sau orice alt semn de urgență, botul escaladează imediat apelul către numărul tău de gardă și trimite o alertă echipei. Tu te concentrezi pe animale, botul se ocupă de restul. 🐕 🐈",
+  "benefits": [
+    {
+      "emoji": "🐕",
+      "title": "Cunoaște fiecare specie",
+      "description": "Învață scheme de vaccinare și recomandări separate pentru câini, pisici, iepuri, păsări sau reptile."
+    },
+    {
+      "emoji": "🐈",
+      "title": "Empatic cu părinții de animale",
+      "description": "Răspunde calm și prietenos stăpânilor anxioși, fără să-i grăbească sau să-i facă să se simtă deranjanți."
+    },
+    {
+      "emoji": "📅",
+      "title": "Programări direct în calendar",
+      "description": "Propune sloturile libere și introduce programarea în sistemul clinicii fără intervenția asistentei."
+    },
+    {
+      "emoji": "⏰",
+      "title": "Disponibil 24/7",
+      "description": "Răspunde și seara, și în weekend, când stăpânii observă că ceva nu e în regulă cu animalul lor."
+    },
+    {
+      "emoji": "💉",
+      "title": "Vaccinări și deparazitări",
+      "description": "Reamintește când e timpul pentru rapel, explică ce vaccinuri sunt obligatorii și care opționale."
+    },
+    {
+      "emoji": "🚨",
+      "title": "Escaladează urgențele",
+      "description": "Când detectează semne de urgență veterinară, transferă imediat la medicul de gardă și alertează echipa."
+    }
+  ],
+  "demo_messages": [
+    {
+      "from": "user",
+      "text": "Bună! Am o pisicuță de 6 luni și aș vrea să o vaccinez antirabic. Se poate?"
+    },
+    {
+      "from": "bot",
+      "text": "Bună ziua! 🐈 Sigur că se poate — la 6 luni e vârsta perfectă pentru vaccinul antirabic. Pisicuța e deja vaccinată cu trivalentul (panleucopenie, calicivirus, rinotraheită)?"
+    },
+    {
+      "from": "user",
+      "text": "Da, a făcut trivalentul la 3 luni și rapelul la 4."
+    },
+    {
+      "from": "bot",
+      "text": "Perfect, atunci putem programa antirabicul oricând. 💉 Costă 80 lei și include consultația. Vă convine joi 9 aprilie la 11:00 sau preferați după-amiaza, pe la 16:30?"
+    },
+    {
+      "from": "user",
+      "text": "Joi la 16:30 ar fi grozav. Ce trebuie să aduc?"
+    },
+    {
+      "from": "bot",
+      "text": "Am notat: joi 9 aprilie, ora 16:30, vaccin antirabic pentru pisicuța dumneavoastră. 📅 Vă rog să aduceți carnetul de sănătate și să o transportați într-o cușcă de transport. Cu 2 ore înainte e bine să nu mănânce. Vă trimit confirmarea pe WhatsApp. Pe curând! 🐾"
+    }
+  ],
+  "social_proof_text": "Clinici veterinare din România folosesc Sambla pentru a prelua programările de rutină și a lăsa medicii să se concentreze pe ce contează cu adevărat: pacienții cu blană.",
+  "cta_title": "Lasă botul să răspundă la telefon. Tu ocupă-te de animale. 🐾",
+  "cta_subtitle": "Configurăm împreună agentul AI pentru clinica ta în mai puțin de o săptămână, cu schema ta de vaccinare, tarifele și programul tău.",
+  "cta_button": "Vreau demo pentru clinica mea",
+  "icon_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"5.5\" cy=\"10.5\" r=\"1.8\"/><circle cx=\"9.5\" cy=\"6.5\" r=\"1.8\"/><circle cx=\"14.5\" cy=\"6.5\" r=\"1.8\"/><circle cx=\"18.5\" cy=\"10.5\" r=\"1.8\"/><path d=\"M12 11c-2.5 0-4.5 2-5 4.2-.3 1.6.9 2.8 2.4 2.8.9 0 1.7-.4 2.6-.4s1.7.4 2.6.4c1.5 0 2.7-1.2 2.4-2.8C16.5 13 14.5 11 12 11z\"/></svg>",
+  "faq": [
+    {
+      "question": "Botul poate da sfaturi medicale veterinare?",
+      "answer": "Nu, și nici nu trebuie. Sambla este clar configurat să NU pună diagnostice și să NU recomande tratamente. Răspunde doar la întrebări administrative — programări, tarife, vaccinări de rutină, ce să aduci la consultație. Diagnosticul rămâne întotdeauna la medicul veterinar."
+    },
+    {
+      "question": "Cum gestionează urgențele veterinare?",
+      "answer": "Botul recunoaște imediat semnele de urgență („vomită sânge”, „nu mai respiră”, „a mâncat ceva toxic”, „lovit de mașină” etc.) și escaladează apelul direct către numărul tău de gardă, trimițând o alertă către echipă. Niciodată nu cere stăpânului să „aștepte până mâine”. 🚨"
+    },
+    {
+      "question": "Poate să gestioneze tarifele și să le țină actualizate?",
+      "answer": "Da. Îți încarci lista de servicii și prețuri într-un panou simplu, iar botul folosește mereu cea mai recentă versiune. Când actualizezi un tarif, modificarea apare instant în răspunsurile lui."
+    },
+    {
+      "question": "Funcționează pentru mai multe specii — câini, pisici, exotice?",
+      "answer": "Absolut. Configurezi scheme separate pentru fiecare tip de pacient pe care îl tratezi: câini, pisici, iepuri, rozătoare, păsări, reptile. Botul întreabă întâi ce specie ai și apoi dă răspunsul corect."
+    },
+    {
+      "question": "Ce trebuie să aducă stăpânul la prima consultație?",
+      "answer": "Botul îi spune automat: carnet de sănătate dacă există, analize sau ecografii anterioare, lista de medicamente curente, mostră de scaun dacă e cazul și transportor potrivit. Tu setezi lista o dată, botul o repetă la fiecare programare nouă."
+    },
+    {
+      "question": "Se integrează cu sistemul de programări al clinicii?",
+      "answer": "Da. Sambla se conectează cu Google Calendar, calendare partajate sau majoritatea softurilor de management veterinar prin API. Programările apar direct în agenda clinicii, fără intervenție manuală."
+    }
+  ]
+}

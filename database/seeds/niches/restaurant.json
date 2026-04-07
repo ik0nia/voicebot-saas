@@ -1,0 +1,118 @@
+{
+  "slug": "restaurante-delivery",
+  "name": "Restaurante și delivery",
+  "vertical_label": "Restaurant",
+  "color_theme": "orange",
+  "tone": "friendly",
+  "sort_order": 70,
+  "is_active": true,
+  "seo_keywords": [
+    "agent ai restaurant",
+    "chatbot restaurant comenzi",
+    "ai pentru delivery",
+    "voicebot rezervari restaurant"
+  ],
+  "hero_eyebrow": "AGENT AI PENTRU RESTAURANTE",
+  "hero_title": "Telefonul de seara nu mai oprește bucătăria 🍝",
+  "hero_subtitle": "Sambla este voicebotul prietenos care răspunde pe numărul restaurantului tău. Preia comenzi, face rezervări și răspunde la întrebări despre meniu, alergeni, program și livrare, ca să nu mai pierzi niciun client când e val. 📞",
+  "problem_text": "Vinerea seara, bucătăria zumzăie, cuptorul e plin, chelnerii aleargă printre mese și telefonul sună fără oprire. Cineva întreabă dacă mai aveți loc pentru patru persoane la 20:30. Altul vrea două pizza, dar nu știe ce conține sosul tău special. Un al treilea sună să întrebe până la ce oră livrați în cartierul lui. Iar tu, cu spatula într-o mână și receptorul în cealaltă, încerci să le notezi pe toate pe un șervețel.\n\nProblema nu e că nu vrei să răspunzi, ci că pur și simplu nu se poate. Fiecare apel ratat e o comandă pierdută. Fiecare „sună ocupat\" e un client care comandă de la concurență și poate nu se mai întoarce. Fiecare comandă luată în grabă, peste zgomotul din bucătărie, devine o reclamație pe Google: „mi-au adus altceva\", „au uitat băutura\", „nu mi-au spus că are nuci\".\n\nȘi apoi sunt întrebările care se repetă de o sută de ori pe seară: „aveți gluten free?\", „livrați în Pipera?\", „până la ce oră sunteți deschiși duminica?\", „cât costă pizza diavola family?\". Fiecare răspuns ia un minut, dar minutele acelea le furi de la clienții care stau deja la masă. Iar la finalul serii, ești epuizat nu de gătit, ci de telefon. 😮‍💨",
+  "solution_text": "Sambla preia telefonul restaurantului tău, 24/7, cu o voce caldă și prietenoasă, în română curată. Îi dai meniul, fie ca PDF, fie dintr-un Google Sheets pe care îl actualizezi când vrei, și voicebotul știe instant fiecare preparat, preț, ingredient și alergen. 🥗\n\nClientul sună, salută, comandă o pizza margherita și o cola. Sambla confirmă comanda, întreabă adresa de livrare, calculează totalul cu taxa de transport, estimează timpul și trimite tot pachetul direct în sistemul tău, prin email, WhatsApp sau integrare cu POS-ul. Dacă cineva vrea o rezervare pentru sâmbătă seara, voicebotul verifică disponibilitatea și o notează în calendar. Dacă întreabă de alergeni sau de un preparat special pe care nu îl știe, escaladează politicos la șeful de sală, fără să lase clientul în aer.\n\nTu rămâi bucătarul. Sambla devine vocea de la telefon, cea care nu obosește vinerea seara, nu confundă comenzile, nu uită de băutură și nu pierde niciodată un apel. Bucătăria respiră, chelnerii se ocupă de mesele reale, iar tu vezi seara la ce oră s-a încheiat ultima comandă, fără să fi atins receptorul. 📦",
+  "benefits": [
+    {
+      "icon": "phone",
+      "emoji": "📞",
+      "title": "Niciun apel pierdut, niciodată",
+      "description": "Sambla răspunde din primul ton, chiar și când suni 30 de oameni deodată vinerea la 20:00."
+    },
+    {
+      "icon": "menu",
+      "emoji": "🍝",
+      "title": "Cunoaște meniul pe de rost",
+      "description": "Încarci PDF-ul sau un Sheet și voicebotul știe fiecare preparat, ingredient, preț și gramaj."
+    },
+    {
+      "icon": "allergen",
+      "emoji": "🥗",
+      "title": "Răspunde despre alergeni",
+      "description": "Gluten, lactoză, nuci, ouă, totul declarat clar și consistent, fără ghicit la telefon."
+    },
+    {
+      "icon": "clock",
+      "emoji": "⏰",
+      "title": "Activ 24/7, inclusiv duminica",
+      "description": "Preia rezervări și întrebări și când restaurantul e închis, ca să nu pierzi clienții de a doua zi."
+    },
+    {
+      "icon": "delivery",
+      "emoji": "📦",
+      "title": "Comenzi delivery curate",
+      "description": "Notează adresa, calculează totalul, confirmă timpul estimativ și trimite comanda direct la bucătărie."
+    },
+    {
+      "icon": "check",
+      "emoji": "✅",
+      "title": "Escaladare doar când e nevoie",
+      "description": "Cazurile speciale ajung la șeful de sală, restul, 90% din apeluri, le rezolvă singur."
+    }
+  ],
+  "demo_messages": [
+    {
+      "role": "user",
+      "text": "Bună seara, aș vrea să comand o pizza, vă rog."
+    },
+    {
+      "role": "assistant",
+      "text": "Bună seara și bine ați sunat la Trattoria Bella! 🍕 Sigur, vă ajut imediat cu comanda. Ce pizza ați dori și în ce mărime, mică, medie sau family?"
+    },
+    {
+      "role": "user",
+      "text": "O margherita medie. Și aș vrea să întreb dacă are nuci sau ceva alergen, soțul meu e alergic."
+    },
+    {
+      "role": "assistant",
+      "text": "Înțeleg perfect, e important. 🥗 Pizza Margherita conține gluten din blat, lactoză din mozzarella și urme de ouă din aluat. Nu are nuci, susan sau arahide. Vă pot adăuga și o băutură?"
+    },
+    {
+      "role": "user",
+      "text": "Da, o cola de jumate. Și livrați în Drumul Taberei?"
+    },
+    {
+      "role": "assistant",
+      "text": "Da, livrăm în Drumul Taberei. 📦 Deci avem o Margherita medie și o Cola 0.5L, total 52 de lei plus 10 lei livrare, 62 de lei. Estimat 35-45 de minute. Îmi spuneți adresa exactă, vă rog?"
+    }
+  ],
+  "social_proof_text": "Restaurante și pizzerii din București, Cluj și Timișoara folosesc Sambla ca să nu mai piardă comenzi în orele de vârf și să elibereze bucătăria de telefon. 🍔",
+  "cta_primary_text": "Vreau voicebot pentru restaurantul meu",
+  "cta_secondary_text": "Ascultă o demonstrație",
+  "cta_footer_title": "Lasă Sambla să răspundă la telefon diseară 🍕",
+  "cta_footer_text": "Configurare în mai puțin de o zi. Încarci meniul, alegi vocea și voicebotul preia primul apel chiar în seara aceasta.",
+  "icon_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M7 2v9a2 2 0 0 1-2 2H4V2\"/><path d=\"M5 13v9\"/><path d=\"M19 2c-1.5 0-3 1.5-3 4v6h3\"/><path d=\"M19 2v20\"/></svg>",
+  "faqs": [
+    {
+      "question": "Se integrează cu POS-ul sau cu sistemul meu de comenzi?",
+      "answer": "Da. Sambla poate trimite comenzile prin email, WhatsApp, webhook sau direct în POS-uri populare precum SmartBill, Oblio sau platforme de delivery proprii. Dacă ai un sistem custom, îl conectăm prin API."
+    },
+    {
+      "question": "Cum gestionează întrebările despre alergeni?",
+      "answer": "Încarci în meniu informațiile despre alergeni (gluten, lactoză, ouă, nuci, susan, etc.) și voicebotul le declară clar, consistent, de fiecare dată. Pentru cazuri sensibile, poate escalada automat la șeful de sală."
+    },
+    {
+      "question": "Ce se întâmplă când schimb meniul sau prețurile?",
+      "answer": "Actualizezi PDF-ul sau Google Sheets-ul tău și Sambla preia modificările în câteva minute. Nu trebuie să suni pe nimeni să reprogrameze ceva, totul e self-service. 🍝"
+    },
+    {
+      "question": "Pot folosi Sambla pentru mai multe locații?",
+      "answer": "Da. Fiecare locație poate avea propriul număr, propriul meniu și propria zonă de livrare, dar le administrezi pe toate dintr-un singur dashboard."
+    },
+    {
+      "question": "Cum funcționează cu livrarea?",
+      "answer": "Voicebotul întreabă adresa, verifică dacă e în zona ta de acoperire, calculează taxa de livrare, estimează timpul și trimite totul, cu adresă, telefon și comandă, direct la bucătărie sau la curierii tăi."
+    },
+    {
+      "question": "Și dacă un client vrea ceva ce voicebotul nu știe să facă?",
+      "answer": "Sambla recunoaște limitele și transferă politicos apelul la un coleg uman, sau notează cererea și sună restaurantul mai târziu. Clientul nu rămâne niciodată în aer. ✅"
+    }
+  ],
+  "meta_title": "Agent AI pentru Restaurante și Delivery | Voicebot Comenzi - Sambla",
+  "meta_description": "Voicebot AI care preia comenzi telefonice, rezervări și întrebări despre meniu, alergeni și livrare pentru restaurantul tău. Activ 24/7, în română. 🍕"
+}

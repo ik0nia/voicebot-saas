@@ -1,0 +1,105 @@
+{
+  "slug": "birouri-notariale",
+  "name": "Birouri notariale",
+  "vertical_label": "Notariat",
+  "color_theme": "blue",
+  "tone": "formal",
+  "sort_order": 100,
+  "is_active": true,
+  "meta_title": "Agent AI pentru birouri notariale | Sambla",
+  "meta_description": "Agent AI conversațional pentru birouri notariale: răspunde la întrebări procedurale, trimite lista de acte necesare și gestionează programări 24/7. Nu oferă consultanță notarială – cazurile reale rămân la notar.",
+  "seo_keywords": [
+    "agent ai birou notarial",
+    "chatbot notar",
+    "ai pentru notariat",
+    "voicebot programari notar"
+  ],
+  "hero_eyebrow": "AGENT AI PENTRU BIROURI NOTARIALE",
+  "hero_title": "Răspuns procedural la cererile clienților, 24 de ore pe zi",
+  "hero_subtitle": "Un asistent digital care preia întrebările repetitive privind actele necesare, tarifele orientative și programările. Cazurile reale și interpretarea juridică rămân, în întregime, în sarcina notarului public.",
+  "problem_text": "Un birou notarial primește zilnic zeci de solicitări telefonice și prin email care, în marea lor majoritate, nu necesită intervenția directă a notarului. Clienții doresc să afle ce acte trebuie să pregătească pentru o donație de imobil, pentru o vânzare-cumpărare, pentru o procedură succesorală, pentru autentificarea unei procuri sau a unei declarații. Întreabă despre tarifele orientative, despre programul biroului, despre documentele de identitate acceptate sau despre necesitatea prezenței ambilor soți. Secretariatul ajunge să repete, de zeci de ori pe zi, aceleași informații procedurale, în detrimentul activităților care necesită atenție reală: pregătirea dosarelor, comunicarea cu instituțiile, gestionarea agendei notarului. În paralel, mulți clienți ajung la întâlnirea programată fără actele necesare, ceea ce conduce la reprogramări, întârzieri și frustrare reciprocă. Apelurile primite în afara programului rămân fără răspuns, iar potențialii clienți se orientează către alte birouri. Rezultatul este un volum mare de muncă administrativă, o experiență inconsistentă pentru clienți și o presiune permanentă asupra personalului. Biroul are nevoie de un mecanism care să filtreze și să standardizeze comunicarea procedurală, fără a substitui în vreun fel rolul notarului public.",
+  "solution_text": "Sambla pune la dispoziția biroului notarial un agent conversațional configurat strict pe baza listei de proceduri și a documentelor aferente. Asistentul este integrat pe site-ul biroului și răspunde, în limba română, la întrebările frecvente: ce acte sunt necesare pentru fiecare tip de procedură, care este programul biroului, ce tarife orientative se aplică, ce pași trebuie urmați înainte de programare. Pe baza răspunsurilor clientului, agentul generează automat un checklist personalizat cu documentele necesare și îl transmite pe email sau prin mesaj. Programările sunt înregistrate direct în calendarul biroului, cu confirmare automată și reamintire înainte de întâlnire. Agentul refuză categoric orice solicitare de consultanță juridică sau notarială, de interpretare a legii, de evaluare a unui caz concret sau de pronunțare asupra valabilității unui act. În toate aceste situații, conversația este escaladată către notar sau către secretariat, cu un rezumat clar al cererii clientului. Datele sunt găzduite pe servere din România, iar prelucrarea respectă cerințele GDPR și obligațiile de confidențialitate specifice profesiei notariale. Astfel, biroul câștigă timp pentru activitatea de fond, iar clienții primesc un răspuns procedural corect și rapid, în orice moment al zilei.",
+  "benefits": [
+    {
+      "title": "Răspuns procedural 24/7",
+      "description": "Agentul răspunde la întrebările frecvente despre proceduri, acte și tarife orientative la orice oră, inclusiv în weekend și în afara programului biroului."
+    },
+    {
+      "title": "Checklist documente automat",
+      "description": "În funcție de tipul de procedură ales de client, agentul generează și transmite o listă completă cu documentele necesare pentru întâlnirea la birou."
+    },
+    {
+      "title": "Programări gestionate fără secretariat",
+      "description": "Întâlnirile sunt rezervate direct în calendarul biroului, cu confirmare și reamintire automată, eliminând apelurile repetitive de coordonare."
+    },
+    {
+      "title": "Refuză categoric consultanța notarială",
+      "description": "Agentul este configurat să nu ofere interpretări juridice, opinii sau evaluări de caz. Orice solicitare de acest tip este escaladată direct către notar."
+    },
+    {
+      "title": "Confidențialitate (hosting RO + GDPR)",
+      "description": "Datele clienților sunt găzduite pe infrastructură din România, cu respectarea integrală a Regulamentului General privind Protecția Datelor."
+    },
+    {
+      "title": "Suport în limba română",
+      "description": "Implementare, configurare și suport tehnic asigurate integral în limba română, cu terminologie adaptată practicii notariale."
+    }
+  ],
+  "demo_messages": [
+    {
+      "role": "user",
+      "text": "Bună ziua. Ce acte îmi trebuie pentru o donație de imobil către fiul meu?"
+    },
+    {
+      "role": "bot",
+      "text": "Bună ziua. Pentru autentificarea unui contract de donație imobiliară sunt necesare, în mod uzual: actele de identitate ale donatorului și donatarului, certificatul de naștere al donatarului (pentru dovedirea gradului de rudenie), titlul de proprietate asupra imobilului (contract de vânzare-cumpărare, certificat de moștenitor etc.), extrasul de carte funciară pentru autentificare (se obține de către biroul notarial), certificatul fiscal eliberat de primărie pe numele donatorului și certificatul de performanță energetică. Doriți să vă transmit lista pe email și să programăm o întâlnire la birou?"
+    },
+    {
+      "role": "user",
+      "text": "Da, vă rog. Și aș dori să știu cât costă procedura."
+    },
+    {
+      "role": "bot",
+      "text": "Onorariul notarial pentru donație se calculează în funcție de valoarea imobilului, conform grilei aprobate de Uniunea Națională a Notarilor Publici. Pentru o estimare exactă este necesară valoarea din extrasul de carte funciară. La întâlnirea de la birou, doamna/domnul notar vă va comunica suma exactă, inclusiv taxele aferente. Vă pot oferi o programare săptămâna viitoare. Aveți o preferință pentru o anumită zi?"
+    },
+    {
+      "role": "user",
+      "text": "Joi după-amiază ar fi potrivit. Mai am o întrebare: este obligatoriu să vină și soția mea?"
+    },
+    {
+      "role": "bot",
+      "text": "Aceasta este o întrebare care ține de regimul juridic al bunului și de situația dumneavoastră concretă. Nu pot oferi un răspuns în acest sens, deoarece interpretarea juridică revine exclusiv notarului public. Voi transmite cererea către biroul notarial, iar doamna/domnul notar vă va clarifica acest aspect la întâlnire sau printr-un apel preliminar. Confirm programarea pentru joi, ora 15:00. Vă mulțumesc."
+    }
+  ],
+  "social_proof_text": "Birourile notariale care folosesc Sambla raportează o reducere semnificativă a apelurilor procedurale repetitive și o scădere notabilă a numărului de întâlniri reprogramate din cauza actelor incomplete. Personalul biroului poate aloca mai mult timp activităților de fond, iar clienții primesc, în mod constant, un răspuns procedural corect și complet.",
+  "cta_title": "Implementați un agent AI dedicat biroului dumneavoastră notarial",
+  "cta_subtitle": "Vă prezentăm, într-o sesiune demonstrativă, modul în care agentul poate prelua întrebările procedurale și gestiona programările, păstrând în întregime rolul notarului public.",
+  "cta_button": "Solicitați o prezentare",
+  "icon_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z\"/><path d=\"M14 3v5h5\"/><path d=\"M9 13h6\"/><path d=\"M9 17h4\"/><circle cx=\"12\" cy=\"11\" r=\"0.5\" fill=\"currentColor\"/></svg>",
+  "faq": [
+    {
+      "question": "Agentul AI oferă consultanță notarială sau juridică?",
+      "answer": "Nu. Agentul este configurat să răspundă exclusiv la întrebări procedurale: acte necesare, tarife orientative, programări, program de lucru. Orice solicitare de interpretare juridică, opinie sau evaluare a unui caz concret este escaladată automat către notarul public."
+    },
+    {
+      "question": "Cum sunt protejate datele clienților biroului?",
+      "answer": "Toate datele sunt găzduite pe infrastructură situată în România, iar prelucrarea respectă integral prevederile Regulamentului General privind Protecția Datelor (GDPR), precum și obligațiile de confidențialitate specifice profesiei notariale."
+    },
+    {
+      "question": "Poate agentul să gestioneze programările direct în calendarul biroului?",
+      "answer": "Da. Agentul se integrează cu calendarul utilizat de birou, înregistrează programările cu confirmare automată și transmite clienților reamintiri înainte de întâlnire."
+    },
+    {
+      "question": "Ce se întâmplă dacă un client adresează o întrebare la care agentul nu poate răspunde?",
+      "answer": "Agentul recunoaște limitele competenței sale și escaladează solicitarea către notar sau secretariat, transmițând un rezumat clar al cererii și datele de contact ale clientului."
+    },
+    {
+      "question": "Lista de proceduri și acte poate fi adaptată specificului biroului nostru?",
+      "answer": "Da. La implementare, configurăm împreună cu biroul lista de proceduri tratate, documentele solicitate pentru fiecare în parte și formulările utilizate, astfel încât răspunsurile să corespundă practicii dumneavoastră."
+    },
+    {
+      "question": "Cât durează implementarea?",
+      "answer": "În mod uzual, implementarea unui agent pentru un birou notarial se finalizează în 5-10 zile lucrătoare, în funcție de numărul de proceduri configurate și de integrările solicitate."
+    }
+  ]
+}

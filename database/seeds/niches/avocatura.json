@@ -1,0 +1,48 @@
+{
+  "slug": "birouri-avocatura",
+  "name": "Birouri de avocatură",
+  "vertical_label": "Avocatură",
+  "color_theme": "blue",
+  "hero_eyebrow": "AGENT AI PENTRU AVOCAȚI",
+  "hero_title": "Asistentul care filtrează clienții, nu cazurile",
+  "hero_subtitle": "Bot-ul răspunde la întrebările procedurale (tarife orientative, documente, programări) și lasă avocații să se concentreze pe cazuri reale. Cu instrucțiune strictă: NU dă consultanță juridică.",
+  "problem_title": "Asistenta biroului nu mai face față cererilor procedurale",
+  "problem_text": "Într-un birou de avocatură mediu din România, asistenta primește zeci de telefoane și email-uri pe zi cu aceleași întrebări: „Cât costă o consultație?”, „Ce acte trebuie să aduc?”, „Când e disponibil domnul avocat Popescu?”, „Mai pot depune contestația până vineri?”. Majoritatea sunt întrebări procedurale, dar fiecare consumă 5-10 minute și întrerupe lucrul real — pregătirea dosarelor, comunicarea cu instanțele, redactarea actelor. Avocații, la rândul lor, sunt scoși din concentrare de fiecare dată când asistenta le bate la ușă cu un client la telefon care „doar voia să întrebe ceva scurt”. Rezultatul: redactarea unei concluzii scrise care ar fi durat două ore se întinde pe o zi întreagă. Și mai grav, mulți potențiali clienți sună sau scriu seara, în weekend sau în pauza de prânz — atunci când nu răspunde nimeni — și până a doua zi au sunat deja la alt birou. Lead-uri pierdute fără ca nimeni să le vadă vreodată. Iar întâlnirile la care clientul vine fără documentele necesare (contract, fluturași, corespondență cu partea adversă) sunt frustrante pentru toată lumea: avocatul nu poate da o evaluare reală, clientul pleacă nemulțumit și consultația trebuie reluată. Toate astea într-o profesie unde reputația se construiește din încredere și răspuns prompt.",
+  "solution_title": "Un agent AI care preia tot ce e procedural și pre-califică lead-urile",
+  "solution_text": "Sambla instalează pe site-ul biroului și pe WhatsApp Business un asistent AI antrenat exact pe informațiile dvs.: onorariile orientative pentru fiecare tip de caz (penal, civil, comercial, dreptul muncii, dreptul familiei), documentele necesare la prima întâlnire pentru fiecare speță, ariile de specializare ale fiecărui avocat și disponibilitatea lor în calendar. Când un potențial client întreabă „cât costă un divorț cu partaj?”, bot-ul răspunde cu intervalul orientativ și propune imediat o programare. Când întreabă „ce acte aduc la întâlnirea pentru concediere abuzivă?”, primește instant lista completă (contract, decizie de concediere, fluturași, corespondență). Dacă vrea programare, bot-ul o introduce direct în calendarul avocatului potrivit, conform specializării. Esențial: bot-ul are o instrucțiune locked, imposibil de ocolit, prin care refuză categoric orice formă de consultanță juridică. La orice întrebare de fond („am dreptate?”, „pot să câștig?”, „ce să fac?”), răspunde politicos că analiza speței este exclusiv atribuția avocatului și escaladează către o programare. Rolul bot-ului este strict de asistent administrativ — niciodată de jurist. Avocații primesc dimineața, în inbox, lead-urile pre-calificate cu rezumatul cererii, tipul cazului și documentele deja confirmate de client.",
+  "benefits": [
+    {"title": "Pre-calificare lead-uri (-70% timp asistent)", "description": "Bot-ul preia întrebările repetitive despre tarife, programe și disponibilitate. Asistenta rămâne liberă pentru cazurile reale și pentru relația cu instanțele."},
+    {"title": "Programări direct în calendarul avocatului", "description": "Integrare cu Google Calendar sau Outlook. Bot-ul vede disponibilitatea fiecărui avocat pe specializare și propune sloturi care chiar sunt libere."},
+    {"title": "Trimite checklist de documente automat", "description": "În funcție de tipul cazului (concediere, divorț, contract comercial, recurs), bot-ul trimite pe email lista exactă a actelor necesare. Avocatul nu mai pierde timp la prima întâlnire."},
+    {"title": "Răspunde la întrebări procedurale 24/7", "description": "Seara, în weekend, în pauza de prânz — clientul primește răspuns imediat și nu mai sună la alt birou. Lead-urile rămân la dvs."},
+    {"title": "NU dă consultanță juridică (instrucțiune locked)", "description": "Bot-ul refuză categoric orice analiză de fond. La întrebări juridice escaladează către programare cu avocatul. Conformitate cu statutul profesiei."},
+    {"title": "Confidențialitate clienți — hosting RO + GDPR", "description": "Datele rămân pe servere din România. Conversațiile sunt criptate, accesibile doar biroului, cu retenție configurabilă conform politicii dvs."}
+  ],
+  "demo_messages": [
+    {"role": "user", "text": "Bună ziua, am o problemă cu un contract de muncă încheiat acum 6 luni. Aș vrea să discut cu un avocat."},
+    {"role": "bot", "text": "Bună ziua! Vă pot ajuta să faceți o programare cu unul dintre avocații noștri specializați în dreptul muncii. Doriți întâlnire la birou sau online? Și aveți contractul plus eventualele anexe la îndemână ca să le aduceți?"},
+    {"role": "user", "text": "La birou, vă rog. Cât costă o consultație?"},
+    {"role": "bot", "text": "Onorariul pentru o primă consultație în drept civil/dreptul muncii este de aproximativ 350 lei pentru 45 de minute. Pentru cazurile mai complexe, avocatul vă poate face o ofertă personalizată după ce vede documentele. Vă propun marți 14 mai, ora 11:00, cu doamna avocat Ionescu. Vă convine?"},
+    {"role": "user", "text": "Da. Ce documente trebuie să aduc?"},
+    {"role": "bot", "text": "Pentru cazul dvs., e bine să aveți: contractul individual de muncă, fișa postului, eventuale acte adiționale, ultimele 3 fluturași de salariu și orice corespondență cu angajatorul (email-uri, notificări). Vă trimit confirmarea pe email cu lista completă. Vă rog să rețineți că la întâlnire avocatul va analiza speța — eu nu pot oferi consultanță juridică."},
+    {"role": "user", "text": "Mulțumesc!"}
+  ],
+  "social_proof_text": "Birouri de avocatură din București, Cluj și Timișoara folosesc Sambla pentru a filtra cererile procedurale și a aduce avocaților doar lead-urile pregătite. În medie, asistentele recuperează peste 15 ore pe săptămână, iar rata de no-show la prima întâlnire scade cu peste 40% pentru că clienții vin cu documentele cerute de bot.",
+  "cta_primary_text": "Începe gratuit",
+  "cta_primary_href": "/register",
+  "cta_secondary_text": "Vorbește cu noi",
+  "cta_secondary_href": "/contact",
+  "icon_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 3v18\"/><path d=\"M5 21h14\"/><path d=\"M12 6 5 9l3 6a4 4 0 0 0 8 0l3-6-7-3z\"/><path d=\"M2 15h6\"/><path d=\"M16 15h6\"/></svg>",
+  "faq": [
+    {"question": "Bot-ul dă sfaturi juridice?", "answer": "Nu, niciodată. Are o instrucțiune locked care îl obligă să refuze orice analiză de fond și să escaladeze către o programare cu avocatul. Rolul lui este strict administrativ: tarife orientative, documente, programări, status dosar."},
+    {"question": "Cum se integrează cu calendarul avocaților?", "answer": "Conectăm bot-ul la Google Calendar, Outlook sau orice sistem cu API. Fiecare avocat are propria disponibilitate, iar bot-ul propune sloturi numai după specializare (penal, civil, comercial etc.)."},
+    {"question": "Pe ce canale funcționează?", "answer": "Site-ul biroului (chat widget), WhatsApp Business, Facebook Messenger și voicebot pe numărul fix al biroului. Toate cu același creier și aceleași informații."},
+    {"question": "Este conform cu obligația profesională de confidențialitate?", "answer": "Da. Hosting în România, criptare la transport și la repaus, acces restricționat la conversații, retenție configurabilă și acord de prelucrare a datelor (DPA) conform GDPR. Bot-ul nu transmite date către terți."},
+    {"question": "Pot configura per arie de drept (penal, civil, comercial)?", "answer": "Da. Definiți tarifele, documentele necesare și avocatul de referință pentru fiecare arie. Bot-ul rutează automat cererile către specializarea potrivită."},
+    {"question": "Cât durează setup-ul?", "answer": "Între 3 și 7 zile lucrătoare. Ne dați tarifele orientative, lista documentelor pe tip de caz și programul avocaților. Noi configurăm bot-ul, îl testăm împreună și îl punem live."}
+  ],
+  "meta_title": "Agent AI pentru birou de avocatură | Sambla — pre-calificare clienți și programări 24/7",
+  "meta_description": "Asistent AI pentru birouri de avocatură: răspunde la întrebări procedurale, ia programări, trimite checklist documente. Refuză consultanța juridică. Hosting în România, GDPR.",
+  "sort_order": 20,
+  "is_active": true
+}

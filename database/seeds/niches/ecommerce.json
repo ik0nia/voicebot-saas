@@ -1,0 +1,48 @@
+{
+  "slug": "magazine-online",
+  "name": "Magazine online (e-commerce)",
+  "vertical_label": "E-commerce",
+  "color_theme": "red",
+  "tone": "friendly",
+  "hero_eyebrow": "AGENT AI PENTRU MAGAZINE ONLINE",
+  "hero_title": "Asistentul de vânzări care nu doarme niciodată 🛒",
+  "hero_subtitle": "Bot AI integrat nativ cu WooCommerce. Caută produse semantic, verifică stocul live, ia comenzi direct din chat, răspunde la întrebări despre livrare. Construit pentru magazinele românești.",
+  "problem_title": "De ce pierzi vânzări chiar acum, în timp ce citești asta",
+  "problem_text": "Realitatea unui magazin online în 2026 e brutală: 70% dintre vizitatori abandonează coșul, iar marea majoritate o fac pentru că nu primesc un răspuns instant la o întrebare simplă. „Aveți pe stoc roz mărimea M?”, „Când ajunge dacă comand acum?”, „E bun pentru ten gras?” — întrebări care, fără răspuns rapid, devin click pe tab-ul concurenței.\n\nEchipa ta de suport face ce poate, dar e copleșită. Dimineața răspunde la zeci de mesaje întârziate, seara nu mai are resurse, iar weekend-ul magazinul tău rămâne practic mut — exact când oamenii au timp să cumpere. Fiecare oră de tăcere înseamnă coșuri abandonate și clienți care pleacă pentru totdeauna.\n\nApoi sunt recomandările. Pagina de produs arată un singur articol, iar „produse similare” afișează aleatoriu ceva ce nu are legătură. Vizitatorul nu descoperă restul catalogului tău, nu adaugă a doua piesă în coș, iar valoarea medie a comenzii rămâne plată. Între timp, plătești Google Ads ca să aduci traficul — și-l lași să plece neasistat. E ca și cum ai avea un magazin fizic plin de clienți și un singur vânzător care răspunde doar luni-vineri, 10:00-17:00.",
+  "solution_title": "Sambla: vânzătorul digital care vorbește limba clienților tăi",
+  "solution_text": "Sambla se conectează nativ la WooCommerce (și Shopify) și sincronizează în timp real catalogul, stocurile și comenzile tale. În câteva minute, bot-ul cunoaște fiecare produs, fiecare variantă, fiecare preț — și răspunde la întrebări exact așa cum ar face un vânzător bun, dar 24/7, în română naturală și prietenoasă. 💬\n\nCăutarea e semantică, nu pe cuvinte cheie: dacă cineva scrie „ceva pentru ten gras care să nu strălucească”, bot-ul înțelege intenția și arată produsele potrivite cu carduri inline (poză + preț + stoc + buton add-to-cart). Clientul adaugă în coș direct din conversație, fără să mai navigheze prin meniuri. ✨\n\nDupă comandă, Sambla preia și partea de „Unde-i comanda mea?” — se conectează la Sameday, FAN Courier, Cargus și răspunde cu status AWB live. Recomandă produse complementare („ai luat hidratantul, vrei și SPF-ul care merge cu el?”), gestionează întrebări despre retururi, dimensiuni, livrare și transferă elegant la un om real doar când chiar e nevoie. Rezultatul: rată de conversie mai mare, AOV crescut, suport relaxat și clienți care revin pentru că au fost ascultați rapid. 📦",
+  "benefits": [
+    {"title": "Sync nativ WooCommerce ⚡", "description": "Plugin oficial care sincronizează produse, variante, stocuri și comenzi în timp real. Zero CSV-uri, zero export manual — modifici prețul în WooCommerce, bot-ul știe în 30 de secunde."},
+    {"title": "Add-to-cart direct din chat 🛒", "description": "Clientul vede cardul produsului în conversație și apasă „Adaugă în coș” fără să părăsească chatul. Mai puține click-uri = mai puține abandonuri = mai multe comenzi finalizate."},
+    {"title": "Tracking AWB „Unde-i comanda mea?” 📦", "description": "Integrare cu Sameday, FAN Courier, Cargus și DPD. Clientul întreabă, bot-ul răspunde instant cu statusul curent — fără să mai blocheze suportul cu zeci de mesaje pe zi."},
+    {"title": "Recomandări semantice „arată-mi ceva similar” ✨", "description": "Căutare bazată pe embeddings, nu pe taguri. Bot-ul înțelege „ceva mai elegant” sau „pentru cadou la o adolescentă” și propune produsele potrivite din catalog."},
+    {"title": "Răspunde 24/7 inclusiv weekend", "description": "Clienții cumpără la 23:00 sâmbătă, nu doar marți la 14:00. Sambla e treaz când echipa ta doarme și convertește traficul care altfel s-ar fi pierdut."},
+    {"title": "Conversii pe vizitatori care altfel ar fi plecat", "description": "Magazinele din pilot raportează creșteri de 18-32% la rata de conversie pe traficul care interacționează cu bot-ul, plus AOV mai mare prin recomandări complementare."}
+  ],
+  "demo_messages": [
+    {"role": "user", "text": "Bună! Aveți cremă hidratantă pentru ten gras? 😊"},
+    {"role": "bot", "text": "Salut! 👋 Avem trei opțiuni excelente pentru ten gras în stoc acum:\n\n💧 Cremă matifiantă cu acid salicilic — 89 lei\n🌿 Gel hidratant cu niacinamidă — 75 lei\n✨ Hidratant non-comedogenic cu bambus — 95 lei\n\nVrei să-ți arăt detalii despre vreuna?"},
+    {"role": "user", "text": "A doua, cu niacinamidă. E pe stoc M?"},
+    {"role": "bot", "text": "Da, gelul cu niacinamidă (75 ml) e în stoc — 12 buc disponibile 📦\n\nLivrare gratis de la 150 lei, sau 20 lei standard prin Sameday (24-48h). Vrei să-l adaug în coș?"},
+    {"role": "user", "text": "Da, adaugă-l. Și mai arată-mi ce mai am pentru ten gras."},
+    {"role": "bot", "text": "Adăugat ✅ Mai ai loc pentru livrare gratis (mai sunt 75 lei până la prag).\n\nAlte produse pentru ten gras:\n🧴 Tonic cu acid glicolic — 45 lei\n☀️ SPF50 ușor non-comedogenic — 110 lei\n\nAr fi perfecte împreună cu hidratantul tău. Le adaug?"}
+  ],
+  "social_proof_text": "Folosit de magazine online din România cu zeci până la mii de SKU-uri — beauty, fashion, electronice, suplimente, home & deco. Integrare nativă cu WooCommerce, Shopify și principalii curieri români (Sameday, FAN Courier, Cargus, DPD).",
+  "cta_primary_text": "Începe gratuit",
+  "cta_primary_href": "/register",
+  "cta_secondary_text": "Vezi demo live",
+  "cta_secondary_href": "/contact",
+  "icon_svg": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z'/></svg>",
+  "faq": [
+    {"question": "Cum se sincronizează cu WooCommerce?", "answer": "Instalezi plugin-ul oficial Sambla din WordPress, introduci cheia API și gata — produsele, variantele, stocurile și comenzile se sincronizează automat în timp real prin webhooks. Modificările din WooCommerce ajung la bot în sub 30 de secunde."},
+    {"question": "Funcționează și pe Shopify?", "answer": "Da. Avem aplicație Shopify oficială care face același lucru: sync produse, stocuri, comenzi și tracking. Integrarea durează aproximativ 10 minute și nu necesită cunoștințe tehnice."},
+    {"question": "Bot-ul poate face checkout complet?", "answer": "Bot-ul adaugă produse în coșul real al clientului și îl trimite direct la pagina de checkout WooCommerce/Shopify, unde plătește în mod normal. Nu intermediem plățile — folosim infrastructura ta existentă, deci păstrezi toate gateway-urile, cupoanele și taxele configurate."},
+    {"question": "Cum gestionează retururile?", "answer": "Bot-ul cunoaște politica ta de retur și răspunde la întrebări frecvente (în câte zile, cum se trimite, cine plătește transportul). Pentru cazurile complexe, deschide un tichet și transferă elegant conversația către echipa ta de suport, cu tot contextul."},
+    {"question": "Cât durează setup-ul cu magazinul meu?", "answer": "Pentru un magazin standard WooCommerce/Shopify cu până la câteva mii de produse, setup-ul complet (instalare plugin, sync inițial, training pe FAQ-uri și politici) durează între 30 de minute și 2 ore. Te ajutăm direct dacă ai nevoie."},
+    {"question": "Crește rata de conversie?", "answer": "Da. Magazinele din pilot raportează creșteri de 18-32% la conversie pe traficul care interacționează cu bot-ul, plus o creștere de 8-15% la valoarea medie a comenzii prin recomandări complementare. Rezultatele variază în funcție de niche și calitatea catalogului."}
+  ],
+  "meta_title": "Agent AI pentru magazin online WooCommerce | Sambla — vânzări 24/7",
+  "meta_description": "Chatbot AI integrat nativ cu WooCommerce. Caută produse semantic, verifică stoc live, add-to-cart din chat, tracking AWB. Construit în România pentru magazine online.",
+  "sort_order": 5,
+  "is_active": true
+}

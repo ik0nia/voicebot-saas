@@ -1,0 +1,49 @@
+{
+  "slug": "optica-medicala",
+  "name": "Optici medicale",
+  "vertical_label": "Optică",
+  "color_theme": "indigo",
+  "hero_eyebrow": "AGENT AI PENTRU OPTICI",
+  "hero_title": "Răspunsul la întrebările clienților despre lentile și asigurări",
+  "hero_subtitle": "Un agent AI care răspunde clienților despre tipurile de rame din stoc, opțiunile de lentile, asigurările de sănătate acceptate și care programează direct controale la optometrist. 👓",
+  "problem_title": "Problema reală pe care o rezolvăm",
+  "problem_text": "O optică medicală nu se ocupă doar cu vânzarea de ochelari — este un mic centru de consultanță în care clienții vin cu zeci de întrebări înainte de a se decide. 'Aveți rame Ray-Ban în stoc?', 'Cât costă lentilele cu policarbonat față de cele cu indice 1.6?', 'Lucrați cu asigurarea Regina Maria sau Medicover?', 'Pot să vin săptămâna asta la un control de vedere?', 'Faceți rame de soare cu dioptrii?'. Aceleași întrebări, repetate de zeci de ori pe zi, pe telefon, pe Instagram, pe WhatsApp și prin mesaje pe Google Business. Problema este că personalul din magazin este aproape mereu ocupat cu un client în fața tejghelei: ajustează o ramă, explică diferența dintre lentilele monofocale și progresive, asistă optometristul în cabinet. Telefonul sună și nimeni nu îl preia. Mesajul pe Instagram primește răspuns abia seara, când clientul deja a comandat ochelarii de la concurența care a răspuns în 5 minute. Pentru fiecare client pierdut la telefon, pierzi atât vânzarea unei perechi de ochelari, cât și relația pe termen lung — pentru că lentilele se schimbă o dată la 2-3 ani și acel client va merge unde s-a simțit ascultat prima dată.",
+  "solution_title": "Cum funcționează Sambla pentru optica ta",
+  "solution_text": "Sambla este un agent AI pe care îl conectezi pe site, pe Instagram DM, pe WhatsApp Business și pe numărul de telefon al magazinului. Îl antrenăm pe inventarul tău de rame (branduri, modele, culori, prețuri, ce e în stoc), pe gama de lentile pe care o oferi (monofocale, bifocale, progresive, antireflex, blue-light, fotocromatice, indici de refracție diferiți), pe lista completă a asigurărilor de sănătate cu care lucrezi (CASS, Regina Maria, Medicover, Signal Iduna, Allianz) și pe tarifele pentru consultul optometric. Răspunde calm, profesional și cu empatie la întrebările clienților, oferă opțiuni concrete și programează direct vizita la optometrist în calendarul cabinetului. Pentru întrebări tehnice de tipul 'mi se pare un vid în jurul lentilei' sau 'lentilele progresive îmi dau vertij', agentul nu improvizează — escaladează imediat conversația către optometrist sau către specialistul din magazin. Sambla NU dă sfaturi medicale sau optometrice: rolul lui este să informeze despre produse, prețuri și asigurări, și să aducă clientul în magazin pentru consultul propriu-zis. 👓",
+  "benefits": [
+    {"title": "Răspunde despre stoc de rame în timp real 👓", "description": "Agentul cunoaște ce branduri și modele ai pe raft, în ce culori și mărimi, și poate spune clientului dacă rama dorită este disponibilă sau când vine reaprovizionarea."},
+    {"title": "Explică opțiunile de lentile clar și fără jargon", "description": "Diferența dintre policarbonat și indice 1.6, ce înseamnă antireflex, blue-light sau fotocromatic — explicate pe limba clientului, cu prețuri concrete."},
+    {"title": "Cunoaște lista completă de asigurări acceptate", "description": "Răspunde imediat dacă lucrezi cu Regina Maria, Medicover, Signal Iduna, CASS sau alte asigurări private și ce decont poate primi clientul."},
+    {"title": "Programări la optometrist direct în calendar", "description": "Vede sloturile libere ale optometristului și rezervă pe loc consultul de vedere, cu confirmare prin SMS și reminder cu o zi înainte."},
+    {"title": "Escaladare pentru întrebări tehnice", "description": "Când clientul descrie un disconfort sau o problemă optică reală, agentul nu improvizează — transferă conversația imediat către optometrist sau către un specialist din magazin."},
+    {"title": "Active 24/7 pe site, Instagram și WhatsApp", "description": "Răspunde la mesajele de seara târziu sau de duminica, când magazinul este închis, ca să nu pierzi clientul în favoarea concurenței."}
+  ],
+  "demo_messages": [
+    {"role": "user", "text": "Bună, aș vrea niște rame de soare cu dioptrii. Aveți așa ceva?"},
+    {"role": "bot", "text": "Bună ziua! Da, lucrăm frecvent cu rame de soare cu dioptrii. 👓 Avem mai multe variante: rame Ray-Ban clasice de la 650 lei, modele Polaroid de la 380 lei și o gamă Hugo Boss de la 890 lei — toate pot fi montate cu lentilele dumneavoastră de vedere. Aveți deja o rețetă optică recentă sau ar fi nevoie să programați un control de vedere mai întâi?"},
+    {"role": "user", "text": "Am o rețetă de acum vreo 8 luni. -2.50 la ambii ochi."},
+    {"role": "bot", "text": "Perfect, rețeta este încă validă. Pentru -2.50 vă recomandăm să discutați în magazin cu colegii noștri ce indice de refracție vi se potrivește (1.5, 1.6 sau 1.67 pentru lentile mai subțiri). Doriți să programăm o vizită la magazin ca să probați câteva rame și să stabiliți tipul de lentile? Avem disponibilitate mâine la 11:00 sau joi la 17:30."},
+    {"role": "user", "text": "Joi la 17:30 sună bine."},
+    {"role": "bot", "text": "Am notat: joi, 9 aprilie, ora 17:30, vizită pentru rame de soare cu dioptrii. Pe ce nume să fac rezervarea și pe ce număr de telefon să trimit confirmarea prin SMS?"},
+    {"role": "user", "text": "Andrei Ionescu, 0721234567."},
+    {"role": "bot", "text": "Mulțumesc, Andrei! Rezervarea este confirmată, vă trimit acum un SMS cu detaliile și miercuri veți primi un reminder. Vă rugăm să aduceți rețeta optică la vizită. Vă așteptăm cu drag!"}
+  ],
+  "social_proof_text": "Sambla este construit, antrenat și hostat în România pentru optici medicale care vor să răspundă rapid clienților fără să își întrerupă lucrul cu cei deja în magazin.",
+  "cta_primary_text": "Începe gratuit",
+  "cta_primary_href": "/register",
+  "cta_secondary_text": "Vorbește cu noi",
+  "cta_secondary_href": "/contact",
+  "icon_svg": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><circle cx='6' cy='15' r='3.5'/><circle cx='18' cy='15' r='3.5'/><path d='M9.5 15c.5-1 1.5-1.5 2.5-1.5s2 .5 2.5 1.5'/><path d='M2.5 12l2-5h2'/><path d='M21.5 12l-2-5h-2'/></svg>",
+  "faq": [
+    {"question": "Lucrați cu asigurări de sănătate private?", "answer": "Agentul cunoaște lista completă a asigurărilor cu care optica ta colaborează — Regina Maria, Medicover, Signal Iduna, Allianz, CASS și altele — și poate spune clientului exact ce decont poate primi pentru rame, lentile sau consult. Lista este actualizată ori de câte ori semnezi un parteneriat nou."},
+    {"question": "Care este politica de retur pentru ochelari?", "answer": "Agentul prezintă politica ta de retur exact așa cum o definești tu: termen, condiții (rame neutilizate, lentile necustomizate), procedura de returnare. Pentru cazurile speciale — ochelari executați pe rețetă personalizată — escaladează către un coleg din magazin."},
+    {"question": "Ce garanție oferiți pentru rame și lentile?", "answer": "Sambla este antrenat pe garanțiile pe care le oferi: garanție de fabricație pentru rame, garanție pe tratamentul antireflex sau blue-light al lentilelor, garanție pe lentilele progresive în perioada de adaptare. Răspunde clienților exact așa cum ai stabilit, fără să improvizeze."},
+    {"question": "Poate face programări la control de vedere?", "answer": "Da. Agentul se conectează la calendarul optometristului, vede sloturile libere și rezervă consultul direct în timpul conversației. Trimite SMS de confirmare imediat și un reminder cu 24 de ore înainte."},
+    {"question": "Răspunde și la întrebări despre ochelari pentru copii?", "answer": "Da. Agentul cunoaște gama de rame pentru copii pe care o ai în stoc, materialele recomandate (rame flexibile, hipoalergenice), opțiunile de lentile rezistente și poate programa control la optometrist pentru cei mici. Pentru întrebări medicale (ambliopie, strabism, dioptrii care evoluează), escaladează către optometrist."},
+    {"question": "Dă agentul sfaturi optometrice?", "answer": "Nu, niciodată. Sambla NU oferă sfaturi medicale sau optometrice. Rolul agentului este să informeze despre rame, lentile, prețuri, asigurări și să programeze vizita la optometrist. Pentru orice întrebare tehnică sau de sănătate a vederii — disconfort, vedere încețoșată, dureri de cap, probleme cu lentilele progresive — agentul transferă conversația imediat către specialistul din magazin."}
+  ],
+  "meta_title": "Agent AI și chatbot pentru optică medicală | Sambla — programări și informații despre lentile 24/7",
+  "meta_description": "Agent AI pentru optici medicale: răspunde la întrebări despre rame, lentile, asigurări de sănătate și programează controale la optometrist. Activ pe site, Instagram și WhatsApp, 24/7. Construit în România.",
+  "sort_order": 140,
+  "is_active": true
+}

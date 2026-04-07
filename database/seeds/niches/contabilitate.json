@@ -1,0 +1,47 @@
+{
+  "slug": "firme-contabilitate",
+  "name": "Firme de contabilitate",
+  "vertical_label": "Contabilitate",
+  "color_theme": "blue",
+  "hero_eyebrow": "AGENT AI PENTRU CONTABILI",
+  "hero_title": "Răspunsul la cele 30 de WhatsApp-uri de luni dimineața",
+  "hero_subtitle": "Un agent AI care răspunde clienților firmei tale de contabilitate la întrebări procedurale (termene, documente, status declarații), îți filtrează cazurile reale și te lasă să te ocupi de contabilitatea care contează.",
+  "problem_title": "Telefonul sună mai des decât calculatorul",
+  "problem_text": "Dacă ești contabil independent sau conduci o firmă de servicii contabile, știi deja scena: e luni dimineața, ai 30 de WhatsApp-uri necitite, 12 mailuri și trei apeluri pierdute. Deschizi primul mesaj — 'Bună, când e termenul pentru D112?'. Al doilea — 'Ce documente îmi mai trebuie pentru bilanț?'. Al treilea — 'Ai depus D394?'. Și tot așa, până la prânz, când abia te apuci de munca reală. Contabilul mediu primește între 30 și 50 de cereri pe săptămână de la clienți, iar 70-80% dintre ele sunt strict procedurale: termene fiscale, liste de documente, status-uri ale declarațiilor depuse. Restul de 20% sunt cazurile care chiar contează — întrebări complexe despre deductibilitate, decizii de optimizare, situații atipice. Problema e că ajungi la ele obosit, întrerupt și cu trei zile întârziere, pentru că ai răspuns de 50 de ori la 'când' și 'ce documente'. În mijlocul închiderii lunii, fiecare întrerupere te costă 15-20 de minute de reconcentrare. Iar clientul important, cel care chiar are nevoie de tine, așteaptă în spatele celor care întreabă lucruri pe care le-ai scris deja de zece ori într-un email vechi.",
+  "solution_title": "Cum funcționează Sambla pentru biroul tău",
+  "solution_text": "Sambla este un agent AI conectat la WhatsApp Business și la chat-ul de pe site-ul firmei tale, care răspunde clienților 24/7 — dar doar la întrebări procedurale. Îl configurezi o singură dată cu lista ta de termene fiscale anuale (D112, D394, D406, D300, bilanț, situații financiare etc.), cu checklist-urile de documente per tip de declarație și, opțional, cu un sync către softul tău de contabilitate (Saga, WinMentor, SmartBill, ContaBlue) sau către portalul ANAF, pentru a putea răspunde și la 'ai depus deja D394 pentru aprilie?'. Bot-ul are o instrucțiune locked, imuabilă: NU dă consultanță fiscală, NU interpretează legea, NU recomandă scheme de optimizare. Dacă un client întreabă ceva care depășește zona procedurală — deductibilitate, încadrări, situații atipice — bot-ul răspunde politicos că întrebarea necesită analiza unui contabil, te notifică pe tine cu contextul complet și îi promite clientului un follow-up uman. Tu primești pe email sau în dashboard doar cazurile reale, deja triate, cu istoric de conversație inclus. În rest, clienții îți știu termenele, primesc checklist-urile pe care le tot trimiteai manual și opresc valul de WhatsApp-uri repetitive. Setup-ul durează între 2 și 5 zile lucrătoare, în funcție de complexitatea integrării.",
+  "benefits": [
+    {"title": "Răspuns la termene fiscale 24/7", "description": "Clienții primesc instant termenele pentru D112, D394, D406, D300, bilanț și orice altă declarație din calendarul tău fiscal — inclusiv duminica seara, când își aduc aminte că au uitat ceva."},
+    {"title": "Trimite checklist documente automat", "description": "Pentru fiecare tip de declarație, bot-ul trimite lista exactă de documente necesare și, opțional, un template Excel pregătit de tine — fără să mai copiezi același mesaj de 20 de ori pe lună."},
+    {"title": "Status declarații live (sync cu softul tău)", "description": "Integrare cu Saga, WinMentor, SmartBill, ContaBlue sau portalul ANAF: clienții pot întreba 'ai depus D394?' și primesc răspuns real, fără să te deranjeze."},
+    {"title": "−70% mesaje repetitive pe WhatsApp", "description": "Întrebările procedurale dispar din inbox-ul tău. Rămân doar cazurile care chiar au nevoie de un contabil real — cele pentru care ești plătit."},
+    {"title": "NU dă consultanță fiscală (instrucțiune locked)", "description": "Bot-ul are o regulă imuabilă: zero interpretări fiscale, zero recomandări de deductibilitate. Orice întrebare de substanță e escaladată direct la tine, cu context complet."},
+    {"title": "Hosting în România, GDPR by default", "description": "Datele clienților firmei tale stau pe servere din România, criptate, cu log-uri de acces și DPA semnat. Conformitate GDPR și ANAF din prima zi."}
+  ],
+  "demo_messages": [
+    {"role": "user", "text": "Salut! Care e termenul pentru D394 luna asta?"},
+    {"role": "bot", "text": "Salut! Termenul pentru declarația 394 (Declarația informativă privind livrările/prestările și achizițiile) pentru luna aprilie 2026 este 25 mai 2026. Aveți deja documentele pregătite sau aveți nevoie de checklist?"},
+    {"role": "user", "text": "Ce documente îmi trebuie?"},
+    {"role": "bot", "text": "Pentru D394 aveți nevoie de: jurnalul de cumpărări și jurnalul de vânzări pe luna respectivă, balanța de verificare la sfârșitul lunii, lista facturilor cu valori >5000 lei (clienți + furnizori), și CIF-urile partenerilor. Doriți să vă trimit un template Excel cu structura corectă?"},
+    {"role": "user", "text": "Da, te rog. Și o întrebare: pot deduce TVA-ul de la o factură de combustibil?"},
+    {"role": "bot", "text": "Această întrebare necesită analiza specifică a situației firmei dvs. (deductibilitatea TVA pentru combustibil depinde de tipul vehiculului, scopul utilizării, regimul TVA al firmei). Vă recomand să vorbiți direct cu doamna contabilă Mihaela. V-am trimis pe email template-ul pentru D394 și i-am notificat pe doamna Mihaela despre întrebarea dvs. — vă va contacta luni dimineață."}
+  ],
+  "social_proof_text": "Folosit de firme de contabilitate din București, Cluj, Timișoara și Iași care gestionează între 30 și 400 de clienți activi. În medie, biroul tipic raportează o reducere de 65-75% a mesajelor procedurale pe WhatsApp în prima lună de utilizare și recuperează 8-12 ore pe săptămână din timpul contabililor seniori.",
+  "cta_primary_text": "Începe gratuit",
+  "cta_primary_href": "/register",
+  "cta_secondary_text": "Vorbește cu noi",
+  "cta_secondary_href": "/contact",
+  "icon_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"5\" y=\"3\" width=\"14\" height=\"18\" rx=\"2\"/><line x1=\"8\" y1=\"7\" x2=\"16\" y2=\"7\"/><line x1=\"8\" y1=\"11\" x2=\"10\" y2=\"11\"/><line x1=\"12\" y1=\"11\" x2=\"14\" y2=\"11\"/><line x1=\"8\" y1=\"14\" x2=\"10\" y2=\"14\"/><line x1=\"12\" y1=\"14\" x2=\"14\" y2=\"14\"/><line x1=\"8\" y1=\"17\" x2=\"10\" y2=\"17\"/><line x1=\"12\" y1=\"17\" x2=\"14\" y2=\"17\"/></svg>",
+  "faq": [
+    {"question": "Bot-ul dă consultanță fiscală?", "answer": "Nu. Are o instrucțiune locked, imuabilă: zero interpretări de lege, zero recomandări de deductibilitate, zero scheme de optimizare. Răspunde strict la întrebări procedurale (termene, documente, status declarații) și escaladează la contabilul real orice întrebare de substanță, cu contextul conversației inclus."},
+    {"question": "Cu ce softuri se integrează?", "answer": "Sambla se conectează nativ cu Saga, WinMentor, SmartBill, ContaBlue și portalul ANAF (SPV). Pentru softuri proprietare sau ERP-uri custom putem face integrare prin API REST sau export periodic CSV — discutăm la onboarding ce variantă e cea mai potrivită."},
+    {"question": "Cum protejează datele clienților mei?", "answer": "Hosting integral în România, criptare în tranzit (TLS) și la rest (AES-256), log-uri de acces complete, DPA semnat la onboarding și politici GDPR aliniate cu cerințele ANSPDCP. Datele clienților firmei tale nu părăsesc niciodată infrastructura noastră și nu sunt folosite pentru antrenarea modelelor."},
+    {"question": "Funcționează pe WhatsApp Business?", "answer": "Da. Sambla se integrează direct cu WhatsApp Business API (canalul oficial Meta), iar clienții îți scriu pe același număr pe care îl știu deja. În plus, poți activa și un widget de chat pe site-ul firmei tale, un voicebot pentru telefon sau un canal Telegram."},
+    {"question": "Pot configura termene specifice firmei mele?", "answer": "Absolut. Calendarul fiscal e complet personalizabil: poți adăuga termenele standard (D112, D394, D406, D300, bilanț), termene specifice anumitor clienți (microîntreprinderi vs plătitori de TVA), reminder-e interne pentru echipă și chiar excepții (zile libere, prelungiri ANAF). Tu controlezi ce 'știe' bot-ul."},
+    {"question": "Cât durează setup-ul?", "answer": "Între 2 și 5 zile lucrătoare. Ziua 1-2: importăm calendarul fiscal, checklist-urile de documente și conectăm WhatsApp Business. Ziua 3-4: integrare cu softul de contabilitate (dacă e cazul) și testare. Ziua 5: go-live cu monitorizare asistată în prima săptămână."}
+  ],
+  "meta_title": "Agent AI și chatbot pentru firmă de contabilitate | Sambla — răspuns 24/7 la întrebări procedurale",
+  "meta_description": "Asistent AI pentru contabili: răspunde la termene fiscale, status declarații, documente necesare. Refuză consultanța fiscală. Sync cu Saga, WinMentor, ANAF. Hosting RO, GDPR.",
+  "sort_order": 30,
+  "is_active": true
+}

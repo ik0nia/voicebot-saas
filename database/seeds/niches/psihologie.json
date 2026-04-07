@@ -1,0 +1,47 @@
+{
+  "slug": "psihologie-psihoterapie",
+  "name": "Cabinete psihologie și psihoterapie",
+  "vertical_label": "Psihologie",
+  "color_theme": "purple",
+  "hero_eyebrow": "AGENT AI PENTRU CABINETE DE PSIHOLOGIE",
+  "hero_title": "Programări gestionate cu discreție și profesionalism",
+  "hero_subtitle": "Un asistent AI care preia strict procedural cererile de programare și informațiile despre ședințe, respectă confidențialitatea pacienților și escaladează imediat orice situație sensibilă către psiholog.",
+  "problem_title": "Realitatea unui cabinet de psihoterapie independent",
+  "problem_text": "Majoritatea psihologilor și psihoterapeuților din România lucrează singuri, fără asistent și fără secretariat. Între ședințe au pauze de zece, cincisprezece minute — exact intervalul în care se acumulează apelurile pierdute, mesajele pe WhatsApp și emailurile cu cereri de programare. În timpul ședinței, telefonul nu poate suna și nu poate fi preluat: este o regulă elementară de etică și de respect față de pacientul aflat în cabinet. Rezultatul este previzibil: la finalul zilei rămân douăzeci de mesaje necitite, cinci apeluri pierdute și o coadă de oameni care așteaptă răspuns la întrebări procedurale repetitive — cât durează o ședință, care este tariful, dacă lucrați online sau doar fizic, dacă se eliberează factură, care este programul. Pacienții care nu primesc răspuns rapid caută alt specialist, iar mulți dintre ei au nevoie reală de sprijin și nu mai revin. La acestea se adaugă no-show-urile: o ședință pierdută înseamnă un slot care nu mai poate fi recuperat în acea zi și un alt pacient care ar fi putut beneficia de el. Timpul terapeutului este consumat cu sarcini administrative care nu au nicio legătură cu actul terapeutic în sine.",
+  "solution_title": "Cum te ajută Sambla, în limite stricte și clare",
+  "solution_text": "Sambla este un asistent vocal și text configurat cu instrucțiuni stricte non-clinice. Nu oferă consiliere, nu interpretează stări emoționale, nu pune diagnostice și nu intră niciodată în conținutul personal al pacientului. Răspunde exclusiv la întrebări procedurale: program, tarife, durata unei ședințe, modalitate online sau fizic, locație, modalități de plată, eliberare factură. Se sincronizează cu Google Calendar al cabinetului și oferă pacientului sloturile disponibile, fără a întreba motivul solicitării. Trimite un reminder discret cu 24 de ore înainte, formulat sobru, fără emoji-uri și fără mesaje familiare. Cel mai important: agentul este antrenat să recunoască imediat orice formulare care sugerează o criză psihologică, ideație suicidară, abuz sau urgență emoțională. În aceste situații întrerupe fluxul de programare, oferă mesajul de urgență cu numerele de criză disponibile în România — 112 pentru urgențe și Telverde Antisuicid 0800 801 200, Alianța Română de Prevenție a Suicidului — și escaladează conversația către psiholog printr-o notificare prioritară. Toate datele pacienților sunt stocate criptat, conform GDPR pentru categorii speciale de date.",
+  "benefits": [
+    {"title": "Programări 24/7 cu discreție absolută", "description": "Pacienții pot solicita o ședință în orice moment al zilei, fără să lase mesaje pe robot sau să sune între ședințe. Bot-ul nu cere niciodată motivul programării."},
+    {"title": "Ton sobru, fără emoji-uri și fără familiarisme", "description": "Mesajele și răspunsurile sunt formulate calm, profesional, cu respect pentru sensibilitatea contextului. Nu se folosesc expresii de tip marketing sau elemente vizuale informale."},
+    {"title": "Reminder discret cu 24 de ore înainte", "description": "Confirmare de programare formulată sobru, prin SMS sau email, pentru a reduce no-show-urile fără a intra în zona personală a pacientului."},
+    {"title": "Integrare cu Google Calendar", "description": "Sincronizare în timp real cu agenda cabinetului, ținând cont de durata ședinței și de pauzele dintre pacienți. Modificările sunt reflectate automat."},
+    {"title": "Multilingv română și engleză", "description": "Răspunde fluent în ambele limbi, util pentru cabinetele care lucrează cu pacienți expat sau cu sesiuni online internaționale."},
+    {"title": "GDPR pentru date sensibile și escaladare de urgență", "description": "Conformitate strictă pentru categorii speciale de date conform articolului 9 GDPR. Recunoaștere automată a semnalelor de criză și escaladare imediată cu mesaj de urgență 112 și Telverde Antisuicid."}
+  ],
+  "demo_messages": [
+    {"role": "user", "text": "Bună ziua, aș dori să stabilesc o primă ședință de psihoterapie."},
+    {"role": "bot", "text": "Bună ziua. Vă pot ajuta cu programarea. O primă ședință durează 50 de minute și poate fi susținută online, prin videoconferință securizată, sau fizic la cabinet. Care dintre cele două variante vă este mai accesibilă?"},
+    {"role": "user", "text": "Aș prefera online. Care este tariful și ce sloturi sunt disponibile săptămâna viitoare?"},
+    {"role": "bot", "text": "Tariful pentru o ședință individuală este de 250 de lei, achitabil prin transfer bancar înainte de ședință. Pentru săptămâna viitoare, am disponibile următoarele intervale: marți, 14 aprilie, ora 17:00, joi, 16 aprilie, ora 11:00, sau vineri, 17 aprilie, ora 18:00. Care vă convine?"},
+    {"role": "user", "text": "Joi la 11:00, vă rog. Se eliberează factură?"},
+    {"role": "bot", "text": "Da, se eliberează factură pe numele dumneavoastră sau al companiei, după preferință. V-am rezervat slotul de joi, 16 aprilie, ora 11:00. Veți primi pe email confirmarea programării și instrucțiunile pentru conexiunea video. Cu o zi înainte veți primi un reminder discret. Vă mulțumesc."}
+  ],
+  "social_proof_text": "Sambla este construit în România pentru cabinete de psihologie și psihoterapie care au nevoie de sprijin administrativ riguros, fără a compromite confidențialitatea sau granițele profesionale ale relației terapeutice.",
+  "cta_primary_text": "Începe gratuit",
+  "cta_primary_href": "/register",
+  "cta_secondary_text": "Vorbește cu noi",
+  "cta_secondary_href": "/contact",
+  "icon_svg": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><path d='M9 4.5C6.5 4.5 5 6.2 5 8.2c0 .9.3 1.6.7 2.2-.7.6-1.2 1.5-1.2 2.5 0 1.3.8 2.4 2 2.9.1 1.6 1.4 2.9 3 2.9.6 0 1.1-.2 1.6-.5V6c0-.8-.7-1.5-1.5-1.5z'/><path d='M15 4.5c2.5 0 4 1.7 4 3.7 0 .9-.3 1.6-.7 2.2.7.6 1.2 1.5 1.2 2.5 0 1.3-.8 2.4-2 2.9-.1 1.6-1.4 2.9-3 2.9-.6 0-1.1-.2-1.6-.5V6c0-.8.7-1.5 1.5-1.5z'/></svg>",
+  "faq": [
+    {"question": "Bot-ul oferă consiliere psihologică sau sfaturi pacienților?", "answer": "Niciodată, sub nicio formă. Sambla este configurat cu instrucțiuni stricte care îi interzic să ofere consiliere, interpretări, sfaturi emoționale sau orice formă de intervenție terapeutică. Răspunde exclusiv la întrebări procedurale legate de programări, tarife, durata ședințelor și modalitatea de desfășurare. Actul terapeutic rămâne integral și exclusiv în responsabilitatea psihologului."},
+    {"question": "Ce se întâmplă dacă un pacient transmite un mesaj de criză?", "answer": "Agentul este antrenat să recunoască imediat formulări care sugerează ideație suicidară, criză acută, abuz sau urgență psihologică. În aceste situații întrerupe fluxul normal, afișează mesajul de urgență cu numerele 112 și Telverde Antisuicid 0800 801 200, și trimite o notificare prioritară către psiholog pentru intervenție umană imediată."},
+    {"question": "Bot-ul întreabă pacientul de ce solicită programarea?", "answer": "Nu. Nu se cere niciodată motivul cererii, nu se solicită istoric și nu se pun întrebări despre starea emoțională. Singurele informații colectate sunt cele strict necesare pentru programare: nume, contact, modalitatea preferată — online sau fizic — și intervalul orar."},
+    {"question": "Cum sunt protejate datele sensibile ale pacienților?", "answer": "Toate datele sunt stocate criptat pe servere din România, în conformitate cu GDPR și cu prevederile articolului 9 privind categoriile speciale de date. Se semnează contract de prelucrare a datelor (DPA), iar accesul este restricționat exclusiv la psihologul titular al cabinetului."},
+    {"question": "Pot configura un mesaj personalizat de întâmpinare?", "answer": "Da. Mesajul de întâmpinare, formulările de răspuns, regulile privind tarifele, modalitățile de plată și conținutul mesajului de criză sunt configurate împreună cu dumneavoastră, pentru a respecta tonul și standardele cabinetului."},
+    {"question": "Cât durează implementarea pentru cabinetul meu?", "answer": "În medie, între 3 și 5 zile lucrătoare. Stabilim împreună regulile procedurale, conectăm Google Calendar, configurăm cuvintele-cheie pentru escaladarea de urgență și formulăm mesajul de întâmpinare. Realizăm câteva apeluri de test înainte de activare."}
+  ],
+  "meta_title": "Agent AI pentru cabinet psihologie și psihoterapie | Sambla — programări discrete și GDPR",
+  "meta_description": "Asistent AI care preia procedural programările pentru cabinetul de psihologie sau psihoterapie. Ton sobru, confidențialitate strictă, escaladare imediată în caz de criză. Construit în România, GDPR compliant pentru date sensibile.",
+  "sort_order": 80,
+  "is_active": true
+}
