@@ -66,6 +66,11 @@ Route::get('/contact', function () {
     return view('contact');
 });
 
+// Legal pages (GDPR compliance)
+Route::view('/termeni', 'legal.termeni')->name('legal.termeni');
+Route::view('/confidentialitate', 'legal.confidentialitate')->name('legal.confidentialitate');
+Route::view('/cookie-uri', 'legal.cookie-uri')->name('legal.cookie-uri');
+
 // Chatbot embed routes are in routes/api.php under /chatbot prefix (no auth/session middleware)
 
 // Public demo & test pages (no auth required)
@@ -315,6 +320,7 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
         Route::get('/', [AdminSocialController::class, 'index'])->name('index');
         Route::post('/generate', [AdminSocialController::class, 'generate'])->name('generate');
         Route::get('/post/{post}', [AdminSocialController::class, 'show'])->name('show');
+        Route::get('/post/{post}/edit', [AdminSocialController::class, 'edit'])->name('edit');
         Route::patch('/post/{post}', [AdminSocialController::class, 'patch'])->name('patch');
         Route::put('/post/{post}', [AdminSocialController::class, 'update'])->name('update');
         Route::post('/post/{post}/publish', [AdminSocialController::class, 'publish'])->name('publish');
