@@ -613,21 +613,21 @@
                     <div class="flex gap-4 items-start">
                         <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 mt-0.5"><svg class="w-5 h-5 text-amber-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
                         <div>
-                            <h4 class="font-bold text-slate-900 mb-1">Detectează întrebările fără răspuns</h4>
+                            <h3 class="text-base font-bold text-slate-900 mb-1">Detectează întrebările fără răspuns</h3>
                             <p class="text-sm text-slate-500">"12 clienți au întrebat despre retur, dar nu ai conținut. Vrei să generez un draft?"</p>
                         </div>
                     </div>
                     <div class="flex gap-4 items-start">
                         <div class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center shrink-0 mt-0.5"><svg class="w-5 h-5 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg></div>
                         <div>
-                            <h4 class="font-bold text-slate-900 mb-1">Generează conținut automat</h4>
+                            <h3 class="text-base font-bold text-slate-900 mb-1">Generează conținut automat</h3>
                             <p class="text-sm text-slate-500">AI-ul scrie un draft de politică de retur bazat pe întrebările reale. Tu doar aprobi.</p>
                         </div>
                     </div>
                     <div class="flex gap-4 items-start">
                         <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shrink-0 mt-0.5"><svg class="w-5 h-5 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg></div>
                         <div>
-                            <h4 class="font-bold text-slate-900 mb-1">Monitorizează calitatea zilnic</h4>
+                            <h3 class="text-base font-bold text-slate-900 mb-1">Monitorizează calitatea zilnic</h3>
                             <p class="text-sm text-slate-500">Health score, rată de rezolvare, frustrare detectată — totul într-un dashboard clar.</p>
                         </div>
                     </div>
@@ -682,7 +682,7 @@
                     <p class="text-base text-slate-500 mb-8 leading-relaxed">Bot real, conectat live. Întreabă orice sau alege o sugestie de mai jos.</p>
 
                     <div class="space-y-3">
-                        <button onclick="askDemo('Ce funcționalități are Sambla?')" class="w-full text-left group flex items-center gap-4 px-5 py-4 rounded-2xl bg-white border border-slate-200 hover:border-red-300 hover:shadow-md transition-all duration-300">
+                        <button onclick="askDemo('Ce funcționalități are Sambla?')" aria-label="Întreabă despre funcționalități" class="w-full text-left group flex items-center gap-4 px-5 py-4 rounded-2xl bg-white border border-slate-200 hover:border-red-300 hover:shadow-md transition-all duration-300">
                             <span class="text-2xl shrink-0">💡</span>
                             <div class="flex-1 min-w-0">
                                 <p class="text-sm font-bold text-slate-900">Ce funcționalități are?</p>
@@ -691,7 +691,7 @@
                             <svg class="w-5 h-5 text-slate-300 shrink-0 group-hover:text-red-500 group-hover:translate-x-1 transition-all duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
                         </button>
 
-                        <button onclick="askDemo('Cât costă platforma?')" class="w-full text-left group flex items-center gap-4 px-5 py-4 rounded-2xl bg-white border border-slate-200 hover:border-red-300 hover:shadow-md transition-all duration-300">
+                        <button onclick="askDemo('Cât costă platforma?')" aria-label="Întreabă despre prețuri" class="w-full text-left group flex items-center gap-4 px-5 py-4 rounded-2xl bg-white border border-slate-200 hover:border-red-300 hover:shadow-md transition-all duration-300">
                             <span class="text-2xl shrink-0">💰</span>
                             <div class="flex-1 min-w-0">
                                 <p class="text-sm font-bold text-slate-900">Cât costă?</p>
@@ -700,7 +700,7 @@
                             <svg class="w-5 h-5 text-slate-300 shrink-0 group-hover:text-red-500 group-hover:translate-x-1 transition-all duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
                         </button>
 
-                        <button onclick="askDemo('Cum se integrează cu magazinul meu?')" class="w-full text-left group flex items-center gap-4 px-5 py-4 rounded-2xl bg-white border border-slate-200 hover:border-red-300 hover:shadow-md transition-all duration-300">
+                        <button onclick="askDemo('Cum se integrează cu magazinul meu?')" aria-label="Întreabă despre integrare WooCommerce" class="w-full text-left group flex items-center gap-4 px-5 py-4 rounded-2xl bg-white border border-slate-200 hover:border-red-300 hover:shadow-md transition-all duration-300">
                             <span class="text-2xl shrink-0">🔗</span>
                             <div class="flex-1 min-w-0">
                                 <p class="text-sm font-bold text-slate-900">Cum se integrează?</p>
@@ -709,7 +709,7 @@
                             <svg class="w-5 h-5 text-slate-300 shrink-0 group-hover:text-red-500 group-hover:translate-x-1 transition-all duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
                         </button>
 
-                        <button onclick="askDemo('Funcționează și pe telefon?')" class="w-full text-left group flex items-center gap-4 px-5 py-4 rounded-2xl bg-white border border-slate-200 hover:border-red-300 hover:shadow-md transition-all duration-300">
+                        <button onclick="askDemo('Funcționează și pe telefon?')" aria-label="Întreabă despre voicebot telefon" class="w-full text-left group flex items-center gap-4 px-5 py-4 rounded-2xl bg-white border border-slate-200 hover:border-red-300 hover:shadow-md transition-all duration-300">
                             <span class="text-2xl shrink-0">📞</span>
                             <div class="flex-1 min-w-0">
                                 <p class="text-sm font-bold text-slate-900">Merge și pe telefon?</p>
@@ -768,8 +768,8 @@
                         <div class="border-t border-slate-100 px-5 py-4 bg-slate-50">
                             <form id="chatForm" class="flex gap-2">
                                 <input type="text" id="chatInput" placeholder="Scrie un mesaj..." class="flex-1 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-300 transition-all" autocomplete="off"/>
-                                <button type="submit" class="w-11 h-11 flex items-center justify-center bg-gradient-to-br from-red-600 to-red-700 text-white rounded-full hover:from-red-500 hover:to-red-600 transition-all shadow-md shadow-red-200 hover:shadow-lg hover:shadow-red-300 active:scale-95">
-                                    <svg class="w-[18px] h-[18px] -rotate-45" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                                <button type="submit" aria-label="Trimite mesaj" class="w-11 h-11 flex items-center justify-center bg-gradient-to-br from-red-600 to-red-700 text-white rounded-full hover:from-red-500 hover:to-red-600 transition-all shadow-md shadow-red-200 hover:shadow-lg hover:shadow-red-300 active:scale-95">
+                                    <svg class="w-[18px] h-[18px] -rotate-45" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
                                 </button>
                             </form>
                         </div>
