@@ -265,7 +265,7 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-6xl mx-auto">
             {{-- Folosim --}}
-            <div class="bg-white rounded-2xl border border-slate-200 p-7">
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 lg:p-8">
                 <div class="flex items-center gap-3 mb-5">
                     <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
                         <svg class="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125"/></svg>
@@ -286,7 +286,7 @@
             </div>
 
             {{-- Am construit --}}
-            <div class="bg-white rounded-2xl border-2 border-red-300 p-7 relative">
+            <div class="bg-white rounded-2xl border-2 border-red-300 p-6 lg:p-8 relative">
                 <div class="absolute top-0 right-0 bg-red-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl uppercase tracking-wider">Proprietar</div>
                 <div class="flex items-center gap-3 mb-5">
                     <div class="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
@@ -610,7 +610,7 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {{-- Real client (anonymized) --}}
-            <div class="bg-white rounded-2xl border-2 border-emerald-300 p-7 shadow-sm hover:shadow-md transition-shadow relative">
+            <div class="bg-white rounded-2xl border-2 border-emerald-300 p-6 lg:p-8 shadow-sm hover:shadow-md transition-shadow relative">
                 <div class="absolute top-0 right-0 bg-emerald-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl uppercase tracking-wider">Client real (anonimizat)</div>
                 <p class="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-2 mt-3">E-COMMERCE · COSMETICE NATURALE</p>
                 <h3 class="text-xl font-bold text-slate-900 mb-3">Magazin online de produse cosmetice naturale</h3>
@@ -648,7 +648,7 @@
             </div>
 
             {{-- Hypothetical 1 --}}
-            <div class="bg-white rounded-2xl border border-slate-200 p-7 hover:border-slate-300 transition-colors relative">
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 lg:p-8 hover:border-slate-300 transition-colors relative">
                 <div class="absolute top-0 right-0 bg-slate-200 text-slate-600 text-[10px] font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl uppercase tracking-wider">Scenariu ilustrativ</div>
                 <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 mt-3">CABINET STOMATOLOGIC · 4 medici</p>
                 <h3 class="text-xl font-bold text-slate-900 mb-3">Cabinet stomatologic urban</h3>
@@ -686,7 +686,7 @@
             </div>
 
             {{-- Hypothetical 2 --}}
-            <div class="bg-white rounded-2xl border border-slate-200 p-7 hover:border-slate-300 transition-colors relative">
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 lg:p-8 hover:border-slate-300 transition-colors relative">
                 <div class="absolute top-0 right-0 bg-slate-200 text-slate-600 text-[10px] font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl uppercase tracking-wider">Scenariu ilustrativ</div>
                 <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 mt-3">BIROU AVOCATURĂ · 6 avocați</p>
                 <h3 class="text-xl font-bold text-slate-900 mb-3">Birou de avocatură mediu</h3>
