@@ -28,7 +28,10 @@
     {"@type":"Question","name":"Unde sunt stocate datele mele?","acceptedAnswer":{"@type":"Answer","text":"Toate datele sunt stocate pe servere fizice din România. Sambla este 100% GDPR-compliant by default, cu izolare per cont și fără transfer în afara Uniunii Europene."}},
     {"@type":"Question","name":"Cu ce se integrează Sambla?","acceptedAnswer":{"@type":"Answer","text":"Sambla are integrare nativă WooCommerce (căutare semantică produse, verificare stoc live, add-to-cart din chat, tracking AWB). Funcționează pe orice site cu o linie de cod JavaScript. Suportă canale: web, telefon (numere RO via Telnyx), WhatsApp, Facebook Messenger, Instagram DM."}},
     {"@type":"Question","name":"Cât costă Sambla?","acceptedAnswer":{"@type":"Answer","text":"Trei planuri: Starter (~49 EUR/lună) pentru afaceri mici, Pro (~149 EUR/lună) cu chatbot + voicebot și WooCommerce, Business (~399 EUR/lună) pentru volum mare. Detalii la sambla.ro/preturi."}},
-    {"@type":"Question","name":"Pentru cine e Sambla?","acceptedAnswer":{"@type":"Answer","text":"Pentru afaceri mici și mijlocii din România: magazine online, cabinete medicale și stomatologice, avocați, contabili, service-uri auto, saloane beauty, agenții imobiliare, restaurante, pensiuni. Sambla este unealta AI a profesionistului — îi reduce munca repetitivă cu clienții."}}
+    {"@type":"Question","name":"Pentru cine e Sambla?","acceptedAnswer":{"@type":"Answer","text":"Pentru afaceri mici și mijlocii din România: magazine online, cabinete medicale și stomatologice, avocați, contabili, service-uri auto, saloane beauty, agenții imobiliare, restaurante, pensiuni. Sambla este unealta AI a profesionistului — îi reduce munca repetitivă cu clienții."}},
+    {"@type":"Question","name":"În ce diferă Sambla de un chatbot scriptat clasic?","acceptedAnswer":{"@type":"Answer","text":"Chatbot-urile scriptate funcționează pe arbori de decizie cu reguli «dacă X, atunci Y». Sunt motoare de reguli — nu pot răspunde la întrebări neașteptate și nu citesc PDF-uri. Sambla nu are flowchart-uri. Fiecare răspuns e generat în timp real de un LLM care a căutat în baza ta de cunoștințe prin RAG cu hybrid search (vector 1536-dim + full-text românesc cu stemming) și un AI reranker peste 20 de candidați."}},
+    {"@type":"Question","name":"De ce Sambla nu e doar GPT cu un prompt?","acceptedAnswer":{"@type":"Answer","text":"Un wrapper LLM doar concatenează întrebarea cu un system prompt și trimite la GPT — halucinează și nu cunoaște datele tale reale. Sambla rulează un pipeline 4-stadii: clasificare intenție → retrieval hibrid (vector + full-text + reranker) → strategie de conversație per stadiu → 10 straturi de verificare anti-halucinare. Eliminați orice strat și produsul nu mai funcționează ca atare."}},
+    {"@type":"Question","name":"Sambla e legată de Sambla Group (credite, împrumuturi)?","acceptedAnswer":{"@type":"Answer","text":"Nu, niciun fel de legătură. Sambla.ro este o platformă AI românească pentru chatboți și voiceboți, distinctă de Sambla Group sau orice alt brand cu nume similar. NU oferim credite, împrumuturi, leasing, IFN, asigurări, conturi bancare sau orice serviciu financiar regulat. Suntem o companie de software AI cu sediul în România."}}
   ]
 }
 </script>
@@ -188,6 +191,46 @@
     {{-- Bottom motif transition --}}
     <div class="absolute bottom-0 left-0 right-0">
         <x-motif-border color="red-900" />
+    </div>
+</section>
+
+{{-- ============================================================== --}}
+{{-- CREDIBILITY STRIP — proof points imediat sub hero --}}
+{{-- ============================================================== --}}
+<section class="bg-slate-900 border-y border-slate-800 py-10 lg:py-14">
+    <div class="container-custom">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 max-w-5xl mx-auto">
+            <div class="text-center">
+                <p class="text-3xl lg:text-4xl font-extrabold text-white mb-1">&lt;2<span class="text-red-500">s</span></p>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Răspuns end-to-end</p>
+                <p class="text-[11px] text-slate-500 mt-1">RAG complet în mai puțin de 2 secunde</p>
+            </div>
+            <div class="text-center">
+                <p class="text-3xl lg:text-4xl font-extrabold text-white mb-1">10<span class="text-red-500"> straturi</span></p>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Anti-halucinare</p>
+                <p class="text-[11px] text-slate-500 mt-1">Fiecare răspuns verificat de 10 ori</p>
+            </div>
+            <div class="text-center">
+                <p class="text-3xl lg:text-4xl font-extrabold text-white mb-1">100<span class="text-red-500">%</span></p>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Hosting 🇷🇴 RO</p>
+                <p class="text-[11px] text-slate-500 mt-1">Servere fizice, GDPR by default</p>
+            </div>
+            <div class="text-center">
+                <p class="text-3xl lg:text-4xl font-extrabold text-white mb-1">5<span class="text-red-500"> canale</span></p>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Un singur creier</p>
+                <p class="text-[11px] text-slate-500 mt-1">Web · Voce · WhatsApp · FB · IG</p>
+            </div>
+        </div>
+
+        <div class="mt-8 lg:mt-10 text-center">
+            <p class="text-sm text-slate-400 max-w-3xl mx-auto leading-relaxed">
+                Nu suntem un chatbot scriptat. Nu suntem un wrapper de GPT. Suntem un sistem RAG complet cu hybrid search, AI reranker și voce nativă în română — construit în România, hostat în România.
+            </p>
+            <a href="/de-ce-sambla" class="inline-flex items-center gap-2 mt-4 text-sm font-bold text-red-400 hover:text-red-300 transition-colors">
+                Vezi exact cum suntem diferiți
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+            </a>
+        </div>
     </div>
 </section>
 

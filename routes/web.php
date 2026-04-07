@@ -70,6 +70,8 @@ Route::middleware(\App\Http\Middleware\PublicPageCache::class)->group(function (
         return view('contact');
     });
 
+    Route::view('/de-ce-sambla', 'de-ce-sambla')->name('public.deCeSambla');
+
     // Legal pages (GDPR compliance)
     Route::view('/termeni', 'legal.termeni')->name('legal.termeni');
     Route::view('/confidentialitate', 'legal.confidentialitate')->name('legal.confidentialitate');

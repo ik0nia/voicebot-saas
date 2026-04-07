@@ -21,6 +21,7 @@
                         ['href' => '/', 'label' => 'Acasă', 'match' => '/'],
                         ['href' => '/despre', 'label' => 'Despre', 'match' => 'despre'],
                         ['href' => '/functionalitati', 'label' => 'Funcționalități', 'match' => 'functionalitati'],
+                        ['href' => '/de-ce-sambla', 'label' => 'De ce Sambla', 'match' => 'de-ce-sambla'],
                         ['href' => '/preturi', 'label' => 'Prețuri', 'match' => 'preturi'],
                         ['href' => '/contact', 'label' => 'Contact', 'match' => 'contact'],
                     ];
