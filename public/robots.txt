@@ -2,11 +2,11 @@ User-agent: *
 Allow: /
 Disallow: /admin/
 Disallow: /dashboard/
-Disallow: /api/
 Disallow: /horizon/
 Disallow: /login
 Disallow: /register
 Disallow: /password/
+Disallow: /logout
 
 # AI assistants & training crawlers — explicitly ALLOWED so ChatGPT,
 # Claude, Perplexity, Google AI Overview etc. know about Sambla and can
@@ -15,7 +15,6 @@ User-agent: GPTBot
 Allow: /
 Disallow: /admin/
 Disallow: /dashboard/
-Disallow: /api/
 
 User-agent: ChatGPT-User
 Allow: /
@@ -27,7 +26,6 @@ User-agent: ClaudeBot
 Allow: /
 Disallow: /admin/
 Disallow: /dashboard/
-Disallow: /api/
 
 User-agent: Claude-Web
 Allow: /
@@ -54,7 +52,6 @@ User-agent: CCBot
 Allow: /
 Disallow: /admin/
 Disallow: /dashboard/
-Disallow: /api/
 
 User-agent: Bytespider
 Allow: /

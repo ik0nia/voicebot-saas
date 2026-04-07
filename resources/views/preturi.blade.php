@@ -3,6 +3,15 @@
 @section('title', 'Prețuri - Sambla')
 @section('meta_description', 'Prețuri simple și transparente pentru Sambla. Alege planul potrivit pentru afacerea ta. Fără costuri ascunse.')
 
+@section('jsonld')
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","@id":"https://sambla.ro/preturi#webpage","url":"https://sambla.ro/preturi","name":"Prețuri Sambla","description":"Planuri Sambla pentru chatbot AI și voicebot — Starter, Pro, Business. Prețuri în EUR, fără costuri ascunse, hosting în România.","isPartOf":{"@id":"https://sambla.ro/#website"},"about":{"@id":"https://sambla.ro/#software"},"inLanguage":"ro-RO"}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Product","name":"Sambla AI Platform","brand":{"@type":"Brand","name":"Sambla"},"description":"Platformă SaaS pentru agenți AI conversaționali (chatbot și voicebot) cu hosting în România, GDPR compliant.","offers":{"@type":"AggregateOffer","priceCurrency":"EUR","lowPrice":"49","highPrice":"399","offerCount":3,"offers":[{"@type":"Offer","name":"Starter","price":"49","priceCurrency":"EUR","description":"Chatbot web pentru afaceri mici"},{"@type":"Offer","name":"Pro","price":"149","priceCurrency":"EUR","description":"Chatbot + voicebot, multi-canal, integrare WooCommerce"},{"@type":"Offer","name":"Business","price":"399","priceCurrency":"EUR","description":"Volum mare, voce premium, multi-bot, suport dedicat"}]}}
+</script>
+@endsection
+
 @section('content')
 
     <section class="relative overflow-hidden bg-slate-950 pt-28 pb-20 lg:pt-36 lg:pb-24">

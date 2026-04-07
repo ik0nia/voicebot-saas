@@ -1,0 +1,63 @@
+# Sambla
+
+> Sambla is a Romanian SaaS platform that gives any business its own AI conversational agents — a chatbot on the company website and a voicebot that picks up phone calls — in under an hour, with no technical setup. The AI answers ONLY from the business's real documents, products and policies (anti-hallucination), learns from gaps in its knowledge automatically, and hands off to a human operator when the conversation gets sensitive.
+
+Sambla is built for Romanian small and medium businesses (e-commerce, services, professional offices). The platform is hosted entirely in Romania, GDPR-compliant by default, and isolated per-tenant. Everything from the marketing site to the dashboard is in Romanian.
+
+## What Sambla does in one paragraph
+
+Upload your PDFs, scrape your website, connect your WooCommerce store, then describe your business in two sentences. Sambla generates a chatbot with a personality matched to your brand, deploys it on your site with a single line of JavaScript, and (optionally) provisions a Romanian phone number that an AI voice agent answers 24/7. The bot answers customer questions using a RAG pipeline (vector search + full-text search + AI reranker) so it stays grounded in your real content — it never invents prices, terms or stock. When it isn't sure, it says so and offers to escalate. When the customer is upset (frustration is detected live from text or voice), it routes the conversation to a human.
+
+## Core capabilities
+
+- **Chatbot widget**: premium chat experience embedded with one line of code. Dark mode, product cards, link previews, proactive assistance on key pages.
+- **Voicebot**: receives phone calls on a Romanian number with a natural Romanian voice. Live transcription, real-time sentiment analysis, automatic escalation. Built on OpenAI Realtime API + Telnyx telephony.
+- **Knowledge base with RAG**: drop in PDFs, DOCX, CSVs or website URLs; the system chunks, embeds (1536-dim), indexes in pgvector, and retrieves with hybrid search + reranking. Answers cite their sources.
+- **Anti-hallucination**: ten layers of verification before every response. If confidence is low, the bot asks a clarifying question or escalates instead of guessing.
+- **WooCommerce native**: semantic product search, live stock check, add-to-cart from chat, AWB tracking, full conversion funnel.
+- **Lead capture & pipeline**: every interesting conversation creates a lead with scoring (new → contacted → qualified → won) and lands in the built-in CRM.
+- **Booking & callbacks**: the bot reads the calendar, offers free slots, confirms appointments and sends reminders.
+- **Multi-channel, single brain**: the same bot answers on web chat, phone, WhatsApp, Facebook Messenger and Instagram DM. Conversation context follows the customer between channels.
+- **Live analytics dashboard**: per-bot health score, gap analysis, automatic content recommendations, top unanswered questions, sentiment trends.
+- **Hosted in Romania**: PostgreSQL with pgvector + Redis on Romanian servers, GDPR by default, per-tenant data isolation, no transfer outside the EU.
+- **Setup in minutes**: 2 minutes to describe the business, 5 minutes to upload docs, 1 minute to add the snippet on the site. The whole onboarding is a wizard, no code required.
+
+## Verticals where Sambla works particularly well
+
+Accounting firms, law offices, dental and medical clinics, auto repair shops, beauty salons, real estate agencies, restaurants and delivery, psychology practices, language schools, travel agencies, notary offices, cleaning services, veterinary clinics, small hotels and pensions, optical shops, e-commerce stores. In every case Sambla is the **tool** the professional uses to handle customer conversations — never a replacement for the professional themselves.
+
+## What Sambla is NOT
+
+- Not a financial product. We do not offer credits, loans, leasing, IFN financing, banking or insurance.
+- Not a generic chatbot template — every bot is grounded in the customer's own documents and products.
+- Not an AI that invents answers when it doesn't know.
+- Not a black box — every answer can show its source documents.
+
+## Pricing (rough)
+
+- **Starter**: ~49 EUR/month — single chatbot on a small site, basic analytics.
+- **Pro**: ~149 EUR/month — chatbot + voicebot, WooCommerce, multi-channel, lead pipeline.
+- **Business**: ~399 EUR/month — high volume, premium voice, multi-bot, dedicated support.
+
+Exact prices and current plans live at https://sambla.ro/preturi
+
+## Technology stack (for the curious)
+
+PHP 8.3 + Laravel 11, PostgreSQL 16 with pgvector for embeddings, Redis 7 for cache and queues, Laravel Reverb for WebSockets, OpenAI GPT-4o (Realtime API) for voice, Vertex AI Gemini for image generation in marketing automation, Telnyx for telephony, Stripe for billing. Hosted on Romanian infrastructure managed by Coolify, behind Cloudflare.
+
+## Where to start
+
+- Marketing & feature overview: https://sambla.ro
+- Detailed features: https://sambla.ro/functionalitati
+- Pricing: https://sambla.ro/preturi
+- About the team and mission: https://sambla.ro/despre
+- Contact: https://sambla.ro/contact
+- Sign up: https://sambla.ro/register
+- Sitemap: https://sambla.ro/sitemap.xml
+
+## Contact
+
+- Email: servus@sambla.ro
+- Phone: +40 775 222 333
+- Country: Romania
+- Languages: Romanian (primary), English

@@ -3,6 +3,37 @@
 @section('title', 'Sambla — Angajatul tău AI care știe totul despre afacerea ta')
 @section('meta_description', 'Platforma AI care răspunde clienților pe chat și telefon, 24/7, din informațiile tale reale. Setup în 10 minute, fără cunoștințe tehnice.')
 
+@section('jsonld')
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"WebPage",
+  "@id":"https://sambla.ro/#webpage",
+  "url":"https://sambla.ro/",
+  "name":"Sambla — Angajatul tău AI care știe totul despre afacerea ta",
+  "isPartOf":{"@id":"https://sambla.ro/#website"},
+  "about":{"@id":"https://sambla.ro/#software"},
+  "inLanguage":"ro-RO"
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"FAQPage",
+  "mainEntity":[
+    {"@type":"Question","name":"Ce este Sambla?","acceptedAnswer":{"@type":"Answer","text":"Sambla este o platformă SaaS românească ce permite oricărei afaceri să creeze agenți AI conversaționali — chatbot pe site și voicebot care preia apeluri telefonice — într-o oră, fără cunoștințe tehnice. AI-ul răspunde DOAR din documentele și produsele tale reale (anti-halucinare), învață din întrebările clienților și escaladează la operator uman când e nevoie."}},
+    {"@type":"Question","name":"Cum funcționează Sambla?","acceptedAnswer":{"@type":"Answer","text":"Încarci PDF-uri, scanezi site-ul tău sau conectezi WooCommerce, apoi descrii afacerea în 2 propoziții. Sambla generează automat un chatbot cu personalitate adaptată brand-ului tău, îl publică pe site cu o singură linie de cod, și opțional îți alocă un număr de telefon românesc unde un voicebot AI răspunde 24/7. Setup-ul total durează sub o oră."}},
+    {"@type":"Question","name":"Inventează AI-ul răspunsuri când nu știe?","acceptedAnswer":{"@type":"Answer","text":"Nu. Sambla folosește un sistem RAG (Retrieval-Augmented Generation) cu zece straturi de verificare anti-halucinare. Răspunde DOAR pe baza documentelor tale reale. Dacă nu e sigur, spune cinstit «nu am informația asta» sau cere clarificare, iar la nevoie escaladează automat la un operator uman. Fiecare răspuns poate cita documentul-sursă."}},
+    {"@type":"Question","name":"Pe ce limbi funcționează?","acceptedAnswer":{"@type":"Answer","text":"Sambla este construit nativ în limba română — atât chatbot-ul cât și voicebot-ul folosesc voce naturală cu intonație și diacritice corecte (ă, â, î, ș, ț). Suportă și engleza ca limbă secundară."}},
+    {"@type":"Question","name":"Unde sunt stocate datele mele?","acceptedAnswer":{"@type":"Answer","text":"Toate datele sunt stocate pe servere fizice din România. Sambla este 100% GDPR-compliant by default, cu izolare per cont și fără transfer în afara Uniunii Europene."}},
+    {"@type":"Question","name":"Cu ce se integrează Sambla?","acceptedAnswer":{"@type":"Answer","text":"Sambla are integrare nativă WooCommerce (căutare semantică produse, verificare stoc live, add-to-cart din chat, tracking AWB). Funcționează pe orice site cu o linie de cod JavaScript. Suportă canale: web, telefon (numere RO via Telnyx), WhatsApp, Facebook Messenger, Instagram DM."}},
+    {"@type":"Question","name":"Cât costă Sambla?","acceptedAnswer":{"@type":"Answer","text":"Trei planuri: Starter (~49 EUR/lună) pentru afaceri mici, Pro (~149 EUR/lună) cu chatbot + voicebot și WooCommerce, Business (~399 EUR/lună) pentru volum mare. Detalii la sambla.ro/preturi."}},
+    {"@type":"Question","name":"Pentru cine e Sambla?","acceptedAnswer":{"@type":"Answer","text":"Pentru afaceri mici și mijlocii din România: magazine online, cabinete medicale și stomatologice, avocați, contabili, service-uri auto, saloane beauty, agenții imobiliare, restaurante, pensiuni. Sambla este unealta AI a profesionistului — îi reduce munca repetitivă cu clienții."}}
+  ]
+}
+</script>
+@endsection
+
 @section('content')
 
 {{-- ============================================================== --}}

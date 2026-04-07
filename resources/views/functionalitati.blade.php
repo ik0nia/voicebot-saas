@@ -3,6 +3,26 @@
 @section('title', 'Funcționalități - Sambla')
 @section('meta_description', 'Descoperă funcționalitățile Sambla: chatbot AI inteligent, apeluri vocale cu AI, bază de cunoștințe RAG, analiză în timp real și API pentru dezvoltatori.')
 
+@section('jsonld')
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","@id":"https://sambla.ro/functionalitati#webpage","url":"https://sambla.ro/functionalitati","name":"Funcționalități Sambla","description":"Toate funcționalitățile platformei Sambla: chatbot RAG, voicebot în română, hybrid search, anti-halucinare, integrare WooCommerce, multi-canal, analytics live.","isPartOf":{"@id":"https://sambla.ro/#website"},"about":{"@id":"https://sambla.ro/#software"},"inLanguage":"ro-RO"}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"ItemList","name":"Funcționalități Sambla","itemListElement":[
+{"@type":"ListItem","position":1,"name":"Chatbot AI cu RAG","description":"Chatbot pe site-ul tău care răspunde din documentele și produsele tale reale, folosind RAG (Retrieval-Augmented Generation) cu hybrid search vector + full-text + reranker."},
+{"@type":"ListItem","position":2,"name":"Voicebot în limba română","description":"Preia apeluri telefonice 24/7 cu voce naturală în română (numere RO via Telnyx, OpenAI Realtime API). Transcriere live, sentiment analysis, escaladare automată."},
+{"@type":"ListItem","position":3,"name":"Anti-halucinare cu 10 straturi de verificare","description":"Bot-ul răspunde DOAR din datele tale. Cite sources. La nesiguranță cere clarificare sau escaladează la operator."},
+{"@type":"ListItem","position":4,"name":"Integrare WooCommerce nativă","description":"Căutare semantică produse, verificare stoc live, add-to-cart din chat, tracking AWB automat."},
+{"@type":"ListItem","position":5,"name":"Multi-canal","description":"Web chat, telefon, WhatsApp, Facebook Messenger, Instagram DM — același bot, același context, un singur creier."},
+{"@type":"ListItem","position":6,"name":"Pipeline lead-uri și CRM","description":"Captare automată, scoring, stadii nou → contactat → calificat → câștigat."},
+{"@type":"ListItem","position":7,"name":"Programări automate","description":"Verifică agenda, oferă sloturi libere, confirmă, trimite reminder."},
+{"@type":"ListItem","position":8,"name":"Detectare frustrare live","description":"Tonul bot-ului se adaptează automat când clientul e nervos; escaladare la om instant."},
+{"@type":"ListItem","position":9,"name":"Dashboard analitice","description":"Health score per bot, gap analysis, recomandări automate de conținut, top întrebări fără răspuns."},
+{"@type":"ListItem","position":10,"name":"Hosting în România GDPR-compliant","description":"PostgreSQL + pgvector + Redis pe servere RO, izolare per cont, fără transfer în afara UE."}
+]}
+</script>
+@endsection
+
 @section('content')
 
 {{-- ==================== HERO ==================== --}}

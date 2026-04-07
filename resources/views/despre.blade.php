@@ -3,6 +3,12 @@
 @section('title', 'Despre noi - Sambla')
 @section('meta_description', 'Descoperă povestea Sambla — platformă AI românească pentru chatbot și voce. Un nume din graiul ardelenesc, o tehnologie care privește spre viitor.')
 
+@section('jsonld')
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"AboutPage","@id":"https://sambla.ro/despre#webpage","url":"https://sambla.ro/despre","name":"Despre Sambla","description":"Sambla este o platformă AI românească construită de o echipă din România pentru afaceri mici și mijlocii din România. Numele Sambla vine din graiul ardelenesc.","isPartOf":{"@id":"https://sambla.ro/#website"},"mainEntity":{"@id":"https://sambla.ro/#organization"},"inLanguage":"ro-RO"}
+</script>
+@endsection
+
 @section('content')
 
 {{-- Hero Section --}}

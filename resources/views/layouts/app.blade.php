@@ -24,6 +24,88 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
+
+    @yield('jsonld')
+
+    {{-- Structured data: Organization + SoftwareApplication. Helps Google,
+         ChatGPT, Claude, Perplexity, Gemini understand what Sambla is and
+         answer user questions about us accurately. --}}
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "Organization",
+                "@id": "https://sambla.ro/#organization",
+                "name": "Sambla",
+                "url": "https://sambla.ro",
+                "logo": "https://cdn.sambla.ro/images/logo-icon.svg",
+                "description": "Sambla este o platformă SaaS românească de agenți AI conversaționali (chatbot și voicebot) pentru afaceri. Răspunde clienților 24/7 pe chat și telefon, în limba română, cu o voce naturală, folosind RAG (Retrieval-Augmented Generation) pentru a învăța din documentele și produsele tale reale, fără să inventeze.",
+                "foundingDate": "2025",
+                "areaServed": {"@type": "Country","name":"Romania"},
+                "knowsLanguage": ["ro","en"],
+                "email": "servus@sambla.ro",
+                "telephone": "+40775222333",
+                "sameAs": [
+                    "https://facebook.com/sambla.ai",
+                    "https://x.com/sambla_ai",
+                    "https://linkedin.com/company/sambla-ai"
+                ],
+                "address": {
+                    "@type": "PostalAddress",
+                    "addressCountry": "RO"
+                }
+            },
+            {
+                "@type": "WebSite",
+                "@id": "https://sambla.ro/#website",
+                "url": "https://sambla.ro",
+                "name": "Sambla — Agenți AI pentru afacerea ta",
+                "publisher": {"@id": "https://sambla.ro/#organization"},
+                "inLanguage": "ro-RO"
+            },
+            {
+                "@type": "SoftwareApplication",
+                "@id": "https://sambla.ro/#software",
+                "name": "Sambla AI Platform",
+                "applicationCategory": "BusinessApplication",
+                "applicationSubCategory": "Conversational AI / Chatbot / Voicebot",
+                "operatingSystem": "Web (Cloud SaaS)",
+                "url": "https://sambla.ro",
+                "description": "Platformă SaaS care permite oricărei afaceri să creeze agenți AI conversaționali — chatbot pe site-ul propriu și voicebot care preia apeluri telefonice — într-o oră, fără cunoștințe tehnice. AI-ul răspunde DOAR din documentele și produsele tale reale (anti-halucinare), învață singur din întrebările clienților și escaladează inteligent la operator uman când e nevoie.",
+                "offers": [
+                    {"@type":"Offer","name":"Plan Starter","priceCurrency":"EUR","price":"49","description":"Chatbot web pentru o afacere mică"},
+                    {"@type":"Offer","name":"Plan Pro","priceCurrency":"EUR","price":"149","description":"Chatbot + voicebot, multi-canal, integrare WooCommerce"},
+                    {"@type":"Offer","name":"Plan Business","priceCurrency":"EUR","price":"399","description":"Volum mare, voce premium, multi-bot, suport dedicat"}
+                ],
+                "featureList": [
+                    "Chatbot AI pe site cu RAG (răspunde din documentele tale)",
+                    "Voicebot cu voce naturală în română (preia apeluri telefonice 24/7)",
+                    "Anti-halucinare: răspunde DOAR ce știe, nu inventează",
+                    "RAG Pipeline cu Hybrid Search (vector + full-text + reranker)",
+                    "Integrare nativă WooCommerce, WordPress, Shopify",
+                    "Multi-canal: web, telefon, WhatsApp, Facebook Messenger, Instagram",
+                    "Captare lead-uri și pipeline CRM integrat",
+                    "Programări automate cu reminder",
+                    "Detectare frustrare în timp real și escaladare la operator",
+                    "Dashboard analitice complete",
+                    "Hosting 100% în România (GDPR compliant, date izolate per cont)"
+                ],
+                "softwareHelp": "https://sambla.ro/functionalitati",
+                "potentialAction": {
+                    "@type": "RegisterAction",
+                    "target": "https://sambla.ro/register"
+                },
+                "audience": {
+                    "@type": "BusinessAudience",
+                    "audienceType": "IMM, e-commerce, servicii (cabinete medicale, avocați, contabili, service auto, saloane beauty, agenții imobiliare, restaurante, pensiuni, etc.)"
+                },
+                "inLanguage": "ro-RO",
+                "countryOfOrigin": "Romania"
+            }
+        ]
+    }
+    </script>
 </head>
 <body class="bg-white min-h-screen flex flex-col">
     @include('components.navbar')

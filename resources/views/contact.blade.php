@@ -3,6 +3,12 @@
 @section('title', 'Contact - Sambla')
 @section('meta_description', 'Contactează echipa Sambla. Suntem aici să te ajutăm cu orice întrebare despre platforma noastră de agenți vocali AI.')
 
+@section('jsonld')
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"ContactPage","@id":"https://sambla.ro/contact#webpage","url":"https://sambla.ro/contact","name":"Contact Sambla","description":"Contactează echipa Sambla la servus@sambla.ro sau +40 775 222 333.","isPartOf":{"@id":"https://sambla.ro/#website"},"about":{"@id":"https://sambla.ro/#organization"},"inLanguage":"ro-RO"}
+</script>
+@endsection
+
 @section('content')
 
 <section class="relative overflow-hidden bg-slate-950 pt-28 pb-20 lg:pt-36 lg:pb-24">
