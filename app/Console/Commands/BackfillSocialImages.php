@@ -12,6 +12,8 @@ class BackfillSocialImages extends Command
     protected $signature = 'social:backfill-images
         {--limit=0 : Max posts to process (0 = no limit)}
         {--status=* : Only these statuses (default: draft, scheduled)}
+        {--worker=0 : Worker index (0..of-1). Filters posts by id % of = worker.}
+        {--of=1 : Total number of parallel workers. With --worker, partitions IDs.}
         {--dry-run : Show what would happen without calling Vertex AI}';
 
     protected $description = 'Generate missing images for social posts that have image_url = NULL';
@@ -22,11 +24,19 @@ class BackfillSocialImages extends Command
         $limit = (int) $this->option('limit');
         $dryRun = (bool) $this->option('dry-run');
 
+        $worker = (int) $this->option('worker');
+        $of = max(1, (int) $this->option('of'));
+
         $query = SocialPost::query()
             ->whereNull('image_url')
             ->whereIn('status', $statuses)
             ->where('post_type', '!=', 'reel')
             ->orderBy('id');
+
+        // Partition by id modulo so parallel workers don't collide.
+        if ($of > 1) {
+            $query->whereRaw('id % ? = ?', [$of, $worker]);
+        }
 
         if ($limit > 0) {
             $query->limit($limit);
@@ -128,7 +138,8 @@ class BackfillSocialImages extends Command
             . $textRule
             . "BRAND LOGO: Place the Sambla logo (attached reference) in a top corner with a subtle white backing for legibility. "
             . "COMPOSITION: Strong focal point, clear hierarchy, designed feel, generous whitespace, premium not busy. "
-            . "PEOPLE RULE — STRICT: if the scene includes any humans, they MUST be Caucasian / European-looking only (light to medium skin tone, European facial features, the kind of person you'd see in a Romanian small-business setting). NO Black, NO Asian, NO South Asian, NO Middle Eastern, NO 'diverse team' compositions. Audience is Romanian SMB owners. "
+            . "PEOPLE RULE — DEFAULT NO PEOPLE: prefer graphic/typographic/object/mockup compositions WITHOUT humans. Use device mockups, dioramas, abstract shapes, typography, paper collage, data viz. People are a rare exception (~1 in 10) and only Caucasian/European if absolutely required. Audience: Romanian SMB owners. "
+            . "ROMANIAN TEXT — render any short headline in Romanian with proper diacritics (ă â î ș ț). Text is the visual hero. "
             . "FORBIDDEN: single icon centered on white, clip-art minimalism, stock-photo clichés (handshakes, suits pointing at laptops), generic floating chat bubbles, garbled text, gradient rainbows. "
             . $aspectLine;
     }
