@@ -533,6 +533,71 @@
 </section>
 
 {{-- ============================================================== --}}
+{{-- DASHBOARD SCREENSHOTS — real, blurred --}}
+{{-- ============================================================== --}}
+<section class="bg-white py-16 lg:py-24">
+    <div class="container-custom">
+        <div class="text-center max-w-3xl mx-auto mb-12">
+            <div class="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-full mb-4">
+                CAPTURE REALE DIN PRODUCȚIE
+            </div>
+            <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-5 tracking-tight">Dashboard-uri reale, date neclare</h2>
+            <p class="text-lg text-slate-500">Capture luate din platforma de producție. Datele clienților sunt blurate intenționat pentru confidențialitate, dar layout-ul, structura și componentele sunt reale — nu mockup-uri.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-6xl mx-auto">
+            <figure class="bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <img src="{{ asset('images/screenshots/admin-home-safe.jpg') }}"
+                     alt="Dashboard administrare Sambla — pagina principală"
+                     loading="lazy" width="1600" height="1000"
+                     class="w-full h-auto block">
+                <figcaption class="p-5 border-t border-slate-200">
+                    <p class="text-sm font-bold text-slate-900 mb-1">Admin · Pagina principală</p>
+                    <p class="text-xs text-slate-500">Vedere de ansamblu cu metrici, activitate recentă și acces rapid la modulele platformei.</p>
+                </figcaption>
+            </figure>
+
+            <figure class="bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <img src="{{ asset('images/screenshots/admin-social-safe.jpg') }}"
+                     alt="Modul Social Media din admin Sambla"
+                     loading="lazy" width="1600" height="1000"
+                     class="w-full h-auto block">
+                <figcaption class="p-5 border-t border-slate-200">
+                    <p class="text-sm font-bold text-slate-900 mb-1">Admin · Social Media (review postări AI)</p>
+                    <p class="text-xs text-slate-500">Modul de generare automată de postări social media cu review uman înainte de publicare. Workflow complet pentru gap detection și publicare programată.</p>
+                </figcaption>
+            </figure>
+
+            <figure class="bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <img src="{{ asset('images/screenshots/dashboard-home-safe.jpg') }}"
+                     alt="Dashboard tenant Sambla — pagina principală"
+                     loading="lazy" width="1600" height="1000"
+                     class="w-full h-auto block">
+                <figcaption class="p-5 border-t border-slate-200">
+                    <p class="text-sm font-bold text-slate-900 mb-1">Dashboard tenant · Acasă</p>
+                    <p class="text-xs text-slate-500">Vederea pe care o are un client cu cont activ: bot-uri configurate, conversații recente, statistici de utilizare.</p>
+                </figcaption>
+            </figure>
+
+            <figure class="bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <img src="{{ asset('images/screenshots/dashboard-boti-safe.jpg') }}"
+                     alt="Listă bot-uri configurate"
+                     loading="lazy" width="1600" height="1000"
+                     class="w-full h-auto block">
+                <figcaption class="p-5 border-t border-slate-200">
+                    <p class="text-sm font-bold text-slate-900 mb-1">Dashboard tenant · Boții mei</p>
+                    <p class="text-xs text-slate-500">Listă cu bot-urile configurate, fiecare cu propria personalitate, bază de cunoștințe, canal și status în timp real.</p>
+                </figcaption>
+            </figure>
+        </div>
+
+        <p class="text-xs text-slate-400 text-center mt-8 max-w-3xl mx-auto">
+            Imaginile sunt capture reale din mediul de producție al sambla.ro, prelucrate cu un filtru de blur pentru a face datele specifice neclare. Layout-ul, componentele, navigarea și fluxurile sunt așa cum apar utilizatorilor reali. Nu sunt mockup-uri Figma.
+        </p>
+    </div>
+</section>
+
+{{-- ============================================================== --}}
 {{-- CASE STUDIES --}}
 {{-- ============================================================== --}}
 <section class="bg-slate-50 py-16 lg:py-24 border-y border-slate-200">
