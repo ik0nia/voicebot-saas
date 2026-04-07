@@ -14,7 +14,10 @@
 {"@type":"Question","name":"Sambla e legată de Sambla Group (credite, împrumuturi)?","acceptedAnswer":{"@type":"Answer","text":"Nu, niciun fel de legătură. Sambla este o platformă AI românească pentru chatboți și voiceboți, creată de o echipă din România pentru afaceri din România. NU oferim credite, împrumuturi, leasing, IFN, asigurări, conturi bancare sau orice serviciu financiar. Suntem o companie de software AI, nu o instituție financiară."}},
 {"@type":"Question","name":"Cum garantați că AI-ul nu inventează răspunsuri?","acceptedAnswer":{"@type":"Answer","text":"Prin 10 straturi de verificare aplicate la fiecare răspuns: base prompt blocat (interzis să inventeze prețuri/termene), politica conversației, contextul produselor + KB, regulile de business, query intelligence cu prag de confidență, strategia conversației per stadiu, scor numeric de confidență, detector frustrare live și verificare finală anti-halucinare contra chunk-urilor sursă. Dacă un strat eșuează, bot-ul cere clarificare sau escaladează la operator uman."}},
 {"@type":"Question","name":"De ce contează că hosting-ul e în România?","acceptedAnswer":{"@type":"Answer","text":"Datele clienților tăi nu părăsesc niciodată România/UE. GDPR by default, izolare per cont (un client nu poate accesa datele altuia, nici accidental), backup-uri criptate cu retenție 30 zile, audit log pe acces. Echipa de suport e românească, vorbește românește. Dacă e o investigație GDPR, totul e traceabil pe servere RO."}},
-{"@type":"Question","name":"Câte canale de comunicare suportă Sambla simultan?","acceptedAnswer":{"@type":"Answer","text":"Cinci canale cu același bot și același context de conversație: chat web, telefon (numere RO native via Telnyx + voce GPT-4o Realtime), WhatsApp, Facebook Messenger și Instagram DM. Clientul începe conversația pe site, sună după două ore — bot-ul ține minte ce a discutat. Acesta e «multi-canal cu același creier», nu cinci bot-uri separate."}}
+{"@type":"Question","name":"Câte canale de comunicare suportă Sambla simultan?","acceptedAnswer":{"@type":"Answer","text":"Cinci canale cu același bot și același context de conversație: chat web, telefon (numere RO native via Telnyx + voce GPT-4o Realtime), WhatsApp, Facebook Messenger și Instagram DM. Clientul începe conversația pe site, sună după două ore — bot-ul ține minte ce a discutat. Acesta e «multi-canal cu același creier», nu cinci bot-uri separate."}},
+{"@type":"Question","name":"Sambla e doar un wrapper peste ChatGPT?","acceptedAnswer":{"@type":"Answer","text":"Nu. Folosim GPT (sau orice alt LLM, e swappable) ca generator de text — nu pretindem că am antrenat un model propriu. Dar tot restul e construit de noi: pipeline RAG 4-stadii, 10 straturi anti-halucinare, 25 grupuri sinonime românești curate manual, hybrid search fusion (vector + BM25 + reranker), state machine de conversație, detector frustrare live, multi-channel context bridge, integrare WooCommerce nativă, tenant isolation, dashboard, billing. Dacă mâine schimbăm GPT cu Claude sau Llama, 90% din platformă funcționează identic. LLM-ul e o componentă, nu produsul."}},
+{"@type":"Question","name":"AI-ul Sambla halucinează?","acceptedAnswer":{"@type":"Answer","text":"Onest: orice LLM poate halucina, e o proprietate fundamentală a tehnologiei. Sambla nu pretinde 100% perfecțiune. Ce facem este să MINIMIZĂM halucinarea prin inginerie: răspunsuri ancorate în chunk-uri sursă verificabile, fallback la „nu știu" când retrieval-ul nu returnează nimic relevant, escaladare automată la operator uman când scorul de confidență e sub prag, 10 straturi de verificare contra documentelor sursă, citare obligatorie a sursei. În producție, modul de eșec e «bot-ul spune cinstit că nu știe», nu «inventează un răspuns greșit cu încredere»."}},
+{"@type":"Question","name":"Bot-ul se învață singur sau cu supervizare?","acceptedAnswer":{"@type":"Answer","text":"Cu supervizare. Bot-ul detectează automat ce întrebări nu poate răspunde bine (gap detection) și generează draft FAQ pentru ele, dar OMUL aprobă fiecare modificare înainte să se publice. Nu e auto-modificare autonomă — asta ar fi periculos. E «învățare asistată» unde AI face munca grea de identificare și redactare, iar tu validezi în 30 de secunde."}}
 ]}
 </script>
 @endsection
@@ -141,6 +144,111 @@
                     <p class="text-sm text-slate-600 leading-relaxed">{{ $s[2] }}</p>
                 </div>
             @endforeach
+        </div>
+    </div>
+</section>
+
+{{-- ============================================================== --}}
+{{-- HONEST DISCLOSURE — ce folosim vs ce am construit --}}
+{{-- ============================================================== --}}
+<section class="bg-slate-50 py-16 lg:py-24 border-y border-slate-200">
+    <div class="container-custom">
+        <div class="text-center max-w-3xl mx-auto mb-12">
+            <div class="inline-flex items-center gap-2 bg-slate-200 text-slate-700 text-xs font-bold px-3 py-1.5 rounded-full mb-4">
+                ONESTITATE TEHNICĂ
+            </div>
+            <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-5 tracking-tight">Ce folosim vs ce am construit</h2>
+            <p class="text-lg text-slate-500">Nu pretindem că am antrenat un GPT propriu. Iată exact ce e al nostru și ce folosim de la alții.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-6xl mx-auto">
+            {{-- Folosim --}}
+            <div class="bg-white rounded-2xl border border-slate-200 p-7">
+                <div class="flex items-center gap-3 mb-5">
+                    <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125"/></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900">Ce folosim de la alții</h3>
+                </div>
+                <p class="text-sm text-slate-500 mb-4">Tehnologii open-source și API-uri terțe, pentru ce e mai bun pe piață.</p>
+                <ul class="space-y-2 text-sm text-slate-700">
+                    <li class="flex gap-2"><span class="text-slate-400 shrink-0">›</span><span><strong>OpenAI GPT-4o</strong> — modelul de text și voce. Swappable cu Claude, Gemini, Llama.</span></li>
+                    <li class="flex gap-2"><span class="text-slate-400 shrink-0">›</span><span><strong>OpenAI text embeddings</strong> — pentru vectorii 1536-dim</span></li>
+                    <li class="flex gap-2"><span class="text-slate-400 shrink-0">›</span><span><strong>Telnyx</strong> — telefonie SIP cu numere RO</span></li>
+                    <li class="flex gap-2"><span class="text-slate-400 shrink-0">›</span><span><strong>PostgreSQL + pgvector</strong> — baza de date cu vector search</span></li>
+                    <li class="flex gap-2"><span class="text-slate-400 shrink-0">›</span><span><strong>Laravel 11</strong> — framework backend</span></li>
+                    <li class="flex gap-2"><span class="text-slate-400 shrink-0">›</span><span><strong>Vertex AI Gemini</strong> — pentru generare imagini în marketing automation</span></li>
+                    <li class="flex gap-2"><span class="text-slate-400 shrink-0">›</span><span><strong>Stripe</strong> — billing</span></li>
+                </ul>
+                <p class="text-xs text-slate-400 mt-5 italic">Nu pretindem că am construit aceste lucruri. Le folosim, ca orice produs serios.</p>
+            </div>
+
+            {{-- Am construit --}}
+            <div class="bg-white rounded-2xl border-2 border-red-300 p-7 relative">
+                <div class="absolute top-0 right-0 bg-red-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl uppercase tracking-wider">Proprietar</div>
+                <div class="flex items-center gap-3 mb-5">
+                    <div class="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z"/></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900">Ce am construit noi</h3>
+                </div>
+                <p class="text-sm text-slate-500 mb-4">Asta e platforma. Restul sunt componente swappable.</p>
+                <ul class="space-y-2 text-sm text-slate-700">
+                    <li class="flex gap-2"><span class="text-red-500 shrink-0 font-bold">✓</span><span><strong>Pipeline RAG 4-stadii</strong> — orchestrare proprie peste LLM (intent → retrieve → strategy → verify)</span></li>
+                    <li class="flex gap-2"><span class="text-red-500 shrink-0 font-bold">✓</span><span><strong>10 straturi de verificare anti-halucinare</strong> — fiecare strat e cod custom, nu librărie</span></li>
+                    <li class="flex gap-2"><span class="text-red-500 shrink-0 font-bold">✓</span><span><strong>25 grupuri sinonime românești</strong> — lexicale, manual curate, integrate în motorul de căutare</span></li>
+                    <li class="flex gap-2"><span class="text-red-500 shrink-0 font-bold">✓</span><span><strong>Hybrid search fusion</strong> — combină vector + BM25 + stemming românesc + AI reranker peste 20 candidați → top 8</span></li>
+                    <li class="flex gap-2"><span class="text-red-500 shrink-0 font-bold">✓</span><span><strong>Conversation strategy state machine</strong> — comportament diferit pe stadii (început/mijloc/final)</span></li>
+                    <li class="flex gap-2"><span class="text-red-500 shrink-0 font-bold">✓</span><span><strong>Detector frustrare live</strong> — clasifică text + voce și escaladează automat</span></li>
+                    <li class="flex gap-2"><span class="text-red-500 shrink-0 font-bold">✓</span><span><strong>Multi-channel context bridge</strong> — același client urmat între web, telefon, WhatsApp, FB, IG cu memorie partajată. Cea mai grea parte tehnică.</span></li>
+                    <li class="flex gap-2"><span class="text-red-500 shrink-0 font-bold">✓</span><span><strong>Supervised gap detection</strong> — bot-ul identifică ce nu știe, generează draft FAQ, dar TU aprobi înainte să se publice (nu auto-modificare)</span></li>
+                    <li class="flex gap-2"><span class="text-red-500 shrink-0 font-bold">✓</span><span><strong>Tuning românesc complet</strong> — chunking pentru morfologia română, intonație voce română, diacritice ă â î ș ț, anti-pattern lists pentru halucinare</span></li>
+                    <li class="flex gap-2"><span class="text-red-500 shrink-0 font-bold">✓</span><span><strong>WooCommerce nativ</strong> — căutare semantică produse, stoc live, add-to-cart din chat, tracking AWB. Nu plugin terț, scris in-house.</span></li>
+                    <li class="flex gap-2"><span class="text-red-500 shrink-0 font-bold">✓</span><span><strong>Tenant isolation</strong> — izolare per cont la nivel de bază de date</span></li>
+                    <li class="flex gap-2"><span class="text-red-500 shrink-0 font-bold">✓</span><span><strong>Dashboard analitice + onboarding wizard + billing</strong> — întreaga aplicație web</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="max-w-3xl mx-auto mt-10 bg-white rounded-xl border border-slate-200 p-6">
+            <p class="text-sm text-slate-700 leading-relaxed">
+                <strong class="text-slate-900">Sumar onest:</strong> Sambla nu e „un wrapper peste GPT". GPT e generatorul de text dintr-o mașinărie mult mai mare. Dacă mâine vrem să trecem pe Claude sau Llama, 90% din platformă continuă să funcționeze. Valoarea pe care o oferim e <strong>orchestrarea, tuningul românesc, straturile de verificare, multi-channel bridge-ul, și infrastructura operațională</strong> (hosting RO, GDPR, billing, analytics, suport în română). LLM-ul e o componentă swappable, nu produsul.
+            </p>
+        </div>
+    </div>
+</section>
+
+{{-- ============================================================== --}}
+{{-- HALUCINARE — onest --}}
+{{-- ============================================================== --}}
+<section class="bg-white py-16 lg:py-24">
+    <div class="container-custom">
+        <div class="max-w-3xl mx-auto">
+            <div class="text-center mb-10">
+                <div class="inline-flex items-center gap-2 bg-amber-50 text-amber-700 text-xs font-bold px-3 py-1.5 rounded-full mb-4">
+                    REALITATE vs MARKETING
+                </div>
+                <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-5 tracking-tight">Despre halucinare, onest</h2>
+            </div>
+
+            <div class="bg-slate-50 rounded-2xl p-8 border border-slate-200">
+                <p class="text-base text-slate-700 leading-relaxed mb-4">
+                    <strong class="text-red-600">Orice LLM poate halucina.</strong> Asta e o proprietate fundamentală a tehnologiei. Oricine îți spune că produsul lui bazat pe LLM are „zero halucinare" e necinstit.
+                </p>
+                <p class="text-base text-slate-700 leading-relaxed mb-4">
+                    Ce face Sambla e să <strong>minimizeze</strong> halucinarea prin inginerie și să <strong>eșueze elegant</strong> când nu poate garanta un răspuns:
+                </p>
+                <ul class="space-y-2 text-sm text-slate-700 mb-4">
+                    <li class="flex gap-2"><span class="text-emerald-600 shrink-0">✓</span><span>Fiecare răspuns e ancorat în chunk-urile reale extrase din baza ta de cunoștințe. LLM-ul e instruit să citeze ce chunk a folosit.</span></li>
+                    <li class="flex gap-2"><span class="text-emerald-600 shrink-0">✓</span><span>Dacă retrieval-ul nu returnează nimic relevant, bot-ul NU generează „cea mai bună presupunere". Spune cinstit „nu am informația asta".</span></li>
+                    <li class="flex gap-2"><span class="text-emerald-600 shrink-0">✓</span><span>Dacă scorul de confidență e sub prag, bot-ul escaladează la operator uman.</span></li>
+                    <li class="flex gap-2"><span class="text-emerald-600 shrink-0">✓</span><span>Cele 10 straturi de verificare prind conținutul generat care contrazice chunk-urile sursă.</span></li>
+                    <li class="flex gap-2"><span class="text-emerald-600 shrink-0">✓</span><span>Fiecare răspuns poate arăta documentele-sursă, ca clientul să verifice singur.</span></li>
+                </ul>
+                <p class="text-base text-slate-700 leading-relaxed">
+                    În producție, modul de eșec e <strong>„bot-ul spune cinstit că nu știe și redirecționează la un om"</strong> — nu „bot-ul inventează un răspuns greșit cu încredere". Asta e obiectivul de inginerie. Nu pretindem 100% perfecțiune, pretindem <strong>răspunsuri verificabile</strong>.
+                </p>
+            </div>
         </div>
     </div>
 </section>
