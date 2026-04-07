@@ -9,14 +9,12 @@
     <link rel="preconnect" href="https://cdn.sambla.ro" crossorigin>
     <link rel="dns-prefetch" href="https://cdn.sambla.ro">
 
-    {{-- Self-hosted Inter (latin + latin-ext only) — replaces the 338KB
-         fonts.bunny.net pull which loaded Greek/Cyrillic/Vietnamese subsets
-         we never use. ~80KB total now, browser only fetches the subset
-         actually needed via unicode-range. --}}
+    {{-- Self-hosted Inter VARIABLE FONT — one woff2 per subset contains
+         all weights (100-900). Romanian visitors fetch only ~85KB
+         (latin-ext) for the entire font family, vs the 338KB / 16-request
+         pull from fonts.bunny.net we used to do. --}}
     <link rel="preload" as="font" type="font/woff2"
-          href="https://cdn.sambla.ro/fonts/inter/inter-latin-ext-400.woff2" crossorigin>
-    <link rel="preload" as="font" type="font/woff2"
-          href="https://cdn.sambla.ro/fonts/inter/inter-latin-ext-700.woff2" crossorigin>
+          href="https://cdn.sambla.ro/fonts/inter/inter-latin-ext-variable.woff2" crossorigin>
     <link href="https://cdn.sambla.ro/fonts/inter/inter.css" rel="stylesheet" />
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
