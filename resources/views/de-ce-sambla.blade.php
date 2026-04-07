@@ -31,11 +31,11 @@
     <div class="absolute top-10 right-0 w-[350px] h-[350px] bg-red-900/20 rounded-full blur-[100px]"></div>
     <div class="container-custom text-center relative z-10">
         <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-6 animate-fade-in">
-            Nu e încă un chatbot.<br>
-            <span class="bg-gradient-to-r from-red-400 via-red-300 to-amber-300 bg-clip-text text-transparent">E un sistem RAG complet.</span>
+            Mai mult decât un chatbot.<br>
+            <span class="bg-gradient-to-r from-red-400 via-red-300 to-amber-300 bg-clip-text text-transparent">Un agent AI care înțelege afacerea ta.</span>
         </h1>
-        <p class="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto animate-fade-in">
-            Hybrid search peste documentele tale reale, voce nativă în română, 10 straturi anti-halucinare, hosting în România. Mai jos vezi exact ce înseamnă fiecare.
+        <p class="text-lg md:text-xl text-slate-400 max-w-3xl mx-auto animate-fade-in">
+            Vorbește pe înțelesul clienților tăi în română, citește din documentele tale reale, preia apeluri telefonice, învață ce nu știe și escaladează la operator când e nevoie. Construit, antrenat și hostat în România.
         </p>
     </div>
 </section>
