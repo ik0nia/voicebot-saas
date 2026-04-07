@@ -156,15 +156,38 @@ class GeminiContentService
      *
      * @return array|null Image data array or null on failure
      */
+    /**
+     * Canonical brand + composition rules applied to EVERY image prompt,
+     * regardless of which provider (OpenAI or Vertex) actually renders it.
+     * Single source of truth so both backends behave identically.
+     */
+    private function imageRulesPreamble(): string
+    {
+        return "STRICT BRAND & COMPOSITION RULES (apply to every image, override any conflicting instruction below):\n"
+            . "1. NO PEOPLE — no humans, faces, hands, silhouettes, crowds. If the brief mentions a person, replace them with a typography poster, device mockup, isometric diorama, abstract geometric composition, paper collage, or data visualization. (Rare exception: only if the topic absolutely requires a person, and only one Caucasian/European subject.)\n"
+            . "2. NO FAKE LOGO — do NOT invent or render any 'Sambla' wordmark, brand text, or logo of your own. Leave the top-right corner clean. The real logo is composited separately.\n"
+            . "3. ROMANIAN TEXT ONLY — any on-image text must be in Romanian with proper diacritics (ă â î ș ț). Keep it short (max 3-5 words), large, centered, as the visual hero. If you cannot render diacritics cleanly, skip the text entirely.\n"
+            . "4. STYLE — graphic design first: editorial typography, isometric 3D dioramas (uninhabited), abstract Bauhaus geometry, product device mockups on clean surfaces, paper collage, data visualization. NEVER stock-photo clichés (handshakes, suits pointing at laptops, smiling diverse teams).\n"
+            . "5. PALETTE — off-white background, deep slate #1e293b, single Sambla red #dc2626 accent. Premium, not busy. Generous whitespace. Strong focal point.\n"
+            . "6. AUDIENCE — Romanian small-business owners. Keep it warm, premium, designed.\n\n"
+            . "BRIEF:\n";
+    }
+
     public function generateImage(string $prompt, string $aspectRatio = '1:1', ?string $style = null): ?array
     {
-        $vertexResult = $this->generateImageVertex($prompt, $aspectRatio, $style);
-        if ($vertexResult) {
-            return $vertexResult;
+        // Wrap the caller's brief with the canonical rules so both providers
+        // (OpenAI primary, Vertex fallback) see the exact same instructions.
+        $wrapped = $this->imageRulesPreamble() . $prompt;
+
+        // OpenAI first (gpt-image-1) — better text rendering and faster than
+        // Vertex AI. Vertex only as a fallback when OpenAI fails.
+        $openaiResult = $this->generateImageOpenAi($wrapped, $aspectRatio);
+        if ($openaiResult) {
+            return $openaiResult;
         }
 
-        Log::warning('Vertex AI image generation failed, falling back to OpenAI', ['aspect' => $aspectRatio]);
-        return $this->generateImageOpenAi($prompt, $aspectRatio);
+        Log::warning('OpenAI image generation failed, falling back to Vertex AI', ['aspect' => $aspectRatio]);
+        return $this->generateImageVertex($wrapped, $aspectRatio, $style);
     }
 
     private function generateImageVertex(string $prompt, string $aspectRatio = '1:1', ?string $style = null): ?array

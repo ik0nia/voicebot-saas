@@ -35,8 +35,47 @@
 
     {{-- Header --}}
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-5">
-        <div>
+        <div class="flex-1">
             <h1 class="text-2xl font-bold text-slate-900">Social Media</h1>
+            @if($bufferUntil)
+                <p class="text-sm font-semibold text-slate-700 mt-1">
+                    📅 Postări programate până la
+                    <span class="text-blue-700">{{ $bufferUntil->translatedFormat('l, d F Y') }}</span>
+                    <span class="text-slate-500 font-normal">({{ $bufferDaysLeft }} {{ $bufferDaysLeft === 1 ? 'zi' : 'zile' }})</span>
+                </p>
+            @endif
+
+            {{-- Header summary cards --}}
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mt-3">
+                @php
+                    $bufferPct = $draftBufferTarget > 0 ? min(100, round($draftGroups / $draftBufferTarget * 100)) : 0;
+                    $bufferColor = $draftGroups >= $draftBufferTarget ? 'emerald' : ($draftGroups >= $draftBufferTarget / 2 ? 'amber' : 'rose');
+                @endphp
+                <div class="bg-{{ $bufferColor }}-50 border border-{{ $bufferColor }}-200 rounded-lg px-3 py-2">
+                    <p class="text-[10px] font-bold text-{{ $bufferColor }}-700 uppercase tracking-wide">Coadă review (drafts)</p>
+                    <p class="text-xl font-extrabold text-{{ $bufferColor }}-900 mt-0.5">
+                        {{ $draftGroups }}<span class="text-sm text-{{ $bufferColor }}-700"> / {{ $draftBufferTarget }}</span>
+                        <span class="text-xs font-semibold text-{{ $bufferColor }}-700">de aprobat</span>
+                    </p>
+                    <div class="mt-1 h-1 bg-{{ $bufferColor }}-100 rounded-full overflow-hidden">
+                        <div class="h-full bg-{{ $bufferColor }}-500" style="width: {{ $bufferPct }}%"></div>
+                    </div>
+                </div>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+                    <p class="text-[10px] font-bold text-blue-700 uppercase tracking-wide">În coadă (programate)</p>
+                    <p class="text-xl font-extrabold text-blue-900 mt-0.5">
+                        {{ $scheduledGroups }} <span class="text-xs font-semibold text-blue-700">postări (FB+IG = 1)</span>
+                    </p>
+                </div>
+                <div class="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+                    <p class="text-[10px] font-bold text-emerald-700 uppercase tracking-wide">Publicate luna {{ now()->translatedFormat('F') }}</p>
+                    <p class="text-xl font-extrabold text-emerald-900 mt-0.5">{{ $publishedThisMonth }} <span class="text-xs font-semibold text-emerald-700">postări</span></p>
+                </div>
+                <div class="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                    <p class="text-[10px] font-bold text-amber-700 uppercase tracking-wide">Programate luna asta</p>
+                    <p class="text-xl font-extrabold text-amber-900 mt-0.5">{{ $scheduledThisMonth }} <span class="text-xs font-semibold text-amber-700">rămase de publicat</span></p>
+                </div>
+            </div>
             <p class="text-sm text-slate-500 mt-0.5">
                 <kbd class="px-1.5 py-0.5 text-[10px] font-mono bg-slate-100 border border-slate-200 rounded">j</kbd>
                 <kbd class="px-1.5 py-0.5 text-[10px] font-mono bg-slate-100 border border-slate-200 rounded">k</kbd>

@@ -11,6 +11,7 @@ use App\Models\SocialStylePreference;
 use App\Models\SocialRejection;
 use App\Services\Social\GeminiContentService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use OpenAI\Laravel\Facades\OpenAI;
 
@@ -72,17 +73,39 @@ class AdminSocialController extends Controller
         $accounts = SocialAccount::all();
         $schedules = SocialSchedule::all();
 
-        // Mobile swipe deck: 1 card per group (feed post, FB preferred), with
-        // legacy ungrouped drafts still appearing individually. We only keep
-        // posts whose image actually exists on disk — many legacy URLs point
-        // to voice.ikonia.cloud and 404, which we don't want in the review UI.
-        $hasRealImage = function ($post) {
-            if (empty($post->image_url)) return false;
-            $path = parse_url($post->image_url, PHP_URL_PATH) ?: '';
-            $local = public_path(ltrim($path, '/'));
-            return is_file($local);
+        // Buffer horizon: how far ahead are scheduled posts queued up?
+        $lastScheduled = SocialPost::where('status', 'scheduled')->max('scheduled_at');
+        $bufferUntil = $lastScheduled ? \Carbon\Carbon::parse($lastScheduled) : null;
+        $bufferDaysLeft = $bufferUntil ? max(0, now()->startOfDay()->diffInDays($bufferUntil->startOfDay(), false)) : 0;
+
+        // Card aggregations — counted as GROUPS (one idea = one post regardless
+        // of how many platforms it fans out to). Posts with NULL group_id are
+        // legacy and each counts as its own group.
+        $countAsGroups = function ($baseQuery) {
+            $base = clone $baseQuery;
+            $grouped = (int) (clone $base)->whereNotNull('group_id')->distinct('group_id')->count('group_id');
+            $solo = (int) (clone $base)->whereNull('group_id')->count();
+            return $grouped + $solo;
         };
 
+        $scheduledGroups = $countAsGroups(SocialPost::query()->where('status', 'scheduled'));
+        $draftGroups = $countAsGroups(SocialPost::query()->where('status', 'draft'));
+        $draftBufferTarget = 30;
+
+        $monthStart = now()->startOfMonth();
+        $monthEnd = now()->endOfMonth();
+        $publishedThisMonth = $countAsGroups(SocialPost::query()
+            ->where('status', 'published')
+            ->whereBetween('published_at', [$monthStart, $monthEnd]));
+        $scheduledThisMonth = $countAsGroups(SocialPost::query()
+            ->where('status', 'scheduled')
+            ->whereBetween('scheduled_at', [now(), $monthEnd]));
+
+        // Mobile swipe deck: 1 card per group (feed post, FB preferred).
+        // We trust image_url and don't check is_file() because the queue
+        // worker container writes images to its own public/ folder which
+        // the app container can't see. Filtering by is_file() here would
+        // empty the deck even when images are perfectly valid.
         $groupedDeck = SocialPost::query()
             ->where('status', 'draft')
             ->where('post_type', 'post')
@@ -91,7 +114,6 @@ class AdminSocialController extends Controller
             ->orderByRaw("CASE WHEN platform = 'facebook' THEN 0 ELSE 1 END")
             ->orderBy('id', 'asc')
             ->get()
-            ->filter($hasRealImage)
             ->unique('group_id')
             ->take(12);
 
@@ -100,10 +122,8 @@ class AdminSocialController extends Controller
             ->whereNull('group_id')
             ->whereNotNull('image_url')
             ->orderBy('id', 'asc')
-            ->limit(50)
-            ->get()
-            ->filter($hasRealImage)
-            ->take(12 - $groupedDeck->count());
+            ->limit(12 - $groupedDeck->count())
+            ->get();
 
         $deck = $groupedDeck->concat($legacyDeck)->values();
 
@@ -128,7 +148,12 @@ class AdminSocialController extends Controller
             return $p;
         });
 
-        return view('admin.social.index', compact('posts', 'accounts', 'schedules', 'stats', 'deck'));
+        return view('admin.social.index', compact(
+            'posts', 'accounts', 'schedules', 'stats', 'deck',
+            'bufferUntil', 'bufferDaysLeft',
+            'scheduledGroups', 'publishedThisMonth', 'scheduledThisMonth',
+            'draftGroups', 'draftBufferTarget'
+        ));
     }
 
     // Generate a new post with Gemini
@@ -486,6 +511,8 @@ class AdminSocialController extends Controller
             $post->group?->delete();
         }
 
+        $this->refillDraftBuffer();
+
         return response()->json(['ok' => true]);
     }
 
@@ -556,6 +583,10 @@ class AdminSocialController extends Controller
             $post->group->update(['status' => 'scheduled']);
         }
 
+        // Refill the draft buffer in the background — approving consumed
+        // one slot, dispatch a job to keep the queue at the target.
+        $this->refillDraftBuffer();
+
         // Return the primary post's slot for UI continuity, plus the full list.
         $primary = collect($scheduled)->firstWhere('platform', $post->platform) ?? $scheduled[0];
         return response()->json([
@@ -564,6 +595,25 @@ class AdminSocialController extends Controller
             'scheduled_human' => \Carbon\Carbon::parse($primary['at'])->translatedFormat('l d M, H:i'),
             'fanout' => $scheduled,
         ]);
+    }
+
+    /**
+     * Fire-and-forget call to top up the draft buffer to its configured
+     * target. Used after every action that consumes a draft (approve,
+     * reject, destroy). The job is queued, not run inline, so the user
+     * action stays fast.
+     */
+    private function refillDraftBuffer(): void
+    {
+        try {
+            Artisan::call('social:ensure-drafts', [
+                '--target' => 30,
+                '--per-tick' => 5,
+                '--spacing' => 20,
+            ]);
+        } catch (\Throwable $e) {
+            \Log::warning('refillDraftBuffer failed', ['error' => $e->getMessage()]);
+        }
     }
 
     // Publish immediately (JSON-aware). Cascades to all group siblings (FB+IG)
@@ -585,7 +635,11 @@ class AdminSocialController extends Controller
     // Soft-delete post (JSON-aware). Restorable via POST /restore within the retention window.
     public function destroy(Request $request, SocialPost $post)
     {
+        $wasDraft = $post->status === 'draft';
         $post->delete(); // soft delete
+        if ($wasDraft) {
+            $this->refillDraftBuffer();
+        }
         if ($request->expectsJson() || $request->wantsJson()) {
             return response()->json(['ok' => true, 'id' => $post->id]);
         }
@@ -836,7 +890,7 @@ class AdminSocialController extends Controller
         $validated = $request->validate([
             'platform' => 'required|in:facebook,instagram,blog,social',
             'is_active' => 'boolean',
-            'posts_per_day' => 'integer|min:1|max:5',
+            'posts_per_day' => 'integer|min:1|max:20',
             'posting_times' => 'nullable|string',
             'topics' => 'nullable|string',
             'auto_blog' => 'boolean',
@@ -852,9 +906,23 @@ class AdminSocialController extends Controller
             ? ['facebook', 'instagram']
             : [$validated['platform']];
 
+        // Detect whether posts_per_day actually changed for any social
+        // platform. If yes, we need to reshuffle scheduled posts after
+        // saving so the calendar respects the new max-per-day.
+        $newPostsPerDay = (int) ($validated['posts_per_day'] ?? 1);
+        $changedPostsPerDay = false;
+        foreach ($targetPlatforms as $p) {
+            if (in_array($p, ['facebook', 'instagram'], true)) {
+                $existing = (int) (SocialSchedule::where('platform', $p)->value('posts_per_day') ?? 0);
+                if ($existing !== $newPostsPerDay) {
+                    $changedPostsPerDay = true;
+                }
+            }
+        }
+
         $payload = [
             'is_active' => $request->boolean('is_active'),
-            'posts_per_day' => $validated['posts_per_day'] ?? 1,
+            'posts_per_day' => $newPostsPerDay,
             'posting_times' => $validated['posting_times'] ? array_map('trim', explode(',', $validated['posting_times'])) : ['10:00'],
             'topics' => $validated['topics'] ? array_map('trim', explode(',', $validated['topics'])) : [],
             'auto_blog' => $request->boolean('auto_blog'),
@@ -865,6 +933,97 @@ class AdminSocialController extends Controller
             SocialSchedule::updateOrCreate(['platform' => $p], $payload);
         }
 
-        return back()->with('success', 'Programare actualizata.');
+        $message = 'Programare actualizata.';
+        if ($changedPostsPerDay) {
+            $count = $this->reshuffleScheduledPosts();
+            $message .= " Reschedule: $count grupuri redistribuite cu noua formulă.";
+        }
+
+        return back()->with('success', $message);
+    }
+
+    /**
+     * Redistribute all scheduled (future, unpublished) post groups across
+     * upcoming days using the current `posts_per_day` setting from the
+     * facebook schedule. Each day gets a random count between half and max,
+     * within the 08:00-21:00 window, with anti-clustering on category so
+     * the same theme doesn't show up back-to-back.
+     *
+     * Returns the number of groups that were re-slotted.
+     */
+    public function reshuffleScheduledPosts(): int
+    {
+        $maxPerDay = (int) (SocialSchedule::where('platform', 'facebook')->value('posts_per_day') ?: 5);
+        $minPerDay = max(1, (int) ceil($maxPerDay / 2));
+        $startHour = 8;
+        $endHour = 20; // last slot 20:59 — keeps everything ≤ 21:00
+
+        $scheduled = SocialPost::where('status', 'scheduled')->orderBy('id')->get();
+        if ($scheduled->isEmpty()) return 0;
+
+        $groups = $scheduled->groupBy(fn($p) => $p->group_id ?? 'solo_' . $p->id);
+
+        // Bucket each group by category (or first 4 words of content as fallback)
+        // for anti-clustering.
+        $bucketKey = function ($g) {
+            $first = $g->sortBy('id')->first();
+            $cat = $first->metadata['category'] ?? null;
+            if ($cat) return $cat;
+            $words = preg_split('/\s+/', mb_strtolower(preg_replace('/\s+/', ' ', (string) $first->content)));
+            return implode(' ', array_slice($words, 0, 4));
+        };
+
+        $byBucket = [];
+        foreach ($groups as $gid => $g) {
+            $byBucket[$bucketKey($g)][] = $gid;
+        }
+
+        // Round-robin: pick from largest bucket each step, but never reuse
+        // the previous bucket twice in a row.
+        $ordered = [];
+        $lastBucket = null;
+        while (!empty($byBucket)) {
+            uasort($byBucket, fn($a, $b) => count($b) - count($a));
+            $bk = array_key_first($byBucket);
+            if ($bk === $lastBucket && count($byBucket) > 1) {
+                $bk = array_keys($byBucket)[1];
+            }
+            $ordered[] = array_shift($byBucket[$bk]);
+            $lastBucket = $bk;
+            if (empty($byBucket[$bk])) unset($byBucket[$bk]);
+        }
+
+        // Build slot calendar: each day random count between min and max,
+        // random hours within window. Skip past slots so today only fills
+        // future hours.
+        $slots = [];
+        $day = \Carbon\Carbon::today();
+        $needed = count($ordered);
+        $safety = 0;
+        while (count($slots) < $needed && $safety++ < 365) {
+            $countToday = random_int($minPerDay, $maxPerDay);
+            $hours = range($startHour, $endHour);
+            shuffle($hours);
+            $hours = array_slice($hours, 0, min($countToday, count($hours)));
+            sort($hours);
+            foreach ($hours as $h) {
+                $slot = $day->copy()->setTime($h, random_int(0, 59), 0);
+                if ($slot->isPast()) continue;
+                $slots[] = $slot;
+            }
+            $day->addDay();
+        }
+        $slots = array_slice($slots, 0, $needed);
+
+        foreach ($ordered as $i => $gid) {
+            $slot = $slots[$i] ?? null;
+            if (!$slot) break;
+            foreach ($groups[$gid] as $p) {
+                $newAt = $p->post_type === 'story' ? $slot->copy()->addMinutes(15) : $slot;
+                $p->update(['scheduled_at' => $newAt]);
+            }
+        }
+
+        return count($ordered);
     }
 }
