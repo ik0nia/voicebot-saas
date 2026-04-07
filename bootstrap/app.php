@@ -13,7 +13,45 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->trustProxies(at: '*');
+        // Trust the local container network (Coolify Traefik → nginx → app)
+        // and Cloudflare's published IPv4/IPv6 ranges so request->ip()
+        // returns the real visitor IP via X-Forwarded-For instead of an
+        // internal Docker address. Restricting to known proxies (vs the
+        // wildcard '*' we used before) prevents IP spoofing.
+        $middleware->trustProxies(at: [
+            '127.0.0.1',
+            '10.0.0.0/8',
+            '172.16.0.0/12',
+            '192.168.0.0/16',
+            // Cloudflare IPv4 — https://www.cloudflare.com/ips-v4
+            '173.245.48.0/20',
+            '103.21.244.0/22',
+            '103.22.200.0/22',
+            '103.31.4.0/22',
+            '141.101.64.0/18',
+            '108.162.192.0/18',
+            '190.93.240.0/20',
+            '188.114.96.0/20',
+            '197.234.240.0/22',
+            '198.41.128.0/17',
+            '162.158.0.0/15',
+            '104.16.0.0/13',
+            '104.24.0.0/14',
+            '172.64.0.0/13',
+            '131.0.72.0/22',
+            // Cloudflare IPv6 — https://www.cloudflare.com/ips-v6
+            '2400:cb00::/32',
+            '2606:4700::/32',
+            '2803:f800::/32',
+            '2405:b500::/32',
+            '2405:8100::/32',
+            '2a06:98c0::/29',
+            '2c0f:f248::/32',
+        ], headers: \Illuminate\Http\Request::HEADER_X_FORWARDED_FOR
+            | \Illuminate\Http\Request::HEADER_X_FORWARDED_HOST
+            | \Illuminate\Http\Request::HEADER_X_FORWARDED_PORT
+            | \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO);
+
         $middleware->alias([
             'tenant' => \App\Http\Middleware\TenantAccess::class,
             'telnyx.verify' => \App\Http\Middleware\VerifyTelnyxSignature::class,
