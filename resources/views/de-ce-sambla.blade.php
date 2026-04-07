@@ -24,37 +24,22 @@
 
 @section('content')
 
-{{-- ============================================================== --}}
-{{-- HERO --}}
-{{-- ============================================================== --}}
-<section class="relative bg-slate-950 pt-28 pb-20 lg:pt-36 lg:pb-24 overflow-hidden">
-    <div class="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-red-950/40"></div>
-    <div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(circle at 25% 25%, #dc2626 0%, transparent 50%), radial-gradient(circle at 75% 75%, #1e293b 0%, transparent 50%);"></div>
-
-    <div class="container-custom relative">
-        <div class="max-w-3xl">
-            <div class="inline-flex items-center gap-2 bg-red-950/50 border border-red-800/50 text-red-300 text-xs font-bold px-4 py-2 rounded-full mb-6 backdrop-blur">
-                <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
-                DE CE SAMBLA
-            </div>
-            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.08] tracking-tight text-white mb-6">
-                Nu e încă un chatbot.<br>
-                <span class="text-red-500">E un sistem RAG complet.</span>
-            </h1>
-            <p class="text-lg lg:text-xl text-slate-300 leading-relaxed mb-8">
-                Pe scurt: hybrid search peste documentele tale reale, voce nativă în română, 10 straturi anti-halucinare, hosting în România. Mai jos vezi exact ce înseamnă fiecare.
-            </p>
-            <div class="flex flex-wrap gap-3">
-                <a href="/register" class="inline-flex items-center gap-2 px-7 py-4 bg-gradient-to-r from-red-700 to-red-600 text-white font-bold rounded-xl hover:from-red-600 hover:to-red-500 transition-all duration-300 shadow-lg shadow-red-900/40">
-                    Începe gratuit
-                </a>
-                <a href="/preturi" class="inline-flex items-center gap-2 px-7 py-4 bg-white/10 backdrop-blur border border-white/20 text-white font-bold rounded-xl hover:bg-white/20 transition-all duration-300">
-                    Vezi prețurile
-                </a>
-            </div>
-        </div>
+<section class="relative overflow-hidden bg-slate-950 pt-28 pb-20 lg:pt-36 lg:pb-24">
+    <div class="absolute inset-0 opacity-[0.04]">
+        <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="why-motif" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse"><path d="M40 12 L52 24 L40 36 L28 24 Z" fill="#991b1b"/><rect x="38" y="2" width="4" height="8" fill="#991b1b"/><rect x="38" y="38" width="4" height="8" fill="#991b1b"/></pattern></defs><rect width="100%" height="100%" fill="url(#why-motif)"/></svg>
+    </div>
+    <div class="absolute top-10 right-0 w-[350px] h-[350px] bg-red-900/20 rounded-full blur-[100px]"></div>
+    <div class="container-custom text-center relative z-10">
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-6 animate-fade-in">
+            Nu e încă un chatbot.<br>
+            <span class="bg-gradient-to-r from-red-400 via-red-300 to-amber-300 bg-clip-text text-transparent">E un sistem RAG complet.</span>
+        </h1>
+        <p class="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto animate-fade-in">
+            Hybrid search peste documentele tale reale, voce nativă în română, 10 straturi anti-halucinare, hosting în România. Mai jos vezi exact ce înseamnă fiecare.
+        </p>
     </div>
 </section>
+<x-motif-border />
 
 {{-- ============================================================== --}}
 {{-- CATEGORICAL COMPARISON TABLE --}}
@@ -714,24 +699,13 @@
     </div>
 </section>
 
-{{-- ============================================================== --}}
-{{-- CTA --}}
-{{-- ============================================================== --}}
-<section class="bg-gradient-to-br from-red-700 to-red-900 py-16 lg:py-24">
-    <div class="container-custom">
-        <div class="max-w-3xl mx-auto text-center">
-            <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-5 tracking-tight">Testează platforma în 10 minute</h2>
-            <p class="text-lg text-red-100 mb-8">Cont nou, încarci 2-3 documente, vezi cum răspunde bot-ul în limba ta. Fără card.</p>
-            <div class="flex flex-wrap gap-3 justify-center">
-                <a href="/register" class="inline-flex items-center gap-2 px-8 py-4 bg-white text-red-700 font-bold rounded-xl hover:bg-red-50 transition-all shadow-lg">
-                    Începe gratuit
-                </a>
-                <a href="/contact" class="inline-flex items-center gap-2 px-8 py-4 bg-white/10 backdrop-blur border border-white/30 text-white font-bold rounded-xl hover:bg-white/20 transition-all">
-                    Vorbește cu noi
-                </a>
-            </div>
-        </div>
-    </div>
-</section>
+<x-cta-section
+    title="Testează platforma în 10 minute"
+    subtitle="Cont nou, încarci 2-3 documente, vezi cum răspunde bot-ul în limba ta. Fără card."
+    primary-text="Începe gratuit"
+    primary-href="/register"
+    secondary-text="Vorbește cu noi"
+    secondary-href="/contact"
+/>
 
 @endsection
