@@ -301,7 +301,7 @@ class GeminiContentService
 
             file_put_contents($storagePath, base64_decode($imageData));
 
-            $publicUrl = rtrim(config('app.url'), '/') . '/' . $filename;
+            $publicUrl = rtrim(config('app.cdn_url') ?: config('app.url'), '/') . '/' . $filename;
             $inputTokens = $data['usageMetadata']['promptTokenCount'] ?? 0;
             $outputTokens = $data['usageMetadata']['candidatesTokenCount'] ?? 0;
 
@@ -386,7 +386,7 @@ class GeminiContentService
             }
             file_put_contents($storagePath, base64_decode($b64));
 
-            $publicUrl = rtrim(config('app.url'), '/') . '/' . $filename;
+            $publicUrl = rtrim(config('app.cdn_url') ?: config('app.url'), '/') . '/' . $filename;
 
             $usage = $data['usage'] ?? [];
             $inputTokens = $usage['input_tokens'] ?? 0;

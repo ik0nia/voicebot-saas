@@ -16,6 +16,14 @@ return [
     'name' => env('APP_NAME', 'Laravel'),
 
     /*
+    | CDN host for static media (images, widget JS, plugin downloads).
+    | Falls back to APP_URL if not configured. Used by services that
+    | generate public asset URLs (e.g. GeminiContentService for social
+    | image URLs) so we serve from cdn.sambla.ro instead of sambla.ro.
+    */
+    'cdn_url' => env('CDN_URL'),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
