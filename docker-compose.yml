@@ -50,9 +50,20 @@ services:
         condition: service_healthy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.voicebot.rule=Host(`sambla.ro`) || Host(`cdn.sambla.ro`)"
+      # Main site
+      - "traefik.http.routers.voicebot.rule=Host(`sambla.ro`)"
+      - "traefik.http.routers.voicebot.entryPoints=https"
       - "traefik.http.routers.voicebot.tls=true"
       - "traefik.http.routers.voicebot.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.voicebot.service=voicebot"
+      # CDN host — explicit router so Traefik never falls back to a Coolify
+      # auto-generated router that lacks a service (which caused 504s).
+      - "traefik.http.routers.voicebot-cdn.rule=Host(`cdn.sambla.ro`)"
+      - "traefik.http.routers.voicebot-cdn.entryPoints=https"
+      - "traefik.http.routers.voicebot-cdn.tls=true"
+      - "traefik.http.routers.voicebot-cdn.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.voicebot-cdn.service=voicebot"
+      # Shared service definition both routers use.
       - "traefik.http.services.voicebot.loadbalancer.server.port=80"
     networks:
       default:
