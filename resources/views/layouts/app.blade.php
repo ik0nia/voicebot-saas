@@ -5,13 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="@yield('meta_description', 'Sambla - Agenți AI multi-canal pentru afacerea ta. Automatizează comunicarea pe telefon, WhatsApp, Facebook, Instagram și chatbot web cu inteligență artificială.')">
     <title>@yield('title', 'Sambla - Agenți AI Multi-Canal pentru Afacerea Ta')</title>
-    {{-- Open early TCP+TLS connections so the first asset request lands fast. --}}
+    {{-- Open early TCP+TLS connection to the CDN so the first asset request lands fast. --}}
     <link rel="preconnect" href="https://cdn.sambla.ro" crossorigin>
     <link rel="dns-prefetch" href="https://cdn.sambla.ro">
-    <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
-    <link rel="dns-prefetch" href="https://fonts.bunny.net">
 
-    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap" rel="stylesheet" />
+    {{-- Self-hosted Inter (latin + latin-ext only) — replaces the 338KB
+         fonts.bunny.net pull which loaded Greek/Cyrillic/Vietnamese subsets
+         we never use. ~80KB total now, browser only fetches the subset
+         actually needed via unicode-range. --}}
+    <link rel="preload" as="font" type="font/woff2"
+          href="https://cdn.sambla.ro/fonts/inter/inter-latin-ext-400.woff2" crossorigin>
+    <link rel="preload" as="font" type="font/woff2"
+          href="https://cdn.sambla.ro/fonts/inter/inter-latin-ext-700.woff2" crossorigin>
+    <link href="https://cdn.sambla.ro/fonts/inter/inter.css" rel="stylesheet" />
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
 </head>
