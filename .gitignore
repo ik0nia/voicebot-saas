@@ -3,6 +3,8 @@
 # /public/build — tracked in git for consistent deployments
 /public/hot
 /public/storage
+# AI-generated social images — never commit, regenerated on demand
+/public/social
 /storage/*.key
 /storage/pail
 /vendor

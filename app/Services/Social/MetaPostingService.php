@@ -20,17 +20,51 @@ class MetaPostingService
     {
         if (empty($post->image_url)) return true;
 
+        $needsRegen = false;
+        $reason = '';
+
+        // 1. Reachability check
         try {
             $head = Http::timeout(10)->head($post->image_url);
-            if ($head->successful()) return true;
-            Log::warning('Image URL not reachable before publish, regenerating', [
-                'post_id' => $post->id, 'status' => $head->status(),
-            ]);
+            if (!$head->successful()) {
+                $needsRegen = true;
+                $reason = 'unreachable (' . $head->status() . ')';
+            }
         } catch (\Throwable $e) {
-            Log::warning('Image HEAD check threw, regenerating', [
-                'post_id' => $post->id, 'error' => $e->getMessage(),
-            ]);
+            $needsRegen = true;
+            $reason = 'head exception: ' . $e->getMessage();
         }
+
+        // 2. Aspect ratio check — feed posts MUST be ~3:4 (ratio ~1.33),
+        //    stories MUST be ~9:16 (ratio ~1.78). If the file is locally
+        //    available we measure it; if mismatched, we regenerate at the
+        //    correct aspect so a story never goes out as a feed-format image
+        //    or vice versa.
+        if (!$needsRegen) {
+            $localPath = $this->localImagePath($post->image_url);
+            if ($localPath && is_file($localPath)) {
+                [$w, $h] = @getimagesize($localPath) ?: [0, 0];
+                if ($w > 0 && $h > 0) {
+                    $isVertical = ($h / $w) > 1.5;
+                    $shouldBeVertical = $post->post_type === 'story';
+                    if ($isVertical !== $shouldBeVertical) {
+                        $needsRegen = true;
+                        $reason = sprintf(
+                            'aspect mismatch %dx%d (ratio=%.2f) for post_type=%s',
+                            $w, $h, $h / $w, $post->post_type
+                        );
+                    }
+                }
+            }
+        }
+
+        if (!$needsRegen) return true;
+
+        Log::warning('Pre-publish image guard triggered, regenerating', [
+            'post_id' => $post->id,
+            'post_type' => $post->post_type,
+            'reason' => $reason,
+        ]);
 
         try {
             $gemini = app(GeminiContentService::class);
@@ -42,9 +76,22 @@ class MetaPostingService
                 return true;
             }
         } catch (\Throwable $e) {
-            Log::error('Image regen on stale URL failed', ['post_id' => $post->id, 'error' => $e->getMessage()]);
+            Log::error('Image regen on guard failed', ['post_id' => $post->id, 'error' => $e->getMessage()]);
         }
         return false;
+    }
+
+    /**
+     * Resolve a public image URL back to a local file path so we can
+     * inspect dimensions. Returns null if the URL points outside our
+     * public/ tree (e.g. legacy CDN host).
+     */
+    private function localImagePath(string $url): ?string
+    {
+        $path = parse_url($url, PHP_URL_PATH) ?: '';
+        if ($path === '') return null;
+        $local = public_path(ltrim($path, '/'));
+        return $local;
     }
 
     /**
@@ -202,6 +249,11 @@ class MetaPostingService
             Log::warning('Instagram story skipped - missing config or image', ['post_id' => $post->id]);
             return false;
         }
+
+        // Aspect ratio guard: stories MUST be 9:16. If the current image
+        // is feed-shaped (3:4), regenerate before pushing to Meta — otherwise
+        // we end up with feed-format graphics in story slots.
+        $this->ensureImageAvailable($post);
 
         try {
             // Step 1: Create story container

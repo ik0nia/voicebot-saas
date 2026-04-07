@@ -158,6 +158,17 @@ class GeminiContentService
      */
     public function generateImage(string $prompt, string $aspectRatio = '1:1', ?string $style = null): ?array
     {
+        $vertexResult = $this->generateImageVertex($prompt, $aspectRatio, $style);
+        if ($vertexResult) {
+            return $vertexResult;
+        }
+
+        Log::warning('Vertex AI image generation failed, falling back to OpenAI', ['aspect' => $aspectRatio]);
+        return $this->generateImageOpenAi($prompt, $aspectRatio);
+    }
+
+    private function generateImageVertex(string $prompt, string $aspectRatio = '1:1', ?string $style = null): ?array
+    {
         try {
             $accessToken = $this->getVertexAccessToken();
             if (!$accessToken) {
@@ -280,6 +291,93 @@ class GeminiContentService
             ];
         } catch (\Throwable $e) {
             Log::error('Vertex AI Image exception', ['error' => $e->getMessage()]);
+            $this->trackImageMetric('error', 0, 0, 0, 0);
+            return null;
+        }
+    }
+
+    /**
+     * Fallback image generation via OpenAI gpt-image-1 when Vertex AI is unavailable.
+     * gpt-image-1 sizes: 1024x1024 (1:1), 1024x1536 (portrait), 1536x1024 (landscape).
+     */
+    private function generateImageOpenAi(string $prompt, string $aspectRatio = '1:1'): ?array
+    {
+        try {
+            $apiKey = \App\Models\PlatformSetting::get('openai_api_key', config('services.openai.api_key', ''));
+            if (!$apiKey) {
+                Log::error('OpenAI fallback: no API key configured');
+                return null;
+            }
+
+            $size = match ($aspectRatio) {
+                '9:16', '3:4', '2:3' => '1024x1536',
+                '16:9', '4:3', '3:2' => '1536x1024',
+                default              => '1024x1024',
+            };
+
+            $startTime = microtime(true);
+
+            $response = Http::timeout(180)
+                ->withHeaders(['Authorization' => "Bearer {$apiKey}"])
+                ->post('https://api.openai.com/v1/images/generations', [
+                    'model' => 'gpt-image-1',
+                    'prompt' => mb_substr($prompt, 0, 3900),
+                    'size' => $size,
+                    'n' => 1,
+                ]);
+
+            $responseTimeMs = (int) ((microtime(true) - $startTime) * 1000);
+
+            if (!$response->ok()) {
+                Log::error('OpenAI image API error', [
+                    'status' => $response->status(),
+                    'body' => mb_substr($response->body(), 0, 500),
+                ]);
+                $this->trackImageMetric('error', 0, 0, 0, $responseTimeMs);
+                return null;
+            }
+
+            $data = $response->json();
+            $b64 = $data['data'][0]['b64_json'] ?? null;
+            $remoteUrl = $data['data'][0]['url'] ?? null;
+
+            if (!$b64 && $remoteUrl) {
+                $bin = Http::timeout(60)->get($remoteUrl);
+                if ($bin->ok()) {
+                    $b64 = base64_encode($bin->body());
+                }
+            }
+
+            if (!$b64) {
+                Log::warning('OpenAI image: no image bytes in response');
+                $this->trackImageMetric('error', 0, 0, 0, $responseTimeMs);
+                return null;
+            }
+
+            $filename = 'social/' . date('Y/m') . '/' . uniqid('openai_') . '.png';
+            $storagePath = public_path($filename);
+            $dir = dirname($storagePath);
+            if (!is_dir($dir)) {
+                mkdir($dir, 0755, true);
+            }
+            file_put_contents($storagePath, base64_decode($b64));
+
+            $publicUrl = rtrim(config('app.url'), '/') . '/' . $filename;
+
+            $usage = $data['usage'] ?? [];
+            $inputTokens = $usage['input_tokens'] ?? 0;
+            $outputTokens = $usage['output_tokens'] ?? 0;
+            $this->trackImageMetric('success', $inputTokens, $outputTokens, ($inputTokens + $outputTokens) * 0.01 / 1000, $responseTimeMs);
+
+            return [
+                'url' => $publicUrl,
+                'path' => $filename,
+                'mime_type' => 'image/png',
+                'alt_text' => '',
+                'provider' => 'openai',
+            ];
+        } catch (\Throwable $e) {
+            Log::error('OpenAI image exception', ['error' => $e->getMessage()]);
             $this->trackImageMetric('error', 0, 0, 0, 0);
             return null;
         }

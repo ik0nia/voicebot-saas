@@ -194,8 +194,8 @@
                 @forelse($grouped as $groupLabel => $groupPosts)
                     <li class="bg-slate-50 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{{ $groupLabel }}</li>
                     @foreach($groupPosts as $post)
-                        <li class="post-row group" data-post-id="{{ $post->id }}">
-                            <div class="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 cursor-pointer relative" onclick="openPost({{ $post->id }}, event)">
+                        <li class="post-row group" data-post-id="{{ $post->id }}" data-edit-url="{{ route('admin.social.edit', $post) }}">
+                            <div class="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 cursor-pointer relative">
                                 <input type="checkbox" class="post-check rounded border-slate-300 shrink-0" value="{{ $post->id }}" onclick="event.stopPropagation(); updateBulk();">
 
                                 <div class="shrink-0 w-14 h-14 rounded-lg overflow-hidden bg-slate-100 border border-slate-200 relative">
@@ -979,11 +979,11 @@ window.addEventListener('error', (e) => {
             closePanel();
             return;
         }
-        // Row click → open panel
+        // Row click → open edit page in new tab
         const row = e.target.closest('.post-row');
-        if (row && !e.target.closest('input,button,a')) {
-            const id = +row.dataset.postId;
-            if (id) openPost(id, e);
+        if (row && !e.target.closest('input,button,a,label')) {
+            const url = row.dataset.editUrl;
+            if (url) window.location.href = url;
         }
     });
 
@@ -1182,7 +1182,7 @@ window.addEventListener('error', (e) => {
                 if (Math.abs(dx) > 10 || Math.abs(dy) > 10) return;
                 if (e.target.closest('button')) return;
                 const id = +card.dataset.postId;
-                if (id) openPost(id);
+                if (id) window.location.href = `/admin/social/post/${id}/edit`;
             });
         });
 
@@ -1197,7 +1197,7 @@ window.addEventListener('error', (e) => {
         });
         document.getElementById('btn-card-detail')?.addEventListener('click', () => {
             const c = topCard();
-            if (c) openPost(+c.dataset.postId);
+            if (c) window.location.href = `/admin/social/post/${c.dataset.postId}/edit`;
         });
 
         refreshStack();

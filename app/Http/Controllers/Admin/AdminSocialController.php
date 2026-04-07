@@ -73,7 +73,16 @@ class AdminSocialController extends Controller
         $schedules = SocialSchedule::all();
 
         // Mobile swipe deck: 1 card per group (feed post, FB preferred), with
-        // legacy ungrouped drafts still appearing individually.
+        // legacy ungrouped drafts still appearing individually. We only keep
+        // posts whose image actually exists on disk — many legacy URLs point
+        // to voice.ikonia.cloud and 404, which we don't want in the review UI.
+        $hasRealImage = function ($post) {
+            if (empty($post->image_url)) return false;
+            $path = parse_url($post->image_url, PHP_URL_PATH) ?: '';
+            $local = public_path(ltrim($path, '/'));
+            return is_file($local);
+        };
+
         $groupedDeck = SocialPost::query()
             ->where('status', 'draft')
             ->where('post_type', 'post')
@@ -82,6 +91,7 @@ class AdminSocialController extends Controller
             ->orderByRaw("CASE WHEN platform = 'facebook' THEN 0 ELSE 1 END")
             ->orderBy('id', 'asc')
             ->get()
+            ->filter($hasRealImage)
             ->unique('group_id')
             ->take(12);
 
@@ -90,8 +100,10 @@ class AdminSocialController extends Controller
             ->whereNull('group_id')
             ->whereNotNull('image_url')
             ->orderBy('id', 'asc')
-            ->limit(12 - $groupedDeck->count())
-            ->get();
+            ->limit(50)
+            ->get()
+            ->filter($hasRealImage)
+            ->take(12 - $groupedDeck->count());
 
         $deck = $groupedDeck->concat($legacyDeck)->values();
 
@@ -157,6 +169,22 @@ class AdminSocialController extends Controller
     }
 
     // Return single post as JSON for the side panel viewer
+    public function edit(SocialPost $post)
+    {
+        $post->load([
+            'variants' => fn($q) => $q->orderByDesc('id')->limit(10),
+            'rejections' => fn($q) => $q->orderByDesc('id')->limit(5),
+        ]);
+
+        $fanout = [];
+        if ($post->group_id) {
+            $fanout = SocialPost::where('group_id', $post->group_id)
+                ->orderBy('id')
+                ->get(['id', 'platform', 'post_type', 'status']);
+        }
+        return view('admin.social.edit', compact('post', 'fanout'));
+    }
+
     public function show(SocialPost $post)
     {
         $post->load(['variants' => fn($q) => $q->orderByDesc('id')->limit(10), 'rejections' => fn($q) => $q->orderByDesc('id')->limit(5)]);
@@ -217,16 +245,19 @@ class AdminSocialController extends Controller
      */
     private function findNextSlotForPlatform(string $platform, ?\Carbon\Carbon $from = null): ?\Carbon\Carbon
     {
-        $schedule = SocialSchedule::where('platform', $platform)->first();
-        $times = collect($schedule?->posting_times ?? ['09:00', '13:00', '18:00'])->filter()->values();
-        if ($times->isEmpty()) $times = collect(['09:00', '13:00', '18:00']);
+        // Random assignment across the fixed working-hours grid 09:00..18:00.
+        // We ignore SocialSchedule.posting_times here on purpose: the user wants
+        // each approval to land on a random whole hour within the workday rather
+        // than cycling through a small fixed list (which clusters posts).
+        $hours = range(9, 18);
 
         $start = $from ?? now();
         for ($day = 0; $day < 180; $day++) {
             $date = $start->copy()->addDays($day);
-            foreach ($times as $time) {
-                [$h, $m] = array_pad(explode(':', $time), 2, '00');
-                $slot = $date->copy()->setTime((int) $h, (int) $m, 0);
+            $shuffled = $hours;
+            shuffle($shuffled);
+            foreach ($shuffled as $h) {
+                $slot = $date->copy()->setTime((int) $h, 0, 0);
                 if ($slot->lte($start)) continue;
                 $collision = SocialPost::where('platform', $platform)
                     ->whereIn('status', ['scheduled', 'publishing'])
@@ -458,7 +489,9 @@ class AdminSocialController extends Controller
         return response()->json(['ok' => true]);
     }
 
-    // Update post content
+    // Update post content. Cascades text + hashtags to feed siblings (FB↔IG)
+    // so editing one half of a group keeps both platforms in sync.
+    // scheduled_at and status are NOT cascaded — each platform owns its slot.
     public function update(Request $request, SocialPost $post)
     {
         $validated = $request->validate([
@@ -467,14 +500,26 @@ class AdminSocialController extends Controller
             'scheduled_at' => 'nullable|date',
         ]);
 
+        $hashtags = $validated['hashtags']
+            ? array_map('trim', explode(',', $validated['hashtags']))
+            : $post->hashtags;
+
         $post->update([
             'content' => $validated['content'],
-            'hashtags' => $validated['hashtags'] ? array_map('trim', explode(',', $validated['hashtags'])) : $post->hashtags,
+            'hashtags' => $hashtags,
             'scheduled_at' => $validated['scheduled_at'] ?? $post->scheduled_at,
             'status' => $request->input('action') === 'schedule' ? 'scheduled' : 'draft',
         ]);
 
-        return redirect()->route('admin.social.index')->with('success', 'Post actualizat!');
+        // Cascade text + hashtags to feed siblings (FB<->IG kept in sync).
+        foreach ($post->feedSiblings() as $sibling) {
+            $sibling->update([
+                'content' => $validated['content'],
+                'hashtags' => $hashtags,
+            ]);
+        }
+
+        return redirect()->route('admin.social.index')->with('success', 'Post actualizat (text sincronizat cu siblings).');
     }
 
     /**
@@ -521,14 +566,18 @@ class AdminSocialController extends Controller
         ]);
     }
 
-    // Publish immediately (JSON-aware)
+    // Publish immediately (JSON-aware). Cascades to all group siblings (FB+IG)
+    // so a "Publish now" from any one post fans out to the whole group.
     public function publish(Request $request, SocialPost $post)
     {
-        $post->update(['status' => 'scheduled', 'scheduled_at' => now()]);
-        dispatch(new \App\Jobs\AutoPublishSocialPost($post->id));
+        $targets = collect([$post])->concat($post->siblings());
+        foreach ($targets as $t) {
+            $t->update(['status' => 'scheduled', 'scheduled_at' => now()]);
+            dispatch(new \App\Jobs\AutoPublishSocialPost($t->id));
+        }
 
         if ($request->expectsJson() || $request->wantsJson()) {
-            return response()->json(['ok' => true]);
+            return response()->json(['ok' => true, 'count' => $targets->count()]);
         }
         return back()->with('success', 'Post trimis la publicare!');
     }
