@@ -61,4 +61,13 @@ return [
         'model' => env('GEMINI_MODEL', 'gemini-2.5-flash-preview-05-20'),
     ],
 
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'picker_api_key' => env('GOOGLE_PICKER_API_KEY'),
+        'redirect_uri' => env('GOOGLE_REDIRECT_URI', env('APP_URL') . '/oauth/google/callback'),
+        // Drive folder name created on first connect (convention, not auto-watched)
+        'kb_folder_name' => env('GOOGLE_KB_FOLDER_NAME', 'Sambla Knowledge Base'),
+    ],
+
 ];

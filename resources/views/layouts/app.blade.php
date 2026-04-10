@@ -83,7 +83,7 @@
                     "Voicebot cu voce naturală în română (preia apeluri telefonice 24/7)",
                     "Anti-halucinare: răspunde DOAR ce știe, nu inventează",
                     "RAG Pipeline cu Hybrid Search (vector + full-text + reranker)",
-                    "Integrare nativă WooCommerce, WordPress, Shopify",
+                    "Integrare nativă WooCommerce și WordPress",
                     "Multi-canal: web, telefon, WhatsApp, Facebook Messenger, Instagram",
                     "Captare lead-uri și pipeline CRM integrat",
                     "Programări automate cu reminder",

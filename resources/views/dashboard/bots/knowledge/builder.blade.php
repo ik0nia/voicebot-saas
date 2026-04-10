@@ -172,7 +172,17 @@
             @include('dashboard.bots.knowledge.partials.scanner', ['bot' => $bot, 'scans' => $scans, 'site' => $site ?? null])
         </div>
         <div id="panel-connectors" class="builder-panel hidden" role="tabpanel" aria-labelledby="btab-connectors">
-            @include('dashboard.bots.knowledge.partials.connectors', ['bot' => $bot, 'connectors' => $connectors, 'site' => $site ?? null])
+            @include('dashboard.bots.knowledge.partials.connectors', [
+                'bot' => $bot,
+                'connectors' => $connectors,
+                'site' => $site ?? null,
+                'googleToken' => $googleToken ?? null,
+                'googleAccessToken' => $googleAccessToken ?? null,
+                'googlePickerApiKey' => $googlePickerApiKey ?? null,
+                'driveCategories' => $driveCategories ?? [],
+                'driveConnector' => $driveConnector ?? null,
+                'driveFiles' => $driveFiles ?? collect(),
+            ])
         </div>
         <div id="panel-documents" class="builder-panel hidden" role="tabpanel" aria-labelledby="btab-documents">
             @include('dashboard.bots.knowledge.partials.documents', ['bot' => $bot, 'documents' => $documents])

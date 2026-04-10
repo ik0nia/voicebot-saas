@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Sambla — Quick Wins (ce putem face ușor acum)</title>
+<style>
+  :root{
+    --bg:#0b1020; --card:#121829; --ink:#e6e9f2; --mute:#8a93ad; --line:#1f2742;
+    --green:#22c55e; --yellow:#eab308; --red:#ef4444; --blue:#3b82f6;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font:15.5px/1.6 -apple-system,Segoe UI,Roboto,Inter,sans-serif}
+  a{color:#93c5fd;text-decoration:none}
+  .wrap{max-width:860px;margin:0 auto;padding:36px 22px 100px}
+  header{border-bottom:1px solid var(--line);padding-bottom:22px;margin-bottom:28px}
+  header h1{font-size:26px;margin:0 0 6px;letter-spacing:-0.02em}
+  header p{margin:4px 0;color:var(--mute);font-size:14px}
+  h2{font-size:20px;margin:38px 0 12px;display:flex;align-items:center;gap:10px}
+  h3{font-size:17px;margin:22px 0 8px;color:#fbbf24}
+  .item{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--green);border-radius:10px;padding:16px 20px;margin:12px 0}
+  .item.medium{border-left-color:var(--yellow)}
+  .item.hard{border-left-color:var(--red)}
+  .item h4{margin:0 0 6px;font-size:16px;display:flex;justify-content:space-between;gap:14px;align-items:baseline}
+  .effort{font-size:12px;color:var(--mute);font-weight:500;white-space:nowrap}
+  .item p{margin:6px 0;font-size:14px}
+  .item ul{margin:6px 0 0;padding-left:22px;font-size:14px}
+  .item li{margin:3px 0}
+  code{background:#0a0f1f;border:1px solid var(--line);padding:1px 6px;border-radius:4px;font-size:13px;color:#fbbf24;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .impact{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-left:8px}
+  .impact.high{background:rgba(34,197,94,.15);color:#86efac}
+  .impact.med{background:rgba(234,179,8,.15);color:#fde68a}
+  .impact.low{background:rgba(139,148,178,.15);color:#9ca3af}
+  .pick{background:linear-gradient(180deg,#1a3329,#121829);border:1px solid #22c55e;border-radius:12px;padding:18px 22px;margin:30px 0}
+  .pick h2{margin-top:0;color:#86efac}
+  .pick ol{margin:8px 0 0;padding-left:22px}
+  .pick li{margin:6px 0;font-size:15px}
+  .legend{display:flex;gap:14px;font-size:12px;color:var(--mute);margin-top:10px}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .dot{width:10px;height:10px;border-radius:2px;display:inline-block}
+  .dot.g{background:var(--green)}.dot.y{background:var(--yellow)}.dot.r{background:var(--red)}
+  footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--line);color:var(--mute);font-size:13px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Quick Wins — ce putem face ușor acum</h1>
+  <p>Listă scurtă de acțiuni rapide și ieftine din auditul de azi. Decide cu ce începem.</p>
+  <p>📅 2026-04-07 · separat de <a href="/audit/index.html">audit-ul complet</a></p>
+  <div class="legend">
+    <span><span class="dot g"></span> 5-30 min (text/UI)</span>
+    <span><span class="dot y"></span> 1-3 ore (cod simplu)</span>
+    <span><span class="dot r"></span> 1-2 zile (dev real)</span>
+  </div>
+</header>
+
+<h2>🟢 Foarte rapide (text + UI cleanup)</h2>
+
+<div class="item">
+<h4>A. Curățarea celorlalte 11 niche-uri <span class="effort">~1-2h · <span class="impact high">impact mare</span></span></h4>
+<p>Aceeași treabă ca cea de azi pe celelalte 11 niche pages. Toate au promise false de integrări care nu există.</p>
+<ul>
+<li><strong>contabilitate</strong> — promite SmartBill, Saga, WinMentor, ContaBlue, ANAF SPV (toate inexistente)</li>
+<li><strong>restaurant</strong> — promite SmartBill + Oblio POS integration</li>
+<li><strong>pensiune</strong> — promite Booking.com + Airbnb sync (channel manager)</li>
+<li><strong>salon-beauty</strong> — promite Google Sheets sync</li>
+<li><strong>turism</strong> — promite touroperator feeds (Christian Tour, Paralela 45)</li>
+<li><strong>veterinar</strong> — promite "majoritatea softurilor de management veterinar prin API"</li>
+<li><strong>psihologie, scoli-limbi, curatenie, service-auto, notariat</strong> — verific fiecare</li>
+</ul>
+<p>Aceeași abordare: identific, scot/rescriu, re-seedez. <strong>Nu e cod nou, doar text.</strong></p>
+</div>
+
+<div class="item">
+<h4>B. Fix prețuri inconsistente în <code>welcome.blade.php</code> <span class="effort">~10 min · <span class="impact high">impact mare</span></span></h4>
+<p>Are 99/299€ vs <code>preturi.blade.php</code> care zice 49/149/399€. Verific dacă fișierul e folosit undeva și fie îl șterg, fie îl actualizez la prețurile reale.</p>
+</div>
+
+<div class="item">
+<h4>C. Hide UI placeholder-uri "Coming soon" <span class="effort">~15 min · <span class="impact med">impact mediu</span></span></h4>
+<p>Ascund din UI butoanele/tab-urile moarte ca să nu vadă utilizatorii feature-uri inactive:</p>
+<ul>
+<li>Tab "Webhooks" în Settings — disabled cu <code>pointer-events-none opacity-50</code></li>
+<li>Tab "Event notifications" — la fel</li>
+<li>Link "Audit" în admin nav — controller absent</li>
+<li>"API docs" — JSON placeholder</li>
+</ul>
+<p>Când le implementăm cu adevărat, le re-activăm.</p>
+</div>
+
+<div class="item">
+<h4>D. Fix wording AWB în landing pages <span class="effort">~10 min · <span class="impact high">impact mare</span></span></h4>
+<p>"Tracking automat AWB" → "Link direct de tracking AWB în chat". Onest, fără să mintă. Schimbare în <code>home.blade.php</code> și <code>functionalitati.blade.php</code>.</p>
+</div>
+
+<h2>🟡 Cod simplu</h2>
+
+<div class="item medium">
+<h4>E. G3 — API tokens cu scope restrictiv <span class="effort">~2h · <span class="impact high">impact mare (security)</span></span></h4>
+<p>Acum când generezi un token în <code>/dashboard/setari/api-keys</code>, primește scope <code>['*']</code> = control complet. Fix:</p>
+<ul>
+<li>UI cu checkbox-uri pentru abilities (<code>bots:read</code>, <code>calls:read</code>, <code>calls:create</code>, <code>analytics:read</code>, etc.)</li>
+<li>Default la <code>bots:read</code>, nu <code>*</code></li>
+<li>Rate limit pe endpoint generate (max 10 tokens/zi/user)</li>
+</ul>
+</div>
+
+<div class="item medium">
+<h4>F. G19 — reactivare email verification <span class="effort">~1h · <span class="impact med">impact mediu</span></span></h4>
+<p>E comentat-out în <code>RegisterController</code>. Reactivez + adaug ruta de verify + un mailable simplu. Util înainte de signup public.</p>
+</div>
+
+<div class="item medium">
+<h4>G. Cleanup queue:failed batch <span class="effort">~30 min · <span class="impact low">impact mic</span></span></h4>
+<p>În log sunt 17 job-uri eșuate <code>ProcessKnowledgeDocument</code> și 1 <code>AutoPublishSocialPost</code>. Le inspectez, le re-rulez sau le șterg + adaug în Admin System page un buton de "purge stale failed jobs".</p>
+</div>
+
+<div class="item medium">
+<h4>H. Niche social proof — rescriere onestă <span class="effort">~45 min · <span class="impact med">impact mediu</span></span></h4>
+<p>Texte de tipul "40+ pensiuni folosesc Sambla", "80+ firme de curățenie", "12+ ore eliberate pe săptămână" pot da impresia că sunt date reale. Le rescriu să sune ca beneficii potențiale, nu ca social proof real (până când nu avem efectiv numere reale).</p>
+</div>
+
+<h2>🔴 Dev real (NU în "easy" — sprint dedicat)</h2>
+
+<div class="item hard">
+<h4>I-K. G5, G6, G7, G23 <span class="effort">1-2 zile fiecare · <span class="impact high">impact mare</span></span></h4>
+<p>Lead capture în voce, sentiment analysis voce, filling messages, Google Calendar + multi-resource bookings. Toate sunt în Sprint 1A din audit. Nu sunt "easy" — necesită sprint dedicat.</p>
+</div>
+
+<div class="pick">
+<h2>✅ Recomandarea mea — ce facem acum</h2>
+<p style="margin-top:0">În ordine, una după alta. Total ~2.5 ore.</p>
+<ol>
+<li><strong>A</strong> — cleanup celelalte 11 niche (cel mai mare impact reputational, ~1-2h)</li>
+<li><strong>B</strong> — fix welcome.blade.php prețuri (~10 min)</li>
+<li><strong>D</strong> — fix wording AWB (~10 min)</li>
+<li><strong>C</strong> — hide UI placeholders (~15 min)</li>
+</ol>
+<p>După astea, ai landing-ul + dashboard-ul curate de minciuni vizibile și placeholder-uri moarte. Apoi decidem dacă mai facem <strong>E (API tokens)</strong> azi sau lăsăm pe mâine.</p>
+<p style="margin-bottom:0;color:#86efac"><strong>Spune "fă A"</strong> și încep cu cele 11 niche-uri. Sau dă-mi altă combinație.</p>
+</div>
+
+<footer>
+Sambla quick-wins list · 2026-04-07 · <a href="/audit/index.html">audit complet</a>
+</footer>
+</div>
+</body>
+</html>

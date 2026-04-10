@@ -87,6 +87,53 @@ Route::middleware(\App\Http\Middleware\PublicPageCache::class)->group(function (
     })->name('public.niche');
 });
 
+// Dynamic sitemap — includes all public pages + active niche landing pages.
+Route::get('/sitemap.xml', function () {
+    $urls = [
+        ['loc' => '/',                  'changefreq' => 'weekly',  'priority' => '1.0'],
+        ['loc' => '/de-ce-sambla',      'changefreq' => 'weekly',  'priority' => '0.95'],
+        ['loc' => '/functionalitati',   'changefreq' => 'weekly',  'priority' => '0.9'],
+        ['loc' => '/preturi',           'changefreq' => 'weekly',  'priority' => '0.9'],
+        ['loc' => '/despre',            'changefreq' => 'monthly', 'priority' => '0.7'],
+        ['loc' => '/contact',           'changefreq' => 'monthly', 'priority' => '0.7'],
+        ['loc' => '/blog',              'changefreq' => 'weekly',  'priority' => '0.6'],
+        ['loc' => '/termeni',           'changefreq' => 'yearly',  'priority' => '0.3'],
+        ['loc' => '/confidentialitate', 'changefreq' => 'yearly',  'priority' => '0.3'],
+        ['loc' => '/cookie-uri',        'changefreq' => 'yearly',  'priority' => '0.3'],
+    ];
+
+    $niches = \App\Models\Niche::where('is_active', true)
+        ->orderBy('sort_order')
+        ->get(['slug', 'updated_at']);
+
+    foreach ($niches as $niche) {
+        $urls[] = [
+            'loc'        => '/pentru/' . $niche->slug,
+            'lastmod'    => $niche->updated_at->toW3cString(),
+            'changefreq' => 'weekly',
+            'priority'   => '0.8',
+        ];
+    }
+
+    $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+    $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+
+    foreach ($urls as $entry) {
+        $xml .= '  <url>' . "\n";
+        $xml .= '    <loc>https://sambla.ro' . $entry['loc'] . '</loc>' . "\n";
+        if (isset($entry['lastmod'])) {
+            $xml .= '    <lastmod>' . $entry['lastmod'] . '</lastmod>' . "\n";
+        }
+        $xml .= '    <changefreq>' . $entry['changefreq'] . '</changefreq>' . "\n";
+        $xml .= '    <priority>' . $entry['priority'] . '</priority>' . "\n";
+        $xml .= '  </url>' . "\n";
+    }
+
+    $xml .= '</urlset>';
+
+    return response($xml, 200, ['Content-Type' => 'application/xml; charset=utf-8']);
+});
+
 // Niche lead capture (POST — outside PublicPageCache so CSRF + flash work normally)
 Route::post('/pentru/{niche:slug}/lead', [\App\Http\Controllers\NicheLandingController::class, 'storeLead'])
     ->name('public.niche.lead');
@@ -237,6 +284,13 @@ Route::middleware('auth')->prefix('dashboard/boti/{bot}/experiments')->group(fun
     Route::delete('/{experiment}', [\App\Http\Controllers\Dashboard\AbTestingController::class, 'destroy'])->name('dashboard.bots.experiments.destroy');
 });
 
+// Google OAuth (per-tenant Google Drive connection)
+Route::middleware('auth')->prefix('oauth/google')->group(function () {
+    Route::get('/connect', [\App\Http\Controllers\Auth\GoogleOAuthController::class, 'connect'])->name('oauth.google.connect');
+    Route::get('/callback', [\App\Http\Controllers\Auth\GoogleOAuthController::class, 'callback'])->name('oauth.google.callback');
+    Route::post('/disconnect', [\App\Http\Controllers\Auth\GoogleOAuthController::class, 'disconnect'])->name('oauth.google.disconnect');
+});
+
 // Knowledge base routes (dashboard)
 Route::middleware('auth')->prefix('dashboard/boti/{bot}')->group(function () {
     Route::get('/knowledge', [KnowledgeController::class, 'index'])->name('dashboard.bots.knowledge.index');
@@ -261,6 +315,10 @@ Route::middleware('auth')->prefix('dashboard/boti/{bot}')->group(function () {
         Route::post('/knowledge/connector/{connector}/sync', [KnowledgeController::class, 'syncConnector'])->name('dashboard.bots.knowledge.connector.sync');
         Route::get('/knowledge/sync-progress', [KnowledgeController::class, 'syncProgress'])->name('dashboard.bots.knowledge.sync-progress');
         Route::delete('/knowledge/connector/{connector}', [KnowledgeController::class, 'destroyConnector'])->name('dashboard.bots.knowledge.connector.destroy');
+
+        // Google Drive: import picked files + delete a single drive file
+        Route::post('/knowledge/connector/{connector}/drive/import', [KnowledgeController::class, 'importDriveFiles'])->name('dashboard.bots.knowledge.drive.import');
+        Route::delete('/knowledge/connector/{connector}/drive/{driveFile}', [KnowledgeController::class, 'destroyDriveFile'])->name('dashboard.bots.knowledge.drive.destroy');
     });
 
     // Read-only status endpoints (higher limit: 60/min)

@@ -111,14 +111,15 @@ class BackfillSocialImages extends Command
 
     private function buildPrompt(SocialPost $post, string $aspect): ?string
     {
-        // The strict no-people / Romanian-text-on-graphic rules that MUST
-        // be appended to every prompt regardless of where it came from.
-        // Without this suffix, legacy stored prompts (which often described
-        // people in cafés / offices) bypassed the new graphics-first rules.
-        $rulesSuffix = " STRICT OVERRIDE — DEFAULT NO PEOPLE: ignore any earlier instruction to include humans. Replace any human subject with a typography poster, device mockup, isometric diorama, abstract geometric composition, paper collage, or data visualization. People are forbidden by default. ROMANIAN TEXT: any on-image headline must be in Romanian with proper diacritics (ă â î ș ț), large and centered, as the visual hero. FORBIDDEN: stock photos of people, smiling teams, handshakes, suits pointing at laptops, faces of any kind.";
+        // The strict zero-text / zero-logo / no-people-by-default rules
+        // that MUST be appended to every prompt regardless of where it
+        // came from. Without this suffix, legacy stored prompts (which
+        // often described people, slogans, or fake logos) bypass the
+        // current graphics-first quality bar.
+        $rulesSuffix = " STRICT OVERRIDE: ZERO text, ZERO words, ZERO letters, ZERO captions, ZERO slogans on the image — pure visual composition only. ZERO logo, ZERO brand mark, ZERO wordmark, ZERO watermark — never invent or fake any brand. The brand is added by us in post-production. NO PEOPLE by default — replace any human subject with a still-life object, device mockup, miniature diorama, abstract Bauhaus composition, or cinematic editorial scene. People allowed only as silhouettes/hands in rare cases. FORBIDDEN: text, logo, wordmark, smiling teams, handshakes, suits with laptops, faces, clip-art, single icon on flat white, gradient rainbows.";
 
         // If we already stored a full prompt, REUSE its subject but rewrap
-        // it with the new graphics-first rules so legacy "people" prompts
+        // it with the new rules so legacy "text + logo + people" prompts
         // don't slip through.
         $stored = trim((string) $post->image_prompt);
         if (mb_strlen($stored) > 60) {
@@ -130,25 +131,20 @@ class BackfillSocialImages extends Command
         if (!$topic) {
             return null;
         }
-        $cta = $meta['cta'] ?? null;
-        $visualText = $meta['visual_text'] ?? $cta ?? null;
 
-        $textRule = $visualText
-            ? "Render EXACTLY this short Romanian phrase, MAX 3 words: '{$visualText}'. One clean headline, no other text. If diacritics can't be rendered cleanly, skip text entirely. "
-            : "Keep any on-image text very short (max 3 Romanian words) or skip text entirely. ";
+        $textRule = "ZERO text on the image. No words, no letters, no captions, no labels. Pure visual only. ";
 
         $aspectLine = $aspect === '9:16'
             ? "ASPECT: 9:16 vertical Instagram Story, full-bleed, generous top/bottom safe zones for UI overlays. "
             : "ASPECT: 3:4 portrait social feed graphic. ";
 
-        return "Premium social media graphic for Sambla (Romanian AI chat & voice bot platform). "
-            . "SUBJECT: {$topic}. "
+        return "Premium magazine-quality social media image for a modern brand. The goal is a beautiful, atmospheric, cinematic visual — NOT a poster with a slogan slapped on. "
+            . "SUBJECT: {$topic}. Translate the topic into a real visual scene with depth, lighting and atmosphere. Examples: a single beautiful object on a textured surface, a still life with golden hour light, a Bauhaus geometric composition, a miniature crafted diorama, a premium 3D render of one floating element. "
             . $textRule
-            . "BRAND LOGO: Place the Sambla logo (attached reference) in a top corner with a subtle white backing for legibility. "
-            . "COMPOSITION: Strong focal point, clear hierarchy, designed feel, generous whitespace, premium not busy. "
-            . "PEOPLE RULE — DEFAULT NO PEOPLE: prefer graphic/typographic/object/mockup compositions WITHOUT humans. Use device mockups, dioramas, abstract shapes, typography, paper collage, data viz. People are a rare exception (~1 in 10) and only Caucasian/European if absolutely required. Audience: Romanian SMB owners. "
-            . "ROMANIAN TEXT — render any short headline in Romanian with proper diacritics (ă â î ș ț). Text is the visual hero. "
-            . "FORBIDDEN: single icon centered on white, clip-art minimalism, stock-photo clichés (handshakes, suits pointing at laptops), generic floating chat bubbles, garbled text, gradient rainbows. "
+            . "BRAND / LOGO — STRICT: do NOT draw, render, fake or invent any logo, wordmark, badge, watermark or company name. Leave all corners empty of brand marks. The brand is added separately by us in post. "
+            . "COMPOSITION: cinematic, intentional, designed by a human art director. Strong focal point, deliberate light direction, real depth, texture, atmosphere. Architectural Digest / Kinfolk / NYT Magazine quality. "
+            . "PEOPLE RULE — DEFAULT NO PEOPLE: object/scene/architectural composition only. People allowed only as silhouettes or hands in rare cases (1 in 15) when the topic absolutely demands. NEVER full faces, NEVER smiling diverse team, NEVER stock-photo clichés. "
+            . "ABSOLUTELY FORBIDDEN: any text on image, any logo (real or fake), any wordmark, any caption, any URL, any phone number, any 'AI' badge, single icon centered on flat white, clip-art, stock photos, garbled letters, gradient rainbows, infographic layouts. "
             . $aspectLine;
     }
 

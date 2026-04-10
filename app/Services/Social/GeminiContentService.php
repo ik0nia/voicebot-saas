@@ -15,7 +15,12 @@ class GeminiContentService
 
     // Vertex AI config for image generation via service account
     private string $vertexProjectId = 'gen-lang-client-0096953872';
-    private string $vertexImageModel = 'gemini-3.1-flash-image-preview';
+    // Switched 2026-04-08 from `gemini-3.1-flash-image-preview` (preview model
+    // with hard-capped quota that ignores billing) to the STABLE release.
+    // The preview was returning 429 RESOURCE_EXHAUSTED on every request even
+    // with billing enabled, forcing all generations to fall through to the
+    // OpenAI fallback (which produces visibly worse design quality).
+    private string $vertexImageModel = 'gemini-2.5-flash-image';
     private string $serviceAccountPath;
 
     public function __construct()
@@ -164,12 +169,12 @@ class GeminiContentService
     private function imageRulesPreamble(): string
     {
         return "STRICT BRAND & COMPOSITION RULES (apply to every image, override any conflicting instruction below):\n"
-            . "1. NO PEOPLE — no humans, faces, hands, silhouettes, crowds. If the brief mentions a person, replace them with a typography poster, device mockup, isometric diorama, abstract geometric composition, paper collage, or data visualization. (Rare exception: only if the topic absolutely requires a person, and only one Caucasian/European subject.)\n"
-            . "2. NO FAKE LOGO — do NOT invent or render any 'Sambla' wordmark, brand text, or logo of your own. Leave the top-right corner clean. The real logo is composited separately.\n"
-            . "3. ROMANIAN TEXT ONLY — any on-image text MUST be Romanian with PROPER ROMANIAN diacritics. The correct characters are ă (a-breve, NOT à or á), â (a-circumflex, NOT à), î (i-circumflex), ș (s-comma below, NOT s-cedilla ş), ț (t-comma below, NOT t-cedilla ţ). NEVER substitute French/Spanish/Polish/Czech accents. NEVER use à á ã ä ñ ç š ž. If you cannot render the exact Romanian glyphs ă â î ș ț cleanly, drop the diacritic and use plain a/i/s/t — but NEVER swap to a different language's accent. Better no diacritic than wrong diacritic. Keep text short (max 3-5 words), large, centered, as the visual hero.\n"
-            . "4. STYLE — graphic design first: editorial typography, isometric 3D dioramas (uninhabited), abstract Bauhaus geometry, product device mockups on clean surfaces, paper collage, data visualization. NEVER stock-photo clichés (handshakes, suits pointing at laptops, smiling diverse teams).\n"
-            . "5. PALETTE — off-white background, deep slate #1e293b, single Sambla red #dc2626 accent. Premium, not busy. Generous whitespace. Strong focal point.\n"
-            . "6. AUDIENCE — Romanian small-business owners. Keep it warm, premium, designed.\n\n"
+            . "1. ZERO TEXT — the image must contain ZERO text, ZERO words, ZERO letters, ZERO captions, ZERO labels, ZERO slogans, ZERO numbers as headline, ZERO URLs. Pure visual composition only. Any text on the image is a failure.\n"
+            . "2. ZERO LOGO — do NOT draw, render, fake, invent or imply any logo, wordmark, brand mark, badge, watermark, stamp, or company name. Leave all corners empty of brand marks. The brand is added separately by us in post-production. Never write 'Sambla' or any other word that looks like a company name.\n"
+            . "3. NO PEOPLE BY DEFAULT — object/scene/architectural composition only. No humans, no faces, no diverse smiling teams, no handshakes, no suits with laptops. People allowed only as a rare exception (1 in 15) and only as silhouettes or hands — never full faces.\n"
+            . "4. STYLE — modern editorial design first: cinematic still life photography, premium 3D renders, Bauhaus geometric compositions, miniature crafted dioramas, paper collage editorial illustration, minimalist product photography. The result should look like Architectural Digest, Kinfolk, NYT Magazine, Apple keynote graphics — NEVER like AI slop, clip art, infographic, or text poster.\n"
+            . "5. ATMOSPHERE — real depth, deliberate lighting, texture, mood. Designed by a human art director, not a template. Strong focal point, intentional composition.\n"
+            . "6. ABSOLUTELY FORBIDDEN — any text, any logo (real or fake), any wordmark, any caption, single icon centered on flat white, clip-art minimalism, stock-photo clichés, smiling diverse teams, handshakes, suits pointing at laptops, generic floating chat bubbles in empty space, gradient rainbow backgrounds, garbled letters, fake numbers, fake testimonials, infographic layouts.\n\n"
             . "BRIEF:\n";
     }
 
@@ -210,35 +215,21 @@ class GeminiContentService
             }
             $preset = $styles[$style];
 
-            // Always attach the real logo as a reference image. The previous
-            // 40%-of-the-time strategy let Gemini fabricate its own fake
-            // "Sambla" wordmarks on the other 60% of generations. Sending
-            // the real PNG every time anchors the model on our actual mark.
-            $logoFile = public_path('images/social/logo-light.png');
-            $logoBase64 = file_exists($logoFile) ? base64_encode(file_get_contents($logoFile)) : null;
-
+            // Logo compositing is intentionally disabled — until we have a
+            // reliable way to overlay our real logo in PHP post-generation,
+            // we prefer NO logo to a fake one. The previous strategy of
+            // attaching the real PNG as a reference image still let Gemini
+            // fabricate stylized variants of the wordmark. Send no logo,
+            // ask for no logo, no text — pure visual.
             $parts = [];
-
-            // Add logo as reference image
-            if ($logoBase64) {
-                $parts[] = [
-                    'inline_data' => [
-                        'mime_type' => 'image/png',
-                        'data' => $logoBase64,
-                    ]
-                ];
-            }
-
             $stylePrompt = $preset['prompt'];
 
-            $brandLine = $logoBase64
-                ? "BRAND LOGO: Use the attached logo EXACTLY as provided — place it as a stamp in a visible corner (vary the corner). Place a solid WHITE rounded rectangle directly behind the logo so the black 'Sambla' wordmark is crisp and perfectly legible. Do NOT redraw, recolor or recreate the logo text. "
-                : "BRAND: Do NOT add any logo, wordmark, or brand text to this image. Keep it purely visual. ";
+            $brandLine = "BRAND: Do NOT add any logo, wordmark, badge, watermark or brand text to this image. Leave all corners empty of brand marks. The brand is added separately in post. ";
 
-            $parts[] = ['text' => "Generate a professional social media graphic with EXACT aspect ratio {$aspectRatio} (this is critical — the image MUST be {$aspectRatio}, portrait orientation if 3:4, vertical 9:16 for stories). "
+            $parts[] = ['text' => "Generate a magazine-quality social media image with EXACT aspect ratio {$aspectRatio} (critical — the image MUST be {$aspectRatio}, portrait if 3:4, vertical 9:16 for stories). "
                 . $brandLine
                 . "VISUAL STYLE ({$preset['name']}): {$stylePrompt} "
-                . "TEXT RULES: All text on the graphic MUST be in Romanian. Keep text very short — use punchy CTA phrases, max 5-7 words per line. "
+                . "TEXT RULES: ZERO text on the image. No words, no letters, no captions, no labels, no slogans. Pure visual only. "
                 . "CONTENT: {$prompt}"];
 
             $startTime = microtime(true);
@@ -342,11 +333,18 @@ class GeminiContentService
             };
 
             // OpenAI gpt-image-1 cannot receive reference images, so any
-            // "Sambla" mark it draws is fabricated. Hammer this into the
-            // prompt as the FIRST and LAST instruction so it has zero
-            // ambiguity. We composite the real logo separately when needed.
-            $openaiGuard = "ABSOLUTE RULE — READ FIRST: this image must contain ZERO brand marks. Do NOT draw, render, type, or imply the word 'Sambla' anywhere on the image. Do NOT invent any wordmark, logo, badge, brand stamp, watermark, or 'AI brand' element. Do NOT put any company-looking text in any corner. Leave the top-right corner completely empty (no shapes, no text, no decoration) — a real logo will be composited there separately. If you are tempted to draw a logo or brand text, STOP and replace it with empty whitespace. ";
-            $openaiGuardEnd = "\n\nFINAL REMINDER: ZERO brand text on this image. ZERO 'Sambla' marks. ZERO invented logos. Top-right corner = empty whitespace.";
+            // "Sambla" mark it draws is fabricated. Strip any logo/brand
+            // instructions that callers may have baked into the prompt
+            // (BackfillSocialImages, GenerateDailyBatch both ask Vertex to
+            // stamp the real logo — that contradicts OpenAI's reality).
+            // Then hammer the no-logo rule as FIRST and LAST instruction.
+            $prompt = preg_replace(
+                '/(?:BRAND LOGO|BRAND|Sambla logo)[^.]*\.\s*/iu',
+                '',
+                $prompt
+            ) ?? $prompt;
+            $openaiGuard = "ABSOLUTE RULE — READ FIRST: this image must contain ZERO brand marks. Do NOT draw, render, type, or imply the word 'Sambla' anywhere on the image. Do NOT invent any wordmark, logo, badge, brand stamp, watermark, or 'AI brand' element. Do NOT put any company-looking text in any corner. Leave all corners completely empty of brand marks (no shapes, no text, no decoration). If you are tempted to draw a logo or brand text, STOP and replace it with empty whitespace. ";
+            $openaiGuardEnd = "\n\nFINAL REMINDER: ZERO brand text on this image. ZERO 'Sambla' marks. ZERO invented logos. No logo placeholders in any corner.";
             $prompt = $openaiGuard . $prompt . $openaiGuardEnd;
 
             $startTime = microtime(true);

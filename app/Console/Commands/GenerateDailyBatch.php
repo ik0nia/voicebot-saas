@@ -207,11 +207,15 @@ class GenerateDailyBatch extends Command
 
         // Anti-repetition: avoid the categories used in the last 3 posts so
         // we don't get a run of 3× tech or 3× verticals back-to-back.
+        // pluck('metadata->category') tries to read $row->{'metadata->category'}
+        // literally on PostgreSQL, which blows up. Use selectRaw with an alias
+        // so the JSON path becomes a real column name we can pluck.
         $recentCategories = SocialPost::query()
             ->whereNotNull('metadata->category')
             ->orderByDesc('id')
             ->limit(3)
-            ->pluck('metadata->category')
+            ->selectRaw("metadata->>'category' as cat")
+            ->pluck('cat')
             ->filter()
             ->all();
 
@@ -226,7 +230,8 @@ class GenerateDailyBatch extends Command
         $lastSeedInCat = SocialPost::query()
             ->where('metadata->category', $category)
             ->orderByDesc('id')
-            ->value('metadata->seed');
+            ->selectRaw("metadata->>'seed' as seed")
+            ->value('seed');
         $seedPool = array_values(array_filter($seeds, fn($s) => $s !== $lastSeedInCat));
         if (empty($seedPool)) $seedPool = $seeds;
         $seed = $seedPool[array_rand($seedPool)];
@@ -626,13 +631,13 @@ class GenerateDailyBatch extends Command
      * is a complete stylistic brief — not just a keyword.
      */
     private array $visualStyles = [
-        'editorial_typography' => "Bold editorial typography poster — large Romanian headline as the hero element, sophisticated typesetting (mix of serif + sans, varied weights), generous whitespace, 1-2 small supporting graphic elements (an arrow, a dot pattern, an underline). Off-white background, slate #1e293b text, Sambla red #dc2626 accent. Magazine cover meets Swiss poster. NO PEOPLE.",
-        'flat_illustration' => "Bold flat vector illustration of OBJECTS and CONCEPTS only — laptops, phones, documents, charts, clouds, gears, lightbulbs, conversation bubbles. Thick confident lines, 3-color palette (off-white + Sambla red #dc2626 + slate #1e293b). Stripe/Notion marketing-illustration quality. Generous negative space. NO PEOPLE, NO CHARACTERS, NO HUMAN FIGURES.",
-        'isometric_3d' => "Isometric 3D render of a small UNINHABITED diorama — desk with monitors and props, server stack, abstract geometric structure, floating UI cards, mini phone with chat bubbles. Soft ambient occlusion, pastel base tones with red (#dc2626) as the single saturated accent on one hero object. Apple-keynote / Vectary quality. NO PEOPLE, NO HANDS, NO CHARACTERS.",
-        'abstract_geometric' => "Bauhaus-style abstract geometric composition. Layered overlapping shapes with rhythm — bold circles, arcs, rectangles, diagonal lines, dot grids. Off-white background, deep slate, Sambla red. Swiss-design hierarchy with one strong focal point. Designed, not random. NO PEOPLE.",
-        'product_mockup' => "Photorealistic device mockup on a clean surface — a phone showing a subtle Sambla chat UI on a wooden desk with a coffee cup and a plant, OR a laptop with a Sambla dashboard on a marble surface, OR a desk phone next to a notebook. Soft studio + ambient lighting, depth of field, lifestyle product photography. NO PEOPLE in the frame, only the device + props.",
-        'data_visualization' => "Clean infographic-style composition — abstract chart, network diagram, flow of data, AI pipeline visualization, conversation graph. Off-white background, slate lines, Sambla red highlights. Editorial, designed, not cluttered. Big Romanian text label in the corner. NO PEOPLE.",
-        'paper_collage' => "Paper-cut collage aesthetic — layered paper shapes, soft shadows, torn edges, mixed textures (kraft paper, cardboard, off-white). Composition centered on an object metaphor (a folder, a phone, a clock, a key, a shield). Warm cream + slate + Sambla red accent. Hand-crafted feel. NO PEOPLE.",
+        'cinematic_still' => "Cinematic still life photography, magazine-cover quality. A single beautifully-lit hero object on a textured surface (linen, oak, marble, concrete) — a phone showing soft chat UI, a vintage rotary telephone next to fresh flowers, a leather notebook with a fountain pen, an espresso cup beside a laptop. Golden hour window light, deep shadows, shallow depth of field, film grain. Muted earthy tones with one subtle red accent. Architectural Digest / Kinfolk magazine aesthetic. NO TEXT, NO LOGO, NO PEOPLE.",
+        'minimalist_object' => "High-end minimalist object photography on a single colored backdrop (sage, terracotta, deep navy, cream). One hero object centered with generous breathing room — a smartphone, a phone receiver, a brass key, a folded letter, a vintage clock. Soft directional studio lighting, sculptural shadows. Premium product photography for a design magazine. NO TEXT, NO LOGO, NO PEOPLE.",
+        'editorial_3d' => "Premium 3D render in the style of Apple keynote graphics — a single hero element floating in soft gradient space (a phone, a chat bubble, a microphone, a clock, an envelope). Glossy materials, subsurface scattering, ambient occlusion, single key light. Pastel background gradient with one bold accent color. Vectary / Spline / Cinema 4D quality. NO TEXT, NO LOGO, NO PEOPLE.",
+        'editorial_collage' => "Sophisticated mixed-media collage — torn paper, vintage photo cutouts, hand-drawn arrows, stamps, ink marks, masking tape. Asymmetric composition centered on one concept. Warm cream base, deep ink blue, faded red. Feels hand-made by an art director, not AI. The Atlantic / NYT Magazine editorial illustration style. NO TEXT, NO LOGO, NO PEOPLE.",
+        'abstract_swiss' => "Bauhaus / Swiss design abstract composition. Bold flat geometric shapes with intentional rhythm — overlapping circles, arcs, sharp angles, halftone dots, thin precise lines. Limited 3-color palette with strong contrast. Tactile paper texture in the background. Massimo Vignelli / Josef Müller-Brockmann quality. Designed, not decorative. NO TEXT, NO LOGO, NO PEOPLE.",
+        'product_mockup_lifestyle' => "Photorealistic device mockup in a warm lived-in scene — a phone showing soft chat UI on a wooden desk with a coffee cup, a paperback book, a brass paperclip, dried flowers in a small ceramic vase. Window light, golden hour, shallow depth of field. Lifestyle product photography for a design magazine. NO TEXT on the device screen except subtle UI hints, NO LOGO, NO PEOPLE.",
+        'tactile_diorama' => "Miniature diorama photography — a tiny crafted scene built from felt, paper, clay, wood blocks. Toy-like but premium, with cinematic lighting. A miniature office, a tiny cafe, a small storefront, a craft workshop. Macro lens, soft shadows. Wes Anderson / craft magazine aesthetic. NO TEXT, NO LOGO, NO PEOPLE.",
     ];
 
     private function generateCtaImage(GeminiContentService $gemini, array $topicData): ?array
@@ -648,17 +653,15 @@ class GenerateDailyBatch extends Command
         $topicAnchor = isset($topicData['topic']) ? "POST TOPIC (the image MUST visually match this — same object, same action, same emotion): {$topicData['topic']} " : '';
 
         $prompt = $avoidLine
-            . "Create a premium 3:4 social media graphic for Sambla (Romanian AI chat & voice bot platform). "
+            . "Create a premium 3:4 social media image for a modern brand. The goal is a beautiful, magazine-quality visual — NOT a poster with a slogan slapped on. "
             . "STYLE ({$styleKey}): {$styleBrief} "
             . $topicAnchor
-            . "SUBJECT: {$topicData['image_concept']} "
-            . "TEXT ON IMAGE — VERY STRICT: Render EXACTLY this short Romanian phrase, MAX 3 words: '{$topicData['visual_text']}'. "
-            . "Display it clean and large as a single headline. NO other text, NO sentences, NO URLs, NO CTAs, NO topic explanation, NO captions. If you can't render Romanian diacritics cleanly, SKIP TEXT ENTIRELY rather than show garbled letters. "
-            . "BRAND LOGO: Place the Sambla logo (attached reference) in a top corner, sized small, with a subtle backing so it stays readable. "
-            . "COMPOSITION: Strong focal point, clear hierarchy, feels designed (not AI-slop). Generous whitespace. Premium, not busy. "
-            . "PEOPLE RULE — DEFAULT NO PEOPLE: the scene MUST be a graphic/typographic/object composition WITHOUT humans. Use device mockups, dioramas, abstract shapes, typography, paper collage, data viz. People are only allowed as a rare exception (about 1 in 10 images) and only when the topic absolutely requires them — in that case Caucasian / European-looking only (Romanian small-business setting). Default: NO PEOPLE. "
-            . "ROMANIAN TEXT — MUST RENDER: the visual_text headline ('{$topicData['visual_text']}') is in Romanian and MUST appear on the image, large, clean, with proper diacritics (ă â î ș ț). This is mandatory. The text is the visual hero — design the rest of the composition AROUND it. "
-            . "ABSOLUTELY FORBIDDEN: a single simple icon centered on a white/empty background; minimalist clip-art; cliché stock photos (handshakes, people in suits pointing at laptops, smiling diverse team); generic floating chat bubbles in empty space; cluttered 'infographic' layouts; gradient rainbows; fake testimonials; random startup buzzwords on screen. "
+            . "SUBJECT: {$topicData['image_concept']}. Translate the topic into a real visual scene with depth, lighting and atmosphere — never reduce it to an icon or symbol on a flat background. "
+            . "TEXT — STRICT NO TEXT RULE: the image must contain ZERO text, ZERO words, ZERO letters, ZERO captions, ZERO slogans, ZERO labels, ZERO numbers as headline. Pure visual composition only. Any text on the image is a failure. "
+            . "BRAND / LOGO — STRICT NO LOGO: do NOT draw, render, type, imply, fake, or invent any brand mark, wordmark, logo, badge, watermark or company name. Leave all corners empty of brand marks. The brand is added separately by us in post-production. "
+            . "PEOPLE — DEFAULT NO PEOPLE: object/scene/architectural composition only. People are allowed only as a rare exception when the topic absolutely demands it (1 in 15 images), and even then only as silhouettes, hands, or partial figures — never full faces, never 'diverse smiling team' stock photo clichés. "
+            . "COMPOSITION: cinematic, intentional, designed by a human art director. Strong focal point, deliberate light direction, real depth (not flat). Texture, atmosphere, mood. Feels like an editorial photograph or a premium 3D render — not AI slop, not clip art, not infographic, not poster. "
+            . "ABSOLUTELY FORBIDDEN: any text on image, any logo (real or fake), any wordmark, any brand stamp, any watermark, any caption, any URL, any phone number, any 'AI' badge, single icon centered on flat white, cliché stock photos (handshakes, suits pointing at laptops, smiling diverse team), generic floating chat bubbles in empty space, gradient rainbow backgrounds, garbled letters, fake numbers, infographic layouts. "
             . "ASPECT: 3:4 portrait for social feed.";
 
         return $gemini->generateImage($prompt, '3:4');
@@ -671,18 +674,17 @@ class GenerateDailyBatch extends Command
 
         $topicAnchor = isset($topicData['topic']) ? "POST TOPIC (the image MUST visually match this — same object, same action, same emotion): {$topicData['topic']} " : '';
 
-        return "Create a 9:16 vertical Instagram STORY graphic for Sambla (Romanian AI chat & voice bot platform). "
+        return "Create a 9:16 vertical Instagram STORY image for a modern brand — magazine-quality, NOT a slogan poster. "
             . "STYLE ({$styleKey}): {$styleBrief} "
             . $topicAnchor
-            . "SUBJECT: {$topicData['image_concept']} "
-            . "TEXT — VERY STRICT: Render EXACTLY this short Romanian phrase, MAX 3 words: '{$topicData['visual_text']}'. "
-            . "One clean headline, NO other text, NO captions, NO URLs. If diacritics can't be rendered cleanly, SKIP TEXT entirely. "
-            . "Full-bleed vertical composition, large hero element, generous top/bottom safe zones (Instagram UI overlays). "
-            . "Sambla logo (attached) in top corner with subtle backing. "
-            . "PEOPLE RULE — DEFAULT NO PEOPLE: graphic/typographic/object composition only. Device mockups, dioramas, typography, abstract shapes, data viz. People are an exception, not the default. If absolutely required by the topic, Caucasian / European-looking only. "
-            . "ROMANIAN TEXT — MUST RENDER: the visual_text headline ('{$topicData['visual_text']}') is in Romanian and MUST appear on the image, large, clean, with proper diacritics (ă â î ș ț). The text is the hero of the composition. "
-            . "ABSOLUTELY FORBIDDEN: a single icon on white background, clip-art minimalism, stock-photo clichés, garbled text. "
-            . "ASPECT: 9:16 portrait, premium editorial quality.";
+            . "SUBJECT: {$topicData['image_concept']}. Translate the topic into a real visual scene with depth, lighting and atmosphere. Never reduce it to an icon on flat background. "
+            . "TEXT — STRICT NO TEXT: ZERO text, ZERO words, ZERO letters, ZERO captions, ZERO labels. Pure visual only. Any text = failure. "
+            . "BRAND / LOGO — STRICT NO LOGO: do NOT draw, render, fake or invent any brand mark, wordmark, logo, badge, watermark. The brand is added by us in post. Leave all corners empty. "
+            . "Full-bleed vertical composition, single bold hero element, generous top/bottom safe zones for Instagram UI overlays. "
+            . "PEOPLE — DEFAULT NO PEOPLE: object/scene composition only. If the topic absolutely demands a person (rare), use silhouettes or hands only — no full faces, no diverse-team stock clichés. "
+            . "COMPOSITION: cinematic, atmospheric, designed by a human art director. Real depth, deliberate light. Editorial photograph or premium 3D render quality — not AI slop, not clip art. "
+            . "ABSOLUTELY FORBIDDEN: any text, any logo (real or fake), any wordmark, any caption, single icon on white background, clip-art, stock photos, garbled letters. "
+            . "ASPECT: 9:16 portrait.";
     }
 
     private function generateStoryImage(GeminiContentService $gemini, array $topicData): ?array

@@ -2,67 +2,51 @@
 
 /**
  * Visual style presets for social media image generation.
- * Based on sambla.ro design language.
+ *
+ * Rewritten 2026-04-08: switched from "card + text + CTA" template style
+ * to magazine-quality visual-only styles. NO text, NO logo, NO slogans —
+ * the brand is composited separately. Each preset is a complete art-
+ * direction brief targeting Architectural Digest / Kinfolk / NYT Magazine
+ * / Apple keynote quality.
  */
 return [
-    'dark' => [
-        'name' => 'Dark Tech',
-        'logo' => 'dark',
-        'prompt' => 'Dark slate background (#0f172a to #1e293b). White and light gray text. Red accent elements (#991b1b, #dc2626). '
-            . 'Glassmorphism cards with backdrop blur and subtle borders. Soft shadows. '
-            . 'Modern SaaS/tech aesthetic. Chat interface elements with red user bubbles and gray bot bubbles.',
+    'cinematic_still_life' => [
+        'name' => 'Cinematic Still Life',
+        'prompt' => 'Cinematic still life photography, magazine-cover quality. A single beautifully-lit hero object on a textured surface (linen, oak, marble, concrete) — a phone showing soft chat UI, a vintage rotary telephone next to fresh flowers, a leather notebook with a fountain pen, an espresso cup beside a closed laptop. Golden hour window light, deep shadows, shallow depth of field, subtle film grain. Muted earthy palette with one subtle red accent. Architectural Digest / Kinfolk magazine aesthetic.',
     ],
 
-    'light' => [
-        'name' => 'Clean Light',
-        'logo' => 'light',
-        'prompt' => 'Clean white/off-white background (#ffffff, #f8fafc). Dark slate text (#0f172a). '
-            . 'White cards with soft shadows (0 2px 12px rgba(0,0,0,0.06)) and rounded corners. '
-            . 'Red accent color (#991b1b) for headings and CTAs. Light gray borders (#e2e8f0). '
-            . 'Minimalist, spacious layout. Professional SaaS feel.',
+    'minimalist_object' => [
+        'name' => 'Minimalist Object Photography',
+        'prompt' => 'High-end minimalist object photography on a single solid colored backdrop (sage green, terracotta, deep navy, warm cream, charcoal). One hero object centered with very generous breathing room — a smartphone, a vintage phone receiver, a brass key, a folded handwritten letter, a small antique clock. Soft directional studio lighting, sculptural shadows, premium product photography for a design magazine.',
     ],
 
-    'red_bold' => [
-        'name' => 'Red Bold',
-        'logo' => 'dark',
-        'prompt' => 'Bold red gradient background (from #991b1b to #dc2626). White text, large and impactful. '
-            . 'Dark overlay elements. Glossy red surfaces. White iconography. '
-            . 'High contrast, energetic, attention-grabbing. CTA buttons in white with red text.',
+    'editorial_3d_render' => [
+        'name' => 'Editorial 3D Render',
+        'prompt' => 'Premium 3D render in the style of Apple keynote graphics — a single hero element floating in soft gradient space (a phone, a chat bubble, a microphone, a clock, an envelope, a key). Glossy materials with subsurface scattering, ambient occlusion, single key light from above, soft rim light. Pastel background gradient with one bold accent color. Vectary / Spline / Cinema 4D quality.',
     ],
 
-    'warm_traditional' => [
-        'name' => 'Warm Traditional',
-        'logo' => 'light',
-        'prompt' => 'Warm cream/ivory background (#fff7ed, #fefce8). Dark red (#991b1b) as primary color. '
-            . 'Subtle Romanian traditional geometric patterns as decorative borders or background texture — '
-            . 'inspired by ie romaneasca cross-stitch motifs in red and dark tones. '
-            . 'Elegant serif-style headings mixed with modern sans-serif body. '
-            . 'Rounded cards with warm shadows. Cultural yet modern tech feel.',
+    'editorial_collage' => [
+        'name' => 'Editorial Collage',
+        'prompt' => 'Sophisticated mixed-media editorial collage — torn paper, vintage photo cutouts, hand-drawn arrows, postage stamps, masking tape, ink marks. Asymmetric intentional composition centered on one concept. Warm cream base, deep ink blue, faded brick red. Hand-made by an art director, not AI. The Atlantic / NYT Magazine editorial illustration style.',
     ],
 
-    'pastel_fresh' => [
-        'name' => 'Pastel Fresh',
-        'logo' => 'light',
-        'prompt' => 'Soft pastel background — mix of light tints: pale red (#fef2f2), pale green (#f0fdf4), pale blue (#eff6ff). '
-            . 'Gradient mesh or soft color blobs in background. Dark slate text (#0f172a). '
-            . 'Red accent (#dc2626) for CTAs and highlights. '
-            . 'Playful yet professional. Rounded shapes, friendly icons. Modern startup aesthetic.',
+    'bauhaus_swiss' => [
+        'name' => 'Bauhaus Swiss',
+        'prompt' => 'Bauhaus / Swiss design abstract composition. Bold flat geometric shapes with intentional rhythm — overlapping circles, arcs, sharp angles, halftone dots, thin precise lines. Limited 3-color palette with strong contrast (cream, deep navy, brick red). Tactile paper texture. Massimo Vignelli / Josef Müller-Brockmann quality. Designed, not decorative.',
     ],
 
-    'dark_red_split' => [
-        'name' => 'Dark Red Split',
-        'logo' => 'dark',
-        'prompt' => 'Split design — left half dark slate (#0f172a), right half deep red (#991b1b). '
-            . 'White text on both sides. Diagonal or curved split line. '
-            . 'Product mockup or chat interface on the dark side, text/CTA on the red side. '
-            . 'Bold, high-impact, duotone. Geometric shapes as accents.',
+    'product_mockup_lifestyle' => [
+        'name' => 'Product Mockup Lifestyle',
+        'prompt' => 'Photorealistic device mockup in a warm lived-in scene — a phone showing soft chat UI on a wooden desk with a coffee cup, a paperback book, a brass paperclip, dried flowers in a small ceramic vase. Window light, golden hour, shallow depth of field. Lifestyle product photography for a design magazine. The phone screen shows only abstract UI hints, no readable text.',
     ],
 
-    'gradient_modern' => [
-        'name' => 'Gradient Modern',
-        'logo' => 'dark',
-        'prompt' => 'Smooth gradient background from dark slate (#0f172a) through deep red (#991b1b) to bright red (#ef4444). '
-            . 'White text with subtle glow effect. Floating UI elements — notification badges, chat bubbles, analytics widgets. '
-            . 'Abstract tech patterns — circuit lines, dots grid, subtle mesh. Futuristic, premium feel.',
+    'tactile_diorama' => [
+        'name' => 'Tactile Miniature Diorama',
+        'prompt' => 'Miniature diorama photography — a tiny crafted scene built from felt, paper, clay, wood blocks. Toy-like but premium, with cinematic studio lighting. A miniature office, a tiny cafe, a small storefront, a craft workshop, a little bookshop. Macro lens, soft shadows, shallow depth of field. Wes Anderson / craft magazine aesthetic.',
+    ],
+
+    'architectural_minimal' => [
+        'name' => 'Architectural Minimal',
+        'prompt' => 'Architectural minimalism — a single beautiful interior detail captured in soft natural light. A doorway with cast shadow, a windowsill with a single object, a wooden bench against a textured wall, a corner of a quiet room. Limited palette of warm neutrals with one subtle accent. Calm, contemplative, premium real estate magazine quality.',
     ],
 ];

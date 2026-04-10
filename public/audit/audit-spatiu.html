@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<title>Audit spațiu disc — sambla.ro</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  :root { --bg:#0f1115; --card:#181b22; --bd:#262a33; --tx:#e7e9ee; --mut:#9aa3b2; --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444; --acc:#3b82f6; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--tx); padding:24px; }
+  h1 { margin:0 0 4px; font-size:24px; }
+  .sub { color:var(--mut); margin-bottom:24px; font-size:13px; }
+  .grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); margin-bottom:24px; }
+  .card { background:var(--card); border:1px solid var(--bd); border-radius:12px; padding:18px; }
+  .card h2 { margin:0 0 12px; font-size:15px; color:var(--mut); text-transform:uppercase; letter-spacing:.5px; }
+  .big { font-size:28px; font-weight:600; }
+  .bar { height:8px; background:#22262f; border-radius:4px; overflow:hidden; margin:8px 0; }
+  .bar > span { display:block; height:100%; background:var(--acc); }
+  .ok > span { background:var(--ok); } .warn > span { background:var(--warn); } .bad > span { background:var(--bad); }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th,td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--bd); }
+  th { color:var(--mut); font-weight:500; font-size:12px; text-transform:uppercase; }
+  td.num { text-align:right; font-variant-numeric:tabular-nums; }
+  .pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:600; }
+  .pill.ok { background:#0d3320; color:#4ade80; }
+  .pill.warn { background:#3a2a08; color:#fbbf24; }
+  .pill.bad { background:#3a0f10; color:#f87171; }
+  .reco { background:var(--card); border:1px solid var(--bd); border-radius:12px; padding:20px; margin-bottom:16px; }
+  .reco h2 { margin:0 0 16px; font-size:18px; }
+  .reco ol { margin:0; padding-left:20px; }
+  .reco li { margin-bottom:14px; line-height:1.55; }
+  .reco code { background:#0a0c10; border:1px solid var(--bd); padding:2px 6px; border-radius:4px; font-size:12px; }
+  .save { color:var(--ok); font-weight:600; }
+  .danger { color:var(--bad); font-weight:600; }
+  details { background:#0a0c10; border:1px solid var(--bd); border-radius:6px; padding:8px 12px; margin-top:6px; }
+  summary { cursor:pointer; color:var(--mut); font-size:12px; }
+  pre { margin:8px 0 0; font-size:12px; overflow-x:auto; color:#cbd5e1; }
+</style>
+</head>
+<body>
+
+<h1>Audit spațiu disc — sambla.ro</h1>
+<div class="sub">Generat 2026-04-07 · Server 185.104.181.113 · Ubuntu 24.04</div>
+
+<div class="card" style="margin-bottom:24px;background:#0d3320;border-color:#166534">
+  <h2 style="color:#86efac">✅ Acțiuni executate (2026-04-07) — re-verificat</h2>
+  <ul style="margin:0;padding-left:20px;line-height:1.7;color:#cbd5e1;font-size:14px">
+    <li><b>laravel.log truncat:</b> 3.6 GB → 0 → 2.6 MB (deja crește în fișiere zilnice noi). <span class="save">~3.6 GB eliberați.</span></li>
+    <li><b>.env actualizat + <code>config:clear</code> rulat:</b> <code>LOG_STACK=daily</code>, <code>LOG_DAILY_DAYS=14</code>. Rotație zilnică activă.</li>
+    <li><b>docker prune:</b> 77 imagini → 30 · build cache 16.5 GB → 0 · containerd 33 GB → 8.9 GB. <span class="save">~24 GB eliberați.</span></li>
+  </ul>
+  <div style="margin-top:14px;padding-top:14px;border-top:1px solid #166534">
+    <b style="color:#86efac;font-size:16px">Total eliberat: ~27 GB</b> · <span class="sub">/ a scăzut de la 52 GB (34%) la <b>25 GB (17%)</b></span>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:24px;background:linear-gradient(135deg,#181b22,#1a1f2e)">
+  <h2>🧠 RAM (memorie)</h2>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:12px">
+    <div><div class="sub">Total</div><div class="big">7.8 GB</div></div>
+    <div><div class="sub">Folosit de procese</div><div class="big" style="color:#fbbf24">3.4 GB</div></div>
+    <div><div class="sub">Cache (recuperabil)</div><div class="big" style="color:#86efac">4.7 GB</div></div>
+    <div><div class="sub">Swap folosit</div><div class="big" style="color:#f87171">1.4 / 4.0 GB</div></div>
+  </div>
+  <div class="bar warn"><span style="width:44%"></span></div>
+  <p style="margin:12px 0 0;line-height:1.6;color:#cbd5e1;font-size:14px">
+    <b style="color:#fbbf24">Semnal de atenție:</b> ai 1.4 GB în <b>swap</b> — adică sistemul a fost forțat să "pună pe disc" date care n-au mai încăput în RAM. RAM-ul fizic e doar 44% folosit, deci paradoxal: există loc, dar Linux a împins lucruri rar-folosite în swap când a avut un vârf. Nu e critic, dar arată că ești <b>la limită</b> când ai mai multe procese active simultan (deploy + cron + cozi).
+  </p>
+  <h3 style="color:#e7e9ee;font-size:14px;margin:16px 0 6px">Top consumatori de RAM (containere)</h3>
+  <table>
+    <thead><tr><th>Container</th><th class="num">RAM</th><th>Rol</th></tr></thead>
+    <tbody>
+      <tr><td><code>queue</code> (voicebot)</td><td class="num">275 MB</td><td>Worker pentru job-uri Laravel</td></tr>
+      <tr><td><code>ofelia</code> (mailcow)</td><td class="num">182 MB</td><td>Cron-ul intern al Mailcow</td></tr>
+      <tr><td><code>postgres</code> (voicebot)</td><td class="num">166 MB</td><td><b>Baza ta principală de date</b></td></tr>
+      <tr><td><code>redis</code> (voicebot)</td><td class="num">144 MB</td><td>Cache + cozi</td></tr>
+      <tr><td><code>coolify</code></td><td class="num">132 MB</td><td>Panoul de administrare</td></tr>
+      <tr><td><code>mysql</code> (mailcow)</td><td class="num">125 MB</td><td>Baza Mailcow</td></tr>
+      <tr><td><code>rspamd</code> (mailcow)</td><td class="num">115 MB</td><td>Anti-spam</td></tr>
+      <tr><td><code>app</code> (voicebot PHP-FPM)</td><td class="num">107 MB</td><td>PHP care servește request-urile</td></tr>
+      <tr><td colspan="3" style="color:#9aa3b2;font-style:italic">+ alte 22 containere mai mici</td></tr>
+      <tr><td><b>Total Mailcow (18 containere)</b></td><td class="num"><b>~760 MB</b></td><td>Server e-mail complet</td></tr>
+      <tr><td><b>Total Voicebot stack</b></td><td class="num"><b>~700 MB</b></td><td>App + queue + DB + Redis + Reverb + nginx</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h2>/ (sda1) — sistem</h2>
+    <div class="big">25 / 154 GB</div>
+    <div class="bar ok"><span style="width:17%"></span></div>
+    <div class="sub">17% folosit · 130 GB liber <span style="color:#86efac">(▼ de la 34%)</span></div>
+  </div>
+  <div class="card">
+    <h2>/mnt/ssd-cdn (sdb)</h2>
+    <div class="big">845 MB / 147 GB</div>
+    <div class="bar ok"><span style="width:1%"></span></div>
+    <div class="sub">1% folosit · 139 GB liber · <b>aproape gol</b></div>
+  </div>
+  <div class="card">
+    <h2>/mnt/hdd-backup (sdc)</h2>
+    <div class="big">40 KB / 246 GB</div>
+    <div class="bar ok"><span style="width:0%"></span></div>
+    <div class="sub">0% folosit · 233 GB liber · <b>complet neutilizat</b></div>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:24px">
+  <h2>Top consumatori pe / (sda1, 25 GB folosiți — actualizat)</h2>
+  <table>
+    <thead><tr><th>Cale</th><th class="num">Mărime</th><th>Detaliu</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td><code>/var/lib/docker</code></td><td class="num">12 GB</td><td>Imagini active (30) + volume + metadata</td><td><span class="pill ok">OK (curățat)</span></td></tr>
+      <tr><td><code>/var/lib/containerd</code></td><td class="num">8.9 GB</td><td>Layer-uri imagini Docker active</td><td><span class="pill ok">OK (de la 33 GB)</span></td></tr>
+      <tr><td><code>/snap</code></td><td class="num">4.2 GB</td><td>Pachete desktop (chromium, gnome, mesa)</td><td><span class="pill warn">de curățat</span></td></tr>
+      <tr><td><code>/swapfile</code></td><td class="num">4.1 GB</td><td>Swap (normal)</td><td><span class="pill ok">OK</span></td></tr>
+      <tr><td><code>/home/sambla</code></td><td class="num">3.4 GB</td><td>Din care 1.8 GB backup-uri (loc greșit)</td><td><span class="pill warn">mută</span></td></tr>
+      <tr><td><code>/usr</code></td><td class="num">3.1 GB</td><td>Pachete sistem</td><td><span class="pill ok">OK</span></td></tr>
+      <tr><td><code>/var/lib/snapd</code></td><td class="num">1.5 GB</td><td>Metadata snap</td><td><span class="pill warn">curăță cu snap</span></td></tr>
+      <tr><td><code>/root</code></td><td class="num">990 MB</td><td>Home root</td><td><span class="pill ok">OK</span></td></tr>
+      <tr><td><code>/var/log</code></td><td class="num">776 MB</td><td>journald + syslog</td><td><span class="pill ok">OK</span></td></tr>
+      <tr><td><code>laravel.log</code></td><td class="num">2.6 MB</td><td>Acum cu rotație zilnică (max 14 zile)</td><td><span class="pill ok">FIX</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="card" style="margin-bottom:24px">
+  <h2>Docker — <code>docker system df</code> (după prune)</h2>
+  <table>
+    <thead><tr><th>Tip</th><th class="num">Total</th><th class="num">Activ</th><th class="num">Mărime</th><th class="num">Recuperabil</th></tr></thead>
+    <tbody>
+      <tr><td>Images</td><td class="num">30</td><td class="num">30</td><td class="num">9.4 GB</td><td class="num">0 B</td></tr>
+      <tr><td>Containers</td><td class="num">31</td><td class="num">31</td><td class="num">793 MB</td><td class="num">0 B</td></tr>
+      <tr><td>Volumes</td><td class="num">18</td><td class="num">17</td><td class="num">1.1 GB</td><td class="num">51 KB</td></tr>
+      <tr><td>Build cache</td><td class="num">0</td><td class="num">0</td><td class="num">0 B</td><td class="num">0 B</td></tr>
+    </tbody>
+  </table>
+  <div class="sub" style="margin-top:8px;color:#86efac">✅ Curat. De la 51.7 GB total la 11.3 GB. Tot ce a rămas e <b>activ și folosit</b>.</div>
+</div>
+
+<div class="card" style="margin-bottom:24px">
+  <h2>Conținut hard-uri atașate</h2>
+  <table>
+    <thead><tr><th>Cale</th><th class="num">Folosit</th><th>Conținut</th></tr></thead>
+    <tbody>
+      <tr><td><b>/mnt/ssd-cdn</b> (150 GB SSD)</td><td class="num">845 MB</td><td><code>social/2026</code> 772 MB · <code>uploads</code> 74 MB</td></tr>
+      <tr><td><b>/mnt/hdd-backup</b> (250 GB HDD)</td><td class="num">40 KB</td><td><code>logs/</code>, <code>postgres/</code>, <code>media-snapshots/</code> — toate goale</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="card" style="margin-bottom:24px;border-color:#3a2a08">
+  <h2>📧 Mailcow — serverul de e-mail care nu trimite încă niciun mail</h2>
+  <p style="margin:0 0 12px;line-height:1.6;color:#cbd5e1;font-size:14px">
+    Pe server rulează <b>Mailcow</b> — o suită completă de e-mail (Postfix + Dovecot + Rspamd + ClamAV + SOGo webmail + MySQL + Redis + Unbound DNS). Sunt <b>18 containere active</b> care pornesc împreună. Mailcow e instalat în <code>/opt/mailcow-dockerized</code>.
+  </p>
+  <table>
+    <thead><tr><th>Resursă</th><th class="num">Cât ocupă</th><th>Detaliu</th></tr></thead>
+    <tbody>
+      <tr><td>RAM total (18 containere)</td><td class="num">~760 MB</td><td>~10% din RAM-ul serverului, <b>permanent</b></td></tr>
+      <tr><td>Volume Docker (date)</td><td class="num">~600 MB</td><td>mysql 217M + rspamd 109M + sogo 73M + restul</td></tr>
+      <tr><td>Mailbox-uri reale (<code>vmail-vol</code>)</td><td class="num"><b>252 KB</b></td><td>🎯 <b>Practic gol — niciun e-mail real stocat</b></td></tr>
+      <tr><td>Imagini Docker</td><td class="num">~2.5 GB</td><td>18 imagini diferite descărcate</td></tr>
+      <tr><td>Cod sursă <code>/opt/mailcow-dockerized</code></td><td class="num">101 MB</td><td>Repo-ul Mailcow</td></tr>
+    </tbody>
+  </table>
+  <p style="margin:12px 0 0;line-height:1.6;color:#fbbf24;font-size:14px">
+    <b>⚠️ Observație critică:</b> Mailcow consumă <b>~760 MB RAM permanent + ~3 GB disc</b> dar volumul cu mailbox-uri reale (<code>vmail-vol</code>) are doar <b>252 KB</b> — adică nu există utilizatori activi care primesc/trimit mail-uri. Plătești costul fix de "a avea un server de e-mail pornit" fără să-l folosești.
+  </p>
+  <p style="margin:8px 0 0;line-height:1.6;color:#cbd5e1;font-size:14px">
+    <b>3 opțiuni pragmatice:</b>
+  </p>
+  <ol style="margin:6px 0 0;padding-left:20px;line-height:1.6;color:#cbd5e1;font-size:14px">
+    <li><b>Oprește-l temporar</b> până ai nevoie: <code>cd /opt/mailcow-dockerized && docker compose stop</code> — eliberezi 760 MB RAM instant, datele rămân pe disc. Pornești cu <code>start</code> când ai nevoie. <b>Cea mai sigură variantă.</b></li>
+    <li><b>Folosește un serviciu extern</b> (Resend, Postmark, AWS SES, Mailgun) — costă ~$10-20/lună dar elimini complet 18 containere și grijile cu reputația IP-ului, DKIM, SPF, blacklist-uri. <b>Recomandat dacă vrei doar să trimiți mail-uri tranzacționale.</b></li>
+    <li><b>Lasă-l pornit</b> dacă ai planuri concrete să-l folosești în următoarele săptămâni (ex: oferi cont de e-mail per tenant). Atunci consumul e justificat.</li>
+  </ol>
+</div>
+
+<div class="card" style="margin-bottom:24px">
+  <h2>🗄️ Bazele de date — cât ocupă fiecare</h2>
+  <table>
+    <thead><tr><th>Bază de date</th><th class="num">Disc</th><th class="num">RAM</th><th>Rol</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>postgres voicebot</b> (pgvector/pg16)<br><span class="sub">volume <code>postgres-data-hvmz3...</code></span></td>
+        <td class="num">378 MB</td>
+        <td class="num">166 MB</td>
+        <td>Baza ta principală — tenanți, voice bots, call logs, knowledge base (cu embeddings vectoriale)</td>
+      </tr>
+      <tr>
+        <td><b>mysql mailcow</b> (mariadb 10.11)</td>
+        <td class="num">217 MB</td>
+        <td class="num">125 MB</td>
+        <td>Conturile de e-mail, alias-uri, setări Mailcow. <b>Practic gol</b> — doar schema default.</td>
+      </tr>
+      <tr>
+        <td><b>postgres coolify</b> (pg15)</td>
+        <td class="num">126 MB</td>
+        <td class="num">31 MB</td>
+        <td>Configurația Coolify (proiecte, deploy-uri, server-e). Nu se atinge.</td>
+      </tr>
+      <tr>
+        <td><b>redis voicebot</b> (7-alpine)</td>
+        <td class="num">~5 MB</td>
+        <td class="num">144 MB</td>
+        <td>Cache, sesiuni, cozi de job-uri Laravel</td>
+      </tr>
+      <tr>
+        <td><b>redis mailcow</b> + <b>redis coolify</b></td>
+        <td class="num">&lt;2 MB</td>
+        <td class="num">19 MB</td>
+        <td>Cache intern pentru cele 2 panouri</td>
+      </tr>
+    </tbody>
+  </table>
+  <p style="margin:12px 0 0;line-height:1.6;color:#cbd5e1;font-size:14px">
+    <b>Concluzie:</b> baza ta principală (Postgres voicebot) e <b>foarte mică încă — 378 MB</b>. Asta e normal pentru un SaaS la început. Va crește pe măsură ce ai mai mulți tenanți, mai multe call log-uri și mai multe documente în knowledge base (embedding-urile pgvector ocupă cel mai mult). Ai loc de creștere de mii de ori înainte să devină o problemă.
+  </p>
+</div>
+
+<div class="card" style="margin-bottom:24px">
+  <h2>📚 Ce înseamnă fiecare lucru — pe înțelesul tuturor</h2>
+
+  <h3 style="color:#e7e9ee;font-size:15px;margin:18px 0 6px">🐳 Docker / containerd (33 + 16 GB)</h3>
+  <p style="margin:0 0 8px;line-height:1.6;color:#cbd5e1;font-size:14px">
+    Aplicația ta rulează în <b>containere Docker</b> (orchestrate de Coolify). Fiecare container pornește dintr-o <b>imagine</b> — un fel de "ZIP" cu sistemul de operare + PHP + dependențe. Aceste imagini sunt stocate ca <b>layer-e</b> (straturi) în <code>/var/lib/containerd</code>.
+  </p>
+  <ul style="margin:0;padding-left:20px;line-height:1.6;color:#cbd5e1;font-size:14px">
+    <li><b>Imagini vechi (20.7 GB recuperabili):</b> de fiecare dată când faci deploy, Coolify construiește o imagine nouă. Cea veche rămâne pe disc "în caz că vrei rollback". Ai 77 imagini, doar 30 sunt folosite acum → 47 sunt orfane.</li>
+    <li><b>Build cache (16.5 GB):</b> când construiești o imagine, Docker memorează rezultatele intermediare ca să fie mai rapid data viitoare (ex: <code>composer install</code>). Cache-ul crește la fiecare build și nu se șterge singur.</li>
+    <li><b>Containere active (793 MB):</b> astea SUNT aplicația ta vie. Nu se ating.</li>
+    <li><b>Volume (1.1 GB):</b> date persistente (Postgres, Redis). Nu se ating.</li>
+  </ul>
+  <p style="margin:8px 0 0;line-height:1.6;color:#cbd5e1;font-size:14px">
+    <b>Curățarea afectează:</b> pierzi posibilitatea de rollback instant la versiuni vechi de imagine (oricum poți reface din git). <b>Aplicația în producție NU se atinge</b> — doar imaginile orfane și cache-ul de build dispar.
+  </p>
+
+  <h3 style="color:#e7e9ee;font-size:15px;margin:18px 0 6px">📜 laravel.log (3.6 GB într-un fișier)</h3>
+  <p style="margin:0 0 8px;line-height:1.6;color:#cbd5e1;font-size:14px">
+    Laravel scrie tot ce se întâmplă (erori, warning-uri, debug) într-un singur fișier care crește la infinit. Acum ai un fișier de 3.6 GB care:
+  </p>
+  <ul style="margin:0;padding-left:20px;line-height:1.6;color:#cbd5e1;font-size:14px">
+    <li>e <b>imposibil de citit</b> (niciun editor nu-l deschide rezonabil);</li>
+    <li>încetinește orice operațiune care îl atinge (backup, scriere);</li>
+    <li>conține log-uri din ultimele luni amestecate — n-ai cum să debug-uiești ceva specific.</li>
+  </ul>
+  <p style="margin:8px 0 0;line-height:1.6;color:#cbd5e1;font-size:14px">
+    <b>Soluția "daily channel":</b> Laravel poate scrie automat câte un fișier pe zi (<code>laravel-2026-04-07.log</code>) și șterge automat cele mai vechi de N zile. Ești astfel sigur că nu ratezi nimic recent, dar nici nu acumulezi la infinit.
+    <br><b>Curățarea afectează:</b> pierzi log-urile istorice (dar oricum nu le poți citi din cauza mărimii). Recomand <code>truncate</code> (golește fișierul fără să-l șteargă) ca să nu trebuiască să restartezi serviciul.
+  </p>
+
+  <h3 style="color:#e7e9ee;font-size:15px;margin:18px 0 6px">💾 Cele 2 hard-uri atașate — la ce sunt</h3>
+  <p style="margin:0 0 8px;line-height:1.6;color:#cbd5e1;font-size:14px">
+    Serverul tău are 3 discuri fizice:
+  </p>
+  <ul style="margin:0;padding-left:20px;line-height:1.6;color:#cbd5e1;font-size:14px">
+    <li><b>sda (160 GB SSD)</b> — discul principal, rapid. Aici rulează sistemul + Docker + aplicația. Folosit 34%.</li>
+    <li><b>sdb (150 GB SSD)</b> — montat la <code>/mnt/ssd-cdn</code>. Rapid, gândit pentru fișiere servite des (uploads tenant, imagini social). Folosit doar <b>1%</b>.</li>
+    <li><b>sdc (250 GB HDD)</b> — montat la <code>/mnt/hdd-backup</code>. Lent, dar mare și ieftin. Gândit pentru backup-uri (le accesezi rar). Folosit <b>0%</b> — complet uitat.</li>
+  </ul>
+  <p style="margin:8px 0 0;line-height:1.6;color:#cbd5e1;font-size:14px">
+    <b>Concluzia:</b> ai plătit pentru 396 GB de spațiu suplimentar pe care nu-l folosești, în timp ce SSD-ul de sistem se umple cu lucruri care n-ar trebui să stea acolo (backup-uri, log-uri). Reorganizarea NU implică să cumperi nimic — doar să muți datele unde aparțin.
+  </p>
+
+  <h3 style="color:#e7e9ee;font-size:15px;margin:18px 0 6px">📦 Snap (4.2 GB)</h3>
+  <p style="margin:0 0 8px;line-height:1.6;color:#cbd5e1;font-size:14px">
+    Snap e un sistem de pachete Ubuntu. Pe serverul tău sunt instalate pachete <b>desktop</b>: Chromium (browser), GNOME (mediul grafic), GTK (librării UI), Mesa (drivere video), CUPS (printare). <b>Niciunul nu are sens pe un server</b> — probabil au venit cu imaginea Ubuntu Desktop instalată inițial în loc de Server.
+    <br><b>Curățarea afectează:</b> nimic. Nu folosești browser sau interfață grafică pe server prin SSH.
+  </p>
+
+  <h3 style="color:#e7e9ee;font-size:15px;margin:18px 0 6px">🔄 Swap (4.1 GB)</h3>
+  <p style="margin:0 0 8px;line-height:1.6;color:#cbd5e1;font-size:14px">
+    Spațiu pe disc folosit ca "memorie de rezervă" când RAM-ul se umple. <b>Nu se atinge</b> — e normal și util. L-am listat doar ca să nu te întrebi ce e.
+  </p>
+</div>
+
+<div class="reco">
+  <h2>🎯 Recomandări pragmatice (în ordinea impactului)</h2>
+  <ol>
+
+    <li>
+      <b class="danger">[1 click · ~3.6 GB]</b> Truncează <code>laravel.log</code> și activează rotația.
+      Un singur fișier crește necontrolat — nu există <code>daily</code> channel configurat în <code>config/logging.php</code>.
+      <details><summary>comenzi</summary><pre>sudo truncate -s 0 /var/www/voicebot-saas/storage/logs/laravel.log
+# apoi în .env: LOG_CHANNEL=daily  + LOG_DAILY_DAYS=14</pre></details>
+    </li>
+
+    <li>
+      <b class="danger">[1 comandă · ~24 GB]</b> Curăță Docker — 60% din imagini și jumătate din build cache sunt nefolosite.
+      <details><summary>comenzi</summary><pre>sudo docker image prune -a   # ~20 GB
+sudo docker builder prune -a # ~16 GB
+# (sau scurt:) sudo docker system prune -a --volumes</pre></details>
+    </li>
+
+    <li>
+      <b class="save">[reorganizare · ~1.8 GB + viitor]</b> Mută <code>/home/sambla/backups</code> pe <code>/mnt/hdd-backup</code>.
+      Ai 250 GB de HDD complet gol dedicat backup-urilor — nu are sens să stea pe SSD-ul de sistem.
+      <details><summary>comenzi</summary><pre>sudo rsync -a /home/sambla/backups/ /mnt/hdd-backup/backups/
+sudo rm -rf /home/sambla/backups
+sudo ln -s /mnt/hdd-backup/backups /home/sambla/backups</pre></details>
+    </li>
+
+    <li>
+      <b class="save">[strategic]</b> Configurează backup-uri Postgres + snapshot-uri media direct pe <code>/mnt/hdd-backup</code>.
+      Directoarele <code>postgres/</code>, <code>logs/</code>, <code>media-snapshots/</code> sunt deja create dar goale — nimic nu scrie acolo.
+      Adaugă în Coolify un job care face <code>pg_dump</code> zilnic în <code>/mnt/hdd-backup/postgres/</code>.
+    </li>
+
+    <li>
+      <b class="save">[strategic]</b> Mută <code>storage/app/public</code> (uploads tenant) pe <code>/mnt/ssd-cdn/uploads</code>.
+      Ai deja <code>/mnt/ssd-cdn/uploads</code> (74 MB) și <code>/mnt/ssd-cdn/social</code> (772 MB) — extinde pattern-ul. SSD-ul are 139 GB liberi pentru creștere.
+      <details><summary>schimbare</summary><pre># config/filesystems.php disk 'public':
+'root' => '/mnt/ssd-cdn/storage-public',
+# + symlink public/storage către noua locație</pre></details>
+    </li>
+
+    <li>
+      <b>[verifică]</b> <code>/snap</code> ocupă 4.2 GB cu pachete <b>desktop</b> (chromium, gnome-46, gtk, mesa, cups).
+      Pe un server headless n-ai nevoie de ele — probabil instalate accidental.
+      <details><summary>comenzi</summary><pre>snap list
+sudo snap remove chromium gnome-46-2404 gtk-common-themes mesa-2404 cups</pre></details>
+    </li>
+
+    <li>
+      <b>[curățenie minoră]</b> 8 PNG/JPG cu avocați (avo*.png, illu_avo*.jpg) în <code>/home/sambla/</code> — ~10 MB. Probabil temporare din generarea de niche pages. Mută în repo sau șterge.
+    </li>
+
+  </ol>
+
+  <div class="card" style="margin-top:20px;background:#0d3320;border-color:#166534">
+    <h2 style="color:#86efac">💰 Total recuperabil imediat</h2>
+    <div class="big" style="color:#4ade80">~28 GB</div>
+    <div class="sub">Doar din pașii 1+2 (log + Docker). Plus reorganizarea care eliberează SSD-ul de sistem și pune la treabă cele 2 hard-uri atașate (140 + 246 GB neutilizate).</div>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:24px;background:linear-gradient(135deg,#1a1f2e,#181b22);border-color:#2d3548">
+  <h2>📖 Povestea serverului tău — așa cum aș povesti-o unui prieten</h2>
+  <div style="line-height:1.75;color:#cbd5e1;font-size:14px">
+    <p>Imaginează-ți serverul tău ca pe o <b>casă cu trei camere de depozitare</b>.</p>
+
+    <p><b>Camera principală</b> (SSD-ul de sistem, 154 GB) e locul unde locuiești efectiv. Acolo ai bucătăria — Postgres-ul cu toate datele tenant-ilor tăi (378 MB, încă mică, dar gata să crească) — și sufrageria, unde rulează aplicația Laravel care răspunde la fiecare apel telefonic prin voice bot. Camera asta e <b>34% plină</b>, deci ai loc, dar începi să acumulezi lucruri care n-ar trebui să fie acolo.</p>
+
+    <p>În colțul camerei principale e un <b>dulap mare cu Docker</b> (49 GB). Înăuntru: 30 de cutii pe care le folosești zilnic (containerele tale active) și încă <b>47 de cutii vechi</b> rămase de la mutări precedente — versiuni vechi ale aplicației pe care Coolify le-a păstrat "în caz că". Plus un sertar uriaș cu <b>resturi de la împachetat</b> (build cache, 16 GB). Nimeni nu se uită niciodată în cutiile vechi, dar ocupă 24 GB.</p>
+
+    <p>Pe masă ai un <b>jurnal</b> în care Laravel scrie tot ce face — fiecare eroare, fiecare warning, fiecare debug. Doar că nimeni n-a configurat o regulă să schimbe pagina, așa că <b>jurnalul are acum 3.6 GB într-un singur "fișier"</b>. E imposibil de citit, dar continuă să crească. E ca un bilet de bucătărie pe care scrii zilnic și nu-l rupi niciodată.</p>
+
+    <p>Lângă casă ai un <b>oaspete care a venit să stea câteva zile</b>: <b>Mailcow</b>, server de e-mail. A venit cu 18 valize (containere), ocupă o cameră întreagă cu echipamente (~3 GB pe disc), consumă curent permanent (760 MB RAM), dar... <b>nu primește și nu trimite nicio scrisoare</b>. Volumul lui de "mailbox-uri reale" are 252 KB — adică nimic. E ca și cum ai angajat un poștaș care stă degeaba în curte cu uniforma pe el. Dacă ai planuri să-l folosești în săptămânile următoare, lasă-l. Dacă nu, oprește-l (<code>docker compose stop</code>) — datele rămân, dar elibereazi resursele.</p>
+
+    <p>Și acum partea cea mai interesantă: în spatele casei ai <b>două depozite uriașe pe care le-ai plătit dar le-ai uitat</b>.</p>
+    <ul style="margin:0 0 12px;padding-left:20px">
+      <li><b>Depozitul SSD (150 GB, rapid)</b> — montat la <code>/mnt/ssd-cdn</code>. Înăuntru sunt doar 845 MB: niște imagini de social media. <b>149 GB stau goale.</b> Acolo ar trebui să stea uploads-urile tenant-ilor (poze, documente knowledge base, audio-uri) — fișiere accesate des care merită SSD rapid.</li>
+      <li><b>Depozitul HDD (250 GB, încăpător dar lent)</b> — montat la <code>/mnt/hdd-backup</code>. Are <b>40 KB</b> înăuntru. Patruzeci. De. Kilobytes. Cineva (probabil tu, când ai configurat serverul) a creat acolo directoarele <code>postgres/</code>, <code>logs/</code>, <code>media-snapshots/</code> — exact unde ar trebui să se ducă backup-urile zilnice. Dar n-a configurat niciun job care să scrie acolo. Așa că <b>250 GB de spațiu de backup stau complet neutilizate</b>, iar backup-urile reale (1.8 GB) sunt în <code>/home/sambla/backups</code> — pe SSD-ul de sistem, exact unde n-au ce căuta.</li>
+    </ul>
+
+    <p><b>Și mai e o ciudățenie:</b> serverul are instalate pachete <b>desktop</b> (Chromium, GNOME, GTK, drivere video, sistem de printare) — 4.2 GB. Pe un server fără monitor, fără mouse, fără tastatură. Probabil cineva a instalat Ubuntu Desktop la început în loc de Ubuntu Server și nimeni n-a curățat. Sunt ca niște scaune de bucătărie într-un birou — nu deranjează tare, dar n-au ce căuta acolo.</p>
+
+    <p><b>Morala:</b> nu ai o problemă de spațiu — ai o problemă de <b>organizare</b>. Camera principală se umple cu lucruri care aparțin în depozite, în timp ce depozitele stau goale. Cu un weekend de curățenie (truncate log + docker prune + mutat backup-urile pe HDD + mutat uploads pe SSD-ul rapid + oprit Mailcow dacă nu-l folosești), eliberezi <b>~30 GB pe SSD-ul de sistem</b> și pui în sfârșit la treabă cele <b>~390 GB de spațiu suplimentar</b> pe care le plătești degeaba. Plus că te pregătești corect pentru creștere: când vei avea 50 de tenanți cu sute de ore de call recordings, vei vrea ca acele fișiere să fie deja pe partiția potrivită, nu să le muți într-o noapte de panică.</p>
+
+    <p style="color:#86efac"><b>Vestea bună:</b> aplicația ta în sine — Laravel + Postgres + Redis + Reverb — e foarte sănătoasă. Ocupă 700 MB RAM, 380 MB DB, e mică, e rapidă, are loc să crească de mii de ori. Tot zgomotul din audit e <b>infrastructură</b>, nu cod. Codul e ok.</p>
+  </div>
+</div>
+
+<div class="sub" style="text-align:center;margin-top:24px">
+  Date colectate cu <code>df</code>, <code>du</code>, <code>lsblk</code>, <code>docker system df</code>
+</div>
+
+</body>
+</html>

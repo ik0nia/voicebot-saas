@@ -28,10 +28,11 @@ Schedule::call(function () {
 Schedule::command('social:cleanup-stuck --minutes=10')->everyFifteenMinutes();
 Schedule::command('social:purge-deleted --days=7')->dailyAt('03:30');
 
-// Keep the draft review queue topped up at 30 GROUPS (one idea = FB+IG+Story).
-// Runs every 5 min and dispatches up to 5 queued jobs per tick, spaced 30s
-// apart. The cron is the safety net — approve/reject actions also fire an
-// inline ensure-drafts call so the buffer refills the moment a slot opens.
-Schedule::command('social:ensure-drafts --target=30 --per-tick=5 --spacing=30')
+// Keep the draft review queue topped up at 5 GROUPS (one idea = FB+IG+Story).
+// Lowered from 30 → 5 to avoid wasting image generation cost on drafts that
+// may end up rejected for visual quality. The cron is the safety net —
+// approve/reject actions also fire an inline ensure-drafts call so the
+// buffer refills the moment a slot opens.
+Schedule::command('social:ensure-drafts --target=5 --per-tick=2 --spacing=30')
     ->everyFiveMinutes()
     ->withoutOverlapping();

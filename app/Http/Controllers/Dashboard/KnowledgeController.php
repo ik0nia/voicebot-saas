@@ -5,11 +5,14 @@ namespace App\Http\Controllers\Dashboard;
 use App\Http\Controllers\Controller;
 use App\Models\Bot;
 use App\Models\BotKnowledge;
+use App\Models\GoogleDriveFile;
+use App\Models\GoogleOAuthToken;
 use App\Models\KnowledgeAgent;
 use App\Models\KnowledgeAgentRun;
 use App\Models\KnowledgeConnector;
 use App\Models\PlanLimit;
 use App\Models\WebsiteScan;
+use App\Jobs\ImportGoogleDriveFile;
 use App\Jobs\ProcessKnowledgeDocument;
 use App\Jobs\RunKnowledgeAgent;
 use App\Jobs\SyncConnector;
@@ -52,6 +55,30 @@ class KnowledgeController extends Controller
         $connectors = $bot->knowledgeConnectors()->get();
         $recentRuns = $bot->agentRuns()->latest()->limit(20)->get();
 
+        // Google Drive integration state (per-tenant token + per-bot drive files)
+        $googleToken = $tenant ? GoogleOAuthToken::where('tenant_id', $tenant->id)->first() : null;
+        $driveCategories = config('google-drive-categories', []);
+        $driveConnector = $connectors->firstWhere('type', 'google_drive');
+        $driveFiles = $driveConnector
+            ? GoogleDriveFile::where('connector_id', $driveConnector->id)->latest()->get()
+            : collect();
+
+        // A short-lived access token to hand to the Google Picker JS.
+        // We refresh on demand; if it fails the user will see "reconectează".
+        $googleAccessToken = null;
+        if ($googleToken) {
+            try {
+                $googleAccessToken = app(\App\Services\Google\GoogleOAuthService::class)
+                    ->getValidAccessToken($googleToken);
+            } catch (\Throwable $e) {
+                \Log::warning('Could not refresh Google access token for Picker', [
+                    'tenant_id' => $tenant?->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+        $googlePickerApiKey = config('services.google.picker_api_key');
+
         // Site-ul asociat botului (pentru pre-completare URL-uri)
         $site = $bot->site;
 
@@ -60,7 +87,9 @@ class KnowledgeController extends Controller
 
         return view('dashboard.bots.knowledge.builder', compact(
             'bot', 'documents', 'agents', 'agentsByCategory', 'lockedAgents',
-            'scans', 'connectors', 'recentRuns', 'plan', 'usageSummary', 'site'
+            'scans', 'connectors', 'recentRuns', 'plan', 'usageSummary', 'site',
+            'googleToken', 'driveCategories', 'driveConnector', 'driveFiles',
+            'googleAccessToken', 'googlePickerApiKey'
         ));
     }
 
@@ -369,11 +398,39 @@ class KnowledgeController extends Controller
         }
 
         $validated = $request->validate([
-            'type' => 'required|in:wordpress,woocommerce',
-            'site_url' => 'required|url',
+            'type' => 'required|in:wordpress,woocommerce,google_drive',
+            'site_url' => 'required_unless:type,google_drive|nullable|url',
             'consumer_key' => 'required_if:type,woocommerce|nullable|string',
             'consumer_secret' => 'required_if:type,woocommerce|nullable|string',
         ]);
+
+        // Google Drive: no URL, no credentials — relies on the per-tenant
+        // OAuth token created by GoogleOAuthController.
+        if ($validated['type'] === 'google_drive') {
+            $googleToken = GoogleOAuthToken::where('tenant_id', $tenant->id)->first();
+            if (! $googleToken) {
+                return back()->withErrors([
+                    'google_drive' => 'Nu există o conexiune Google activă. Conectează contul Google mai întâi.',
+                ]);
+            }
+
+            // Idempotent: one Google Drive connector per bot
+            $existing = $bot->knowledgeConnectors()->where('type', 'google_drive')->first();
+            if ($existing) {
+                return back()->with('success', 'Google Drive este deja activat pentru acest bot.');
+            }
+
+            KnowledgeConnector::create([
+                'bot_id' => $bot->id,
+                'type' => 'google_drive',
+                'site_url' => 'https://drive.google.com',
+                'credentials' => null,
+                'sync_settings' => [],
+                'status' => 'connected',
+            ]);
+
+            return back()->with('success', 'Google Drive activat. Apasă "Adaugă fișiere din Drive" pentru a importa.');
+        }
 
         // ── SSRF protection: block internal/private URLs ──
         try {
@@ -400,6 +457,108 @@ class KnowledgeController extends Controller
         ]);
 
         return back()->with('success', 'Conectorul a fost adăugat. Testează conexiunea și apoi sincronizează.');
+    }
+
+    // ─── Google Drive: import picked files ───
+
+    /**
+     * Import a batch of files the user picked via Google Picker.
+     * Each file gets a category (key from config/google-drive-categories.php)
+     * and an optional free-text description.
+     */
+    public function importDriveFiles(Request $request, Bot $bot, KnowledgeConnector $connector)
+    {
+        if ($connector->bot_id !== $bot->id || $connector->type !== 'google_drive') {
+            abort(403);
+        }
+
+        $tenant = auth()->user()->tenant;
+        if (! $tenant) {
+            return response()->json(['error' => true, 'message' => 'Tenant lipsă.'], 403);
+        }
+
+        $token = GoogleOAuthToken::where('tenant_id', $tenant->id)->first();
+        if (! $token) {
+            return response()->json(['error' => true, 'message' => 'Conectează contul Google mai întâi.'], 403);
+        }
+
+        $categoryKeys = array_keys(config('google-drive-categories', []));
+
+        $validated = $request->validate([
+            'files' => 'required|array|min:1|max:50',
+            'files.*.id' => 'required|string',
+            'files.*.name' => 'required|string|max:500',
+            'files.*.mime_type' => 'nullable|string|max:200',
+            'files.*.icon_url' => 'nullable|string|max:1000',
+            'files.*.web_view_link' => 'nullable|string|max:1000',
+            'files.*.category' => 'required|string|in:' . implode(',', $categoryKeys),
+            'files.*.description' => 'nullable|string|max:1000',
+        ]);
+
+        $imported = 0;
+        $skipped = 0;
+
+        foreach ($validated['files'] as $f) {
+            // Per-bot KB cap
+            $check = $this->planLimitService->canAddKnowledge($tenant, $bot);
+            if (! $check->allowed) {
+                return response()->json([
+                    'error' => true,
+                    'message' => $check->message,
+                    'imported' => $imported,
+                ], 403);
+            }
+
+            $existing = GoogleDriveFile::where('connector_id', $connector->id)
+                ->where('drive_file_id', $f['id'])
+                ->first();
+
+            if ($existing) {
+                $skipped++;
+                continue;
+            }
+
+            $driveFile = GoogleDriveFile::create([
+                'connector_id' => $connector->id,
+                'drive_file_id' => $f['id'],
+                'name' => $f['name'],
+                'mime_type' => $f['mime_type'] ?? null,
+                'icon_url' => $f['icon_url'] ?? null,
+                'web_view_link' => $f['web_view_link'] ?? null,
+                'category' => $f['category'],
+                'user_description' => $f['description'] ?? null,
+                'status' => 'pending',
+            ]);
+
+            ImportGoogleDriveFile::dispatch($driveFile);
+            $imported++;
+        }
+
+        $connector->update(['status' => 'syncing', 'last_synced_at' => now()]);
+
+        return response()->json([
+            'success' => true,
+            'imported' => $imported,
+            'skipped' => $skipped,
+            'message' => "$imported fișier(e) în curs de import" . ($skipped > 0 ? ", $skipped sărit(e) (deja importate)" : '') . '.',
+        ]);
+    }
+
+    /**
+     * Delete a single Google Drive file row + its associated knowledge.
+     */
+    public function destroyDriveFile(Bot $bot, KnowledgeConnector $connector, GoogleDriveFile $driveFile)
+    {
+        if ($connector->bot_id !== $bot->id || $connector->type !== 'google_drive' || $driveFile->connector_id !== $connector->id) {
+            abort(403);
+        }
+
+        if ($driveFile->knowledge_id) {
+            BotKnowledge::where('id', $driveFile->knowledge_id)->delete();
+        }
+        $driveFile->delete();
+
+        return back()->with('success', 'Fișierul Drive a fost șters din Knowledge Base.');
     }
 
     public function testConnector(Bot $bot, KnowledgeConnector $connector)

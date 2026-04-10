@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Sambla — Product Audit & Gap Analysis</title>
+<style>
+  :root{
+    --bg:#0b1020; --card:#121829; --ink:#e6e9f2; --mute:#8a93ad; --line:#1f2742;
+    --red:#ef4444; --amber:#f59e0b; --yellow:#eab308; --green:#22c55e; --blue:#3b82f6;
+    --accent:#dc2626;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,Segoe UI,Roboto,Inter,sans-serif}
+  a{color:#93c5fd;text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:980px;margin:0 auto;padding:40px 22px 120px}
+  header{border-bottom:1px solid var(--line);padding-bottom:26px;margin-bottom:30px}
+  header h1{font-size:28px;margin:0 0 8px;letter-spacing:-0.02em}
+  header .sub{color:var(--mute);font-size:14px}
+  .meta{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px;font-size:13px;color:var(--mute)}
+  .meta span{background:var(--card);padding:4px 10px;border-radius:999px;border:1px solid var(--line)}
+  nav.toc{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px 22px;margin-bottom:34px}
+  nav.toc h3{margin:0 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--mute)}
+  nav.toc ol{margin:0;padding-left:20px;columns:2;column-gap:30px}
+  nav.toc li{margin:4px 0}
+  h2{font-size:22px;margin:50px 0 14px;padding-bottom:10px;border-bottom:1px solid var(--line);letter-spacing:-0.01em}
+  h3{font-size:17px;margin:26px 0 10px;color:#fbbf24}
+  h4{font-size:15px;margin:18px 0 6px;color:var(--ink)}
+  p{margin:10px 0}
+  ul,ol{padding-left:22px}
+  li{margin:4px 0}
+  code{background:#0a0f1f;border:1px solid var(--line);padding:1px 6px;border-radius:4px;font-size:13px;color:#fbbf24;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  pre{background:#0a0f1f;border:1px solid var(--line);border-radius:8px;padding:14px;overflow-x:auto;font-size:12.5px;line-height:1.5}
+  pre code{background:none;border:none;padding:0;color:#d1d5db}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+  th,td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{color:var(--mute);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+  .gap{background:var(--card);border:1px solid var(--line);border-left-width:4px;border-radius:8px;padding:14px 18px;margin:14px 0}
+  .gap.p0{border-left-color:var(--red)}
+  .gap.p1{border-left-color:var(--amber)}
+  .gap.p2{border-left-color:var(--yellow)}
+  .gap.p3{border-left-color:var(--blue)}
+  .gap h4{margin-top:0;display:flex;align-items:center;gap:10px}
+  .tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:999px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+  .tag.p0{background:rgba(239,68,68,.15);color:#fca5a5}
+  .tag.p1{background:rgba(245,158,11,.15);color:#fcd34d}
+  .tag.p2{background:rgba(234,179,8,.15);color:#fde68a}
+  .tag.p3{background:rgba(59,130,246,.15);color:#93c5fd}
+  .tag.done{background:rgba(34,197,94,.15);color:#86efac}
+  .status{display:inline-block;font-size:12px;padding:2px 8px;border-radius:4px;font-weight:600}
+  .status.ok{background:rgba(34,197,94,.15);color:#86efac}
+  .status.warn{background:rgba(245,158,11,.15);color:#fcd34d}
+  .status.bad{background:rgba(239,68,68,.15);color:#fca5a5}
+  .sprint{background:linear-gradient(180deg,var(--card),#0d1224);border:1px solid var(--line);border-radius:10px;padding:18px 22px;margin:16px 0}
+  .sprint h3{margin-top:0;color:#93c5fd}
+  .sprint ul{list-style:none;padding:0}
+  .sprint li{padding:6px 0;border-bottom:1px dashed var(--line)}
+  .sprint li:last-child{border-bottom:none}
+  .sprint li::before{content:"☐ ";color:var(--mute);font-weight:700}
+  .claim-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+  .claim-grid .col h4{margin-bottom:6px}
+  .claim-grid ul{margin:0}
+  .claim-grid li{font-size:13px}
+  footer{margin-top:70px;padding-top:20px;border-top:1px solid var(--line);color:var(--mute);font-size:13px;text-align:center}
+  @media (max-width:720px){
+    nav.toc ol{columns:1}
+    .claim-grid{grid-template-columns:1fr}
+    .wrap{padding:26px 16px 80px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Sambla — Product Audit &amp; Gap Analysis</h1>
+  <div class="sub">Audit complet al aplicației (workflow + funcții + marketing vs realitate), identificare gap-uri, plan prioritizat.</div>
+  <div class="meta">
+    <span>📅 2026-04-07</span>
+    <span>🤖 Claude Opus 4.6 + 8 agenți paralel</span>
+    <span>📊 125 fișiere backend · 264 rute · 156 claims marketing</span>
+    <span>🎯 29 gap-uri identificate (17 niche pages cu integrări promise nelivrate)</span>
+  </div>
+</header>
+
+<nav class="toc">
+  <h3>Cuprins</h3>
+  <ol>
+    <li><a href="#stack">Tech Stack</a></li>
+    <li><a href="#workflows">Workflow-uri critice</a></li>
+    <li><a href="#inventar">Inventar domenii</a></li>
+    <li><a href="#gaps">Gap Analysis</a></li>
+    <li><a href="#plan">Plan prioritizat</a></li>
+    <li><a href="#reco">Recomandări operaționale</a></li>
+    <li><a href="#instr">Instrucțiuni viitor</a></li>
+    <li><a href="#claims">Master list marketing</a></li>
+  </ol>
+</nav>
+
+<h2 id="stack">1. Tech Stack (confirmat)</h2>
+<table>
+<tr><th>Layer</th><th>Tehnologie</th></tr>
+<tr><td>Backend</td><td>Laravel 11, PHP 8.3</td></tr>
+<tr><td>Frontend</td><td>Blade + Tailwind + Alpine.js <em>(nu Inertia/Vue/React)</em></td></tr>
+<tr><td>Database</td><td>PostgreSQL 16 + pgvector (HNSW)</td></tr>
+<tr><td>Cache / Queue</td><td>Redis 7 + Laravel Horizon</td></tr>
+<tr><td>WebSocket</td><td>Laravel Reverb</td></tr>
+<tr><td>Voice</td><td>OpenAI Realtime (gpt-4o-realtime) + ElevenLabs cloning</td></tr>
+<tr><td>Telefonie</td><td>Telnyx (voice + numere RO)</td></tr>
+<tr><td>AI text</td><td>OpenAI GPT-4o / GPT-4o-mini + Anthropic Claude</td></tr>
+<tr><td>Embeddings</td><td>OpenAI text-embedding-3-small (1536 dim)</td></tr>
+<tr><td>Image gen</td><td>Vertex AI Gemini + OpenAI gpt-image-1 fallback</td></tr>
+<tr><td>Billing</td><td>Laravel Cashier (Stripe) — <strong style="color:#fca5a5">incomplet</strong></td></tr>
+<tr><td>RBAC</td><td>spatie/laravel-permission</td></tr>
+<tr><td>Error tracking</td><td>Sentry</td></tr>
+<tr><td>Hosting</td><td>Coolify pe Ubuntu 24.04</td></tr>
+</table>
+
+<h2 id="workflows">2. Workflow-uri critice</h2>
+
+<h3>2.1 Voice call inbound</h3>
+<pre><code>Telnyx (client sună +40) → POST /webhook/telnyx/voice
+  → TelnyxWebhookController::handleVoice()
+  → Creează Call record, validează phone number
+  → Returnează TeXML cu stream URL WebSocket
+  → MediaStreamHandler stabilește conexiunea
+  → RealtimeClient → OpenAI Realtime API (WebSocket)
+  → Audio g711_ulaw live în ambele direcții
+  → Tool calls: lead capture, product search, callback
+  → call.hangup → cost calculat, transcript salvat</code></pre>
+
+<h3>2.2 Chat message (webchat / WhatsApp / FB / IG)</h3>
+<pre><code>Client → POST /api/v1/chatbot/{channel}/message SAU
+Meta webhook → ProcessChannelMessage job
+  → ChatCompletionService::handle()
+  → Stage 1: IntentClassifier (7 tipuri, ~30ms)
+  → Stage 2: Hybrid RAG (vector 1536 + FTS RO + RRF + reranker, ~150ms)
+  → Stage 3: ConversationStrategy (per-stage policy, ~5ms)
+  → Stage 4: Generate + 10-layer anti-hallucination
+  → Response JSON/SSE</code></pre>
+
+<h3>2.3 Knowledge ingestion</h3>
+<pre><code>Upload PDF/DOCX/CSV/URL → ProcessKnowledgeDocument job
+  → Extract text → Semantic chunking
+  → Batch embed (100 chunks/call OpenAI text-embedding-3-small)
+  → Insert în knowledge_chunks cu pgvector HNSW
+  → tsvector FTS populated prin trigger PostgreSQL
+  → Scheduled knowledge:process every minute</code></pre>
+
+<h2 id="inventar">3. Inventar domenii</h2>
+<table>
+<tr><th>Domeniu</th><th>Status</th><th>Observație</th></tr>
+<tr><td>OpenAI Realtime voice</td><td><span class="status ok">WIRED</span></td><td>Circuit breaker, 6 voci nativă + ElevenLabs</td></tr>
+<tr><td>Telnyx inbound/outbound</td><td><span class="status ok">WIRED</span></td><td>Webhook verificat, TeXML stream</td></tr>
+<tr><td>Numere RO provisioning</td><td><span class="status ok">WIRED</span></td><td>Per-tenant, cost tracking</td></tr>
+<tr><td>Knowledge RAG (hybrid)</td><td><span class="status ok">WIRED</span></td><td>Vector + FTS + RRF + reranker</td></tr>
+<tr><td>Document processing</td><td><span class="status warn">FRAGIL</span></td><td>ProcessKnowledgeDocument eșuează frecvent</td></tr>
+<tr><td>Chat pipeline 4-stage</td><td><span class="status ok">WIRED</span></td><td>Intent → RAG → Strategy → Generate</td></tr>
+<tr><td>Product search + WooCommerce</td><td><span class="status ok">WIRED</span></td><td>Sync produse/categorii/pagini/comenzi</td></tr>
+<tr><td>AWB tracking</td><td><span class="status warn">PARȚIAL</span></td><td>Servicii listate, verifică integrare reală</td></tr>
+<tr><td>Lead pipeline</td><td><span class="status ok">WIRED</span></td><td>7 stagii, scoring, notes</td></tr>
+<tr><td>Callback requests</td><td><span class="status ok">WIRED</span></td><td>Create + notify + pipeline</td></tr>
+<tr><td>Meta channels (WA/FB/IG)</td><td><span class="status ok">WIRED</span></td><td>Webhooks semnate, job processing</td></tr>
+<tr><td>Analytics dashboard</td><td><span class="status ok">WIRED</span></td><td>Costuri, conversii, sentiment, gaps</td></tr>
+<tr><td>Commerce attribution</td><td><span class="status ok">WIRED</span></td><td>3 moduri (strict/probabil/asistat)</td></tr>
+<tr><td>A/B testing prompturi</td><td><span class="status warn">PARȚIAL</span></td><td>Backend complet, UI minimal</td></tr>
+<tr><td>Voice cloning ElevenLabs</td><td><span class="status warn">POLLING</span></td><td>Fără webhook event</td></tr>
+<tr><td>Stripe billing</td><td><span class="status bad">INCOMPLET</span></td><td>Fără checkout, webhooks, invoice</td></tr>
+<tr><td>Email verification</td><td><span class="status bad">OFF</span></td><td>Dezactivat complet</td></tr>
+<tr><td>Webhooks out settings</td><td><span class="status bad">PLACEHOLDER</span></td><td>Tab disabled în UI</td></tr>
+<tr><td>Audit page</td><td><span class="status bad">ORFAN</span></td><td>Link vizibil, controller absent</td></tr>
+<tr><td>Admin social media</td><td><span class="status ok">WIRED</span></td><td>Generare + approve + schedule</td></tr>
+<tr><td>Adaptive learning</td><td><span class="status ok">WIRED</span></td><td>Daily cron insights</td></tr>
+<tr><td>Bot health score</td><td><span class="status ok">WIRED</span></td><td>KB + prompt + performance</td></tr>
+</table>
+
+<h2 id="gaps">4. Gap Analysis — promisiuni vs realitate</h2>
+<p>Legendă prioritate: <span class="tag p0">P0 critical</span> <span class="tag p1">P1 high</span> <span class="tag p2">P2 medium</span> <span class="tag p3">P3 low</span></p>
+
+<div class="gap p0" style="border-left-width:6px;background:linear-gradient(180deg,#1a0d0d,#121829)">
+<h4 style="color:#fca5a5">🔥 §4.0 NICHE LANDING PAGES — promise major nelivrat <span class="tag p0">P0</span></h4>
+<p>Există <strong>17 niche landing pages</strong> la <code>/pentru/{slug}</code> (seedate din <code>database/seeds/niches/*.json</code>) care promit zeci de integrări vertical-specifice. <strong>Niciuna nu există în cod.</strong></p>
+
+<table>
+<tr><th>Integrare promisă</th><th>Niche-uri</th><th>Cod</th></tr>
+<tr><td><strong>Google Calendar</strong></td><td>medical, stomatologic, veterinar, salon-beauty, psihologie, scoli-limbi, imobiliare, avocatura, optica, notariat, curatenie</td><td><span class="status bad">0 fișiere</span></td></tr>
+<tr><td><strong>Outlook / Microsoft Graph</strong></td><td>avocatura, imobiliare, medical</td><td><span class="status bad">0 fișiere</span></td></tr>
+<tr><td><strong>Google Sheets</strong></td><td>restaurant, turism, salon-beauty</td><td><span class="status bad">0 fișiere</span></td></tr>
+<tr><td><strong>Booking.com + Airbnb</strong></td><td>pensiune</td><td><span class="status bad">0 fișiere</span></td></tr>
+<tr><td><strong>SmartBill</strong></td><td>contabilitate, restaurant</td><td><span class="status bad">0 fișiere</span></td></tr>
+<tr><td><strong>Oblio</strong></td><td>restaurant, contabilitate</td><td><span class="status bad">0 fișiere</span></td></tr>
+<tr><td><strong>Saga / WinMentor / ContaBlue</strong></td><td>contabilitate</td><td><span class="status bad">0 fișiere</span></td></tr>
+<tr><td><strong>ANAF SPV</strong></td><td>contabilitate</td><td><span class="status bad">0 fișiere</span></td></tr>
+<tr><td><strong>Software management veterinar prin API</strong></td><td>veterinar</td><td><span class="status bad">0 fișiere</span></td></tr>
+<tr><td><strong>Regina Maria, Medicover, Signal Iduna, Allianz, Groupama, CASS</strong></td><td>medical, stomatologic, optica</td><td><span class="status bad">0 fișiere</span></td></tr>
+<tr><td><strong>CRM-uri imobiliare</strong></td><td>imobiliare</td><td><span class="status bad">0 fișiere</span></td></tr>
+<tr><td><strong>Touroperator feeds</strong> (Christian Tour, Paralela 45)</td><td>turism</td><td><span class="status bad">0 fișiere</span></td></tr>
+<tr><td><strong>POS restaurant integration</strong></td><td>restaurant</td><td><span class="status bad">0 fișiere</span></td></tr>
+<tr><td><strong>Shopify</strong> ("plugin oficial", "integrare nativă")</td><td>ecommerce + footer layouts/app.blade.php:86</td><td><span class="status bad">0 fișiere</span></td></tr>
+</table>
+
+<h4>Citate verbatim din JSON-uri</h4>
+<ul style="font-size:13px">
+<li><code>veterinar.json:108</code> — "Sambla se conectează cu Google Calendar, calendare partajate sau <strong>majoritatea softurilor de management veterinar prin API</strong>."</li>
+<li><code>stomatologic.json:12</code> — "Se conectează direct la Google Calendar al fiecărui medic, vede sloturile libere în timp real."</li>
+<li><code>medical.json:13</code> — "asigurările private cu care lucrezi (Regina Maria, Medicover, Signal Iduna, Allianz, Groupama)... Se conectează direct la Google Calendar"</li>
+<li><code>pensiune.json:16</code> — "sincronizat cu Booking.com și Airbnb"</li>
+<li><code>contabilitate.json:16</code> — "Integrare cu Saga, WinMentor, SmartBill, ContaBlue sau portalul ANAF (SPV)"</li>
+<li><code>restaurant.json:93</code> — "POS-uri populare precum SmartBill, Oblio"</li>
+<li><code>imobiliare.json:36</code> — "Avem conectori pentru cele mai folosite CRM-uri imobiliare din România"</li>
+<li><code>turism.json:40</code> — "feed de la un touroperator (Christian Tour, Paralela 45, etc.)"</li>
+<li><code>ecommerce.json:38</code> — "Avem aplicație Shopify oficială"</li>
+<li><code>layouts/app.blade.php:86</code> — "Integrare nativă WooCommerce, WordPress, <strong>Shopify</strong>"</li>
+</ul>
+
+<h4>Realitate cod</h4>
+<pre><code>grep -rli "google.calendar|outlook|smartbill|saga|oblio|winmentor|booking.com|airbnb|shopify|regina.maria|medicover" app/ config/
+→ 0 fișiere matched
+
+resources/views/dashboard/bots/knowledge/partials/connectors.blade.php
+→ doar 2 connector types: WordPress + WooCommerce</code></pre>
+
+<p><strong>Acțiune (alege una pentru fiecare integrare promisă):</strong></p>
+<ul>
+<li><strong>(A) Implementează</strong> — vezi Sprint 1A din §5</li>
+<li><strong>(B) Șterge promisa</strong> — editează JSON niches, re-rulează <code>php artisan db:seed --class=NicheSeeder</code></li>
+</ul>
+</div>
+
+<h3>🔴 Critical — promise direct nelivrat sau risc de securitate</h3>
+
+<div class="gap p0">
+<h4>G1 <span class="tag p0">P0</span> Stripe billing flow lipsă complet</h4>
+<p><strong>Promis:</strong> planuri lunare/anuale, 7 zile trial, upgrade/downgrade pro-rata, 30% discount ONG, overage automat.</p>
+<p><strong>Realitate:</strong> Cashier Billable trait există dar NU există: checkout flow, Stripe webhooks, produse/prices create, facturi emise. Trial-ul e setat dar nu e enforce-uit. Overage e calculat dar niciodată facturat.</p>
+<p><strong>Impact:</strong> Nu putem percepe bani. Toate promisiunile de pricing sunt literă moartă.</p>
+</div>
+
+<div class="gap p0">
+<h4>G2 <span class="tag p0">P0</span> Inconsistență prețuri între landing pages</h4>
+<p><code>welcome.blade.php</code>: 99€ / 299€ / Custom · <code>home.blade.php</code> + <code>preturi.blade.php</code>: ~49€ / ~149€ / ~399€. Fix rapid: șterge sau update <code>welcome.blade.php</code> (pare legacy).</p>
+</div>
+
+<div class="gap p0">
+<h4>G3 <span class="tag p0">P0</span> API Sanctum tokens cu scope nelimitat *</h4>
+<p><code>SettingsController::generateApiKey()</code> creează tokens cu abilities <code>['*']</code>, fără rate limit pe endpoint, fără audit log. Un token scurs = control complet peste tenant.</p>
+</div>
+
+<div class="gap p0">
+<h4>G4 <span class="tag p0">P0</span> Tenant isolation doar pe global scope</h4>
+<p>Niciun middleware la request boundary. Se poate bypassa accidental cu <code>withoutGlobalScopes()</code>. Recomand middleware <code>EnforceTenantBoundary</code> + audit de <code>withoutGlobalScopes()</code> în tot codul.</p>
+</div>
+
+<h3>🟠 High — promise parțial livrat</h3>
+
+<div class="gap p1">
+<h4>G5 <span class="tag p1">P1</span> Lead capture în voce promis dar nu persistă</h4>
+<p>Prompt-ul spune botului să colecteze nume/telefon/interval, dar nu există tool <code>save_lead</code> expus. Datele rămân în transcript, nu ajung în <code>leads</code>. Fix: function calling tool <code>capture_lead()</code> în RealtimeSession + event <code>NewLeadCaptured</code>.</p>
+</div>
+
+<div class="gap p1">
+<h4>G6 <span class="tag p1">P1</span> Sentiment analysis voce — câmpuri DB fără cod</h4>
+<p><code>calls.sentiment_score</code> și <code>sentiment_label</code> există în schema dar nu se populează. <code>BotSentimentService</code> există pentru chat, nu e wired la call-end. Fix: job <code>AnalyzeCallSentiment</code> dispatched la <code>call.hangup</code>.</p>
+</div>
+
+<div class="gap p1">
+<h4>G7 <span class="tag p1">P1</span> Filling messages / latency masking — serviciu neapelat</h4>
+<p><code>FillingMessageService</code> există cu cache audio, dar <code>RealtimeSession</code> nu-l apelează. Latențele lungi vor avea tăcere. Fix: hook în <code>onUserMessage()</code> la >600ms.</p>
+</div>
+
+<div class="gap p1">
+<h4>G8 <span class="tag p1">P1</span> Reverb live transcript broadcast — frontend lipsă</h4>
+<p>Events <code>CallTranscriptUpdated</code> și <code>UsageUpdated</code> sunt broadcast pe <code>tenant.{id}</code>, DAR niciun listener în Blade/Alpine. Dashboard-ul de calls e static refresh. Fix: Laravel Echo + Reverb client + listeners Alpine.</p>
+</div>
+
+<div class="gap p1">
+<h4>G10 <span class="tag p1">P1</span> ProcessKnowledgeDocument — rate 25% eșec</h4>
+<p>17 jobs eșuate vizibile. Cauze: OpenAI timeout/429 (60%), PDF corupt (25%), token limit (15%). Fix: backoff agresiv (60→300→900s), pre-validation, FTS-only fallback, retry UI, Sentry alert peste 20%.</p>
+</div>
+
+<h3>🟡 Medium — feature half-built</h3>
+
+<div class="gap p2">
+<h4>G9 <span class="tag p2">P2</span> Voice cloning ElevenLabs — doar polling</h4>
+<p>ElevenLabs suportă webhook. Endpoint <code>/webhook/elevenlabs/voice-ready</code> → event-driven.</p>
+</div>
+
+<div class="gap p2">
+<h4>G11 <span class="tag p2">P2</span> Webhooks outbound — tab disabled</h4>
+<p>Settings > Webhooks e <code>pointer-events-none opacity-50</code>. Fix: model <code>TenantWebhook</code> + <code>DeliverWebhook</code> job cu retry + HMAC + UI subscribe la evenimente.</p>
+</div>
+
+<div class="gap p2">
+<h4>G12 <span class="tag p2">P2</span> Audit page orfană</h4>
+<p>Link în admin nav, controller absent. Implementează tenant activity log sau scoate linkul.</p>
+</div>
+
+<div class="gap p2">
+<h4>G13 <span class="tag p2">P2</span> Event notifications tab disabled</h4>
+<p>Similar G11 pentru email/push la evenimente interne.</p>
+</div>
+
+<div class="gap p2">
+<h4>G14 <span class="tag p2">P2</span> IVR / call transfer / queue</h4>
+<p>Promis escalare la operator. Call-urile merg direct la OpenAI Realtime, fără mecanism de transfer. Fix: tool <code>transfer_to_operator</code> → Telnyx bridge + SMS alert + handoff log.</p>
+</div>
+
+<div class="gap p2">
+<h4>G16 <span class="tag p2">P2</span> Failed call handling — doar log</h4>
+<p>Niciun retry, escalare, fallback. Fix: <code>FailedCallHandler</code> → creează <code>CallbackRequest</code> automat din numărul apelantului.</p>
+</div>
+
+<h3>🟢 Low — polish &amp; observability</h3>
+<div class="gap p3">
+<p>G15 SMS via Telnyx · G17 permission granularity (manager can't delete dar poate edita) · G18 <code>admin_view_all</code> session-scoped → request-scoped · G19 reactivare email verification · G20 queue depth monitoring + alertă Sentry · G21 social post per-platform retry · G22 hardcoded config → PlatformSetting DB</p>
+</div>
+
+<h2 id="plan">5. Plan prioritizat</h2>
+
+<div class="sprint">
+<h3>Sprint 0 — Urgent Safety + Anti-Misleading (1-2 zile)</h3>
+<ul>
+<li><strong>G2</strong> Șterge/update <code>welcome.blade.php</code> — prețuri inconsistente <em>(~10 min)</em></li>
+<li><strong>G3</strong> API tokens: scope default restrictiv + rate limit generate <em>(~2h)</em></li>
+<li><strong>G4</strong> Middleware <code>EnforceTenantBoundary</code> + audit <code>withoutGlobalScopes()</code> <em>(~4h)</em></li>
+<li><strong>G29</strong> Audit toate cele 17 niche JSON files — scoate orice promisă de integrare care nu există în cod (Google Calendar, Outlook, Booking.com, Airbnb, SmartBill, Saga, Shopify, etc) și re-seed <em>(~3h)</em></li>
+<li><strong>G27 fix rapid</strong> Scoate "Shopify" din <code>layouts/app.blade.php:86</code> + niche ecommerce <em>(~5 min)</em></li>
+<li><strong>G26 fix rapid</strong> Schimbă "tracking automat AWB" → "verificare AWB cu un click" <em>(~10 min)</em></li>
+</ul>
+</div>
+
+<div class="sprint" style="border-color:#dc2626">
+<h3 style="color:#fca5a5">📌 Decizii 2026-04-07 (sesiunea audit)</h3>
+<ul>
+<li><strong>Microsoft / Outlook scos complet</strong> — în tot, înlocuit cu Google Calendar peste tot. Outlook a fost scos deja din <code>avocatura.json</code> și <code>imobiliare.json</code>.</li>
+<li><strong>Multi-calendar per bot</strong> — un tenant și un singur bot pot avea N resurse bookable (medici, stiliste, agenți, departamente). Fiecare resursă poate avea propriul Google Calendar — sau zero (folosește doar dashboard-ul intern Sambla).</li>
+<li><strong>Captură dublă obligatorie</strong> — orice programare prinsă de bot creează ÎNTOTDEAUNA un <code>CallbackRequest</code> intern (sursa de adevăr). Sync Google e best-effort, secundar.</li>
+<li><strong>Sprint 1B redus la doar punctul 1</strong> (creează Stripe Products + Prices în dashboard). Restul flow-ului Stripe e scos din scope curent.</li>
+</ul>
+</div>
+
+<div class="sprint">
+<h3>Sprint 1A — Google Calendar + Multi-Resource Bookings (5-8 zile)</h3>
+<p style="margin-top:0;color:var(--mute);font-size:13px">Implementarea G23 cu support multi-calendar și dual-write CallbackRequest + Google.</p>
+
+<h4 style="color:#fbbf24">Cazuri reale acoperite</h4>
+<ul style="font-size:13.5px">
+<li><strong>Clinică medicală/stomato/veterinară</strong> — N medici, fiecare cu calendar și specializări diferite</li>
+<li><strong>Salon beauty</strong> — N stiliste cu skill-uri diferite (balayage / nails / facial)</li>
+<li><strong>Cabinet avocatură</strong> — N avocați pe specializări (penal / civil / comercial)</li>
+<li><strong>Agenție imobiliară</strong> — N agenți pe zone</li>
+<li><strong>Hotel / pensiune / B&amp;B</strong> — N camere (fiecare cameră = resursă, ocupată pe perioade)</li>
+<li><strong>Service auto</strong> — N rampe / N mecanici</li>
+<li><strong>Restaurant</strong> — N mese sau N sloturi de delivery</li>
+</ul>
+
+<h4 style="color:#fbbf24">Arhitectură multi-resource</h4>
+<pre><code>bot (1) ─── (n) bookable_resources
+                   ├── id, bot_id, name, slug
+                   ├── kind: doctor | stylist | lawyer | agent
+                   │       | department | room | table | bay | generic
+                   ├── google_calendar_id (nullable)
+                   ├── working_hours (json per zi)
+                   ├── slot_duration_minutes
+                   ├── buffer_before_minutes / buffer_after_minutes
+                   ├── services_offered (json — routing pe servicii)
+                   └── is_active</code></pre>
+
+<p>Un singur OAuth Google = N calendare. Tenant-ul mapează în UI: "Calendar Google «Dr. Popescu» → Resursa Sambla «Dr. Popescu»". Mai multe resurse pot puncta la același calendar dacă e cazul.</p>
+
+<h4 style="color:#fbbf24">Tool pentru bot</h4>
+<pre><code>book_appointment(resource_id_or_slug, start, duration, contact_name, contact_phone, service?, notes?)
+
+Algoritm:
+1. Resolve resource (după nume sau service requested)
+2. Verifică disponibilitate (Google freeBusy SAU CallbackRequest local)
+3. Persistă local CallbackRequest (sursa de adevăr — niciodată skipat)
+4. Push Google paralel (job queued, retry 3x). La fail: sync_error, dar lead-ul rămâne.
+5. Confirmă natural ("te-am programat la Dr. Popescu joi 14:00, primești SMS")</code></pre>
+
+<p>Plus tool secundar <code>list_resources(service?)</code> pentru întrebări de tipul "ce medici aveți pentru endodonție?".</p>
+
+<h4 style="color:#fbbf24">Acțiuni concrete</h4>
+<ul>
+<li>Migration <code>create_bookable_resources_table</code></li>
+<li>Migration <code>create_oauth_credentials_table</code></li>
+<li>Migration <code>add_resource_and_google_fields_to_callback_requests</code> (bookable_resource_id, service_requested, google_event_id, external_calendar_provider, synced_at, sync_error)</li>
+<li>Model <code>BookableResource</code> cu relații + scope <code>forService()</code></li>
+<li>Service <code>GoogleOAuthService</code> (exchange, refresh, revoke)</li>
+<li>Service <code>GoogleCalendarConnector</code> (listCalendars, freeBusy, createEvent, deleteEvent)</li>
+<li>Service <code>AppointmentRouter</code> (resolve + find next slot)</li>
+<li>Job <code>SyncCallbackToGoogleCalendar</code> (queued, retry 3x backoff)</li>
+<li>Tools <code>book_appointment</code> + <code>list_resources</code> în RealtimeSession + ChatCompletionService</li>
+<li>Controllers: <code>BookableResourceController</code> (CRUD), <code>GoogleIntegrationController</code> (connect/callback/map/disconnect)</li>
+<li>Views: <code>dashboard/boti/{bot}/resurse/</code> (CRUD + working hours editor + color picker) și <code>dashboard/integrari/google.blade.php</code></li>
+<li>Update <code>dashboard/callbacks/index.blade.php</code>: coloană resursă + filter + badge sync</li>
+<li>Tests Pest: 2 resurse cu calendare Google diferite → bookings paralele → ambele aterizează corect</li>
+<li>Tests edge: Google quota → CallbackRequest creat + sync_error setat / tenant fără OAuth → totul local</li>
+</ul>
+
+<h4 style="color:#fbbf24">Avantaje</h4>
+<ul>
+<li>✅ Suportă clinică cu N medici, salon cu N stiliste, agenție cu N agenți</li>
+<li>✅ Routing automat pe baza serviciului cerut</li>
+<li>✅ Tenant poate folosi doar dashboard-ul intern (zero Google) și tot funcționează</li>
+<li>✅ Lead-ul nu se pierde niciodată — CallbackRequest local e sursa de adevăr</li>
+<li>✅ Migrare ușoară spre alți provideri în viitor</li>
+</ul>
+</div>
+
+<div class="sprint">
+<h3>Sprint 1B — Revenue Unblock (REDUS)</h3>
+<p style="margin-top:0;color:var(--mute);font-size:13px">Decizie 2026-04-07: doar punctul 1 din lista originală. Restul scos din scope curent.</p>
+<ul>
+<li><strong>G1 (parțial)</strong> Crează Stripe Products + Prices manual în dashboard-ul Stripe, pentru cele 3 planuri webchat (49/149/399€) + addon voce + lookup keys. Salvează <code>stripe_price_id</code> pe <code>plan_limits</code>.</li>
+</ul>
+<p style="font-size:12px;color:var(--mute)">Notă: fără checkout/webhooks/trial enforcement/invoice/UI/ONG/overage din planul original, încasarea rămâne manuală — dar avem catalogul Stripe pregătit pentru continuare.</p>
+</div>
+
+<div class="sprint">
+<h3>G24-G28 — discutăm ulterior</h3>
+<ul style="color:var(--mute);font-size:13px">
+<li>G24 Booking.com / Airbnb pensiuni</li>
+<li>G25 SmartBill / Oblio / Saga / WinMentor / ContaBlue / ANAF</li>
+<li>G26 AWB tracking real (Sameday / FanCourier API)</li>
+<li>G27 Decizie Shopify (implementăm sau ștergem)</li>
+<li>G28 Re-write insurance providers ca "configurabil"</li>
+</ul>
+</div>
+
+<div class="sprint">
+<h3>Sprint 1 — Revenue Unblock (1 săptămână)</h3>
+<ul>
+<li><strong>G1</strong> Stripe flow complet:
+  <ul>
+    <li>Stripe Products + Prices pentru 3 planuri + addon voce</li>
+    <li>Checkout session <code>/dashboard/facturare/subscribe/{plan}</code></li>
+    <li>Webhook <code>/webhook/stripe</code>: customer.subscription.*, invoice.payment_*, charge.refunded</li>
+    <li>Job <code>EnforceTrialExpiration</code> daily — downgrade la free după <code>trial_ends_at</code></li>
+    <li>Invoice email automat</li>
+    <li>UI cancel / upgrade / downgrade pro-rata</li>
+    <li>30% discount ONG via Stripe coupons</li>
+    <li>Overage billing lunar (usage_tracking → invoice items)</li>
+  </ul>
+</li>
+</ul>
+</div>
+
+<div class="sprint">
+<h3>Sprint 2 — Promise Parity (1-2 săptămâni)</h3>
+<ul>
+<li><strong>G5</strong> Tool <code>capture_lead</code> în RealtimeSession + persistare + event</li>
+<li><strong>G6</strong> Job <code>AnalyzeCallSentiment</code> wired la call.hangup</li>
+<li><strong>G7</strong> Filling messages triggered la >600ms latență</li>
+<li><strong>G8</strong> Laravel Echo + Reverb listeners în dashboard layout</li>
+<li><strong>G10</strong> ProcessKnowledgeDocument robustness (backoff, pre-validation, FTS fallback, Sentry alert)</li>
+</ul>
+</div>
+
+<div class="sprint">
+<h3>Sprint 3 — Depth (2-3 săptămâni)</h3>
+<ul>
+<li><strong>G11</strong> TenantWebhook + delivery job + UI</li>
+<li><strong>G14</strong> Tool <code>transfer_to_operator</code> cu Telnyx bridge</li>
+<li><strong>G16</strong> FailedCallHandler → auto callback request</li>
+<li><strong>G9</strong> ElevenLabs webhook</li>
+<li><strong>G13</strong> Event notifications tab</li>
+<li><strong>G12</strong> Audit log — model + listener global + UI</li>
+</ul>
+</div>
+
+<div class="sprint">
+<h3>Sprint 4 — Polish (ongoing)</h3>
+<ul>
+<li>G15 SMS Telnyx</li>
+<li>G17-G22 items polish</li>
+</ul>
+</div>
+
+<h2 id="reco">6. Recomandări operaționale</h2>
+<h4>Dev flow</h4>
+<ul>
+<li>Orice feature nouă trebuie să aibă test Pest + verificare explicită că claim-ul corespunzător e real + update la <code>docs/PRODUCT_AUDIT.md</code></li>
+<li>Înainte de release, rulează <code>grep -r "TODO\|FIXME\|disabled" resources/views/</code> pentru a prinde placeholder-urile noi</li>
+</ul>
+<h4>Marketing parity</h4>
+<ul>
+<li>Product owner review mensual: landing page claim → test manual că feature-ul livrează</li>
+<li>Lista din §4 e single source of truth. Gap fix → tick, dar adaugă test de regresie</li>
+</ul>
+<h4>Security</h4>
+<ul>
+<li>Înainte de signup public: Sprint 0 + Sprint 1 complete</li>
+<li>Audit extern al tenant isolation înainte de primul client plătitor</li>
+<li>Enable email verification înainte de primul plan plătit</li>
+</ul>
+<h4>Observabilitate</h4>
+<ul>
+<li>Alertă Sentry: rate job failure >5%/h, circuit breaker open >2 min, stripe webhook fail</li>
+<li>Dashboard Horizon public (behind basic auth) pentru monitorizare cozi</li>
+</ul>
+
+<h2 id="instr">7. Instrucțiuni pentru viitor</h2>
+<p>Pentru următoarele sesiuni Claude sau alți dezvoltatori. Când deschizi un task nou:</p>
+<ol>
+<li>Citește <code>docs/PRODUCT_AUDIT.md</code> — conține planul curent + gap list. Update status la final.</li>
+<li>Nu adăuga feature nouă fără să verifici dacă un gap existent o acoperă mai urgent.</li>
+<li>Când fixezi un gap, marcheză-l completat cu data + commit hash.</li>
+<li>Înainte de a promite ceva nou pe landing page, verifică că există cod care livrează.</li>
+<li>Nu elimina documentul de audit — e referința product/engineering.</li>
+<li>Fișierele brute din audit sunt în <code>/tmp/audit/</code> — re-rulează audit-ul pentru snapshot proaspăt.</li>
+<li>Acest HTML se actualizează manual după modificări majore în MD.</li>
+</ol>
+
+<h2 id="claims">8. Master list marketing (extras)</h2>
+<div class="claim-grid">
+  <div class="col">
+    <h4>Numere promise</h4>
+    <ul>
+      <li>&lt;2s end-to-end RAG</li>
+      <li>&lt;1s voice latency</li>
+      <li>10 straturi anti-halucinare</li>
+      <li>100% hosting RO</li>
+      <li>5 canale unificate</li>
+      <li>7 tipuri de intenție</li>
+      <li>1536 dim vector</li>
+      <li>25 grupuri sinonime RO</li>
+      <li>30+ semnale lead scoring</li>
+      <li>40+ evenimente tracked</li>
+      <li>Setup 10 minute</li>
+      <li>24/7/365 disponibilitate</li>
+    </ul>
+  </div>
+  <div class="col">
+    <h4>Integrări promise</h4>
+    <ul>
+      <li>WooCommerce / WordPress</li>
+      <li>PDF, DOCX, CSV, TXT, URL</li>
+      <li>WhatsApp, FB Messenger, IG DM</li>
+      <li>Telnyx numere RO</li>
+      <li>OpenAI GPT-4o + Realtime</li>
+      <li>Anthropic Claude</li>
+      <li>ElevenLabs voice cloning</li>
+      <li>FanCourier, Cargus, DPD, SameDay</li>
+      <li>PostgreSQL + pgvector</li>
+      <li>Vertex AI Gemini</li>
+      <li>Cloudflare CDN</li>
+    </ul>
+  </div>
+</div>
+<p><em>Lista completă (156+ claims verbatim cu file:line) în <code>/tmp/audit/03-marketing-claims.md</code>.</em></p>
+
+<footer>
+  Generated by Claude Opus 4.6 (1M context) + 8 parallel Explore agents · 2026-04-07<br>
+  Source: <code>docs/PRODUCT_AUDIT.md</code> · Raw agent reports: <code>/tmp/audit/01-*.md</code>–<code>08-*.md</code>
+</footer>
+</div>
+</body>
+</html>

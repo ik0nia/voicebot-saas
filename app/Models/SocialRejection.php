@@ -39,10 +39,15 @@ class SocialRejection extends Model
         foreach ($byCategory as $cat => $items) {
             $cat = $cat ?: 'other';
             $feedbacks = $items->pluck('feedback')->filter()->unique()->take(5)->implode(' | ');
-            $sample = $items->first()->content_snapshot ? mb_substr($items->first()->content_snapshot, 0, 120) : null;
+            $sample = null;
+            $first = $items->first();
+            $snapshot = $first?->content_snapshot;
+            if (is_string($snapshot) && $snapshot !== '') {
+                $sample = mb_substr($snapshot, 0, 120);
+            }
             $line = "- [$cat]";
             if ($feedbacks) $line .= " feedback: $feedbacks";
-            if ($sample) $line .= " (rejected example: \"$sample…\")";
+            if (($sample ?? null) !== null) $line .= " (rejected example: \"" . ($sample ?? '') . "…\")";
             $lines[] = $line;
         }
 
