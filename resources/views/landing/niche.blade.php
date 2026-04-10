@@ -56,7 +56,7 @@
         'agentii-turism'         => 'agenția ta de turism',
         'clinici-veterinare'     => 'clinica ta veterinară',
         'pensiuni-hoteluri-mici' => 'pensiunea ta',
-        'optica-medicala'        => 'optica ta medicală',
+        'optica-medicala'        => 'centrul tău de optică',
     ][$niche->slug] ?? 'afacerea ta';
 @endphp
 
