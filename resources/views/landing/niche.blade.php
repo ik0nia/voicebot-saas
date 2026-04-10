@@ -548,7 +548,7 @@
                     ÎNTREBĂRI FRECVENTE
                 </span>
                 <h2 class="text-3xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-[1.1]">
-                    Cele mai frecvente întrebări despre Sambla
+                    Cele mai frecvente întrebări despre agenții AI Sambla
                 </h2>
             </div>
 
