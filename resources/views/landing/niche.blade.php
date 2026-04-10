@@ -36,6 +36,28 @@
         'orange'  => ['bg600' => 'bg-orange-600',  'bg700' => 'bg-orange-700',  'text600' => 'text-orange-600',  'text700' => 'text-orange-700',  'bg50' => 'bg-orange-50',  'bg100' => 'bg-orange-100',  'border200' => 'border-orange-200',  'ring' => 'ring-orange-500/30',  'hex' => '#ea580c'],
     ];
     $p = $palettes[$niche->color_theme] ?? $palettes['red'];
+
+    // Possessive form per niche — "cabinetul tău", "biroul tău", etc.
+    // Used in headings where "afacerea ta" doesn't fit (notari, avocați, cabinete).
+    $possessive = [
+        'cabinete-stomatologice' => 'cabinetul tău stomatologic',
+        'cabinete-medicale'      => 'cabinetul tău medical',
+        'birouri-avocatura'      => 'biroul tău de avocatură',
+        'birouri-notariale'      => 'biroul tău notarial',
+        'firme-contabilitate'    => 'firma ta de contabilitate',
+        'firme-curatenie'        => 'firma ta de curățenie',
+        'salon-beauty'           => 'salonul tău',
+        'service-auto'           => 'service-ul tău auto',
+        'magazine-online'        => 'magazinul tău online',
+        'agentii-imobiliare'     => 'agenția ta imobiliară',
+        'restaurante-delivery'   => 'restaurantul tău',
+        'psihologie-psihoterapie'=> 'cabinetul tău de psihologie',
+        'scoli-limbi-straine'    => 'școala ta de limbi străine',
+        'agentii-turism'         => 'agenția ta de turism',
+        'clinici-veterinare'     => 'clinica ta veterinară',
+        'pensiuni-hoteluri-mici' => 'pensiunea ta',
+        'optica-medicala'        => 'optica ta medicală',
+    ][$niche->slug] ?? 'afacerea ta';
 @endphp
 
 @section('title', $metaTitle)
@@ -379,7 +401,7 @@
                 AVANTAJE
             </span>
             <h2 class="text-3xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-[1.1]">
-                Avantajele Sambla pentru afacerea ta
+                Avantajele Sambla pentru {{ $possessive }}
             </h2>
         </div>
 
@@ -447,7 +469,7 @@
                     HAI SĂ VORBIM
                 </span>
                 <h2 class="text-3xl lg:text-5xl font-extrabold text-slate-900 tracking-tight mb-5 leading-[1.1]">
-                    Vrei un demo personalizat pentru afacerea ta?
+                    Vrei un demo personalizat pentru {{ $possessive }}?
                 </h2>
                 <p class="text-lg text-slate-700 leading-relaxed font-medium">
                     Trimite-ne link-ul site-ului sau paginii de Facebook — primești un demo personalizat pe afacerea ta.
@@ -554,7 +576,7 @@
 
 {{-- ============================== FINAL CTA ============================== --}}
 <x-cta-section
-    title="Gata să automatizezi comunicarea cu clienții?"
+    title="Gata să automatizezi {{ $possessive }}?"
     subtitle="Configurezi agentul în 10 minute. Primele conversații reale din prima zi."
     primary-text="Începe gratuit"
     secondary-text="Vorbește cu noi"
