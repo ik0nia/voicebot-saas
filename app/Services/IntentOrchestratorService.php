@@ -290,10 +290,41 @@ class IntentOrchestratorService
         // ── Post-pipeline: Lead scoring ──
         if ($conversation) {
             try {
+                // Check if lead capture was already requested in recent messages
+                // to avoid nagging the user repeatedly
+                $alreadyAskedForLead = false;
+
+                // 1. Check if a lead already exists for this conversation
+                $existingLead = \App\Models\Lead::where('conversation_id', $conversation->id)
+                    ->whereNotNull('email')
+                    ->orWhere(fn($q) => $q->where('conversation_id', $conversation->id)->whereNotNull('phone'))
+                    ->first();
+
+                if ($existingLead) {
+                    $alreadyAskedForLead = true;
+                }
+
+                // 2. Check recent bot messages for lead capture phrases
+                if (!$alreadyAskedForLead) {
+                    $recentBotMessages = $conversation->messages()
+                        ->where('direction', 'outbound')
+                        ->orderByDesc('id')
+                        ->limit(4)
+                        ->pluck('content')
+                        ->implode(' ');
+
+                    if ($recentBotMessages && preg_match(
+                        '/(?:email|e-mail|telefon|adresa\s+ta|numărul\s+tău|datele?\s+de\s+contact|ofertă\s+(?:pe|prin)\s+email|trimit\s+(?:pe|prin)\s+email)/iu',
+                        $recentBotMessages
+                    )) {
+                        $alreadyAskedForLead = true;
+                    }
+                }
+
                 $sessionEvents = $this->events->getConversationEvents($conversation->id)->toArray();
                 $leadScore = $this->leadScorer->score($conversation, $plan->intents, $sessionEvents);
 
-                if ($leadScore->shouldCapture()) {
+                if ($leadScore->shouldCapture() && !$alreadyAskedForLead) {
                     $result->leadContext = "\n\n[INSTRUCȚIUNE LEAD CAPTURE — OBLIGATORIU în acest răspuns:"
                         . "\nClientul este interesat (scor interes: {$leadScore->value}/100). "
                         . "\nTREBUIE să incluzi în răspunsul tău o propunere naturală de a obține datele de contact."

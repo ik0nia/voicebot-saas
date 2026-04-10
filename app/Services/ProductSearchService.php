@@ -394,8 +394,35 @@ class ProductSearchService
                 }
 
                 if ($typeInName) {
-                    $score += 5;
-                    $reasons[] = '+5 type_in_name';
+                    // Check if product_type is the PRIMARY noun (starts the name)
+                    // vs a qualifier word appearing later (e.g., "dibluri DE polistiren")
+                    $nameWords = preg_split('/[\s\-]+/', $nameNoDiac, -1, PREG_SPLIT_NO_EMPTY);
+                    $firstSignificantWord = null;
+                    $skipWords = ['placa', 'placi', 'set', 'kit', 'pachet'];
+                    foreach ($nameWords as $w) {
+                        if (mb_strlen($w) >= 3 && !in_array($w, $skipWords)) {
+                            $firstSignificantWord = $w;
+                            break;
+                        }
+                    }
+
+                    $isPrimaryNoun = false;
+                    foreach ($typeVariants as $tv) {
+                        if ($firstSignificantWord && (
+                            str_contains($firstSignificantWord, $tv) || str_contains($tv, $firstSignificantWord)
+                        )) {
+                            $isPrimaryNoun = true;
+                            break;
+                        }
+                    }
+
+                    if ($isPrimaryNoun) {
+                        $score += 5;
+                        $reasons[] = '+5 type_is_primary_noun';
+                    } else {
+                        $score += 2;
+                        $reasons[] = '+2 type_in_name_as_qualifier';
+                    }
                 } elseif ($typeInAttr) {
                     $score += 4;
                     $reasons[] = '+4 type_in_attr';
@@ -455,16 +482,19 @@ class ProductSearchService
                 $ctxInDesc = str_contains($this->removeDiacritics($descLower), $ctx);
 
                 if ($ctxInName) {
-                    $score += 2;
-                    $reasons[] = "+2 context_in_name:{$ctx}";
+                    $score += 4;
+                    $reasons[] = "+4 context_in_name:{$ctx}";
                 } elseif ($ctxInAttrs || $ctxInDesc) {
-                    $score += 1;
-                    $reasons[] = "+1 context_in_attrs:{$ctx}";
+                    $score += 2;
+                    $reasons[] = "+2 context_in_attrs:{$ctx}";
                 } elseif ($ctxInCat) {
-                    $score += 1;
-                    $reasons[] = "+1 context_in_cat:{$ctx}";
+                    $score += 2;
+                    $reasons[] = "+2 context_in_cat:{$ctx}";
+                } else {
+                    // Penalize products missing context words — helps differentiate
+                    $score -= 1;
+                    $reasons[] = "-1 context_missing:{$ctx}";
                 }
-                // No penalty for missing context — it's a preference, not a requirement
             }
 
             // ── Rule D: Usage Compatibility Check ──

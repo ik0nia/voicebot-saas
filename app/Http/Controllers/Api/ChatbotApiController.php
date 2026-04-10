@@ -153,6 +153,18 @@ class ChatbotApiController extends Controller
             }
         }
 
+        // ── Safety net: strip product intro text when no product cards are shown ──
+        // The AI may say "Iată ce am găsit:" because the prompt told it to,
+        // but products were suppressed or empty. Remove the dangling intro.
+        if (empty($products)) {
+            $botResponse = preg_replace(
+                '/(?:Iată ce am găsit|Uite ce am găsit|Am găsit \d+ produse?|Am \d+ opțiuni|Am \d+ variante)[^.!?\n]*[:.]?\s*$/iu',
+                '',
+                $botResponse
+            );
+            $botResponse = rtrim($botResponse);
+        }
+
         // Save bot response with AI metadata + product cards + V2 intent data
         // (saved AFTER post-response gate so content and products reflect final state)
         $botMessage = Message::create([
