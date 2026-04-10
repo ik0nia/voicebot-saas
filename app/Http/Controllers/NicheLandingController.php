@@ -20,7 +20,7 @@ class NicheLandingController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
-            'business_name' => ['nullable', 'string', 'max:160'],
+            'website_url' => ['nullable', 'string', 'max:500'],
             'email' => ['required', 'email', 'max:180'],
             'phone' => ['required', 'string', 'max:40'],
             'message' => ['nullable', 'string', 'max:2000'],
@@ -30,7 +30,7 @@ class NicheLandingController extends Controller
         NicheLead::create([
             'niche_id' => $niche->id,
             'name' => $data['name'],
-            'business_name' => $data['business_name'] ?? null,
+            'business_name' => $data['website_url'] ?? null,
             'email' => $data['email'],
             'phone' => $data['phone'],
             'message' => $data['message'] ?? null,

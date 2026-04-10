@@ -379,7 +379,7 @@
                 AVANTAJE
             </span>
             <h2 class="text-3xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-[1.1]">
-                De ce Sambla pentru {{ $niche->vertical_label }}
+                Avantajele Sambla pentru afacerea ta
             </h2>
         </div>
 
@@ -447,10 +447,10 @@
                     HAI SĂ VORBIM
                 </span>
                 <h2 class="text-3xl lg:text-5xl font-extrabold text-slate-900 tracking-tight mb-5 leading-[1.1]">
-                    Vrei să vezi cum arată pentru {{ $niche->vertical_label }} ta?
+                    Vrei un demo personalizat pentru afacerea ta?
                 </h2>
                 <p class="text-lg text-slate-700 leading-relaxed font-medium">
-                    Lasă-ne datele — îți răspundem în 24h cu un demo personalizat.
+                    Trimite-ne link-ul site-ului sau paginii de Facebook — primești un demo personalizat pe afacerea ta.
                 </p>
             </div>
 
@@ -483,8 +483,8 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-bold text-slate-900 mb-2">Numele afacerii</label>
-                    <input type="text" name="business_name" value="{{ old('business_name') }}" class="w-full px-4 py-3.5 rounded-xl bg-slate-50 border-2 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-900 focus:bg-white transition font-medium">
+                    <label class="block text-sm font-bold text-slate-900 mb-2">Site-ul sau pagina de Facebook</label>
+                    <input type="text" name="website_url" value="{{ old('website_url') }}" placeholder="ex: www.cabinetdental.ro sau facebook.com/cabinetulmeu" class="w-full px-4 py-3.5 rounded-xl bg-slate-50 border-2 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-900 focus:bg-white transition font-medium">
                 </div>
 
                 <div class="grid sm:grid-cols-2 gap-4">
@@ -504,7 +504,7 @@
                 </div>
 
                 <button type="submit" class="w-full inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-bold text-base text-white {{ $p['bg700'] }} hover:{{ $p['bg600'] }} shadow-xl hover:shadow-2xl transition-all duration-300">
-                    Trimite cererea
+                    Vreau demo personalizat
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
                 </button>
 
@@ -526,7 +526,7 @@
                     ÎNTREBĂRI FRECVENTE
                 </span>
                 <h2 class="text-3xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-[1.1]">
-                    Ce întreabă alți {{ $niche->vertical_label }}
+                    Întrebări frecvente
                 </h2>
             </div>
 
@@ -554,7 +554,7 @@
 
 {{-- ============================== FINAL CTA ============================== --}}
 <x-cta-section
-    title="Începe să răspunzi clienților tăi 24/7"
+    title="Gata să automatizezi comunicarea cu clienții?"
     subtitle="Configurezi agentul în 10 minute. Primele conversații reale din prima zi."
     primary-text="Începe gratuit"
     secondary-text="Vorbește cu noi"
