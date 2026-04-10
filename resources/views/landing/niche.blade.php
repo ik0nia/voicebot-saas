@@ -548,7 +548,7 @@
                     ÎNTREBĂRI FRECVENTE
                 </span>
                 <h2 class="text-3xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-[1.1]">
-                    Ce vor să știe clienții despre Sambla pentru {{ $possessive }}
+                    Cele mai frecvente întrebări despre Sambla
                 </h2>
             </div>
 
