@@ -12,6 +12,11 @@ services:
       # off the project directory and allows future CDN/cache strategies.
       - /mnt/ssd-cdn/social:/var/www/html/public/social
       - /mnt/ssd-cdn/uploads:/var/www/html/public/uploads
+      # ANCPI cadastral viewer lives outside the project tree. The host
+      # symlink public/ancpi -> /home/sambla/ancpi/public is dangling
+      # inside this container without an explicit bind mount, which makes
+      # PHP-FPM return 404 for ancpi_api.php / save_marks.php / etc.
+      - /home/sambla/ancpi/public:/var/www/html/public/ancpi
     env_file:
       - .env
     environment:
