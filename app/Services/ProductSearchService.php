@@ -244,7 +244,7 @@ class ProductSearchService
         if ($totalTokens === 0) return [];
 
         $productType = $intent['product_type'];
-        $productTypeStem = $productType ? $this->stemRomanian($productType) : null;
+        $productTypeStems = $productType ? $this->stemRomanian($productType) : [];
 
         $bindings = ['bot_id' => $botId, 'trgm_query' => $rawQuery];
 
@@ -298,10 +298,10 @@ class ProductSearchService
         // in name are always retrieved as candidates, even if other tokens don't match
         $typeMatchSql = '0';
         if ($productType) {
-            $typePatterns = [$productType];
-            if ($productTypeStem && $productTypeStem !== $productType) {
-                $typePatterns[] = $productTypeStem;
-            }
+            // Dedup against raw product type + all candidate stems
+            $typePatterns = array_values(array_unique(array_merge([$productType], $productTypeStems)));
+            // Filter out sub-3-char noise
+            $typePatterns = array_values(array_filter($typePatterns, fn ($p) => mb_strlen($p) >= 3));
             $typeConds = [];
             foreach ($typePatterns as $ti => $tp) {
                 $key = "ptype_{$ti}";
@@ -380,8 +380,10 @@ class ProductSearchService
             // ── Rule A: Product Type Match (GATING) ──
             // Uses both the original product_type and its stem for matching
             if ($productType) {
-                $typeStem = $this->stemRomanian($productType);
-                $typeVariants = array_unique([$productType, $typeStem]);
+                $typeStems = $this->stemRomanian($productType);
+                $typeVariants = array_values(array_unique(array_merge([$productType], $typeStems)));
+                // Drop ultra-short stems to avoid noise matches (e.g. "ri" in everything)
+                $typeVariants = array_values(array_filter($typeVariants, fn ($v) => mb_strlen($v) >= 3));
 
                 $typeInName = false;
                 $typeInCat = false;
@@ -814,33 +816,154 @@ class ProductSearchService
         $word = $this->escapeLike($word);
         if (preg_match('/^([a-z]+)(\d+)$/i', $word, $m)) return "%{$m[1]}%{$m[2]}%";
         if (preg_match('/^(\d+)([a-z]+)$/i', $word, $m)) return "%{$m[1]}%{$m[2]}%";
-        $stem = $this->escapeLike($this->stemRomanian(str_replace(['\\%', '\\_', '\\\\'], ['%', '_', '\\'], $word)));
-        if ($stem !== $word && mb_strlen($stem) >= 3) return "%{$stem}%";
+        // Produce a pattern using the shortest safe stem candidate so LIKE matches
+        // both plural and singular product names. Example: "riflaje" → "riflaj".
+        $rawWord = str_replace(['\\%', '\\_', '\\\\'], ['%', '_', '\\'], $word);
+        $variants = $this->stemRomanian($rawWord);
+        // Pick the shortest variant ≥ 3 chars that is a prefix/contained substring
+        // of the longest — falls back to the original word.
+        $best = $rawWord;
+        foreach ($variants as $v) {
+            if (mb_strlen($v) >= 3 && mb_strlen($v) < mb_strlen($best)) {
+                $best = $v;
+            }
+        }
+        if ($best !== $rawWord) {
+            return "%" . $this->escapeLike($best) . "%";
+        }
         return "%{$word}%";
     }
 
-    private function stemRomanian(string $word): string
+    /**
+     * Return a list of candidate stems for a Romanian word.
+     *
+     * Romanian plural→singular is genuinely ambiguous (gender isn't always inferable
+     * from the word form), so we produce MULTIPLE candidate stems and let the caller
+     * match against any of them. The original word is always included as the first
+     * candidate so exact matches still work.
+     *
+     * Covered patterns (each produces one or more candidates):
+     *   -urilor/-urile/-ilor/-elor  → drop (definite plural)
+     *   -aje                         → -aj   (neuter plural: riflaj/riflaje, etalaj/etalaje)
+     *   -uri                         → drop + -u (neuter plural: panouri→panou, grunduri→grund)
+     *   -ele                         → drop + -ea (vopsele→vopsea, perdele→perdea)
+     *   -ile                         → drop + -ă (pâinile→pâine, etc.)
+     *   -e   (final)                 → drop + -ă (amorse→amors/amorsă, filtre→filtru — ambiguous)
+     *   -i   (final)                 → drop + -ă (plăci→plac/plăcă, adezivi→adeziv, uși→uș/ușă)
+     *   -a/-ă (singular definite)    → drop
+     *
+     * Results are deduplicated, filtered to length ≥ 3, and returned with the
+     * original word first.
+     *
+     * @return array<int,string>
+     */
+    private function stemRomanian(string $word): array
     {
-        if (mb_strlen($word) < 5) return $word;
-        $suffixes = [
-            'urilor', 'urile', 'ilor', 'elor',
-            'uri', 'ele', 'ile',
-            'ari', 'eri', 'iri',
-            'ati', 'eti', 'iti', 'uti',
-            'ate', 'ete', 'ite',
-            'nte', 'nta',
-            'ul', 'le', 'ii',
-            'ea', 'ia',
-            'i', 'e', 'a',
-        ];
-        foreach ($suffixes as $suffix) {
-            if (mb_strlen($word) > mb_strlen($suffix) + 2 && str_ends_with($word, $suffix)) {
-                $stem = mb_substr($word, 0, mb_strlen($word) - mb_strlen($suffix));
-                if (mb_strlen($stem) >= 3) return $stem;
+        $word = (string) $word;
+        if ($word === '') return [''];
+        if (mb_strlen($word) < 5) return [$word];
+
+        $candidates = [$word];
+
+        $add = function (string $candidate) use (&$candidates) {
+            if (mb_strlen($candidate) >= 3 && !in_array($candidate, $candidates, true)) {
+                $candidates[] = $candidate;
+            }
+        };
+
+        // Helper: strip a suffix if present, provided result is still ≥ 3 chars
+        $strip = function (string $w, string $suffix) {
+            if (!str_ends_with($w, $suffix)) return null;
+            if (mb_strlen($w) <= mb_strlen($suffix) + 2) return null;
+            return mb_substr($w, 0, mb_strlen($w) - mb_strlen($suffix));
+        };
+
+        // 1. Long definite-plural endings (drop entirely)
+        foreach (['urilor', 'urile', 'ilor', 'elor'] as $suf) {
+            if (($stem = $strip($word, $suf)) !== null) {
+                $add($stem);
+                $add($stem . 'u');   // neuter: panourile → panou
+                break;
             }
         }
-        return $word;
+
+        // 2. -aje → -aj   (productive neuter plural: riflaj, etalaj, bagaj, peisaj)
+        if (($stem = $strip($word, 'aje')) !== null) {
+            $add($stem . 'aj');
+        }
+
+        // 3. -uri → drop + -u    (panouri → panou, grunduri → grund, dibluri → diblu/dibl)
+        if (($stem = $strip($word, 'uri')) !== null) {
+            $add($stem);
+            $add($stem . 'u');
+        }
+
+        // 4. -ele → drop + -ea   (vopsele → vopsea, perdele → perdea)
+        if (($stem = $strip($word, 'ele')) !== null) {
+            $add($stem);
+            $add($stem . 'ea');
+        }
+
+        // 5. -ile → drop + -ă    (feminine definite plural)
+        if (($stem = $strip($word, 'ile')) !== null) {
+            $add($stem);
+            $add($stem . 'ă');
+            $add($stem . 'a');   // diacritic-less variant
+        }
+
+        // 6. -nte / -nta — known productive endings (kept for back-compat)
+        foreach (['nte', 'nta'] as $suf) {
+            if (($stem = $strip($word, $suf)) !== null) {
+                $add($stem);
+            }
+        }
+
+        // 7. participial endings (kept for back-compat)
+        foreach (['ati', 'eti', 'iti', 'uti', 'ate', 'ete', 'ite', 'ari', 'eri', 'iri'] as $suf) {
+            if (($stem = $strip($word, $suf)) !== null) {
+                $add($stem);
+            }
+        }
+
+        // 8. -ea / -ia (singular feminine forms) — back-compat
+        foreach (['ea', 'ia'] as $suf) {
+            if (($stem = $strip($word, $suf)) !== null) {
+                $add($stem);
+            }
+        }
+
+        // 9. -ul / -le / -ii — definite singular forms
+        foreach (['ul', 'le', 'ii'] as $suf) {
+            if (($stem = $strip($word, $suf)) !== null) {
+                $add($stem);
+            }
+        }
+
+        // 10. Final -e   (plăci/placă ambiguity, filtre/filtru, amorse/amorsă, …)
+        //     Produce: drop + -ă + -a (diacritic-less)
+        if (($stem = $strip($word, 'e')) !== null) {
+            $add($stem);
+            $add($stem . 'ă');
+            $add($stem . 'a');
+        }
+
+        // 11. Final -i   (adezivi→adeziv, plăci→plac/plăcă, uși→uș/ușă)
+        if (($stem = $strip($word, 'i')) !== null) {
+            $add($stem);
+            $add($stem . 'ă');
+            $add($stem . 'a');
+        }
+
+        // 12. Final -a / -ă (singular definite: masa → mas, bunica → bunic)
+        foreach (['a', 'ă'] as $suf) {
+            if (($stem = $strip($word, $suf)) !== null) {
+                $add($stem);
+            }
+        }
+
+        return array_values(array_unique($candidates));
     }
+
 
     // =========================================================================
     // ANALYTICS & UTILITIES
