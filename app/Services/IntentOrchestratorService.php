@@ -650,13 +650,18 @@ class IntentOrchestratorService
             } elseif ($outOfStock > 0) {
                 $inStock = $total - $outOfStock;
                 $result->productContext = "\n\n[CARDURI PRODUSE: {$total} produse afișate ({$inStock} în stoc, {$outOfStock} out of stock)."
-                    . "\nPentru produsele in-stock spune 'Iată ce am găsit:'."
-                    . "\nPentru cele out-of-stock menționează-le ca alternative ('mai avem și aceste modele, momentan nu pe stoc').]";
+                    . "\nIntro scurt (o propoziție, 30-80 caractere) care menționează tipul produsului căutat și că o parte sunt pe stoc, cealaltă epuizată."
+                    . "\nExemplu: 'Am găsit {$inStock} variante pe stoc și încă {$outOfStock} momentan epuizate:'"
+                    . "\nNU enumera numele produselor în text — cardurile le arată.]";
             } elseif ($onBackorder > 0) {
                 $result->productContext = "\n\n[CARDURI PRODUSE: {$total} produse afișate, dintre care {$onBackorder} sunt pe comandă (backorder)."
-                    . "\nMenționează că produsele pe comandă pot fi comandate dar livrarea durează mai mult.]";
+                    . "\nIntro scurt (o propoziție, 30-80 caractere) care menționează tipul produsului și faptul că unele sunt pe comandă (livrarea durează mai mult)."
+                    . "\nNU enumera numele produselor în text.]";
             } else {
-                $result->productContext = "\n\n[CARDURI PRODUSE: {$total} produse se afișează automat ca carduri vizuale. Spune SCURT: 'Iată ce am găsit:' — fără a enumera produsele în text.]";
+                $result->productContext = "\n\n[CARDURI PRODUSE: {$total} produse se afișează automat ca carduri vizuale."
+                    . "\nScrie un intro scurt (o singură propoziție, 30-80 caractere) care menționează tipul/categoria produsului căutat — NU enumera numele produselor."
+                    . "\nExemple bune: 'Am găsit câteva variante de polistiren pentru tine:' sau 'Uite 4 opțiuni de vopsele lavabile disponibile:' sau 'Iată plăcile BCA pe care le avem:'"
+                    . "\nExemplu prea scurt (NU folosi): 'Iată ce am găsit:']";
             }
         } else {
             // Fallback: try semantic product retrieval when structured search fails
@@ -664,7 +669,9 @@ class IntentOrchestratorService
                 $semanticResults = $this->semanticProducts->search($botId, $query, 4);
                 if (!empty($semanticResults)) {
                     $result->products = array_map(fn($r) => $r->toCardArray(), $semanticResults);
-                    $result->productContext = "\n\n[CARDURI PRODUSE: " . count($result->products) . " produse găsite prin căutare semantică. Spune SCURT: 'Iată ce am găsit:' — fără a enumera produsele în text.]";
+                    $result->productContext = "\n\n[CARDURI PRODUSE: " . count($result->products) . " produse găsite prin căutare semantică."
+                        . "\nScrie un intro scurt (o singură propoziție, 30-80 caractere) care menționează tipul/categoria produsului — NU enumera numele produselor."
+                        . "\nExemple bune: 'Am găsit câteva opțiuni potrivite pentru tine:' sau 'Uite variantele disponibile pentru ce cauți:']";
                     $task->resultsCount = count($semanticResults);
                     return;
                 }
