@@ -1289,6 +1289,21 @@ class ChatbotApiController extends Controller
             $this->tryCreatePrechatLead($bot, $conversation, $prechatName, $prechatEmail, $prechatPhone);
         }
 
+        // ── Conversation focus: augment query with active topic for follow-ups ──
+        // The augmented query is used ONLY for product search (and the intent
+        // detection that feeds it). The AI prompt still gets the raw $userMessage
+        // via buildPromptForStream/generateAIResponse below — the focus service
+        // never rewrites what the AI sees.
+        $focusService = app(\App\Services\ConversationFocusService::class);
+        try {
+            $augmentedQuery = $focusService->augmentQuery($conversation, $userMessage);
+        } catch (\Throwable $e) {
+            Log::warning('ConversationFocusService::augmentQuery failed', [
+                'conversation_id' => $conversation->id, 'error' => $e->getMessage(),
+            ]);
+            $augmentedQuery = $userMessage;
+        }
+
         // ── Intent detection & pipeline execution ──
         $products = [];
         $extraContext = '';
@@ -1301,8 +1316,8 @@ class ChatbotApiController extends Controller
         if ($useOrchestrator) {
             try {
                 $orchestrator = app(\App\Services\IntentOrchestratorService::class);
-                $plan = $orchestrator->plan($userMessage, $conversation, $bot);
-                $orchestratorResult = $orchestrator->execute($plan, $bot, $userMessage, $conversation);
+                $plan = $orchestrator->plan($augmentedQuery, $conversation, $bot);
+                $orchestratorResult = $orchestrator->execute($plan, $bot, $augmentedQuery, $conversation);
 
                 $products = $orchestratorResult->products;
                 $extraContext = $orchestratorResult->getMergedContext();
@@ -1387,7 +1402,7 @@ class ChatbotApiController extends Controller
                     $products = $lastProductCards;
                     $productContext = "\n\n[" . count($products) . " produse discutate anterior afișate ca carduri. Acestea sunt produsele despre care clientul vorbea.]";
                 } else {
-                    $products = $this->searchProductCards($bot->id, $userMessage);
+                    $products = $this->searchProductCards($bot->id, $augmentedQuery);
                     if (!empty($products)) {
                         $productContext = "\n\n[" . count($products) . " produse relevante afișate ca carduri.]";
                     }
@@ -1462,7 +1477,7 @@ class ChatbotApiController extends Controller
                     $isGenericChat = $wordCount <= 5 && preg_match('/^(cum|ce|de ce|cine|unde|cand|cat|poti|puteti|ajut|help|info|detalii)\b/iu', trim($userMessage));
 
                     if (!$isGenericChat) {
-                        $products = $this->searchProductCards($bot->id, $userMessage);
+                        $products = $this->searchProductCards($bot->id, $augmentedQuery);
                         if (!empty($products)) {
                             $productContext = "\n\n[Am găsit " . count($products) . " produse relevante ca carduri. NU le enumera în text.]";
                         }
@@ -1485,6 +1500,15 @@ class ChatbotApiController extends Controller
             }
 
             $extraContext = $orderContext . $productContext;
+        }
+
+        // ── Update conversation focus based on raw user message + detected intents ──
+        try {
+            $focusService->updateFocus($conversation, $userMessage, $detectedIntents ?? []);
+        } catch (\Throwable $e) {
+            Log::warning('ConversationFocusService::updateFocus failed', [
+                'conversation_id' => $conversation->id, 'error' => $e->getMessage(),
+            ]);
         }
 
         return [
