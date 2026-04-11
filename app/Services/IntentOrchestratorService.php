@@ -29,8 +29,10 @@ class IntentOrchestratorService
         private LeadOpportunityScorer $leadScorer,
         private HandoffService $handoffService,
         private ?SemanticProductRetrievalService $semanticProducts = null,
+        private ?GroundedProductContextService $groundedContext = null,
     ) {
         $this->semanticProducts ??= app(SemanticProductRetrievalService::class);
+        $this->groundedContext ??= app(GroundedProductContextService::class);
     }
 
     /**
@@ -237,9 +239,9 @@ class IntentOrchestratorService
             match ($pipeline->name) {
                 'order_lookup' => $this->executeOrderLookup($bot->id, $pipeline, $result, $userMessage),
                 'new_order' => $this->executeNewOrder($pipeline, $result, $conversation),
-                'product_search' => $this->executeProductSearch($bot->id, $pipeline, $result),
+                'product_search' => $this->executeProductSearch($bot, $pipeline, $result),
                 'category_browse' => $this->executeCategoryBrowse($bot->id, $pipeline, $result),
-                'recommendation' => $this->executeRecommendation($bot->id, $pipeline, $result),
+                'recommendation' => $this->executeRecommendation($bot, $pipeline, $result),
                 'knowledge' => $this->executeKnowledge($bot->id, $pipeline, $result, $dataSources['rag_limit']),
                 default => null,
             };
@@ -621,7 +623,7 @@ class IntentOrchestratorService
         $task->resultsCount = !empty($result->orderContext) ? 1 : 0;
     }
 
-    private function executeProductSearch(int $botId, PipelineTask $task, OrchestratorResult $result): void
+    private function executeProductSearch(Bot $bot, PipelineTask $task, OrchestratorResult $result): void
     {
         // Skip if products already populated (e.g. from new_order using conversation history)
         if (!empty($result->products)) {
@@ -629,49 +631,69 @@ class IntentOrchestratorService
             return;
         }
 
+        $botId = $bot->id;
+        $botSettings = $bot->settings ?? null;
         $query = $task->params['query'] ?? '';
         $products = $this->productSearch->search($botId, $query, 4);
         if (!empty($products)) {
-            $result->products = array_map(fn($r) => $this->productSearch->toCardArray($r), $products);
-            // Check stock distribution — if all results are out-of-stock, tell
-            // the AI explicitly so it doesn't say "iată ce am găsit" without
-            // noting the stock situation.
-            $stockCounts = array_count_values(array_map(fn($p) => $p['stock_status'] ?? 'unknown', $result->products));
-            $total = count($result->products);
-            $outOfStock = $stockCounts['outofstock'] ?? 0;
-            $onBackorder = $stockCounts['onbackorder'] ?? 0;
+            $cards = array_map(fn($r) => $this->productSearch->toCardArray($r), $products);
 
-            if ($outOfStock === $total) {
-                // 100% out-of-stock — explicit messaging required
-                $result->productContext = "\n\n[CARDURI PRODUSE: {$total} produse găsite în catalog, dar TOATE sunt momentan OUT OF STOCK."
-                    . "\nSPUNE EXPLICIT clientului că produsele există în catalogul nostru dar momentan nu sunt în stoc."
-                    . "\nOferă-i să fie anunțat când revin pe stoc sau să-i recomanzi alternative similare."
-                    . "\nNU spune 'nu am detalii' sau 'nu avem' — produsele EXISTĂ, doar nu sunt disponibile acum.]";
-            } elseif ($outOfStock > 0) {
-                $inStock = $total - $outOfStock;
-                $result->productContext = "\n\n[CARDURI PRODUSE: {$total} produse afișate ({$inStock} în stoc, {$outOfStock} out of stock)."
-                    . "\nIntro scurt (o propoziție, 30-80 caractere) care menționează tipul produsului căutat și că o parte sunt pe stoc, cealaltă epuizată."
-                    . "\nExemplu: 'Am găsit {$inStock} variante pe stoc și încă {$outOfStock} momentan epuizate:'"
-                    . "\nNU enumera numele produselor în text — cardurile le arată.]";
-            } elseif ($onBackorder > 0) {
-                $result->productContext = "\n\n[CARDURI PRODUSE: {$total} produse afișate, dintre care {$onBackorder} sunt pe comandă (backorder)."
-                    . "\nIntro scurt (o propoziție, 30-80 caractere) care menționează tipul produsului și faptul că unele sunt pe comandă (livrarea durează mai mult)."
-                    . "\nNU enumera numele produselor în text.]";
-            } else {
-                $result->productContext = "\n\n[CARDURI PRODUSE: {$total} produse se afișează automat ca carduri vizuale."
-                    . "\nScrie un intro scurt (o singură propoziție, 30-80 caractere) care menționează tipul/categoria produsului căutat — NU enumera numele produselor."
-                    . "\nExemple bune: 'Am găsit câteva variante de polistiren pentru tine:' sau 'Uite 4 opțiuni de vopsele lavabile disponibile:' sau 'Iată plăcile BCA pe care le avem:'"
-                    . "\nExemplu prea scurt (NU folosi): 'Iată ce am găsit:']";
+            // ── Deterministic relevance gate ──
+            // Catch cases where lexical search returns products completely
+            // unrelated to the query (classic RAG failure mode, e.g.
+            // "polistiren EPS vs XPS" returning electric switches). Prompt
+            // rules alone are not reliable enough — some models will present
+            // any list of products they see. Keyword overlap is a cheap,
+            // deterministic sanity check that runs before the LLM call.
+            if ($this->groundedContext->detectMismatch($cards, $query)) {
+                Log::info('IntentOrchestrator: mismatch gate suppressed unrelated products', [
+                    'bot_id' => $botId,
+                    'query' => $query,
+                    'suppressed_count' => count($cards),
+                    'first_product' => $cards[0]['name'] ?? null,
+                ]);
+                $result->products = [];
+                $result->productContext = "\n\n[NU s-au găsit produse relevante pentru \"{$query}\". NU spune că ai găsit produse. Dacă e o întrebare tehnică, răspunde din cunoștințe generale fără a menționa produse.]";
+                $task->resultsCount = 0;
+                return;
             }
+
+            $result->products = $cards;
+            // Grounded context: inject actual product names/prices/stock into the
+            // prompt so the LLM can answer comparison questions accurately and
+            // detect when retrieval returned products unrelated to the query.
+            // See GroundedProductContextService class doc for rationale.
+            $result->productContext = $this->groundedContext->build(
+                $result->products,
+                $botSettings,
+                $query,
+            );
         } else {
             // Fallback: try semantic product retrieval when structured search fails
             if ($this->semanticProducts && $query) {
                 $semanticResults = $this->semanticProducts->search($botId, $query, 4);
                 if (!empty($semanticResults)) {
-                    $result->products = array_map(fn($r) => $r->toCardArray(), $semanticResults);
-                    $result->productContext = "\n\n[CARDURI PRODUSE: " . count($result->products) . " produse găsite prin căutare semantică."
-                        . "\nScrie un intro scurt (o singură propoziție, 30-80 caractere) care menționează tipul/categoria produsului — NU enumera numele produselor."
-                        . "\nExemple bune: 'Am găsit câteva opțiuni potrivite pentru tine:' sau 'Uite variantele disponibile pentru ce cauți:']";
+                    $semanticCards = array_map(fn($r) => $r->toCardArray(), $semanticResults);
+
+                    // Same mismatch gate on the semantic fallback path.
+                    if ($this->groundedContext->detectMismatch($semanticCards, $query)) {
+                        Log::info('IntentOrchestrator: mismatch gate suppressed semantic results', [
+                            'bot_id' => $botId,
+                            'query' => $query,
+                            'suppressed_count' => count($semanticCards),
+                        ]);
+                        $result->products = [];
+                        $result->productContext = "\n\n[NU s-au găsit produse relevante pentru \"{$query}\". NU spune că ai găsit produse. Dacă e o întrebare tehnică, răspunde din cunoștințe generale fără a menționa produse.]";
+                        $task->resultsCount = 0;
+                        return;
+                    }
+
+                    $result->products = $semanticCards;
+                    $result->productContext = $this->groundedContext->build(
+                        $result->products,
+                        $botSettings,
+                        $query,
+                    );
                     $task->resultsCount = count($semanticResults);
                     return;
                 }
@@ -681,8 +703,10 @@ class IntentOrchestratorService
         $task->resultsCount = count($products);
     }
 
-    private function executeRecommendation(int $botId, PipelineTask $task, OrchestratorResult $result): void
+    private function executeRecommendation(Bot $bot, PipelineTask $task, OrchestratorResult $result): void
     {
+        $botId = $bot->id;
+        $botSettings = $bot->settings ?? null;
         $concept = $task->params['concept'] ?? '';
         $query = $task->params['query'] ?? $concept;
 
@@ -692,7 +716,10 @@ class IntentOrchestratorService
             if (!empty($rec['products'])) {
                 $result->products = array_map(fn($r) => $this->productSearch->toCardArray($r), $rec['products']);
                 $subQueries = implode(', ', $rec['sub_queries']);
-                $result->productContext = "\n\n[Recomandări pentru \"{$concept}\": " . count($result->products) . " produse din categoriile: {$subQueries}. Explică pe scurt DE CE sunt necesare.]";
+                $groundedBlock = $this->groundedContext->build($result->products, $botSettings, $query);
+                $recHint = "\n\n[RECOMANDĂRI pentru \"{$concept}\" — din categoriile: {$subQueries}. Explică pe scurt DE CE sunt necesare.]";
+                // Prefer grounded block if feature is on; otherwise keep legacy placeholder.
+                $result->productContext = $groundedBlock !== '' ? ($groundedBlock . $recHint) : $recHint;
             }
         }
 
@@ -701,9 +728,9 @@ class IntentOrchestratorService
             $semanticResults = $this->semanticProducts->search($botId, $query, 4);
             if (!empty($semanticResults)) {
                 $result->products = array_map(fn($r) => $r->toCardArray(), $semanticResults);
-                $result->productContext = "\n\n[PRODUSE RECOMANDATE SEMANTIC: " . count($result->products)
-                    . " produse găsite prin căutare semantică pentru \"{$query}\". "
-                    . "Prezintă-le natural, explică de ce sunt relevante pentru cererea clientului.]";
+                $groundedBlock = $this->groundedContext->build($result->products, $botSettings, $query);
+                $semHint = "\n\n[PRODUSE RECOMANDATE SEMANTIC pentru \"{$query}\". Prezintă-le natural, explică de ce sunt relevante.]";
+                $result->productContext = $groundedBlock !== '' ? ($groundedBlock . $semHint) : $semHint;
 
                 Log::debug('IntentOrchestrator: semantic product retrieval used', [
                     'bot_id' => $botId,

@@ -128,9 +128,34 @@ class ChatbotApiController extends Controller
         if (!empty($products)) {
             // Positive: AI clearly introduced/recommended products.
             $hasPositiveProductMention = preg_match(
-                '/(?:recoman|suger[aă]m|am găsit|avem\s+(?:câteva|mai multe|urm[aă]toarele|aceste)|iată|uite\s+(?:ce|câteva|produsele)|produse?\s+(?:potrivit|relevant|disponibil)|po[țt]i\s+comanda|adaug[aă]\s+în\s+co[sș]|în\s+stoc)/iu',
+                '/(?:recoman|suger[aă]m|am găsit|avem\s+(?:câteva|mai multe|urm[aă]toarele|aceste)|iată|uite\s+(?:ce|câteva|produsele)|produse?\s+(?:potrivit|relevant|disponibil)|po[țt]i\s+comanda|adaug[aă]\s+în\s+co[sș]|în\s+stoc|cel\s+mai\s+(?:ieftin|scump|bun|potrivit)|(?:varianta|optiunea|opțiunea)\s+de\s+\d|(?:primul|al\s+doilea|al\s+treilea|al\s+patrulea)\s+(?:produs|card|este))/iu',
                 $botResponse
             );
+
+            // With grounded context, the LLM may reference products by name or by their
+            // category word (e.g. "Polistiren" in "Cel mai ieftin este Polistiren Eps 80
+            // ...") — count that as a positive grounded reference so we don't rewrite
+            // a correct answer. The needle is the first word of each product name,
+            // lowercased (typically a category/type noun like "polistiren", "vopsea",
+            // "adeziv"), which is short enough to appear even in terse answers.
+            if (!$hasPositiveProductMention) {
+                $lowerResponse = mb_strtolower($botResponse);
+                $seenNeedles = [];
+                foreach ($products as $p) {
+                    $name = trim((string) ($p['name'] ?? ''));
+                    if ($name === '') continue;
+                    // First word, length ≥ 4 (skip "La", "De", etc).
+                    $first = (string) (preg_split('/\s+/u', $name)[0] ?? '');
+                    if (mb_strlen($first) < 4) continue;
+                    $needle = mb_strtolower($first);
+                    if (isset($seenNeedles[$needle])) continue;
+                    $seenNeedles[$needle] = true;
+                    if (mb_stripos($lowerResponse, $needle) !== false) {
+                        $hasPositiveProductMention = true;
+                        break;
+                    }
+                }
+            }
 
             // Clarification: AI asked the user to specify what they want. Cards next
             // to "tell me what type you're looking for" are contradictory — the bot
@@ -141,18 +166,21 @@ class ChatbotApiController extends Controller
             );
 
             // Negative: AI said it doesn't have / doesn't know / can't find / can't help.
-            // Broadened to catch "nu am detalii", "momentan, nu am", "nu dispun",
-            // "îmi pare rău, nu ...", "nu pot să te ajut", "contactează magazinul", etc.
+            // Handles both full forms ("nu am") and common Romanian contractions
+            // ("n-am", "n-avem"). Broadened to catch "nu am detalii",
+            // "momentan, nu am", "nu dispun", "îmi pare rău, nu ...",
+            // "contactează magazinul", etc.
             $hasNegativeProductMention = preg_match(
                 '/(?:'
-                . 'nu\s+am\s+(?:g[aă]sit|detalii|informa[tț]ii|date|suficiente?|acces|cum)'
-                . '|nu\s+avem\s+(?:informa[tț]ii|detalii|în\s+stoc|aceast[aă]|acest)'
+                . '(?:nu\s+am|n-am)\s+(?:g[aă]sit|detalii|informa[tț]ii|date|suficiente?|acces|cum|exact)'
+                . '|(?:nu\s+avem|n-avem)\s+(?:g[aă]sit|informa[tț]ii|detalii|în\s+stoc|aceast[aă]|acest|exact)'
                 . '|nu\s+dispun(?:em)?\s+de'
                 . '|nu\s+(?:s[tț]iu|sunt\s+sigur)\s+(?:exact|sigur|momentan|dac[aă])?'
-                . '|nu\s+pot\s+(?:g[aă]si|s[aă]\s+(?:g[aă]sesc|te\s+ajut|îți\s+spun|confirm)|oferi)'
-                . '|(?:momentan|din\s+p[aă]cate),?\s*nu\s+(?:am|avem|dispun|g[aă]sesc|pot)'
+                . '|(?:nu\s+pot|n-pot)\s+(?:g[aă]si|s[aă]\s+(?:g[aă]sesc|te\s+ajut|îți\s+spun|confirm)|oferi)'
+                . '|(?:momentan|din\s+p[aă]cate),?\s*(?:nu|n-)\s*(?:am|avem|dispun|g[aă]sesc|pot)'
                 . '|îmi\s+pare\s+r[aă]u,?\s*(?:dar\s+)?nu'
                 . '|indisponibil'
+                . '|n-?am\s+g[aă]sit\s+(?:nimic|exact|produse)'
                 . '|contacteaz[aă]\s+(?:magazinul|suportul|support|echipa)'
                 . '|(?:recomand|sugerez|î[tț]i\s+recomand)\s+s[aă]\s+contactezi'
                 . ')/iu',
@@ -185,12 +213,16 @@ class ChatbotApiController extends Controller
                 // Non-explicit intent AND AI didn't affirmatively talk about products →
                 // drop cards (e.g. knowledge/info queries that accidentally triggered search).
                 $products = [];
-            } elseif ($isExplicitProductIntent && !$hasPositiveProductMention && !empty($products)) {
+            } elseif ($isExplicitProductIntent && !$hasPositiveProductMention && !empty($products) && mb_strlen(trim($botResponse)) < 25) {
                 // Rare recovery path: user explicitly asked for products, search found
-                // high-confidence matches (non-empty after prior gates), but the AI wrote
-                // a neutral/empty reply that neither affirms nor denies. Rewrite the
-                // response to an intro so the cards don't appear "orphaned".
-                // NOTE: this branch is reached ONLY when no negative phrase was detected.
+                // high-confidence matches, but the AI wrote a TRULY neutral/empty reply
+                // (under 25 chars, no positive phrase detected). Rewrite to an intro
+                // so the cards don't appear "orphaned".
+                //
+                // Length gate added after grounded context landed: with grounded data in
+                // the prompt, the LLM often writes legitimate follow-up questions or
+                // comparison answers that happen to not match the positive regex. Those
+                // responses are well-formed and must not be overwritten by a template.
                 $botResponse = $this->buildProductIntroText($products, $userMessage);
             }
 
@@ -614,12 +646,26 @@ class ChatbotApiController extends Controller
                 }
                 if ($hasProducts) {
                     $prompt .= "\n\n"
-                        . "Ești asistentul unui magazin online. REGULI STRICTE PRODUSE:"
-                        . "\n- Când contextul conține '[CARDURI PRODUSE' sau '[PRODUSE RECOMANDATE', înseamnă că PRODUSELE AU FOST GĂSITE și se afișează automat ca carduri vizuale sub mesajul tău."
-                        . "\n- Când produse SUNT găsite (carduri), scrie un intro scurt de o singură propoziție (30-80 caractere) care menționează tipul/categoria produsului căutat, ex: 'Am găsit câteva variante de polistiren pentru tine:' sau 'Uite 4 opțiuni de vopsele lavabile disponibile:'. NU folosi doar 'Iată ce am găsit:' (e prea generic). NU enumera numele produselor în text — cardurile le arată."
-                        . "\n- NU enumera produse în text. NU scrie nume de produse, prețuri sau liste. Cardurile le arată automat."
-                        . "\n- DOAR când contextul conține explicit '[NU s-au găsit produse relevante]' poți spune că nu ai găsit. Altfel, PRESUPUNE că produsele sunt afișate."
-                        . "\n- Dacă întrebarea NU e despre produse (livrare, retur, contact, etc.), răspunde la întrebare FĂRĂ a menționa produse."
+                        . "Ești asistentul unui magazin online cu carduri vizuale."
+                        . "\n"
+                        . "\nCÂND CONTEXTUL CONȚINE 'PRODUSELE AFIȘATE CLIENTULUI' (sau '[CARDURI PRODUSE'):"
+                        . "\nLista de produse de acolo este AFIȘATĂ AUTOMAT ca CARDURI vizuale sub mesajul tău — clientul le vede direct, cu imagine, nume și preț. Te folosești de listă ca SURSĂ DE ADEVĂR pentru ce spui, dar NU O REPETI."
+                        . "\n"
+                        . "\nFORMAT răspuns pentru căutare de produse:"
+                        . "\n  1) O propoziție de intro care menționează tipul/categoria (30-100 caractere)."
+                        . "\n  2) Opțional o întrebare scurtă de follow-up (ex: 'Ce grosime cauți?')."
+                        . "\n  3) STOP. Nu mai scrie nimic."
+                        . "\nExemple bune: 'Am găsit câteva variante de polistiren pentru tine. Ce grosime cauți?' / 'Uite 4 opțiuni de vopsele lavabile disponibile.'"
+                        . "\nExemple REFUZATE: orice răspuns cu listă numerotată sau bullet-uri care repetă numele produselor (cardurile le arată deja)."
+                        . "\n"
+                        . "\nFORMAT răspuns pentru întrebări de comparație/preț:"
+                        . "\nRăspunde la întrebare folosind nume și prețuri EXACTE din lista din context (1-3 propoziții). Ex: 'Cel mai ieftin este Polistiren Eps 80 5 Cm la 63.50 RON.'"
+                        . "\n"
+                        . "\nGROUNDING CRITIC: dacă produsele din context sunt complet nepotrivite pentru întrebare (client a întrebat X, lista arată Y din altă categorie), SPUNE EXPLICIT 'N-am găsit exact ce cauți' și cere clarificare. Răspunsul tău nu trebuie să se contrazică cu lista."
+                        . "\n"
+                        . "\nAlte reguli:"
+                        . "\n- Dacă contextul conține '[NU s-au găsit produse relevante]', poți spune că nu ai găsit."
+                        . "\n- Dacă întrebarea NU e despre produse (livrare, retur, contact), răspunde la întrebare fără a menționa produse."
                         . "\n- NU inventa produse, prețuri sau specificații. Răspunde doar din datele furnizate."
                         . "\n- Fii natural, concis și util.";
                 }
@@ -1514,11 +1560,21 @@ class ChatbotApiController extends Controller
 
                 if (!empty($lastProductCards)) {
                     $products = $lastProductCards;
-                    $productContext = "\n\n[" . count($products) . " produse discutate anterior afișate ca carduri. Acestea sunt produsele despre care clientul vorbea.]";
+                    $productContext = app(\App\Services\GroundedProductContextService::class)
+                        ->build($products, $bot->settings ?? null, $userMessage);
+                    if ($productContext === '') {
+                        $productContext = "\n\n[" . count($products) . " produse discutate anterior afișate ca carduri. Acestea sunt produsele despre care clientul vorbea.]";
+                    } else {
+                        $productContext .= "\n\n[CONTEXT: Acestea sunt produsele discutate anterior în conversație.]";
+                    }
                 } else {
                     $products = $this->searchProductCards($bot->id, $augmentedQuery);
                     if (!empty($products)) {
-                        $productContext = "\n\n[" . count($products) . " produse relevante afișate ca carduri.]";
+                        $productContext = app(\App\Services\GroundedProductContextService::class)
+                            ->build($products, $bot->settings ?? null, $userMessage);
+                        if ($productContext === '') {
+                            $productContext = "\n\n[" . count($products) . " produse relevante afișate ca carduri.]";
+                        }
                     }
                 }
             } elseif ($intents['is_order_query'] ?? false) {
@@ -1574,7 +1630,10 @@ class ChatbotApiController extends Controller
                     $products = array_map(fn($r) => app(\App\Services\ProductSearchService::class)->toCardArray($r), $recommendation['products']);
                     if (!empty($products)) {
                         $subQueryList = implode(', ', $recommendation['sub_queries']);
-                        $productContext = "\n\n[Clientul a cerut recomandări pentru \"{$concept}\". Am găsit " . count($products) . " produse din categoriile: {$subQueryList}. Produsele se afișează ca carduri.]";
+                        $grounded = app(\App\Services\GroundedProductContextService::class)
+                            ->build($products, $bot->settings ?? null, $concept);
+                        $recHint = "\n\n[RECOMANDĂRI pentru \"{$concept}\" — din categoriile: {$subQueryList}. Explică pe scurt DE CE sunt necesare.]";
+                        $productContext = $grounded !== '' ? ($grounded . $recHint) : $recHint;
                     } else {
                         $productContext = "\n\n[Nu am găsit produse pentru \"{$concept}\". Sugerează contactarea magazinului.]";
                     }
@@ -1593,7 +1652,26 @@ class ChatbotApiController extends Controller
                     if (!$isGenericChat) {
                         $products = $this->searchProductCards($bot->id, $augmentedQuery);
                         if (!empty($products)) {
-                            $productContext = "\n\n[Am găsit " . count($products) . " produse relevante ca carduri. NU le enumera în text.]";
+                            $groundedSvc = app(\App\Services\GroundedProductContextService::class);
+
+                            // Deterministic mismatch gate — suppress completely unrelated
+                            // products before they reach the LLM. Mirrors the orchestrator
+                            // path's gate so legacy and new pipelines behave identically.
+                            if ($groundedSvc->detectMismatch($products, $userMessage)) {
+                                Log::info('Legacy path: mismatch gate suppressed unrelated products', [
+                                    'bot_id' => $bot->id,
+                                    'query' => $userMessage,
+                                    'suppressed_count' => count($products),
+                                    'first_product' => $products[0]['name'] ?? null,
+                                ]);
+                                $products = [];
+                                $productContext = "\n\n[NU s-au găsit produse relevante pentru \"{$userMessage}\". NU spune că ai găsit produse. Dacă e o întrebare tehnică, răspunde din cunoștințe generale fără a menționa produse.]";
+                            } else {
+                                $productContext = $groundedSvc->build($products, $bot->settings ?? null, $userMessage);
+                                if ($productContext === '') {
+                                    $productContext = "\n\n[Am găsit " . count($products) . " produse relevante ca carduri. NU le enumera în text.]";
+                                }
+                            }
                         }
                     }
                 }
@@ -1670,12 +1748,26 @@ class ChatbotApiController extends Controller
             }
             if ($hasProducts) {
                 $prompt .= "\n\n"
-                    . "Ești asistentul unui magazin online. REGULI STRICTE PRODUSE:"
-                    . "\n- Când contextul conține '[CARDURI PRODUSE' sau '[PRODUSE RECOMANDATE', înseamnă că PRODUSELE AU FOST GĂSITE și se afișează automat ca carduri vizuale sub mesajul tău."
-                    . "\n- Când produse SUNT găsite (carduri), scrie un intro scurt de o singură propoziție (30-80 caractere) care menționează tipul/categoria produsului căutat, ex: 'Am găsit câteva variante de polistiren pentru tine:' sau 'Uite 4 opțiuni de vopsele lavabile disponibile:'. NU folosi doar 'Iată ce am găsit:' (e prea generic). NU enumera numele produselor în text — cardurile le arată."
-                    . "\n- NU enumera produse în text. NU scrie nume de produse, prețuri sau liste. Cardurile le arată automat."
-                    . "\n- DOAR când contextul conține explicit '[NU s-au găsit produse relevante]' poți spune că nu ai găsit. Altfel, PRESUPUNE că produsele sunt afișate."
-                    . "\n- Dacă întrebarea NU e despre produse (livrare, retur, contact, etc.), răspunde la întrebare FĂRĂ a menționa produse."
+                    . "Ești asistentul unui magazin online cu carduri vizuale."
+                    . "\n"
+                    . "\nCÂND CONTEXTUL CONȚINE 'PRODUSELE AFIȘATE CLIENTULUI' (sau '[CARDURI PRODUSE'):"
+                    . "\nLista de produse de acolo este AFIȘATĂ AUTOMAT ca CARDURI vizuale sub mesajul tău — clientul le vede direct, cu imagine, nume și preț. Te folosești de listă ca SURSĂ DE ADEVĂR pentru ce spui, dar NU O REPETI."
+                    . "\n"
+                    . "\nFORMAT răspuns pentru căutare de produse:"
+                    . "\n  1) O propoziție de intro care menționează tipul/categoria (30-100 caractere)."
+                    . "\n  2) Opțional o întrebare scurtă de follow-up (ex: 'Ce grosime cauți?')."
+                    . "\n  3) STOP. Nu mai scrie nimic."
+                    . "\nExemple bune: 'Am găsit câteva variante de polistiren pentru tine. Ce grosime cauți?' / 'Uite 4 opțiuni de vopsele lavabile disponibile.'"
+                    . "\nExemple REFUZATE: orice răspuns cu listă numerotată sau bullet-uri care repetă numele produselor (cardurile le arată deja)."
+                    . "\n"
+                    . "\nFORMAT răspuns pentru întrebări de comparație/preț:"
+                    . "\nRăspunde la întrebare folosind nume și prețuri EXACTE din lista din context (1-3 propoziții). Ex: 'Cel mai ieftin este Polistiren Eps 80 5 Cm la 63.50 RON.'"
+                    . "\n"
+                    . "\nGROUNDING CRITIC: dacă produsele din context sunt complet nepotrivite pentru întrebare (client a întrebat X, lista arată Y din altă categorie), SPUNE EXPLICIT 'N-am găsit exact ce cauți' și cere clarificare. Răspunsul tău nu trebuie să se contrazică cu lista."
+                    . "\n"
+                    . "\nAlte reguli:"
+                    . "\n- Dacă contextul conține '[NU s-au găsit produse relevante]', poți spune că nu ai găsit."
+                    . "\n- Dacă întrebarea NU e despre produse (livrare, retur, contact), răspunde la întrebare fără a menționa produse."
                     . "\n- NU inventa produse, prețuri sau specificații. Răspunde doar din datele furnizate."
                     . "\n- Fii natural, concis și util.";
             }
