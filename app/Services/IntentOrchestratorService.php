@@ -633,7 +633,31 @@ class IntentOrchestratorService
         $products = $this->productSearch->search($botId, $query, 4);
         if (!empty($products)) {
             $result->products = array_map(fn($r) => $this->productSearch->toCardArray($r), $products);
-            $result->productContext = "\n\n[CARDURI PRODUSE: " . count($result->products) . " produse se afișează automat ca carduri vizuale. Spune SCURT: 'Iată ce am găsit:' — fără a enumera produsele în text.]";
+            // Check stock distribution — if all results are out-of-stock, tell
+            // the AI explicitly so it doesn't say "iată ce am găsit" without
+            // noting the stock situation.
+            $stockCounts = array_count_values(array_map(fn($p) => $p['stock_status'] ?? 'unknown', $result->products));
+            $total = count($result->products);
+            $outOfStock = $stockCounts['outofstock'] ?? 0;
+            $onBackorder = $stockCounts['onbackorder'] ?? 0;
+
+            if ($outOfStock === $total) {
+                // 100% out-of-stock — explicit messaging required
+                $result->productContext = "\n\n[CARDURI PRODUSE: {$total} produse găsite în catalog, dar TOATE sunt momentan OUT OF STOCK."
+                    . "\nSPUNE EXPLICIT clientului că produsele există în catalogul nostru dar momentan nu sunt în stoc."
+                    . "\nOferă-i să fie anunțat când revin pe stoc sau să-i recomanzi alternative similare."
+                    . "\nNU spune 'nu am detalii' sau 'nu avem' — produsele EXISTĂ, doar nu sunt disponibile acum.]";
+            } elseif ($outOfStock > 0) {
+                $inStock = $total - $outOfStock;
+                $result->productContext = "\n\n[CARDURI PRODUSE: {$total} produse afișate ({$inStock} în stoc, {$outOfStock} out of stock)."
+                    . "\nPentru produsele in-stock spune 'Iată ce am găsit:'."
+                    . "\nPentru cele out-of-stock menționează-le ca alternative ('mai avem și aceste modele, momentan nu pe stoc').]";
+            } elseif ($onBackorder > 0) {
+                $result->productContext = "\n\n[CARDURI PRODUSE: {$total} produse afișate, dintre care {$onBackorder} sunt pe comandă (backorder)."
+                    . "\nMenționează că produsele pe comandă pot fi comandate dar livrarea durează mai mult.]";
+            } else {
+                $result->productContext = "\n\n[CARDURI PRODUSE: {$total} produse se afișează automat ca carduri vizuale. Spune SCURT: 'Iată ce am găsit:' — fără a enumera produsele în text.]";
+            }
         } else {
             // Fallback: try semantic product retrieval when structured search fails
             if ($this->semanticProducts && $query) {

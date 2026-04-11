@@ -322,6 +322,15 @@ class ProductSearchService
             $bindings['max_price'] = $options['max_price'];
         }
 
+        // Stock filter: by default include all stock statuses (instock,
+        // onbackorder, outofstock). The semantic filter later applies a small
+        // score penalty to out-of-stock products so in-stock equivalents win
+        // on ties, but out-of-stock products with clearly stronger name
+        // matches still surface — the user deserves to know the product exists
+        // in the catalog. Legacy `include_out_of_stock = false` option kept
+        // for backwards compatibility but has no effect in normal calls.
+        $stockFilter = "stock_status IN ('instock', 'onbackorder', 'outofstock')";
+
         return DB::select("
             SELECT id, name, price, regular_price, sale_price, currency,
                    image_url, short_description, permalink, stock_status,
@@ -334,7 +343,7 @@ class ProductSearchService
                    ({$typeMatchSql}) AS type_in_name
             FROM woocommerce_products
             WHERE bot_id = :bot_id
-              AND stock_status IN ('instock', 'onbackorder')
+              AND {$stockFilter}
               {$priceFilter}
               AND (({$nameOr}) OR ({$catOr}) OR ({$attrOr})
                    OR similarity(name, :trgm_query2) >= :trgm_threshold)
@@ -531,6 +540,16 @@ class ProductSearchService
                 $partial = round(($fullMatched / $totalTokens) * 1.5, 2);
                 $score += $partial;
                 $reasons[] = "+{$partial} partial_coverage({$fullMatched}/{$totalTokens})";
+            }
+
+            // Stock penalty — out-of-stock products are included in candidates
+            // so the user can see what exists in the catalog, but they lose
+            // 1.5 points so in-stock equivalents (with similar matching) win
+            // on ties. Products with a strong name match (primary noun = +10)
+            // still surface comfortably above threshold even when OOS.
+            if (($product->stock_status ?? '') === 'outofstock') {
+                $score -= 1.5;
+                $reasons[] = '-1.5 out_of_stock_penalty';
             }
 
             $scored[] = [
@@ -766,6 +785,11 @@ class ProductSearchService
     private function normalizeQuery(string $query): string
     {
         $q = mb_strtolower(trim($query));
+        // Strip punctuation (?, !, ., ,, :, ;, etc.) so tokens don't carry
+        // trailing symbols like "riflaje?" that break LIKE/stem matching.
+        // Keep letters, numbers, whitespace, and the 'x' separator used in
+        // dimension syntax (matched later by the pattern below).
+        $q = preg_replace('/[^\p{L}\p{N}\s]+/u', ' ', $q);
         $q = preg_replace('/(\d+)(cm|mm|m|kg|ml|l|mp|g)\b/i', '$1 $2', $q);
         $q = preg_replace('/\b(cm|mm|m|kg|ml|l|mp)(\d+)/i', '$1 $2', $q);
         $q = preg_replace('/(\d+)\s*x\s*(\d+)/i', '$1x$2', $q);
