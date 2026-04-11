@@ -249,9 +249,10 @@ class ChatbotApiController extends Controller
         }
         $channel->update(['last_activity_at' => now()]);
 
-        // Track message usage (1 per interaction = user question + bot answer)
+        // Track message usage (1 per interaction = user question + bot answer).
+        // No-op for test-mode bots/tenants.
         if ($tenant) {
-            app(PlanLimitService::class)->recordMessage($tenant);
+            app(PlanLimitService::class)->recordMessage($tenant, 1, $bot);
         }
 
         // ── Auto-extract lead from chat messages ──
@@ -1167,9 +1168,9 @@ class ChatbotApiController extends Controller
                     $channel->update(['last_activity_at' => now()]);
                 }
 
-                // Track message usage
+                // Track message usage (no-op for test-mode bots/tenants).
                 if ($tenant) {
-                    app(PlanLimitService::class)->recordMessage($tenant);
+                    app(PlanLimitService::class)->recordMessage($tenant, 1, $bot);
                 }
 
                 // Auto-extract lead from chat messages
@@ -1300,10 +1301,11 @@ class ChatbotApiController extends Controller
             return ['error' => 'Bot inactiv.', 'status' => 403];
         }
 
-        // Check message limit
+        // Check message limit (bypassed for bots/tenants marked as test_mode —
+        // see PlanLimitService::canSendMessage() for docs).
         $tenant = Tenant::find($bot->tenant_id);
         if ($tenant) {
-            $limitCheck = app(PlanLimitService::class)->canSendMessage($tenant);
+            $limitCheck = app(PlanLimitService::class)->canSendMessage($tenant, $bot);
             if (!$limitCheck->allowed) {
                 return ['error' => 'Limita de mesaje a fost atinsă. Contactați administratorul pentru upgrade.', 'status' => 429];
             }

@@ -30,10 +30,11 @@ class ChannelMessageService
     {
         $bot = $channel->bot;
 
-        // Check message limit
+        // Check message limit (bypassed for bots/tenants marked as test_mode —
+        // see PlanLimitService::canSendMessage() for docs).
         $tenant = Tenant::find($bot->tenant_id);
         if ($tenant) {
-            $limitCheck = app(PlanLimitService::class)->canSendMessage($tenant);
+            $limitCheck = app(PlanLimitService::class)->canSendMessage($tenant, $bot);
             if (!$limitCheck->allowed) {
                 return [
                     'response' => 'Ne pare rău, limita de mesaje a fost atinsă. Contactați-ne direct pentru asistență.',
@@ -100,9 +101,10 @@ class ChannelMessageService
             'last_activity_at' => now(),
         ]);
 
-        // Track message usage
+        // Track message usage (no-op for test-mode bots/tenants —
+        // see PlanLimitService::canSendMessage() for docs).
         if ($tenant) {
-            app(PlanLimitService::class)->recordMessage($tenant);
+            app(PlanLimitService::class)->recordMessage($tenant, 1, $bot);
         }
 
         // ── Auto-extract lead from channel messages ──

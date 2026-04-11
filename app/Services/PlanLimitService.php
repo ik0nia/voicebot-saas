@@ -294,9 +294,30 @@ class PlanLimitService
 
     /**
      * Poate trimite un mesaj? (limita lunară de mesaje)
+     *
+     * ─── TEST MODE BYPASS ───
+     * Message limits can be bypassed for internal regression testing by marking
+     * either the tenant or a specific bot as "test mode". Scope order (most
+     * specific wins): bot → tenant.
+     *
+     *   - Bot-level:    $bot->settings['test_mode'] = true
+     *   - Tenant-level: $tenant->settings['test_mode'] = true (if column exists)
+     *
+     * When test mode is active, canSendMessage() always returns allowed() AND
+     * recordMessage() is a no-op, so the usage counter is untouched.
+     *
+     * To enable for a specific bot (e.g. Malinco, id=67):
+     *   php artisan tinker --execute="\$b=\App\Models\Bot::find(67); \$b->settings=array_merge(\$b->settings??[], ['test_mode'=>true]); \$b->save();"
+     *
+     * WARNING: NEVER enable test_mode on a production bot/tenant belonging to a
+     * paying customer — it disables billing enforcement for message usage.
      */
-    public function canSendMessage(Tenant $tenant): LimitCheckResult
+    public function canSendMessage(Tenant $tenant, ?Bot $bot = null): LimitCheckResult
     {
+        if ($this->isTestMode($tenant, $bot)) {
+            return LimitCheckResult::allowed();
+        }
+
         $plan = $this->getPlanForTenant($tenant);
         $maxMessages = $plan->getLimit('messages_per_month', 100);
         $currentMessages = UsageTracking::getCurrentValue($tenant->id, UsageTracking::FEATURE_MESSAGES);
@@ -309,6 +330,25 @@ class PlanLimitService
         }
 
         return LimitCheckResult::allowed();
+    }
+
+    /**
+     * Returnează true dacă tenant-ul sau bot-ul sunt marcați drept "test mode"
+     * și trebuie să ignore limita de mesaje. Vezi canSendMessage() pentru detalii.
+     */
+    public function isTestMode(Tenant $tenant, ?Bot $bot = null): bool
+    {
+        if ($bot && is_array($bot->settings ?? null) && !empty($bot->settings['test_mode'])) {
+            return true;
+        }
+
+        // Tenant-level flag (supports a 'settings' JSON column if present, fallback safe).
+        $tenantSettings = $tenant->settings ?? null;
+        if (is_array($tenantSettings) && !empty($tenantSettings['test_mode'])) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -372,9 +412,16 @@ class PlanLimitService
 
     /**
      * Înregistrează mesaje consumate.
+     *
+     * No-op pentru tenant/bot marcate drept "test mode" — vezi canSendMessage()
+     * pentru documentație completă și instrucțiuni de activare.
      */
-    public function recordMessage(Tenant $tenant, int $count = 1): void
+    public function recordMessage(Tenant $tenant, int $count = 1, ?Bot $bot = null): void
     {
+        if ($this->isTestMode($tenant, $bot)) {
+            return;
+        }
+
         UsageTracking::incrementUsage($tenant->id, now()->format('Y-m'), UsageTracking::FEATURE_MESSAGES, $count);
     }
 
