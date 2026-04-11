@@ -28,3 +28,6 @@ yarn-error.log
 docker-compose.override.yml
 .claude/
 .env.bak.*
+.mailcow-credentials
+# Chatbot QA reports — generated locally, served from public/, not in git
+/public/malinco_*.html
