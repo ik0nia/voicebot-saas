@@ -416,19 +416,26 @@ class ProductSearchService
                         }
                     }
 
+                    // Signal strength ordering: name > attribute > category.
+                    // A term in the product name is a much stronger signal than
+                    // a term in the category (which often contains accessories
+                    // for the actual product — e.g., "Colț Exterior" inside
+                    // category "Riflaje de interior" is NOT a riflaj itself).
                     if ($isPrimaryNoun) {
-                        $score += 5;
-                        $reasons[] = '+5 type_is_primary_noun';
+                        $score += 10;
+                        $reasons[] = '+10 type_is_primary_noun';
                     } else {
-                        $score += 2;
-                        $reasons[] = '+2 type_in_name_as_qualifier';
+                        $score += 7;
+                        $reasons[] = '+7 type_in_name_as_qualifier';
                     }
                 } elseif ($typeInAttr) {
-                    $score += 4;
-                    $reasons[] = '+4 type_in_attr';
-                } elseif ($typeInCat) {
                     $score += 5;
-                    $reasons[] = '+5 type_in_category';
+                    $reasons[] = '+5 type_in_attr';
+                } elseif ($typeInCat) {
+                    // Weakest signal — category membership alone often means
+                    // "accessory for X" rather than "is X".
+                    $score += 3;
+                    $reasons[] = '+3 type_in_category_only';
                 } else {
                     // Product type NOT found anywhere → EXCLUDE
                     $excluded = true;

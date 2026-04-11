@@ -153,16 +153,24 @@ class ChatbotApiController extends Controller
             }
         }
 
-        // ── Safety net: strip product intro text when no product cards are shown ──
-        // The AI may say "Iată ce am găsit:" because the prompt told it to,
-        // but products were suppressed or empty. Remove the dangling intro.
+        // ── Safety net: strip trailing list-announcement when no products ──
+        // Language-agnostic rule: a trailing sentence ending with ":" announces
+        // a list. If no products will be shown, that sentence must be removed
+        // regardless of what phrasing the AI chose ("Iată ce am găsit:",
+        // "Uite câteva opțiuni:", "Here's what I found:", etc).
         if (empty($products)) {
             $botResponse = preg_replace(
-                '/(?:Iată ce am găsit|Uite ce am găsit|Am găsit \d+ produse?|Am \d+ opțiuni|Am \d+ variante)[^.!?\n]*[:.]?\s*$/iu',
+                '/(?:^|(?<=[.!?\n]))\s*[^.!?\n]{1,200}:\s*$/u',
                 '',
                 $botResponse
             );
             $botResponse = rtrim($botResponse);
+
+            // If stripping leaves an empty or near-empty response, fall back
+            // to a polite clarification prompt so the user isn't left hanging.
+            if (mb_strlen(trim($botResponse)) < 3) {
+                $botResponse = 'Spune-mi mai multe detalii, te rog, ca să te pot ajuta mai bine.';
+            }
         }
 
         // Save bot response with AI metadata + product cards + V2 intent data
