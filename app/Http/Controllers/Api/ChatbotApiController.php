@@ -122,35 +122,86 @@ class ChatbotApiController extends Controller
         $botResponse = $aiResult['content'];
 
         // ── Post-response product relevance gate ──
-        // STRICT: suppress cards unless the AI response actually discusses products
-        // This catches ALL paths (orchestrator AND legacy) to prevent irrelevant cards
+        // Ground truth: the AI text is what the user actually sees/hears. If the text
+        // says "I don't know" / "I don't have details", showing product cards alongside
+        // creates a contradictory UI. So: negative text → suppress cards, always.
         if (!empty($products)) {
-            // Check if AI response mentions products positively (not "nu am găsit")
-            $hasPositiveProductMention = preg_match('/(?:recoman|suger[aă]m|am găsit|avem|iată|produse?\s+(?:potrivit|relevant|disponibil)|poți\s+comanda|adaugă\s+în\s+coș)/iu', $botResponse);
-            $hasNegativeProductMention = preg_match('/(?:nu\s+am\s+(?:găsit|gasit)|nu\s+avem|indisponibil|nu\s+(?:știu|stiu)|nu\s+pot\s+(?:găsi|gasi))/iu', $botResponse);
+            // Positive: AI clearly introduced/recommended products.
+            $hasPositiveProductMention = preg_match(
+                '/(?:recoman|suger[aă]m|am găsit|avem\s+(?:câteva|mai multe|urm[aă]toarele|aceste)|iată|uite\s+(?:ce|câteva|produsele)|produse?\s+(?:potrivit|relevant|disponibil)|po[țt]i\s+comanda|adaug[aă]\s+în\s+co[sș]|în\s+stoc)/iu',
+                $botResponse
+            );
+
+            // Clarification: AI asked the user to specify what they want. Cards next
+            // to "tell me what type you're looking for" are contradictory — the bot
+            // just said it needs more info. Catches conv 126-128 ("spune-mi ce tip cauți").
+            $hasClarificationRequest = preg_match(
+                '/(?:spune[-\s]?mi\s+(?:ce|mai\s+multe|exact)|po[țt]i\s+(?:s[aă]\s+)?(?:îmi\s+)?spui|ce\s+(?:anume|tip|fel|model|dimensiune|marc[aă]|produs)|pentru\s+ce\s+(?:folose[șs]ti|ai\s+nevoie)|ce\s+cau[țt]i\s+(?:exact|mai)|dore[sș]ti\s+(?:ceva\s+)?anume|ai\s+(?:vreo\s+)?preferin[țt]|ce\s+buget)/iu',
+                $botResponse
+            );
+
+            // Negative: AI said it doesn't have / doesn't know / can't find / can't help.
+            // Broadened to catch "nu am detalii", "momentan, nu am", "nu dispun",
+            // "îmi pare rău, nu ...", "nu pot să te ajut", "contactează magazinul", etc.
+            $hasNegativeProductMention = preg_match(
+                '/(?:'
+                . 'nu\s+am\s+(?:g[aă]sit|detalii|informa[tț]ii|date|suficiente?|acces|cum)'
+                . '|nu\s+avem\s+(?:informa[tț]ii|detalii|în\s+stoc|aceast[aă]|acest)'
+                . '|nu\s+dispun(?:em)?\s+de'
+                . '|nu\s+(?:s[tț]iu|sunt\s+sigur)\s+(?:exact|sigur|momentan|dac[aă])?'
+                . '|nu\s+pot\s+(?:g[aă]si|s[aă]\s+(?:g[aă]sesc|te\s+ajut|îți\s+spun|confirm)|oferi)'
+                . '|(?:momentan|din\s+p[aă]cate),?\s*nu\s+(?:am|avem|dispun|g[aă]sesc|pot)'
+                . '|îmi\s+pare\s+r[aă]u,?\s*(?:dar\s+)?nu'
+                . '|indisponibil'
+                . '|contacteaz[aă]\s+(?:magazinul|suportul|support|echipa)'
+                . '|(?:recomand|sugerez|î[tț]i\s+recomand)\s+s[aă]\s+contactezi'
+                . ')/iu',
+                $botResponse
+            );
 
             // Determine the effective query type from whatever path was taken
             $effectiveQueryType = $queryIntel['type']
                 ?? (is_array($detectedIntents) && isset($detectedIntents[0]['name']) ? $detectedIntents[0]['name'] : null)
                 ?? 'unknown';
 
-            // Explicitly transactional intents always keep cards (user asked for products)
+            // Explicitly transactional intents — user clearly asked for products.
             $isExplicitProductIntent = in_array($effectiveQueryType, [
                 'transactional', 'product_search', 'category_recommendation', 'comparison', 'exploratory',
             ]);
 
-            // Suppress cards if:
-            // 1. AI said it couldn't find products AND intent wasn't explicitly about products, OR
-            // 2. AI response has no positive product reference AND intent wasn't explicitly about products
-            if ($isExplicitProductIntent) {
-                // Explicit product intent: always keep cards from orchestrator/semantic search
-                // If AI says "nu am găsit" but we DO have product cards, fix the contradiction
-                if ($hasNegativeProductMention && !empty($products)) {
-                    $botResponse = $this->buildProductIntroText($products, $userMessage);
-                }
-            } elseif ($hasNegativeProductMention || !$hasPositiveProductMention) {
+            if ($hasNegativeProductMention) {
+                // Text is the ground truth: if AI said "no / don't know / contact support",
+                // never leave contradictory product cards next to it. Always suppress.
+                // Fixes the text/card desync where cards stayed alongside
+                // "Nu am detalii despre asta momentan".
                 $products = [];
+            } elseif ($hasClarificationRequest && !$hasPositiveProductMention) {
+                // AI is asking for clarification (e.g. "spune-mi ce tip cauți") and did
+                // NOT also affirm products — don't show cards while waiting for user
+                // to narrow down. Without this, Malinco conv 126-128 showed 4 adhesive
+                // cards next to "tell me what type you need".
+                $products = [];
+            } elseif (!$isExplicitProductIntent && !$hasPositiveProductMention) {
+                // Non-explicit intent AND AI didn't affirmatively talk about products →
+                // drop cards (e.g. knowledge/info queries that accidentally triggered search).
+                $products = [];
+            } elseif ($isExplicitProductIntent && !$hasPositiveProductMention && !empty($products)) {
+                // Rare recovery path: user explicitly asked for products, search found
+                // high-confidence matches (non-empty after prior gates), but the AI wrote
+                // a neutral/empty reply that neither affirms nor denies. Rewrite the
+                // response to an intro so the cards don't appear "orphaned".
+                // NOTE: this branch is reached ONLY when no negative phrase was detected.
+                $botResponse = $this->buildProductIntroText($products, $userMessage);
             }
+
+            // TODO(bug2-confidence-gate): ProductSearchService::search() currently strips
+            // per-result scores before returning objects (see toCardArray), so we cannot
+            // inspect a max-relevance score here without modifying that service. A proper
+            // fix would either (a) have search() return score-annotated rows and have
+            // preprocessMessage() pass a $productsConfidence float through the return
+            // array, or (b) expose a $queryIntel['top_score'] field from the orchestrator
+            // / legacy path. For now Bug 1's stronger negative gate covers most of the
+            // observed desync cases; confidence-based suppression is deferred.
         }
 
         // ── Safety net: strip product intro text when no product cards are shown ──
@@ -245,6 +296,8 @@ class ChatbotApiController extends Controller
                 ];
                 // Store all product cards so "vreau să comand" shows the discussed products
                 $meta['last_product_cards'] = $products;
+                // Stamp current outbound turn for Bug 3 TTL (see getValidLastProductContext).
+                $meta['last_product_context_turn'] = (int) ($conversation->messages_count ?? 0);
                 $conversation->update(['metadata' => $meta]);
             }
         }
@@ -602,7 +655,8 @@ class ChatbotApiController extends Controller
             }
 
             // Inject last product context for memory ("pe ăla vreau să îl comand")
-            $lastProduct = ($conversation->metadata ?? [])['last_product_context'] ?? null;
+            // Use TTL-aware getter (Bug 3) so old topic references don't leak.
+            $lastProduct = $this->getValidLastProductContext($conversation, $userMessage);
             if ($lastProduct) {
                 $systemPrompt .= "\n\nPRODUS DISCUTAT ANTERIOR: {$lastProduct['name']} — {$lastProduct['price']} {$lastProduct['currency']}"
                     . "\nDacă clientul face referire la \"ăla\", \"acela\", \"produsul\", sau vrea să comande fără a specifica — folosește ACEST produs.";
@@ -779,6 +833,53 @@ class ChatbotApiController extends Controller
         $templates[] = "Sigur! Am {$count} variante pentru tine:";
 
         return $templates[array_rand($templates)];
+    }
+
+    /**
+     * Return the stored last_product_context for this conversation IFF it's still
+     * considered valid. Bug 3 fix: old references were leaking across topic shifts
+     * (e.g. user moves from "polistiren" to "vopsea" and the old polistiren product
+     * stayed referenced forever).
+     *
+     * Design choice: turn-count TTL (simple, deterministic) instead of semantic
+     * topic-shift detection. Context expires after LAST_PRODUCT_CONTEXT_TTL_TURNS
+     * outbound messages without reinforcement. Reinforcement happens every time
+     * products are shown again (the setter updates the turn stamp), so continuous
+     * product-focused conversations keep the context fresh while off-topic chains
+     * let it decay naturally.
+     *
+     * If $userMessage is provided and contains an explicit "topic reset" phrase
+     * ("vreau altceva", "schimbă subiectul", "altă întrebare"), the context is
+     * also treated as expired regardless of TTL.
+     */
+    private function getValidLastProductContext(Conversation $conversation, ?string $userMessage = null): ?array
+    {
+        $meta = $conversation->metadata ?? [];
+        $lastProduct = $meta['last_product_context'] ?? null;
+        if (!$lastProduct) {
+            return null;
+        }
+
+        // Explicit topic-reset phrases from user.
+        if ($userMessage) {
+            if (preg_match('/(?:vreau\s+altceva|schimb[aă](?:m)?\s+(?:subiectul|tema)|alt[aă]\s+întrebare|alt\s+subiect|uit[aă]\s+de)/iu', $userMessage)) {
+                return null;
+            }
+        }
+
+        // Turn-count TTL. Expire after ~5 outbound turns without reinforcement.
+        $setAtTurn = $meta['last_product_context_turn'] ?? null;
+        $currentTurn = (int) ($conversation->messages_count ?? 0);
+        if ($setAtTurn !== null) {
+            $ttlTurns = 5;
+            if (($currentTurn - (int) $setAtTurn) > $ttlTurns) {
+                return null;
+            }
+        }
+        // If no turn stamp exists (legacy rows written before this fix), fall through
+        // and return the value — next write will add the stamp.
+
+        return $lastProduct;
     }
 
     private function searchProductCards(int $botId, string $userMessage): array
@@ -1108,6 +1209,8 @@ class ChatbotApiController extends Controller
                             'currency' => $firstProduct['currency'] ?? 'RON',
                         ];
                         $meta['last_product_cards'] = $products;
+                        // Bug 3 TTL stamp — see getValidLastProductContext.
+                        $meta['last_product_context_turn'] = (int) ($conversation->messages_count ?? 0);
                         $conversation->update(['metadata' => $meta]);
                     }
                 }
@@ -1373,8 +1476,9 @@ class ChatbotApiController extends Controller
             }
 
             if ($intents['is_new_order_intent'] ?? false) {
-                $lastProduct = ($conversation->metadata ?? [])['last_product_context'] ?? null;
-                $lastProductCards = ($conversation->metadata ?? [])['last_product_cards'] ?? null;
+                // Bug 3: TTL-aware — ignore stale last_product_context from previous topic.
+                $lastProduct = $this->getValidLastProductContext($conversation, $userMessage);
+                $lastProductCards = $lastProduct ? (($conversation->metadata ?? [])['last_product_cards'] ?? null) : null;
                 $orderContext = "\n\n[INTENȚIE: COMANDĂ NOUĂ — Clientul vrea să PLASEZE o comandă."
                     . "\nNU cere număr de comandă. NU cere email pentru verificare. Ajută-l să comande.";
                 if ($lastProduct) {
@@ -1576,8 +1680,8 @@ class ChatbotApiController extends Controller
             $systemPrompt .= $extraContext;
         }
 
-        // Inject last product context
-        $lastProduct = ($conversation->metadata ?? [])['last_product_context'] ?? null;
+        // Inject last product context (TTL-aware per Bug 3).
+        $lastProduct = $this->getValidLastProductContext($conversation, $userMessage);
         if ($lastProduct) {
             $systemPrompt .= "\n\nPRODUS DISCUTAT ANTERIOR: {$lastProduct['name']} — {$lastProduct['price']} {$lastProduct['currency']}"
                 . "\nDacă clientul face referire la \"ăla\", \"acela\", \"produsul\", sau vrea să comande fără a specifica — folosește ACEST produs.";
