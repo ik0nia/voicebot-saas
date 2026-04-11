@@ -164,4 +164,91 @@ class ProductSearchServiceTest extends TestCase
 
         $this->assertEmpty($results);
     }
+
+    /**
+     * Romanian plural → singular stemming.
+     *
+     * stemRomanian() returns an array of candidate stems. For each
+     * input plural, assert the relevant singular form is present.
+     */
+    public function test_romanian_plural_stemming(): void
+    {
+        $cases = [
+            // plural     => one of these must be in the candidate list
+            'riflaje'     => ['riflaj'],
+            'etalaje'     => ['etalaj'],
+            'dibluri'     => ['diblu', 'dibl'],
+            'panouri'     => ['panou'],
+            'grunduri'     => ['grund'],
+            'vopsele'     => ['vopsea', 'vopsel'],
+            'plăci'       => ['placă', 'plac', 'plăc'],
+            'amorse'      => ['amorsă', 'amors', 'amorsa'],
+            'adezivi'     => ['adeziv'],
+            'perdele'     => ['perdea', 'perdel'],
+            'filtre'      => ['filtru', 'filtr'],
+        ];
+
+        foreach ($cases as $plural => $expected) {
+            $variants = $this->callPrivateMethod('stemRomanian', [$plural]);
+
+            $this->assertIsArray(
+                $variants,
+                "stemRomanian('{$plural}') should return an array"
+            );
+
+            $this->assertNotEmpty(
+                $variants,
+                "stemRomanian('{$plural}') returned empty list"
+            );
+
+            $intersection = array_intersect($expected, $variants);
+            $this->assertNotEmpty(
+                $intersection,
+                "stemRomanian('{$plural}') did not contain any of ["
+                    . implode(', ', $expected) . "]. Got: ["
+                    . implode(', ', $variants) . "]"
+            );
+        }
+    }
+
+    /**
+     * The motivating bug: asking "riflaje" must produce a stem that
+     * is a substring of a product named "Panou Riflaj Vox Linerio ...".
+     *
+     * The semanticFilter step does `str_contains($nameNoDiac, $variant)`
+     * for each stem variant — so at least one variant must be found
+     * inside the product name (lowercased).
+     */
+    public function test_riflaje_matches_riflaj_in_product_name(): void
+    {
+        $variants = $this->callPrivateMethod('stemRomanian', ['riflaje']);
+        $productName = mb_strtolower('Panou Riflaj Vox Linerio M-Line Alb');
+
+        $matched = false;
+        foreach ($variants as $v) {
+            if (mb_strlen($v) >= 3 && str_contains($productName, $v)) {
+                $matched = true;
+                break;
+            }
+        }
+
+        $this->assertTrue(
+            $matched,
+            'No stem variant of "riflaje" matched product name. Variants: '
+                . implode(', ', $variants)
+        );
+    }
+
+    public function test_stem_romanian_returns_original_for_short_words(): void
+    {
+        // Words under 5 chars are left untouched
+        $variants = $this->callPrivateMethod('stemRomanian', ['cas']);
+        $this->assertEquals(['cas'], $variants);
+    }
+
+    public function test_stem_romanian_always_includes_original_word(): void
+    {
+        $variants = $this->callPrivateMethod('stemRomanian', ['riflaje']);
+        $this->assertContains('riflaje', $variants);
+    }
 }
