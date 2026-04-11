@@ -99,7 +99,7 @@ class ProductSearchService
 
         try {
             // 1. Parse query intent
-            $intent = $this->parseQueryIntent($query);
+            $intent = $this->parseQueryIntent($query, $botId);
 
             if ($debug) {
                 Log::debug('ProductSearch:intent', ['query' => $query, 'intent' => $intent]);
@@ -170,22 +170,20 @@ class ProductSearchService
      * Parse query into structured intent: product type, dimensions, context words.
      * General-purpose, no tenant-specific logic.
      */
-    private function parseQueryIntent(string $query): array
+    private function parseQueryIntent(string $query, ?int $botId = null): array
     {
         $normalized = $this->normalizeQuery($this->removeDiacritics($query));
         $allTokens = $this->extractTokens($normalized);
 
         // Classify tokens
-        $productType = null;    // Primary product identifier (e.g., "adeziv", "polistiren")
         $dimensions = [];       // Numeric + unit pairs (e.g., ["30", "cm"])
-        $contextWords = [];     // Usage/context qualifiers (e.g., "gresie", "exterior")
-        $brandWords = [];       // Potential brand names (detected heuristically)
+        $nounCandidates = [];   // Non-numeric ≥3-char tokens that could be product types
+        $shortTokens = [];      // Everything else that's not a dimension
 
         $units = ['cm', 'mm', 'm', 'kg', 'ml', 'g', 'l', 'mp'];
 
         foreach ($allTokens as $i => $token) {
             if (preg_match('/^\d+$/', $token)) {
-                // Numeric — check if next token is a unit
                 $nextToken = $allTokens[$i + 1] ?? null;
                 if ($nextToken && in_array($nextToken, $units, true)) {
                     $dimensions[] = ['value' => $token, 'unit' => $nextToken];
@@ -197,7 +195,6 @@ class ProductSearchService
 
             if (in_array($token, $units, true)) {
                 // Check if this looks like a product code prefix (e.g., "CM" before "11")
-                // A unit followed by a number is a code, not a measurement
                 $prevToken = $i > 0 ? $allTokens[$i - 1] : null;
                 $nextToken = $allTokens[$i + 1] ?? null;
 
@@ -205,23 +202,93 @@ class ProductSearchService
                     && (!$prevToken || !preg_match('/^\d+$/', $prevToken));
 
                 if ($isCodePrefix) {
-                    // Treat as product code, not unit (e.g., "CM 11" = product code)
-                    if ($productType === null) {
-                        $productType = $token;
-                    } else {
-                        $contextWords[] = $token;
-                    }
+                    $nounCandidates[] = $token;
                 }
-                continue; // Otherwise consumed by dimension parsing
+                continue;
             }
 
-            // First non-numeric token ≥ 3 chars = product type
-            if ($productType === null && mb_strlen($token) >= 3) {
-                $productType = $token;
+            if (mb_strlen($token) >= 3) {
+                $nounCandidates[] = $token;
             } else {
-                $contextWords[] = $token;
+                $shortTokens[] = $token;
             }
         }
+
+        // Pick the most SPECIFIC candidate as product_type by catalog frequency.
+        // When the user types a compound noun like "panouri rigips" or
+        // "plăci BCA", the qualifier after the head noun is often the more
+        // precise product identifier. Measuring catalog frequency per token
+        // gives us a general, tenant-agnostic way to pick the distinctive one:
+        // the rarer term in the catalog is almost always the real product
+        // identifier, and the common head noun ("panouri", "plăci") is a
+        // generic container that matches too many things.
+        $productType = null;
+        $contextWords = [];
+
+        if (count($nounCandidates) === 0) {
+            // No substantive nouns — nothing to do
+        } elseif (count($nounCandidates) === 1) {
+            $productType = $nounCandidates[0];
+        } else {
+            // Default: first token is primary (positional). Override if
+            // another token is a MORE SPECIFIC product identifier in the
+            // catalog, using distinct-category count as the signal.
+            //
+            // Rationale: a token concentrated in few product categories is
+            // almost always a product identifier (e.g. "BCA" appears only
+            // in wall-block categories, "rigips" only in drywall). A token
+            // that spans many categories is a qualifier/adjective (e.g.
+            // "exterior" appears in doors, faucets, paint, locks, …).
+            //
+            // Compare:
+            //   polistiren → 13 distinct categories
+            //   exterior   → 23 distinct categories
+            //   → polistiren is more concentrated, stays as primary
+            //
+            //   panouri → 6 distinct categories
+            //   rigips  → 2 distinct categories
+            //   → rigips is more concentrated, overrides panouri
+            //
+            //   plăci → 13 distinct categories
+            //   BCA   → 3  distinct categories
+            //   → BCA is more concentrated, overrides plăci
+            //
+            // This is tenant-agnostic and handles compound nouns correctly
+            // without any hardcoded lists of qualifiers.
+            $productType = $nounCandidates[0];
+
+            if ($botId) {
+                $diversity = $this->getCatalogTokenCategoryDiversity($botId, $nounCandidates);
+                if ($diversity) {
+                    $firstDiv = $diversity[$productType] ?? 0;
+                    $bestOverride = null;
+                    $bestOverrideDiv = PHP_INT_MAX;
+
+                    foreach (array_slice($nounCandidates, 1) as $cand) {
+                        $div = $diversity[$cand] ?? 0;
+                        if ($div === 0) continue;              // not in catalog at all
+                        if ($firstDiv === 0) continue;         // no signal on first
+                        // Override only if the alternative is STRICTLY more
+                        // concentrated (fewer distinct categories).
+                        if ($div >= $firstDiv) continue;
+                        if ($div < $bestOverrideDiv) {
+                            $bestOverride = $cand;
+                            $bestOverrideDiv = $div;
+                        }
+                    }
+
+                    if ($bestOverride !== null) {
+                        $productType = $bestOverride;
+                    }
+                }
+            }
+
+            foreach ($nounCandidates as $tok) {
+                if ($tok !== $productType) $contextWords[] = $tok;
+            }
+        }
+
+        $contextWords = array_merge($contextWords, $shortTokens);
 
         return [
             'original' => $query,
@@ -231,6 +298,74 @@ class ProductSearchService
             'dimensions' => $dimensions,
             'context' => $contextWords,
         ];
+    }
+
+    /**
+     * For each given token, count how many DISTINCT product categories it
+     * appears in. Used by parseQueryIntent to pick the most specific token
+     * as product_type: fewer distinct categories = more concentrated =
+     * more likely a product identifier (vs a qualifier that spreads across
+     * many categories like "exterior", "interior", "mare", etc.).
+     *
+     * Uses stem variants so "panouri" also counts "panou" etc. Cached per
+     * bot + token set for 30 minutes.
+     *
+     * @param  string[]  $tokens  Non-diacritic lowercased tokens.
+     * @return array<string, int>|null  Token → distinct-category count. Null on failure.
+     */
+    private function getCatalogTokenCategoryDiversity(int $botId, array $tokens): ?array
+    {
+        $tokens = array_values(array_unique($tokens));
+        if (empty($tokens)) return null;
+
+        $cacheKey = "product_search_divcat_{$botId}_" . md5(implode('|', $tokens));
+        try {
+            $cached = Cache::get($cacheKey);
+            if (is_array($cached)) return $cached;
+        } catch (\Throwable $e) {
+            // Cache miss / unavailable — fall through to DB
+        }
+
+        try {
+            $diversity = [];
+            foreach ($tokens as $i => $tok) {
+                // Include stem variants so "panouri" also counts "panou"
+                $variants = array_unique(array_merge([$tok], $this->stemRomanian($tok)));
+                $variants = array_filter($variants, fn ($v) => mb_strlen($v) >= 3);
+
+                if (empty($variants)) {
+                    $diversity[$tok] = 0;
+                    continue;
+                }
+
+                $conds = [];
+                $bindings = ['bot_id' => $botId];
+                foreach ($variants as $vi => $v) {
+                    $key = "v_{$i}_{$vi}";
+                    $conds[] = "LOWER(name) LIKE :{$key}";
+                    $bindings[$key] = '%' . $this->escapeLike($v) . '%';
+                }
+
+                $sql = "SELECT COUNT(DISTINCT categories::text) AS cnt
+                        FROM woocommerce_products
+                        WHERE bot_id = :bot_id AND (" . implode(' OR ', $conds) . ")";
+                $row = DB::selectOne($sql, $bindings);
+                $diversity[$tok] = (int) ($row->cnt ?? 0);
+            }
+
+            try {
+                Cache::put($cacheKey, $diversity, now()->addMinutes(30));
+            } catch (\Throwable $e) {
+                // Ignore cache write failures
+            }
+
+            return $diversity;
+        } catch (\Throwable $e) {
+            Log::warning('ProductSearch:getCatalogTokenCategoryDiversity failed', [
+                'bot_id' => $botId, 'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
     }
 
     // =========================================================================
