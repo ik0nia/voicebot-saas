@@ -153,7 +153,12 @@ class ChatCompletionService
                 }
                 return $result;
 
-            } catch (ChatCompletionException $e) {
+            } catch (\Throwable $e) {
+                // Wrap raw PHP Errors (e.g. "Class not found") as ChatCompletionException
+                // so the cross-provider fallback logic below still triggers.
+                if (!($e instanceof ChatCompletionException)) {
+                    $e = $this->classifyException($e, $provider, $model);
+                }
                 $lastException = $e;
                 $responseTimeMs = (int) ((microtime(true) - $startTime) * 1000);
                 $this->recordFailure($provider);

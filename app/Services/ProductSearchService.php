@@ -338,7 +338,7 @@ class ProductSearchService
               {$priceFilter}
               AND (({$nameOr}) OR ({$catOr}) OR ({$attrOr})
                    OR similarity(name, :trgm_query2) >= :trgm_threshold)
-            ORDER BY ({$typeMatchSql}) DESC, ({$nameMatchCount}) DESC, ({$fullMatchCount}) DESC, similarity(name, :trgm_query3) DESC
+            ORDER BY (CASE WHEN ({$typeMatchSql}) > 0 THEN 1 ELSE 0 END) DESC, ({$nameMatchCount}) DESC, ({$fullMatchCount}) DESC, similarity(name, :trgm_query3) DESC
             LIMIT :lim
         ", array_merge($bindings, [
             'trgm_query2' => $rawQuery,
