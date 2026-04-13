@@ -184,11 +184,26 @@ class GeminiContentService
             . "BRIEF:\n";
     }
 
+    /**
+     * Generate image with full preamble rules (for short/simple prompts).
+     */
     public function generateImage(string $prompt, string $aspectRatio = '1:1', ?string $style = null): ?array
     {
-        // Wrap the caller's brief with the canonical rules so both providers
-        // see the exact same instructions.
         $wrapped = $this->imageRulesPreamble() . $prompt;
+        return $this->generateImageRaw($wrapped, $aspectRatio, $style);
+    }
+
+    /**
+     * Generate image WITHOUT preamble — for detailed prompts that already
+     * include all rules (like RegenerateSocialImages scene-based prompts).
+     */
+    public function generateImageDirect(string $prompt, string $aspectRatio = '1:1', ?string $style = null): ?array
+    {
+        return $this->generateImageRaw($prompt, $aspectRatio, $style);
+    }
+
+    private function generateImageRaw(string $wrapped, string $aspectRatio = '1:1', ?string $style = null): ?array
+    {
 
         // Try Pro first (best quality), then Flash fallback (separate quota).
         // Each model has 2 RPM independently.

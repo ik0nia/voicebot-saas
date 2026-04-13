@@ -108,7 +108,7 @@ class RegenerateSocialImages extends Command
 
                 $this->line("  [{$post->id}] {$post->platform}/{$post->post_type} — generating ({$preset['name']})...");
 
-                $result = $gemini->generateImage($prompt, $aspectRatio);
+                $result = $gemini->generateImageDirect($prompt, $aspectRatio);
 
                 if ($result && !empty($result['url'])) {
                     $post->update(['image_url' => $result['url']]);
