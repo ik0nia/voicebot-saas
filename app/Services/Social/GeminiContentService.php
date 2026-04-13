@@ -189,23 +189,22 @@ class GeminiContentService
         // see the exact same instructions.
         $wrapped = $this->imageRulesPreamble() . $prompt;
 
-        // Generate image via Vertex only. If rate-limited (429), retry
-        // after a pause. No OpenAI fallback — quality is inconsistent.
-        for ($attempt = 1; $attempt <= 3; $attempt++) {
-            $vertexResult = $this->generateImageVertex($wrapped, $aspectRatio, $style);
-            if ($vertexResult) {
-                return $vertexResult;
-            }
-
-            // If Vertex failed, wait before retrying (likely rate limit)
-            if ($attempt < 3) {
-                $wait = $attempt * 15; // 15s, 30s
-                Log::info("Vertex AI attempt {$attempt} failed, retrying in {$wait}s", ['aspect' => $aspectRatio]);
-                sleep($wait);
-            }
+        // Generate image via Vertex only. Quota is 2 images/min so we
+        // only retry once after 45s to stay within limits.
+        $vertexResult = $this->generateImageVertex($wrapped, $aspectRatio, $style);
+        if ($vertexResult) {
+            return $vertexResult;
         }
 
-        Log::error('Vertex AI failed after 3 attempts, skipping image', ['aspect' => $aspectRatio]);
+        // Single retry after cooldown
+        Log::info('Vertex AI failed, retrying once in 45s', ['aspect' => $aspectRatio]);
+        sleep(45);
+        $vertexResult = $this->generateImageVertex($wrapped, $aspectRatio, $style);
+        if ($vertexResult) {
+            return $vertexResult;
+        }
+
+        Log::warning('Vertex AI failed after retry, skipping image', ['aspect' => $aspectRatio]);
         return null;
     }
 
