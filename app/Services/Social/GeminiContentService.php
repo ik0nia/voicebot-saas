@@ -14,13 +14,11 @@ class GeminiContentService
     private string $imageModel;                  // Gemini for images (native generation)
 
     // Vertex AI config for image generation via service account
-    private string $vertexProjectId = 'gen-lang-client-0096953872';
-    // Switched 2026-04-08 from `gemini-3.1-flash-image-preview` (preview model
-    // with hard-capped quota that ignores billing) to the STABLE release.
-    // The preview was returning 429 RESOURCE_EXHAUSTED on every request even
-    // with billing enabled, forcing all generations to fall through to the
-    // OpenAI fallback (which produces visibly worse design quality).
-    private string $vertexImageModel = 'gemini-2.5-flash-image';
+    private string $vertexProjectId = 'sambla';
+    // Switched 2026-04-13 to gemini-3.1-flash-image-preview on project sambla
+    // (with billing via ikonia). Previous 2.5-flash-image was on gen-lang-client
+    // project which had quota issues.
+    private string $vertexImageModel = 'gemini-3.1-flash-image-preview';
     private string $serviceAccountPath;
 
     public function __construct()
@@ -29,7 +27,7 @@ class GeminiContentService
         $this->geminiApiKey = $dbKey ? decrypt($dbKey) : config('services.gemini.api_key', '');
         $this->imageModel = \DB::table('settings')->where('key', 'gemini_image_model')->value('value')
             ?: env('GEMINI_IMAGE_MODEL', 'gemini-3.1-flash');
-        $this->serviceAccountPath = storage_path('app/google-service-account.json');
+        $this->serviceAccountPath = storage_path('app/google-service-account-sambla.json');
     }
 
     /**
