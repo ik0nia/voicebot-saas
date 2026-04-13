@@ -142,10 +142,14 @@ class AdminSocialController extends Controller
         // worker container writes images to its own public/ folder which
         // the app container can't see. Filtering by is_file() here would
         // empty the deck even when images are perfectly valid.
+        // Only show posts with Vertex-generated images (img_ prefix) in the
+        // review deck. OpenAI fallback images are lower quality and will be
+        // regenerated — hide them until Vertex version is ready.
         $groupedDeck = SocialPost::query()
             ->where('status', 'draft')
             ->where('post_type', 'post')
             ->whereNotNull('image_url')
+            ->where('image_url', 'NOT LIKE', '%openai_%')
             ->whereNotNull('group_id')
             ->orderByRaw("CASE WHEN platform = 'facebook' THEN 0 ELSE 1 END")
             ->orderBy('id', 'asc')
@@ -157,6 +161,7 @@ class AdminSocialController extends Controller
             ->where('status', 'draft')
             ->whereNull('group_id')
             ->whereNotNull('image_url')
+            ->where('image_url', 'NOT LIKE', '%openai_%')
             ->orderBy('id', 'asc')
             ->limit(12 - $groupedDeck->count())
             ->get();
