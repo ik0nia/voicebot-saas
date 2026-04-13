@@ -167,13 +167,19 @@ class GeminiContentService
     private function imageRulesPreamble(): string
     {
         return "REGULI (suprascriu orice instrucțiune conflictuală):\n"
-            . "1. TEXT SCURT PERMIS — poți include UN singur headline sau tagline în ROMÂNĂ (max 5-6 cuvinte). Textul TREBUIE integrat ORGANIC în design, ca pe un landing page premium — nu lipit deasupra. Font sans-serif curat (Inter/Helvetica), dimensiune mare, contrast puternic. Textul e parte din compoziție, nu un addon.\n"
-            . "2. FĂRĂ LOGO — NU desena, NU inventa, NU pune NICIUN logo, brand mark, siglă sau text de tip brand pe imagine. Niciun element de branding în colțuri sau oriunde altundeva. Imaginea trebuie să fie curată, fără nicio marcă.\n"
-            . "3. FĂRĂ OAMENI — obiecte, scene, UI mockups, vizualuri abstracte. Fără fețe, fără echipe stock.\n"
-            . "4. STIL — modern SaaS / tech-forward: glassmorphism, ilustrații isometrice, obiecte 3D gradient, dashboard-uri dark/light, scene vectoriale, mockup-uri. Gândește Stripe, Linear, Vercel, Notion.\n"
-            . "5. CALITATE — scroll-stopping, calitate Dribbble/Behance. Culori bold, compoziție curată, premium.\n"
-            . "6. BUTON CTA (opțional, ~50% din imagini) — dacă se potrivește cu designul, adaugă un buton stilizat de tip CTA (ex: 'Află mai mult →', 'Începe acum', 'Testează gratis') integrat organic în compoziție, ca pe un landing page. Butonul trebuie să arate ca element de design, nu ca un buton real — culori din paletă, colțuri rotunjite, text scurt în ROMÂNĂ.\n"
-            . "7. INTERZIS — clip-art, stock photos, handshakes, costume, gradient rainbow, infografice, litere ilizibile/distorsionate.\n\n"
+            . "1. HEADLINE ÎN DESIGN (nu peste design!) — poți include UN singur headline în ROMÂNĂ (max 5-6 cuvinte). "
+            . "CRITICAL: textul trebuie DESIGNAT ca parte din compoziția grafică — exact ca pe un poster premium sau hero section de landing page. "
+            . "Asta înseamnă: textul are propriul spațiu rezervat în layout, cu fundal/card/bandă de culoare dedicat(ă) care se potrivește cu paleta graficii. "
+            . "Font sans-serif bold (stil Inter/Montserrat), dimensiune mare, contrast puternic. "
+            . "INTERZIS: text aruncat peste ilustrație fără fundal, text care se confundă cu elementele grafice, text lipit ca un watermark. "
+            . "Dacă nu poți integra textul frumos ca element de design → NU pune text deloc, e mai bine fără.\n"
+            . "2. BUTON CTA (opțional, ~40% din imagini) — un buton stilizat (ex: 'Află mai mult →', 'Testează gratis') ca pe un landing page. "
+            . "Butonul e un element de design: culori din paletă, colțuri rotunjite, text scurt în ROMÂNĂ. Doar dacă se integrează natural.\n"
+            . "3. FĂRĂ LOGO — NU pune niciun logo, brand mark, siglă sau text de tip brand. Niciun element de branding.\n"
+            . "4. FĂRĂ OAMENI — obiecte, scene, UI mockups, vizualuri abstracte. Fără fețe, fără echipe stock.\n"
+            . "5. STIL — modern SaaS / tech-forward: glassmorphism, ilustrații isometrice, obiecte 3D gradient, dashboard-uri dark/light, scene vectoriale, mockup-uri. Gândește Stripe, Linear, Vercel, Notion.\n"
+            . "6. CALITATE — scroll-stopping, calitate Dribbble/Behance. Culori bold, compoziție curată, premium.\n"
+            . "7. INTERZIS — clip-art, stock photos, handshakes, costume, gradient rainbow, infografice, litere ilizibile/distorsionate, text peste ilustrație fără fundal dedicat.\n\n"
             . "BRIEF:\n";
     }
 

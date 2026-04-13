@@ -107,7 +107,7 @@ class RegenerateSocialImages extends Command
                         . "STIL: Ilustrație modernă, colorată, dinamică — culori vii și saturate. Elementele din nișă stilizate isometric sau flat-design. "
                         . ($topic ? "SUBIECTUL POSTĂRII: {$topic} " : '')
                         . "CONCEPT: {$concept}. Îmbină elementele din nișa ({$niche}) cu elemente tech/AI. "
-                        . "HEADLINE ÎN IMAGINE: Headline scurt (3-5 cuvinte) în ROMÂNĂ relevant cu nișa. Integrează-l organic în design. "
+                        . "HEADLINE: dacă pui text, să fie despre cum Sambla ajută domeniul {$niche}. "
                         . "ENERGIE: Vibrant, optimist, profesional. Culorile trebuie să POP pe feed. "
                         . "ASPECT: {$aspectRatio}.";
                 } else {
@@ -115,7 +115,7 @@ class RegenerateSocialImages extends Command
                         . "STIL VIZUAL ({$preset['name']}): {$preset['prompt']} "
                         . ($topic ? "SUBIECTUL POSTĂRII (imaginea TREBUIE să fie vizual relevantă): {$topic} " : '')
                         . "CONCEPT: {$concept}. Transformă în vizual modern, tech, premium. "
-                        . "HEADLINE ÎN IMAGINE: Inventează un headline scurt (3-5 cuvinte) în ROMÂNĂ care să fie RELEVANT cu subiectul postării și cu ce face Sambla (chatbot, voicebot, automatizare conversații). Integrează-l organic în designul imaginii ca pe un landing page premium. "
+                        . "HEADLINE: dacă pui text, să fie relevant cu subiectul — ceva ce un antreprenor înțelege instant. "
                         . "DISPOZIȚIE: Smart, prietenos, profesional. "
                         . "ASPECT: {$aspectRatio}.";
                 }

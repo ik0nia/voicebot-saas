@@ -688,7 +688,7 @@ class GenerateDailyBatch extends Command
                 . "STIL: Ilustrație modernă, colorată, dinamică — culori vii și saturate (nu palide/corporate). Gândește: poster de festival tech meets infographic Dribbble. Fundalul poate fi gradient bold sau scenă colorată. Elementele din nișă sunt stilizate, isometrice sau flat-design, nu realiste. "
                 . $topicAnchor
                 . "CONCEPT: {$topicData['image_concept']}. Îmbină elementele din nișa ({$niche}) cu elemente tech/AI (chat bubbles, unde sonore, dashboard-uri) pentru a arăta cum Sambla ajută acest domeniu. "
-                . "HEADLINE ÎN IMAGINE: Inventează un headline scurt (3-5 cuvinte) în ROMÂNĂ relevant cu nișa și cu ce face Sambla pentru acest domeniu. Integrează-l organic în design. "
+                . "HEADLINE: dacă pui text, să fie despre cum Sambla ajută domeniul {$niche}. "
                 . "ENERGIE: Vibrant, optimist, profesional dar accesibil. Culorile trebuie să POP pe feed. "
                 . "COMPOZIȚIE: Dinamică, cu mai multe elemente vizuale distribuite armonios. Punct focal central clar. "
                 . "ASPECT: 3:4 portrait.";
@@ -698,7 +698,7 @@ class GenerateDailyBatch extends Command
                 . "STIL VIZUAL ({$preset['name']}): {$preset['prompt']} "
                 . $topicAnchor
                 . "CONCEPT: {$topicData['image_concept']}. Transformă în vizual modern, tech, premium — ca hero image de pe site-ul unui startup top. "
-                . "HEADLINE ÎN IMAGINE: Inventează un headline scurt (3-5 cuvinte) în ROMÂNĂ care să fie RELEVANT cu subiectul postării și cu ce face Sambla. Headline-ul trebuie să aibă sens pentru un antreprenor care vede postarea — nu cuvinte generice. Integrează-l organic în design ca pe un landing page premium. "
+                . "HEADLINE: dacă pui text, să fie relevant cu subiectul postării — ceva ce un antreprenor înțelege instant. "
                 . "DISPOZIȚIE: Smart, prietenos, profesional. Imaginea trebuie să facă un antreprenor să gândească 'vreau să folosesc acest tool'. "
                 . "COMPOZIȚIE: Curată, bold, designată. Punct focal puternic. Gradienți sau iluminare moale. Oprește scroll-ul pe Instagram/Facebook. "
                 . "ASPECT: 3:4 portrait.";
@@ -728,7 +728,7 @@ class GenerateDailyBatch extends Command
                 . $topicAnchor
                 . "CONCEPT: {$topicData['image_concept']}. Îmbină elemente din nișa ({$niche}) cu elemente tech/AI. "
                 . "STIL: Ilustrație colorată, dinamică, culori vii saturate. Poster de festival tech meets Dribbble. Elementele din nișă stilizate isometric sau flat-design. "
-                . "HEADLINE ÎN IMAGINE: Headline scurt (3-5 cuvinte) în ROMÂNĂ relevant cu nișa. Integrează-l în treimea din mijloc (safe zone Instagram). "
+                . "HEADLINE: dacă pui text, în treimea din mijloc (safe zone Instagram). "
                 . "Compoziție verticală full-bleed, element central bold, culori care POP. "
                 . "ASPECT: 9:16 portrait.";
         }
@@ -737,7 +737,7 @@ class GenerateDailyBatch extends Command
             . "STIL VIZUAL ({$preset['name']}): {$preset['prompt']} "
             . $topicAnchor
             . "CONCEPT: {$topicData['image_concept']}. Vizual modern, premium, tech. "
-            . "HEADLINE ÎN IMAGINE: Inventează un headline scurt (3-5 cuvinte) în ROMÂNĂ relevant cu subiectul. Integrează-l organic în design, în treimea din mijloc a imaginii (safe zone de la UI-ul Instagram sus/jos). "
+            . "HEADLINE: dacă pui text, în treimea din mijloc (safe zone Instagram sus/jos). "
             . "Compoziție verticală full-bleed, element central bold, spațiu generos sus/jos. "
             . "ASPECT: 9:16 portrait.";
     }
