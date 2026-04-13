@@ -626,19 +626,13 @@ class GenerateDailyBatch extends Command
     }
 
     /**
-     * Five distinct visual aesthetics. Picked randomly so the grid doesn't
-     * look like the same minimal-white-icon template on repeat. Each one
-     * is a complete stylistic brief — not just a keyword.
+     * Modern SaaS visual styles — loaded from config so both the batch
+     * command and the service share the same presets.
      */
-    private array $visualStyles = [
-        'cinematic_still' => "Cinematic still life photography, magazine-cover quality. A single beautifully-lit hero object on a textured surface (linen, oak, marble, concrete) — a phone showing soft chat UI, a vintage rotary telephone next to fresh flowers, a leather notebook with a fountain pen, an espresso cup beside a laptop. Golden hour window light, deep shadows, shallow depth of field, film grain. Muted earthy tones with one subtle red accent. Architectural Digest / Kinfolk magazine aesthetic. NO TEXT, NO LOGO, NO PEOPLE.",
-        'minimalist_object' => "High-end minimalist object photography on a single colored backdrop (sage, terracotta, deep navy, cream). One hero object centered with generous breathing room — a smartphone, a phone receiver, a brass key, a folded letter, a vintage clock. Soft directional studio lighting, sculptural shadows. Premium product photography for a design magazine. NO TEXT, NO LOGO, NO PEOPLE.",
-        'editorial_3d' => "Premium 3D render in the style of Apple keynote graphics — a single hero element floating in soft gradient space (a phone, a chat bubble, a microphone, a clock, an envelope). Glossy materials, subsurface scattering, ambient occlusion, single key light. Pastel background gradient with one bold accent color. Vectary / Spline / Cinema 4D quality. NO TEXT, NO LOGO, NO PEOPLE.",
-        'editorial_collage' => "Sophisticated mixed-media collage — torn paper, vintage photo cutouts, hand-drawn arrows, stamps, ink marks, masking tape. Asymmetric composition centered on one concept. Warm cream base, deep ink blue, faded red. Feels hand-made by an art director, not AI. The Atlantic / NYT Magazine editorial illustration style. NO TEXT, NO LOGO, NO PEOPLE.",
-        'abstract_swiss' => "Bauhaus / Swiss design abstract composition. Bold flat geometric shapes with intentional rhythm — overlapping circles, arcs, sharp angles, halftone dots, thin precise lines. Limited 3-color palette with strong contrast. Tactile paper texture in the background. Massimo Vignelli / Josef Müller-Brockmann quality. Designed, not decorative. NO TEXT, NO LOGO, NO PEOPLE.",
-        'product_mockup_lifestyle' => "Photorealistic device mockup in a warm lived-in scene — a phone showing soft chat UI on a wooden desk with a coffee cup, a paperback book, a brass paperclip, dried flowers in a small ceramic vase. Window light, golden hour, shallow depth of field. Lifestyle product photography for a design magazine. NO TEXT on the device screen except subtle UI hints, NO LOGO, NO PEOPLE.",
-        'tactile_diorama' => "Miniature diorama photography — a tiny crafted scene built from felt, paper, clay, wood blocks. Toy-like but premium, with cinematic lighting. A miniature office, a tiny cafe, a small storefront, a craft workshop. Macro lens, soft shadows. Wes Anderson / craft magazine aesthetic. NO TEXT, NO LOGO, NO PEOPLE.",
-    ];
+    private function getVisualStyles(): array
+    {
+        return config('social-image-styles');
+    }
 
     private function generateCtaImage(GeminiContentService $gemini, array $topicData): ?array
     {
@@ -647,21 +641,23 @@ class GenerateDailyBatch extends Command
             ->latest()->limit(10)->pluck('feedback')->filter()->unique()->take(5)->implode(' | ');
         $avoidLine = $imageRejections ? "CRITICAL — AVOID what user rejected before: {$imageRejections}. " : '';
 
-        $styleKey = array_rand($this->visualStyles);
-        $styleBrief = $this->visualStyles[$styleKey];
+        $styles = $this->getVisualStyles();
+        $styleKey = array_rand($styles);
+        $preset = $styles[$styleKey];
 
-        $topicAnchor = isset($topicData['topic']) ? "POST TOPIC (the image MUST visually match this — same object, same action, same emotion): {$topicData['topic']} " : '';
+        $topicAnchor = isset($topicData['topic']) ? "POST TOPIC (the image MUST visually relate to this concept): {$topicData['topic']} " : '';
+
+        // Generate a short Romanian headline for the image (max 5 words)
+        $headline = $this->generateImageHeadline($topicData);
 
         $prompt = $avoidLine
-            . "Create a premium 3:4 social media image for a modern brand. The goal is a beautiful, magazine-quality visual — NOT a poster with a slogan slapped on. "
-            . "STYLE ({$styleKey}): {$styleBrief} "
+            . "Create a scroll-stopping 3:4 social media image for Sambla — a modern Romanian AI chatbot & voicebot SaaS platform. "
+            . "VISUAL STYLE ({$preset['name']}): {$preset['prompt']} "
             . $topicAnchor
-            . "SUBJECT: {$topicData['image_concept']}. Translate the topic into a real visual scene with depth, lighting and atmosphere — never reduce it to an icon or symbol on a flat background. "
-            . "TEXT — STRICT NO TEXT RULE: the image must contain ZERO text, ZERO words, ZERO letters, ZERO captions, ZERO slogans, ZERO labels, ZERO numbers as headline. Pure visual composition only. Any text on the image is a failure. "
-            . "BRAND / LOGO — STRICT NO LOGO: do NOT draw, render, type, imply, fake, or invent any brand mark, wordmark, logo, badge, watermark or company name. Leave all corners empty of brand marks. The brand is added separately by us in post-production. "
-            . "PEOPLE — DEFAULT NO PEOPLE: object/scene/architectural composition only. People are allowed only as a rare exception when the topic absolutely demands it (1 in 15 images), and even then only as silhouettes, hands, or partial figures — never full faces, never 'diverse smiling team' stock photo clichés. "
-            . "COMPOSITION: cinematic, intentional, designed by a human art director. Strong focal point, deliberate light direction, real depth (not flat). Texture, atmosphere, mood. Feels like an editorial photograph or a premium 3D render — not AI slop, not clip art, not infographic, not poster. "
-            . "ABSOLUTELY FORBIDDEN: any text on image, any logo (real or fake), any wordmark, any brand stamp, any watermark, any caption, any URL, any phone number, any 'AI' badge, single icon centered on flat white, cliché stock photos (handshakes, suits pointing at laptops, smiling diverse team), generic floating chat bubbles in empty space, gradient rainbow backgrounds, garbled letters, fake numbers, infographic layouts. "
+            . "CONCEPT: {$topicData['image_concept']}. Translate this into a visually rich scene that feels modern, techy, and premium — like the hero image of a top Y Combinator startup. "
+            . ($headline ? "HEADLINE ON IMAGE: Include this short text on the image: \"{$headline}\". Use a clean sans-serif font (Inter/Helvetica style), high contrast against the background (white text on dark, dark text on light). Place it where it's clearly readable and doesn't cover the main visual. Make it look designed, not slapped on. " : '')
+            . "MOOD: Smart, friendly, approachable but professional. The image should make a business owner think 'this looks like a tool I want to use'. "
+            . "COMPOSITION: Clean, bold, designed. Strong focal point. Rich gradients or soft lighting. The kind of image that stops the scroll on Instagram/Facebook. "
             . "ASPECT: 3:4 portrait for social feed.";
 
         return $gemini->generateImage($prompt, '3:4');
@@ -669,22 +665,53 @@ class GenerateDailyBatch extends Command
 
     private function storyPrompt(array $topicData): string
     {
-        $styleKey = array_rand($this->visualStyles);
-        $styleBrief = $this->visualStyles[$styleKey];
+        $styles = $this->getVisualStyles();
+        $styleKey = array_rand($styles);
+        $preset = $styles[$styleKey];
 
-        $topicAnchor = isset($topicData['topic']) ? "POST TOPIC (the image MUST visually match this — same object, same action, same emotion): {$topicData['topic']} " : '';
+        $topicAnchor = isset($topicData['topic']) ? "POST TOPIC (the image MUST visually relate to this concept): {$topicData['topic']} " : '';
 
-        return "Create a 9:16 vertical Instagram STORY image for a modern brand — magazine-quality, NOT a slogan poster. "
-            . "STYLE ({$styleKey}): {$styleBrief} "
+        $headline = $this->generateImageHeadline($topicData);
+
+        return "Create a 9:16 vertical Instagram STORY image for Sambla — a modern AI chatbot & voicebot SaaS platform. "
+            . "VISUAL STYLE ({$preset['name']}): {$preset['prompt']} "
             . $topicAnchor
-            . "SUBJECT: {$topicData['image_concept']}. Translate the topic into a real visual scene with depth, lighting and atmosphere. Never reduce it to an icon on flat background. "
-            . "TEXT — STRICT NO TEXT: ZERO text, ZERO words, ZERO letters, ZERO captions, ZERO labels. Pure visual only. Any text = failure. "
-            . "BRAND / LOGO — STRICT NO LOGO: do NOT draw, render, fake or invent any brand mark, wordmark, logo, badge, watermark. The brand is added by us in post. Leave all corners empty. "
+            . "CONCEPT: {$topicData['image_concept']}. Make it feel like a premium tech brand's story — modern, clean, vibrant. "
+            . ($headline ? "HEADLINE ON IMAGE: Include this short text: \"{$headline}\". Clean sans-serif font, high contrast, clearly readable. Place in the middle third of the image (safe from Instagram UI overlays at top/bottom). " : '')
             . "Full-bleed vertical composition, single bold hero element, generous top/bottom safe zones for Instagram UI overlays. "
-            . "PEOPLE — DEFAULT NO PEOPLE: object/scene composition only. If the topic absolutely demands a person (rare), use silhouettes or hands only — no full faces, no diverse-team stock clichés. "
-            . "COMPOSITION: cinematic, atmospheric, designed by a human art director. Real depth, deliberate light. Editorial photograph or premium 3D render quality — not AI slop, not clip art. "
-            . "ABSOLUTELY FORBIDDEN: any text, any logo (real or fake), any wordmark, any caption, single icon on white background, clip-art, stock photos, garbled letters. "
+            . "MOOD: Smart, friendly, techy. Scroll-stopping visual quality. "
             . "ASPECT: 9:16 portrait.";
+    }
+
+    /**
+     * Generate a short Romanian headline (3-5 words) for the image
+     * based on the post topic. Returns null ~20% of the time for variety.
+     */
+    private function generateImageHeadline(array $topicData): ?string
+    {
+        // ~20% of images have no text at all for visual variety
+        if (random_int(1, 100) <= 20) {
+            return null;
+        }
+
+        $headlines = [
+            'tehnologie' => ['Cum funcționează?', 'Sub capotă', 'Tehnologia din spate', 'Inteligent prin design'],
+            'tehnologie_explicativ' => ['Cum funcționează?', 'Simplu explicat', 'Știință, nu magie'],
+            'verticale' => ['Soluția ta AI', 'Automatizează simplu', 'Mai mult timp liber', 'Focusează-te pe clienți'],
+            'caz_real' => ['Rezultate reale', 'Funcționează deja', 'Poveste de succes'],
+            'voce' => ['Răspunde vocal 24/7', 'Voce naturală AI', 'Apeluri pe pilot automat'],
+            'antihalucinare' => ['Zero inventat', 'Doar fapte reale', 'Răspunsuri corecte'],
+            'securitate' => ['Date protejate', 'GDPR complet', 'Hosted în România'],
+            'ecommerce' => ['Vinde non-stop', 'Magazin + AI', 'Clienți fericiți 24/7'],
+            'baza_cunostinte' => ['Învață din documente', 'Cunoștințe instant', 'Răspunsuri din PDF-uri'],
+            'servicii' => ['Programări automate', 'Lead-uri captate', 'Mai puțin stres'],
+            'platforma' => ['Gata în 5 minute', 'Dashboard live', 'Totul într-un loc'],
+        ];
+
+        $category = $topicData['category'] ?? 'platforma';
+        $pool = $headlines[$category] ?? $headlines['platforma'];
+
+        return $pool[array_rand($pool)];
     }
 
     private function generateStoryImage(GeminiContentService $gemini, array $topicData): ?array

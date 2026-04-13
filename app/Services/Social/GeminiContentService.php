@@ -166,13 +166,13 @@ class GeminiContentService
      */
     private function imageRulesPreamble(): string
     {
-        return "STRICT BRAND & COMPOSITION RULES (apply to every image, override any conflicting instruction below):\n"
-            . "1. ZERO TEXT — the image must contain ZERO text, ZERO words, ZERO letters, ZERO captions, ZERO labels, ZERO slogans, ZERO numbers as headline, ZERO URLs. Pure visual composition only. Any text on the image is a failure.\n"
-            . "2. ZERO LOGO — do NOT draw, render, fake, invent or imply any logo, wordmark, brand mark, badge, watermark, stamp, or company name. Leave all corners empty of brand marks. The brand is added separately by us in post-production. Never write 'Sambla' or any other word that looks like a company name.\n"
-            . "3. NO PEOPLE BY DEFAULT — object/scene/architectural composition only. No humans, no faces, no diverse smiling teams, no handshakes, no suits with laptops. People allowed only as a rare exception (1 in 15) and only as silhouettes or hands — never full faces.\n"
-            . "4. STYLE — modern editorial design first: cinematic still life photography, premium 3D renders, Bauhaus geometric compositions, miniature crafted dioramas, paper collage editorial illustration, minimalist product photography. The result should look like Architectural Digest, Kinfolk, NYT Magazine, Apple keynote graphics — NEVER like AI slop, clip art, infographic, or text poster.\n"
-            . "5. ATMOSPHERE — real depth, deliberate lighting, texture, mood. Designed by a human art director, not a template. Strong focal point, intentional composition.\n"
-            . "6. ABSOLUTELY FORBIDDEN — any text, any logo (real or fake), any wordmark, any caption, single icon centered on flat white, clip-art minimalism, stock-photo clichés, smiling diverse teams, handshakes, suits pointing at laptops, generic floating chat bubbles in empty space, gradient rainbow backgrounds, garbled letters, fake numbers, fake testimonials, infographic layouts.\n\n"
+        return "RULES (override any conflicting instruction):\n"
+            . "1. SHORT TEXT ALLOWED — you may include ONE short headline or tagline in Romanian (max 5-6 words) if it adds value. The text MUST be perfectly legible: use high-contrast colors (white text on dark backgrounds, dark text on light backgrounds), clean sans-serif font (like Inter or Helvetica), and place it where it doesn't clash with the visual. NO long paragraphs, NO URLs, NO phone numbers.\n"
+            . "2. ZERO LOGO — no brand marks, wordmarks, badges, watermarks. Leave corners empty. Logo is composited separately.\n"
+            . "3. NO PEOPLE — objects, scenes, UI mockups, abstract visuals only. No faces, no stock-photo teams.\n"
+            . "4. STYLE — modern SaaS / tech-forward: glassmorphism, isometric illustrations, gradient 3D objects, dark-mode dashboards, flat vector scenes, clean product mockups. Think Stripe, Linear, Vercel, Notion marketing visuals.\n"
+            . "5. QUALITY — scroll-stopping, Dribbble/Behance quality. Bold colors, clean composition, premium feel.\n"
+            . "6. FORBIDDEN — logos, clip-art, stock photos, handshakes, suits, rainbow gradients, infographics, garbled/unreadable letters.\n\n"
             . "BRIEF:\n";
     }
 
@@ -182,17 +182,75 @@ class GeminiContentService
         // see the exact same instructions.
         $wrapped = $this->imageRulesPreamble() . $prompt;
 
-        // Vertex AI FIRST — it accepts our real logo PNG as a reference
-        // image, so the brand mark renders correctly. OpenAI gpt-image-1
-        // can't accept reference images and tends to fabricate fake "Sambla"
-        // wordmarks, so we only fall back to it when Vertex is unavailable.
         $vertexResult = $this->generateImageVertex($wrapped, $aspectRatio, $style);
         if ($vertexResult) {
+            // Logo badge on ~30% of images, randomly
+            if (random_int(1, 100) <= 30) {
+                $this->compositeLogoBadge($vertexResult['path']);
+            }
             return $vertexResult;
         }
 
         Log::warning('Vertex AI failed, falling back to OpenAI', ['aspect' => $aspectRatio]);
-        return $this->generateImageOpenAi($wrapped, $aspectRatio);
+        $openaiResult = $this->generateImageOpenAi($wrapped, $aspectRatio);
+        if ($openaiResult && random_int(1, 100) <= 30) {
+            $this->compositeLogoBadge($openaiResult['path']);
+        }
+        return $openaiResult;
+    }
+
+    /**
+     * Composite the Sambla logo badge (white rounded bg + shadow) onto
+     * the bottom-left corner of a generated image.
+     */
+    private function compositeLogoBadge(string $relativePath): void
+    {
+        try {
+            $imagePath = public_path($relativePath);
+            $logoPath = public_path('images/social/logo-light.png');
+
+            if (!file_exists($imagePath) || !file_exists($logoPath)) {
+                return;
+            }
+
+            // Get image width to scale logo proportionally (~17% of image width)
+            $imageSize = getimagesize($imagePath);
+            if (!$imageSize) return;
+            $logoWidth = (int) ($imageSize[0] * 0.17);
+            $pad = (int) max(8, $logoWidth * 0.07);
+            $radius = (int) max(6, $logoWidth * 0.07);
+            $margin = (int) ($imageSize[0] * 0.03);
+
+            // Logo source is 420x120 (3.5:1 ratio)
+            $logoHeight = (int) round($logoWidth / 3.5);
+            $bgW = $logoWidth + $pad * 2;
+            $bgH = $logoHeight + $pad * 2;
+
+            // ImageMagick: create badge (white rounded rect + shadow) then composite
+            $cmd = sprintf(
+                'convert %s '
+                . '\( \( -size %dx%d xc:none -fill white -draw "roundrectangle 0,0,%d,%d,%d,%d" \) '
+                . '\( +clone -background "rgba(0,0,0,0.2)" -shadow 60x3+0+2 \) '
+                . '+swap -background none -layers merge +repage '
+                . '\( %s -resize %dx%d\! \) -gravity center -composite \) '
+                . '-gravity southwest -geometry +%d+%d -composite %s',
+                escapeshellarg($imagePath),
+                $bgW, $bgH,
+                $bgW - 1, $bgH - 1,
+                $radius, $radius,
+                escapeshellarg($logoPath),
+                $logoWidth, $logoHeight,
+                $margin, $margin,
+                escapeshellarg($imagePath)
+            );
+
+            exec($cmd . ' 2>&1', $output, $exitCode);
+            if ($exitCode !== 0) {
+                Log::warning('Logo composite failed', ['cmd' => $cmd, 'output' => implode("\n", $output)]);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Logo composite exception', ['error' => $e->getMessage()]);
+        }
     }
 
     private function generateImageVertex(string $prompt, string $aspectRatio = '1:1', ?string $style = null): ?array
