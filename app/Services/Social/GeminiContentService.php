@@ -189,16 +189,24 @@ class GeminiContentService
         // see the exact same instructions.
         $wrapped = $this->imageRulesPreamble() . $prompt;
 
-        // Generate image via Vertex first, OpenAI as fallback.
-        // No logo on images — AI distorts it, and post-processing badge
-        // can look out of place. Clean images without branding.
-        $vertexResult = $this->generateImageVertex($wrapped, $aspectRatio, $style);
-        if ($vertexResult) {
-            return $vertexResult;
+        // Generate image via Vertex only. If rate-limited (429), retry
+        // after a pause. No OpenAI fallback — quality is inconsistent.
+        for ($attempt = 1; $attempt <= 3; $attempt++) {
+            $vertexResult = $this->generateImageVertex($wrapped, $aspectRatio, $style);
+            if ($vertexResult) {
+                return $vertexResult;
+            }
+
+            // If Vertex failed, wait before retrying (likely rate limit)
+            if ($attempt < 3) {
+                $wait = $attempt * 15; // 15s, 30s
+                Log::info("Vertex AI attempt {$attempt} failed, retrying in {$wait}s", ['aspect' => $aspectRatio]);
+                sleep($wait);
+            }
         }
 
-        Log::warning('Vertex AI failed, falling back to OpenAI', ['aspect' => $aspectRatio]);
-        return $this->generateImageOpenAi($wrapped, $aspectRatio);
+        Log::error('Vertex AI failed after 3 attempts, skipping image', ['aspect' => $aspectRatio]);
+        return null;
     }
 
     /**
