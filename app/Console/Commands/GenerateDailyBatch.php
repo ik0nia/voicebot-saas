@@ -48,26 +48,26 @@ class GenerateDailyBatch extends Command
             'Stemming românesc: motorul recunoaște «factură», «facturi», «facturare», «facturat» ca același cuvânt-rădăcină.',
             'Detector de frustrare bazat pe semnale conversaționale: limbaj negativ, repetare, escaladare în ton — toate trigger pentru transferul la om.',
             'Sub 2 secunde end-to-end pe RAG complet: cum reușim atât de repede (vector cache + filtru pre-rerank + LLM streaming).',
-            'Anti-halucinare pe nivel de confidență: dacă scor < threshold, bot-ul spune «nu am informația asta» în loc să inventeze.',
+            'Anti-halucinare pe nivel de confidență: dacă scor < threshold, agentul AI spune «nu am informația asta» în loc să inventeze.',
             'Audio bidirecțional pe WebSocket: ce se întâmplă la nivel de pachete între telefonul clientului și GPT-4o voice.',
             'Tenant isolation cu row-level security: cum garantăm că datele unui cont nu pot fi văzute de altul, nici accidental.',
             'Embeddings caching: aceeași întrebare pusă de două ori = un singur apel la modelul de embedding (economie + viteză).',
-            'Cum funcționează un voicebot pas cu pas: recunoaștere voce → text → înțelegere intenție → căutare KB → generare răspuns → text-to-speech → audio.',
-            'Diferența dintre un chatbot clasic și unul cu RAG: primul memorează scenarii, al doilea citește documentele tale în timp real.',
+            'Cum funcționează un agent vocal AI pas cu pas: recunoaștere voce → text → înțelegere intenție → căutare KB → generare răspuns → text-to-speech → audio.',
+            'Diferența dintre un agent AI clasic și unul cu RAG: primul memorează scenarii, al doilea citește documentele tale în timp real.',
             'Ce e un embedding și de ce contează: explicat simplu, fără matematică — cum AI-ul «înțelege» sensul cuvintelor.',
             'De ce hybrid search bate pure vector search: vectorii pierd cuvintele rare, full-text le găsește.',
             'Reranking explicat: de ce a doua trecere AI peste rezultate produce relevanță radical mai bună decât doar prima căutare.',
             'Cum protejăm contextul în conversațiile lungi: window de 16k tokens + summarizare progresivă a istoricului.',
             'Pipeline-ul nostru de ingestion: PDF → OCR (dacă e nevoie) → chunking → embedding → indexare în pgvector. Tot fluxul.',
             'De ce am ales PostgreSQL + pgvector în loc de o bază vectorială dedicată (Pinecone, Weaviate): un singur sistem, ACID, joins.',
-            'Cum tratăm întrebări ambigue: bot-ul cere clarificare în loc să ghicească — o decizie de design conștientă.',
-            'OpenAI GPT-4o vs alternative: de ce am ales-o pentru voicebot (latență, calitate voce română, suport conversație continuă).',
+            'Cum tratăm întrebări ambigue: agentul AI cere clarificare în loc să ghicească — o decizie de design conștientă.',
+            'OpenAI GPT-4o vs alternative: de ce am ales-o pentru agentul vocal (latență, calitate voce română, suport conversație continuă).',
             'Telnyx ca furnizor de telefonie: numere RO native, SIP la nivel de carrier, webhook-uri în timp real pentru evenimentele de apel.',
         ],
         'tehnologie_explicativ' => [
             'Cum funcționează un RAG (Retrieval-Augmented Generation) la nivel conceptual: explicat în 30 de secunde fără jargon.',
             'Ce înseamnă «vector search semantic»: AI-ul transformă fiecare frază într-un șir de numere care reprezintă SENSUL, nu cuvintele.',
-            'De ce un chatbot AI bun are nevoie de mai mult decât un LLM: arhitectura completă (LLM + vector DB + reranker + guards).',
+            'De ce un agent AI bun are nevoie de mai mult decât un LLM: arhitectura completă (LLM + vector DB + reranker + guards).',
             'Cum decide AI-ul când să escaladeze la un om: scor de confidență + clasificator de frustrare + reguli de business.',
             'Ce sunt embeddings și de ce sunt fundamentale pentru un AI care «citește» documente.',
             'Diferența dintre fine-tuning și RAG: cele două abordări de a-i da AI-ului cunoștințe noi, comparate.',
@@ -81,7 +81,7 @@ class GenerateDailyBatch extends Command
         'antihalucinare' => [
             'Răspunde DOAR din datele tale: dacă nu știe, spune cinstit «nu am informația asta», nu inventează prețuri sau termene.',
             'Anti-halucinare cu nivel de confidență: dacă AI-ul nu e sigur, escaladează la om sau cere clarificare în loc să ghicească.',
-            'Răspunsuri cu surse: bot-ul arată din ce document a luat fiecare informație — verificabil, nu black-box.',
+            'Răspunsuri cu surse: agentul AI arată din ce document a luat fiecare informație — verificabil, nu black-box.',
             '10 straturi de verificare înainte de fiecare răspuns: ultima protecție e specific anti-halucinare.',
             'Detectează automat întrebările fără răspuns și generează FAQ-uri ca să închizi gap-urile în baza ta de cunoștințe.',
         ],
@@ -89,29 +89,29 @@ class GenerateDailyBatch extends Command
             'Bază de cunoștințe inteligentă: încarci PDF, DOCX, CSV sau link de site, AI-ul citește, structurează și organizează automat.',
             'Importă întregul site într-un click: scanare automată, extragere conținut, indexare semantică.',
             'FAQ-uri generate automat din întrebările reale ale clienților, nu dintr-un template generic.',
-            'Documentele tale rămân live: actualizezi un PDF, bot-ul învață imediat, fără re-training manual.',
-            'Health score per bot și gap analysis: vezi exact ce subiecte nu acoperă bine baza ta de cunoștințe.',
+            'Documentele tale rămân live: actualizezi un PDF, agentul AI învață imediat, fără re-training manual.',
+            'Health score per agent și gap analysis: vezi exact ce subiecte nu acoperă bine baza ta de cunoștințe.',
         ],
         'voce' => [
             'Voicebot cu voce naturală în română: numere RO, transcriere live, analiză de sentiment în timpul apelului.',
             'Preia apeluri 24/7 cu voce realistă, nu robotică. Clientul nici nu-și dă seama că vorbește cu AI.',
             'Sentiment live pe apel: alertă instant când un client e nervos, escaladare imediată la operator uman.',
-            'Voicebot + chatbot același creier: clientul te sună după ce a vorbit pe site, contextul e păstrat.',
-            'Detectare frustrare în voce: tonul bot-ului devine empatic automat când simte iritare.',
+            'Agent vocal + agent chat, același creier: clientul te sună după ce a vorbit pe site, contextul e păstrat.',
+            'Detectare frustrare în voce: tonul agentul AIui devine empatic automat când simte iritare.',
         ],
         'ecommerce' => [
             'WooCommerce nativ: căutare semantică pe produse, verificare stoc live, add-to-cart direct din chat.',
             'Tracking AWB automat: clientul întreabă «unde-i comanda mea?» și primește status în timp real.',
             'Carduri produs interactive în chat: imagine, preț, stoc, buton de comandă — tot inline.',
             'Funnel de conversie complet: AI-ul ghidează clientul de la întrebare la comandă fără intervenție umană.',
-            'Cross-sell și recomandări inteligente: bot-ul propune produse complementare în funcție de coș.',
+            'Cross-sell și recomandări inteligente: agentul AI propune produse complementare în funcție de coș.',
         ],
         'servicii' => [
             'Programări automate: verifică agenda, oferă sloturi libere, confirmă întâlnirea, trimite reminder.',
             'Pipeline de lead-uri integrat: captare → scoring → stadii (nou → contactat → calificat → câștigat).',
-            'Callback-uri programate: clientul cere să fie sunat, bot-ul îți pune apelul în calendar.',
-            'Pre-calificare lead-uri: bot-ul pune întrebările potrivite înainte să-ți ajungă pe email cazul.',
-            'Estimări și consultanță AI: bot-ul recomandă serviciul potrivit pentru nevoia descrisă de client.',
+            'Callback-uri programate: clientul cere să fie sunat, agentul AI îți pune apelul în calendar.',
+            'Pre-calificare lead-uri: agentul AI pune întrebările potrivite înainte să-ți ajungă pe email cazul.',
+            'Estimări și consultanță AI: agentul AI recomandă serviciul potrivit pentru nevoia descrisă de client.',
         ],
         'securitate' => [
             'Hosting 100% în România: date stocate pe servere RO, fără transfer în afara UE.',
@@ -122,45 +122,45 @@ class GenerateDailyBatch extends Command
         ],
         'platforma' => [
             'O singură linie de cod pe site și ești live. Fără plugin-uri, fără configurări complicate.',
-            'Migrare ușoară de pe alt chatbot: importăm baza de cunoștințe existentă fără downtime.',
+            'Migrare ușoară de pe altă soluție: importăm baza de cunoștințe existentă fără downtime.',
             'Chat widget premium: dark mode, carduri produs, link preview, asistență proactivă pe pagini cheie.',
-            'Personalizezi tonul, culorile și avatarul în câteva click-uri — bot-ul vorbește în vocea brandului tău.',
+            'Personalizezi tonul, culorile și avatarul în câteva click-uri — agentul AI vorbește în vocea brandului tău.',
             'Conectare la WooCommerce, calendare, CRM-uri și email marketing fără cod — doar API keys.',
             'Setup live în 10 minute: 2 min descrii afacerea, 5 min uploadezi docs, 1 min adaugi linia de cod.',
             'Răspunsuri end-to-end în sub 2 secunde: classification → search → strategy → generation, totul livrat clientului.',
             'Scalează automat cu volumul: același timp de răspuns la 10 sau 10.000 de conversații simultane.',
             'Dashboard live: vezi în timp real conversațiile, sentiment-ul, conversiile, gap-urile de cunoaștere.',
-            'Health score per bot: o cifră care îți spune dacă bot-ul tău își face treaba sau are nevoie de ajustări.',
+            'Health score per agent: o cifră care îți spune dacă agentul AI tău își face treaba sau are nevoie de ajustări.',
             'Recomandări automate de îmbunătățire: «adaugă FAQ pentru retururi», «documentul X are erori», «clienții întreabă des despre Y».',
         ],
         'caz_real' => [
-            'Cabinet stomatologic din Cluj: după implementare, programările telefonice noaptea sunt preluate de bot, iar dimineața secretariatul găsește deja agenda completată. Sambla doar gestionează — medicul rămâne expertul.',
-            'Service auto din Timișoara: bot-ul răspunde la întrebări despre tarife orientative și statusul reparațiilor, eliberând mecanicul de telefoane în mijlocul unei revizii. Lucrul tehnic îl face omul.',
+            'Cabinet stomatologic din Cluj: după implementare, programările telefonice noaptea sunt preluate de agentul AI, iar dimineața secretariatul găsește deja agenda completată. Sambla doar gestionează — medicul rămâne expertul.',
+            'Service auto din Timișoara: agentul AI răspunde la întrebări despre tarife orientative și statusul reparațiilor, eliberând mecanicul de telefoane în mijlocul unei revizii. Lucrul tehnic îl face omul.',
             'Magazin online de produse cosmetice: AI-ul recomandă produse pe baza tipului de ten, iar comenzile cresc fără ca echipa de suport să fie copleșită. Recomandările vin din baza ta de produse, nu inventate.',
-            'Birou de avocatură mic: bot-ul filtrează întrebările procedurale (onorarii, documente, programări) de cele care necesită consultanță reală. Avocatul primește doar cazurile relevante.',
+            'Birou de avocatură mic: agentul AI filtrează întrebările procedurale (onorarii, documente, programări) de cele care necesită consultanță reală. Avocatul primește doar cazurile relevante.',
             'Pensiune de 12 camere: rezervările vin acum 24/7 prin chat și telefon, iar proprietarul răspunde dimineața doar la cazurile speciale. Bot-ul știe disponibilitatea din calendarul propriu al pensiunii.',
             'Salon de beauty din Iași: clienții își rezervă singuri, primesc reminder cu o zi înainte, iar no-show-urile au scăzut considerabil. Programarea o face software-ul, serviciul îl face stilistul.',
-            'Firmă de contabilitate: clienții întreabă bot-ul despre termene fiscale și status declarații, iar contabilul nu mai răspunde la 30 de WhatsApp-uri pe zi. Consilierea fiscală rămâne strict la contabil.',
-            'Optică medicală: bot-ul răspunde la întrebări despre rame, lentile și asigurări, lasă optometristul să facă consultația. Comenzile online au crescut natural fără agenți de vânzări.',
-            'Clinică veterinară: programările vin prin bot 24/7, iar instrucțiunile post-operatorii sunt trimise automat. Diagnosticul îl pune medicul veterinar.',
-            'Agenție imobiliară: bot-ul preia primele întrebări despre proprietăți și calificare lead-uri (buget, zonă, tip), iar agentul ajunge la potențiali cumpărători deja pregătiți.',
+            'Firmă de contabilitate: clienții întreabă agentul AI despre termene fiscale și status declarații, iar contabilul nu mai răspunde la 30 de WhatsApp-uri pe zi. Consilierea fiscală rămâne strict la contabil.',
+            'Optică medicală: agentul AI răspunde la întrebări despre rame, lentile și asigurări, lasă optometristul să facă consultația. Comenzile online au crescut natural fără agenți de vânzări.',
+            'Clinică veterinară: programările vin prin agentul AI 24/7, iar instrucțiunile post-operatorii sunt trimise automat. Diagnosticul îl pune medicul veterinar.',
+            'Agenție imobiliară: agentul AI preia primele întrebări despre proprietăți și calificare lead-uri (buget, zonă, tip), iar agentul ajunge la potențiali cumpărători deja pregătiți.',
         ],
         'verticale' => [
-            'CONTABILITATE: bot AI care răspunde clienților firmei de contabilitate la întrebări despre termene fiscale, statusul declarațiilor, documente lipsă — bot-ul citește din baza de cunoștințe a contabilului, NU oferă consultanță fiscală. Sambla = unealta, contabilul = expertul.',
-            'CABINET AVOCATURĂ: bot care răspunde la întrebări procedurale (program, onorarii orientative, ce documente aduci la prima întâlnire, status dosar) și programează consultații. Sambla NU dă consultanță juridică — doar reduce munca repetitivă a secretariatului.',
-            'CABINET MEDICAL / STOMATOLOGIC: bot care preia programări 24/7, răspunde la întrebări despre tarife, asigurări, ce trebuie să aduci la consultație, instrucțiuni post-procedură. Sambla NU dă sfaturi medicale — doar gestionează programările și FAQ-urile.',
-            'SERVICE AUTO: bot care răspunde clienților la întrebări despre tarife orientative, statusul reparației, programări la ITP/revizie, ce piese sunt în stoc. Sambla = unealta service-ului, nu oferim noi reparațiile.',
-            'SALON BEAUTY / FRIZERIE: bot care preia rezervări, răspunde despre tarife, durata serviciilor, recomandă combinații (păr + unghii), trimite reminder. Sambla = software-ul salonului, nu serviciul în sine.',
-            'AGENȚIE IMOBILIARĂ: bot care răspunde despre proprietățile listate, programează vizionări, calificare lead-uri (buget, zonă, tip imobil) înainte ca agentul să intervină. Sambla = AI-ul agenției, nu oferim noi imobile.',
-            'RESTAURANT / DELIVERY: bot care preia comenzi pe telefon, răspunde despre meniu, alergeni, program, livrare. Sambla = telefonul deștept al restaurantului, nu oferim noi mâncare.',
-            'CABINET PSIHOLOGIE / PSIHOTERAPIE: bot care răspunde la întrebări procedurale (programări, tarife, durata sesiunilor, modalități online vs fizic), NU dă sfaturi psihologice. Sambla reduce munca administrativă a cabinetului.',
-            'ȘCOALĂ DE LIMBI / CURSURI: bot care răspunde despre programe, tarife, niveluri, programări la testare, status înscriere. Sambla = secretariat AI al școlii.',
-            'AGENȚIE DE TURISM: bot care răspunde despre pachete, disponibilitate, documente necesare, status rezervare. Sambla NU oferă noi sejururi — doar AI-ul agenției.',
-            'BIROU NOTARIAL: bot care răspunde la întrebări procedurale (acte necesare, tarife orientative, programări), NU dă consultanță notarială.',
-            'FIRMĂ DE CURĂȚENIE / SERVICII LA DOMICILIU: bot care preia comenzi, răspunde despre tarife, programări, zone deservite. Sambla = AI-ul firmei.',
-            'CLINICĂ VETERINARĂ: bot care preia programări, răspunde despre vaccinări, tarife, ce să aduci la consultație. NU dă sfaturi veterinare.',
-            'PENSIUNE / HOTEL MIC: bot care răspunde despre disponibilitate, tarife, facilități, preia rezervări 24/7. Sambla = recepția AI a pensiunii.',
-            'OPTICĂ MEDICALĂ: bot care răspunde despre rame, lentile, asigurări de sănătate, programări la consult. NU dă sfaturi optometrice.',
+            'CONTABILITATE: agent AI care răspunde clienților firmei de contabilitate la întrebări despre termene fiscale, statusul declarațiilor, documente lipsă — agentul AI citește din baza de cunoștințe a contabilului, NU oferă consultanță fiscală. Sambla = unealta, contabilul = expertul.',
+            'CABINET AVOCATURĂ: agent AI care răspunde la întrebări procedurale (program, onorarii orientative, ce documente aduci la prima întâlnire, status dosar) și programează consultații. Sambla NU dă consultanță juridică — doar reduce munca repetitivă a secretariatului.',
+            'CABINET MEDICAL / STOMATOLOGIC: agent AI care preia programări 24/7, răspunde la întrebări despre tarife, asigurări, ce trebuie să aduci la consultație, instrucțiuni post-procedură. Sambla NU dă sfaturi medicale — doar gestionează programările și FAQ-urile.',
+            'SERVICE AUTO: agent AI care răspunde clienților la întrebări despre tarife orientative, statusul reparației, programări la ITP/revizie, ce piese sunt în stoc. Sambla = unealta service-ului, nu oferim noi reparațiile.',
+            'SALON BEAUTY / FRIZERIE: agent AI care preia rezervări, răspunde despre tarife, durata serviciilor, recomandă combinații (păr + unghii), trimite reminder. Sambla = software-ul salonului, nu serviciul în sine.',
+            'AGENȚIE IMOBILIARĂ: agent AI care răspunde despre proprietățile listate, programează vizionări, calificare lead-uri (buget, zonă, tip imobil) înainte ca agentul să intervină. Sambla = AI-ul agenției, nu oferim noi imobile.',
+            'RESTAURANT / DELIVERY: agent AI care preia comenzi pe telefon, răspunde despre meniu, alergeni, program, livrare. Sambla = telefonul deștept al restaurantului, nu oferim noi mâncare.',
+            'CABINET PSIHOLOGIE / PSIHOTERAPIE: agent AI care răspunde la întrebări procedurale (programări, tarife, durata sesiunilor, modalități online vs fizic), NU dă sfaturi psihologice. Sambla reduce munca administrativă a cabinetului.',
+            'ȘCOALĂ DE LIMBI / CURSURI: agent AI care răspunde despre programe, tarife, niveluri, programări la testare, status înscriere. Sambla = secretariat AI al școlii.',
+            'AGENȚIE DE TURISM: agent AI care răspunde despre pachete, disponibilitate, documente necesare, status rezervare. Sambla NU oferă noi sejururi — doar AI-ul agenției.',
+            'BIROU NOTARIAL: agent AI care răspunde la întrebări procedurale (acte necesare, tarife orientative, programări), NU dă consultanță notarială.',
+            'FIRMĂ DE CURĂȚENIE / SERVICII LA DOMICILIU: agent AI care preia comenzi, răspunde despre tarife, programări, zone deservite. Sambla = AI-ul firmei.',
+            'CLINICĂ VETERINARĂ: agent AI care preia programări, răspunde despre vaccinări, tarife, ce să aduci la consultație. NU dă sfaturi veterinare.',
+            'PENSIUNE / HOTEL MIC: agent AI care răspunde despre disponibilitate, tarife, facilități, preia rezervări 24/7. Sambla = recepția AI a pensiunii.',
+            'OPTICĂ MEDICALĂ: agent AI care răspunde despre rame, lentile, asigurări de sănătate, programări la consult. NU dă sfaturi optometrice.',
         ],
     ];
 
@@ -291,7 +291,7 @@ class GenerateDailyBatch extends Command
         ];
         $angle = $angleTypes[array_rand($angleTypes)];
 
-        $prompt = "Ești copywriter pentru Sambla, platformă românească de chatbot și voicebot AI pentru afaceri mici și mijlocii. Audiența: antreprenori și manageri români care nu sunt tehnici. Tonul: prietenos, cald, direct, fără jargon corporate.\n\n"
+        $prompt = "Ești copywriter pentru Sambla, platformă românească de agenți AI pentru afaceri mici și mijlocii. Audiența: antreprenori și manageri români care nu sunt tehnici. Tonul: prietenos, cald, direct, fără jargon corporate.\n\n"
             . "FUNCȚIONALITATEA pe care TREBUIE să te axezi (nu devia spre alta):\n- {$seed}\n\n"
             . "UNGHIUL OBLIGATORIU al acestei postări: {$angle}\n\n"
             . "INTERZIS — aceste deschideri sunt SUPRA-FOLOSITE. NU începe postarea cu vreuna dintre ele și NU varia pe ele:\n"
@@ -310,8 +310,8 @@ class GenerateDailyBatch extends Command
             . "EVITĂ și aceste unghiuri deja folosite recent:\n{$avoidTopicsBlock}\n\n"
             . "EVITĂ și aceste deschideri deja folosite recent:\n{$avoidOpenersBlock}\n\n"
             . "Generează o IDEE COMPLET DIFERITĂ de toate cele de mai sus. Concretă, nu generică. Pune accent pe BENEFICIUL pentru proprietarul afacerii (timp câștigat, clienți câștigați, bani economisiți, liniște), nu pe descrieri tehnice.\n\n"
-            . "REGULĂ DE CONCRETEȚE: 'topic' TREBUIE să menționeze EXPLICIT funcționalitatea de mai sus (cuvintele cheie din ea — ex: «analiza de sentiment», «voicebot», «RAG», «hybrid search», «WooCommerce», «pgvector», «hosting în România», «programări automate»). INTERZIS topic vag de tipul «vrei o afacere mai eficientă?», «vrei mai mulți clienți?», «visezi la mai mult timp?». Topicul trebuie să spună CONCRET ce face Sambla, nu o promisiune generală.\n\n"
-            . "REGULĂ CRITICĂ: 'image_concept' TREBUIE să fie o vizualizare LITERALĂ a 'topic'. Scena descrisă în image_concept TREBUIE să arate exact ceea ce spune topicul — același obiect, aceeași acțiune, aceeași emoție. Dacă topicul vorbește despre un voicebot care preia apeluri, scena conține telefon și apel; dacă topicul e despre RAG/căutare în documente, scena conține documente/laptop/căutare; dacă topicul e despre ecommerce, scena conține un magazin/coș/mobil. NICIODATĂ scenă generică care nu reflectă topicul.\n\n"
+            . "REGULĂ DE CONCRETEȚE: 'topic' TREBUIE să menționeze EXPLICIT funcționalitatea de mai sus (cuvintele cheie din ea — ex: «analiza de sentiment», «agent vocal», «RAG», «hybrid search», «WooCommerce», «pgvector», «hosting în România», «programări automate»). INTERZIS topic vag de tipul «vrei o afacere mai eficientă?», «vrei mai mulți clienți?», «visezi la mai mult timp?». Topicul trebuie să spună CONCRET ce face Sambla, nu o promisiune generală.\n\n"
+            . "REGULĂ CRITICĂ: 'image_concept' TREBUIE să fie o vizualizare LITERALĂ a 'topic'. Scena descrisă în image_concept TREBUIE să arate exact ceea ce spune topicul — același obiect, aceeași acțiune, aceeași emoție. Dacă topicul vorbește despre un agent AI care preia apeluri, scena conține telefon și apel; dacă topicul e despre RAG/căutare în documente, scena conține documente/laptop/căutare; dacă topicul e despre ecommerce, scena conține un magazin/coș/mobil. NICIODATĂ scenă generică care nu reflectă topicul.\n\n"
             . "Returnează DOAR JSON valid, exact în acest format:\n"
             . '{"topic":"o propoziție-două care descriu unghiul postării — concret, nu generic","cta":"un îndemn scurt în română (2-4 cuvinte)","visual_text":"1-3 cuvinte SCURTE și UZUALE în română (fără cratimă, fără cifre lungi, fără termeni tehnici); ceva ce orice om înțelege instant — ex: «mai mulți clienți», «zero stres», «răspunde mereu»","image_concept":"o scenă vizuală bogată (în engleză, pentru generatorul de imagini) care VIZUALIZEAZĂ LITERAL topicul de mai sus: mediu real, mockup de device, diorama 3D sau ilustrație flat — descrie mediul, lumina, obiectele specifice topicului. NICIODATĂ «simple icon on white background», «minimal flat icon», «clean white with one icon». Vrem scene cu profunzime și caracter, ANCORATE pe topic."}';
 
@@ -599,7 +599,7 @@ class GenerateDailyBatch extends Command
             . "- FĂRĂ hashtag-uri (zero, nici măcar la final).\n"
             . "- FĂRĂ link-uri brute, doar mențiunea «sambla.ro» în CTA.\n\n"
             . "BRAND SAMBLA (folosește, nu cita textual):\n"
-            . "- Platformă românească (hosting în România, GDPR, echipă RO) de chatbot și voicebot AI.\n"
+            . "- Platformă românească (hosting în România, GDPR, echipă RO) de agenți AI.\n"
             . "- Funcționalități reale pe care le poți menționa NETEHNIC: răspunde 24/7, învață din documentele tale (PDF, contracte, FAQ-uri), preia apeluri telefonice cu voce naturală, captează lead-uri, programări automate, integrare cu magazinul WooCommerce, alertă când un client e supărat, escaladare la om când e cazul.\n"
             . "- Vorbește ca un fondator prietenos, nu ca un agent de vânzări.\n\n"
             . 'Returnează DOAR JSON: {"content": "textul postării cu \\n\\n între paragrafe"}';
@@ -683,7 +683,7 @@ class GenerateDailyBatch extends Command
             $nicheElements = $nicheVisuals[$niche] ?? 'elemente specifice domeniului, obiecte profesionale stilizate';
 
             $prompt = $avoidLine
-                . "Creează o imagine 3:4 VIBRANTĂ și COLORATĂ pentru social media Sambla — platformă românească de chatbot și voicebot AI. "
+                . "Creează o imagine 3:4 VIBRANTĂ și COLORATĂ pentru social media Sambla — platformă românească de agenți AI. "
                 . "NIȘĂ: {$niche} — imaginea TREBUIE să conțină elemente vizuale din acest domeniu: {$nicheElements}. "
                 . "STIL: Ilustrație modernă, colorată, dinamică — culori vii și saturate (nu palide/corporate). Gândește: poster de festival tech meets infographic Dribbble. Fundalul poate fi gradient bold sau scenă colorată. Elementele din nișă sunt stilizate, isometrice sau flat-design, nu realiste. "
                 . $topicAnchor
@@ -694,7 +694,7 @@ class GenerateDailyBatch extends Command
                 . "ASPECT: 3:4 portrait.";
         } else {
             $prompt = $avoidLine
-                . "Creează o imagine 3:4 pentru social media Sambla — platformă românească de chatbot și voicebot AI. "
+                . "Creează o imagine 3:4 pentru social media Sambla — platformă românească de agenți AI. "
                 . "STIL VIZUAL ({$preset['name']}): {$preset['prompt']} "
                 . $topicAnchor
                 . "CONCEPT: {$topicData['image_concept']}. Transformă în vizual modern, tech, premium — ca hero image de pe site-ul unui startup top. "
@@ -723,7 +723,7 @@ class GenerateDailyBatch extends Command
                 $niche = mb_strtolower(trim($m[1]));
             }
 
-            return "Creează o imagine 9:16 verticală VIBRANTĂ pentru Instagram Story Sambla — platformă românească de chatbot și voicebot AI. "
+            return "Creează o imagine 9:16 verticală VIBRANTĂ pentru Instagram Story Sambla — platformă românească de agenți AI. "
                 . "NIȘĂ: {$niche} — include elemente vizuale specifice acestui domeniu, stilizate și colorate. "
                 . $topicAnchor
                 . "CONCEPT: {$topicData['image_concept']}. Îmbină elemente din nișa ({$niche}) cu elemente tech/AI. "
@@ -733,7 +733,7 @@ class GenerateDailyBatch extends Command
                 . "ASPECT: 9:16 portrait.";
         }
 
-        return "Creează o imagine 9:16 verticală pentru Instagram Story Sambla — platformă românească de chatbot și voicebot AI. "
+        return "Creează o imagine 9:16 verticală pentru Instagram Story Sambla — platformă românească de agenți AI. "
             . "STIL VIZUAL ({$preset['name']}): {$preset['prompt']} "
             . $topicAnchor
             . "CONCEPT: {$topicData['image_concept']}. Vizual modern, premium, tech. "

@@ -86,7 +86,7 @@ class RealignSocialText extends Command
         $visualText = $post->metadata['visual_text'] ?? null;
         $visualLine = $visualText ? "TEXT VIZIBIL PE IMAGINE: «{$visualText}»\n" : '';
 
-        $prompt = "Scrii un post Facebook/Instagram pentru Sambla (platformă românească de chatbot și voicebot AI). Public: antreprenori și manageri români din IMM, NU tehnici.\n\n"
+        $prompt = "Scrii un post Facebook/Instagram pentru Sambla (platformă românească de agenți AI). Public: antreprenori și manageri români din IMM, NU tehnici.\n\n"
             . "IMPORTANT: textul TREBUIE să fie aliniat cu imaginea care va însoți postarea. Imaginea există deja, nu o poți schimba.\n\n"
             . "DESCRIEREA IMAGINII (sursa adevărului — textul TREBUIE să reflecte ce arată):\n{$imagePrompt}\n\n"
             . $visualLine

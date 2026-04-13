@@ -46,8 +46,8 @@ class GeminiContentService
 
         $prompt = "Generează un post pentru {$platform} despre: {$topic}\n\n"
             . "REGULI PLATFORMĂ:\n{$platformRules}\n\n"
-            . "CONTEXT BRAND:\nSambla este o platformă românească de AI conversațional (chatbot + voicebot) pentru business-uri. "
-            . "Oferim: chatbot inteligent, voicebot cu voce naturală, integrare WooCommerce, bază de cunoștințe AI, analytics avansate. "
+            . "CONTEXT BRAND:\nSambla este o platformă românească de agenți AI pentru business-uri. "
+            . "Oferim: agenți AI care răspund la chat și telefon, integrare WooCommerce, bază de cunoștințe AI, analytics avansate. "
             . "Setup în 10 minute, funcționează 24/7, anti-halucinare, GDPR compliant. Planuri de la 99€/lună.\n\n"
             . ($styleContext ? "STIL DORIT:\n{$styleContext}\n\n" : "")
             . "LIMBA: {$language}\n\n"
@@ -86,7 +86,7 @@ class GeminiContentService
         };
 
         $prompt = "Generează o bio pentru pagina {$platform} a brandului Sambla.\n\n"
-            . "DESPRE SAMBLA: Platformă românească de AI conversațional — chatbot și voicebot inteligent pentru business-uri. "
+            . "DESPRE SAMBLA: Platformă românească de agenți AI pentru business-uri. "
             . "Setup 10 minute, 24/7, anti-halucinare. De la 99€/lună.\n\n"
             . "REGULI: {$rules}\n\n"
             . "Returnează JSON: {\"bio\": \"textul\", \"alternatives\": [\"varianta2\", \"varianta3\"]}";

@@ -102,7 +102,7 @@ class RegenerateSocialImages extends Command
                         $niche = mb_strtolower(trim($m[1]));
                     }
 
-                    $prompt = "Creează o imagine {$aspectRatio} VIBRANTĂ și COLORATĂ pentru social media Sambla — platformă românească de chatbot și voicebot AI. "
+                    $prompt = "Creează o imagine {$aspectRatio} VIBRANTĂ și COLORATĂ pentru social media Sambla — platformă românească de agenți AI. "
                         . "NIȘĂ: {$niche} — imaginea TREBUIE să conțină elemente vizuale din acest domeniu. "
                         . "STIL: Ilustrație modernă, colorată, dinamică — culori vii și saturate. Elementele din nișă stilizate isometric sau flat-design. "
                         . ($topic ? "SUBIECTUL POSTĂRII: {$topic} " : '')
@@ -111,7 +111,7 @@ class RegenerateSocialImages extends Command
                         . "ENERGIE: Vibrant, optimist, profesional. Culorile trebuie să POP pe feed. "
                         . "ASPECT: {$aspectRatio}.";
                 } else {
-                    $prompt = "Creează o imagine pentru social media Sambla — platformă românească de chatbot și voicebot AI. "
+                    $prompt = "Creează o imagine pentru social media Sambla — platformă românească de agenți AI. "
                         . "STIL VIZUAL ({$preset['name']}): {$preset['prompt']} "
                         . ($topic ? "SUBIECTUL POSTĂRII (imaginea TREBUIE să fie vizual relevantă): {$topic} " : '')
                         . "CONCEPT: {$concept}. Transformă în vizual modern, tech, premium. "

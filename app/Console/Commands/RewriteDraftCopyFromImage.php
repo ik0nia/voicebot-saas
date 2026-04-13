@@ -116,10 +116,10 @@ class RewriteDraftCopyFromImage extends Command
         $hookKey = array_rand($hookPatterns);
         $hookInstruction = $hookPatterns[$hookKey];
 
-        $sys = 'Ești copywriter pentru Sambla, platformă românească de chatbot și voicebot AI pentru afaceri mici și mijlocii. Scrii postări social media în română, cald și direct, fără jargon corporate. Răspunzi DOAR cu JSON valid.';
+        $sys = 'Ești copywriter pentru Sambla, platformă românească de agenți AI pentru afaceri mici și mijlocii. Scrii postări social media în română, cald și direct, fără jargon corporate. Răspunzi DOAR cu JSON valid.';
 
         $userText = "Privește imaginea atașată și scrie o postare Facebook/Instagram pentru Sambla care să fie RELEVANTĂ pentru ce se vede în imagine. "
-            . "Sambla = chatbot + voicebot AI pentru afaceri mici din România (preia mesaje, răspunde la întrebări, programări, suport clienți 24/7). "
+            . "Sambla = agenți AI pentru afaceri mici din România (preia mesaje, răspunde la întrebări, programări, suport clienți 24/7). "
             . ($topic ? "Unghi inițial al postării (poți să te abați dacă imaginea spune altceva): {$topic}. " : '')
             . ($cta ? "CTA preferat: {$cta}. " : '')
             . "\n\nPATTERN DE HOOK ({$hookKey}): {$hookInstruction}\n\n"
