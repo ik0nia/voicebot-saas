@@ -11,6 +11,7 @@ class RegenerateSocialImages extends Command
     protected $signature = 'social:regenerate-images
         {--status=* : Filter by status (draft, scheduled). Defaults to both}
         {--limit=0 : Max posts to process (0 = all)}
+        {--only-openai : Only regenerate images from OpenAI (filename starts with openai_)}
         {--dry-run : Show what would be regenerated without doing it}
         {--sleep=5 : Seconds between API calls to avoid rate limits}';
 
@@ -27,6 +28,10 @@ class RegenerateSocialImages extends Command
             ->whereIn('post_type', ['post', 'story'])
             ->orderBy('scheduled_at')
             ->orderBy('id');
+
+        if ($this->option('only-openai')) {
+            $query->where('image_url', 'LIKE', '%openai_%');
+        }
 
         if ($limit > 0) {
             $query->limit($limit);
