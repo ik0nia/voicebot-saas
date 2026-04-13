@@ -30,7 +30,12 @@ class RegenerateSocialImages extends Command
             ->orderBy('id');
 
         if ($this->option('only-openai')) {
-            $query->where('image_url', 'LIKE', '%openai_%');
+            // OpenAI images + posts without any image
+            $query->where(function ($q) {
+                $q->where('image_url', 'LIKE', '%openai_%')
+                  ->orWhereNull('image_url')
+                  ->orWhere('image_url', '');
+            });
         }
 
         if ($limit > 0) {
