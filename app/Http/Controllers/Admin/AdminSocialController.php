@@ -306,15 +306,30 @@ class AdminSocialController extends Controller
      */
     private function findNextSlotForPlatform(string $platform, ?\Carbon\Carbon $from = null): ?\Carbon\Carbon
     {
-        // Random assignment across the fixed working-hours grid 09:00..18:00.
-        // We ignore SocialSchedule.posting_times here on purpose: the user wants
-        // each approval to land on a random whole hour within the workday rather
-        // than cycling through a small fixed list (which clusters posts).
+        $maxPerDay = (int) (SocialSchedule::where('platform', 'facebook')->value('posts_per_day') ?: 3);
         $hours = range(9, 18);
-
         $start = $from ?? now();
+
         for ($day = 0; $day < 180; $day++) {
             $date = $start->copy()->addDays($day);
+            $dayStart = $date->copy()->startOfDay();
+            $dayEnd = $date->copy()->endOfDay();
+
+            // Count how many groups are already scheduled on this day
+            $groupsOnDay = SocialPost::whereIn('status', ['scheduled', 'publishing'])
+                ->whereBetween('scheduled_at', [$dayStart, $dayEnd])
+                ->whereNotNull('group_id')
+                ->distinct('group_id')
+                ->count('group_id');
+            $soloOnDay = SocialPost::whereIn('status', ['scheduled', 'publishing'])
+                ->whereBetween('scheduled_at', [$dayStart, $dayEnd])
+                ->whereNull('group_id')
+                ->count();
+            $totalGroupsOnDay = $groupsOnDay + $soloOnDay;
+
+            // Skip this day if already at the limit
+            if ($totalGroupsOnDay >= $maxPerDay) continue;
+
             $shuffled = $hours;
             shuffle($shuffled);
             foreach ($shuffled as $h) {
@@ -1029,15 +1044,14 @@ class AdminSocialController extends Controller
             if (empty($byBucket[$bk])) unset($byBucket[$bk]);
         }
 
-        // Build slot calendar: each day random count between min and max,
-        // random hours within window. Skip past slots so today only fills
-        // future hours.
+        // Build slot calendar: EXACTLY maxPerDay groups per day (strict).
+        // Distribute evenly with random hours in the window.
         $slots = [];
         $day = \Carbon\Carbon::today();
         $needed = count($ordered);
         $safety = 0;
         while (count($slots) < $needed && $safety++ < 365) {
-            $countToday = random_int($minPerDay, $maxPerDay);
+            $countToday = $maxPerDay; // strict limit, always fill to max
             $hours = range($startHour, $endHour);
             shuffle($hours);
             $hours = array_slice($hours, 0, min($countToday, count($hours)));
