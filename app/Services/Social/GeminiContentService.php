@@ -166,13 +166,13 @@ class GeminiContentService
      */
     private function imageRulesPreamble(): string
     {
-        return "RULES (override any conflicting instruction):\n"
-            . "1. SHORT TEXT ALLOWED — you may include ONE short headline or tagline in Romanian (max 5-6 words) if it adds value. The text MUST be perfectly legible: use high-contrast colors (white text on dark backgrounds, dark text on light backgrounds), clean sans-serif font (like Inter or Helvetica), and place it where it doesn't clash with the visual. NO long paragraphs, NO URLs, NO phone numbers.\n"
-            . "2. ZERO LOGO — no brand marks, wordmarks, badges, watermarks. Leave corners empty. Logo is composited separately.\n"
-            . "3. NO PEOPLE — objects, scenes, UI mockups, abstract visuals only. No faces, no stock-photo teams.\n"
-            . "4. STYLE — modern SaaS / tech-forward: glassmorphism, isometric illustrations, gradient 3D objects, dark-mode dashboards, flat vector scenes, clean product mockups. Think Stripe, Linear, Vercel, Notion marketing visuals.\n"
-            . "5. QUALITY — scroll-stopping, Dribbble/Behance quality. Bold colors, clean composition, premium feel.\n"
-            . "6. FORBIDDEN — logos, clip-art, stock photos, handshakes, suits, rainbow gradients, infographics, garbled/unreadable letters.\n\n"
+        return "REGULI (suprascriu orice instrucțiune conflictuală):\n"
+            . "1. TEXT SCURT PERMIS — poți include UN singur headline sau tagline în ROMÂNĂ (max 5-6 cuvinte). Textul TREBUIE integrat ORGANIC în design, ca pe un landing page premium — nu lipit deasupra. Font sans-serif curat (Inter/Helvetica), dimensiune mare, contrast puternic. Textul e parte din compoziție, nu un addon.\n"
+            . "2. LOGO — folosește logo-ul Sambla atașat, integrat subtil în design (colț, mic). NU inventa alt logo.\n"
+            . "3. FĂRĂ OAMENI — obiecte, scene, UI mockups, vizualuri abstracte. Fără fețe, fără echipe stock.\n"
+            . "4. STIL — modern SaaS / tech-forward: glassmorphism, ilustrații isometrice, obiecte 3D gradient, dashboard-uri dark/light, scene vectoriale, mockup-uri. Gândește Stripe, Linear, Vercel, Notion.\n"
+            . "5. CALITATE — scroll-stopping, calitate Dribbble/Behance. Culori bold, compoziție curată, premium.\n"
+            . "6. INTERZIS — clip-art, stock photos, handshakes, costume, gradient rainbow, infografice, litere ilizibile/distorsionate.\n\n"
             . "BRIEF:\n";
     }
 
@@ -182,18 +182,17 @@ class GeminiContentService
         // see the exact same instructions.
         $wrapped = $this->imageRulesPreamble() . $prompt;
 
+        // Vertex gets the logo as a reference image — it integrates it into
+        // the design naturally. No post-processing badge needed.
         $vertexResult = $this->generateImageVertex($wrapped, $aspectRatio, $style);
         if ($vertexResult) {
-            // Logo badge on ~30% of images, randomly
-            if (random_int(1, 100) <= 30) {
-                $this->compositeLogoBadge($vertexResult['path']);
-            }
             return $vertexResult;
         }
 
         Log::warning('Vertex AI failed, falling back to OpenAI', ['aspect' => $aspectRatio]);
         $openaiResult = $this->generateImageOpenAi($wrapped, $aspectRatio);
-        if ($openaiResult && random_int(1, 100) <= 30) {
+        // OpenAI can't receive reference images, so composite logo manually
+        if ($openaiResult) {
             $this->compositeLogoBadge($openaiResult['path']);
         }
         return $openaiResult;
@@ -271,22 +270,26 @@ class GeminiContentService
             }
             $preset = $styles[$style];
 
-            // Logo compositing is intentionally disabled — until we have a
-            // reliable way to overlay our real logo in PHP post-generation,
-            // we prefer NO logo to a fake one. The previous strategy of
-            // attaching the real PNG as a reference image still let Gemini
-            // fabricate stylized variants of the wordmark. Send no logo,
-            // ask for no logo, no text — pure visual.
             $parts = [];
             $stylePrompt = $preset['prompt'];
 
-            $brandLine = "BRAND: Do NOT add any logo, wordmark, badge, watermark or brand text to this image. Leave all corners empty of brand marks. The brand is added separately in post. ";
+            // Attach logo as reference image so Gemini can integrate it naturally
+            $logoPath = public_path('images/social/logo-light.png');
+            if (file_exists($logoPath)) {
+                $logoBase64 = base64_encode(file_get_contents($logoPath));
+                $parts[] = [
+                    'inlineData' => [
+                        'mimeType' => 'image/png',
+                        'data' => $logoBase64,
+                    ],
+                ];
+            }
 
-            $parts[] = ['text' => "Generate a magazine-quality social media image with EXACT aspect ratio {$aspectRatio} (critical — the image MUST be {$aspectRatio}, portrait if 3:4, vertical 9:16 for stories). "
-                . $brandLine
-                . "VISUAL STYLE ({$preset['name']}): {$stylePrompt} "
-                . "TEXT RULES: ZERO text on the image. No words, no letters, no captions, no labels, no slogans. Pure visual only. "
-                . "CONTENT: {$prompt}"];
+            $parts[] = ['text' => "Generează o imagine premium pentru social media cu aspect ratio EXACT {$aspectRatio} (critic — imaginea TREBUIE să fie {$aspectRatio}, portrait dacă e 3:4, vertical 9:16 pentru stories). "
+                . "LOGO SAMBLA: Ți-am atașat logo-ul oficial Sambla. Integrează-l subtil în designul imaginii — în colțul stânga-jos sau dreapta-jos, la dimensiune mică (~15% din lățimea imaginii). NU modifica logo-ul, NU-l redesena, NU inventa alt logo. Folosește-l exact cum e. Dacă fundalul e închis, logo-ul se vede bine așa cum e (text alb). Dacă fundalul e deschis, pune-l pe un mic card alb cu colțuri rotunjite și umbră subtilă. "
+                . "STIL VIZUAL ({$preset['name']}): {$stylePrompt} "
+                . "REGULĂ TEXT: Dacă prompt-ul conține un HEADLINE, integrează-l ORGANIC în designul imaginii — textul trebuie să fie PARTE din compoziție, nu lipit peste. Folosește font sans-serif curat (stil Inter/Helvetica), dimensiune mare, contrast puternic cu fundalul. Textul trebuie să arate ca un element de design, ca pe un landing page premium. Textele TREBUIE să fie în limba ROMÂNĂ. "
+                . "CONȚINUT: {$prompt}"];
 
             $startTime = microtime(true);
 

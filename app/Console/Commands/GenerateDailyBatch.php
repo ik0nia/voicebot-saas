@@ -645,20 +645,17 @@ class GenerateDailyBatch extends Command
         $styleKey = array_rand($styles);
         $preset = $styles[$styleKey];
 
-        $topicAnchor = isset($topicData['topic']) ? "POST TOPIC (the image MUST visually relate to this concept): {$topicData['topic']} " : '';
-
-        // Generate a short Romanian headline for the image (max 5 words)
-        $headline = $this->generateImageHeadline($topicData);
+        $topicAnchor = isset($topicData['topic']) ? "SUBIECTUL POSTĂRII (imaginea TREBUIE să fie vizual relevantă): {$topicData['topic']} " : '';
 
         $prompt = $avoidLine
-            . "Create a scroll-stopping 3:4 social media image for Sambla — a modern Romanian AI chatbot & voicebot SaaS platform. "
-            . "VISUAL STYLE ({$preset['name']}): {$preset['prompt']} "
+            . "Creează o imagine 3:4 pentru social media Sambla — platformă românească de chatbot și voicebot AI. "
+            . "STIL VIZUAL ({$preset['name']}): {$preset['prompt']} "
             . $topicAnchor
-            . "CONCEPT: {$topicData['image_concept']}. Translate this into a visually rich scene that feels modern, techy, and premium — like the hero image of a top Y Combinator startup. "
-            . ($headline ? "HEADLINE ON IMAGE: Include this short text on the image: \"{$headline}\". Use a clean sans-serif font (Inter/Helvetica style), high contrast against the background (white text on dark, dark text on light). Place it where it's clearly readable and doesn't cover the main visual. Make it look designed, not slapped on. " : '')
-            . "MOOD: Smart, friendly, approachable but professional. The image should make a business owner think 'this looks like a tool I want to use'. "
-            . "COMPOSITION: Clean, bold, designed. Strong focal point. Rich gradients or soft lighting. The kind of image that stops the scroll on Instagram/Facebook. "
-            . "ASPECT: 3:4 portrait for social feed.";
+            . "CONCEPT: {$topicData['image_concept']}. Transformă în vizual modern, tech, premium — ca hero image de pe site-ul unui startup top. "
+            . "HEADLINE ÎN IMAGINE: Inventează un headline scurt (3-5 cuvinte) în ROMÂNĂ care să fie RELEVANT cu subiectul postării și cu ce face Sambla. Headline-ul trebuie să aibă sens pentru un antreprenor care vede postarea — nu cuvinte generice. Integrează-l organic în design ca pe un landing page premium. "
+            . "DISPOZIȚIE: Smart, prietenos, profesional. Imaginea trebuie să facă un antreprenor să gândească 'vreau să folosesc acest tool'. "
+            . "COMPOZIȚIE: Curată, bold, designată. Punct focal puternic. Gradienți sau iluminare moale. Oprește scroll-ul pe Instagram/Facebook. "
+            . "ASPECT: 3:4 portrait.";
 
         return $gemini->generateImage($prompt, '3:4');
     }
@@ -669,49 +666,15 @@ class GenerateDailyBatch extends Command
         $styleKey = array_rand($styles);
         $preset = $styles[$styleKey];
 
-        $topicAnchor = isset($topicData['topic']) ? "POST TOPIC (the image MUST visually relate to this concept): {$topicData['topic']} " : '';
+        $topicAnchor = isset($topicData['topic']) ? "SUBIECTUL POSTĂRII: {$topicData['topic']} " : '';
 
-        $headline = $this->generateImageHeadline($topicData);
-
-        return "Create a 9:16 vertical Instagram STORY image for Sambla — a modern AI chatbot & voicebot SaaS platform. "
-            . "VISUAL STYLE ({$preset['name']}): {$preset['prompt']} "
+        return "Creează o imagine 9:16 verticală pentru Instagram Story Sambla — platformă românească de chatbot și voicebot AI. "
+            . "STIL VIZUAL ({$preset['name']}): {$preset['prompt']} "
             . $topicAnchor
-            . "CONCEPT: {$topicData['image_concept']}. Make it feel like a premium tech brand's story — modern, clean, vibrant. "
-            . ($headline ? "HEADLINE ON IMAGE: Include this short text: \"{$headline}\". Clean sans-serif font, high contrast, clearly readable. Place in the middle third of the image (safe from Instagram UI overlays at top/bottom). " : '')
-            . "Full-bleed vertical composition, single bold hero element, generous top/bottom safe zones for Instagram UI overlays. "
-            . "MOOD: Smart, friendly, techy. Scroll-stopping visual quality. "
+            . "CONCEPT: {$topicData['image_concept']}. Vizual modern, premium, tech. "
+            . "HEADLINE ÎN IMAGINE: Inventează un headline scurt (3-5 cuvinte) în ROMÂNĂ relevant cu subiectul. Integrează-l organic în design, în treimea din mijloc a imaginii (safe zone de la UI-ul Instagram sus/jos). "
+            . "Compoziție verticală full-bleed, element central bold, spațiu generos sus/jos. "
             . "ASPECT: 9:16 portrait.";
-    }
-
-    /**
-     * Generate a short Romanian headline (3-5 words) for the image
-     * based on the post topic. Returns null ~20% of the time for variety.
-     */
-    private function generateImageHeadline(array $topicData): ?string
-    {
-        // ~20% of images have no text at all for visual variety
-        if (random_int(1, 100) <= 20) {
-            return null;
-        }
-
-        $headlines = [
-            'tehnologie' => ['Cum funcționează?', 'Sub capotă', 'Tehnologia din spate', 'Inteligent prin design'],
-            'tehnologie_explicativ' => ['Cum funcționează?', 'Simplu explicat', 'Știință, nu magie'],
-            'verticale' => ['Soluția ta AI', 'Automatizează simplu', 'Mai mult timp liber', 'Focusează-te pe clienți'],
-            'caz_real' => ['Rezultate reale', 'Funcționează deja', 'Poveste de succes'],
-            'voce' => ['Răspunde vocal 24/7', 'Voce naturală AI', 'Apeluri pe pilot automat'],
-            'antihalucinare' => ['Zero inventat', 'Doar fapte reale', 'Răspunsuri corecte'],
-            'securitate' => ['Date protejate', 'GDPR complet', 'Hosted în România'],
-            'ecommerce' => ['Vinde non-stop', 'Magazin + AI', 'Clienți fericiți 24/7'],
-            'baza_cunostinte' => ['Învață din documente', 'Cunoștințe instant', 'Răspunsuri din PDF-uri'],
-            'servicii' => ['Programări automate', 'Lead-uri captate', 'Mai puțin stres'],
-            'platforma' => ['Gata în 5 minute', 'Dashboard live', 'Totul într-un loc'],
-        ];
-
-        $category = $topicData['category'] ?? 'platforma';
-        $pool = $headlines[$category] ?? $headlines['platforma'];
-
-        return $pool[array_rand($pool)];
     }
 
     private function generateStoryImage(GeminiContentService $gemini, array $topicData): ?array

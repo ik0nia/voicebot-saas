@@ -91,19 +91,12 @@ class RegenerateSocialImages extends Command
                 $styleKey = array_rand($styles);
                 $preset = $styles[$styleKey];
 
-                // Pick a short Romanian headline for ~80% of images
-                $headline = '';
-                if (random_int(1, 100) <= 80 && $topic) {
-                    $headlinePool = ['Soluția ta AI', 'Automatizează simplu', 'Rezultate reale', 'Răspunde 24/7', 'Mai mult timp liber', 'Simplu și rapid', 'Funcționează deja', 'Gata în 5 minute', 'Clienți fericiți'];
-                    $headline = $headlinePool[array_rand($headlinePool)];
-                }
-
-                $prompt = "Create a scroll-stopping social media image for Sambla — a modern Romanian AI chatbot & voicebot SaaS platform. "
-                    . "VISUAL STYLE ({$preset['name']}): {$preset['prompt']} "
-                    . ($topic ? "POST TOPIC: {$topic} " : '')
-                    . "CONCEPT: {$concept}. Make it feel like a premium tech brand visual — modern, clean, vibrant. "
-                    . ($headline ? "HEADLINE ON IMAGE: Include this short text: \"{$headline}\". Clean sans-serif font, high contrast against background, clearly readable and well-designed. " : '')
-                    . "MOOD: Smart, friendly, approachable but professional. "
+                $prompt = "Creează o imagine pentru social media Sambla — platformă românească de chatbot și voicebot AI. "
+                    . "STIL VIZUAL ({$preset['name']}): {$preset['prompt']} "
+                    . ($topic ? "SUBIECTUL POSTĂRII (imaginea TREBUIE să fie vizual relevantă): {$topic} " : '')
+                    . "CONCEPT: {$concept}. Transformă în vizual modern, tech, premium. "
+                    . "HEADLINE ÎN IMAGINE: Inventează un headline scurt (3-5 cuvinte) în ROMÂNĂ care să fie RELEVANT cu subiectul postării și cu ce face Sambla (chatbot, voicebot, automatizare conversații). Integrează-l organic în designul imaginii ca pe un landing page premium. "
+                    . "DISPOZIȚIE: Smart, prietenos, profesional. "
                     . "ASPECT: {$aspectRatio}.";
 
                 $this->line("  [{$post->id}] {$post->platform}/{$post->post_type} — generating ({$preset['name']})...");
