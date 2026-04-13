@@ -36,3 +36,11 @@ Schedule::command('social:purge-deleted --days=7')->dailyAt('03:30');
 Schedule::command('social:ensure-drafts --target=5 --per-tick=2 --spacing=30')
     ->everyFiveMinutes()
     ->withoutOverlapping();
+
+// Hourly: regenerate OpenAI/missing images with Gemini 3 Pro.
+// Checks quota first — if exhausted, stops immediately and waits for next tick.
+// If OK, processes up to 20 images per run, then sends email report.
+Schedule::command('social:smart-regenerate --sleep=35 --batch=20 --notify=codrut@ikonia.ro')
+    ->hourly()
+    ->withoutOverlapping()
+    ->between('6:00', '23:00');
