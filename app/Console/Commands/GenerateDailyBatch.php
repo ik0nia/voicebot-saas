@@ -691,6 +691,7 @@ class GenerateDailyBatch extends Command
                 . "HEADLINE: dacă pui text, să fie despre cum Sambla ajută domeniul {$niche}. "
                 . "ENERGIE: Vibrant, optimist, profesional dar accesibil. Culorile trebuie să POP pe feed. "
                 . "COMPOZIȚIE: Dinamică, cu mai multe elemente vizuale distribuite armonios. Punct focal central clar. "
+                . "SAFE ZONES: minim 10% margine liberă pe toate laturile — Instagram cropuiește marginile. Centrează textul și elementele cheie. "
                 . "ASPECT: 3:4 portrait.";
         } else {
             $prompt = $avoidLine
@@ -701,10 +702,11 @@ class GenerateDailyBatch extends Command
                 . "HEADLINE: dacă pui text, să fie relevant cu subiectul postării — ceva ce un antreprenor înțelege instant. "
                 . "DISPOZIȚIE: Smart, prietenos, profesional. Imaginea trebuie să facă un antreprenor să gândească 'vreau să folosesc acest tool'. "
                 . "COMPOZIȚIE: Curată, bold, designată. Punct focal puternic. Gradienți sau iluminare moale. Oprește scroll-ul pe Instagram/Facebook. "
+                . "SAFE ZONES: minim 10% margine liberă pe toate laturile — Instagram cropuiește marginile. Centrează textul și elementele cheie. "
                 . "ASPECT: 3:4 portrait.";
         }
 
-        return $gemini->generateImage($prompt, '3:4');
+        return $gemini->generateImage($prompt, '4:5');
     }
 
     private function storyPrompt(array $topicData): string

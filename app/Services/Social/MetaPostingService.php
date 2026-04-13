@@ -68,7 +68,7 @@ class MetaPostingService
 
         try {
             $gemini = app(GeminiContentService::class);
-            $aspect = $post->post_type === 'story' ? '9:16' : '3:4';
+            $aspect = $post->post_type === 'story' ? '9:16' : '4:5';
             $prompt = $post->image_prompt ?? ($post->metadata['topic'] ?? 'Sambla AI');
             $image = $gemini->generateImage($prompt, $aspect);
             if ($image && !empty($image['url'])) {

@@ -71,7 +71,7 @@ class RegenerateSocialImages extends Command
 
             foreach ($groupPosts as $post) {
                 $isStory = $post->post_type === 'story';
-                $aspectRatio = $isStory ? '9:16' : '3:4';
+                $aspectRatio = $isStory ? '9:16' : '4:5';
 
                 // Reuse image within the same group for same aspect ratio
                 if (!$isStory && $feedImage) {

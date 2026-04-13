@@ -65,7 +65,7 @@ class BackfillSocialImages extends Command
             $label = "#{$post->id} [{$post->platform}/{$post->post_type}]";
 
             $isStory = $post->post_type === 'story';
-            $aspect = $isStory ? '9:16' : '3:4';
+            $aspect = $isStory ? '9:16' : '4:5';
 
             // Try to reuse a sibling-generated image only for non-story FB/IG posts
             // sharing the same group_id (same topic, same intended visual).
@@ -136,7 +136,7 @@ class BackfillSocialImages extends Command
 
         $aspectLine = $aspect === '9:16'
             ? "ASPECT: 9:16 vertical Instagram Story, full-bleed, generous top/bottom safe zones for UI overlays. "
-            : "ASPECT: 3:4 portrait social feed graphic. ";
+            : "ASPECT: 3:4 portrait social feed graphic. SAFE ZONES: minim 10% margine liberă pe toate laturile — Instagram cropuiește marginile în feed. Centrează elementele importante în zona sigură interioară. ";
 
         return "Premium magazine-quality social media image for a modern brand. The goal is a beautiful, atmospheric, cinematic visual — NOT a poster with a slogan slapped on. "
             . "SUBJECT: {$topic}. Translate the topic into a real visual scene with depth, lighting and atmosphere. Examples: a single beautiful object on a textured surface, a still life with golden hour light, a Bauhaus geometric composition, a miniature crafted diorama, a premium 3D render of one floating element. "

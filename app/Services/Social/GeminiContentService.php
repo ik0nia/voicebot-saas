@@ -15,10 +15,11 @@ class GeminiContentService
 
     // Vertex AI config for image generation via service account
     private string $vertexProjectId = 'sambla';
-    // Switched 2026-04-13 to gemini-3.1-flash-image-preview on project sambla
-    // (with billing via ikonia). Previous 2.5-flash-image was on gen-lang-client
-    // project which had quota issues.
-    private string $vertexImageModel = 'gemini-3.1-flash-image-preview';
+    // Primary: Gemini 3 Pro Image (best quality, detailed reasoning)
+    // Fallback: Gemini 3.1 Flash Image (faster, separate quota)
+    // Each has 2 RPM quota independently = 4 RPM total when alternating
+    private string $vertexImageModel = 'gemini-3-pro-image-preview';
+    private string $vertexImageModelFallback = 'gemini-3.1-flash-image-preview';
     private string $serviceAccountPath;
 
     public function __construct()
@@ -189,22 +190,32 @@ class GeminiContentService
         // see the exact same instructions.
         $wrapped = $this->imageRulesPreamble() . $prompt;
 
-        // Generate image via Vertex only. Quota is 2 images/min so we
-        // only retry once after 45s to stay within limits.
+        // Try Pro first (best quality), then Flash fallback (separate quota).
+        // Each model has 2 RPM independently.
         $vertexResult = $this->generateImageVertex($wrapped, $aspectRatio, $style);
         if ($vertexResult) {
             return $vertexResult;
         }
 
-        // Single retry after cooldown
-        Log::info('Vertex AI failed, retrying once in 45s', ['aspect' => $aspectRatio]);
-        sleep(45);
+        // Pro failed (likely quota) — try Flash which has independent quota
+        Log::info('Gemini Pro failed, trying Flash fallback', ['aspect' => $aspectRatio]);
+        $savedModel = $this->vertexImageModel;
+        $this->vertexImageModel = $this->vertexImageModelFallback;
+        $vertexResult = $this->generateImageVertex($wrapped, $aspectRatio, $style);
+        $this->vertexImageModel = $savedModel;
+        if ($vertexResult) {
+            return $vertexResult;
+        }
+
+        // Both models at quota — wait and retry Pro once
+        Log::info('Both models failed, retrying Pro in 35s', ['aspect' => $aspectRatio]);
+        sleep(35);
         $vertexResult = $this->generateImageVertex($wrapped, $aspectRatio, $style);
         if ($vertexResult) {
             return $vertexResult;
         }
 
-        Log::warning('Vertex AI failed after retry, skipping image', ['aspect' => $aspectRatio]);
+        Log::warning('All Vertex models failed, skipping image', ['aspect' => $aspectRatio]);
         return null;
     }
 
@@ -286,8 +297,13 @@ class GeminiContentService
             // Logo is composited post-processing (AI models distort logos).
             // DO NOT send logo as reference image to Gemini.
 
-            $parts[] = ['text' => "Generează o imagine premium pentru social media cu aspect ratio EXACT {$aspectRatio} (critic — imaginea TREBUIE să fie {$aspectRatio}, portrait dacă e 3:4, vertical 9:16 pentru stories). "
+            $safeZoneRule = in_array($aspectRatio, ['4:5', '3:4'])
+                ? "SAFE ZONES (CRITIC pentru Instagram): Lasă minim 10% margine liberă pe toate laturile. NU plasa text sau elemente importante în primii/ultimii 10% din imagine (sus, jos, stânga, dreapta) — Instagram cropuiește aceste zone în feed. Centrează orice text în zona sigură interioară. "
+                : "SAFE ZONES: Lasă margini generoase sus și jos pentru overlay-urile de UI. ";
+
+            $parts[] = ['text' => "Generează o imagine premium pentru social media cu aspect ratio EXACT {$aspectRatio} (critic — imaginea TREBUIE să fie {$aspectRatio}, portrait dacă e 4:5, vertical 9:16 pentru stories). "
                 . "FĂRĂ LOGO: NU pune niciun logo, niciun brand mark, niciun text de tip 'Sambla' pe imagine. Niciun element de branding în colțuri sau oriunde altundeva. Imaginea trebuie curată, fără mărci. "
+                . $safeZoneRule
                 . "STIL VIZUAL ({$preset['name']}): {$stylePrompt} "
                 . "REGULĂ TEXT: Dacă prompt-ul conține un HEADLINE, integrează-l ORGANIC în designul imaginii — textul trebuie să fie PARTE din compoziție, nu lipit peste. Folosește font sans-serif curat (stil Inter/Helvetica), dimensiune mare, contrast puternic cu fundalul. Textul trebuie să arate ca un element de design, ca pe un landing page premium. Textele TREBUIE să fie în limba ROMÂNĂ. "
                 . "CONȚINUT: {$prompt}"];
@@ -387,7 +403,7 @@ class GeminiContentService
             }
 
             $size = match ($aspectRatio) {
-                '9:16', '3:4', '2:3' => '1024x1536',
+                '9:16', '4:5', '3:4', '2:3' => '1024x1536',
                 '16:9', '4:3', '3:2' => '1536x1024',
                 default              => '1024x1024',
             };
@@ -572,7 +588,7 @@ class GeminiContentService
 
         // Platform-specific aspect ratios
         $aspectRatio = match($platform) {
-            'facebook', 'instagram' => '3:4',
+            'facebook', 'instagram' => '4:5',
             'blog' => '16:9',
             default => '1:1',
         };
