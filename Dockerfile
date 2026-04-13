@@ -22,7 +22,7 @@ RUN apk add --no-cache \
     && pecl install redis \
     && docker-php-ext-enable redis \
     && apk del $PHPIZE_DEPS \
-    && apk add --no-cache fcgi \
+    && apk add --no-cache fcgi imagemagick \
     && echo '#!/bin/sh' > /usr/local/bin/php-fpm-healthcheck \
     && echo 'SCRIPT_NAME=/ping SCRIPT_FILENAME=/ping REQUEST_METHOD=GET cgi-fcgi -bind -connect 127.0.0.1:9000 || exit 1' >> /usr/local/bin/php-fpm-healthcheck \
     && chmod +x /usr/local/bin/php-fpm-healthcheck

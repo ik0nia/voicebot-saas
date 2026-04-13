@@ -17,6 +17,7 @@ class GenerateDailyBatch extends Command
                             {--from=09:00 : Earliest posting time HH:MM (only enforced for future dates)}
                             {--until=20:00 : Schedule posts until this time (HH:MM)}
                             {--platform=both : facebook, instagram, or both}
+                            {--category= : Force a specific category (e.g. verticale, tehnologie)}
                             {--drafts : Create posts as drafts with no scheduled_at (for review queue)}
                             {--dry-run : Preview without creating}';
 
@@ -219,10 +220,15 @@ class GenerateDailyBatch extends Command
             ->filter()
             ->all();
 
-        $filtered = array_values(array_filter($weighted, fn($c) => !in_array($c, $recentCategories, true)));
-        if (empty($filtered)) $filtered = $weighted; // fallback if everything was filtered
+        $forcedCategory = $this->option('category');
+        if ($forcedCategory && isset($this->featureSeedsByCategory[$forcedCategory])) {
+            $category = $forcedCategory;
+        } else {
+            $filtered = array_values(array_filter($weighted, fn($c) => !in_array($c, $recentCategories, true)));
+            if (empty($filtered)) $filtered = $weighted; // fallback if everything was filtered
 
-        $category = $filtered[array_rand($filtered)];
+            $category = $filtered[array_rand($filtered)];
+        }
 
         // Within the category, also avoid the last seed used from this same
         // category so we don't repeat "cabinet medical" twice in a row.
@@ -647,15 +653,56 @@ class GenerateDailyBatch extends Command
 
         $topicAnchor = isset($topicData['topic']) ? "SUBIECTUL POSTĂRII (imaginea TREBUIE să fie vizual relevantă): {$topicData['topic']} " : '';
 
-        $prompt = $avoidLine
-            . "Creează o imagine 3:4 pentru social media Sambla — platformă românească de chatbot și voicebot AI. "
-            . "STIL VIZUAL ({$preset['name']}): {$preset['prompt']} "
-            . $topicAnchor
-            . "CONCEPT: {$topicData['image_concept']}. Transformă în vizual modern, tech, premium — ca hero image de pe site-ul unui startup top. "
-            . "HEADLINE ÎN IMAGINE: Inventează un headline scurt (3-5 cuvinte) în ROMÂNĂ care să fie RELEVANT cu subiectul postării și cu ce face Sambla. Headline-ul trebuie să aibă sens pentru un antreprenor care vede postarea — nu cuvinte generice. Integrează-l organic în design ca pe un landing page premium. "
-            . "DISPOZIȚIE: Smart, prietenos, profesional. Imaginea trebuie să facă un antreprenor să gândească 'vreau să folosesc acest tool'. "
-            . "COMPOZIȚIE: Curată, bold, designată. Punct focal puternic. Gradienți sau iluminare moale. Oprește scroll-ul pe Instagram/Facebook. "
-            . "ASPECT: 3:4 portrait.";
+        $isVerticale = ($topicData['category'] ?? null) === 'verticale';
+
+        if ($isVerticale) {
+            // Extract the niche name from the seed (first word before ":")
+            $niche = 'business';
+            if (!empty($topicData['seed']) && preg_match('/^([A-ZĂÂÎȘȚ\s\/]+):/u', $topicData['seed'], $m)) {
+                $niche = mb_strtolower(trim($m[1]));
+            }
+
+            $nicheVisuals = [
+                'contabilitate' => 'calculatoare, grafice financiare, dosare colorate, cifre floating, pixeli de spreadsheet',
+                'cabinet avocatură' => 'balanța justiției stilizată, cărți de drept, documente sigilate, elemente juridice',
+                'cabinet medical / stomatologic' => 'stetoscop stilizat, instrumente medicale moderne, ecrane de monitorizare, elemente de sănătate',
+                'service auto' => 'chei mecanice stilizate, piese auto, dashboard digital, elemente de atelier modern',
+                'salon beauty / frizerie' => 'foarfece stilizate, pensule de machiaj, palete de culori, elemente glamour',
+                'agenție imobiliară' => 'chei de casă, planuri de apartament, clădiri stilizate, pin-uri de locație',
+                'restaurant / delivery' => 'farfurii elegante, ingrediente colorate, cutii de livrare, elemente culinare',
+                'cabinet psihologie / psihoterapie' => 'forme abstracte calmante, plante, spații serene, elemente de wellbeing',
+                'școală de limbi / cursuri' => 'cărți colorate, steaguri de țări, litere floating, elemente educaționale',
+                'agenție de turism' => 'valize colorate, bilete de avion, globuri, repere turistice stilizate',
+                'birou notarial' => 'sigilii, ștampile, documente oficiale stilizate, elemente de autentificare',
+                'firmă de curățenie / servicii la domiciliu' => 'spray-uri colorate, bule de săpun, case strălucitoare, elemente fresh',
+                'clinică veterinară' => 'lăbuțe colorate, stetoscop veterinar, animale stilizate (pisici, câini), elemente de îngrijire',
+                'pensiune / hotel mic' => 'chei de cameră, peisaje montane/rurale, pat confortabil, elemente de ospitalitate',
+                'optică medicală' => 'ochelari stilizați, lentile, teste de vedere, elemente optice colorate',
+            ];
+
+            $nicheElements = $nicheVisuals[$niche] ?? 'elemente specifice domeniului, obiecte profesionale stilizate';
+
+            $prompt = $avoidLine
+                . "Creează o imagine 3:4 VIBRANTĂ și COLORATĂ pentru social media Sambla — platformă românească de chatbot și voicebot AI. "
+                . "NIȘĂ: {$niche} — imaginea TREBUIE să conțină elemente vizuale din acest domeniu: {$nicheElements}. "
+                . "STIL: Ilustrație modernă, colorată, dinamică — culori vii și saturate (nu palide/corporate). Gândește: poster de festival tech meets infographic Dribbble. Fundalul poate fi gradient bold sau scenă colorată. Elementele din nișă sunt stilizate, isometrice sau flat-design, nu realiste. "
+                . $topicAnchor
+                . "CONCEPT: {$topicData['image_concept']}. Îmbină elementele din nișa ({$niche}) cu elemente tech/AI (chat bubbles, unde sonore, dashboard-uri) pentru a arăta cum Sambla ajută acest domeniu. "
+                . "HEADLINE ÎN IMAGINE: Inventează un headline scurt (3-5 cuvinte) în ROMÂNĂ relevant cu nișa și cu ce face Sambla pentru acest domeniu. Integrează-l organic în design. "
+                . "ENERGIE: Vibrant, optimist, profesional dar accesibil. Culorile trebuie să POP pe feed. "
+                . "COMPOZIȚIE: Dinamică, cu mai multe elemente vizuale distribuite armonios. Punct focal central clar. "
+                . "ASPECT: 3:4 portrait.";
+        } else {
+            $prompt = $avoidLine
+                . "Creează o imagine 3:4 pentru social media Sambla — platformă românească de chatbot și voicebot AI. "
+                . "STIL VIZUAL ({$preset['name']}): {$preset['prompt']} "
+                . $topicAnchor
+                . "CONCEPT: {$topicData['image_concept']}. Transformă în vizual modern, tech, premium — ca hero image de pe site-ul unui startup top. "
+                . "HEADLINE ÎN IMAGINE: Inventează un headline scurt (3-5 cuvinte) în ROMÂNĂ care să fie RELEVANT cu subiectul postării și cu ce face Sambla. Headline-ul trebuie să aibă sens pentru un antreprenor care vede postarea — nu cuvinte generice. Integrează-l organic în design ca pe un landing page premium. "
+                . "DISPOZIȚIE: Smart, prietenos, profesional. Imaginea trebuie să facă un antreprenor să gândească 'vreau să folosesc acest tool'. "
+                . "COMPOZIȚIE: Curată, bold, designată. Punct focal puternic. Gradienți sau iluminare moale. Oprește scroll-ul pe Instagram/Facebook. "
+                . "ASPECT: 3:4 portrait.";
+        }
 
         return $gemini->generateImage($prompt, '3:4');
     }
@@ -667,6 +714,24 @@ class GenerateDailyBatch extends Command
         $preset = $styles[$styleKey];
 
         $topicAnchor = isset($topicData['topic']) ? "SUBIECTUL POSTĂRII: {$topicData['topic']} " : '';
+
+        $isVerticale = ($topicData['category'] ?? null) === 'verticale';
+
+        if ($isVerticale) {
+            $niche = 'business';
+            if (!empty($topicData['seed']) && preg_match('/^([A-ZĂÂÎȘȚ\s\/]+):/u', $topicData['seed'], $m)) {
+                $niche = mb_strtolower(trim($m[1]));
+            }
+
+            return "Creează o imagine 9:16 verticală VIBRANTĂ pentru Instagram Story Sambla — platformă românească de chatbot și voicebot AI. "
+                . "NIȘĂ: {$niche} — include elemente vizuale specifice acestui domeniu, stilizate și colorate. "
+                . $topicAnchor
+                . "CONCEPT: {$topicData['image_concept']}. Îmbină elemente din nișa ({$niche}) cu elemente tech/AI. "
+                . "STIL: Ilustrație colorată, dinamică, culori vii saturate. Poster de festival tech meets Dribbble. Elementele din nișă stilizate isometric sau flat-design. "
+                . "HEADLINE ÎN IMAGINE: Headline scurt (3-5 cuvinte) în ROMÂNĂ relevant cu nișa. Integrează-l în treimea din mijloc (safe zone Instagram). "
+                . "Compoziție verticală full-bleed, element central bold, culori care POP. "
+                . "ASPECT: 9:16 portrait.";
+        }
 
         return "Creează o imagine 9:16 verticală pentru Instagram Story Sambla — platformă românească de chatbot și voicebot AI. "
             . "STIL VIZUAL ({$preset['name']}): {$preset['prompt']} "

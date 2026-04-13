@@ -168,7 +168,7 @@ class GeminiContentService
     {
         return "REGULI (suprascriu orice instrucțiune conflictuală):\n"
             . "1. TEXT SCURT PERMIS — poți include UN singur headline sau tagline în ROMÂNĂ (max 5-6 cuvinte). Textul TREBUIE integrat ORGANIC în design, ca pe un landing page premium — nu lipit deasupra. Font sans-serif curat (Inter/Helvetica), dimensiune mare, contrast puternic. Textul e parte din compoziție, nu un addon.\n"
-            . "2. LOGO — folosește logo-ul Sambla atașat, integrat subtil în design (colț, mic). NU inventa alt logo.\n"
+            . "2. LOGO — NU desena, NU inventa, NU pune NICIUN logo sau brand mark pe imagine. Logo-ul Sambla va fi adăugat automat post-processing. Lasă colțul stânga-jos LIBER.\n"
             . "3. FĂRĂ OAMENI — obiecte, scene, UI mockups, vizualuri abstracte. Fără fețe, fără echipe stock.\n"
             . "4. STIL — modern SaaS / tech-forward: glassmorphism, ilustrații isometrice, obiecte 3D gradient, dashboard-uri dark/light, scene vectoriale, mockup-uri. Gândește Stripe, Linear, Vercel, Notion.\n"
             . "5. CALITATE — scroll-stopping, calitate Dribbble/Behance. Culori bold, compoziție curată, premium.\n"
@@ -182,16 +182,17 @@ class GeminiContentService
         // see the exact same instructions.
         $wrapped = $this->imageRulesPreamble() . $prompt;
 
-        // Vertex gets the logo as a reference image — it integrates it into
-        // the design naturally. No post-processing badge needed.
+        // Generate image via Vertex first, OpenAI as fallback.
+        // Logo is composited post-processing on ALL images — AI models
+        // distort/reinvent the logo when given as reference image.
         $vertexResult = $this->generateImageVertex($wrapped, $aspectRatio, $style);
         if ($vertexResult) {
+            $this->compositeLogoBadge($vertexResult['path']);
             return $vertexResult;
         }
 
         Log::warning('Vertex AI failed, falling back to OpenAI', ['aspect' => $aspectRatio]);
         $openaiResult = $this->generateImageOpenAi($wrapped, $aspectRatio);
-        // OpenAI can't receive reference images, so composite logo manually
         if ($openaiResult) {
             $this->compositeLogoBadge($openaiResult['path']);
         }
@@ -273,20 +274,11 @@ class GeminiContentService
             $parts = [];
             $stylePrompt = $preset['prompt'];
 
-            // Attach logo as reference image so Gemini can integrate it naturally
-            $logoPath = public_path('images/social/logo-light.png');
-            if (file_exists($logoPath)) {
-                $logoBase64 = base64_encode(file_get_contents($logoPath));
-                $parts[] = [
-                    'inlineData' => [
-                        'mimeType' => 'image/png',
-                        'data' => $logoBase64,
-                    ],
-                ];
-            }
+            // Logo is composited post-processing (AI models distort logos).
+            // DO NOT send logo as reference image to Gemini.
 
             $parts[] = ['text' => "Generează o imagine premium pentru social media cu aspect ratio EXACT {$aspectRatio} (critic — imaginea TREBUIE să fie {$aspectRatio}, portrait dacă e 3:4, vertical 9:16 pentru stories). "
-                . "LOGO SAMBLA: Ți-am atașat logo-ul oficial Sambla. Integrează-l subtil în designul imaginii — în colțul stânga-jos sau dreapta-jos, la dimensiune mică (~15% din lățimea imaginii). NU modifica logo-ul, NU-l redesena, NU inventa alt logo. Folosește-l exact cum e. Dacă fundalul e închis, logo-ul se vede bine așa cum e (text alb). Dacă fundalul e deschis, pune-l pe un mic card alb cu colțuri rotunjite și umbră subtilă. "
+                . "NU pune niciun logo, niciun brand mark, niciun text de tip 'Sambla' pe imagine — logo-ul va fi adăugat automat post-processing. Lasă colțul stânga-jos LIBER (acolo vine logo-ul). "
                 . "STIL VIZUAL ({$preset['name']}): {$stylePrompt} "
                 . "REGULĂ TEXT: Dacă prompt-ul conține un HEADLINE, integrează-l ORGANIC în designul imaginii — textul trebuie să fie PARTE din compoziție, nu lipit peste. Folosește font sans-serif curat (stil Inter/Helvetica), dimensiune mare, contrast puternic cu fundalul. Textul trebuie să arate ca un element de design, ca pe un landing page premium. Textele TREBUIE să fie în limba ROMÂNĂ. "
                 . "CONȚINUT: {$prompt}"];

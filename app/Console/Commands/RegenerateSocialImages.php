@@ -91,13 +91,34 @@ class RegenerateSocialImages extends Command
                 $styleKey = array_rand($styles);
                 $preset = $styles[$styleKey];
 
-                $prompt = "Creează o imagine pentru social media Sambla — platformă românească de chatbot și voicebot AI. "
-                    . "STIL VIZUAL ({$preset['name']}): {$preset['prompt']} "
-                    . ($topic ? "SUBIECTUL POSTĂRII (imaginea TREBUIE să fie vizual relevantă): {$topic} " : '')
-                    . "CONCEPT: {$concept}. Transformă în vizual modern, tech, premium. "
-                    . "HEADLINE ÎN IMAGINE: Inventează un headline scurt (3-5 cuvinte) în ROMÂNĂ care să fie RELEVANT cu subiectul postării și cu ce face Sambla (chatbot, voicebot, automatizare conversații). Integrează-l organic în designul imaginii ca pe un landing page premium. "
-                    . "DISPOZIȚIE: Smart, prietenos, profesional. "
-                    . "ASPECT: {$aspectRatio}.";
+                $category = $metadata['category'] ?? null;
+                $isVerticale = $category === 'verticale';
+
+                if ($isVerticale) {
+                    // Extract niche name from seed
+                    $seed = $metadata['seed'] ?? '';
+                    $niche = 'business';
+                    if (preg_match('/^([A-ZĂÂÎȘȚ\s\/]+):/u', $seed, $m)) {
+                        $niche = mb_strtolower(trim($m[1]));
+                    }
+
+                    $prompt = "Creează o imagine {$aspectRatio} VIBRANTĂ și COLORATĂ pentru social media Sambla — platformă românească de chatbot și voicebot AI. "
+                        . "NIȘĂ: {$niche} — imaginea TREBUIE să conțină elemente vizuale din acest domeniu. "
+                        . "STIL: Ilustrație modernă, colorată, dinamică — culori vii și saturate. Elementele din nișă stilizate isometric sau flat-design. "
+                        . ($topic ? "SUBIECTUL POSTĂRII: {$topic} " : '')
+                        . "CONCEPT: {$concept}. Îmbină elementele din nișa ({$niche}) cu elemente tech/AI. "
+                        . "HEADLINE ÎN IMAGINE: Headline scurt (3-5 cuvinte) în ROMÂNĂ relevant cu nișa. Integrează-l organic în design. "
+                        . "ENERGIE: Vibrant, optimist, profesional. Culorile trebuie să POP pe feed. "
+                        . "ASPECT: {$aspectRatio}.";
+                } else {
+                    $prompt = "Creează o imagine pentru social media Sambla — platformă românească de chatbot și voicebot AI. "
+                        . "STIL VIZUAL ({$preset['name']}): {$preset['prompt']} "
+                        . ($topic ? "SUBIECTUL POSTĂRII (imaginea TREBUIE să fie vizual relevantă): {$topic} " : '')
+                        . "CONCEPT: {$concept}. Transformă în vizual modern, tech, premium. "
+                        . "HEADLINE ÎN IMAGINE: Inventează un headline scurt (3-5 cuvinte) în ROMÂNĂ care să fie RELEVANT cu subiectul postării și cu ce face Sambla (chatbot, voicebot, automatizare conversații). Integrează-l organic în designul imaginii ca pe un landing page premium. "
+                        . "DISPOZIȚIE: Smart, prietenos, profesional. "
+                        . "ASPECT: {$aspectRatio}.";
+                }
 
                 $this->line("  [{$post->id}] {$post->platform}/{$post->post_type} — generating ({$preset['name']})...");
 

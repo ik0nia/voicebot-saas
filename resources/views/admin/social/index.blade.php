@@ -243,14 +243,14 @@
                                     @else
                                         <div class="w-full h-full flex items-center justify-center text-slate-300 text-[10px]">no img</div>
                                     @endif
-                                    <span class="absolute bottom-0 left-0 px-1 py-0.5 text-[9px] font-bold text-white {{ $platformBg[$post->platform] ?? 'bg-slate-600' }} rounded-tr">{{ $platformIcon[$post->platform] ?? $post->platform }}</span>
+                                    <span class="absolute bottom-0 left-0 px-1 py-0.5 text-[9px] font-bold text-white bg-slate-800 rounded-tr">{{ $post->fanout_label ?? $platformIcon[$post->platform] ?? $post->platform }}</span>
                                 </div>
 
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center gap-2 mb-0.5">
                                         <span class="inline-flex px-1.5 py-0.5 text-[10px] font-semibold rounded {{ $statusColors[$post->status] ?? 'bg-slate-100' }}">{{ strtoupper($post->status) }}</span>
-                                        @if($post->post_type === 'story')
-                                            <span class="inline-flex px-1.5 py-0.5 text-[10px] font-semibold rounded bg-purple-100 text-purple-700">STORY</span>
+                                        @if($post->metadata['category'] ?? null)
+                                            <span class="inline-flex px-1.5 py-0.5 text-[10px] font-semibold rounded bg-slate-50 text-slate-500">{{ $post->metadata['category'] }}</span>
                                         @endif
                                         @if(($post->regen_count ?? 0) > 0)
                                             <span class="inline-flex px-1.5 py-0.5 text-[10px] text-amber-700" title="Regenerări">↻{{ $post->regen_count }}</span>

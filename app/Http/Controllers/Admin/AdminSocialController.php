@@ -50,11 +50,45 @@ class AdminSocialController extends Controller
         // Deterministic ordering: "active" bucket (draft, scheduled, failed) first
         // with nearest scheduled_at at top, then the rest by newest published/created.
         $activeStatuses = ['scheduled', 'draft', 'failed', 'publishing'];
+
+        // Show 1 row per GROUP (not per post). For each group_id pick the FB
+        // feed post as representative; for legacy ungrouped posts pick themselves.
+        // Subquery selects the min id per group (FB feed preferred via ordering).
+        $representativeIds = DB::table('social_posts')
+            ->selectRaw("DISTINCT ON (COALESCE(group_id, id)) id")
+            ->orderByRaw("COALESCE(group_id, id)")
+            ->orderByRaw("CASE WHEN platform = 'facebook' AND post_type = 'post' THEN 0 WHEN post_type = 'post' THEN 1 ELSE 2 END")
+            ->orderBy('id');
+        $query->whereIn('social_posts.id', $representativeIds);
+
         $query->orderByRaw("CASE WHEN status IN ('scheduled','draft','failed','publishing') THEN 0 ELSE 1 END")
               ->orderByRaw('COALESCE(scheduled_at, published_at, created_at) ASC NULLS LAST')
               ->orderByDesc('id');
 
         $posts = $query->paginate(50)->withQueryString();
+
+        // Attach group siblings info to each representative post for the view
+        $groupIds = $posts->getCollection()->pluck('group_id')->filter()->unique()->all();
+        $siblingInfo = $groupIds
+            ? SocialPost::whereIn('group_id', $groupIds)
+                ->get()
+                ->groupBy('group_id')
+                ->map(function ($siblings) {
+                    $platforms = $siblings->pluck('platform')->unique()->all();
+                    $hasStory = $siblings->contains(fn($p) => $p->post_type === 'story');
+                    $parts = [];
+                    if (in_array('facebook', $platforms)) $parts[] = 'FB';
+                    if (in_array('instagram', $platforms)) $parts[] = 'IG';
+                    if ($hasStory) $parts[] = 'Story';
+                    return implode('+', $parts) ?: 'FB';
+                })
+            : collect();
+        $posts->getCollection()->transform(function ($post) use ($siblingInfo) {
+            $post->fanout_label = $post->group_id
+                ? ($siblingInfo[$post->group_id] ?? strtoupper(substr($post->platform, 0, 2)))
+                : strtoupper(substr($post->platform, 0, 2));
+            return $post;
+        });
 
         // Single-query stats via GROUP BY
         $counts = SocialPost::query()
