@@ -183,20 +183,15 @@ class GeminiContentService
         $wrapped = $this->imageRulesPreamble() . $prompt;
 
         // Generate image via Vertex first, OpenAI as fallback.
-        // Logo is composited post-processing on ALL images — AI models
-        // distort/reinvent the logo when given as reference image.
+        // No logo on images — AI distorts it, and post-processing badge
+        // can look out of place. Clean images without branding.
         $vertexResult = $this->generateImageVertex($wrapped, $aspectRatio, $style);
         if ($vertexResult) {
-            $this->compositeLogoBadge($vertexResult['path']);
             return $vertexResult;
         }
 
         Log::warning('Vertex AI failed, falling back to OpenAI', ['aspect' => $aspectRatio]);
-        $openaiResult = $this->generateImageOpenAi($wrapped, $aspectRatio);
-        if ($openaiResult) {
-            $this->compositeLogoBadge($openaiResult['path']);
-        }
-        return $openaiResult;
+        return $this->generateImageOpenAi($wrapped, $aspectRatio);
     }
 
     /**
