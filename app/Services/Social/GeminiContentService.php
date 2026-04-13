@@ -172,7 +172,8 @@ class GeminiContentService
             . "3. FĂRĂ OAMENI — obiecte, scene, UI mockups, vizualuri abstracte. Fără fețe, fără echipe stock.\n"
             . "4. STIL — modern SaaS / tech-forward: glassmorphism, ilustrații isometrice, obiecte 3D gradient, dashboard-uri dark/light, scene vectoriale, mockup-uri. Gândește Stripe, Linear, Vercel, Notion.\n"
             . "5. CALITATE — scroll-stopping, calitate Dribbble/Behance. Culori bold, compoziție curată, premium.\n"
-            . "6. INTERZIS — clip-art, stock photos, handshakes, costume, gradient rainbow, infografice, litere ilizibile/distorsionate.\n\n"
+            . "6. BUTON CTA (opțional, ~50% din imagini) — dacă se potrivește cu designul, adaugă un buton stilizat de tip CTA (ex: 'Află mai mult →', 'Începe acum', 'Testează gratis') integrat organic în compoziție, ca pe un landing page. Butonul trebuie să arate ca element de design, nu ca un buton real — culori din paletă, colțuri rotunjite, text scurt în ROMÂNĂ.\n"
+            . "7. INTERZIS — clip-art, stock photos, handshakes, costume, gradient rainbow, infografice, litere ilizibile/distorsionate.\n\n"
             . "BRIEF:\n";
     }
 

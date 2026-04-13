@@ -53,13 +53,15 @@ class AdminSocialController extends Controller
 
         // Show 1 row per GROUP (not per post). For each group_id pick the FB
         // feed post as representative; for legacy ungrouped posts pick themselves.
-        // Subquery selects the min id per group (FB feed preferred via ordering).
-        $representativeIds = DB::table('social_posts')
-            ->selectRaw("DISTINCT ON (COALESCE(group_id, id)) id")
-            ->orderByRaw("COALESCE(group_id, id)")
-            ->orderByRaw("CASE WHEN platform = 'facebook' AND post_type = 'post' THEN 0 WHEN post_type = 'post' THEN 1 ELSE 2 END")
-            ->orderBy('id');
-        $query->whereIn('social_posts.id', $representativeIds);
+        $query->whereRaw("social_posts.id IN (
+            SELECT DISTINCT ON (COALESCE(group_id, id)) id
+            FROM social_posts
+            ORDER BY COALESCE(group_id, id),
+                     CASE WHEN platform = 'facebook' AND post_type = 'post' THEN 0
+                          WHEN post_type = 'post' THEN 1
+                          ELSE 2 END,
+                     id
+        )");
 
         $query->orderByRaw("CASE WHEN status IN ('scheduled','draft','failed','publishing') THEN 0 ELSE 1 END")
               ->orderByRaw('COALESCE(scheduled_at, published_at, created_at) ASC NULLS LAST')
