@@ -67,19 +67,61 @@
             addMsg(text, 'user');
             showTyping();
 
-            fetch(apiBase + '/api/v1/chatbot/' + channelId + '/message', {
+            fetch(apiBase + '/api/v1/chatbot/' + channelId + '/message-stream', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
                 body: JSON.stringify({ message: text })
             })
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                hideTyping();
-                addMsg(data.response || data.reply || data.message || 'Mulțumesc pentru mesaj!', 'bot');
-                if (data.products && data.products.length > 0) {
-                    renderProducts(data.products);
+            .then(function(r) {
+                if (!r.ok || !r.body) { throw new Error('stream unavailable'); }
+                var reader = r.body.getReader();
+                var decoder = new TextDecoder('utf-8');
+                var buffer = '';
+                var botDiv = null;
+
+                function pump() {
+                    return reader.read().then(function(result) {
+                        if (result.done) {
+                            hideTyping();
+                            sending = false;
+                            return;
+                        }
+                        buffer += decoder.decode(result.value, { stream: true });
+                        var events = buffer.split('\n\n');
+                        buffer = events.pop();
+                        for (var i = 0; i < events.length; i++) {
+                            var line = events[i].trim();
+                            if (line.indexOf('data:') !== 0) continue;
+                            var payload = line.replace(/^data:\s*/, '');
+                            if (!payload) continue;
+                            try {
+                                var evt = JSON.parse(payload);
+                                handleEvent(evt);
+                            } catch (e) {}
+                        }
+                        return pump();
+                    });
                 }
-                sending = false;
+
+                function handleEvent(evt) {
+                    if (evt.type === 'delta' && evt.content) {
+                        if (!botDiv) {
+                            hideTyping();
+                            botDiv = document.createElement('div');
+                            botDiv.className = 'msg msg-bot';
+                            messages.appendChild(botDiv);
+                        }
+                        botDiv.textContent += evt.content;
+                        messages.scrollTop = messages.scrollHeight;
+                    } else if (evt.type === 'products' && evt.products && evt.products.length > 0) {
+                        renderProducts(evt.products);
+                    } else if (evt.type === 'error') {
+                        hideTyping();
+                        addMsg(evt.message || 'Eroare. Te rog încearcă din nou.', 'bot');
+                    }
+                }
+
+                return pump();
             })
             .catch(function() {
                 hideTyping();
