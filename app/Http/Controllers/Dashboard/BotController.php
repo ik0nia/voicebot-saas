@@ -102,6 +102,16 @@ class BotController extends Controller
 
         $bot = Bot::create($validated);
 
+        $bot->channels()->create([
+            'type' => \App\Models\Channel::TYPE_WEB_CHATBOT,
+            'name' => 'Web Chatbot',
+            'is_active' => true,
+            'config' => [
+                'greeting' => 'Bună! Cu ce te pot ajuta?',
+                'color' => '#991b1b',
+            ],
+        ]);
+
         return redirect()->route('dashboard.bots.show', $bot)
             ->with('success', 'Botul a fost creat cu succes!');
     }
