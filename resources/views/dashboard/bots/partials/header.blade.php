@@ -28,7 +28,7 @@
                 ->where('is_active', true)
                 ->first();
             $demoUrl = $chatChannel
-                ? route('chatbot.frame', $chatChannel->id)
+                ? route('public.chatDemo', $bot->slug)
                 : route('public.demo', $bot->slug);
         @endphp
         <a href="{{ $demoUrl }}" target="_blank"

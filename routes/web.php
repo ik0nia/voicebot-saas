@@ -142,6 +142,7 @@ Route::post('/pentru/{niche:slug}/lead', [\App\Http\Controllers\NicheLandingCont
 
 // Public demo & test pages (no auth required)
 Route::get('/demo/{slug}', [\App\Http\Controllers\PublicDemoController::class, 'show'])->name('public.demo');
+Route::get('/chat-demo/{slug}', [\App\Http\Controllers\PublicDemoController::class, 'chat'])->name('public.chatDemo');
 Route::get('/dashboard/boti/{bot}/test-vocal', [\App\Http\Controllers\PublicDemoController::class, 'testById'])->name('dashboard.bots.testVocal');
 
 // Setup wizard (onboarding)

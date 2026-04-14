@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bot;
+use App\Models\Channel;
 use Illuminate\Http\Request;
 
 class PublicDemoController extends Controller
@@ -16,6 +17,24 @@ class PublicDemoController extends Controller
 
         return response()
             ->view('public.demo', compact('bot'))
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate')
+            ->header('Pragma', 'no-cache');
+    }
+
+    public function chat(string $slug)
+    {
+        $bot = Bot::withoutGlobalScopes()
+            ->where('slug', $slug)
+            ->where('is_active', true)
+            ->firstOrFail();
+
+        $channel = $bot->channels()
+            ->where('type', Channel::TYPE_WEB_CHATBOT)
+            ->where('is_active', true)
+            ->firstOrFail();
+
+        return response()
+            ->view('public.chat-demo', compact('bot', 'channel'))
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate')
             ->header('Pragma', 'no-cache');
     }
