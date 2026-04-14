@@ -26,7 +26,7 @@ class CrawlWebsite implements ShouldQueue
 
     public function __construct(public WebsiteScan $scan)
     {
-        $this->onQueue('crawling');
+        $this->onQueue('knowledge');
     }
 
     public function handle(WebContentExtractorService $extractor): void
