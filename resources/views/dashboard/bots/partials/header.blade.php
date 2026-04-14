@@ -22,7 +22,16 @@
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m-4-4h8m-4-14a3 3 0 013 3v4a3 3 0 01-6 0V7a3 3 0 013-3z" /></svg>
             Test Vocal
         </a>
-        <a href="{{ route('public.demo', $bot->slug) }}" target="_blank"
+        @php
+            $chatChannel = $bot->channels()
+                ->where('type', \App\Models\Channel::TYPE_WEB_CHATBOT)
+                ->where('is_active', true)
+                ->first();
+            $demoUrl = $chatChannel
+                ? route('chatbot.frame', $chatChannel->id)
+                : route('public.demo', $bot->slug);
+        @endphp
+        <a href="{{ $demoUrl }}" target="_blank"
            class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
             Demo Link
