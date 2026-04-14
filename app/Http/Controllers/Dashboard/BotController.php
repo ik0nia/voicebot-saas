@@ -107,7 +107,7 @@ class BotController extends Controller
             'name' => 'Web Chatbot',
             'is_active' => true,
             'config' => [
-                'greeting' => 'Bună! Cu ce te pot ajuta?',
+                'greeting' => $bot->greeting_message ?: 'Bună! Cu ce te pot ajuta?',
                 'color' => '#991b1b',
             ],
         ]);
