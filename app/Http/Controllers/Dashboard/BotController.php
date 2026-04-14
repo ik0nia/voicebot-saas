@@ -325,6 +325,18 @@ class BotController extends Controller
         }
 
         $bot->update([$field => $value]);
+
+        if ($field === 'greeting_message') {
+            $bot->channels()
+                ->where('type', \App\Models\Channel::TYPE_WEB_CHATBOT)
+                ->get()
+                ->each(function ($channel) use ($value) {
+                    $cfg = $channel->config ?? [];
+                    $cfg['greeting'] = $value;
+                    $channel->update(['config' => $cfg]);
+                });
+        }
+
         return response()->json(['success' => true]);
     }
 

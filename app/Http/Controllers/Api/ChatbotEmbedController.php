@@ -170,7 +170,7 @@ class ChatbotEmbedController extends Controller
             'bot' => $bot,
             'channel' => $channel,
             'color' => $config['color'] ?? '#991b1b',
-            'greeting' => $config['greeting'] ?? 'Bună! Cu ce te pot ajuta?',
+            'greeting' => $config['greeting'] ?? $bot->greeting_message ?? 'Bună! Cu ce te pot ajuta?',
         ]);
     }
 
