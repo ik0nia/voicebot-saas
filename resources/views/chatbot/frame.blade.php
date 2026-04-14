@@ -18,7 +18,7 @@
         .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
         @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-4px); } }
         #input-area { padding: 12px; background: #fff; border-top: 1px solid #e2e8f0; display: flex; gap: 8px; }
-        #input-area input { flex: 1; border: 1px solid #e2e8f0; border-radius: 20px; padding: 10px 16px; font-size: 14px; outline: none; }
+        #input-area input { flex: 1; border: 1px solid #e2e8f0; border-radius: 20px; padding: 10px 16px; font-size: 16px; outline: none; }
         #input-area input:focus { border-color: {{ $color }}; box-shadow: 0 0 0 2px {{ $color }}22; }
         #input-area button { width: 40px; height: 40px; border-radius: 50%; border: none; background: {{ $color }}; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         #input-area button:hover { opacity: 0.9; }
