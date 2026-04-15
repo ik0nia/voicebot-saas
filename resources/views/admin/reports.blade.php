@@ -158,7 +158,7 @@
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                     <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
                         <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Cost Luna Aceasta</p>
-                        <p class="text-3xl font-bold text-slate-900">{{ number_format(($mom['this_month']['total'] ?? 0) / 100, 2) }} <span class="text-base font-normal text-slate-400">RON</span></p>
+                        <p class="text-3xl font-bold text-slate-900">{{ number_format(($mom['this_month']['total'] ?? 0) / 100, 2) }} <span class="text-base font-normal text-slate-400">lei</span></p>
                         <div class="mt-3 space-y-1 text-xs">
                             <div class="flex justify-between"><span class="text-slate-500">AI (API calls)</span><span class="font-medium text-slate-700">{{ number_format(($mom['this_month']['ai'] ?? 0) / 100, 2) }} RON</span></div>
                             <div class="flex justify-between"><span class="text-slate-500">Conversații</span><span class="font-medium text-slate-700">{{ number_format(($mom['this_month']['msg'] ?? 0) / 100, 2) }} RON</span></div>
@@ -168,7 +168,7 @@
                     </div>
                     <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
                         <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Cost Luna Trecută</p>
-                        <p class="text-3xl font-bold text-slate-900">{{ number_format(($mom['last_month']['total'] ?? 0) / 100, 2) }} <span class="text-base font-normal text-slate-400">RON</span></p>
+                        <p class="text-3xl font-bold text-slate-900">{{ number_format(($mom['last_month']['total'] ?? 0) / 100, 2) }} <span class="text-base font-normal text-slate-400">lei</span></p>
                         <div class="mt-3 space-y-1 text-xs">
                             <div class="flex justify-between"><span class="text-slate-500">AI (API calls)</span><span class="font-medium text-slate-700">{{ number_format(($mom['last_month']['ai'] ?? 0) / 100, 2) }} RON</span></div>
                             <div class="flex justify-between"><span class="text-slate-500">Conversații</span><span class="font-medium text-slate-700">{{ number_format(($mom['last_month']['msg'] ?? 0) / 100, 2) }} RON</span></div>
@@ -195,7 +195,7 @@
                                 @foreach($costAnalysis['phone_numbers'] as $pn)
                                     <div class="flex justify-between items-center text-xs mb-1">
                                         <span class="text-slate-600 font-mono">{{ $pn['number'] }}</span>
-                                        <span class="font-medium text-slate-700">{{ number_format($pn['monthly_cost_cents'] / 100, 2) }} RON/lună</span>
+                                        <span class="font-medium text-slate-700">{{ number_format($pn['monthly_cost_cents'] / 100, 2) }} lei/lună</span>
                                     </div>
                                 @endforeach
                                 <div class="flex justify-between items-center text-xs mt-2 pt-1 border-t border-slate-100 font-semibold">
@@ -866,15 +866,15 @@
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                     <div class="bg-emerald-50 rounded-xl p-4 border border-emerald-100">
                         <p class="text-xs font-semibold text-emerald-500 uppercase tracking-wider">Venituri Platformă</p>
-                        <p class="text-xl font-bold text-emerald-900 mt-1">{{ number_format(($pf['revenue'] ?? 0) / 100, 2) }} <span class="text-sm font-normal">RON</span></p>
+                        <p class="text-xl font-bold text-emerald-900 mt-1">{{ number_format(($pf['revenue'] ?? 0) / 100, 2) }} <span class="text-sm font-normal">lei</span></p>
                     </div>
                     <div class="bg-red-50 rounded-xl p-4 border border-red-100">
                         <p class="text-xs font-semibold text-red-500 uppercase tracking-wider">Costuri Platformă</p>
-                        <p class="text-xl font-bold text-red-900 mt-1">{{ number_format(($pf['cost'] ?? 0) / 100, 2) }} <span class="text-sm font-normal">RON</span></p>
+                        <p class="text-xl font-bold text-red-900 mt-1">{{ number_format(($pf['cost'] ?? 0) / 100, 2) }} <span class="text-sm font-normal">lei</span></p>
                     </div>
                     <div class="bg-teal-50 rounded-xl p-4 border border-teal-100">
                         <p class="text-xs font-semibold text-teal-500 uppercase tracking-wider">Marjă Netă</p>
-                        <p class="text-xl font-bold {{ ($pf['margin'] ?? 0) >= 0 ? 'text-teal-900' : 'text-red-900' }} mt-1">{{ number_format(($pf['margin'] ?? 0) / 100, 2) }} <span class="text-sm font-normal">RON</span></p>
+                        <p class="text-xl font-bold {{ ($pf['margin'] ?? 0) >= 0 ? 'text-teal-900' : 'text-red-900' }} mt-1">{{ number_format(($pf['margin'] ?? 0) / 100, 2) }} <span class="text-sm font-normal">lei</span></p>
                     </div>
                     <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
                         <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Marjă %</p>

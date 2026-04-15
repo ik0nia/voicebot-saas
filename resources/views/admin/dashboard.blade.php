@@ -25,7 +25,7 @@
         {{-- Revenue — HERO CARD --}}
         <div class="col-span-2 md:col-span-1 bg-emerald-50 rounded-2xl p-6 border border-emerald-200">
             <p class="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Revenue Atribuit</p>
-            <p class="text-3xl font-extrabold text-emerald-700 mt-2">{{ number_format($commerce['revenue_total_cents'] / 100, 0) }} <span class="text-lg font-semibold">RON</span></p>
+            <p class="text-3xl font-extrabold text-emerald-700 mt-2">{{ number_format($commerce['revenue_total_cents'] / 100, 0) }} <span class="text-lg font-semibold">lei</span></p>
             <p class="text-xs text-emerald-600/70 mt-1">{{ $commerce['purchases'] }} cumpărături</p>
         </div>
 
