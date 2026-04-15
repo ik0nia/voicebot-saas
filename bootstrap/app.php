@@ -60,6 +60,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'plan.limit' => \App\Http\Middleware\CheckPlanLimits::class,
             'chatbot.domain' => \App\Http\Middleware\VerifyChatbotDomain::class,
         ]);
+
+        // Stripe sends webhook POSTs without our CSRF token; Cashier's
+        // controller verifies the Stripe signature instead.
+        $middleware->validateCsrfTokens(except: [
+            'stripe/*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

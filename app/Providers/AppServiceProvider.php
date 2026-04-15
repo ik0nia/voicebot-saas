@@ -37,6 +37,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        \Laravel\Cashier\Cashier::useCustomerModel(\App\Models\Tenant::class);
+
         View::composer('layouts.dashboard', TranscriptSidebarComposer::class);
 
         View::composer('home', function ($view) {
