@@ -138,7 +138,7 @@
                     <div class="rounded-xl border border-slate-200 p-5 flex flex-col">
                         <div class="text-sm font-bold text-slate-900">{{ $bundle['name'] }}</div>
                         <div class="text-xs text-slate-500 mt-1">{{ number_format($bundle['quantity']) }} {{ $bundle['unit'] === 'minutes' ? 'minute' : ($bundle['unit'] === 'products' ? 'produse' : 'mesaje') }}</div>
-                        <div class="mt-3 text-2xl font-extrabold text-slate-900">{{ number_format($bundle['price'], 2) }} <span class="text-sm font-medium text-slate-500">RON +TVA</span></div>
+                        <div class="mt-3 text-2xl font-extrabold text-slate-900">{{ number_format($bundle['price'], 2) }} <span class="text-sm font-medium text-slate-500">lei +TVA</span></div>
                         @php $priceId = $currentPlan->stripeTopupPriceId((int) $idx); @endphp
                         <form method="POST" action="{{ route('dashboard.billing.topup', ['plan' => $currentPlan->id, 'bundleIndex' => $idx]) }}" class="mt-auto pt-4">
                             @csrf
@@ -350,7 +350,7 @@
                             <td class="px-6 py-3 text-slate-500">{{ $p->created_at->format('d M Y, H:i') }}</td>
                             <td class="px-6 py-3">{{ $p->unit === 'minutes' ? 'Minute voce' : ($p->unit === 'products' ? 'Capacitate produse' : 'Mesaje') }}</td>
                             <td class="px-6 py-3 text-right font-semibold">{{ number_format($p->quantity) }}</td>
-                            <td class="px-6 py-3 text-right">{{ number_format($p->price_cents / 100, 2) }} {{ strtoupper($p->currency) }}</td>
+                            <td class="px-6 py-3 text-right">{{ number_format($p->price_cents / 100, 2) }} {{ $p->currency === 'ron' ? 'lei' : strtoupper($p->currency) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -379,7 +379,7 @@
                                             @if($p->is_popular)<span class="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-semibold text-yellow-800">Popular</span>@endif
                                             @if($isCurrent)<span class="inline-flex items-center rounded-full bg-red-200 px-2 py-0.5 text-xs font-semibold text-red-900">Actual</span>@endif
                                         </div>
-                                        <div class="mt-2 text-2xl font-extrabold text-slate-900">{{ number_format($p->price_monthly, 0) }} <span class="text-sm font-medium text-slate-500">RON/lună +TVA</span></div>
+                                        <div class="mt-2 text-2xl font-extrabold text-slate-900">{{ number_format($p->price_monthly, 0) }} <span class="text-sm font-medium text-slate-500">lei/lună +TVA</span></div>
                                         @php
                                             $monthlyTotal = $p->price_monthly * 12;
                                             $yearlyTotal = $p->price_yearly * 12;
@@ -387,7 +387,7 @@
                                             $savingsPct = $monthlyTotal > 0 ? (int) round(100 * $savings / $monthlyTotal) : 0;
                                         @endphp
                                         <div class="text-xs text-slate-500">
-                                            sau {{ number_format($p->price_yearly, 0) }} RON/lună +TVA (anual)
+                                            sau {{ number_format($p->price_yearly, 0) }} lei/lună +TVA (anual)
                                             @if($savingsPct > 0)
                                                 <span class="ml-1 inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800">-{{ $savingsPct }}%</span>
                                             @endif

@@ -56,7 +56,7 @@
                                 <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $statusLabel[1] }}">{{ $statusLabel[0] }}</span>
                             </td>
                             <td class="px-6 py-3 text-right font-semibold">
-                                {{ number_format(($invoice->total ?? 0) / 100, 2) }} {{ strtoupper($invoice->currency ?? 'RON') }}
+                                {{ number_format(($invoice->total ?? 0) / 100, 2) }} {{ $invoice->currency === 'ron' ? 'lei' : strtoupper($invoice->currency) }}
                             </td>
                             <td class="px-6 py-3 text-right">
                                 @if($invoice->invoice_pdf)

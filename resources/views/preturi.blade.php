@@ -90,7 +90,7 @@
                                 @if($plan->price_monthly !== null && $plan->price_monthly > 0)
                                     <div class="flex items-baseline gap-1">
                                         <span class="text-4xl font-extrabold {{ $isPopular ? 'text-red-800' : 'text-slate-900' }} pricing-amount" data-monthly="{{ number_format($plan->price_monthly, 0) }}" data-annual="{{ number_format($plan->price_yearly, 0) }}">{{ number_format($plan->price_monthly, 0) }}</span>
-                                        <span class="text-lg font-semibold text-slate-700">RON</span>
+                                        <span class="text-lg font-semibold text-slate-700">lei</span>
                                         <span class="text-sm text-slate-600">/lună +TVA</span>
                                     </div>
                                     <p class="text-xs text-slate-500 mt-1 pricing-note hidden">facturat anual</p>
@@ -111,10 +111,10 @@
                             @if($overageCostPerMessage || $overageCostPerBot)
                                 <div class="text-xs text-slate-600 mb-6 border-t border-slate-200 pt-4 space-y-1">
                                     @if($overageCostPerMessage)
-                                        <p>Mesaj suplimentar: <span class="font-semibold text-slate-900">RON{{ number_format($overageCostPerMessage, 2) }}/mesaj</span></p>
+                                        <p>Mesaj suplimentar: <span class="font-semibold text-slate-900">lei {{ number_format($overageCostPerMessage, 2) }}/mesaj</span></p>
                                     @endif
                                     @if($overageCostPerBot)
-                                        <p>Bot suplimentar: <span class="font-semibold text-slate-900">RON{{ number_format($overageCostPerBot, 0) }}/lună</span></p>
+                                        <p>Bot suplimentar: <span class="font-semibold text-slate-900">lei {{ number_format($overageCostPerBot, 0) }}/lună</span></p>
                                     @endif
                                 </div>
                             @endif
@@ -169,7 +169,7 @@
                                 @if(!$isEnterprise && $plan->price_monthly > 0)
                                     <div class="flex items-baseline gap-1">
                                         <span class="text-4xl font-extrabold text-white pricing-amount" data-monthly="{{ number_format($plan->price_monthly, 0) }}" data-annual="{{ number_format($plan->price_yearly, 0) }}">{{ number_format($plan->price_monthly, 0) }}</span>
-                                        <span class="text-lg font-semibold text-slate-300">RON</span>
+                                        <span class="text-lg font-semibold text-slate-300">lei</span>
                                         <span class="text-sm text-slate-400">/lună +TVA</span>
                                     </div>
                                     <p class="text-xs text-slate-400 mt-1 pricing-note hidden">facturat anual</p>
@@ -194,7 +194,7 @@
                             </ul>
                             @if($overageCostPerMinute)
                                 <p class="text-xs text-slate-400 mb-6 border-t border-slate-600 pt-4">
-                                    Credit suplimentar: <span class="font-semibold text-white">RON{{ number_format($overageCostPerMinute, 2) }}/minut</span>
+                                    Credit suplimentar: <span class="font-semibold text-white">lei {{ number_format($overageCostPerMinute, 2) }}/minut</span>
                                 </p>
                             @endif
                             @if($isEnterprise)
@@ -250,7 +250,7 @@
                                         @if($cpm)
                                             <tr>
                                                 <td class="py-3 px-4 text-slate-700 font-medium">{{ $plan->name }}</td>
-                                                <td class="py-3 px-4 text-right text-slate-900 font-semibold">RON{{ number_format($cpm, 2) }}</td>
+                                                <td class="py-3 px-4 text-right text-slate-900 font-semibold">lei {{ number_format($cpm, 2) }}</td>
                                             </tr>
                                         @endif
                                     @endforeach
@@ -285,7 +285,7 @@
                                         @if($cpb)
                                             <tr>
                                                 <td class="py-3 px-4 text-slate-700 font-medium">{{ $plan->name }}</td>
-                                                <td class="py-3 px-4 text-right text-slate-900 font-semibold">RON{{ number_format($cpb, 0) }}</td>
+                                                <td class="py-3 px-4 text-right text-slate-900 font-semibold">lei {{ number_format($cpb, 0) }}</td>
                                             </tr>
                                         @endif
                                     @endforeach
@@ -320,7 +320,7 @@
                                         @if($cpm)
                                             <tr>
                                                 <td class="py-3 px-4 text-slate-700 font-medium">{{ $plan->name }}</td>
-                                                <td class="py-3 px-4 text-right text-slate-900 font-semibold">RON{{ number_format($cpm, 2) }}</td>
+                                                <td class="py-3 px-4 text-right text-slate-900 font-semibold">lei {{ number_format($cpm, 2) }}</td>
                                             </tr>
                                         @endif
                                     @endforeach

@@ -71,19 +71,19 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-xs font-medium text-slate-600 mb-1">Preț lunar (RON) *</label>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Preț lunar (lei) *</label>
                     <div class="relative">
                         <input type="number" step="0.01" name="price_monthly" value="{{ old('price_monthly', $plan?->price_monthly ?? 0) }}" required min="0"
                                class="w-full text-sm border border-slate-300 rounded-lg pl-3 pr-14 py-2 focus:ring-red-500 focus:border-red-500">
-                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">RON/lună</span>
+                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">lei/lună</span>
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-slate-600 mb-1">Preț anual (RON) *</label>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Preț anual (lei) *</label>
                     <div class="relative">
                         <input type="number" step="0.01" name="price_yearly" value="{{ old('price_yearly', $plan?->price_yearly ?? 0) }}" required min="0"
                                class="w-full text-sm border border-slate-300 rounded-lg pl-3 pr-12 py-2 focus:ring-red-500 focus:border-red-500">
-                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">RON/an</span>
+                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">lei/an</span>
                     </div>
                 </div>
             </div>
@@ -205,19 +205,19 @@
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                    <label class="block text-xs font-medium text-slate-600 mb-1">Cost / mesaj (RON)</label>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Cost / mesaj (lei)</label>
                     <input type="number" step="0.0001" name="overage[cost_per_message]" value="{{ $currentOverage['cost_per_message'] ?? '' }}" min="0"
                            class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-red-500 focus:border-red-500"
                            placeholder="Ex: 0.05">
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-slate-600 mb-1">Cost / cuvânt (RON)</label>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Cost / cuvânt (lei)</label>
                     <input type="number" step="0.0001" name="overage[cost_per_word]" value="{{ $currentOverage['cost_per_word'] ?? '' }}" min="0"
                            class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-red-500 focus:border-red-500"
                            placeholder="Ex: 0.001">
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-slate-600 mb-1">Cost / minut (RON)</label>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Cost / minut (lei)</label>
                     <input type="number" step="0.0001" name="overage[cost_per_minute]" value="{{ $currentOverage['cost_per_minute'] ?? '' }}" min="0"
                            class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-red-500 focus:border-red-500"
                            placeholder="Ex: 0.50">
@@ -258,7 +258,7 @@
                                class="md:col-span-2 text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-red-500 focus:border-red-500">
 
                         <input type="number" step="0.01" min="0" name="topups[{{ $i }}][price]" value="{{ $topup['price'] ?? '' }}"
-                               placeholder="Preț (RON)"
+                               placeholder="Preț (lei)"
                                class="md:col-span-2 text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-red-500 focus:border-red-500">
 
                         <label class="md:col-span-2 inline-flex items-center gap-2 text-xs text-slate-600">

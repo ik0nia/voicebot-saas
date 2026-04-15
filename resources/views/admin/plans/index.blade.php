@@ -133,9 +133,9 @@
 
                             {{-- Pricing --}}
                             <div class="flex items-baseline gap-2 mb-3">
-                                <span class="text-2xl font-bold text-slate-900">{{ number_format($plan->price_monthly, 0) }} <span class="text-sm font-normal text-slate-500">RON/lună</span></span>
+                                <span class="text-2xl font-bold text-slate-900">{{ number_format($plan->price_monthly, 0) }} <span class="text-sm font-normal text-slate-500">lei/lună</span></span>
                                 @if($plan->price_yearly > 0)
-                                    <span class="text-xs text-slate-400">/ {{ number_format($plan->price_yearly, 0) }} RON/an</span>
+                                    <span class="text-xs text-slate-400">/ {{ number_format($plan->price_yearly, 0) }} lei/an</span>
                                 @endif
                             </div>
 
