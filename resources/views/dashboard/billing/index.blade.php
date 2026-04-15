@@ -16,6 +16,22 @@
         <p class="mt-1 text-sm text-slate-500">Monitorizează utilizarea și gestionează planul tău.</p>
     </div>
 
+    @if(request('subscribed'))
+        <div class="rounded-lg bg-emerald-50 border border-emerald-200 p-4 text-sm text-emerald-800">✅ Abonamentul a fost activat cu succes.</div>
+    @elseif(request('cancelled'))
+        <div class="rounded-lg bg-yellow-50 border border-yellow-200 p-4 text-sm text-yellow-800">Procesul de plată a fost anulat. Nu s-a făcut nicio reținere.</div>
+    @elseif(request('topup') === 'ok')
+        <div class="rounded-lg bg-emerald-50 border border-emerald-200 p-4 text-sm text-emerald-800">✅ Creditele au fost adăugate în contul tău.</div>
+    @elseif(request('topup') === 'cancelled')
+        <div class="rounded-lg bg-yellow-50 border border-yellow-200 p-4 text-sm text-yellow-800">Cumpărarea de credite a fost anulată.</div>
+    @endif
+
+    @if(($mode ?? 'live') === 'test')
+        <div class="rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-800 font-mono">
+            🧪 Stripe în mod TEST — folosește carduri test Stripe (ex: 4242 4242 4242 4242, exp 12/34, cvc orice).
+        </div>
+    @endif
+
     @if(!$tenant || !$usage)
         <div class="rounded-xl border border-slate-200 bg-white p-8 text-center">
             <p class="text-slate-500">Nu există informații de facturare disponibile.</p>
@@ -56,9 +72,64 @@
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" /></svg>
                     Schimbă planul
                 </a>
+                @if($tenant->hasStripeId() ?? false)
+                    <a href="{{ route('dashboard.billing.portal') }}" class="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition-colors">
+                        Gestionează abonamentul
+                    </a>
+                @endif
             </div>
         </div>
     </div>
+
+    {{-- Credit balances --}}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="rounded-xl border border-slate-200 bg-white p-4">
+            <div class="text-xs font-semibold text-slate-500 uppercase">Credite mesaje</div>
+            <div class="mt-1 text-2xl font-bold text-slate-900">{{ number_format($tenant->message_credits ?? 0) }}</div>
+            <div class="text-xs text-slate-400 mt-1">extra peste cuota inclusă în abonament</div>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-white p-4">
+            <div class="text-xs font-semibold text-slate-500 uppercase">Credite minute</div>
+            <div class="mt-1 text-2xl font-bold text-slate-900">{{ number_format($tenant->minute_credits ?? 0) }}</div>
+            <div class="text-xs text-slate-400 mt-1">minute voce extra</div>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-white p-4">
+            <div class="text-xs font-semibold text-slate-500 uppercase">Credite produse</div>
+            <div class="mt-1 text-2xl font-bold text-slate-900">{{ number_format($tenant->product_credits ?? 0) }}</div>
+            <div class="text-xs text-slate-400 mt-1">capacitate produse extra</div>
+        </div>
+    </div>
+
+    {{-- Top-up bundles available for current plan --}}
+    @if(!empty($topups) && $currentPlan)
+        <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                <div>
+                    <h3 class="text-base font-semibold text-slate-900">Cumpără credite extra</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Pachete one-off, nu se reînnoiesc lunar. Creditele rămân până le consumi.</p>
+                </div>
+                <span class="text-xs text-slate-400">Pentru pachetul: {{ $currentPlan->name }}</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-6">
+                @foreach($topups as $idx => $bundle)
+                    <div class="rounded-xl border border-slate-200 p-5 flex flex-col">
+                        <div class="text-sm font-bold text-slate-900">{{ $bundle['name'] }}</div>
+                        <div class="text-xs text-slate-500 mt-1">{{ number_format($bundle['quantity']) }} {{ $bundle['unit'] === 'minutes' ? 'minute' : ($bundle['unit'] === 'products' ? 'produse' : 'mesaje') }}</div>
+                        <div class="mt-3 text-2xl font-extrabold text-slate-900">{{ number_format($bundle['price'], 2) }} <span class="text-sm font-medium text-slate-500">RON</span></div>
+                        @php $priceId = $currentPlan->stripeTopupPriceId((int) $idx); @endphp
+                        <form method="POST" action="{{ route('dashboard.billing.topup', ['plan' => $currentPlan->id, 'bundleIndex' => $idx]) }}" class="mt-auto pt-4">
+                            @csrf
+                            <button type="submit"
+                                    @if(!$priceId) disabled @endif
+                                    class="w-full rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors">
+                                {{ $priceId ? 'Cumpără' : 'Nesincronizat în Stripe' }}
+                            </button>
+                        </form>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
 
     {{-- Usage Cards --}}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -233,6 +304,91 @@
             </div>
         </div>
     </div>
+    @endif
+
+    {{-- Recent purchases --}}
+    @if($recentPurchases->isNotEmpty())
+        <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-200">
+                <h3 class="text-base font-semibold text-slate-900">Istoric cumpărări credite</h3>
+            </div>
+            <table class="min-w-full divide-y divide-slate-200 text-sm">
+                <thead class="bg-slate-50 text-xs uppercase text-slate-600">
+                    <tr>
+                        <th class="px-6 py-3 text-left">Data</th>
+                        <th class="px-6 py-3 text-left">Tip</th>
+                        <th class="px-6 py-3 text-right">Cantitate</th>
+                        <th class="px-6 py-3 text-right">Preț</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    @foreach($recentPurchases as $p)
+                        <tr>
+                            <td class="px-6 py-3 text-slate-500">{{ $p->created_at->format('d M Y, H:i') }}</td>
+                            <td class="px-6 py-3">{{ $p->unit === 'minutes' ? 'Minute voce' : ($p->unit === 'products' ? 'Capacitate produse' : 'Mesaje') }}</td>
+                            <td class="px-6 py-3 text-right font-semibold">{{ number_format($p->quantity) }}</td>
+                            <td class="px-6 py-3 text-right">{{ number_format($p->price_cents / 100, 2) }} {{ strtoupper($p->currency) }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
+
+    {{-- Plan comparison + subscribe --}}
+    @if($webchatPlans->isNotEmpty() || $voicePlans->isNotEmpty())
+        <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div class="px-6 py-4 border-b border-slate-200">
+                <h3 class="text-base font-semibold text-slate-900">Schimbă pachetul</h3>
+                <p class="text-xs text-slate-500 mt-0.5">Apasă "Abonează-te" și vei fi redirecționat la Stripe Checkout.</p>
+            </div>
+            <div class="p-6 space-y-6">
+                @foreach(['Webchat' => $webchatPlans, 'Voce' => $voicePlans] as $section => $list)
+                    @if($list->isNotEmpty())
+                        <div>
+                            <div class="text-xs font-semibold text-slate-500 uppercase mb-3">{{ $section }}</div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                @foreach($list as $p)
+                                    @php $isCurrent = $currentPlan && $currentPlan->id === $p->id; @endphp
+                                    <div class="rounded-xl border @if($isCurrent) border-red-300 bg-red-50 @else border-slate-200 @endif p-5 flex flex-col">
+                                        <div class="flex items-center gap-2">
+                                            <h4 class="text-sm font-bold text-slate-900">{{ $p->name }}</h4>
+                                            @if($p->is_popular)<span class="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-semibold text-yellow-800">Popular</span>@endif
+                                            @if($isCurrent)<span class="inline-flex items-center rounded-full bg-red-200 px-2 py-0.5 text-xs font-semibold text-red-900">Actual</span>@endif
+                                        </div>
+                                        <div class="mt-2 text-2xl font-extrabold text-slate-900">{{ number_format($p->price_monthly, 0) }} <span class="text-sm font-medium text-slate-500">RON/lună</span></div>
+                                        <div class="text-xs text-slate-500">sau {{ number_format($p->price_yearly, 0) }} RON/lună (anual)</div>
+                                        @if($p->description)
+                                            <p class="mt-2 text-xs text-slate-600">{{ $p->description }}</p>
+                                        @endif
+                                        <div class="mt-auto pt-4 grid grid-cols-2 gap-2">
+                                            <form method="POST" action="{{ route('dashboard.billing.subscribe', $p->id) }}">
+                                                @csrf
+                                                <input type="hidden" name="interval" value="monthly">
+                                                <button type="submit"
+                                                        @if($isCurrent || !$p->stripePriceId('monthly')) disabled @endif
+                                                        class="w-full rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:bg-slate-300 disabled:cursor-not-allowed">
+                                                    Lunar
+                                                </button>
+                                            </form>
+                                            <form method="POST" action="{{ route('dashboard.billing.subscribe', $p->id) }}">
+                                                @csrf
+                                                <input type="hidden" name="interval" value="yearly">
+                                                <button type="submit"
+                                                        @if($isCurrent || !$p->stripePriceId('yearly')) disabled @endif
+                                                        class="w-full rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:bg-slate-300 disabled:cursor-not-allowed">
+                                                    Anual
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                @endforeach
+            </div>
+        </div>
     @endif
 
     @endif

@@ -158,7 +158,12 @@ Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['au
 Route::post('/dashboard/toggle-admin-view', [DashboardController::class, 'toggleAdminView'])->middleware(['auth'])->name('dashboard.toggleAdminView');
 
 // Billing routes (dashboard)
-Route::get('/dashboard/facturare', [BillingController::class, 'index'])->middleware('auth')->name('dashboard.billing.index');
+Route::middleware('auth')->prefix('dashboard/facturare')->group(function () {
+    Route::get('/', [BillingController::class, 'index'])->name('dashboard.billing.index');
+    Route::post('/subscribe/{plan}', [BillingController::class, 'subscribe'])->name('dashboard.billing.subscribe');
+    Route::post('/topup/{plan}/{bundleIndex}', [BillingController::class, 'topup'])->name('dashboard.billing.topup');
+    Route::get('/portal', [BillingController::class, 'portal'])->name('dashboard.billing.portal');
+});
 
 // Bot routes (dashboard)
 Route::middleware('auth')->prefix('dashboard/boti')->group(function () {

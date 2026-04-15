@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
+use App\Models\CreditPurchase;
 use App\Models\Plan;
 use App\Services\PlanLimitService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class BillingController extends Controller
 {
@@ -22,17 +25,119 @@ class BillingController extends Controller
                 'usage' => null,
                 'webchatPlans' => collect(),
                 'voicePlans' => collect(),
+                'currentPlan' => null,
+                'topups' => [],
+                'recentPurchases' => collect(),
+                'mode' => Plan::activeStripeMode(),
             ]);
         }
 
         $usage = $this->planLimitService->getUsageSummary($tenant);
-
-        // Plans for upgrade comparison
         $webchatPlans = Plan::active()->webchat()->orderBy('sort_order')->get();
         $voicePlans = Plan::active()->voice()->orderBy('sort_order')->get();
 
+        // Current plan resolution: tenant.plan column may hold the slug,
+        // fallback to first webchat plan if nothing assigned.
+        $currentPlan = null;
+        if (!empty($tenant->plan)) {
+            $currentPlan = Plan::where('slug', $tenant->plan)->first();
+        }
+
+        // Top-up bundles available for the user's current plan.
+        $topups = $currentPlan ? $currentPlan->activeTopups() : [];
+
+        $recentPurchases = CreditPurchase::where('tenant_id', $tenant->id)
+            ->latest()->limit(10)->get();
+
         return view('dashboard.billing.index', compact(
-            'tenant', 'usage', 'webchatPlans', 'voicePlans'
-        ));
+            'tenant', 'usage', 'webchatPlans', 'voicePlans',
+            'currentPlan', 'topups', 'recentPurchases'
+        ) + ['mode' => Plan::activeStripeMode()]);
+    }
+
+    /**
+     * Start a Stripe Checkout session for a recurring subscription.
+     */
+    public function subscribe(Request $request, Plan $plan)
+    {
+        $tenant = auth()->user()->tenant;
+        abort_unless($tenant, 403);
+
+        $interval = $request->input('interval', 'monthly');
+        $priceId = $plan->stripePriceId($interval);
+
+        if (!$priceId) {
+            return back()->withErrors(['plan' => 'Acest pachet nu este sincronizat încă cu Stripe. Contactează administratorul.']);
+        }
+
+        $checkout = $tenant->newSubscription('default', $priceId)
+            ->checkout([
+                'success_url' => route('dashboard.billing.index') . '?subscribed=1',
+                'cancel_url' => route('dashboard.billing.index') . '?cancelled=1',
+                'metadata' => [
+                    'tenant_id' => (string) $tenant->id,
+                    'plan_id' => (string) $plan->id,
+                    'plan_slug' => (string) $plan->slug,
+                    'interval' => $interval,
+                ],
+            ]);
+
+        return redirect($checkout->url);
+    }
+
+    /**
+     * Start a Stripe Checkout session for a one-off top-up bundle.
+     * Bundle index is validated against the tenant's current plan so a
+     * Starter user can't buy a Pro-priced bundle.
+     */
+    public function topup(Request $request, Plan $plan, int $bundleIndex)
+    {
+        $tenant = auth()->user()->tenant;
+        abort_unless($tenant, 403);
+
+        $topups = $plan->activeTopups();
+        if (!isset($topups[$bundleIndex])) {
+            abort(404, 'Bundle inexistent.');
+        }
+        $bundle = $topups[$bundleIndex];
+
+        $priceId = $plan->stripeTopupPriceId($bundleIndex);
+        if (!$priceId) {
+            return back()->withErrors(['topup' => 'Acest top-up nu este sincronizat cu Stripe încă.']);
+        }
+
+        $checkout = $tenant->checkout([
+            $priceId => 1,
+        ], [
+            'mode' => 'payment',
+            'success_url' => route('dashboard.billing.index') . '?topup=ok',
+            'cancel_url' => route('dashboard.billing.index') . '?topup=cancelled',
+            'invoice_creation' => ['enabled' => true], // generate proper invoice for the receipt
+            'metadata' => [
+                'tenant_id' => (string) $tenant->id,
+                'plan_id' => (string) $plan->id,
+                'bundle_index' => (string) $bundleIndex,
+                'topup_unit' => (string) $bundle['unit'],
+                'topup_quantity' => (string) $bundle['quantity'],
+            ],
+        ]);
+
+        return redirect($checkout->url);
+    }
+
+    /**
+     * Redirect to Stripe Customer Portal so the tenant can manage
+     * payment methods, see invoices, cancel subscription.
+     */
+    public function portal()
+    {
+        $tenant = auth()->user()->tenant;
+        abort_unless($tenant, 403);
+
+        if (!$tenant->hasStripeId()) {
+            $tenant->createAsStripeCustomer();
+        }
+
+        return $tenant->redirectToBillingPortal(route('dashboard.billing.index'));
     }
 }
