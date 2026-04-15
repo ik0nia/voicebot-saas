@@ -39,6 +39,9 @@ class Tenant extends Model
         'company_bank',
         'company_iban',
         'billing_complete',
+        'message_credits',
+        'minute_credits',
+        'product_credits',
     ];
 
     protected function casts(): array

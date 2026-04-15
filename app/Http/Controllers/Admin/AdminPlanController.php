@@ -12,7 +12,7 @@ class AdminPlanController extends Controller
 {
     public function index()
     {
-        $plans = Plan::orderBy('sort_order')->orderBy('name')->get();
+        $plans = Plan::with('tenant:id,name')->orderBy('sort_order')->orderBy('name')->get();
 
         $grouped = $plans->groupBy('type');
 
@@ -23,6 +23,7 @@ class AdminPlanController extends Controller
     {
         return view('admin.plans.form', [
             'plan' => null,
+            'tenants' => \App\Models\Tenant::orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -36,6 +37,11 @@ class AdminPlanController extends Controller
         $validated['topups'] = $this->parseTopups($request);
         $validated['is_popular'] = $request->boolean('is_popular');
         $validated['is_active'] = $request->boolean('is_active', true);
+        $validated['is_public'] = $request->boolean('is_public', true);
+        // Custom plans (tenant_id set) cannot be public — enforce.
+        if (! empty($validated['tenant_id'])) {
+            $validated['is_public'] = false;
+        }
 
         if (empty($validated['slug'])) {
             $validated['slug'] = Str::slug($validated['name']);
@@ -52,6 +58,7 @@ class AdminPlanController extends Controller
     {
         return view('admin.plans.form', [
             'plan' => $pachete,
+            'tenants' => \App\Models\Tenant::orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -102,6 +109,8 @@ class AdminPlanController extends Controller
             'sort_order' => 'nullable|integer|min:0',
             'is_popular' => 'nullable',
             'is_active' => 'nullable',
+            'is_public' => 'nullable',
+            'tenant_id' => 'nullable|exists:tenants,id',
         ]);
     }
 

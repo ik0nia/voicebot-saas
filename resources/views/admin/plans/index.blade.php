@@ -75,12 +75,19 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     @foreach($typePlans as $plan)
                         <div class="bg-white rounded-xl border {{ $plan->is_popular ? 'border-red-300 ring-2 ring-red-100' : 'border-slate-200' }} p-5 relative {{ !$plan->is_active ? 'opacity-60' : '' }}">
-                            {{-- Popular badge --}}
-                            @if($plan->is_popular)
-                                <div class="absolute -top-2.5 left-4">
+                            {{-- Popular / Custom badges --}}
+                            <div class="absolute -top-2.5 left-4 flex gap-1">
+                                @if($plan->is_popular)
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-600 text-white">Popular</span>
-                                </div>
-                            @endif
+                                @endif
+                                @if($plan->tenant_id)
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-600 text-white" title="Pachet custom pentru {{ $plan->tenant?->name }}">
+                                        Custom: {{ $plan->tenant?->name ?? '#'.$plan->tenant_id }}
+                                    </span>
+                                @elseif(! $plan->is_public)
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-600 text-white">Privat</span>
+                                @endif
+                            </div>
 
                             {{-- Header --}}
                             <div class="flex items-start justify-between mb-3">

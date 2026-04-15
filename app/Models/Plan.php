@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Plan extends Model
 {
     protected $fillable = [
+        'tenant_id',
         'slug',
         'name',
         'type',
@@ -15,6 +16,7 @@ class Plan extends Model
         'price_yearly',
         'is_popular',
         'is_active',
+        'is_public',
         'sort_order',
         'limits',
         'overage',
@@ -38,9 +40,11 @@ class Plan extends Model
         'stripe_topup_prices' => 'array',
         'is_popular' => 'boolean',
         'is_active' => 'boolean',
+        'is_public' => 'boolean',
         'price_monthly' => 'decimal:2',
         'price_yearly' => 'decimal:2',
         'sort_order' => 'integer',
+        'tenant_id' => 'integer',
     ];
 
     // ------------------------------------------------------------------
@@ -50,6 +54,37 @@ class Plan extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
+    }
+
+    /**
+     * Plans that should appear on the public pricing page —
+     * global (tenant_id NULL) AND explicitly public.
+     */
+    public function scopePublic(Builder $query): Builder
+    {
+        return $query->whereNull('tenant_id')->where('is_public', true);
+    }
+
+    /**
+     * Plans the given tenant is allowed to see — own custom plans plus
+     * all public global plans.
+     */
+    public function scopeVisibleTo(Builder $query, int $tenantId): Builder
+    {
+        return $query->where(function ($q) use ($tenantId) {
+            $q->whereNull('tenant_id')->where('is_public', true)
+              ->orWhere('tenant_id', $tenantId);
+        });
+    }
+
+    public function tenant(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Tenant::class);
+    }
+
+    public function isCustom(): bool
+    {
+        return $this->tenant_id !== null;
     }
 
     public function scopeWebchat(Builder $query): Builder

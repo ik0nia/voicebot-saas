@@ -88,7 +88,7 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-6 mt-4">
+            <div class="flex items-center gap-6 mt-4 flex-wrap">
                 <label class="flex items-center gap-2 cursor-pointer">
                     <input type="hidden" name="is_popular" value="0">
                     <input type="checkbox" name="is_popular" value="1" {{ old('is_popular', $plan?->is_popular) ? 'checked' : '' }}
@@ -101,7 +101,33 @@
                            class="w-4 h-4 text-red-600 border-slate-300 rounded focus:ring-red-500">
                     <span class="text-sm text-slate-700">Activ</span>
                 </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="hidden" name="is_public" value="0">
+                    <input type="checkbox" name="is_public" value="1" {{ old('is_public', $plan?->is_public ?? true) ? 'checked' : '' }}
+                           class="w-4 h-4 text-red-600 border-slate-300 rounded focus:ring-red-500">
+                    <span class="text-sm text-slate-700">Public (vizibil pe /preturi)</span>
+                </label>
             </div>
+        </div>
+
+        {{-- Custom plan: assign to one tenant --}}
+        <div class="bg-white rounded-xl border border-slate-200 p-6">
+            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wide mb-1">Pachet custom (opțional)</h3>
+            <p class="text-xs text-slate-400 mb-4">Atribuie acest pachet unui singur tenant. Pachetele custom NU apar pe pagina publică /preturi și sunt vizibile doar în dashboard-ul tenantului asignat.</p>
+            <select name="tenant_id"
+                    class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-red-500 focus:border-red-500">
+                <option value="">— Pachet global (toți userii) —</option>
+                @foreach($tenants ?? [] as $t)
+                    <option value="{{ $t->id }}" {{ old('tenant_id', $plan?->tenant_id) == $t->id ? 'selected' : '' }}>
+                        {{ $t->name }} (#{{ $t->id }})
+                    </option>
+                @endforeach
+            </select>
+            @if($plan?->tenant_id)
+                <p class="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2">
+                    ⚠ Pachet custom — <strong>is_public</strong> va fi forțat la <code>false</code> indiferent ce bifezi mai sus.
+                </p>
+            @endif
         </div>
 
         {{-- Limits --}}

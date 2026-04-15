@@ -34,8 +34,9 @@ class BillingController extends Controller
         }
 
         $usage = $this->planLimitService->getUsageSummary($tenant);
-        $webchatPlans = Plan::active()->webchat()->orderBy('sort_order')->get();
-        $voicePlans = Plan::active()->voice()->orderBy('sort_order')->get();
+        // Tenant sees public + their own custom plans, never another tenant's.
+        $webchatPlans = Plan::active()->visibleTo($tenant->id)->webchat()->orderBy('sort_order')->get();
+        $voicePlans = Plan::active()->visibleTo($tenant->id)->voice()->orderBy('sort_order')->get();
 
         // Current plan resolution: tenant.plan column may hold the slug,
         // fallback to first webchat plan if nothing assigned.
@@ -71,6 +72,13 @@ class BillingController extends Controller
             return back()->withErrors(['plan' => 'Acest pachet nu este sincronizat încă cu Stripe. Contactează administratorul.']);
         }
 
+        // Defense in depth: a tenant cannot subscribe to another tenant's
+        // custom plan even if they craft the URL. Public plans (tenant_id
+        // null) are always allowed.
+        if ($plan->tenant_id !== null && $plan->tenant_id !== $tenant->id) {
+            abort(403, 'Pachet indisponibil pentru contul tău.');
+        }
+
         $taxRateId = $this->activeTaxRateId();
 
         $sessionOptions = [
@@ -103,6 +111,10 @@ class BillingController extends Controller
     {
         $tenant = auth()->user()->tenant;
         abort_unless($tenant, 403);
+
+        if ($plan->tenant_id !== null && $plan->tenant_id !== $tenant->id) {
+            abort(403, 'Pachet indisponibil pentru contul tău.');
+        }
 
         $topups = $plan->activeTopups();
         if (!isset($topups[$bundleIndex])) {

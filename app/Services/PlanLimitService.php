@@ -323,8 +323,13 @@ class PlanLimitService
         $currentMessages = UsageTracking::getCurrentValue($tenant->id, UsageTracking::FEATURE_MESSAGES);
 
         if ($currentMessages >= $maxMessages) {
+            // Over the plan quota — try to spend a purchased credit.
+            $credits = app(\App\Services\CreditService::class);
+            if ($credits->consume($tenant, 'messages', 1, 'chat_message')) {
+                return LimitCheckResult::allowed();
+            }
             return LimitCheckResult::denied(
-                "Ai atins limita de {$this->formatNumber($maxMessages)} mesaje pe planul {$plan->name}. Fă upgrade pentru mai multe mesaje.",
+                "Ai atins limita de {$this->formatNumber($maxMessages)} mesaje pe planul {$plan->name} și nu mai ai credite extra. Fă upgrade sau cumpără credite.",
                 ['limit_key' => 'messages_per_month', 'limit' => $maxMessages, 'current' => $currentMessages]
             );
         }
@@ -373,8 +378,13 @@ class PlanLimitService
         $currentMinutes = UsageTracking::getCurrentValue($tenant->id, UsageTracking::FEATURE_VOICE_MINUTES);
 
         if ($currentMinutes >= $maxMinutes) {
+            // Try to spend a minute credit before refusing the call.
+            $credits = app(\App\Services\CreditService::class);
+            if ($credits->consume($tenant, 'minutes', 1, 'voice_call')) {
+                return LimitCheckResult::allowed();
+            }
             return LimitCheckResult::denied(
-                "Ai consumat toate cele {$maxMinutes} minute vocale pe planul {$plan->name}. Fă upgrade sau așteaptă resetarea lunară.",
+                "Ai consumat toate cele {$maxMinutes} minute vocale pe planul {$plan->name} și nu mai ai credite extra. Fă upgrade sau cumpără minute.",
                 ['limit_key' => 'voice_minutes_per_month', 'limit' => $maxMinutes, 'current' => $currentMinutes]
             );
         }
