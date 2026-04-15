@@ -199,6 +199,67 @@
             </div>
         </div>
 
+        {{-- Topup bundles --}}
+        <div class="bg-white rounded-xl border border-slate-200 p-6">
+            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wide mb-1">Credite extra (top-up)</h3>
+            <p class="text-xs text-slate-400 mb-4">Pachete de credite suplimentare pe care clientul le poate cumpăra one-off, peste cuota inclusă în abonament. Ex: 1.000 mesaje extra = 5 RON. Mesajele se consumă până la zero, nu expiră lunar.</p>
+
+            @php
+                $currentTopups = old('topups', $plan?->topups ?? []);
+                if (!is_array($currentTopups)) $currentTopups = [];
+                // Always render at least 3 rows so admins can fill them in.
+                while (count($currentTopups) < 3) {
+                    $currentTopups[] = ['name' => '', 'unit' => 'messages', 'quantity' => '', 'price' => '', 'is_active' => true];
+                }
+            @endphp
+
+            <div id="topup-rows" class="space-y-3">
+                @foreach($currentTopups as $i => $topup)
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-2 items-center bg-slate-50 rounded-lg p-3">
+                        <input type="text" name="topups[{{ $i }}][name]" value="{{ $topup['name'] ?? '' }}"
+                               placeholder="Ex: 1.000 mesaje extra"
+                               class="md:col-span-4 text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-red-500 focus:border-red-500">
+
+                        <select name="topups[{{ $i }}][unit]"
+                                class="md:col-span-2 text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-red-500 focus:border-red-500">
+                            <option value="messages" {{ ($topup['unit'] ?? 'messages') === 'messages' ? 'selected' : '' }}>mesaje</option>
+                            <option value="minutes" {{ ($topup['unit'] ?? 'messages') === 'minutes' ? 'selected' : '' }}>minute</option>
+                        </select>
+
+                        <input type="number" step="1" min="1" name="topups[{{ $i }}][quantity]" value="{{ $topup['quantity'] ?? '' }}"
+                               placeholder="Cantitate"
+                               class="md:col-span-2 text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-red-500 focus:border-red-500">
+
+                        <input type="number" step="0.01" min="0" name="topups[{{ $i }}][price]" value="{{ $topup['price'] ?? '' }}"
+                               placeholder="Preț (RON)"
+                               class="md:col-span-2 text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-red-500 focus:border-red-500">
+
+                        <label class="md:col-span-2 inline-flex items-center gap-2 text-xs text-slate-600">
+                            <input type="hidden" name="topups[{{ $i }}][is_active]" value="0">
+                            <input type="checkbox" name="topups[{{ $i }}][is_active]" value="1"
+                                   {{ ($topup['is_active'] ?? true) ? 'checked' : '' }}
+                                   class="rounded border-slate-300 text-red-600 focus:ring-red-500">
+                            Activ
+                        </label>
+                    </div>
+                @endforeach
+            </div>
+
+            <div class="mt-3 text-xs text-slate-500">
+                <strong>Notă:</strong> Lasă rândurile goale dacă nu vrei mai multe bundle-uri. ID-urile Stripe se generează automat la <code class="text-xs bg-slate-100 px-1 rounded">php artisan stripe:sync-plans</code>.
+            </div>
+
+            @if($plan && !empty($plan->stripe_topup_prices))
+                <div class="mt-4 text-xs text-slate-600 bg-slate-50 rounded-lg p-3 border border-slate-200">
+                    <div class="font-semibold mb-1">Stripe price IDs (mod activ: {{ \App\Models\Plan::activeStripeMode() }})</div>
+                    @foreach(($plan->topups ?? []) as $i => $bundle)
+                        @php $pid = $plan->stripeTopupPriceId((int)$i); @endphp
+                        <div>#{{ $i }} {{ $bundle['name'] ?? '—' }} → <code class="bg-white px-1 rounded">{{ $pid ?: 'nesincronizat' }}</code></div>
+                    @endforeach
+                </div>
+            @endif
+        </div>
+
         {{-- Features --}}
         <div class="bg-white rounded-xl border border-slate-200 p-6">
             <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wide mb-1">Funcționalități</h3>

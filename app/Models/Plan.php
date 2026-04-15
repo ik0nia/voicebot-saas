@@ -20,12 +20,22 @@ class Plan extends Model
         'overage',
         'features',
         'description',
+        'topups',
+        'stripe_product_id_live',
+        'stripe_product_id_test',
+        'stripe_price_id_monthly_live',
+        'stripe_price_id_monthly_test',
+        'stripe_price_id_yearly_live',
+        'stripe_price_id_yearly_test',
+        'stripe_topup_prices',
     ];
 
     protected $casts = [
         'limits' => 'array',
         'overage' => 'array',
         'features' => 'array',
+        'topups' => 'array',
+        'stripe_topup_prices' => 'array',
         'is_popular' => 'boolean',
         'is_active' => 'boolean',
         'price_monthly' => 'decimal:2',
@@ -103,5 +113,48 @@ class Plan extends Model
         $limits = $this->limits ?? [];
 
         return $limits[$key] ?? $default;
+    }
+
+    // ------------------------------------------------------------------
+    // Stripe per-mode helpers
+    // ------------------------------------------------------------------
+
+    public static function activeStripeMode(): string
+    {
+        $mode = (string) (config('cashier.active_mode') ?: 'live');
+        return in_array($mode, ['live', 'test'], true) ? $mode : 'live';
+    }
+
+    public function stripeProductId(?string $mode = null): ?string
+    {
+        $mode ??= self::activeStripeMode();
+        return $this->{"stripe_product_id_{$mode}"} ?? null;
+    }
+
+    public function stripePriceId(string $interval, ?string $mode = null): ?string
+    {
+        $mode ??= self::activeStripeMode();
+        $interval = $interval === 'yearly' ? 'yearly' : 'monthly';
+        return $this->{"stripe_price_id_{$interval}_{$mode}"} ?? null;
+    }
+
+    public function stripeTopupPriceId(int $bundleIndex, ?string $mode = null): ?string
+    {
+        $mode ??= self::activeStripeMode();
+        $map = $this->stripe_topup_prices ?? [];
+        return $map[(string) $bundleIndex][$mode] ?? null;
+    }
+
+    public function activeTopups(): array
+    {
+        $topups = $this->topups ?? [];
+        $out = [];
+        foreach ($topups as $idx => $bundle) {
+            if (! ($bundle['is_active'] ?? true)) {
+                continue;
+            }
+            $out[$idx] = $bundle;
+        }
+        return $out;
     }
 }

@@ -32,6 +32,7 @@ class AdminPlanController extends Controller
         $validated['limits'] = $this->parseLimits($request);
         $validated['overage'] = $this->parseOverage($request);
         $validated['features'] = $this->parseFeatures($request);
+        $validated['topups'] = $this->parseTopups($request);
         $validated['is_popular'] = $request->boolean('is_popular');
         $validated['is_active'] = $request->boolean('is_active', true);
 
@@ -58,6 +59,7 @@ class AdminPlanController extends Controller
         $validated['limits'] = $this->parseLimits($request);
         $validated['overage'] = $this->parseOverage($request);
         $validated['features'] = $this->parseFeatures($request);
+        $validated['topups'] = $this->parseTopups($request);
         $validated['is_popular'] = $request->boolean('is_popular');
         $validated['is_active'] = $request->boolean('is_active');
 
@@ -145,5 +147,43 @@ class AdminPlanController extends Controller
             array_map('trim', explode("\n", $raw)),
             fn($line) => $line !== ''
         ));
+    }
+
+    /**
+     * Repeater rows from form: topups[N][name|unit|quantity|price|is_active].
+     * Drop empty rows; keep order.
+     */
+    private function parseTopups(Request $request): array
+    {
+        $rows = $request->input('topups', []);
+        if (! is_array($rows)) {
+            return [];
+        }
+
+        $allowedUnits = ['messages', 'minutes'];
+        $out = [];
+
+        foreach ($rows as $row) {
+            $name = trim((string) ($row['name'] ?? ''));
+            $quantity = (int) ($row['quantity'] ?? 0);
+            $price = (float) ($row['price'] ?? 0);
+            $unit = (string) ($row['unit'] ?? 'messages');
+            if (! in_array($unit, $allowedUnits, true)) {
+                $unit = 'messages';
+            }
+            // Skip blank rows so admins can leave trailing empties.
+            if ($name === '' || $quantity <= 0 || $price <= 0) {
+                continue;
+            }
+            $out[] = [
+                'name' => $name,
+                'unit' => $unit,
+                'quantity' => $quantity,
+                'price' => round($price, 2),
+                'is_active' => isset($row['is_active']) && $row['is_active'] !== '0',
+            ];
+        }
+
+        return $out;
     }
 }
