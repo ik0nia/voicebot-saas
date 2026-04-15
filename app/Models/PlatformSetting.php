@@ -4,10 +4,25 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Log;
 
 class PlatformSetting extends Model
 {
-    protected $fillable = ['key', 'value', 'type', 'group'];
+    private const SENSITIVE_SUFFIXES = [
+        '_secret_key',
+        '_api_key',
+        '_webhook_secret',
+        '_password',
+        '_secret',
+        '_token',
+    ];
+
+    protected $fillable = ['key', 'value', 'type', 'group', 'is_encrypted'];
+
+    protected $casts = [
+        'is_encrypted' => 'boolean',
+    ];
 
     public $timestamps = true;
 
@@ -22,36 +37,85 @@ class PlatformSetting extends Model
         });
     }
 
+    public function getValueAttribute(?string $stored): ?string
+    {
+        if ($stored === null || $stored === '') {
+            return $stored;
+        }
+        if (! ($this->attributes['is_encrypted'] ?? false)) {
+            return $stored;
+        }
+        try {
+            return Crypt::decryptString($stored);
+        } catch (\Throwable $e) {
+            Log::warning('PlatformSetting decrypt failed', ['key' => $this->key]);
+            return null;
+        }
+    }
+
     public static function get(string $key, mixed $default = null): mixed
     {
-        $settings = Cache::remember('platform_settings', 3600, function () {
-            return static::all()->pluck('value', 'key')->toArray();
-        });
+        $settings = self::cachedSettings();
 
-        $value = $settings[$key] ?? $default;
-
-        // Find type for casting
-        if (isset($settings[$key])) {
-            $setting = static::where('key', $key)->first();
-            if ($setting) {
-                return self::castValue($value, $setting->type);
-            }
+        if (! isset($settings[$key])) {
+            return $default;
         }
 
-        return $value;
+        return self::castValue($settings[$key]['value'], $settings[$key]['type']);
     }
 
     public static function set(string $key, mixed $value, string $type = 'string', string $group = 'general'): void
     {
+        $raw = is_array($value) ? json_encode($value) : (string) $value;
+        $shouldEncrypt = self::isSensitiveKey($key) && $raw !== '';
+        $stored = $shouldEncrypt ? Crypt::encryptString($raw) : $raw;
+
         static::updateOrCreate(
             ['key' => $key],
-            ['value' => is_array($value) ? json_encode($value) : (string) $value, 'type' => $type, 'group' => $group]
+            [
+                'value' => $stored,
+                'type' => $type,
+                'group' => $group,
+                'is_encrypted' => $shouldEncrypt,
+            ]
         );
     }
 
     public static function getGroup(string $group): array
     {
-        return static::where('group', $group)->pluck('value', 'key')->toArray();
+        $settings = self::cachedSettings();
+        $out = [];
+        foreach ($settings as $key => $row) {
+            if ($row['group'] === $group) {
+                $out[$key] = self::castValue($row['value'], $row['type']);
+            }
+        }
+        return $out;
+    }
+
+    private static function cachedSettings(): array
+    {
+        return Cache::remember('platform_settings', 300, function () {
+            $out = [];
+            foreach (static::query()->get() as $row) {
+                $out[$row->key] = [
+                    'value' => $row->value, // accessor decrypts
+                    'type' => $row->type,
+                    'group' => $row->group,
+                ];
+            }
+            return $out;
+        });
+    }
+
+    private static function isSensitiveKey(string $key): bool
+    {
+        foreach (self::SENSITIVE_SUFFIXES as $suffix) {
+            if (str_ends_with($key, $suffix)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static function castValue(mixed $value, string $type): mixed
@@ -60,7 +124,7 @@ class PlatformSetting extends Model
             'boolean' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
             'integer' => (int) $value,
             'float' => (float) $value,
-            'json', 'array' => json_decode($value, true),
+            'json', 'array' => json_decode((string) $value, true),
             default => $value,
         };
     }

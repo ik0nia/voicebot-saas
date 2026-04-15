@@ -6,44 +6,72 @@ use App\Models\PlatformSetting;
 use Illuminate\Support\ServiceProvider;
 
 /**
- * Override API keys from platform_settings (database) over .env values.
+ * Override config values from platform_settings (DB) over .env.
  *
- * This ensures that API keys configured in the admin dashboard take
- * precedence over .env file values. Critical for Docker deployments
- * where .env may have placeholders but real keys are in the database.
- *
- * Priority: platform_settings (DB) > .env > default
+ * Priority: platform_settings (DB) > .env > default.
+ * Sensitive values (api keys, secrets, passwords) are stored encrypted
+ * in the DB and decrypted on read by the PlatformSetting model.
  */
 class ApiKeyServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        // Only override if the database is available (skip during migrations, etc.)
         try {
-            $this->overrideApiKeys();
+            $this->overrideFromSettings();
         } catch (\Throwable $e) {
-            // Database not available yet (migration, fresh install) — skip silently
+            // DB unavailable (migrations, fresh install) — silent skip
         }
     }
 
-    private function overrideApiKeys(): void
+    private function overrideFromSettings(): void
     {
         $keyMap = [
-            'openai_api_key' => 'openai.api_key',
-            'openai_organization' => 'openai.organization',
-            'anthropic_api_key' => 'services.anthropic.api_key',
-            'elevenlabs_api_key' => 'services.elevenlabs.api_key',
-            'telnyx_api_key' => 'services.telnyx.api_key',
-            'telnyx_connection_id' => 'services.telnyx.connection_id',
-            'telnyx_public_key' => 'services.telnyx.public_key',
+            // OpenAI / LLM
+            'openai_api_key' => ['openai.api_key'],
+            'openai_organization' => ['openai.organization'],
+            'anthropic_api_key' => ['services.anthropic.api_key'],
+            'elevenlabs_api_key' => ['services.elevenlabs.api_key'],
+
+            // Telnyx
+            'telnyx_api_key' => ['services.telnyx.api_key'],
+            'telnyx_connection_id' => ['services.telnyx.connection_id'],
+            'telnyx_public_key' => ['services.telnyx.public_key'],
+
+            // Stripe / Cashier
+            'stripe_public_key' => ['cashier.key', 'services.stripe.key'],
+            'stripe_secret_key' => ['cashier.secret', 'services.stripe.secret', 'stripe.api_key'],
+            'stripe_webhook_secret' => ['cashier.webhook.secret', 'services.stripe.webhook.secret'],
+            'stripe_currency' => ['cashier.currency'],
+
+            // Mail
+            'mail_host' => ['mail.mailers.smtp.host'],
+            'mail_port' => ['mail.mailers.smtp.port'],
+            'mail_username' => ['mail.mailers.smtp.username'],
+            'mail_password' => ['mail.mailers.smtp.password'],
+            'mail_encryption' => ['mail.mailers.smtp.encryption'],
+            'mail_from_address' => ['mail.from.address'],
+            'mail_from_name' => ['mail.from.name'],
         ];
 
-        foreach ($keyMap as $settingKey => $configKey) {
-            $dbValue = PlatformSetting::get($settingKey);
+        foreach ($keyMap as $settingKey => $configKeys) {
+            $value = PlatformSetting::get($settingKey);
 
-            if ($dbValue && $dbValue !== '' && !str_starts_with($dbValue, 'sk-your-')) {
-                config([$configKey => $dbValue]);
+            if ($value === null || $value === '' || $this->isPlaceholder((string) $value)) {
+                continue;
+            }
+
+            foreach ($configKeys as $configKey) {
+                config([$configKey => $value]);
             }
         }
+    }
+
+    private function isPlaceholder(string $value): bool
+    {
+        return str_starts_with($value, 'sk-your-')
+            || str_starts_with($value, 'sk_live_your')
+            || str_starts_with($value, 'pk_live_your')
+            || str_starts_with($value, 'whsec_your')
+            || str_contains($value, 'your-');
     }
 }
