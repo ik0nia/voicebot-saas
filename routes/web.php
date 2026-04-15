@@ -161,8 +161,11 @@ Route::post('/dashboard/toggle-admin-view', [DashboardController::class, 'toggle
 Route::middleware('auth')->prefix('dashboard/facturare')->group(function () {
     Route::get('/', [BillingController::class, 'index'])->name('dashboard.billing.index');
     Route::post('/subscribe/{plan}', [BillingController::class, 'subscribe'])->name('dashboard.billing.subscribe');
+    Route::post('/change-plan/{plan}', [BillingController::class, 'changePlan'])->name('dashboard.billing.changePlan');
     Route::post('/topup/{plan}/{bundleIndex}', [BillingController::class, 'topup'])->name('dashboard.billing.topup');
     Route::get('/portal', [BillingController::class, 'portal'])->name('dashboard.billing.portal');
+    Route::get('/facturi', [BillingController::class, 'invoices'])->name('dashboard.billing.invoices');
+    Route::get('/facturi/{invoice}/download', [BillingController::class, 'downloadInvoice'])->name('dashboard.billing.downloadInvoice');
 });
 
 // Bot routes (dashboard)

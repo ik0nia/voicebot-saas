@@ -73,6 +73,9 @@
                     Schimbă planul
                 </a>
                 @if($tenant->hasStripeId() ?? false)
+                    <a href="{{ route('dashboard.billing.invoices') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
+                        Facturi
+                    </a>
                     <a href="{{ route('dashboard.billing.portal') }}" class="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition-colors">
                         Gestionează abonamentul
                     </a>
@@ -361,23 +364,32 @@
                                         @if($p->description)
                                             <p class="mt-2 text-xs text-slate-600">{{ $p->description }}</p>
                                         @endif
+                                        @php
+                                            // If the tenant already has an active subscription, use the
+                                            // change-plan route (no new Checkout). Otherwise subscribe fresh.
+                                            $hasSub = optional($tenant->subscription('default'))->active();
+                                            $action = $hasSub
+                                                ? route('dashboard.billing.changePlan', $p->id)
+                                                : route('dashboard.billing.subscribe', $p->id);
+                                            $btnLabelPrefix = $hasSub ? 'Schimbă · ' : '';
+                                        @endphp
                                         <div class="mt-auto pt-4 grid grid-cols-2 gap-2">
-                                            <form method="POST" action="{{ route('dashboard.billing.subscribe', $p->id) }}">
+                                            <form method="POST" action="{{ $action }}">
                                                 @csrf
                                                 <input type="hidden" name="interval" value="monthly">
                                                 <button type="submit"
                                                         @if($isCurrent || !$p->stripePriceId('monthly')) disabled @endif
                                                         class="w-full rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:bg-slate-300 disabled:cursor-not-allowed">
-                                                    Lunar
+                                                    {{ $btnLabelPrefix }}Lunar
                                                 </button>
                                             </form>
-                                            <form method="POST" action="{{ route('dashboard.billing.subscribe', $p->id) }}">
+                                            <form method="POST" action="{{ $action }}">
                                                 @csrf
                                                 <input type="hidden" name="interval" value="yearly">
                                                 <button type="submit"
                                                         @if($isCurrent || !$p->stripePriceId('yearly')) disabled @endif
                                                         class="w-full rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:bg-slate-300 disabled:cursor-not-allowed">
-                                                    Anual
+                                                    {{ $btnLabelPrefix }}Anual
                                                 </button>
                                             </form>
                                         </div>

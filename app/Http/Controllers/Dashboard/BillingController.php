@@ -103,6 +103,52 @@ class BillingController extends Controller
     }
 
     /**
+     * Swap the existing subscription to a new plan (same owner), with
+     * Stripe-side proration. No Checkout — no new session, no new card.
+     */
+    public function changePlan(Request $request, Plan $plan)
+    {
+        $tenant = auth()->user()->tenant;
+        abort_unless($tenant, 403);
+
+        if ($plan->tenant_id !== null && $plan->tenant_id !== $tenant->id) {
+            abort(403, 'Pachet indisponibil pentru contul tău.');
+        }
+
+        $subscription = $tenant->subscription('default');
+        if (! $subscription || ! $subscription->active()) {
+            return back()->withErrors(['plan' => 'Nu ai un abonament activ. Folosește butonul Abonează-te.']);
+        }
+
+        $interval = $request->input('interval', 'monthly');
+        $priceId = $plan->stripePriceId($interval);
+        if (! $priceId) {
+            return back()->withErrors(['plan' => 'Prețul pentru acest plan nu este sincronizat cu Stripe.']);
+        }
+
+        try {
+            $subscription->swap($priceId);
+        } catch (\Throwable $e) {
+            Log::error('Subscription swap failed', [
+                'tenant_id' => $tenant->id,
+                'new_price' => $priceId,
+                'error' => $e->getMessage(),
+            ]);
+            return back()->withErrors(['plan' => 'Nu am putut schimba pachetul: ' . $e->getMessage()]);
+        }
+
+        // Listener will pick the next subscription.updated webhook and
+        // write plan_slug; optimistically reflect it now so the page
+        // redirect shows the right plan.
+        $tenant->forceFill([
+            'plan' => $plan->slug,
+            'plan_slug' => $plan->slug,
+        ])->save();
+
+        return redirect()->route('dashboard.billing.index')->with('success', "Pachet schimbat la {$plan->name}.");
+    }
+
+    /**
      * Start a Stripe Checkout session for a one-off top-up bundle.
      * Bundle index is validated against the tenant's current plan so a
      * Starter user can't buy a Pro-priced bundle.
@@ -168,6 +214,40 @@ class BillingController extends Controller
             return [];
         }
         return ['tax_id_collection' => ['enabled' => true]];
+    }
+
+    /**
+     * List Stripe invoices for the current tenant.
+     */
+    public function invoices()
+    {
+        $tenant = auth()->user()->tenant;
+        abort_unless($tenant, 403);
+
+        $invoices = collect();
+        if ($tenant->hasStripeId()) {
+            $invoices = $tenant->invoices(includePending: false, parameters: ['limit' => 50]);
+        }
+
+        return view('dashboard.billing.invoices', [
+            'tenant' => $tenant,
+            'invoices' => $invoices,
+        ]);
+    }
+
+    /**
+     * Proxy the PDF of a specific invoice through Cashier so users
+     * don't need Stripe login.
+     */
+    public function downloadInvoice(string $invoiceId)
+    {
+        $tenant = auth()->user()->tenant;
+        abort_unless($tenant && $tenant->hasStripeId(), 403);
+
+        return $tenant->downloadInvoice($invoiceId, [
+            'vendor' => config('app.name', 'Sambla'),
+            'product' => 'Abonament Sambla',
+        ]);
     }
 
     /**
