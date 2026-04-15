@@ -126,6 +126,16 @@ class BillingController extends Controller
             return back()->withErrors(['plan' => 'Prețul pentru acest plan nu este sincronizat cu Stripe.']);
         }
 
+        // Downgrade guard: refuse if current usage exceeds the new plan's
+        // limits. The user must free resources before switching.
+        $violations = $this->downgradeViolations($tenant, $plan);
+        if (! empty($violations) && ! $request->boolean('confirm_downgrade')) {
+            return back()->withErrors([
+                'plan' => 'Nu poți trece pe ' . $plan->name . ' cu setup-ul actual: ' . implode(' · ', $violations)
+                    . '. Eliberează resursele și reîncearcă.',
+            ]);
+        }
+
         try {
             $subscription->swap($priceId);
         } catch (\Throwable $e) {
@@ -201,6 +211,34 @@ class BillingController extends Controller
         return redirect($checkout->url);
     }
 
+    /**
+     * Return a list of human-readable reasons why the tenant cannot
+     * downgrade to $newPlan. Empty = all checks pass.
+     */
+    private function downgradeViolations(\App\Models\Tenant $tenant, Plan $newPlan): array
+    {
+        $violations = [];
+        $limits = $newPlan->limits ?? [];
+
+        $maxBots = (int) ($limits['bots'] ?? -1);
+        if ($maxBots >= 0) {
+            $botCount = \App\Models\Bot::where('tenant_id', $tenant->id)->count();
+            if ($botCount > $maxBots) {
+                $violations[] = "ai {$botCount} boți, pachetul nou permite maxim {$maxBots}";
+            }
+        }
+
+        $maxProducts = (int) ($limits['products'] ?? -1);
+        if ($maxProducts >= 0) {
+            $productCount = \DB::table('woocommerce_products')->where('tenant_id', $tenant->id)->count();
+            if ($productCount > $maxProducts) {
+                $violations[] = "ai {$productCount} produse sincronizate, pachetul nou permite maxim {$maxProducts}";
+            }
+        }
+
+        return $violations;
+    }
+
     private function activeTaxRateId(): ?string
     {
         $mode = Plan::activeStripeMode();
@@ -248,6 +286,50 @@ class BillingController extends Controller
             'vendor' => config('app.name', 'Sambla'),
             'product' => 'Abonament Sambla',
         ]);
+    }
+
+    /**
+     * Cancel the active subscription at end of current billing period.
+     * The tenant keeps access until then; plan_slug stays the same.
+     */
+    public function cancelSubscription(Request $request)
+    {
+        $tenant = auth()->user()->tenant;
+        abort_unless($tenant, 403);
+
+        $subscription = $tenant->subscription('default');
+        if (! $subscription || ! $subscription->active()) {
+            return back()->withErrors(['cancel' => 'Nu ai un abonament activ.']);
+        }
+
+        try {
+            $subscription->cancel();
+        } catch (\Throwable $e) {
+            Log::error('Subscription cancel failed', [
+                'tenant_id' => $tenant->id,
+                'error' => $e->getMessage(),
+            ]);
+            return back()->withErrors(['cancel' => 'Anularea a eșuat: ' . $e->getMessage()]);
+        }
+
+        return back()->with('success', 'Abonamentul va fi anulat la finalul ciclului curent. Până atunci ai acces complet.');
+    }
+
+    /**
+     * Resume a subscription that was cancelled but is still in its
+     * grace period.
+     */
+    public function resumeSubscription()
+    {
+        $tenant = auth()->user()->tenant;
+        abort_unless($tenant, 403);
+
+        $subscription = $tenant->subscription('default');
+        if (! $subscription || ! $subscription->onGracePeriod()) {
+            return back()->withErrors(['resume' => 'Abonamentul nu poate fi resumed acum.']);
+        }
+        $subscription->resume();
+        return back()->with('success', 'Abonamentul a fost reactivat.');
     }
 
     /**

@@ -39,6 +39,8 @@ class AppServiceProvider extends ServiceProvider
     {
         \Laravel\Cashier\Cashier::useCustomerModel(\App\Models\Tenant::class);
 
+        \App\Models\Plan::observe(\App\Observers\PlanObserver::class);
+
         View::composer('layouts.dashboard', TranscriptSidebarComposer::class);
 
         View::composer('home', function ($view) {

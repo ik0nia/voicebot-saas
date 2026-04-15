@@ -67,6 +67,27 @@ class HandleStripeCheckoutCompleted
 
     public function handle(WebhookReceived $event): void
     {
+        try {
+            $this->doHandle($event);
+        } catch (\Throwable $e) {
+            Log::error('HandleStripeCheckoutCompleted failed', [
+                'event_id' => $event->payload['id'] ?? null,
+                'type' => $event->payload['type'] ?? null,
+                'error' => $e->getMessage(),
+            ]);
+            // Forward to Sentry if configured; swallow otherwise so the
+            // Cashier pipeline keeps running for the next listener.
+            if (app()->bound('sentry')) {
+                try {
+                    app('sentry')->captureException($e);
+                } catch (\Throwable) {
+                }
+            }
+        }
+    }
+
+    private function doHandle(WebhookReceived $event): void
+    {
         $payload = $event->payload;
         $type = $payload['type'] ?? null;
 

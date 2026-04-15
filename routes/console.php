@@ -16,6 +16,9 @@ Schedule::command('queue:autoscale --max-workers=6 --scale-threshold=100 --jobs-
 Schedule::command('stripe:sync-plans --mode=live')->dailyAt('03:15')->withoutOverlapping();
 Schedule::command('stripe:sync-plans --mode=test')->dailyAt('03:20')->withoutOverlapping();
 
+// Trial reminders + expiration sweep.
+Schedule::command('billing:trial-lifecycle')->dailyAt('08:00')->withoutOverlapping();
+
 // Social media: generate posts daily at 07:00
 // PAUSED 2026-04-14: backlog de 306 grupuri draft + texte/imagini cu limbaj vechi.
 // Reactivează după curățarea backlog-ului și după fix logo (image-to-image cu ref).

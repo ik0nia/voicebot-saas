@@ -79,6 +79,26 @@
                     <a href="{{ route('dashboard.billing.portal') }}" class="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition-colors">
                         Gestionează abonamentul
                     </a>
+                    @php
+                        $sub = $tenant->subscription('default');
+                        $isActive = $sub && $sub->active() && ! $sub->onGracePeriod();
+                        $inGrace = $sub && $sub->onGracePeriod();
+                    @endphp
+                    @if($isActive)
+                        <form method="POST" action="{{ route('dashboard.billing.cancel') }}" onsubmit="return confirm('Sigur vrei să anulezi abonamentul? Vei avea acces până la finalul ciclului curent.');">
+                            @csrf
+                            <button type="submit" class="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 transition-colors">
+                                Anulează abonament
+                            </button>
+                        </form>
+                    @elseif($inGrace)
+                        <form method="POST" action="{{ route('dashboard.billing.resume') }}">
+                            @csrf
+                            <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors">
+                                Reactivează abonament
+                            </button>
+                        </form>
+                    @endif
                 @endif
             </div>
         </div>
@@ -360,7 +380,18 @@
                                             @if($isCurrent)<span class="inline-flex items-center rounded-full bg-red-200 px-2 py-0.5 text-xs font-semibold text-red-900">Actual</span>@endif
                                         </div>
                                         <div class="mt-2 text-2xl font-extrabold text-slate-900">{{ number_format($p->price_monthly, 0) }} <span class="text-sm font-medium text-slate-500">RON/lună +TVA</span></div>
-                                        <div class="text-xs text-slate-500">sau {{ number_format($p->price_yearly, 0) }} RON/lună +TVA (anual)</div>
+                                        @php
+                                            $monthlyTotal = $p->price_monthly * 12;
+                                            $yearlyTotal = $p->price_yearly * 12;
+                                            $savings = max(0, $monthlyTotal - $yearlyTotal);
+                                            $savingsPct = $monthlyTotal > 0 ? (int) round(100 * $savings / $monthlyTotal) : 0;
+                                        @endphp
+                                        <div class="text-xs text-slate-500">
+                                            sau {{ number_format($p->price_yearly, 0) }} RON/lună +TVA (anual)
+                                            @if($savingsPct > 0)
+                                                <span class="ml-1 inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800">-{{ $savingsPct }}%</span>
+                                            @endif
+                                        </div>
                                         @if($p->description)
                                             <p class="mt-2 text-xs text-slate-600">{{ $p->description }}</p>
                                         @endif
