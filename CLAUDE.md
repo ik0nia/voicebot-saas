@@ -28,20 +28,26 @@ Multi-tenant SaaS platform for AI-powered voice bots. Businesses can create, con
 - **Credentials:** `/var/www/voicebot-saas/.env.coolify` (NOT in git)
 
 ## Multi-Tenant Architecture
-- **Tenant isolation:** Single database, tenant_id column on all tenant-scoped tables
-- **Tenant scoping:** Global query scopes on Eloquent models
-- **Roles:** super-admin (platform), admin (tenant), agent, viewer
-- **Billing:** Per-tenant Stripe subscriptions via Cashier
+- **Tenant isolation:** Single database, `tenant_id` column on all tenant-scoped tables
+- **Tenant scoping:** Global `TenantScope` via `BelongsToTenant` trait on ~22 models
+- **Roles:** super_admin (platform), tenant_admin, tenant_manager, tenant_viewer — stored via spatie/laravel-permission; role names use underscores
+- **Billing:** Per-tenant Stripe subscriptions via Cashier 16; `Tenant` is the Billable customer
 
 ## Key Modules
-1. **Tenant Management** - registration, onboarding, settings
-2. **Voice Bot Builder** - prompt configuration, personality, knowledge base
-3. **Phone Numbers** - Telnyx number provisioning per tenant
-4. **Call Handling** - inbound/outbound calls via Telnyx + OpenAI Realtime
-5. **Knowledge Base** - document upload, embedding with pgvector, RAG
-6. **Analytics** - call logs, duration, sentiment, cost tracking
-7. **Billing** - Stripe subscriptions, usage-based billing for call minutes
-8. **API** - REST API with Sanctum tokens for integrations
+1. **Tenant Management** – registration, onboarding wizard, settings, trial lifecycle (reminder + expiry)
+2. **Voice Bot Builder** – prompt configuration, personality, knowledge base, A/B prompt variants
+3. **Phone Numbers** – Telnyx number provisioning per tenant (inbound + outbound)
+4. **Call Handling** – Telnyx webhooks (state-machine + signature verified); OpenAI Realtime session handler exists in PHP, **but the `wss://host/ws/media-stream` WebSocket server that Telnyx streams into is NOT in this repo yet** — see `ROADMAP.md`
+5. **Knowledge Base** – document upload, pgvector embeddings with HNSW + FTS (hybrid RAG with RRF + sibling chunks), re-embed on change
+6. **Chat / Messaging** – web chatbot widget (embeddable), SSE streaming endpoint, per-channel config
+7. **Channels** – WhatsApp / Facebook / Instagram inbound webhooks with HMAC signature verification (outbound send paths partial)
+8. **WooCommerce** – WP plugin (`wordpress-plugin/sambla-woocommerce/`) syncs products to `BotKnowledge`; recommendations inside chat + voice
+9. **Leads & Callbacks** – chat auto-extract (≥3 messages) + explicit callback widget API with GDPR consent, 7-stage pipeline, dashboard
+10. **ElevenLabs** – voice cloning pipeline (sample → job → cloned_voice row → used in RealtimeSession)
+11. **Analytics** – call logs, duration, sentiment, cost; admin reports (revenue / cost / margin)
+12. **Billing** – Stripe subscriptions (monthly + yearly), one-off top-up credit bundles, TVA 21% RO +TVA pricing, custom per-tenant plans (hidden from public)
+13. **Social Media Factory** – Gemini 3 / 3.1 image pipeline, FB + IG posting, approval workflow (currently paused)
+14. **API** – REST API with Sanctum tokens for integrations
 
 ## Docker Services
 - `app` - PHP-FPM application server

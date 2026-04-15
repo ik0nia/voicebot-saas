@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use App\Models\User;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -65,10 +66,15 @@ class RegisterController extends Controller
             return $user;
         });
 
-        // 4. Login the user
+        // 4. Fire Registered event (triggers SendWelcomeEmail listener +
+        //    Laravel's built-in MustVerifyEmail notification so the user
+        //    receives a signed verification link on their email).
+        event(new Registered($user));
+
+        // 5. Login the user
         Auth::login($user);
 
-        // 5. Redirect to setup wizard (new users) or dashboard (existing)
+        // 6. Redirect to setup wizard (new users) or dashboard (existing)
         return redirect('/dashboard/setup');
     }
 }

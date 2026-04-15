@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Call;
 use App\Models\Bot;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class AnalyticsController extends Controller
@@ -24,53 +25,61 @@ class AnalyticsController extends Controller
             ? \Carbon\Carbon::parse($request->get('date_to'))
             : now();
 
-        // Summary metrics
-        $totalCalls = Call::whereBetween('created_at', [$dateFrom, $dateTo])->count();
-        $totalMinutes = round(Call::whereBetween('created_at', [$dateFrom, $dateTo])->sum('duration_seconds') / 60, 1);
-        $totalCost = Call::whereBetween('created_at', [$dateFrom, $dateTo])->sum('cost_cents') / 100;
-        $completedCalls = Call::whereBetween('created_at', [$dateFrom, $dateTo])->where('status', 'completed')->count();
-        $completionRate = $totalCalls > 0 ? round(($completedCalls / $totalCalls) * 100, 1) : 0;
-        $avgDuration = round(Call::whereBetween('created_at', [$dateFrom, $dateTo])->where('status', 'completed')->avg('duration_seconds') ?? 0);
+        // Aggregated summary cached 5 min per (tenant, period, custom range).
+        // TenantScope applies inside the Call queries so the cache key must
+        // include the tenant; otherwise two tenants would see each other's
+        // aggregates.
+        $tenantId = auth()->user()?->tenant_id ?? 'none';
+        $cacheKey = "analytics:v1:{$tenantId}:{$period}:{$dateFrom->timestamp}:{$dateTo->timestamp}";
 
-        // Daily calls chart data
-        $dailyCalls = Call::selectRaw('DATE(created_at) as date, COUNT(*) as count, SUM(duration_seconds) as total_seconds')
-            ->whereBetween('created_at', [$dateFrom, $dateTo])
-            ->groupByRaw('DATE(created_at)')
-            ->orderBy('date')
-            ->get();
+        $aggregates = Cache::remember($cacheKey, now()->addMinutes(5), function () use ($dateFrom, $dateTo) {
+            $totalCalls = Call::whereBetween('created_at', [$dateFrom, $dateTo])->count();
+            $totalMinutes = round(Call::whereBetween('created_at', [$dateFrom, $dateTo])->sum('duration_seconds') / 60, 1);
+            $totalCost = Call::whereBetween('created_at', [$dateFrom, $dateTo])->sum('cost_cents') / 100;
+            $completedCalls = Call::whereBetween('created_at', [$dateFrom, $dateTo])->where('status', 'completed')->count();
+            $completionRate = $totalCalls > 0 ? round(($completedCalls / $totalCalls) * 100, 1) : 0;
+            $avgDuration = round(Call::whereBetween('created_at', [$dateFrom, $dateTo])->where('status', 'completed')->avg('duration_seconds') ?? 0);
 
-        // Status distribution
-        $statusDistribution = Call::selectRaw('status, COUNT(*) as count')
-            ->whereBetween('created_at', [$dateFrom, $dateTo])
-            ->groupBy('status')
-            ->pluck('count', 'status');
+            $dailyCalls = Call::selectRaw('DATE(created_at) as date, COUNT(*) as count, SUM(duration_seconds) as total_seconds')
+                ->whereBetween('created_at', [$dateFrom, $dateTo])
+                ->groupByRaw('DATE(created_at)')
+                ->orderBy('date')
+                ->get();
 
-        // Sentiment distribution
-        $sentimentDistribution = Call::selectRaw('sentiment_label, COUNT(*) as count')
-            ->whereBetween('created_at', [$dateFrom, $dateTo])
-            ->whereNotNull('sentiment_label')
-            ->groupBy('sentiment_label')
-            ->pluck('count', 'sentiment_label');
+            $statusDistribution = Call::selectRaw('status, COUNT(*) as count')
+                ->whereBetween('created_at', [$dateFrom, $dateTo])
+                ->groupBy('status')
+                ->pluck('count', 'status');
 
-        $avgSentiment = Call::whereBetween('created_at', [$dateFrom, $dateTo])
-            ->whereNotNull('sentiment_score')
-            ->avg('sentiment_score');
-        $avgSentiment = $avgSentiment !== null ? round($avgSentiment, 2) : null;
+            $sentimentDistribution = Call::selectRaw('sentiment_label, COUNT(*) as count')
+                ->whereBetween('created_at', [$dateFrom, $dateTo])
+                ->whereNotNull('sentiment_label')
+                ->groupBy('sentiment_label')
+                ->pluck('count', 'sentiment_label');
 
-        // Top bots
-        $topBots = Bot::withCount(['calls as period_calls_count' => function($q) use ($dateFrom, $dateTo) {
-                $q->whereBetween('created_at', [$dateFrom, $dateTo]);
-            }])
-            ->get()
-            ->filter(fn ($bot) => $bot->period_calls_count > 0)
-            ->sortByDesc('period_calls_count')
-            ->take(5)
-            ->values();
+            $avgSentiment = Call::whereBetween('created_at', [$dateFrom, $dateTo])
+                ->whereNotNull('sentiment_score')
+                ->avg('sentiment_score');
+            $avgSentiment = $avgSentiment !== null ? round($avgSentiment, 2) : null;
 
-        return view('dashboard.analytics.index', compact(
-            'period', 'dateFrom', 'dateTo',
-            'totalCalls', 'totalMinutes', 'totalCost', 'completionRate', 'avgDuration',
-            'dailyCalls', 'statusDistribution', 'sentimentDistribution', 'avgSentiment', 'topBots'
+            $topBots = Bot::withCount(['calls as period_calls_count' => function($q) use ($dateFrom, $dateTo) {
+                    $q->whereBetween('created_at', [$dateFrom, $dateTo]);
+                }])
+                ->get()
+                ->filter(fn ($bot) => $bot->period_calls_count > 0)
+                ->sortByDesc('period_calls_count')
+                ->take(5)
+                ->values();
+
+            return compact(
+                'totalCalls', 'totalMinutes', 'totalCost', 'completionRate', 'avgDuration',
+                'dailyCalls', 'statusDistribution', 'sentimentDistribution', 'avgSentiment', 'topBots'
+            );
+        });
+
+        return view('dashboard.analytics.index', array_merge(
+            compact('period', 'dateFrom', 'dateTo'),
+            $aggregates
         ));
     }
 

@@ -1,0 +1,93 @@
+name: tests
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+jobs:
+  phpunit:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: voicebot
+          POSTGRES_PASSWORD: voicebot
+          POSTGRES_DB: voicebot_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U voicebot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, pdo_pgsql, redis, bcmath, intl, sodium
+          coverage: none
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: composer-${{ hashFiles('composer.lock') }}
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Copy env
+        run: cp .env.example .env || true
+        continue-on-error: true
+
+      - name: Prepare test database (pgvector)
+        env:
+          PGPASSWORD: voicebot
+        run: |
+          psql -h localhost -U voicebot -d voicebot_test -c "CREATE EXTENSION IF NOT EXISTS vector;"
+
+      - name: Generate app key
+        run: php artisan key:generate --force
+
+      - name: Run migrations against voicebot_test
+        env:
+          APP_ENV: testing
+          DB_CONNECTION: pgsql
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_DATABASE: voicebot_test
+          DB_USERNAME: voicebot
+          DB_PASSWORD: voicebot
+        run: php artisan migrate --force
+
+      - name: Run Pest / PHPUnit
+        env:
+          APP_ENV: testing
+          DB_CONNECTION: pgsql
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_DATABASE: voicebot_test
+          DB_USERNAME: voicebot
+          DB_PASSWORD: voicebot
+          REDIS_HOST: localhost
+          CACHE_STORE: array
+          MAIL_MAILER: array
+          QUEUE_CONNECTION: sync
+        run: vendor/bin/phpunit --no-coverage

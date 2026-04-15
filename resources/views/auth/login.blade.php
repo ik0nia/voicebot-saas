@@ -69,7 +69,7 @@
                         >
                         <span class="text-sm text-slate-600">Ține-mă minte</span>
                     </label>
-                    <a href="#" class="text-sm text-primary-600 hover:text-primary-700 font-medium">Ai uitat parola?</a>
+                    <a href="{{ route('password.request') }}" class="text-sm text-primary-600 hover:text-primary-700 font-medium">Ai uitat parola?</a>
                 </div>
 
                 {{-- Submit --}}
