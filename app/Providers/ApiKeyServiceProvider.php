@@ -37,10 +37,7 @@ class ApiKeyServiceProvider extends ServiceProvider
             'telnyx_connection_id' => ['services.telnyx.connection_id'],
             'telnyx_public_key' => ['services.telnyx.public_key'],
 
-            // Stripe / Cashier
-            'stripe_public_key' => ['cashier.key', 'services.stripe.key'],
-            'stripe_secret_key' => ['cashier.secret', 'services.stripe.secret', 'stripe.api_key'],
-            'stripe_webhook_secret' => ['cashier.webhook.secret', 'services.stripe.webhook.secret'],
+            // Stripe currency (mode-independent)
             'stripe_currency' => ['cashier.currency'],
 
             // Mail
@@ -63,6 +60,57 @@ class ApiKeyServiceProvider extends ServiceProvider
             foreach ($configKeys as $configKey) {
                 config([$configKey => $value]);
             }
+        }
+
+        $this->applyStripeMode();
+    }
+
+    /**
+     * Stripe has two key sets (live + test). The active set is selected
+     * by the `stripe_mode` PlatformSetting (live | test, default live).
+     * If the requested mode lacks keys, fall back to the other set so
+     * the app never boots with stripe config in a broken half-state.
+     */
+    private function applyStripeMode(): void
+    {
+        $mode = PlatformSetting::get('stripe_mode', 'live');
+        if (! in_array($mode, ['live', 'test'], true)) {
+            $mode = 'live';
+        }
+
+        $modes = [
+            'live' => [
+                'public' => 'stripe_public_key',
+                'secret' => 'stripe_secret_key',
+                'webhook' => 'stripe_webhook_secret',
+            ],
+            'test' => [
+                'public' => 'stripe_test_public_key',
+                'secret' => 'stripe_test_secret_key',
+                'webhook' => 'stripe_test_webhook_secret',
+            ],
+        ];
+
+        foreach ([$mode, $mode === 'live' ? 'test' : 'live'] as $candidate) {
+            $public = PlatformSetting::get($modes[$candidate]['public']);
+            $secret = PlatformSetting::get($modes[$candidate]['secret']);
+            $webhook = PlatformSetting::get($modes[$candidate]['webhook']);
+
+            if (! $secret || $this->isPlaceholder((string) $secret)) {
+                continue;
+            }
+
+            config([
+                'cashier.key' => $public,
+                'services.stripe.key' => $public,
+                'cashier.secret' => $secret,
+                'services.stripe.secret' => $secret,
+                'stripe.api_key' => $secret,
+                'cashier.webhook.secret' => $webhook,
+                'services.stripe.webhook.secret' => $webhook,
+                'cashier.active_mode' => $candidate,
+            ]);
+            return;
         }
     }
 

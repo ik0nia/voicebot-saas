@@ -109,17 +109,38 @@ class AdminSettingsController extends Controller
     public function updateStripe(Request $request)
     {
         $validated = $request->validate([
-            'stripe_public_key' => 'required|string',
-            'stripe_secret_key' => 'required|string',
-            'stripe_webhook_secret' => 'required|string',
+            'stripe_mode' => 'required|string|in:live,test',
             'stripe_currency' => 'required|string|in:eur,usd,ron,gbp',
+            'stripe_public_key' => 'nullable|string',
+            'stripe_secret_key' => 'nullable|string',
+            'stripe_webhook_secret' => 'nullable|string',
+            'stripe_test_public_key' => 'nullable|string',
+            'stripe_test_secret_key' => 'nullable|string',
+            'stripe_test_webhook_secret' => 'nullable|string',
         ]);
 
+        $mode = $validated['stripe_mode'];
+        $required = $mode === 'test'
+            ? ['stripe_test_public_key', 'stripe_test_secret_key', 'stripe_test_webhook_secret']
+            : ['stripe_public_key', 'stripe_secret_key', 'stripe_webhook_secret'];
+
+        foreach ($required as $field) {
+            $existing = PlatformSetting::get($field);
+            if (empty($validated[$field]) && empty($existing)) {
+                return back()->withErrors([
+                    $field => "Câmpul este obligatoriu pentru modul {$mode}.",
+                ])->withInput();
+            }
+        }
+
         foreach ($validated as $key => $value) {
+            if ($value === null || $value === '') {
+                continue;
+            }
             PlatformSetting::set($key, $value, 'string', 'stripe');
         }
 
-        return back()->with('success', 'Setările Stripe au fost actualizate.');
+        return back()->with('success', "Setările Stripe au fost actualizate (mod: {$mode}).");
     }
 
     public function updateEmail(Request $request)

@@ -486,73 +486,108 @@
     {{-- TAB: Stripe --}}
     {{-- ============================================================ --}}
     @if($tab === 'stripe')
+        @php
+            $currentMode = old('stripe_mode', $settings['stripe']['stripe_mode'] ?? 'live');
+            $hasLive = !empty($settings['stripe']['stripe_secret_key'] ?? '');
+            $hasTest = !empty($settings['stripe']['stripe_test_secret_key'] ?? '');
+        @endphp
         <div class="bg-white rounded-xl border border-slate-200 p-6">
             <h2 class="text-lg font-semibold text-slate-900">Configurare Stripe</h2>
-            <p class="mt-1 text-sm text-slate-500">Chei API și configurări pentru plățile Stripe.</p>
+            <p class="mt-1 text-sm text-slate-500">Două seturi de chei (Live + Test). Modul activ este folosit de Cashier la runtime.</p>
 
-            <form method="POST" action="{{ url('/admin/setari/stripe') }}" class="mt-6 space-y-5">
+            <form method="POST" action="{{ url('/admin/setari/stripe') }}" class="mt-6 space-y-6">
                 @csrf
                 @method('PUT')
 
-                <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                    {{-- Public Key --}}
-                    <div class="sm:col-span-2">
-                        <label for="stripe_public_key" class="block text-sm font-medium text-slate-700">Cheie Publică (Publishable Key)</label>
-                        <input type="text" name="stripe_public_key" id="stripe_public_key"
-                               value="{{ old('stripe_public_key', $settings['stripe']['stripe_public_key'] ?? '') }}"
-                               placeholder="pk_live_..."
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors font-mono text-xs"
-                               required>
+                {{-- Mode toggle --}}
+                <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <label class="block text-sm font-semibold text-slate-700">Mod activ</label>
+                    <p class="mt-1 text-xs text-slate-500">Selectează ce set de chei folosește aplicația acum. Comutarea NU șterge cheile celuilalt mod.</p>
+                    <div class="mt-3 grid grid-cols-2 gap-3">
+                        <label class="relative flex cursor-pointer rounded-lg border bg-white p-3 {{ $currentMode === 'live' ? 'border-red-500 ring-2 ring-red-500/20' : 'border-slate-300' }}">
+                            <input type="radio" name="stripe_mode" value="live" {{ $currentMode === 'live' ? 'checked' : '' }} class="sr-only">
+                            <div class="flex flex-col">
+                                <span class="text-sm font-semibold text-slate-900">🔴 LIVE</span>
+                                <span class="mt-1 text-xs text-slate-500">Plăți reale. {{ $hasLive ? 'Configurat ✓' : 'Lipsesc cheile' }}</span>
+                            </div>
+                        </label>
+                        <label class="relative flex cursor-pointer rounded-lg border bg-white p-3 {{ $currentMode === 'test' ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-slate-300' }}">
+                            <input type="radio" name="stripe_mode" value="test" {{ $currentMode === 'test' ? 'checked' : '' }} class="sr-only">
+                            <div class="flex flex-col">
+                                <span class="text-sm font-semibold text-slate-900">🧪 TEST</span>
+                                <span class="mt-1 text-xs text-slate-500">Sandbox. {{ $hasTest ? 'Configurat ✓' : 'Lipsesc cheile' }}</span>
+                            </div>
+                        </label>
                     </div>
+                </div>
 
-                    {{-- Secret Key --}}
-                    <div class="sm:col-span-2">
-                        <label for="stripe_secret_key" class="block text-sm font-medium text-slate-700">Cheie Secretă (Secret Key)</label>
-                        <div class="relative mt-1.5">
+                {{-- LIVE keys --}}
+                <details class="rounded-lg border border-slate-200" {{ $currentMode === 'live' ? 'open' : '' }}>
+                    <summary class="cursor-pointer p-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">🔴 Chei LIVE (producție)</summary>
+                    <div class="border-t border-slate-200 p-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-medium text-slate-700">Publishable Key</label>
+                            <input type="text" name="stripe_public_key"
+                                   value="{{ old('stripe_public_key', $settings['stripe']['stripe_public_key'] ?? '') }}"
+                                   placeholder="pk_live_..."
+                                   class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-900 shadow-sm font-mono focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-medium text-slate-700">Secret Key</label>
                             <input type="password" name="stripe_secret_key" id="stripe_secret_key"
                                    value="{{ old('stripe_secret_key', $settings['stripe']['stripe_secret_key'] ?? '') }}"
                                    placeholder="sk_live_..."
-                                   class="block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 pr-10 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors font-mono text-xs"
-                                   required>
-                            <button type="button" onclick="togglePassword('stripe_secret_key')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                            </button>
+                                   class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-900 shadow-sm font-mono focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
                         </div>
-                    </div>
-
-                    {{-- Webhook Secret --}}
-                    <div>
-                        <label for="stripe_webhook_secret" class="block text-sm font-medium text-slate-700">Webhook Secret</label>
-                        <div class="relative mt-1.5">
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-medium text-slate-700">Webhook Secret</label>
                             <input type="password" name="stripe_webhook_secret" id="stripe_webhook_secret"
                                    value="{{ old('stripe_webhook_secret', $settings['stripe']['stripe_webhook_secret'] ?? '') }}"
                                    placeholder="whsec_..."
-                                   class="block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 pr-10 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors font-mono text-xs"
-                                   required>
-                            <button type="button" onclick="togglePassword('stripe_webhook_secret')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                            </button>
+                                   class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-900 shadow-sm font-mono focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
                         </div>
                     </div>
+                </details>
 
-                    {{-- Currency --}}
-                    <div>
-                        <label for="stripe_currency" class="block text-sm font-medium text-slate-700">Monedă</label>
-                        <select name="stripe_currency" id="stripe_currency"
-                                class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
-                            @php $currentCurrency = old('stripe_currency', $settings['stripe']['stripe_currency'] ?? 'eur'); @endphp
-                            <option value="eur" {{ $currentCurrency === 'eur' ? 'selected' : '' }}>EUR (Euro)</option>
-                            <option value="usd" {{ $currentCurrency === 'usd' ? 'selected' : '' }}>USD (Dollar)</option>
-                            <option value="ron" {{ $currentCurrency === 'ron' ? 'selected' : '' }}>RON (Leu)</option>
-                            <option value="gbp" {{ $currentCurrency === 'gbp' ? 'selected' : '' }}>GBP (Liră)</option>
-                        </select>
+                {{-- TEST keys --}}
+                <details class="rounded-lg border border-slate-200" {{ $currentMode === 'test' ? 'open' : '' }}>
+                    <summary class="cursor-pointer p-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">🧪 Chei TEST (sandbox)</summary>
+                    <div class="border-t border-slate-200 p-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-medium text-slate-700">Publishable Key</label>
+                            <input type="text" name="stripe_test_public_key"
+                                   value="{{ old('stripe_test_public_key', $settings['stripe']['stripe_test_public_key'] ?? '') }}"
+                                   placeholder="pk_test_..."
+                                   class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-900 shadow-sm font-mono focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-medium text-slate-700">Secret Key</label>
+                            <input type="password" name="stripe_test_secret_key" id="stripe_test_secret_key"
+                                   value="{{ old('stripe_test_secret_key', $settings['stripe']['stripe_test_secret_key'] ?? '') }}"
+                                   placeholder="sk_test_..."
+                                   class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-900 shadow-sm font-mono focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-medium text-slate-700">Webhook Secret</label>
+                            <input type="password" name="stripe_test_webhook_secret" id="stripe_test_webhook_secret"
+                                   value="{{ old('stripe_test_webhook_secret', $settings['stripe']['stripe_test_webhook_secret'] ?? '') }}"
+                                   placeholder="whsec_..."
+                                   class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-900 shadow-sm font-mono focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none">
+                        </div>
                     </div>
+                </details>
+
+                {{-- Currency --}}
+                <div>
+                    <label for="stripe_currency" class="block text-sm font-medium text-slate-700">Monedă</label>
+                    <select name="stripe_currency" id="stripe_currency"
+                            class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                        @php $currentCurrency = old('stripe_currency', $settings['stripe']['stripe_currency'] ?? 'eur'); @endphp
+                        <option value="eur" {{ $currentCurrency === 'eur' ? 'selected' : '' }}>EUR (Euro)</option>
+                        <option value="usd" {{ $currentCurrency === 'usd' ? 'selected' : '' }}>USD (Dollar)</option>
+                        <option value="ron" {{ $currentCurrency === 'ron' ? 'selected' : '' }}>RON (Leu)</option>
+                        <option value="gbp" {{ $currentCurrency === 'gbp' ? 'selected' : '' }}>GBP (Liră)</option>
+                    </select>
                 </div>
 
                 <div class="flex justify-end pt-2">
