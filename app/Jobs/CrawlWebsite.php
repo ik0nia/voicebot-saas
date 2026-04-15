@@ -167,7 +167,7 @@ class CrawlWebsite implements ShouldQueue
                     // Create knowledge entry and process it
                     $knowledge = BotKnowledge::create([
                         'bot_id' => $this->scan->bot_id,
-                        'type' => 'url',
+                        'type' => 'text',
                         'source_type' => 'scan',
                         'source_id' => $this->scan->id,
                         'title' => $extracted['title'] ?: $url,
