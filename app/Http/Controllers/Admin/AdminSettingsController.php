@@ -19,9 +19,24 @@ class AdminSettingsController extends Controller
     {
         $tab = $request->get('tab', 'general');
 
-        $settings = PlatformSetting::all()->groupBy('group')->map(function ($group) {
-            return $group->pluck('value', 'key')->toArray();
-        })->toArray();
+        // pluck() bypasses the model accessor and would expose encrypted
+        // ciphertext to the view. Fetch models so the value accessor
+        // decrypts secrets in memory, then mask sensitive fields below.
+        $settings = [];
+        $secretSuffixes = ['_secret_key', '_api_key', '_webhook_secret', '_password', '_secret', '_token'];
+        foreach (PlatformSetting::all() as $row) {
+            $isSecret = false;
+            foreach ($secretSuffixes as $suffix) {
+                if (str_ends_with($row->key, $suffix)) {
+                    $isSecret = true;
+                    break;
+                }
+            }
+            $value = $isSecret ? '' : $row->value;
+            $settings[$row->group][$row->key] = $value;
+            // Tell the view whether a saved value exists, without leaking it.
+            $settings[$row->group][$row->key . '__present'] = ! empty($row->getRawOriginal('value'));
+        }
 
         // Extra data for specific tabs
         $extra = [];
@@ -133,11 +148,21 @@ class AdminSettingsController extends Controller
             }
         }
 
-        foreach ($validated as $key => $value) {
+        // Always persist mode + currency. For secrets, only persist if user
+        // actually typed something new (empty submit means "keep existing").
+        PlatformSetting::set('stripe_mode', $validated['stripe_mode'], 'string', 'stripe');
+        PlatformSetting::set('stripe_currency', $validated['stripe_currency'], 'string', 'stripe');
+
+        $secretFields = [
+            'stripe_public_key', 'stripe_secret_key', 'stripe_webhook_secret',
+            'stripe_test_public_key', 'stripe_test_secret_key', 'stripe_test_webhook_secret',
+        ];
+        foreach ($secretFields as $field) {
+            $value = $validated[$field] ?? null;
             if ($value === null || $value === '') {
                 continue;
             }
-            PlatformSetting::set($key, $value, 'string', 'stripe');
+            PlatformSetting::set($field, $value, 'string', 'stripe');
         }
 
         return back()->with('success', "Setările Stripe au fost actualizate (mod: {$mode}).");
