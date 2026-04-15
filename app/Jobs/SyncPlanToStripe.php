@@ -149,6 +149,7 @@ class SyncPlanToStripe implements ShouldQueue
             'currency' => $currency,
             'unit_amount' => $unitAmount,
             'recurring' => ['interval' => $interval],
+            'tax_behavior' => $this->taxBehavior(),
             'metadata' => ['lookup_key' => $lookupKey, 'managed_by' => 'sambla'],
         ])->id;
     }
@@ -185,6 +186,7 @@ class SyncPlanToStripe implements ShouldQueue
             'currency' => $currency,
             'unit_amount' => $unitAmount,
             'nickname' => $name,
+            'tax_behavior' => $this->taxBehavior(),
             'metadata' => [
                 'plan_slug' => $plan->slug,
                 'topup_index' => (string) $idx,
@@ -193,5 +195,11 @@ class SyncPlanToStripe implements ShouldQueue
                 'managed_by' => 'sambla',
             ],
         ])->id;
+    }
+
+    private function taxBehavior(): string
+    {
+        $inclusive = (bool) \App\Models\PlatformSetting::get('vat_inclusive', false);
+        return $inclusive ? 'inclusive' : 'exclusive';
     }
 }

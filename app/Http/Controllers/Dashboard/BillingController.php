@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Dashboard;
 use App\Http\Controllers\Controller;
 use App\Models\CreditPurchase;
 use App\Models\Plan;
+use App\Models\PlatformSetting;
 use App\Services\PlanLimitService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -70,17 +71,25 @@ class BillingController extends Controller
             return back()->withErrors(['plan' => 'Acest pachet nu este sincronizat încă cu Stripe. Contactează administratorul.']);
         }
 
-        $checkout = $tenant->newSubscription('default', $priceId)
-            ->checkout([
-                'success_url' => route('dashboard.billing.index') . '?subscribed=1',
-                'cancel_url' => route('dashboard.billing.index') . '?cancelled=1',
-                'metadata' => [
-                    'tenant_id' => (string) $tenant->id,
-                    'plan_id' => (string) $plan->id,
-                    'plan_slug' => (string) $plan->slug,
-                    'interval' => $interval,
-                ],
-            ]);
+        $taxRateId = $this->activeTaxRateId();
+
+        $sessionOptions = [
+            'success_url' => route('dashboard.billing.index') . '?subscribed=1',
+            'cancel_url' => route('dashboard.billing.index') . '?cancelled=1',
+            'billing_address_collection' => 'required',
+            'metadata' => [
+                'tenant_id' => (string) $tenant->id,
+                'plan_id' => (string) $plan->id,
+                'plan_slug' => (string) $plan->slug,
+                'interval' => $interval,
+            ],
+        ];
+        if ($taxRateId) {
+            $sessionOptions['subscription_data'] = ['default_tax_rates' => [$taxRateId]];
+        }
+        $sessionOptions = array_merge($sessionOptions, $this->tenantTaxIdCollection());
+
+        $checkout = $tenant->newSubscription('default', $priceId)->checkout($sessionOptions);
 
         return redirect($checkout->url);
     }
@@ -106,13 +115,22 @@ class BillingController extends Controller
             return back()->withErrors(['topup' => 'Acest top-up nu este sincronizat cu Stripe încă.']);
         }
 
-        $checkout = $tenant->checkout([
-            $priceId => 1,
-        ], [
+        $taxRateId = $this->activeTaxRateId();
+
+        $items = [[
+            'price' => $priceId,
+            'quantity' => 1,
+        ]];
+        if ($taxRateId) {
+            $items[0]['tax_rates'] = [$taxRateId];
+        }
+
+        $checkout = $tenant->checkout($items, array_merge([
             'mode' => 'payment',
             'success_url' => route('dashboard.billing.index') . '?topup=ok',
             'cancel_url' => route('dashboard.billing.index') . '?topup=cancelled',
-            'invoice_creation' => ['enabled' => true], // generate proper invoice for the receipt
+            'billing_address_collection' => 'required',
+            'invoice_creation' => ['enabled' => true],
             'metadata' => [
                 'tenant_id' => (string) $tenant->id,
                 'plan_id' => (string) $plan->id,
@@ -120,9 +138,24 @@ class BillingController extends Controller
                 'topup_unit' => (string) $bundle['unit'],
                 'topup_quantity' => (string) $bundle['quantity'],
             ],
-        ]);
+        ], $this->tenantTaxIdCollection()));
 
         return redirect($checkout->url);
+    }
+
+    private function activeTaxRateId(): ?string
+    {
+        $mode = Plan::activeStripeMode();
+        $id = (string) PlatformSetting::get("stripe_tax_rate_id_{$mode}", '');
+        return $id !== '' ? $id : null;
+    }
+
+    private function tenantTaxIdCollection(): array
+    {
+        if (! (bool) PlatformSetting::get('collect_tax_id', true)) {
+            return [];
+        }
+        return ['tax_id_collection' => ['enabled' => true]];
     }
 
     /**

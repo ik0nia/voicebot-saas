@@ -115,7 +115,7 @@
                     <div class="rounded-xl border border-slate-200 p-5 flex flex-col">
                         <div class="text-sm font-bold text-slate-900">{{ $bundle['name'] }}</div>
                         <div class="text-xs text-slate-500 mt-1">{{ number_format($bundle['quantity']) }} {{ $bundle['unit'] === 'minutes' ? 'minute' : ($bundle['unit'] === 'products' ? 'produse' : 'mesaje') }}</div>
-                        <div class="mt-3 text-2xl font-extrabold text-slate-900">{{ number_format($bundle['price'], 2) }} <span class="text-sm font-medium text-slate-500">RON</span></div>
+                        <div class="mt-3 text-2xl font-extrabold text-slate-900">{{ number_format($bundle['price'], 2) }} <span class="text-sm font-medium text-slate-500">RON +TVA</span></div>
                         @php $priceId = $currentPlan->stripeTopupPriceId((int) $idx); @endphp
                         <form method="POST" action="{{ route('dashboard.billing.topup', ['plan' => $currentPlan->id, 'bundleIndex' => $idx]) }}" class="mt-auto pt-4">
                             @csrf
@@ -356,8 +356,8 @@
                                             @if($p->is_popular)<span class="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-semibold text-yellow-800">Popular</span>@endif
                                             @if($isCurrent)<span class="inline-flex items-center rounded-full bg-red-200 px-2 py-0.5 text-xs font-semibold text-red-900">Actual</span>@endif
                                         </div>
-                                        <div class="mt-2 text-2xl font-extrabold text-slate-900">{{ number_format($p->price_monthly, 0) }} <span class="text-sm font-medium text-slate-500">RON/lună</span></div>
-                                        <div class="text-xs text-slate-500">sau {{ number_format($p->price_yearly, 0) }} RON/lună (anual)</div>
+                                        <div class="mt-2 text-2xl font-extrabold text-slate-900">{{ number_format($p->price_monthly, 0) }} <span class="text-sm font-medium text-slate-500">RON/lună +TVA</span></div>
+                                        <div class="text-xs text-slate-500">sau {{ number_format($p->price_yearly, 0) }} RON/lună +TVA (anual)</div>
                                         @if($p->description)
                                             <p class="mt-2 text-xs text-slate-600">{{ $p->description }}</p>
                                         @endif

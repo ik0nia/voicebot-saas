@@ -214,6 +214,7 @@ class SyncStripePlans extends Command
             'currency' => $currency,
             'unit_amount' => $unitAmount,
             'recurring' => ['interval' => $interval],
+            'tax_behavior' => $this->taxBehavior(),
             'metadata' => [
                 'lookup_key' => $lookupKey,
                 'managed_by' => 'sambla',
@@ -281,6 +282,7 @@ class SyncStripePlans extends Command
             'currency' => $currency,
             'unit_amount' => $unitAmount,
             'nickname' => $name,
+            'tax_behavior' => $this->taxBehavior(),
             'metadata' => [
                 'plan_slug' => $plan->slug,
                 'topup_index' => (string) $idx,
@@ -291,5 +293,11 @@ class SyncStripePlans extends Command
         ]);
         $this->line("    topup#{$idx}: <fg=green>{$price->id}</> (created) — {$name}");
         return [$price->id, true, $archived];
+    }
+
+    private function taxBehavior(): string
+    {
+        $inclusive = (bool) \App\Models\PlatformSetting::get('vat_inclusive', false);
+        return $inclusive ? 'inclusive' : 'exclusive';
     }
 }
