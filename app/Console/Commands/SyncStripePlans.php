@@ -23,17 +23,14 @@ class SyncStripePlans extends Command
             return self::FAILURE;
         }
 
-        $secret = config('cashier.secret');
+        $secret = (string) \App\Models\PlatformSetting::get($mode === 'live' ? 'stripe_secret_key' : 'stripe_test_secret_key', '');
         if (empty($secret)) {
-            $this->error('cashier.secret is empty — configure Stripe keys at /admin/setari/stripe first.');
+            $this->error("Stripe secret for mode={$mode} is empty — configure it at /admin/setari/stripe.");
             return self::FAILURE;
         }
-        if ($mode === 'live' && ! str_starts_with((string) $secret, 'sk_live_')) {
-            $this->error('Active key is not a live key but you asked for live mode. Switch the mode in /admin/setari/stripe first.');
-            return self::FAILURE;
-        }
-        if ($mode === 'test' && ! str_starts_with((string) $secret, 'sk_test_')) {
-            $this->error('Active key is not a test key but you asked for test mode. Switch the mode in /admin/setari/stripe first.');
+        $expectedPrefix = $mode === 'live' ? 'sk_live_' : 'sk_test_';
+        if (! str_starts_with($secret, $expectedPrefix)) {
+            $this->error("Stored secret for mode={$mode} does not start with {$expectedPrefix} — refusing to run.");
             return self::FAILURE;
         }
 

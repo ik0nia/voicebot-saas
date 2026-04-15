@@ -165,7 +165,7 @@ class AdminPlanController extends Controller
             return [];
         }
 
-        $allowedUnits = ['messages', 'minutes'];
+        $allowedUnits = ['messages', 'minutes', 'products'];
         $out = [];
 
         foreach ($rows as $row) {

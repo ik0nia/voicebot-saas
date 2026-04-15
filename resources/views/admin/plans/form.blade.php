@@ -224,6 +224,7 @@
                                 class="md:col-span-2 text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-red-500 focus:border-red-500">
                             <option value="messages" {{ ($topup['unit'] ?? 'messages') === 'messages' ? 'selected' : '' }}>mesaje</option>
                             <option value="minutes" {{ ($topup['unit'] ?? 'messages') === 'minutes' ? 'selected' : '' }}>minute</option>
+                            <option value="products" {{ ($topup['unit'] ?? 'messages') === 'products' ? 'selected' : '' }}>produse</option>
                         </select>
 
                         <input type="number" step="1" min="1" name="topups[{{ $i }}][quantity]" value="{{ $topup['quantity'] ?? '' }}"

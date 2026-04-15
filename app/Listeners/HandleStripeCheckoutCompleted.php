@@ -3,9 +3,13 @@
 namespace App\Listeners;
 
 use App\Models\CreditPurchase;
+use App\Models\Plan;
 use App\Models\Tenant;
+use App\Notifications\SubscriptionStartedNotification;
+use App\Notifications\TopUpPurchasedNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 use Laravel\Cashier\Events\WebhookReceived;
 
 /**
@@ -18,6 +22,49 @@ use Laravel\Cashier\Events\WebhookReceived;
  */
 class HandleStripeCheckoutCompleted
 {
+    private function notifySubscriptionStarted(array $session): void
+    {
+        $metadata = $session['metadata'] ?? [];
+        $tenantId = (int) ($metadata['tenant_id'] ?? 0);
+        $planSlug = (string) ($metadata['plan_slug'] ?? '');
+        $interval = (string) ($metadata['interval'] ?? 'monthly');
+
+        if (! $tenantId || ! $planSlug) {
+            return;
+        }
+        $tenant = Tenant::find($tenantId);
+        $plan = Plan::where('slug', $planSlug)->first();
+        if (! $tenant || ! $plan) {
+            return;
+        }
+
+        $amount = $interval === 'yearly' ? (float) $plan->price_yearly : (float) $plan->price_monthly;
+        $recipients = $this->billingRecipients($tenant);
+        if (empty($recipients)) {
+            return;
+        }
+
+        \Illuminate\Support\Facades\Notification::route('mail', $recipients)
+            ->notify(new SubscriptionStartedNotification($plan->name, $interval, $amount));
+    }
+
+    /**
+     * Recipients for billing emails: tenant.company_email if set, plus
+     * the first admin user. De-duplicated.
+     */
+    private function billingRecipients(Tenant $tenant): array
+    {
+        $emails = [];
+        if (! empty($tenant->company_email)) {
+            $emails[] = $tenant->company_email;
+        }
+        $admin = $tenant->users()->orderBy('id')->first();
+        if ($admin && ! empty($admin->email)) {
+            $emails[] = $admin->email;
+        }
+        return array_values(array_unique(array_filter($emails)));
+    }
+
     public function handle(WebhookReceived $event): void
     {
         $payload = $event->payload;
@@ -31,8 +78,18 @@ class HandleStripeCheckoutCompleted
         $sessionId = $session['id'] ?? null;
         $mode = $session['mode'] ?? null;
 
-        // Only one-off payments. Cashier's own handler manages subscription mode.
-        if ($mode !== 'payment' || ! $sessionId) {
+        if (! $sessionId) {
+            return;
+        }
+
+        if ($mode === 'subscription') {
+            $this->notifySubscriptionStarted($session);
+            return;
+        }
+
+        // Only one-off payments past this point. Cashier handles subscription
+        // bookkeeping natively; we just notify above.
+        if ($mode !== 'payment') {
             return;
         }
 
@@ -98,6 +155,12 @@ class HandleStripeCheckoutCompleted
                     'unit' => $unit,
                     'quantity' => $quantity,
                 ]);
+
+                $recipients = $this->billingRecipients($tenant);
+                if (! empty($recipients)) {
+                    Notification::route('mail', $recipients)
+                        ->notify(new TopUpPurchasedNotification($purchase));
+                }
             }
         });
     }

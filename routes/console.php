@@ -11,6 +11,11 @@ Schedule::command('voicebot:onboarding-emails')->dailyAt('09:00');
 Schedule::command('voicebot:weekly-report')->weeklyOn(1, '08:00');
 Schedule::command('queue:autoscale --max-workers=6 --scale-threshold=100 --jobs-per-worker=200 --queue=high,default,knowledge')->everyMinute()->withoutOverlapping();
 
+// Stripe drift check: keep live + test in sync with our DB definitions.
+// Idempotent — only writes when something has actually changed.
+Schedule::command('stripe:sync-plans --mode=live')->dailyAt('03:15')->withoutOverlapping();
+Schedule::command('stripe:sync-plans --mode=test')->dailyAt('03:20')->withoutOverlapping();
+
 // Social media: generate posts daily at 07:00
 // PAUSED 2026-04-14: backlog de 306 grupuri draft + texte/imagini cu limbaj vechi.
 // Reactivează după curățarea backlog-ului și după fix logo (image-to-image cu ref).

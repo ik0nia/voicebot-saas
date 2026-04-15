@@ -24,9 +24,18 @@ class RebuildStripePrices extends Command
     public function handle(): int
     {
         $mode = (string) ($this->option('mode') ?: Plan::activeStripeMode());
-        $secret = config('cashier.secret');
+        if (! in_array($mode, ['live', 'test'], true)) {
+            $this->error("Invalid mode: {$mode}");
+            return self::FAILURE;
+        }
+        $secret = (string) \App\Models\PlatformSetting::get($mode === 'live' ? 'stripe_secret_key' : 'stripe_test_secret_key', '');
         if (empty($secret)) {
-            $this->error('cashier.secret missing');
+            $this->error("Stripe secret for mode={$mode} is empty.");
+            return self::FAILURE;
+        }
+        $expectedPrefix = $mode === 'live' ? 'sk_live_' : 'sk_test_';
+        if (! str_starts_with($secret, $expectedPrefix)) {
+            $this->error("Stored secret for mode={$mode} does not start with {$expectedPrefix} — refusing to run.");
             return self::FAILURE;
         }
 
