@@ -286,7 +286,18 @@ class BillingController extends Controller
         if (! (bool) PlatformSetting::get('collect_tax_id', true)) {
             return [];
         }
-        return ['tax_id_collection' => ['enabled' => true]];
+        // When tax_id_collection is on, Stripe requires permission to write
+        // the billing address back onto the customer (otherwise it fails
+        // with "We could not find a valid address on the provided customer").
+        // customer_update.name is set by Cashier itself; we add address here
+        // and merge it so both coexist cleanly.
+        return [
+            'tax_id_collection' => ['enabled' => true],
+            'customer_update' => [
+                'name' => 'auto',
+                'address' => 'auto',
+            ],
+        ];
     }
 
     /**
