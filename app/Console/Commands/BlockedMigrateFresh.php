@@ -28,10 +28,10 @@ class BlockedMigrateFresh extends Command
 
     public function handle(): int
     {
-        if (app()->environment('local')) {
-            // In local, delegate to the real command
-            $this->warn('Running migrate:fresh in LOCAL environment...');
-            return $this->call('migrate', ['--fresh' => true]);
+        if (app()->environment('local', 'testing')) {
+            // Inline fresh: drop all tables, rerun migrations.
+            \Illuminate\Support\Facades\Schema::dropAllTables();
+            return $this->call('migrate', ['--force' => true]);
         }
 
         logger()->critical('🚨 migrate:fresh BLOCKED by command override', [

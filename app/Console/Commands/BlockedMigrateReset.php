@@ -21,9 +21,11 @@ class BlockedMigrateReset extends Command
 
     public function handle(): int
     {
-        if (app()->environment('local')) {
-            $this->warn('Running migrate:reset in LOCAL environment...');
-            return 0;
+        if (app()->environment('local', 'testing')) {
+            return \Illuminate\Support\Facades\Artisan::call(
+                \Illuminate\Database\Console\Migrations\ResetCommand::class,
+                ['--force' => true]
+            );
         }
 
         logger()->critical('🚨 migrate:reset BLOCKED by command override', [

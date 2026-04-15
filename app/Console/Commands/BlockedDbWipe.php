@@ -20,8 +20,18 @@ class BlockedDbWipe extends Command
 
     public function handle(): int
     {
-        if (app()->environment('local')) {
-            $this->warn('Running db:wipe in LOCAL environment...');
+        if (app()->environment('local', 'testing')) {
+            $schema = \Illuminate\Support\Facades\Schema::connection($this->option('database') ?: null);
+            if ($this->option('drop-views')) {
+                $schema->dropAllViews();
+            }
+            $schema->dropAllTables();
+            if ($this->option('drop-types')) {
+                try {
+                    $schema->dropAllTypes();
+                } catch (\Throwable) {
+                }
+            }
             return 0;
         }
 

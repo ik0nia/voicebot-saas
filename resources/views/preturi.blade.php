@@ -5,10 +5,10 @@
 
 @section('jsonld')
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebPage","@id":"https://sambla.ro/preturi#webpage","url":"https://sambla.ro/preturi","name":"Prețuri Sambla","description":"Planuri Sambla pentru chatbot AI și voicebot — Starter, Pro, Business. Prețuri în EUR, fără costuri ascunse, hosting în România.","isPartOf":{"@id":"https://sambla.ro/#website"},"about":{"@id":"https://sambla.ro/#software"},"inLanguage":"ro-RO"}
+{"@context":"https://schema.org","@type":"WebPage","@id":"https://sambla.ro/preturi#webpage","url":"https://sambla.ro/preturi","name":"Prețuri Sambla","description":"Planuri Sambla pentru chatbot AI și voicebot — Starter, Pro, Business. Prețuri în RON (fără TVA), fără costuri ascunse, hosting în România.","isPartOf":{"@id":"https://sambla.ro/#website"},"about":{"@id":"https://sambla.ro/#software"},"inLanguage":"ro-RO"}
 </script>
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"Product","name":"Sambla AI Platform","brand":{"@type":"Brand","name":"Sambla"},"description":"Platformă SaaS pentru agenți AI conversaționali (chatbot și voicebot) cu hosting în România, GDPR compliant.","offers":{"@type":"AggregateOffer","priceCurrency":"EUR","lowPrice":"49","highPrice":"399","offerCount":3,"offers":[{"@type":"Offer","name":"Starter","price":"49","priceCurrency":"EUR","description":"Chatbot web pentru afaceri mici"},{"@type":"Offer","name":"Pro","price":"149","priceCurrency":"EUR","description":"Chatbot + voicebot, multi-canal, integrare WooCommerce"},{"@type":"Offer","name":"Business","price":"399","priceCurrency":"EUR","description":"Volum mare, voce premium, multi-bot, suport dedicat"}]}}
+{"@context":"https://schema.org","@type":"Product","name":"Sambla AI Platform","brand":{"@type":"Brand","name":"Sambla"},"description":"Platformă SaaS pentru agenți AI conversaționali (chatbot și voicebot) cu hosting în România, GDPR compliant.","offers":{"@type":"AggregateOffer","priceCurrency":"RON","lowPrice":"29","highPrice":"199","offerCount":3,"offers":[{"@type":"Offer","name":"Chat Starter","price":"29","priceCurrency":"RON","description":"Chatbot web pentru afaceri mici"},{"@type":"Offer","name":"Chat Professional","price":"79","priceCurrency":"RON","description":"Chatbot + integrare WooCommerce"},{"@type":"Offer","name":"Chat Business","price":"199","priceCurrency":"RON","description":"Volum mare, multi-bot, suport dedicat"}]}}
 </script>
 @endsection
 
@@ -90,8 +90,8 @@
                                 @if($plan->price_monthly !== null && $plan->price_monthly > 0)
                                     <div class="flex items-baseline gap-1">
                                         <span class="text-4xl font-extrabold {{ $isPopular ? 'text-red-800' : 'text-slate-900' }} pricing-amount" data-monthly="{{ number_format($plan->price_monthly, 0) }}" data-annual="{{ number_format($plan->price_yearly, 0) }}">{{ number_format($plan->price_monthly, 0) }}</span>
-                                        <span class="text-lg font-semibold text-slate-700">&euro;</span>
-                                        <span class="text-sm text-slate-600">/lună</span>
+                                        <span class="text-lg font-semibold text-slate-700">RON</span>
+                                        <span class="text-sm text-slate-600">/lună +TVA</span>
                                     </div>
                                     <p class="text-xs text-slate-500 mt-1 pricing-note hidden">facturat anual</p>
                                 @else
@@ -111,10 +111,10 @@
                             @if($overageCostPerMessage || $overageCostPerBot)
                                 <div class="text-xs text-slate-600 mb-6 border-t border-slate-200 pt-4 space-y-1">
                                     @if($overageCostPerMessage)
-                                        <p>Mesaj suplimentar: <span class="font-semibold text-slate-900">&euro;{{ number_format($overageCostPerMessage, 2) }}/mesaj</span></p>
+                                        <p>Mesaj suplimentar: <span class="font-semibold text-slate-900">RON{{ number_format($overageCostPerMessage, 2) }}/mesaj</span></p>
                                     @endif
                                     @if($overageCostPerBot)
-                                        <p>Bot suplimentar: <span class="font-semibold text-slate-900">&euro;{{ number_format($overageCostPerBot, 0) }}/lună</span></p>
+                                        <p>Bot suplimentar: <span class="font-semibold text-slate-900">RON{{ number_format($overageCostPerBot, 0) }}/lună</span></p>
                                     @endif
                                 </div>
                             @endif
@@ -169,8 +169,8 @@
                                 @if(!$isEnterprise && $plan->price_monthly > 0)
                                     <div class="flex items-baseline gap-1">
                                         <span class="text-4xl font-extrabold text-white pricing-amount" data-monthly="{{ number_format($plan->price_monthly, 0) }}" data-annual="{{ number_format($plan->price_yearly, 0) }}">{{ number_format($plan->price_monthly, 0) }}</span>
-                                        <span class="text-lg font-semibold text-slate-300">&euro;</span>
-                                        <span class="text-sm text-slate-400">/lună</span>
+                                        <span class="text-lg font-semibold text-slate-300">RON</span>
+                                        <span class="text-sm text-slate-400">/lună +TVA</span>
                                     </div>
                                     <p class="text-xs text-slate-400 mt-1 pricing-note hidden">facturat anual</p>
                                 @else
@@ -194,7 +194,7 @@
                             </ul>
                             @if($overageCostPerMinute)
                                 <p class="text-xs text-slate-400 mb-6 border-t border-slate-600 pt-4">
-                                    Credit suplimentar: <span class="font-semibold text-white">&euro;{{ number_format($overageCostPerMinute, 2) }}/minut</span>
+                                    Credit suplimentar: <span class="font-semibold text-white">RON{{ number_format($overageCostPerMinute, 2) }}/minut</span>
                                 </p>
                             @endif
                             @if($isEnterprise)
@@ -250,7 +250,7 @@
                                         @if($cpm)
                                             <tr>
                                                 <td class="py-3 px-4 text-slate-700 font-medium">{{ $plan->name }}</td>
-                                                <td class="py-3 px-4 text-right text-slate-900 font-semibold">&euro;{{ number_format($cpm, 2) }}</td>
+                                                <td class="py-3 px-4 text-right text-slate-900 font-semibold">RON{{ number_format($cpm, 2) }}</td>
                                             </tr>
                                         @endif
                                     @endforeach
@@ -285,7 +285,7 @@
                                         @if($cpb)
                                             <tr>
                                                 <td class="py-3 px-4 text-slate-700 font-medium">{{ $plan->name }}</td>
-                                                <td class="py-3 px-4 text-right text-slate-900 font-semibold">&euro;{{ number_format($cpb, 0) }}</td>
+                                                <td class="py-3 px-4 text-right text-slate-900 font-semibold">RON{{ number_format($cpb, 0) }}</td>
                                             </tr>
                                         @endif
                                     @endforeach
@@ -320,7 +320,7 @@
                                         @if($cpm)
                                             <tr>
                                                 <td class="py-3 px-4 text-slate-700 font-medium">{{ $plan->name }}</td>
-                                                <td class="py-3 px-4 text-right text-slate-900 font-semibold">&euro;{{ number_format($cpm, 2) }}</td>
+                                                <td class="py-3 px-4 text-right text-slate-900 font-semibold">RON{{ number_format($cpm, 2) }}</td>
                                             </tr>
                                         @endif
                                     @endforeach

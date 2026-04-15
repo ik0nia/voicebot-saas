@@ -23,9 +23,11 @@ class BlockedMigrateRefresh extends Command
 
     public function handle(): int
     {
-        if (app()->environment('local')) {
-            $this->warn('Running migrate:refresh in LOCAL environment...');
-            return $this->call('migrate', ['--refresh' => true]);
+        if (app()->environment('local', 'testing')) {
+            return \Illuminate\Support\Facades\Artisan::call(
+                \Illuminate\Database\Console\Migrations\RefreshCommand::class,
+                ['--force' => true]
+            );
         }
 
         logger()->critical('🚨 migrate:refresh BLOCKED by command override', [

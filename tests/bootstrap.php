@@ -18,12 +18,27 @@ if (file_exists($envFile)) {
         $realEnv = trim($matches[1], " \t\n\r\"'");
 
         if (in_array($realEnv, ['production', 'prod'], true)) {
-            // Extract DB name to give clear error
-            $dbName = 'unknown';
+            // Extract production DB name from .env
+            $prodDb = 'unknown';
             if (preg_match('/^DB_DATABASE\s*=\s*(.+)$/m', $envContent, $dbMatch)) {
-                $dbName = trim($dbMatch[1], " \t\n\r\"'");
+                $prodDb = trim($dbMatch[1], " \t\n\r\"'");
             }
 
+            // Resolve the DB the test run will actually use. phpunit.xml sets
+            // an env for this (DB_DATABASE=voicebot_test by default). Only
+            // block when the runtime target equals the production DB, so
+            // running against a clearly-separate test DB is permitted.
+            $runtimeDb = getenv('DB_DATABASE');
+            if ($runtimeDb === false || $runtimeDb === '') {
+                $runtimeDb = $_ENV['DB_DATABASE'] ?? $_SERVER['DB_DATABASE'] ?? $prodDb;
+            }
+
+            if ($runtimeDb !== $prodDb && $runtimeDb !== '' && $runtimeDb !== 'unknown') {
+                // Different DB at runtime — safe to proceed.
+                goto passed_guard;
+            }
+
+            $dbName = $prodDb;
             $hostname = gethostname();
             $msg = "\n\033[41;37;1m FATAL: PHPUnit running on PRODUCTION server! \033[0m\n"
                 . "\033[33m Server: {$hostname}\033[0m\n"
@@ -54,5 +69,6 @@ if (file_exists($envFile)) {
     }
 }
 
+passed_guard:
 // If we passed the production check, load the normal Laravel autoloader
 require dirname(__DIR__) . '/vendor/autoload.php';

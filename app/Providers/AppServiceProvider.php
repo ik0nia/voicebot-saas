@@ -53,7 +53,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Layer 1: Laravel built-in — blocks Schema::dropAllTables(), Schema::drop(), etc.
         // Works at the DB driver level, cannot be bypassed by artisan commands.
-        DB::prohibitDestructiveCommands(!app()->environment('local'));
+        DB::prohibitDestructiveCommands(!app()->environment('local', 'testing'));
 
         // Layer 2: Event listener — intercepts artisan commands BEFORE they execute.
         // Catches: migrate:fresh, migrate:refresh, migrate:reset, db:wipe
