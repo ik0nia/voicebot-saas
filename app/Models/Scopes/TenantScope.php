@@ -14,8 +14,14 @@ class TenantScope implements Scope
 
         $user = auth()->user();
 
-        // Super admin with "view all" toggle: bypass scope entirely
-        if ($user->isSuperAdmin() && session('admin_view_all', false)) {
+        // Super admin with "view all" toggle: bypass scope entirely.
+        // The role check runs every query (not just at toggle time) so
+        // demoting a user takes effect immediately even if their session
+        // still has the flag; the role re-read uses the permissions cache.
+        if (session('admin_view_all', false)
+            && method_exists($user, 'isSuperAdmin')
+            && $user->isSuperAdmin()
+            && $user->hasRole('super_admin')) {
             return;
         }
 

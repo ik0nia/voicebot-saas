@@ -202,18 +202,27 @@ class SmartRegenerateImages extends Command
     private function sendMail(string $to, string $subject, string $html): void
     {
         try {
+            $host = (string) \App\Models\PlatformSetting::get('mail_host', 'mail.sambla.ro');
+            $port = (int) \App\Models\PlatformSetting::get('mail_port', 587);
+            $username = (string) \App\Models\PlatformSetting::get('mail_username', 'noreply@sambla.ro');
+            $password = (string) \App\Models\PlatformSetting::get('mail_password', '');
+            $fromAddress = (string) \App\Models\PlatformSetting::get('mail_from_address', 'noreply@sambla.ro');
+
+            if ($password === '') {
+                $this->error('Mail password not configured (set at /admin/setari/email).');
+                return;
+            }
+
             $msg = new \Symfony\Component\Mime\Email();
-            $msg->from('noreply@sambla.ro')
+            $msg->from($fromAddress)
                 ->to($to)
                 ->replyTo('servus@sambla.ro')
                 ->subject($subject)
                 ->html($html);
 
-            $transport = new \Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport(
-                'mail.sambla.ro', 587, true
-            );
-            $transport->setUsername('noreply@sambla.ro');
-            $transport->setPassword('w3IAZCLSeNhOF7FmRNO4');
+            $transport = new \Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport($host, $port, true);
+            $transport->setUsername($username);
+            $transport->setPassword($password);
 
             $mailer = new \Symfony\Component\Mailer\Mailer($transport);
             $mailer->send($msg);

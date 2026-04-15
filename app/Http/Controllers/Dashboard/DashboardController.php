@@ -29,10 +29,23 @@ class DashboardController extends Controller
 
     public function toggleAdminView(Request $request)
     {
-        if (!auth()->user()->hasRole('super_admin')) {
+        $user = auth()->user();
+        // Belt-and-braces: both the role AND the isSuperAdmin flag must
+        // agree; either alone can be wrong (a renamed role, a missing
+        // column) and we would silently leak data across tenants.
+        if (! $user->hasRole('super_admin') || ! $user->isSuperAdmin()) {
             abort(403);
         }
-        session(['admin_view_all' => !session('admin_view_all', false)]);
+
+        $newValue = ! session('admin_view_all', false);
+        session(['admin_view_all' => $newValue]);
+
+        \App\Models\AdminAuditLog::record(
+            $newValue ? 'admin.view_all.enabled' : 'admin.view_all.disabled',
+            null,
+            ['actor_id' => $user->id, 'actor_email' => $user->email]
+        );
+
         return back();
     }
 
