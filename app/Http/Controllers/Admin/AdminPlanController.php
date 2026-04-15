@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SyncPlanToStripe;
 use App\Models\Plan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -40,9 +41,11 @@ class AdminPlanController extends Controller
             $validated['slug'] = Str::slug($validated['name']);
         }
 
-        Plan::create($validated);
+        $plan = Plan::create($validated);
 
-        return redirect()->route('admin.plans.index')->with('success', 'Pachetul a fost creat cu succes.');
+        SyncPlanToStripe::dispatch($plan->id);
+
+        return redirect()->route('admin.plans.index')->with('success', 'Pachetul a fost creat. Sincronizarea cu Stripe rulează în background.');
     }
 
     public function edit(Plan $pachete)
@@ -69,7 +72,9 @@ class AdminPlanController extends Controller
 
         $pachete->update($validated);
 
-        return redirect()->route('admin.plans.index')->with('success', "Pachetul \"{$pachete->name}\" a fost actualizat.");
+        SyncPlanToStripe::dispatch($pachete->id);
+
+        return redirect()->route('admin.plans.index')->with('success', "Pachetul \"{$pachete->name}\" a fost actualizat. Sincronizarea cu Stripe rulează în background.");
     }
 
     public function destroy(Plan $pachete)
