@@ -81,6 +81,13 @@ class BillingController extends Controller
 
         $taxRateId = $this->activeTaxRateId();
 
+        // Stripe keeps live + test accounts fully isolated: a customer
+        // created in one mode cannot be used with the other mode's key.
+        // Verify the stored stripe_id is resolvable with the active key;
+        // if not (cross-mode, deleted, or live-vs-test drift), clear it
+        // so Cashier creates a fresh customer in the active mode.
+        $this->ensureStripeCustomerMatchesActiveMode($tenant);
+
         $sessionOptions = [
             'success_url' => route('dashboard.billing.index') . '?subscribed=1',
             'cancel_url' => route('dashboard.billing.index') . '?cancelled=1',
@@ -184,6 +191,7 @@ class BillingController extends Controller
         }
 
         $taxRateId = $this->activeTaxRateId();
+        $this->ensureStripeCustomerMatchesActiveMode($tenant);
 
         $items = [[
             'price' => $priceId,
@@ -237,6 +245,33 @@ class BillingController extends Controller
         }
 
         return $violations;
+    }
+
+    /**
+     * If the tenant's stored stripe_id was created in a different Stripe
+     * mode (or was deleted), clear it so Cashier recreates a fresh
+     * customer in the current active mode on the next API call.
+     */
+    private function ensureStripeCustomerMatchesActiveMode(\App\Models\Tenant $tenant): void
+    {
+        if (! $tenant->stripe_id) {
+            return;
+        }
+        try {
+            $tenant->asStripeCustomer();
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::info('Resetting stripe_id after cross-mode/invalid state', [
+                'tenant_id' => $tenant->id,
+                'stripe_id' => $tenant->stripe_id,
+                'active_mode' => \App\Models\Plan::activeStripeMode(),
+                'error' => $e->getMessage(),
+            ]);
+            $tenant->forceFill([
+                'stripe_id' => null,
+                'pm_type' => null,
+                'pm_last_four' => null,
+            ])->save();
+        }
     }
 
     private function activeTaxRateId(): ?string
