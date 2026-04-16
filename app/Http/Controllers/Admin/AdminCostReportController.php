@@ -104,11 +104,19 @@ class AdminCostReportController extends Controller
         // spend legible. Tenant-scoped rows with NO context IDs
         // still show here — the cost exists, it's just not attached
         // to billable activity yet.
-        $platform = AiApiMetric::query()
+        // Bypass BelongsToTenant scope — this is the super-admin
+        // overview. When the operator filters by tenant the scope
+        // gets re-applied explicitly below.
+        $platformQuery = AiApiMetric::query()
+            ->withoutGlobalScopes()
             ->whereBetween('created_at', [$start->copy()->startOfDay(), $end->copy()->endOfDay()])
             ->whereNull('call_id')
             ->whereNull('conversation_id')
-            ->whereNull('message_id')
+            ->whereNull('message_id');
+        if ($tenantFilter) {
+            $platformQuery->where('tenant_id', $tenantFilter);
+        }
+        $platform = $platformQuery
             ->selectRaw('COALESCE(purpose, provider || \':\' || model) as label, provider, model, purpose, SUM(cost_cents) as cost_cents, COUNT(*) as n')
             ->groupBy('purpose', 'provider', 'model')
             ->orderByDesc('cost_cents')
