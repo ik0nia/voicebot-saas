@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\PlatformSetting;
+use App\Models\Tenant;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -13,18 +14,18 @@ use Symfony\Component\HttpFoundation\Response;
  *
  * Twilio's signature scheme: HMAC-SHA1 of
  *   URL + concatenated sorted(param_key + param_value)
- * keyed with the account Auth Token, base64-encoded. The URL must be
- * the exact absolute URL Twilio called — behind a reverse proxy that
- * means trusting X-Forwarded-* (already configured in bootstrap/app.php).
+ * keyed with the Auth Token of the account that OWNS the number. With
+ * per-tenant subaccounts (see TelephonyManager::forTenant), that's the
+ * subaccount's Auth Token, not the master's. We extract AccountSid
+ * from the POST params, resolve it to a tenant if it matches a
+ * provisioned subaccount, and use that tenant's encrypted auth token.
+ * Falls back to master when AccountSid matches the master SID.
  *
  * Fail-closed behaviour mirrors iter 1 on the Meta middleware: missing
  * auth token => 503 (don't pretend to verify with no secret); missing
- * header => 401; bad signature => 403.
- *
- * Unlike Telnyx's ed25519 + timestamp (iter 10), Twilio's signature
- * has no timestamp, so replay protection has to be per-event via the
- * CallSid (planned for a follow-up iter, mirroring the Meta dedupe
- * added in iter 11).
+ * header => 401; bad signature => 403; unknown AccountSid => 403
+ * (prevents an attacker from bypassing verification by claiming to be
+ * a subaccount we don't own).
  */
 class VerifyTwilioSignature
 {
@@ -34,12 +35,13 @@ class VerifyTwilioSignature
             return $next($request);
         }
 
-        $authToken = PlatformSetting::get('twilio_auth_token')
-            ?: config('services.twilio.auth_token');
-
-        if (empty($authToken)) {
-            Log::error('VerifyTwilioSignature: no Twilio auth token configured — rejecting webhook');
+        $authToken = $this->resolveAuthToken($request);
+        if ($authToken === null) {
+            // Diagnostic already logged by resolveAuthToken.
             abort(503, 'Twilio webhook signing not configured.');
+        }
+        if ($authToken === false) {
+            abort(403, 'Unknown Twilio account.');
         }
 
         $signature = $request->header('X-Twilio-Signature');
@@ -75,5 +77,52 @@ class VerifyTwilioSignature
         }
 
         return $next($request);
+    }
+
+    /**
+     * Returns:
+     *   - string auth token when verification can proceed
+     *   - null when the platform is misconfigured (no master token at all → 503)
+     *   - false when AccountSid in the request is unknown (403)
+     */
+    private function resolveAuthToken(Request $request): string|null|false
+    {
+        $masterSid = PlatformSetting::get('twilio_account_sid')
+            ?: config('services.twilio.account_sid');
+        $masterToken = PlatformSetting::get('twilio_auth_token')
+            ?: config('services.twilio.auth_token');
+
+        if (empty($masterToken)) {
+            Log::error('VerifyTwilioSignature: no Twilio master auth token configured');
+            return null;
+        }
+
+        $accountSid = $request->input('AccountSid');
+
+        // No AccountSid in the payload — Twilio always sends one on
+        // real webhooks, but fall back to master for safety (still
+        // fails the signature check below if the payload was tampered).
+        if (empty($accountSid)) {
+            return $masterToken;
+        }
+
+        if ($masterSid && hash_equals((string) $masterSid, $accountSid)) {
+            return $masterToken;
+        }
+
+        // Subaccount case — look up the tenant that owns this AccountSid.
+        $tenant = Tenant::withoutGlobalScopes()
+            ->where('telephony_subaccount_sid', $accountSid)
+            ->first();
+
+        if (!$tenant || empty($tenant->telephony_subaccount_auth_token)) {
+            Log::warning('VerifyTwilioSignature: AccountSid does not match master or any known subaccount', [
+                'account_sid' => $accountSid,
+                'ip' => $request->ip(),
+            ]);
+            return false;
+        }
+
+        return $tenant->telephony_subaccount_auth_token;
     }
 }
