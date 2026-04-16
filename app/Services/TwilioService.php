@@ -124,6 +124,47 @@ class TwilioService implements TelephonyProvider
         return ['sid' => $sub->sid, 'auth_token' => $sub->authToken];
     }
 
+    /**
+     * Toggle a subaccount's status. 'suspended' stops calls +
+     * provisioning instantly; 'active' resumes. Used by the tenant
+     * billing-default flow and the admin "pause tenant" action.
+     *
+     * 'closed' is one-way — Twilio releases every number on the
+     * subaccount and it's gone. Only call on tenant hard-delete.
+     */
+    public function setSubaccountStatus(\App\Models\Tenant $tenant, string $status): bool
+    {
+        if (!in_array($status, ['active', 'suspended', 'closed'], true)) {
+            throw new \InvalidArgumentException("Invalid subaccount status: {$status}");
+        }
+        if (!$tenant->telephony_subaccount_sid) {
+            return false;
+        }
+        try {
+            $this->masterClient()
+                ->api->v2010->accounts($tenant->telephony_subaccount_sid)
+                ->update(['status' => $status]);
+            Log::info('TwilioService: subaccount status changed', [
+                'tenant_id' => $tenant->id,
+                'status' => $status,
+            ]);
+            if ($status === 'closed') {
+                $tenant->forceFill([
+                    'telephony_subaccount_sid' => null,
+                    'telephony_subaccount_auth_token' => null,
+                ])->save();
+            }
+            return true;
+        } catch (RestException $e) {
+            Log::error('TwilioService: setSubaccountStatus failed', [
+                'tenant_id' => $tenant->id,
+                'status' => $status,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
     public function makeCall(string $to, string $from, string $webhookUrl): object
     {
         if (!preg_match('/^\+[1-9]\d{7,14}$/', $to)) {
