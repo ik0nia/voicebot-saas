@@ -192,17 +192,17 @@
                     <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
                 </summary>
                 <div class="px-6 pb-6">
-                    <p class="text-slate-600 leading-relaxed">Sambla este o platformă AI românească de comunicare inteligentă. Oferă chatbot text pentru site-ul tău și agent vocal AI pentru apeluri telefonice — totul alimentat de modele AI de ultimă generație (GPT-4o, Claude) și conectat la baza ta de cunoștințe.</p>
+                    <p class="text-slate-600 leading-relaxed">Sambla este o platformă AI românească de comunicare inteligentă. Oferă agent AI text pentru site-ul tău și agent vocal AI pentru apeluri telefonice — totul alimentat de modele AI de ultimă generație (GPT-4o, Claude) și conectat la baza ta de cunoștințe.</p>
                 </div>
             </details>
 
             <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                 <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
-                    <h4 class="text-lg font-bold text-slate-900">Ce poate face chatbot-ul text?</h4>
+                    <h4 class="text-lg font-bold text-slate-900">Ce poate face agentul AI text?</h4>
                     <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
                 </summary>
                 <div class="px-6 pb-6">
-                    <p class="text-slate-600 leading-relaxed">Chatbot-ul răspunde la întrebări bazat pe documentele tale (PDF, DOCX, CSV), caută produse și le afișează cu poze și prețuri, verifică statusul comenzilor cu tracking automat (FanCourier, Cargus, DPD, SameDay), captează lead-uri automat, detectează intenții și frustrare, și poate escalada conversația către un operator uman când e necesar.</p>
+                    <p class="text-slate-600 leading-relaxed">Agentul AI răspunde la întrebări bazat pe documentele tale (PDF, DOCX, CSV), caută produse și le afișează cu poze și prețuri, verifică statusul comenzilor cu tracking automat (FanCourier, Cargus, DPD, SameDay), captează lead-uri automat, detectează intenții și frustrare, și poate escalada conversația către un operator uman când e necesar.</p>
                 </div>
             </details>
 
@@ -245,13 +245,13 @@
                     <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
                 </summary>
                 <div class="px-6 pb-6">
-                    <p class="text-slate-600 leading-relaxed">Chatbot-ul text poate fi live pe site-ul tău în 10 minute — o singură linie de cod de adăugat. Configurarea bazei de cunoștințe (documente, scanare site, conectori) durează de obicei câteva ore. Agentul vocal necesită configurare Telnyx suplimentară, de obicei 1-2 zile.</p>
+                    <p class="text-slate-600 leading-relaxed">Agentul AI text poate fi live pe site-ul tău în 10 minute — o singură linie de cod de adăugat. Configurarea bazei de cunoștințe (documente, scanare site, conectori) durează de obicei câteva ore. Agentul vocal necesită configurare Telnyx suplimentară, de obicei 1-2 zile.</p>
                 </div>
             </details>
 
             <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                 <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
-                    <h4 class="text-lg font-bold text-slate-900">Cum instalez chatbot-ul pe site?</h4>
+                    <h4 class="text-lg font-bold text-slate-900">Cum instalez agentul AI pe site?</h4>
                     <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
                 </summary>
                 <div class="px-6 pb-6">
@@ -261,11 +261,11 @@
 
             <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                 <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
-                    <h4 class="text-lg font-bold text-slate-900">Cum învăț chatbot-ul despre afacerea mea?</h4>
+                    <h4 class="text-lg font-bold text-slate-900">Cum învăț agentul AI despre afacerea mea?</h4>
                     <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
                 </summary>
                 <div class="px-6 pb-6">
-                    <p class="text-slate-600 leading-relaxed">Ai mai multe opțiuni: încarcă documente (PDF, DOCX, CSV, TXT), adaugă URL-uri pe care le scanăm automat, conectează-ți magazinul WordPress/WooCommerce pentru sincronizare automată de produse, sau scrie direct informațiile ca text. Chatbot-ul folosește tot ce îi dai ca bază de cunoștințe pentru a răspunde clienților.</p>
+                    <p class="text-slate-600 leading-relaxed">Ai mai multe opțiuni: încarcă documente (PDF, DOCX, CSV, TXT), adaugă URL-uri pe care le scanăm automat, conectează-ți magazinul WordPress/WooCommerce pentru sincronizare automată de produse, sau scrie direct informațiile ca text. Agentul AI folosește tot ce îi dai ca bază de cunoștințe pentru a răspunde clienților.</p>
                 </div>
             </details>
 
@@ -275,7 +275,7 @@
                     <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
                 </summary>
                 <div class="px-6 pb-6">
-                    <p class="text-slate-600 leading-relaxed">Da, complet. Poți schimba culoarea principală (se potrivește cu brandul tău), mesajul de bun venit, numele chatbot-ului, poziția pe ecran (stânga sau dreapta) și tonul conversației (profesional, prietenos, premium etc.).</p>
+                    <p class="text-slate-600 leading-relaxed">Da, complet. Poți schimba culoarea principală (se potrivește cu brandul tău), mesajul de bun venit, numele agent AI-ului, poziția pe ecran (stânga sau dreapta) și tonul conversației (profesional, prietenos, premium etc.).</p>
                 </div>
             </details>
 
@@ -285,7 +285,7 @@
                     <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
                 </summary>
                 <div class="px-6 pb-6">
-                    <p class="text-slate-600 leading-relaxed">Nu. Dashboard-ul este intuitiv, iar instalarea chatbot-ului necesită doar copy-paste a unui cod. Pentru integrări avansate (API, webhook-uri), oferim documentație completă și suport tehnic.</p>
+                    <p class="text-slate-600 leading-relaxed">Nu. Dashboard-ul este intuitiv, iar instalarea agent AI-ului necesită doar copy-paste a unui cod. Pentru integrări avansate (API, webhook-uri), oferim documentație completă și suport tehnic.</p>
                 </div>
             </details>
 
@@ -298,23 +298,23 @@
                     <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
                 </summary>
                 <div class="px-6 pb-6">
-                    <p class="text-slate-600 leading-relaxed">Da, avem conector WooCommerce nativ. Se sincronizează automat cu catalogul de produse (nume, descriere, prețuri, imagini, categorii, stoc) și cu comenzile. Chatbot-ul poate afișa produse cu poze și preț, permite adăugarea în coș și verifică statusul comenzilor.</p>
+                    <p class="text-slate-600 leading-relaxed">Da, avem conector WooCommerce nativ. Se sincronizează automat cu catalogul de produse (nume, descriere, prețuri, imagini, categorii, stoc) și cu comenzile. Agentul AI poate afișa produse cu poze și preț, permite adăugarea în coș și verifică statusul comenzilor.</p>
                 </div>
             </details>
 
             <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                 <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
-                    <h4 class="text-lg font-bold text-slate-900">Poate chatbot-ul să verifice o comandă?</h4>
+                    <h4 class="text-lg font-bold text-slate-900">Poate agentul AI să verifice o comandă?</h4>
                     <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
                 </summary>
                 <div class="px-6 pb-6">
-                    <p class="text-slate-600 leading-relaxed">Da. Clientul poate întreba „Unde e comanda mea?" și să dea numărul comenzii, email-ul sau telefonul. Chatbot-ul caută comanda, afișează statusul, produsele comandate și link-ul de tracking AWB pentru FanCourier, Cargus, DPD, SameDay, GLS sau Urgent Cargus.</p>
+                    <p class="text-slate-600 leading-relaxed">Da. Clientul poate întreba „Unde e comanda mea?" și să dea numărul comenzii, email-ul sau telefonul. Agentul AI caută comanda, afișează statusul, produsele comandate și link-ul de tracking AWB pentru FanCourier, Cargus, DPD, SameDay, GLS sau Urgent Cargus.</p>
                 </div>
             </details>
 
             <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                 <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
-                    <h4 class="text-lg font-bold text-slate-900">Pot măsura vânzările generate de chatbot?</h4>
+                    <h4 class="text-lg font-bold text-slate-900">Pot măsura vânzările generate de agent AI?</h4>
                     <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
                 </summary>
                 <div class="px-6 pb-6">
@@ -327,11 +327,11 @@
 
             <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                 <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
-                    <h4 class="text-lg font-bold text-slate-900">Cum captează chatbot-ul lead-uri?</h4>
+                    <h4 class="text-lg font-bold text-slate-900">Cum captează agentul AI lead-uri?</h4>
                     <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
                 </summary>
                 <div class="px-6 pb-6">
-                    <p class="text-slate-600 leading-relaxed">Chatbot-ul folosește un sistem de scoring cu peste 30 de semnale (număr mesaje, interacțiuni cu produse, intenție de cumpărare) și cere datele de contact la momentul potrivit — fără a fi agresiv. Lead-urile intră într-un pipeline cu 7 etape pe care îl gestionezi din dashboard.</p>
+                    <p class="text-slate-600 leading-relaxed">Agentul AI folosește un sistem de scoring cu peste 30 de semnale (număr mesaje, interacțiuni cu produse, intenție de cumpărare) și cere datele de contact la momentul potrivit — fără a fi agresiv. Lead-urile intră într-un pipeline cu 7 etape pe care îl gestionezi din dashboard.</p>
                 </div>
             </details>
 
@@ -341,17 +341,17 @@
                     <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
                 </summary>
                 <div class="px-6 pb-6">
-                    <p class="text-slate-600 leading-relaxed">Dashboard-ul arată: număr conversații și trend pe 7 zile, cost per mesaj/conversație/bot, analiză de sentiment în timp real, funnel de vânzări, 40+ tipuri de evenimente tracked per conversație, detecție „knowledge gaps" (întrebări la care chatbot-ul nu știe să răspundă) și export CSV/PDF.</p>
+                    <p class="text-slate-600 leading-relaxed">Dashboard-ul arată: număr conversații și trend pe 7 zile, cost per mesaj/conversație/bot, analiză de sentiment în timp real, funnel de vânzări, 40+ tipuri de evenimente tracked per conversație, detecție „knowledge gaps" (întrebări la care agentul AI nu știe să răspundă) și export CSV/PDF.</p>
                 </div>
             </details>
 
             <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                 <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
-                    <h4 class="text-lg font-bold text-slate-900">Poate chatbot-ul să transfere la un om?</h4>
+                    <h4 class="text-lg font-bold text-slate-900">Poate agentul AI să transfere la un om?</h4>
                     <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
                 </summary>
                 <div class="px-6 pb-6">
-                    <p class="text-slate-600 leading-relaxed">Da. Când detectează că clientul cere un operator uman sau când situația depășește ce poate rezolva singur, chatbot-ul creează automat un handoff request cu rezumatul conversației, intențiile detectate și produsele discutate. Echipa ta primește notificarea și preia conversația.</p>
+                    <p class="text-slate-600 leading-relaxed">Da. Când detectează că clientul cere un operator uman sau când situația depășește ce poate rezolva singur, agentul AI creează automat un handoff request cu rezumatul conversației, intențiile detectate și produsele discutate. Echipa ta primește notificarea și preia conversația.</p>
                 </div>
             </details>
 
@@ -407,7 +407,7 @@
                     <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
                 </summary>
                 <div class="px-6 pb-6">
-                    <p class="text-slate-600 leading-relaxed">Da, poți testa platforma fără card de credit. Creezi un cont, configurezi chatbot-ul și vezi cum funcționează pe site-ul tău înainte de a alege un plan plătit.</p>
+                    <p class="text-slate-600 leading-relaxed">Da, poți testa platforma fără card de credit. Creezi un cont, configurezi agentul AI și vezi cum funcționează pe site-ul tău înainte de a alege un plan plătit.</p>
                 </div>
             </details>
 
@@ -433,11 +433,11 @@
 
             <details class="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                 <summary class="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 transition-colors">
-                    <h4 class="text-lg font-bold text-slate-900">Câte limbi suportă chatbot-ul?</h4>
+                    <h4 class="text-lg font-bold text-slate-900">Câte limbi suportă agentul AI?</h4>
                     <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
                 </summary>
                 <div class="px-6 pb-6">
-                    <p class="text-slate-600 leading-relaxed">Chatbot-ul suportă 10+ limbi, cu optimizare specială pentru română. Detectează automat limba clientului și răspunde în aceeași limbă. Limbile principale: română, engleză, germană, franceză, spaniolă.</p>
+                    <p class="text-slate-600 leading-relaxed">Agentul AI suportă 10+ limbi, cu optimizare specială pentru română. Detectează automat limba clientului și răspunde în aceeași limbă. Limbile principale: română, engleză, germană, franceză, spaniolă.</p>
                 </div>
             </details>
 

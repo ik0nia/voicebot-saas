@@ -5,10 +5,10 @@
 
 @section('jsonld')
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebPage","@id":"https://sambla.ro/preturi#webpage","url":"https://sambla.ro/preturi","name":"Prețuri Sambla","description":"Planuri Sambla pentru chatbot AI și voicebot — Starter, Pro, Business. Prețuri în RON (fără TVA), fără costuri ascunse, hosting în România.","isPartOf":{"@id":"https://sambla.ro/#website"},"about":{"@id":"https://sambla.ro/#software"},"inLanguage":"ro-RO"}
+{"@context":"https://schema.org","@type":"WebPage","@id":"https://sambla.ro/preturi#webpage","url":"https://sambla.ro/preturi","name":"Prețuri Sambla","description":"Planuri Sambla pentru agent AI AI și agent AI vocal — Starter, Pro, Business. Prețuri în RON (fără TVA), fără costuri ascunse, hosting în România.","isPartOf":{"@id":"https://sambla.ro/#website"},"about":{"@id":"https://sambla.ro/#software"},"inLanguage":"ro-RO"}
 </script>
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"Product","name":"Sambla AI Platform","brand":{"@type":"Brand","name":"Sambla"},"description":"Platformă SaaS pentru agenți AI conversaționali (chatbot și voicebot) cu hosting în România, GDPR compliant.","offers":{"@type":"AggregateOffer","priceCurrency":"RON","lowPrice":"29","highPrice":"199","offerCount":3,"offers":[{"@type":"Offer","name":"Chat Starter","price":"29","priceCurrency":"RON","description":"Chatbot web pentru afaceri mici"},{"@type":"Offer","name":"Chat Professional","price":"79","priceCurrency":"RON","description":"Chatbot + integrare WooCommerce"},{"@type":"Offer","name":"Chat Business","price":"199","priceCurrency":"RON","description":"Volum mare, multi-bot, suport dedicat"}]}}
+{"@context":"https://schema.org","@type":"Product","name":"Sambla AI Platform","brand":{"@type":"Brand","name":"Sambla"},"description":"Platformă SaaS pentru agenți AI conversaționali (agent AI și agent AI vocal) cu hosting în România, GDPR compliant.","offers":{"@type":"AggregateOffer","priceCurrency":"RON","lowPrice":"29","highPrice":"199","offerCount":3,"offers":[{"@type":"Offer","name":"Chat Starter","price":"29","priceCurrency":"RON","description":"Agent AI web pentru afaceri mici"},{"@type":"Offer","name":"Chat Professional","price":"79","priceCurrency":"RON","description":"Agent AI + integrare WooCommerce"},{"@type":"Offer","name":"Chat Business","price":"199","priceCurrency":"RON","description":"Volum mare, multi-bot, suport dedicat"}]}}
 </script>
 @endsection
 
@@ -38,7 +38,7 @@
                 Pachete <span class="gradient-text">Webchat</span>
             </h2>
             <p class="text-center text-slate-700 mb-12 max-w-2xl mx-auto animate-fade-in">
-                Chatbot AI integrat pe site-ul tău. Răspunde automat clienților 24/7.
+                Agent AI AI integrat pe site-ul tău. Răspunde automat clienților 24/7.
             </p>
 
             {{-- Billing Toggle --}}
@@ -144,7 +144,7 @@
                 Adaugă funcționalitate <span class="gradient-text">vocală</span>
             </h2>
             <p class="text-center text-slate-300 mb-12 max-w-2xl mx-auto animate-fade-in">
-                Extinde chatbot-ul cu voce AI. Gestionează apeluri telefonice automat prin Telnyx + OpenAI.
+                Extinde agentul AI cu voce AI. Gestionează apeluri telefonice automat prin Telnyx + OpenAI.
             </p>
 
             @if($voicePlans->count())

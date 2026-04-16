@@ -98,7 +98,7 @@
                             </div>
                             <div class="flex items-start gap-2 text-xs text-slate-500">
                                 <span class="inline-flex items-center rounded-full bg-sky-50 px-2 py-0.5 font-medium text-sky-700 shrink-0">Manager</span>
-                                <span>Poate gestiona boți și apeluri, fără acces la facturare</span>
+                                <span>Poate gestiona agenți AI și apeluri, fără acces la facturare</span>
                             </div>
                             <div class="flex items-start gap-2 text-xs text-slate-500">
                                 <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-600 shrink-0">Vizualizator</span>
@@ -273,7 +273,7 @@
                     <tbody class="divide-y divide-slate-100">
                         @php
                             $permissions = [
-                                ['label' => 'Gestiune boți', 'admin' => true, 'manager' => true, 'viewer' => false],
+                                ['label' => 'Gestiune agenți AI', 'admin' => true, 'manager' => true, 'viewer' => false],
                                 ['label' => 'Vizualizare apeluri', 'admin' => true, 'manager' => true, 'viewer' => true],
                                 ['label' => 'Setări cont', 'admin' => true, 'manager' => false, 'viewer' => false],
                                 ['label' => 'Facturare', 'admin' => true, 'manager' => false, 'viewer' => false],

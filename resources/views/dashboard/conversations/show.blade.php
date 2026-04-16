@@ -9,7 +9,7 @@
     @php
         $chType = $conversation->channel?->type ?? 'web_chatbot';
         $chLabel = match ($chType) {
-            'web_chatbot' => 'Web Chatbot',
+            'web_chatbot' => 'Web Agent AI',
             'whatsapp' => 'WhatsApp',
             'facebook_messenger' => 'Facebook Messenger',
             'instagram_dm' => 'Instagram DM',

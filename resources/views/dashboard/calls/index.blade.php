@@ -42,7 +42,7 @@
                 {{-- Bot filter --}}
                 <select name="bot"
                         class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition min-w-[160px]">
-                    <option value="">Toți boții</option>
+                    <option value="">Toți agenții AI</option>
                     @foreach($bots as $bot)
                         <option value="{{ $bot->id }}" {{ request('bot') == $bot->id ? 'selected' : '' }}>{{ $bot->name }}</option>
                     @endforeach

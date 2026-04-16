@@ -6,7 +6,7 @@
     <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div class="border-l-4 border-red-500 p-5">
             <label class="block text-sm font-semibold text-slate-800 mb-1">Tonul conversatiei</label>
-            <p class="text-xs text-slate-500 mb-4">Cum se adreseaza botul clientilor tai?</p>
+            <p class="text-xs text-slate-500 mb-4">Cum se adreseaza agentul AI clientilor tai?</p>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <template x-for="t in tones">
                     <button type="button" @click="form.tone = t.v; dirty = true"
@@ -56,7 +56,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-semibold text-slate-800">Foloseste emoji-uri</p>
-                    <p class="text-xs text-slate-500 mt-0.5">Botul va adauga emoji-uri ocazional pentru un ton mai prietenos.</p>
+                    <p class="text-xs text-slate-500 mt-0.5">Agentul AI va adauga emoji-uri ocazional pentru un ton mai prietenos.</p>
                 </div>
                 <button type="button" @click="form.emoji_allowed = !form.emoji_allowed; dirty = true"
                         :class="form.emoji_allowed ? 'bg-purple-500' : 'bg-slate-300'"
@@ -85,7 +85,7 @@
     {{-- CTA Aggressiveness --}}
     <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div class="border-l-4 border-amber-500 p-5">
-            <label class="block text-sm font-semibold text-slate-800 mb-1">Cat de insistent vinde botul?</label>
+            <label class="block text-sm font-semibold text-slate-800 mb-1">Cat de insistent vinde agentul AI?</label>
             <p class="text-xs text-slate-500 mb-5">Cat de des sugereaza produse sau actiuni de cumparare?</p>
             <div class="relative px-4">
                 <div class="h-4 rounded-full bg-slate-200 relative overflow-hidden shadow-inner">
@@ -112,7 +112,7 @@
     <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div class="border-l-4 border-emerald-500 p-5">
             <label class="block text-sm font-semibold text-slate-800 mb-1">Capturare date de contact</label>
-            <p class="text-xs text-slate-500 mb-5">Cat de insistent cere botul emailul sau telefonul?</p>
+            <p class="text-xs text-slate-500 mb-5">Cat de insistent cere agentul AI emailul sau telefonul?</p>
             <div class="relative px-4">
                 <div class="h-4 rounded-full bg-slate-200 relative overflow-hidden shadow-inner">
                     <div class="absolute inset-y-0 left-0 rounded-full transition-all duration-300" :style="'width:' + (leadIdx * 50) + '%; background:' + leadLabels[leadIdx][2]"></div>

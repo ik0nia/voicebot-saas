@@ -136,7 +136,7 @@
                     </div>
                     <p class="text-sm text-slate-400 mb-6">2000 minute incluse</p>
                     <ul class="space-y-3 mb-8 text-sm text-slate-300">
-                        <li class="flex items-center gap-2"><span class="text-red-400">✓</span> 10 boți vocali</li>
+                        <li class="flex items-center gap-2"><span class="text-red-400">✓</span> 10 agenți AI vocali</li>
                         <li class="flex items-center gap-2"><span class="text-red-400">✓</span> 2000 minute / lună</li>
                         <li class="flex items-center gap-2"><span class="text-red-400">✓</span> 10 membri echipă</li>
                         <li class="flex items-center gap-2"><span class="text-red-400">✓</span> Suport prioritar</li>
@@ -154,7 +154,7 @@
                     </div>
                     <p class="text-sm text-slate-400 mb-6">Minute nelimitate</p>
                     <ul class="space-y-3 mb-8 text-sm text-slate-300">
-                        <li class="flex items-center gap-2"><span class="text-red-400">✓</span> Boți nelimitați</li>
+                        <li class="flex items-center gap-2"><span class="text-red-400">✓</span> Agenți AI nelimitați</li>
                         <li class="flex items-center gap-2"><span class="text-red-400">✓</span> Minute nelimitate</li>
                         <li class="flex items-center gap-2"><span class="text-red-400">✓</span> Echipă nelimitată</li>
                         <li class="flex items-center gap-2"><span class="text-red-400">✓</span> Suport dedicat</li>

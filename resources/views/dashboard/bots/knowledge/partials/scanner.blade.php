@@ -11,7 +11,7 @@
                 @if(isset($site) && $site && $site->isVerified())
                     <p class="text-[11px] text-green-600 mt-1 flex items-center gap-1">
                         <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                        URL pre-completat din site-ul asociat botului
+                        URL pre-completat din site-ul asociat agentului AI
                     </p>
                 @endif
             </div>

@@ -64,7 +64,7 @@
                             $webChatbotChannel = $bot->channels->where('type', 'web_chatbot')->where('is_active', true)->first();
                             $siteVerified = $bot->site && $bot->site->isVerified();
                         @endphp
-                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Cod Embed Chatbot</label>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Cod Embed Agent AI</label>
                         @if($webChatbotChannel && $siteVerified && $embedCode)
                             <div class="relative group">
                                 <div class="flex items-start gap-2">
@@ -88,7 +88,7 @@
                             </div>
                         @else
                             <div class="rounded-lg bg-slate-50 border border-slate-200 px-4 py-3 text-sm text-slate-500">
-                                <p>Activeaza un canal Web Chatbot si verifica site-ul.</p>
+                                <p>Activeaza un canal Web Agent AI si verifica site-ul.</p>
                                 <a href="{{ route('dashboard.bots.channels.index', $bot) }}" class="text-xs font-medium text-red-800 hover:text-red-900 mt-1 inline-block">Gestioneaza canale &rarr;</a>
                             </div>
                         @endif

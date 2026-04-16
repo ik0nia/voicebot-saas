@@ -207,7 +207,7 @@
             </div>
             <p class="text-sm text-slate-600">
                 <span class="font-semibold text-slate-900">{{ $usage['bots']['used'] }}</span>
-                / {{ $usage['bots']['limit'] }} boți incluși
+                / {{ $usage['bots']['limit'] }} agenți AI incluși
             </p>
             @if($usage['bots']['used'] > $usage['bots']['limit'])
                 <p class="text-xs text-red-600 font-medium mt-1">
@@ -317,7 +317,7 @@
             @endif
             @if($botOverage > 0)
                 <div class="flex justify-between">
-                    <span>{{ max(0, $usage['bots']['used'] - $usage['bots']['limit']) }} boți extra &times; &euro;{{ number_format($usage['bots']['overage_unit_cost'], 0) }}/lună</span>
+                    <span>{{ max(0, $usage['bots']['used'] - $usage['bots']['limit']) }} agenți AI extra &times; &euro;{{ number_format($usage['bots']['overage_unit_cost'], 0) }}/lună</span>
                     <span class="font-semibold">&euro;{{ number_format($botOverage, 0) }}</span>
                 </div>
             @endif

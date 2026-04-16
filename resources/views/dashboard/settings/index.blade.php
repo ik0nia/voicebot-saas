@@ -584,7 +584,7 @@
         <div class="bg-white rounded-xl border-2 border-red-200 p-6">
             <h2 class="text-lg font-semibold text-red-700">Zonă periculoasă</h2>
             <p class="mt-2 text-sm text-slate-600">
-                Ștergerea contului este permanentă. Toate datele, boții, apelurile și setările vor fi șterse irecuperabil.
+                Ștergerea contului este permanentă. Toate datele, agenții AI, apelurile și setările vor fi șterse irecuperabil.
             </p>
 
             <div class="mt-6">

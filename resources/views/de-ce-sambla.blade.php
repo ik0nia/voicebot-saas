@@ -1,23 +1,23 @@
 @extends('layouts.app')
 
 @section('title', 'De ce Sambla — Comparație, arhitectură și diferențiatori | Sambla')
-@section('meta_description', 'De ce Sambla nu e încă un chatbot. RAG real cu hybrid search, 10 straturi anti-halucinare, voce nativă în română, hosting în România. Comparație tehnică cu alternative.')
+@section('meta_description', 'De ce Sambla nu e încă un agent AI. RAG real cu hybrid search, 10 straturi anti-halucinare, voce nativă în română, hosting în România. Comparație tehnică cu alternative.')
 
 @section('jsonld')
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebPage","@id":"https://sambla.ro/de-ce-sambla#webpage","url":"https://sambla.ro/de-ce-sambla","name":"De ce Sambla","description":"Diferențiatori tehnici și de produs ai platformei Sambla față de chatbot-uri scriptate, wrapper-e GPT, soluții call-center clasice și landing-page-only AI startups.","isPartOf":{"@id":"https://sambla.ro/#website"},"about":{"@id":"https://sambla.ro/#software"},"inLanguage":"ro-RO"}
+{"@context":"https://schema.org","@type":"WebPage","@id":"https://sambla.ro/de-ce-sambla#webpage","url":"https://sambla.ro/de-ce-sambla","name":"De ce Sambla","description":"Diferențiatori tehnici și de produs ai platformei Sambla față de agenți AI scriptate, wrapper-e GPT, soluții call-center clasice și landing-page-only AI startups.","isPartOf":{"@id":"https://sambla.ro/#website"},"about":{"@id":"https://sambla.ro/#software"},"inLanguage":"ro-RO"}
 </script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
-{"@type":"Question","name":"În ce diferă Sambla de un chatbot scriptat clasic?","acceptedAnswer":{"@type":"Answer","text":"Chatbot-urile scriptate funcționează pe arbori de decizie: «dacă utilizatorul spune X, răspunde Y». Sunt în esență motoare de reguli — nu pot răspunde la întrebări neașteptate și nu citesc PDF-uri. Sambla nu are flowchart-uri. Fiecare răspuns e generat în timp real de un LLM care a căutat în baza ta de cunoștințe reală prin RAG cu hybrid search (vector + full-text românesc) și un AI reranker."}},
+{"@type":"Question","name":"În ce diferă Sambla de un agent AI scriptat clasic?","acceptedAnswer":{"@type":"Answer","text":"Agent AI-urile scriptate funcționează pe arbori de decizie: «dacă utilizatorul spune X, răspunde Y». Sunt în esență motoare de reguli — nu pot răspunde la întrebări neașteptate și nu citesc PDF-uri. Sambla nu are flowchart-uri. Fiecare răspuns e generat în timp real de un LLM care a căutat în baza ta de cunoștințe reală prin RAG cu hybrid search (vector + full-text românesc) și un AI reranker."}},
 {"@type":"Question","name":"De ce Sambla nu e doar «GPT cu prompt»?","acceptedAnswer":{"@type":"Answer","text":"Un wrapper LLM doar concatenează întrebarea cu un system prompt și trimite la GPT — halucinează des și nu cunoaște datele tale. Sambla rulează un pipeline 4-stadii: clasificare intenție → retrieval hibrid (vectori 1536-dim + text complet românesc + reranker AI) → strategie de conversație → 10 straturi de verificare anti-halucinare. Nu e wrapper, e sistem RAG end-to-end."}},
 {"@type":"Question","name":"Sambla e legată de Sambla Group (credite, împrumuturi)?","acceptedAnswer":{"@type":"Answer","text":"Nu, niciun fel de legătură. Sambla este o platformă AI românească pentru chatboți și voiceboți, creată de o echipă din România pentru afaceri din România. NU oferim credite, împrumuturi, leasing, IFN, asigurări, conturi bancare sau orice serviciu financiar. Suntem o companie de software AI, nu o instituție financiară."}},
-{"@type":"Question","name":"Cum garantați că AI-ul nu inventează răspunsuri?","acceptedAnswer":{"@type":"Answer","text":"Prin 10 straturi de verificare aplicate la fiecare răspuns: base prompt blocat (interzis să inventeze prețuri/termene), politica conversației, contextul produselor + KB, regulile de business, query intelligence cu prag de confidență, strategia conversației per stadiu, scor numeric de confidență, detector frustrare live și verificare finală anti-halucinare contra chunk-urilor sursă. Dacă un strat eșuează, bot-ul cere clarificare sau escaladează la operator uman."}},
+{"@type":"Question","name":"Cum garantați că AI-ul nu inventează răspunsuri?","acceptedAnswer":{"@type":"Answer","text":"Prin 10 straturi de verificare aplicate la fiecare răspuns: base prompt blocat (interzis să inventeze prețuri/termene), politica conversației, contextul produselor + KB, regulile de business, query intelligence cu prag de confidență, strategia conversației per stadiu, scor numeric de confidență, detector frustrare live și verificare finală anti-halucinare contra chunk-urilor sursă. Dacă un strat eșuează, agentul AI cere clarificare sau escaladează la operator uman."}},
 {"@type":"Question","name":"De ce contează că hosting-ul e în România?","acceptedAnswer":{"@type":"Answer","text":"Datele clienților tăi nu părăsesc niciodată România/UE. GDPR by default, izolare per cont (un client nu poate accesa datele altuia, nici accidental), backup-uri criptate cu retenție 30 zile, audit log pe acces. Echipa de suport e românească, vorbește românește. Dacă e o investigație GDPR, totul e traceabil pe servere RO."}},
-{"@type":"Question","name":"Câte canale de comunicare suportă Sambla simultan?","acceptedAnswer":{"@type":"Answer","text":"Cinci canale cu același bot și același context de conversație: chat web, telefon (numere RO native via Telnyx + voce GPT-4o Realtime), WhatsApp, Facebook Messenger și Instagram DM. Clientul începe conversația pe site, sună după două ore — bot-ul ține minte ce a discutat. Acesta e «multi-canal cu același creier», nu cinci bot-uri separate."}},
+{"@type":"Question","name":"Câte canale de comunicare suportă Sambla simultan?","acceptedAnswer":{"@type":"Answer","text":"Cinci canale cu același bot și același context de conversație: chat web, telefon (numere RO native via Telnyx + voce GPT-4o Realtime), WhatsApp, Facebook Messenger și Instagram DM. Clientul începe conversația pe site, sună după două ore — agentul AI ține minte ce a discutat. Acesta e «multi-canal cu același creier», nu cinci agenți AI separate."}},
 {"@type":"Question","name":"Sambla e doar un wrapper peste ChatGPT?","acceptedAnswer":{"@type":"Answer","text":"Nu. Folosim GPT (sau orice alt LLM, e swappable) ca generator de text — nu pretindem că am antrenat un model propriu. Dar tot restul e construit de noi: pipeline RAG 4-stadii, 10 straturi anti-halucinare, 25 grupuri sinonime românești curate manual, hybrid search fusion (vector + BM25 + reranker), state machine de conversație, detector frustrare live, multi-channel context bridge, integrare WooCommerce nativă, tenant isolation, dashboard, billing. Dacă mâine schimbăm GPT cu Claude sau Llama, 90% din platformă funcționează identic. LLM-ul e o componentă, nu produsul."}},
-{"@type":"Question","name":"AI-ul Sambla halucinează?","acceptedAnswer":{"@type":"Answer","text":"Onest: orice LLM poate halucina, e o proprietate fundamentală a tehnologiei. Sambla nu pretinde 100% perfecțiune. Ce facem este să MINIMIZĂM halucinarea prin inginerie: răspunsuri ancorate în chunk-uri sursă verificabile, fallback la „nu știu" când retrieval-ul nu returnează nimic relevant, escaladare automată la operator uman când scorul de confidență e sub prag, 10 straturi de verificare contra documentelor sursă, citare obligatorie a sursei. În producție, modul de eșec e «bot-ul spune cinstit că nu știe», nu «inventează un răspuns greșit cu încredere»."}},
-{"@type":"Question","name":"Bot-ul se învață singur sau cu supervizare?","acceptedAnswer":{"@type":"Answer","text":"Cu supervizare. Bot-ul detectează automat ce întrebări nu poate răspunde bine (gap detection) și generează draft FAQ pentru ele, dar OMUL aprobă fiecare modificare înainte să se publice. Nu e auto-modificare autonomă — asta ar fi periculos. E «învățare asistată» unde AI face munca grea de identificare și redactare, iar tu validezi în 30 de secunde."}}
+{"@type":"Question","name":"AI-ul Sambla halucinează?","acceptedAnswer":{"@type":"Answer","text":"Onest: orice LLM poate halucina, e o proprietate fundamentală a tehnologiei. Sambla nu pretinde 100% perfecțiune. Ce facem este să MINIMIZĂM halucinarea prin inginerie: răspunsuri ancorate în chunk-uri sursă verificabile, fallback la „nu știu" când retrieval-ul nu returnează nimic relevant, escaladare automată la operator uman când scorul de confidență e sub prag, 10 straturi de verificare contra documentelor sursă, citare obligatorie a sursei. În producție, modul de eșec e «agentul AI spune cinstit că nu știe», nu «inventează un răspuns greșit cu încredere»."}},
+{"@type":"Question","name":"Agentul AI se învață singur sau cu supervizare?","acceptedAnswer":{"@type":"Answer","text":"Cu supervizare. Agentul AI detectează automat ce întrebări nu poate răspunde bine (gap detection) și generează draft FAQ pentru ele, dar OMUL aprobă fiecare modificare înainte să se publice. Nu e auto-modificare autonomă — asta ar fi periculos. E «învățare asistată» unde AI face munca grea de identificare și redactare, iar tu validezi în 30 de secunde."}}
 ]}
 </script>
 @endsection
@@ -32,7 +32,7 @@
     <div class="absolute -bottom-20 -left-10 w-[300px] h-[300px] bg-red-800/10 rounded-full blur-[100px]"></div>
     <div class="container-custom text-center relative z-10">
         <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white mb-6 animate-fade-in">
-            <span class="block">Mai mult decât un chatbot.</span>
+            <span class="block">Mai mult decât un agent AI.</span>
             <span class="bg-gradient-to-r from-red-400 via-red-300 to-amber-300 bg-clip-text text-transparent">Un agent AI care înțelege afacerea ta.</span>
         </h1>
         <p class="text-lg md:text-xl text-slate-400 max-w-3xl mx-auto animate-fade-in mb-8">
@@ -94,7 +94,7 @@
                     <tr class="bg-slate-900 text-white">
                         <th class="px-4 py-4 text-left font-bold w-[28%]">Capabilitate</th>
                         <th class="px-3 py-4 text-center font-bold w-[18%]">
-                            <span class="block">Chatbot scriptat</span>
+                            <span class="block">Agent AI scriptat</span>
                             <span class="block text-[11px] font-normal text-slate-300 mt-0.5">flowchart-uri</span>
                         </th>
                         <th class="px-3 py-4 text-center font-bold w-[18%]">
@@ -136,7 +136,7 @@
                 ARHITECTURĂ
             </div>
             <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-5 tracking-tight">Pipeline-ul de 4 stadii</h2>
-            <p class="text-lg text-slate-500">Fiecare mesaj pe care îl primește bot-ul tău trece prin aceste 4 stadii. Total: sub 2 secunde.</p>
+            <p class="text-lg text-slate-500">Fiecare mesaj pe care îl primește agentul AI tău trece prin aceste 4 stadii. Total: sub 2 secunde.</p>
         </div>
 
         {{-- Visual SVG flow diagram with latency budget --}}
@@ -231,7 +231,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             @php
                 $stages = [
-                    ['1','Înțelegere intenție','Clasifică mesajul ca informațional, tranzacțional sau reclamație. Schimbă strategia bot-ului în consecință.'],
+                    ['1','Înțelegere intenție','Clasifică mesajul ca informațional, tranzacțional sau reclamație. Schimbă strategia agentului AI în consecință.'],
                     ['2','Hybrid Search RAG','Vector search 1536-dim + full-text românesc cu stemming, fuzionate. AI reranker peste 20 candidați → top 8 chunks.'],
                     ['3','Strategie conversație','Începutul conversației înțelege nevoia. Mijlocul recomandă. Finalul cere lead/escaladare. Diferit per stadiu.'],
                     ['4','Verificare 10 straturi','Răspunsul generat trece prin 10 verificări înainte să ajungă la client. Anti-halucinare e ultimul filtru.'],
@@ -303,7 +303,7 @@
                     <li class="flex gap-2"><span class="text-red-500 shrink-0 font-bold">✓</span><span><strong>Conversation strategy state machine</strong> — comportament diferit pe stadii (început/mijloc/final)</span></li>
                     <li class="flex gap-2"><span class="text-red-500 shrink-0 font-bold">✓</span><span><strong>Detector frustrare live</strong> — clasifică text + voce și escaladează automat</span></li>
                     <li class="flex gap-2"><span class="text-red-500 shrink-0 font-bold">✓</span><span><strong>Multi-channel context bridge</strong> — același client urmat între web, telefon, WhatsApp, FB, IG cu memorie partajată. Cea mai grea parte tehnică.</span></li>
-                    <li class="flex gap-2"><span class="text-red-500 shrink-0 font-bold">✓</span><span><strong>Supervised gap detection</strong> — bot-ul identifică ce nu știe, generează draft FAQ, dar TU aprobi înainte să se publice (nu auto-modificare)</span></li>
+                    <li class="flex gap-2"><span class="text-red-500 shrink-0 font-bold">✓</span><span><strong>Supervised gap detection</strong> — agentul AI identifică ce nu știe, generează draft FAQ, dar TU aprobi înainte să se publice (nu auto-modificare)</span></li>
                     <li class="flex gap-2"><span class="text-red-500 shrink-0 font-bold">✓</span><span><strong>Tuning românesc complet</strong> — chunking pentru morfologia română, intonație voce română, diacritice ă â î ș ț, anti-pattern lists pentru halucinare</span></li>
                     <li class="flex gap-2"><span class="text-red-500 shrink-0 font-bold">✓</span><span><strong>WooCommerce nativ</strong> — căutare semantică produse, stoc live, add-to-cart din chat, tracking AWB. Nu plugin terț, scris in-house.</span></li>
                     <li class="flex gap-2"><span class="text-red-500 shrink-0 font-bold">✓</span><span><strong>Tenant isolation</strong> — izolare per cont la nivel de bază de date</span></li>
@@ -342,13 +342,13 @@
                 </p>
                 <ul class="space-y-2 text-sm text-slate-700 mb-4">
                     <li class="flex gap-2"><span class="text-emerald-600 shrink-0">✓</span><span>Fiecare răspuns e ancorat în chunk-urile reale extrase din baza ta de cunoștințe. LLM-ul e instruit să citeze ce chunk a folosit.</span></li>
-                    <li class="flex gap-2"><span class="text-emerald-600 shrink-0">✓</span><span>Dacă retrieval-ul nu returnează nimic relevant, bot-ul NU generează „cea mai bună presupunere". Spune cinstit „nu am informația asta".</span></li>
-                    <li class="flex gap-2"><span class="text-emerald-600 shrink-0">✓</span><span>Dacă scorul de confidență e sub prag, bot-ul escaladează la operator uman.</span></li>
+                    <li class="flex gap-2"><span class="text-emerald-600 shrink-0">✓</span><span>Dacă retrieval-ul nu returnează nimic relevant, agentul AI NU generează „cea mai bună presupunere". Spune cinstit „nu am informația asta".</span></li>
+                    <li class="flex gap-2"><span class="text-emerald-600 shrink-0">✓</span><span>Dacă scorul de confidență e sub prag, agentul AI escaladează la operator uman.</span></li>
                     <li class="flex gap-2"><span class="text-emerald-600 shrink-0">✓</span><span>Cele 10 straturi de verificare prind conținutul generat care contrazice chunk-urile sursă.</span></li>
                     <li class="flex gap-2"><span class="text-emerald-600 shrink-0">✓</span><span>Fiecare răspuns poate arăta documentele-sursă, ca clientul să verifice singur.</span></li>
                 </ul>
                 <p class="text-base text-slate-700 leading-relaxed">
-                    În producție, modul de eșec e <strong>„bot-ul spune cinstit că nu știe și redirecționează la un om"</strong> — nu „bot-ul inventează un răspuns greșit cu încredere". Asta e obiectivul de inginerie. Nu pretindem 100% perfecțiune, pretindem <strong>răspunsuri verificabile</strong>.
+                    În producție, modul de eșec e <strong>„agentul AI spune cinstit că nu știe și redirecționează la un om"</strong> — nu „agentul AI inventează un răspuns greșit cu încredere". Asta e obiectivul de inginerie. Nu pretindem 100% perfecțiune, pretindem <strong>răspunsuri verificabile</strong>.
                 </p>
             </div>
         </div>
@@ -365,7 +365,7 @@
                 ANTI-HALUCINARE
             </div>
             <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-5 tracking-tight">10 straturi de verificare</h2>
-            <p class="text-lg text-slate-400">Fiecare răspuns trece prin toate. Dacă un strat eșuează, bot-ul nu inventează — escaladează la om.</p>
+            <p class="text-lg text-slate-400">Fiecare răspuns trece prin toate. Dacă un strat eșuează, agentul AI nu inventează — escaladează la om.</p>
         </div>
 
         @php
@@ -374,7 +374,7 @@
                 ['02','Politica conversației','Per-business: ton, ce subiecte refuză, cum vorbește'],
                 ['03','Context produse + KB','Chunk-urile reale extrase din baza ta de cunoștințe'],
                 ['04','Reguli comenzi','Date tranzacționale verificate contra produselor și stocurilor reale'],
-                ['05','Stil răspuns','Cum vrea brand-ul tău să sune bot-ul'],
+                ['05','Stil răspuns','Cum vrea brand-ul tău să sune agentul AI'],
                 ['06','Query Intelligence','S-a înțeles întrebarea? Dacă scor < prag, cere clarificare'],
                 ['07','Strategia conversației','Politica per stadiu (început/mijloc/final)'],
                 ['08','Scor de confidență','Confidență numerică pe răspunsul generat'],
@@ -493,9 +493,9 @@
                 @php
                     $nots = [
                         ['Nu suntem Sambla Group', 'Sambla.ro este o platformă AI românească pentru chatboți și voiceboți, distinctă de Sambla Group sau orice alt brand cu nume similar. NU oferim credite, împrumuturi, leasing, IFN, asigurări, conturi bancare sau orice serviciu financiar regulat. Suntem o companie de software AI, nu o instituție financiară.'],
-                        ['Nu suntem un chatbot template', 'Fiecare bot Sambla e ancorat în documentele și produsele clientului prin RAG real, nu într-o bază FAQ generică partajată între clienți.'],
+                        ['Nu suntem un agent AI template', 'Fiecare bot Sambla e ancorat în documentele și produsele clientului prin RAG real, nu într-o bază FAQ generică partajată între clienți.'],
                         ['Nu suntem un wrapper de GPT', 'Avem un pipeline 4-stadii (intent → retrieve → strategy → generate) cu 10 straturi de verificare, hybrid search vector + full-text românesc, AI reranker, detector frustrare live. Eliminați orice strat și produsul nu mai funcționează.'],
-                        ['Nu suntem un AI care inventează', 'Când bot-ul nu știe, spune cinstit. Când nu e sigur, escaladează la operator uman. Fiecare răspuns poate cita documentul-sursă.'],
+                        ['Nu suntem un AI care inventează', 'Când agentul AI nu știe, spune cinstit. Când nu e sigur, escaladează la operator uman. Fiecare răspuns poate cita documentul-sursă.'],
                         ['Nu suntem un tool american tradus în română', 'Construit nativ în România, în română, pe servere românești, de o echipă românească. Vocea are intonație corectă și diacritice ă â î ș ț. Search-ul cunoaște morfologia românească.'],
                         ['Nu înlocuim profesionistul', 'În fiecare verticală (medical, juridic, financiar, psihologic), Sambla este unealta profesionistului — niciodată nu oferă consultanță care necesită licență.'],
                     ];
@@ -563,9 +563,9 @@
 
         @php
             $shots = [
-                ['file' => 'home-blur.jpg',      'title' => 'Acasă',                'desc' => 'Vedere de ansamblu: bot-urile tale, conversații recente, statistici de utilizare, alerte și acces rapid la fiecare modul.'],
-                ['file' => 'boti-blur.jpg',     'title' => 'Boții mei',            'desc' => 'Lista bot-urilor configurate, fiecare cu propria personalitate, bază de cunoștințe, canal și status în timp real.'],
-                ['file' => 'apeluri-blur.jpg',  'title' => 'Apeluri telefonice',   'desc' => 'Istoric apeluri preluate de voicebot: durată, sentiment detectat, transcript live, escaladări la operator uman.'],
+                ['file' => 'home-blur.jpg',      'title' => 'Acasă',                'desc' => 'Vedere de ansamblu: agenții AI tale, conversații recente, statistici de utilizare, alerte și acces rapid la fiecare modul.'],
+                ['file' => 'boti-blur.jpg',     'title' => 'Agenții AI mei',            'desc' => 'Lista agenților AI configurate, fiecare cu propria personalitate, bază de cunoștințe, canal și status în timp real.'],
+                ['file' => 'apeluri-blur.jpg',  'title' => 'Apeluri telefonice',   'desc' => 'Istoric apeluri preluate de agent AI vocal: durată, sentiment detectat, transcript live, escaladări la operator uman.'],
                 ['file' => 'leads-blur.jpg',    'title' => 'Lead-uri',             'desc' => 'Pipeline-ul de lead-uri captate automat de bot: nou → contactat → calificat → câștigat. Cu scoring și note.'],
                 ['file' => 'numere-blur.jpg',   'title' => 'Numere de telefon',    'desc' => 'Numere RO native alocate prin Telnyx, cu rutare per bot și configurare per canal.'],
                 ['file' => 'setari-blur.jpg',   'title' => 'Setări cont',          'desc' => 'Personalizarea contului: tonul brand-ului, integrările active, preferințe de notificare, ore de lucru.'],
@@ -623,7 +623,7 @@
                     </div>
                     <div>
                         <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Soluție</p>
-                        <p class="text-sm text-slate-700">Sambla a sincronizat catalogul WooCommerce, a învățat din descrierile produselor + politica de retur + secțiunea blog cu sfaturi de îngrijire. Bot-ul răspunde la întrebările clienților cu recomandări de produse din catalog.</p>
+                        <p class="text-sm text-slate-700">Sambla a sincronizat catalogul WooCommerce, a învățat din descrierile produselor + politica de retur + secțiunea blog cu sfaturi de îngrijire. Agentul AI răspunde la întrebările clienților cu recomandări de produse din catalog.</p>
                     </div>
                     <div>
                         <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Integrare</p>
@@ -661,7 +661,7 @@
                     </div>
                     <div>
                         <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Soluție</p>
-                        <p class="text-sm text-slate-700">Voicebot Sambla pe numărul cabinetului, conectat la calendarul Google al medicilor. Răspunde 24/7 cu voce naturală română, ia programări, trimite confirmări, escaladează urgențele.</p>
+                        <p class="text-sm text-slate-700">Agent AI vocal Sambla pe numărul cabinetului, conectat la calendarul Google al medicilor. Răspunde 24/7 cu voce naturală română, ia programări, trimite confirmări, escaladează urgențele.</p>
                     </div>
                     <div>
                         <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Integrare</p>
@@ -699,7 +699,7 @@
                     </div>
                     <div>
                         <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Soluție</p>
-                        <p class="text-sm text-slate-700">Chatbot Sambla pe site cu instrucțiune strictă: NU dă consultanță juridică. Răspunde la întrebări procedurale (onorarii orientative, documente, programări). Cazurile reale ajung pre-calificate la avocat.</p>
+                        <p class="text-sm text-slate-700">Agent AI Sambla pe site cu instrucțiune strictă: NU dă consultanță juridică. Răspunde la întrebări procedurale (onorarii orientative, documente, programări). Cazurile reale ajung pre-calificate la avocat.</p>
                     </div>
                     <div>
                         <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Integrare</p>
@@ -732,7 +732,7 @@
 
 <x-cta-section
     title="Testează platforma în 10 minute"
-    subtitle="Cont nou, încarci 2-3 documente, vezi cum răspunde bot-ul în limba ta. Fără card."
+    subtitle="Cont nou, încarci 2-3 documente, vezi cum răspunde agentul AI în limba ta. Fără card."
     primary-text="Începe gratuit"
     primary-href="/register"
     secondary-text="Vorbește cu noi"

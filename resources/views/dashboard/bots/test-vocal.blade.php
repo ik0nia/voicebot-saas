@@ -16,7 +16,7 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
             <h1 class="text-2xl font-bold text-slate-900">Test Vocal &mdash; {{ $bot->name }}</h1>
-            <p class="mt-1 text-sm text-slate-500">Testati botul vocal direct din browser, fara a fi nevoie de un numar de telefon.</p>
+            <p class="mt-1 text-sm text-slate-500">Testati agentul AI vocal direct din browser, fara a fi nevoie de un numar de telefon.</p>
         </div>
         <a href="{{ route('dashboard.bots.show', $bot) }}"
            class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">

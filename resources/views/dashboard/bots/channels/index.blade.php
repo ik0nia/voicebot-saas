@@ -4,7 +4,7 @@
 
 @section('breadcrumb')
     <span class="text-slate-400">/</span>
-    <a href="{{ route('dashboard.bots.index') }}" class="text-slate-500 hover:text-slate-700 transition-colors">Boți</a>
+    <a href="{{ route('dashboard.bots.index') }}" class="text-slate-500 hover:text-slate-700 transition-colors">Agenți AI</a>
     <span class="text-slate-400">/</span>
     <a href="{{ route('dashboard.bots.show', $bot) }}" class="text-slate-500 hover:text-slate-700 transition-colors">{{ $bot->name }}</a>
     <span class="text-slate-400">/</span>
@@ -35,7 +35,7 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
             <h1 class="text-2xl font-bold text-slate-900">Canale - {{ $bot->name }}</h1>
-            <p class="text-sm text-slate-500 mt-1">Gestionează canalele de comunicare ale botului</p>
+            <p class="text-sm text-slate-500 mt-1">Gestionează canalele de comunicare ale agentului AI</p>
         </div>
         <a href="{{ route('dashboard.bots.show', $bot) }}"
            class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
@@ -89,7 +89,7 @@
                 'dot' => 'bg-pink-500',
             ],
             'web_chatbot' => [
-                'label' => 'Web Chatbot',
+                'label' => 'Web Agent AI',
                 'description' => 'Widget de chat pe site-ul tău, instalare rapidă',
                 'bg' => 'bg-slate-50',
                 'icon_bg' => 'bg-slate-100',

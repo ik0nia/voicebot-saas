@@ -116,7 +116,7 @@ class BotController extends Controller
         ]);
 
         return redirect()->route('dashboard.bots.show', $bot)
-            ->with('success', 'Botul a fost creat cu succes!');
+            ->with('success', 'Agentul AI a fost creat cu succes!');
     }
 
     public function show($botId)
@@ -264,7 +264,7 @@ class BotController extends Controller
         $bot->update($validated);
 
         return redirect()->route('dashboard.bots.show', $bot)
-            ->with('success', 'Botul a fost actualizat!');
+            ->with('success', 'Agentul AI a fost actualizat!');
     }
 
     public function destroy($botId)
@@ -272,14 +272,14 @@ class BotController extends Controller
         $bot = $this->resolveBot($botId);
         $bot->delete();
         return redirect()->route('dashboard.bots.index')
-            ->with('success', 'Botul a fost șters.');
+            ->with('success', 'Agentul AI a fost șters.');
     }
 
     public function toggleActive($botId)
     {
         $bot = $this->resolveBot($botId);
         $bot->update(['is_active' => !$bot->is_active]);
-        return back()->with('success', $bot->is_active ? 'Bot activat.' : 'Bot dezactivat.');
+        return back()->with('success', $bot->is_active ? 'Agent AI activat.' : 'Agent AI dezactivat.');
     }
 
     public function updatePolicy(Request $request, $botId)

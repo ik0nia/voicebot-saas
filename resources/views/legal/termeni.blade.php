@@ -13,7 +13,7 @@
         <p>Prin accesarea și utilizarea platformei Sambla (sambla.ro), confirmi că ai citit, ai înțeles și ești de acord cu acești termeni. Dacă nu ești de acord, te rugăm să nu folosești serviciul.</p>
 
         <h2>2. Descrierea serviciului</h2>
-        <p>Sambla este o platformă SaaS care oferă agenți AI conversaționali (chatbot și voicebot) pentru afaceri. Serviciul include unelte de configurare, hosting, integrare cu canale de comunicare și analize.</p>
+        <p>Sambla este o platformă SaaS care oferă agenți AI conversaționali (agent AI și agent AI vocal) pentru afaceri. Serviciul include unelte de configurare, hosting, integrare cu canale de comunicare și analize.</p>
 
         <h2>3. Cont și securitate</h2>
         <p>Ești responsabil pentru păstrarea în siguranță a credențialelor contului tău. Orice activitate desfășurată prin contul tău este responsabilitatea ta. Anunță-ne imediat la <a href="mailto:servus@sambla.ro">servus@sambla.ro</a> dacă suspectezi acces neautorizat.</p>

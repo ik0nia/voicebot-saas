@@ -1,10 +1,10 @@
 @extends('layouts.dashboard')
 
-@section('title', 'Boți')
+@section('title', 'Agenți AI')
 
 @section('breadcrumb')
     <span class="text-slate-400">/</span>
-    <span class="font-medium text-slate-700">Boți</span>
+    <span class="font-medium text-slate-700">Agenți AI</span>
 @endsection
 
 @section('content')
@@ -21,7 +21,7 @@
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-            <h1 class="text-2xl font-bold text-slate-900">Boți</h1>
+            <h1 class="text-2xl font-bold text-slate-900">Agenți AI</h1>
             <p class="mt-1 text-sm text-slate-500">Gestionează asistenții vocali ai organizației tale.</p>
         </div>
         <a href="{{ route('dashboard.bots.create') }}"
@@ -29,7 +29,7 @@
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
             </svg>
-            Creează bot nou
+            Creează agent AI nou
         </a>
     </div>
 
@@ -155,7 +155,7 @@
                             </a>
 
                             <form method="POST" action="{{ route('dashboard.bots.destroy', $bot) }}" class="shrink-0"
-                                  onsubmit="return confirm('Ești sigur că vrei să ștergi acest bot? Această acțiune este ireversibilă.')">
+                                  onsubmit="return confirm('Ești sigur că vrei să ștergi acest agent AI? Această acțiune este ireversibilă.')">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" title="Șterge"
@@ -183,14 +183,14 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6m-6 4h6" />
                 </svg>
             </div>
-            <h3 class="text-lg font-semibold text-slate-900 mb-1">Nu ai niciun bot încă</h3>
+            <h3 class="text-lg font-semibold text-slate-900 mb-1">Nu ai niciun agent AI încă</h3>
             <p class="text-sm text-slate-500 mb-6 text-center max-w-sm">Creează primul tău asistent vocal pentru a începe să automatizezi apelurile telefonice.</p>
             <a href="{{ route('dashboard.bots.create') }}"
                class="inline-flex items-center gap-2 rounded-lg bg-red-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 transition-colors">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
-                Creează bot nou
+                Creează agent AI nou
             </a>
         </div>
     @endif

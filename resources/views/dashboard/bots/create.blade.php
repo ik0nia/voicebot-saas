@@ -1,19 +1,19 @@
 @extends('layouts.dashboard')
 
-@section('title', 'Creează bot nou')
+@section('title', 'Creează agent AI nou')
 
 @section('breadcrumb')
     <span class="text-slate-400">/</span>
-    <a href="{{ route('dashboard.bots.index') }}" class="text-slate-500 hover:text-slate-700 transition-colors">Boți</a>
+    <a href="{{ route('dashboard.bots.index') }}" class="text-slate-500 hover:text-slate-700 transition-colors">Agenți AI</a>
     <span class="text-slate-400">/</span>
-    <span class="font-medium text-slate-700">Creează bot nou</span>
+    <span class="font-medium text-slate-700">Creează agent AI nou</span>
 @endsection
 
 @section('content')
     <div class="max-w-3xl mx-auto">
         {{-- Header --}}
         <div class="mb-8">
-            <h1 class="text-2xl font-bold text-slate-900">Creează bot nou</h1>
+            <h1 class="text-2xl font-bold text-slate-900">Creează agent AI nou</h1>
             <p class="mt-1 text-sm text-slate-500">Configurează un nou asistent vocal în 3 pași simpli.</p>
         </div>
 
@@ -57,12 +57,12 @@
             {{-- Step 1: Informații de bază --}}
             <div id="step-1" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
                 <h2 class="text-lg font-semibold text-slate-900 mb-1">Informații de bază</h2>
-                <p class="text-sm text-slate-500 mb-6">Alege numele si limba botului tau.</p>
+                <p class="text-sm text-slate-500 mb-6">Alege numele si limba agentului AI tau.</p>
 
                 <div class="space-y-5">
-                    {{-- Nume bot --}}
+                    {{-- Nume agent AI --}}
                     <div>
-                        <label for="name" class="block text-sm font-medium text-slate-700 mb-1.5">Nume bot <span class="text-red-500">*</span></label>
+                        <label for="name" class="block text-sm font-medium text-slate-700 mb-1.5">Nume agent AI <span class="text-red-500">*</span></label>
                         <input type="text" name="name" id="name" value="{{ old('name') }}" required
                                placeholder="Ex: Asistent Clinică, Suport Tehnic..."
                                class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" />
@@ -84,7 +84,7 @@
                                     </option>
                                 @endforeach
                             </select>
-                            <p class="text-xs text-slate-400 mt-1">Chatbot-ul va functiona doar pe acest site</p>
+                            <p class="text-xs text-slate-400 mt-1">Agentul AI va functiona doar pe acest site</p>
                         @endif
                     </div>
 
@@ -110,7 +110,7 @@
             {{-- Step 2: Prompt sistem --}}
             <div id="step-2" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 hidden">
                 <h2 class="text-lg font-semibold text-slate-900 mb-1">Prompt sistem</h2>
-                <p class="text-sm text-slate-500 mb-6">Descrie personalitatea și comportamentul botului. Ex: Ești un asistent vocal prietenos pentru o clinică dentară...</p>
+                <p class="text-sm text-slate-500 mb-6">Descrie personalitatea și comportamentul agentului AI. Ex: Ești un asistent vocal prietenos pentru o clinică dentară...</p>
 
                 {{-- Template suggestions --}}
                 <div class="mb-5">
@@ -138,7 +138,7 @@
                 <div class="mb-5">
                     <label for="system_prompt" class="block text-sm font-medium text-slate-700 mb-1.5">Prompt</label>
                     <textarea name="system_prompt" id="system_prompt" rows="8"
-                              placeholder="Descrie cum trebuie să se comporte botul..."
+                              placeholder="Descrie cum trebuie să se comporte agentul AI..."
                               oninput="updatePreview()"
                               class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-700 placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition resize-y">{{ old('system_prompt') }}</textarea>
                 </div>
@@ -155,7 +155,7 @@
             {{-- Step 3: Configurări avansate --}}
             <div id="step-3" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 hidden">
                 <h2 class="text-lg font-semibold text-slate-900 mb-1">Configurări avansate</h2>
-                <p class="text-sm text-slate-500 mb-6">Ajustează parametrii tehnici ai botului. Valorile implicite funcționează bine pentru majoritatea cazurilor.</p>
+                <p class="text-sm text-slate-500 mb-6">Ajustează parametrii tehnici ai agentului AI. Valorile implicite funcționează bine pentru majoritatea cazurilor.</p>
 
                 <div class="space-y-6">
                     {{-- VAD Threshold --}}
@@ -179,7 +179,7 @@
                         <input type="range" name="settings[silence_duration_ms]" id="silence_duration" min="200" max="2000" step="50" value="{{ old('settings.silence_duration_ms', '500') }}"
                                oninput="document.getElementById('silence_duration_value').textContent = this.value"
                                class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-red-800" />
-                        <p class="mt-1 text-xs text-slate-400">Cât timp de tăcere așteaptă botul înainte să considere că vorbitorul a terminat (200-2000ms)</p>
+                        <p class="mt-1 text-xs text-slate-400">Cât timp de tăcere așteaptă agentul AI înainte să considere că vorbitorul a terminat (200-2000ms)</p>
                     </div>
 
                     {{-- Temperature --}}
@@ -218,7 +218,7 @@
                 </button>
                 <button type="submit" id="btn-submit" class="hidden inline-flex items-center gap-2 rounded-lg bg-red-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 transition-colors">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
-                    Creează botul
+                    Creează agentul AI
                 </button>
             </div>
         </form>

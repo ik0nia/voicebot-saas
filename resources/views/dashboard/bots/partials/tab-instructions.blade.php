@@ -30,7 +30,7 @@
             @if($bot->system_prompt)
             <div class="pt-4 border-t border-slate-100">
                 <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-medium text-slate-600">Instructiunile actuale ale botului:</span>
+                    <span class="text-xs font-medium text-slate-600">Instructiunile actuale ale agentului AI:</span>
                     <button type="button" @click="step = 'edit'; prompt = currentPrompt; greeting = currentGreeting" class="text-xs text-blue-600 hover:underline font-medium">Editeaza direct &rarr;</button>
                 </div>
                 <div class="bg-slate-50 rounded-lg p-3 text-xs text-slate-600 max-h-24 overflow-hidden relative">
@@ -46,7 +46,7 @@
         <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
             <div>
                 <h2 class="text-base font-semibold text-slate-900">Descrie afacerea ta</h2>
-                <p class="text-xs text-slate-500 mt-0.5">AI-ul va genera instructiuni personalizate pentru botul tau.</p>
+                <p class="text-xs text-slate-500 mt-0.5">AI-ul va genera instructiuni personalizate pentru agentul AI tau.</p>
             </div>
             <button type="button" @click="step = 'choose'" class="text-xs text-slate-500 hover:text-slate-700 flex items-center gap-1">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
@@ -63,7 +63,7 @@
                 <textarea x-model="businessDesc" rows="3" placeholder="Ex: Vindem buchete de flori proaspete, aranjamente florale pentru evenimente si livram in tot orasul. Avem si plante de apartament." class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"></textarea>
             </div>
             <div>
-                <label class="block text-sm font-medium text-slate-800 mb-2">Ce ton vrei sa aiba botul?</label>
+                <label class="block text-sm font-medium text-slate-800 mb-2">Ce ton vrei sa aiba agentul AI?</label>
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     <template x-for="t in toneOptions">
                         <label class="cursor-pointer">
@@ -107,11 +107,11 @@
             <div class="flex items-center justify-between mb-2">
                 <div>
                     <label class="block text-sm font-medium text-slate-800">Instructiuni pentru bot</label>
-                    <p class="text-[11px] text-slate-500">Regulile pe care le urmeaza botul in fiecare conversatie.</p>
+                    <p class="text-[11px] text-slate-500">Regulile pe care le urmeaza agentul AI in fiecare conversatie.</p>
                 </div>
                 <span class="text-[10px] text-slate-400" x-text="prompt.length + ' caractere'"></span>
             </div>
-            <textarea x-model="prompt" rows="14" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-mono leading-relaxed focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="Descrie cum se comporta botul..."></textarea>
+            <textarea x-model="prompt" rows="14" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-mono leading-relaxed focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="Descrie cum se comporta agentul AI..."></textarea>
         </div>
 
         {{-- Save --}}

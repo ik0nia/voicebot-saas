@@ -159,7 +159,16 @@ Route::post('/pentru/{niche:slug}/lead', [\App\Http\Controllers\NicheLandingCont
 // Public demo & test pages (no auth required)
 Route::get('/demo/{slug}', [\App\Http\Controllers\PublicDemoController::class, 'show'])->name('public.demo');
 Route::get('/chat-demo/{slug}', [\App\Http\Controllers\PublicDemoController::class, 'chat'])->name('public.chatDemo');
-Route::get('/dashboard/boti/{bot}/test-vocal', [\App\Http\Controllers\PublicDemoController::class, 'testById'])->name('dashboard.bots.testVocal');
+Route::get('/dashboard/agenti/{bot}/test-vocal', [\App\Http\Controllers\PublicDemoController::class, 'testById'])->name('dashboard.bots.testVocal');
+
+// Legacy /dashboard/boti/* paths: permanent redirect to /dashboard/agenti/*
+// so bookmarks and links shared before the rename stay usable.
+Route::redirect('/dashboard/boti', '/dashboard/agenti', 301);
+Route::any('/dashboard/boti/{rest?}', function ($rest = '') {
+    $query = request()->getQueryString();
+    $target = '/dashboard/agenti' . ($rest !== '' ? '/' . $rest : '') . ($query ? '?' . $query : '');
+    return redirect($target, 301);
+})->where('rest', '.*');
 
 // Setup wizard (onboarding)
 Route::middleware('auth')->prefix('dashboard/setup')->group(function () {
@@ -195,7 +204,7 @@ Route::middleware('auth')->prefix('dashboard/facturare')->group(function () {
 });
 
 // Bot routes (dashboard)
-Route::middleware('auth')->prefix('dashboard/boti')->group(function () {
+Route::middleware('auth')->prefix('dashboard/agenti')->group(function () {
     Route::get('/', [BotController::class, 'index'])->name('dashboard.bots.index');
     Route::get('/nou', [BotController::class, 'create'])->name('dashboard.bots.create');
     Route::post('/', [BotController::class, 'store'])->name('dashboard.bots.store');
@@ -269,7 +278,7 @@ Route::middleware('auth')->prefix('dashboard/setari')->group(function () {
 });
 
 // Channel management routes (dashboard)
-Route::middleware('auth')->prefix('dashboard/boti/{bot}/canale')->group(function () {
+Route::middleware('auth')->prefix('dashboard/agenti/{bot}/canale')->group(function () {
     Route::get('/', [ChannelController::class, 'index'])->name('dashboard.bots.channels.index');
     Route::post('/', [ChannelController::class, 'store'])->name('dashboard.bots.channels.store');
     Route::put('/{channel}', [ChannelController::class, 'update'])->name('dashboard.bots.channels.update');
@@ -311,7 +320,7 @@ Route::middleware('auth')->prefix('dashboard')->group(function () {
 });
 
 // A/B Testing experiments routes (dashboard)
-Route::middleware('auth')->prefix('dashboard/boti/{bot}/experiments')->group(function () {
+Route::middleware('auth')->prefix('dashboard/agenti/{bot}/experiments')->group(function () {
     Route::get('/', [\App\Http\Controllers\Dashboard\AbTestingController::class, 'index'])->name('dashboard.bots.experiments.index');
     Route::post('/', [\App\Http\Controllers\Dashboard\AbTestingController::class, 'store'])->name('dashboard.bots.experiments.store');
     Route::get('/{experiment}', [\App\Http\Controllers\Dashboard\AbTestingController::class, 'show'])->name('dashboard.bots.experiments.show');
@@ -327,7 +336,7 @@ Route::middleware('auth')->prefix('oauth/google')->group(function () {
 });
 
 // Knowledge base routes (dashboard)
-Route::middleware('auth')->prefix('dashboard/boti/{bot}')->group(function () {
+Route::middleware('auth')->prefix('dashboard/agenti/{bot}')->group(function () {
     Route::get('/knowledge', [KnowledgeController::class, 'index'])->name('dashboard.bots.knowledge.index');
     Route::delete('/knowledge/{title}', [KnowledgeController::class, 'destroy'])->name('dashboard.bots.knowledge.destroy');
 

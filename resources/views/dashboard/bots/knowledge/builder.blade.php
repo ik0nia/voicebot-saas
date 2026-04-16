@@ -3,7 +3,7 @@
 @section('title', 'Knowledge Builder — ' . $bot->name)
 
 @section('breadcrumb')
-    <a href="/dashboard/boti" class="text-slate-500 hover:text-slate-700 transition-colors">Boți</a>
+    <a href="/dashboard/boti" class="text-slate-500 hover:text-slate-700 transition-colors">Agenți AI</a>
     <svg class="w-4 h-4 text-slate-400 mx-1 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
     <a href="/dashboard/boti/{{ $bot->id }}" class="text-slate-500 hover:text-slate-700 transition-colors">{{ $bot->name }}</a>
     <svg class="w-4 h-4 text-slate-400 mx-1 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
@@ -38,8 +38,8 @@
     <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-3">
         <svg class="w-5 h-5 text-yellow-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         <div>
-            <p class="text-sm font-medium text-yellow-800">Botul nu are un site asociat</p>
-            <p class="text-xs text-yellow-600">Asociaza un site pentru a restrictiona unde poate rula chatbot-ul. <a href="/dashboard/sites" class="underline hover:text-yellow-800">Gestioneaza sites</a></p>
+            <p class="text-sm font-medium text-yellow-800">Agentul AI nu are un site asociat</p>
+            <p class="text-xs text-yellow-600">Asociaza un site pentru a restrictiona unde poate rula agentul AI. <a href="/dashboard/sites" class="underline hover:text-yellow-800">Gestioneaza sites</a></p>
         </div>
     </div>
     @endif
@@ -69,7 +69,7 @@
             {{-- Knowledge entries --}}
             <div>
                 <div class="flex items-center justify-between mb-1">
-                    <span class="text-xs text-slate-500">Boți</span>
+                    <span class="text-xs text-slate-500">Agenți AI</span>
                     <span class="text-xs font-medium text-slate-700">{{ $usageSummary['bots']['used'] }}/{{ $usageSummary['bots']['limit'] }}</span>
                 </div>
                 <div class="w-full bg-slate-100 rounded-full h-1.5">
@@ -116,7 +116,7 @@
         <div class="text-center max-w-lg mx-auto">
             <svg class="w-12 h-12 text-red-700/80 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
             <h3 class="text-lg font-bold text-slate-900 mb-1">Baza de cunoștințe este goală</h3>
-            <p class="text-sm text-slate-600 mb-5">Alege una din metodele de mai jos pentru a adăuga conținut botului tău.</p>
+            <p class="text-sm text-slate-600 mb-5">Alege una din metodele de mai jos pentru a adăuga conținut agentului AI tău.</p>
             <div class="flex flex-wrap items-center justify-center gap-3">
                 <button onclick="switchBuilderTab('agents')" class="inline-flex items-center gap-2 px-4 py-2.5 bg-red-800 text-white text-sm font-semibold rounded-lg hover:bg-red-900 transition-colors shadow-sm">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>

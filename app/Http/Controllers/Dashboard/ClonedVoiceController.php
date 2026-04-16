@@ -72,7 +72,7 @@ class ClonedVoiceController extends Controller
 
         $bot->update(['cloned_voice_id' => null]);
 
-        return back()->with('success', 'Botul folosește din nou vocea presetată.');
+        return back()->with('success', 'Agentul AI folosește din nou vocea presetată.');
     }
 
     public function destroy(Bot $bot, ClonedVoice $clonedVoice)

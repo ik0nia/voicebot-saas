@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="@yield('meta_description', 'Sambla - Agenți AI multi-canal pentru afacerea ta. Automatizează comunicarea pe telefon, WhatsApp, Facebook, Instagram și chatbot web cu inteligență artificială.')">
+    <meta name="description" content="@yield('meta_description', 'Sambla - Agenți AI multi-canal pentru afacerea ta. Automatizează comunicarea pe telefon, WhatsApp, Facebook, Instagram și agent AI web cu inteligență artificială.')">
     <title>@yield('title', 'Sambla - Agenți AI Multi-Canal pentru Afacerea Ta')</title>
 
     {{-- Favicon — SVG version of the Sambla logo, served from CDN --}}
@@ -40,7 +40,7 @@
                 "name": "Sambla",
                 "url": "https://sambla.ro",
                 "logo": "https://cdn.sambla.ro/images/logo-icon.svg",
-                "description": "Sambla este o platformă SaaS românească de agenți AI conversaționali (chatbot și voicebot) pentru afaceri. Răspunde clienților 24/7 pe chat și telefon, în limba română, cu o voce naturală, folosind RAG (Retrieval-Augmented Generation) pentru a învăța din documentele și produsele tale reale, fără să inventeze.",
+                "description": "Sambla este o platformă SaaS românească de agenți AI conversaționali (agent AI și agent AI vocal) pentru afaceri. Răspunde clienților 24/7 pe chat și telefon, în limba română, cu o voce naturală, folosind RAG (Retrieval-Augmented Generation) pentru a învăța din documentele și produsele tale reale, fără să inventeze.",
                 "foundingDate": "2025",
                 "areaServed": {"@type": "Country","name":"Romania"},
                 "knowsLanguage": ["ro","en"],
@@ -69,18 +69,18 @@
                 "@id": "https://sambla.ro/#software",
                 "name": "Sambla AI Platform",
                 "applicationCategory": "BusinessApplication",
-                "applicationSubCategory": "Conversational AI / Chatbot / Voicebot",
+                "applicationSubCategory": "Conversational AI / Agent AI / Agent AI vocal",
                 "operatingSystem": "Web (Cloud SaaS)",
                 "url": "https://sambla.ro",
-                "description": "Platformă SaaS care permite oricărei afaceri să creeze agenți AI conversaționali — chatbot pe site-ul propriu și voicebot care preia apeluri telefonice — într-o oră, fără cunoștințe tehnice. AI-ul răspunde DOAR din documentele și produsele tale reale (anti-halucinare), învață singur din întrebările clienților și escaladează inteligent la operator uman când e nevoie.",
+                "description": "Platformă SaaS care permite oricărei afaceri să creeze agenți AI conversaționali — agent AI pe site-ul propriu și agent AI vocal care preia apeluri telefonice — într-o oră, fără cunoștințe tehnice. AI-ul răspunde DOAR din documentele și produsele tale reale (anti-halucinare), învață singur din întrebările clienților și escaladează inteligent la operator uman când e nevoie.",
                 "offers": [
-                    {"@type":"Offer","name":"Plan Starter","priceCurrency":"EUR","price":"49","description":"Chatbot web pentru o afacere mică"},
-                    {"@type":"Offer","name":"Plan Pro","priceCurrency":"EUR","price":"149","description":"Chatbot + voicebot, multi-canal, integrare WooCommerce"},
+                    {"@type":"Offer","name":"Plan Starter","priceCurrency":"EUR","price":"49","description":"Agent AI web pentru o afacere mică"},
+                    {"@type":"Offer","name":"Plan Pro","priceCurrency":"EUR","price":"149","description":"Agent AI + agent AI vocal, multi-canal, integrare WooCommerce"},
                     {"@type":"Offer","name":"Plan Business","priceCurrency":"EUR","price":"399","description":"Volum mare, voce premium, multi-bot, suport dedicat"}
                 ],
                 "featureList": [
-                    "Chatbot AI pe site cu RAG (răspunde din documentele tale)",
-                    "Voicebot cu voce naturală în română (preia apeluri telefonice 24/7)",
+                    "Agent AI AI pe site cu RAG (răspunde din documentele tale)",
+                    "Agent AI vocal cu voce naturală în română (preia apeluri telefonice 24/7)",
                     "Anti-halucinare: răspunde DOAR ce știe, nu inventează",
                     "RAG Pipeline cu Hybrid Search (vector + full-text + reranker)",
                     "Integrare nativă WooCommerce și WordPress",
@@ -116,8 +116,8 @@
 
     @include('components.footer')
 
-    {{-- Chatbot widget served from CDN. async + defer so it never blocks render. --}}
-    <script src="{{ rtrim(config('app.cdn_url') ?: config('app.url'), '/') }}/widget/sambla-chat.min.js" data-channel-id="1" data-bot-name="Sambla" data-color="#991b1b" data-lang="ro" data-greeting="Salut! 👋 Sunt Sambla, asistentul virtual al platformei. Pot să îți povestesc cum funcționează chatbot-ul și voicebot-ul nostru AI, sau să te ajut cu orice întrebare. Cu ce pot să te ajut?" async defer></script>
+    {{-- Agent AI widget served from CDN. async + defer so it never blocks render. --}}
+    <script src="{{ rtrim(config('app.cdn_url') ?: config('app.url'), '/') }}/widget/sambla-chat.min.js" data-channel-id="1" data-bot-name="Sambla" data-color="#991b1b" data-lang="ro" data-greeting="Salut! 👋 Sunt Sambla, asistentul virtual al platformei. Pot să îți povestesc cum funcționează agentul AI și agent AI vocal-ul nostru AI, sau să te ajut cu orice întrebare. Cu ce pot să te ajut?" async defer></script>
 
     @stack('scripts')
 </body>

@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Despre noi - Sambla')
-@section('meta_description', 'Descoperă povestea Sambla — platformă AI românească pentru chatbot și voce. Un nume din graiul ardelenesc, o tehnologie care privește spre viitor.')
+@section('meta_description', 'Descoperă povestea Sambla — platformă AI românească pentru agent AI și voce. Un nume din graiul ardelenesc, o tehnologie care privește spre viitor.')
 
 @section('jsonld')
 <script type="application/ld+json">
@@ -45,7 +45,7 @@
                     Sambla a pornit dintr-o convingere simplă: companiile din România merită acces la aceeași tehnologie AI pe care o folosesc giganții tech din Silicon Valley, dar adaptată limbii și culturii noastre.
                 </p>
                 <p class="text-lg text-slate-600 leading-relaxed mb-6">
-                    Construim o platformă completă de comunicare inteligentă — de la chatbot text pe site, la agenți vocali care sună ca oamenii reali. Totul hosted în România, totul conform GDPR, totul în limba română.
+                    Construim o platformă completă de comunicare inteligentă — de la agent AI text pe site, la agenți vocali care sună ca oamenii reali. Totul hosted în România, totul conform GDPR, totul în limba română.
                 </p>
                 <p class="text-lg text-slate-600 leading-relaxed">
                     Nu suntem încă un brand mare. Suntem o echipă care construiește zi de zi, release după release, o platformă de care suntem mândri. Fiecare funcționalitate pe care o vezi a fost gândită, testată și rafinată cu grijă.
@@ -85,8 +85,8 @@
                         </svg>
                     </div>
                     <div>
-                        <h3 class="font-bold text-slate-900 mb-1">Platformă completă, nu doar chatbot</h3>
-                        <p class="text-slate-600 text-sm leading-relaxed">Chatbot text, agent vocal, bază de cunoștințe, lead management, analytics, e-commerce integration, API — totul într-un singur loc.</p>
+                        <h3 class="font-bold text-slate-900 mb-1">Platformă completă, nu doar agent AI</h3>
+                        <p class="text-slate-600 text-sm leading-relaxed">Agent AI text, agent vocal, bază de cunoștințe, lead management, analytics, e-commerce integration, API — totul într-un singur loc.</p>
                     </div>
                 </div>
 
@@ -262,7 +262,7 @@
                 <div class="w-10 h-10 rounded-lg bg-red-700/20 flex items-center justify-center mb-4">
                     <svg class="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
                 </div>
-                <h3 class="text-white font-semibold mb-2">Chatbot text</h3>
+                <h3 class="text-white font-semibold mb-2">Agent AI text</h3>
                 <p class="text-slate-400 text-sm leading-relaxed">Widget pe site cu RAG, e-commerce, lead generation și detecție intenții. Live și funcțional.</p>
                 <span class="inline-flex items-center mt-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Live</span>
             </div>

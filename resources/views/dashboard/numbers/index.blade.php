@@ -146,12 +146,12 @@
                                class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" />
                     </div>
 
-                    {{-- Asociază cu bot --}}
+                    {{-- Asociază cu agent AI --}}
                     <div>
-                        <label for="bot_id" class="block text-sm font-medium text-slate-700 mb-1">Asociază cu bot <span class="text-slate-400">(opțional)</span></label>
+                        <label for="bot_id" class="block text-sm font-medium text-slate-700 mb-1">Asociază cu agent AI <span class="text-slate-400">(opțional)</span></label>
                         <select name="bot_id" id="bot_id"
                                 class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition">
-                            <option value="">— Fără bot asociat —</option>
+                            <option value="">— Fără agent AI asociat —</option>
                             @foreach($bots as $bot)
                                 <option value="{{ $bot->id }}" {{ old('bot_id') == $bot->id ? 'selected' : '' }}>{{ $bot->name }}</option>
                             @endforeach
@@ -183,7 +183,7 @@
                         <tr class="border-b border-slate-200 bg-slate-50">
                             <th class="px-4 py-3 font-semibold text-slate-600">Număr</th>
                             <th class="px-4 py-3 font-semibold text-slate-600">Nume</th>
-                            <th class="px-4 py-3 font-semibold text-slate-600 hidden md:table-cell">Bot asociat</th>
+                            <th class="px-4 py-3 font-semibold text-slate-600 hidden md:table-cell">Agent AI asociat</th>
                             <th class="px-4 py-3 font-semibold text-slate-600 hidden lg:table-cell">Cost lunar</th>
                             <th class="px-4 py-3 font-semibold text-slate-600">Status</th>
                             <th class="px-4 py-3 font-semibold text-slate-600 text-right">Acțiuni</th>
@@ -207,7 +207,7 @@
                                     {{ $phoneNumber->friendly_name ?? '—' }}
                                 </td>
 
-                                {{-- Bot asociat --}}
+                                {{-- Agent AI asociat --}}
                                 <td class="px-4 py-3 hidden md:table-cell">
                                     {{-- Inline edit form (hidden by default) --}}
                                     <div id="edit-bot-{{ $phoneNumber->id }}" class="hidden">
@@ -216,7 +216,7 @@
                                             @method('PUT')
                                             <select name="bot_id"
                                                     class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition">
-                                                <option value="">— Fără bot —</option>
+                                                <option value="">— Fără agent AI —</option>
                                                 @foreach($bots as $bot)
                                                     <option value="{{ $bot->id }}" {{ $phoneNumber->bot_id == $bot->id ? 'selected' : '' }}>{{ $bot->name }}</option>
                                                 @endforeach
@@ -334,7 +334,7 @@
                 </svg>
             </div>
             <h3 class="text-lg font-semibold text-slate-900 mb-1">Nu ai numere de telefon încă</h3>
-            <p class="text-sm text-slate-500 mb-6 text-center max-w-sm">Adaugă primul număr pentru a conecta un bot.</p>
+            <p class="text-sm text-slate-500 mb-6 text-center max-w-sm">Adaugă primul număr pentru a conecta un agent AI.</p>
             <button onclick="document.getElementById('add-number-modal').classList.remove('hidden')"
                     class="inline-flex items-center gap-2 rounded-lg bg-red-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 transition-colors">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

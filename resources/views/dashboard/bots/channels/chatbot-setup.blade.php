@@ -1,6 +1,6 @@
 @extends('layouts.dashboard')
 
-@section('title', 'Configurare Chatbot — ' . $channel->getDisplayName())
+@section('title', 'Configurare Agent AI — ' . $channel->getDisplayName())
 
 @section('breadcrumb')
     <span class="text-slate-400">/</span>
@@ -8,14 +8,14 @@
     <span class="text-slate-400">/</span>
     <a href="{{ route('dashboard.bots.show', $bot) }}" class="text-slate-500 hover:text-slate-700 transition-colors">{{ $bot->name }}</a>
     <span class="text-slate-400">/</span>
-    <span class="font-medium text-slate-700">Chatbot Setup</span>
+    <span class="font-medium text-slate-700">Agent AI Setup</span>
 @endsection
 
 @section('content')
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-            <h1 class="text-2xl font-bold text-slate-900">Configurare Widget Chatbot</h1>
+            <h1 class="text-2xl font-bold text-slate-900">Configurare Widget Agent AI</h1>
             <p class="mt-1 text-sm text-slate-500">Configurati si integrati widget-ul de chat pe site-ul dumneavoastra.</p>
         </div>
         <div class="flex items-center gap-2">
@@ -45,11 +45,11 @@
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="text-sm text-slate-500">Webhook URL</span>
-                        <code class="text-xs font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-600 max-w-[200px] truncate">{{ url('/api/v1/chatbot/' . $channel->id . '/message') }}</code>
+                        <code class="text-xs font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-600 max-w-[200px] truncate">{{ url('/api/v1/agent AI/' . $channel->id . '/message') }}</code>
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="text-sm text-slate-500">Config URL</span>
-                        <code class="text-xs font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-600 max-w-[200px] truncate">{{ url('/api/v1/chatbot/' . $channel->id . '/config') }}</code>
+                        <code class="text-xs font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-600 max-w-[200px] truncate">{{ url('/api/v1/agent AI/' . $channel->id . '/config') }}</code>
                     </div>
                 </div>
             </div>

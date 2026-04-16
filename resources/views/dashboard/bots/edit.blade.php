@@ -4,7 +4,7 @@
 
 @section('breadcrumb')
     <span class="text-slate-400">/</span>
-    <a href="{{ route('dashboard.bots.index') }}" class="text-slate-500 hover:text-slate-700 transition-colors">Boți</a>
+    <a href="{{ route('dashboard.bots.index') }}" class="text-slate-500 hover:text-slate-700 transition-colors">Agenți AI</a>
     <span class="text-slate-400">/</span>
     <a href="{{ route('dashboard.bots.show', $bot) }}" class="text-slate-500 hover:text-slate-700 transition-colors">{{ $bot->name }}</a>
     <span class="text-slate-400">/</span>
@@ -16,7 +16,7 @@
         {{-- Header --}}
         <div class="flex items-center justify-between mb-6">
             <div>
-                <h1 class="text-2xl font-bold text-slate-900">Editează bot</h1>
+                <h1 class="text-2xl font-bold text-slate-900">Editează agent AI</h1>
                 <p class="mt-1 text-sm text-slate-500">Modifică setările pentru <strong>{{ $bot->name }}</strong>.</p>
             </div>
         </div>
@@ -39,12 +39,12 @@
             {{-- Basic info --}}
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-6">
                 <h2 class="text-lg font-semibold text-slate-900 mb-1">Informații de bază</h2>
-                <p class="text-sm text-slate-500 mb-6">Numele, limba și vocea botului.</p>
+                <p class="text-sm text-slate-500 mb-6">Numele, limba și vocea agentului AI.</p>
 
                 <div class="space-y-5">
-                    {{-- Nume bot --}}
+                    {{-- Nume agent AI --}}
                     <div>
-                        <label for="name" class="block text-sm font-medium text-slate-700 mb-1.5">Nume bot <span class="text-red-500">*</span></label>
+                        <label for="name" class="block text-sm font-medium text-slate-700 mb-1.5">Nume agent AI <span class="text-red-500">*</span></label>
                         <input type="text" name="name" id="name" value="{{ old('name', $bot->name) }}" required
                                class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" />
                     </div>
@@ -65,7 +65,7 @@
                                     </option>
                                 @endforeach
                             </select>
-                            <p class="text-xs text-slate-400 mt-1">Chatbot-ul va functiona doar pe acest site</p>
+                            <p class="text-xs text-slate-400 mt-1">Agentul AI va functiona doar pe acest site</p>
                         @endif
                     </div>
 
@@ -204,7 +204,7 @@
                                    class="w-5 h-5 rounded border-slate-300 text-red-800 focus:ring-red-700/20 transition" />
                             <div>
                                 <span class="text-sm font-medium text-slate-700">Bot activ</span>
-                                <p class="text-xs text-slate-400">Botul va putea primi și efectua apeluri</p>
+                                <p class="text-xs text-slate-400">Agentul AI va putea primi și efectua apeluri</p>
                             </div>
                         </label>
                     </div>
@@ -214,16 +214,16 @@
             {{-- System prompt --}}
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-6">
                 <h2 class="text-lg font-semibold text-slate-900 mb-1">Prompt sistem</h2>
-                <p class="text-sm text-slate-500 mb-6">Descrie personalitatea și comportamentul botului.</p>
+                <p class="text-sm text-slate-500 mb-6">Descrie personalitatea și comportamentul agentului AI.</p>
 
                 <textarea name="system_prompt" id="system_prompt" rows="8"
-                          placeholder="Descrie cum trebuie să se comporte botul..."
+                          placeholder="Descrie cum trebuie să se comporte agentul AI..."
                           class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-700 placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition resize-y">{{ old('system_prompt', $bot->system_prompt) }}</textarea>
 
                 {{-- Greeting message --}}
                 <div class="mt-5">
                     <label for="greeting_message" class="block text-sm font-medium text-slate-700 mb-1.5">Mesaj de intampinare</label>
-                    <p class="text-xs text-slate-500 mb-2">Textul exact pe care botul il spune cand raspunde. Lasa gol daca vrei sa astepte clientul sa vorbeasca primul.</p>
+                    <p class="text-xs text-slate-500 mb-2">Textul exact pe care agentul AI il spune cand raspunde. Lasa gol daca vrei sa astepte clientul sa vorbeasca primul.</p>
                     <input type="text" name="greeting_message" id="greeting_message"
                            value="{{ old('greeting_message', $bot->greeting_message) }}"
                            placeholder="ex: Buna ziua, sunt Greg de la Sambla. Cu ce va pot ajuta?"
@@ -235,7 +235,7 @@
             @php $settings = $bot->settings ?? []; @endphp
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-6">
                 <h2 class="text-lg font-semibold text-slate-900 mb-1">Configurări avansate</h2>
-                <p class="text-sm text-slate-500 mb-6">Parametri tehnici ai botului.</p>
+                <p class="text-sm text-slate-500 mb-6">Parametri tehnici ai agentului AI.</p>
 
                 <div class="space-y-6">
                     {{-- VAD Threshold --}}
@@ -261,7 +261,7 @@
                                value="{{ old('settings.silence_duration_ms', $settings['silence_duration_ms'] ?? 500) }}"
                                oninput="document.getElementById('silence_duration_value').textContent = this.value"
                                class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-red-800" />
-                        <p class="mt-1 text-xs text-slate-400">Cât timp de tăcere așteaptă botul înainte să considere că vorbitorul a terminat (200-2000ms)</p>
+                        <p class="mt-1 text-xs text-slate-400">Cât timp de tăcere așteaptă agentul AI înainte să considere că vorbitorul a terminat (200-2000ms)</p>
                     </div>
 
                     {{-- Temperature --}}

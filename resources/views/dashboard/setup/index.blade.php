@@ -71,7 +71,7 @@
             {{-- Step 2: Describe Business --}}
             <div x-show="step === 2" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0" class="p-8">
                 <h2 class="text-2xl font-bold text-slate-900 mb-2">Spune-ne despre afacerea ta</h2>
-                <p class="text-slate-500 mb-6">AI-ul va genera prompt-ul și personalitatea bot-ului automat.</p>
+                <p class="text-slate-500 mb-6">AI-ul va genera prompt-ul și personalitatea agentului AI automat.</p>
 
                 <div class="space-y-4">
                     <div>
@@ -101,7 +101,7 @@
 
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Numele bot-ului</label>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Numele agentului AI</label>
                         <input x-model="botName" type="text" class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm focus:border-red-300 focus:ring-2 focus:ring-red-100 transition">
                     </div>
                     <div>
@@ -123,7 +123,7 @@
                     <button @click="completeSetup()" :disabled="completing"
                             class="px-8 py-3 bg-red-800 text-white rounded-lg font-bold text-sm hover:bg-red-900 transition-colors disabled:opacity-40 shadow-lg flex items-center gap-2">
                         <svg x-show="completing" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                        <span x-text="completing ? 'Se creează...' : 'Creează bot-ul 🚀'"></span>
+                        <span x-text="completing ? 'Se creează...' : 'Creează agentul AI 🚀'"></span>
                     </button>
                 </div>
             </div>

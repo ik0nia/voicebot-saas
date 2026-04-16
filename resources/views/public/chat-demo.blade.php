@@ -65,7 +65,7 @@
 
                     {{-- Chat iframe --}}
                     <iframe
-                        src="{{ route('chatbot.frame', $channel->id) }}"
+                        src="{{ route('agent AI.frame', $channel->id) }}"
                         class="flex-1 w-full border-0"
                         title="{{ $bot->name }} Chat"
                         allow="microphone"

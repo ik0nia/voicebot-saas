@@ -21,15 +21,15 @@
   "@context":"https://schema.org",
   "@type":"FAQPage",
   "mainEntity":[
-    {"@type":"Question","name":"Ce este Sambla?","acceptedAnswer":{"@type":"Answer","text":"Sambla este o platformă SaaS românească ce permite oricărei afaceri să creeze agenți AI conversaționali — chatbot pe site și voicebot care preia apeluri telefonice — într-o oră, fără cunoștințe tehnice. AI-ul răspunde DOAR din documentele și produsele tale reale (anti-halucinare), învață din întrebările clienților și escaladează la operator uman când e nevoie."}},
-    {"@type":"Question","name":"Cum funcționează Sambla?","acceptedAnswer":{"@type":"Answer","text":"Încarci PDF-uri, scanezi site-ul tău sau conectezi WooCommerce, apoi descrii afacerea în 2 propoziții. Sambla generează automat un chatbot cu personalitate adaptată brand-ului tău, îl publică pe site cu o singură linie de cod, și opțional îți alocă un număr de telefon românesc unde un voicebot AI răspunde 24/7. Setup-ul total durează sub o oră."}},
+    {"@type":"Question","name":"Ce este Sambla?","acceptedAnswer":{"@type":"Answer","text":"Sambla este o platformă SaaS românească ce permite oricărei afaceri să creeze agenți AI conversaționali — agent AI pe site și agent AI vocal care preia apeluri telefonice — într-o oră, fără cunoștințe tehnice. AI-ul răspunde DOAR din documentele și produsele tale reale (anti-halucinare), învață din întrebările clienților și escaladează la operator uman când e nevoie."}},
+    {"@type":"Question","name":"Cum funcționează Sambla?","acceptedAnswer":{"@type":"Answer","text":"Încarci PDF-uri, scanezi site-ul tău sau conectezi WooCommerce, apoi descrii afacerea în 2 propoziții. Sambla generează automat un agent AI cu personalitate adaptată brand-ului tău, îl publică pe site cu o singură linie de cod, și opțional îți alocă un număr de telefon românesc unde un agent AI vocal AI răspunde 24/7. Setup-ul total durează sub o oră."}},
     {"@type":"Question","name":"Inventează AI-ul răspunsuri când nu știe?","acceptedAnswer":{"@type":"Answer","text":"Nu. Sambla folosește un sistem RAG (Retrieval-Augmented Generation) cu zece straturi de verificare anti-halucinare. Răspunde DOAR pe baza documentelor tale reale. Dacă nu e sigur, spune cinstit «nu am informația asta» sau cere clarificare, iar la nevoie escaladează automat la un operator uman. Fiecare răspuns poate cita documentul-sursă."}},
-    {"@type":"Question","name":"Pe ce limbi funcționează?","acceptedAnswer":{"@type":"Answer","text":"Sambla este construit nativ în limba română — atât chatbot-ul cât și voicebot-ul folosesc voce naturală cu intonație și diacritice corecte (ă, â, î, ș, ț). Suportă și engleza ca limbă secundară."}},
+    {"@type":"Question","name":"Pe ce limbi funcționează?","acceptedAnswer":{"@type":"Answer","text":"Sambla este construit nativ în limba română — atât agentul AI cât și agent AI vocal-ul folosesc voce naturală cu intonație și diacritice corecte (ă, â, î, ș, ț). Suportă și engleza ca limbă secundară."}},
     {"@type":"Question","name":"Unde sunt stocate datele mele?","acceptedAnswer":{"@type":"Answer","text":"Toate datele sunt stocate pe servere fizice din România. Sambla este 100% GDPR-compliant by default, cu izolare per cont și fără transfer în afara Uniunii Europene."}},
     {"@type":"Question","name":"Cu ce se integrează Sambla?","acceptedAnswer":{"@type":"Answer","text":"Sambla are integrare nativă WooCommerce (căutare semantică produse, verificare stoc live, add-to-cart din chat, tracking AWB). Funcționează pe orice site cu o linie de cod JavaScript. Suportă canale: web, telefon (numere RO via Telnyx), WhatsApp, Facebook Messenger, Instagram DM."}},
-    {"@type":"Question","name":"Cât costă Sambla?","acceptedAnswer":{"@type":"Answer","text":"Trei planuri: Starter (~49 EUR/lună) pentru afaceri mici, Pro (~149 EUR/lună) cu chatbot + voicebot și WooCommerce, Business (~399 EUR/lună) pentru volum mare. Detalii la sambla.ro/preturi."}},
+    {"@type":"Question","name":"Cât costă Sambla?","acceptedAnswer":{"@type":"Answer","text":"Trei planuri: Starter (~49 EUR/lună) pentru afaceri mici, Pro (~149 EUR/lună) cu agent AI + agent AI vocal și WooCommerce, Business (~399 EUR/lună) pentru volum mare. Detalii la sambla.ro/preturi."}},
     {"@type":"Question","name":"Pentru cine e Sambla?","acceptedAnswer":{"@type":"Answer","text":"Pentru afaceri mici și mijlocii din România: magazine online, cabinete medicale și stomatologice, avocați, contabili, service-uri auto, saloane beauty, agenții imobiliare, restaurante, pensiuni. Sambla este unealta AI a profesionistului — îi reduce munca repetitivă cu clienții."}},
-    {"@type":"Question","name":"În ce diferă Sambla de un chatbot scriptat clasic?","acceptedAnswer":{"@type":"Answer","text":"Chatbot-urile scriptate funcționează pe arbori de decizie cu reguli «dacă X, atunci Y». Sunt motoare de reguli — nu pot răspunde la întrebări neașteptate și nu citesc PDF-uri. Sambla nu are flowchart-uri. Fiecare răspuns e generat în timp real de un LLM care a căutat în baza ta de cunoștințe prin RAG cu hybrid search (vector 1536-dim + full-text românesc cu stemming) și un AI reranker peste 20 de candidați."}},
+    {"@type":"Question","name":"În ce diferă Sambla de un agent AI scriptat clasic?","acceptedAnswer":{"@type":"Answer","text":"Agent AI-urile scriptate funcționează pe arbori de decizie cu reguli «dacă X, atunci Y». Sunt motoare de reguli — nu pot răspunde la întrebări neașteptate și nu citesc PDF-uri. Sambla nu are flowchart-uri. Fiecare răspuns e generat în timp real de un LLM care a căutat în baza ta de cunoștințe prin RAG cu hybrid search (vector 1536-dim + full-text românesc cu stemming) și un AI reranker peste 20 de candidați."}},
     {"@type":"Question","name":"De ce Sambla nu e doar GPT cu un prompt?","acceptedAnswer":{"@type":"Answer","text":"Un wrapper LLM doar concatenează întrebarea cu un system prompt și trimite la GPT — halucinează și nu cunoaște datele tale reale. Sambla rulează un pipeline 4-stadii: clasificare intenție → retrieval hibrid (vector + full-text + reranker) → strategie de conversație per stadiu → 10 straturi de verificare anti-halucinare. Eliminați orice strat și produsul nu mai funcționează ca atare."}},
     {"@type":"Question","name":"Sambla e legată de Sambla Group (credite, împrumuturi)?","acceptedAnswer":{"@type":"Answer","text":"Nu, niciun fel de legătură. Sambla.ro este o platformă AI românească pentru chatboți și voiceboți, distinctă de Sambla Group sau orice alt brand cu nume similar. NU oferim credite, împrumuturi, leasing, IFN, asigurări, conturi bancare sau orice serviciu financiar regulat. Suntem o companie de software AI cu sediul în România."}}
   ]
@@ -224,7 +224,7 @@
 
         <div class="mt-8 lg:mt-10 text-center">
             <p class="text-sm text-slate-400 max-w-3xl mx-auto leading-relaxed">
-                Nu suntem un chatbot scriptat. Nu suntem un wrapper de GPT. Suntem un sistem RAG complet cu hybrid search, AI reranker și voce nativă în română — construit în România, hostat în România.
+                Nu suntem un agent AI scriptat. Nu suntem un wrapper de GPT. Suntem un sistem RAG complet cu hybrid search, AI reranker și voce nativă în română — construit în România, hostat în România.
             </p>
             <a href="/de-ce-sambla" class="inline-flex items-center gap-2 mt-4 text-sm font-bold text-red-400 hover:text-red-300 transition-colors">
                 Vezi exact cum suntem diferiți
@@ -242,7 +242,7 @@
         <div class="text-center mb-16">
             <x-motif-divider class="mb-8" />
             <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-5 tracking-tight">De ce Sambla e diferit</h2>
-            <p class="text-lg text-slate-500 max-w-2xl mx-auto">Nu e un chatbot generic. E un angajat AI care înțelege afacerea ta, vorbește cu clienții tăi, și devine mai bun în fiecare zi.</p>
+            <p class="text-lg text-slate-500 max-w-2xl mx-auto">Nu e un agent AI generic. E un angajat AI care înțelege afacerea ta, vorbește cu clienții tăi, și devine mai bun în fiecare zi.</p>
         </div>
 
         {{-- Big 3 advantages --}}
@@ -330,7 +330,7 @@
         <div class="text-center mb-20">
             <p class="text-sm font-semibold text-red-700 tracking-widest uppercase mb-3">Tehnologia din spate</p>
             <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-5 tracking-tight">Cum gândește AI-ul Sambla</h2>
-            <p class="text-lg text-slate-500 max-w-2xl mx-auto">Nu e un chatbot simplu. E un pipeline inteligent cu 4 etape care analizează, caută, decide și răspunde — în sub 2 secunde.</p>
+            <p class="text-lg text-slate-500 max-w-2xl mx-auto">Nu e un agent AI simplu. E un pipeline inteligent cu 4 etape care analizează, caută, decide și răspunde — în sub 2 secunde.</p>
         </div>
 
         {{-- Roadmap vertical --}}
@@ -636,8 +636,8 @@
             @php
             $onboard = [
                 ['num' => '1', 'title' => 'Spune-i despre afacerea ta', 'desc' => 'Descrie afacerea în 2 propoziții. AI-ul generează automat prompt-ul, personalitatea și setările optime.', 'time' => '2 min'],
-                ['num' => '2', 'title' => 'Adaugă informațiile tale', 'desc' => 'Uploadează documente, scanează site-ul, conectează magazinul. Bot-ul învață totul în câteva minute.', 'time' => '5 min'],
-                ['num' => '3', 'title' => 'Activează și monitorizează', 'desc' => 'O linie de cod pe site. Gata. Bot-ul răspunde 24/7, iar tu monitorizezi din dashboard.', 'time' => '1 min'],
+                ['num' => '2', 'title' => 'Adaugă informațiile tale', 'desc' => 'Uploadează documente, scanează site-ul, conectează magazinul. Agentul AI învață totul în câteva minute.', 'time' => '5 min'],
+                ['num' => '3', 'title' => 'Activează și monitorizează', 'desc' => 'O linie de cod pe site. Gata. Agentul AI răspunde 24/7, iar tu monitorizezi din dashboard.', 'time' => '1 min'],
             ];
             @endphp
 
@@ -704,7 +704,7 @@
                     </div>
                     <div class="flex items-center gap-2 mb-5">
                         <div class="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center"><svg class="w-4 h-4 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
-                        <span class="font-semibold text-sm text-slate-800">Ce nu știe bot-ul tău</span>
+                        <span class="font-semibold text-sm text-slate-800">Ce nu știe agentul AI tău</span>
                         <span class="ml-auto text-xs text-slate-400">Ultima săptămână</span>
                     </div>
                     <div class="space-y-2.5">
@@ -770,7 +770,7 @@
                             <svg class="w-5 h-5 text-slate-300 shrink-0 group-hover:text-red-500 group-hover:translate-x-1 transition-all duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
                         </button>
 
-                        <button onclick="askDemo('Funcționează și pe telefon?')" aria-label="Întreabă despre voicebot telefon" class="w-full text-left group flex items-center gap-4 px-5 py-4 rounded-2xl bg-white border border-slate-200 hover:border-red-300 hover:shadow-md transition-all duration-300">
+                        <button onclick="askDemo('Funcționează și pe telefon?')" aria-label="Întreabă despre agent AI vocal telefon" class="w-full text-left group flex items-center gap-4 px-5 py-4 rounded-2xl bg-white border border-slate-200 hover:border-red-300 hover:shadow-md transition-all duration-300">
                             <span class="text-2xl shrink-0">📞</span>
                             <div class="flex-1 min-w-0">
                                 <p class="text-sm font-bold text-slate-900">Merge și pe telefon?</p>
@@ -1436,7 +1436,7 @@
     window.askDemo = function(q) { chatInput.value = q; chatForm.dispatchEvent(new Event('submit')); };
 
     function api(msg, cb) {
-        fetch('/api/v1/chatbot/' + channelId + '/message', {
+        fetch('/api/v1/agent AI/' + channelId + '/message', {
             method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify({ message: msg })
         }).then(function(r) { return r.json(); }).then(function(d) { cb(d.reply || d.response || 'Mulțumesc!'); }).catch(function() { cb('Momentan procesez. Încearcă din nou.'); });

@@ -33,7 +33,7 @@
         @endif
     </div>
     <div class="bg-white rounded-xl border border-slate-200 p-5">
-        <p class="text-sm font-medium text-slate-500">Boți activi</p>
+        <p class="text-sm font-medium text-slate-500">Agenți AI activi</p>
         <p class="text-2xl font-bold text-slate-900 mt-1">{{ $activeBots }}</p>
         <p class="text-xs text-slate-400 mt-1">din {{ $totalBots }} total</p>
     </div>
@@ -62,7 +62,7 @@
         <p class="text-2xl font-bold text-slate-900 mt-1">{{ $totalNumbers }}</p>
     </div>
     <div class="bg-white rounded-xl border border-slate-200 p-5">
-        <p class="text-sm font-medium text-slate-500">Conversatii chatbot</p>
+        <p class="text-sm font-medium text-slate-500">Conversatii agent AI</p>
         <p class="text-2xl font-bold text-slate-900 mt-1">{{ $totalConversations }}</p>
         @if($conversationsToday > 0)
             <p class="text-xs text-emerald-600 mt-1">+{{ $conversationsToday }} azi</p>
@@ -102,7 +102,7 @@
                     <th class="px-6 py-3">Tenant</th>
                     <th class="px-6 py-3">Plan</th>
                     <th class="px-6 py-3">Utilizatori</th>
-                    <th class="px-6 py-3">Boți</th>
+                    <th class="px-6 py-3">Agenți AI</th>
                     <th class="px-6 py-3">Apeluri</th>
                     <th class="px-6 py-3">Creat</th>
                 </tr>
@@ -227,7 +227,7 @@
 {{-- Recent Conversations --}}
 <div class="bg-white rounded-xl border border-slate-200 shadow-sm mt-6">
     <div class="px-6 py-4 border-b border-slate-200">
-        <h3 class="font-semibold text-slate-900">Ultimele conversatii chatbot (toate platformele)</h3>
+        <h3 class="font-semibold text-slate-900">Ultimele conversatii agent AI (toate platformele)</h3>
     </div>
     <div class="overflow-x-auto">
         <table class="w-full text-sm">

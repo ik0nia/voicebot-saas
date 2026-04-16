@@ -70,7 +70,7 @@ class PhoneNumberController extends Controller
         if (!empty($validated['bot_id'])) {
             $ownsBot = Bot::where('id', $validated['bot_id'])->exists();
             if (!$ownsBot) {
-                return back()->withErrors(['bot_id' => 'Botul selectat nu aparține contului tău.'])->withInput();
+                return back()->withErrors(['bot_id' => 'Agentul AI selectat nu aparține contului tău.'])->withInput();
             }
         }
 
@@ -136,7 +136,7 @@ class PhoneNumberController extends Controller
         if (!empty($validated['bot_id'])) {
             $ownsBot = Bot::where('id', $validated['bot_id'])->exists();
             if (!$ownsBot) {
-                return back()->withErrors(['bot_id' => 'Botul selectat nu aparține contului tău.'])->withInput();
+                return back()->withErrors(['bot_id' => 'Agentul AI selectat nu aparține contului tău.'])->withInput();
             }
         }
 

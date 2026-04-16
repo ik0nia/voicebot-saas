@@ -31,7 +31,7 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
             <h1 class="text-2xl font-bold text-slate-900">Site-urile tale</h1>
-            <p class="mt-1 text-sm text-slate-500">Gestionează site-urile pe care vrei să folosești chatbot-ul.</p>
+            <p class="mt-1 text-sm text-slate-500">Gestionează site-urile pe care vrei să folosești agentul AI.</p>
         </div>
         @if($canAddSite ?? true)
             <a href="{{ route('dashboard.sites.create') }}"
@@ -80,7 +80,7 @@
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6m-6 4h6" />
                                 </svg>
-                                {{ $site->bots_count ?? $site->bots->count() }} {{ ($site->bots_count ?? $site->bots->count()) == 1 ? 'bot' : 'boți' }}
+                                {{ $site->bots_count ?? $site->bots->count() }} {{ ($site->bots_count ?? $site->bots->count()) == 1 ? 'bot' : 'agenți AI' }}
                             </div>
                             <div class="flex items-center gap-1.5">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
@@ -135,7 +135,7 @@
                 </svg>
             </div>
             <h3 class="text-lg font-semibold text-slate-900 mb-1">Nu ai niciun site încă</h3>
-            <p class="text-sm text-slate-500 mb-6 text-center max-w-sm">Adaugă primul tău site pentru a putea folosi chatbot-ul.</p>
+            <p class="text-sm text-slate-500 mb-6 text-center max-w-sm">Adaugă primul tău site pentru a putea folosi agentul AI.</p>
             @if($canAddSite ?? true)
                 <a href="{{ route('dashboard.sites.create') }}"
                    class="inline-flex items-center gap-2 rounded-lg bg-red-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 transition-colors">

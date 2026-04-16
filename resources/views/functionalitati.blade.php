@@ -1,22 +1,22 @@
 @extends('layouts.app')
 
 @section('title', 'Funcționalități - Sambla')
-@section('meta_description', 'Descoperă funcționalitățile Sambla: chatbot AI inteligent, apeluri vocale cu AI, bază de cunoștințe RAG, analiză în timp real și API pentru dezvoltatori.')
+@section('meta_description', 'Descoperă funcționalitățile Sambla: agent AI AI inteligent, apeluri vocale cu AI, bază de cunoștințe RAG, analiză în timp real și API pentru dezvoltatori.')
 
 @section('jsonld')
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebPage","@id":"https://sambla.ro/functionalitati#webpage","url":"https://sambla.ro/functionalitati","name":"Funcționalități Sambla","description":"Toate funcționalitățile platformei Sambla: chatbot RAG, voicebot în română, hybrid search, anti-halucinare, integrare WooCommerce, multi-canal, analytics live.","isPartOf":{"@id":"https://sambla.ro/#website"},"about":{"@id":"https://sambla.ro/#software"},"inLanguage":"ro-RO"}
+{"@context":"https://schema.org","@type":"WebPage","@id":"https://sambla.ro/functionalitati#webpage","url":"https://sambla.ro/functionalitati","name":"Funcționalități Sambla","description":"Toate funcționalitățile platformei Sambla: agent AI RAG, agent AI vocal în română, hybrid search, anti-halucinare, integrare WooCommerce, multi-canal, analytics live.","isPartOf":{"@id":"https://sambla.ro/#website"},"about":{"@id":"https://sambla.ro/#software"},"inLanguage":"ro-RO"}
 </script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"ItemList","name":"Funcționalități Sambla","itemListElement":[
-{"@type":"ListItem","position":1,"name":"Chatbot AI cu RAG","description":"Chatbot pe site-ul tău care răspunde din documentele și produsele tale reale, folosind RAG (Retrieval-Augmented Generation) cu hybrid search vector + full-text + reranker."},
-{"@type":"ListItem","position":2,"name":"Voicebot în limba română","description":"Preia apeluri telefonice 24/7 cu voce naturală în română (numere RO via Telnyx, OpenAI Realtime API). Transcriere live, sentiment analysis, escaladare automată."},
-{"@type":"ListItem","position":3,"name":"Anti-halucinare cu 10 straturi de verificare","description":"Bot-ul răspunde DOAR din datele tale. Cite sources. La nesiguranță cere clarificare sau escaladează la operator."},
+{"@type":"ListItem","position":1,"name":"Agent AI AI cu RAG","description":"Agent AI pe site-ul tău care răspunde din documentele și produsele tale reale, folosind RAG (Retrieval-Augmented Generation) cu hybrid search vector + full-text + reranker."},
+{"@type":"ListItem","position":2,"name":"Agent AI vocal în limba română","description":"Preia apeluri telefonice 24/7 cu voce naturală în română (numere RO via Telnyx, OpenAI Realtime API). Transcriere live, sentiment analysis, escaladare automată."},
+{"@type":"ListItem","position":3,"name":"Anti-halucinare cu 10 straturi de verificare","description":"Agentul AI răspunde DOAR din datele tale. Cite sources. La nesiguranță cere clarificare sau escaladează la operator."},
 {"@type":"ListItem","position":4,"name":"Integrare WooCommerce nativă","description":"Căutare semantică produse, verificare stoc live, add-to-cart din chat, tracking AWB automat."},
 {"@type":"ListItem","position":5,"name":"Multi-canal","description":"Web chat, telefon, WhatsApp, Facebook Messenger, Instagram DM — același bot, același context, un singur creier."},
 {"@type":"ListItem","position":6,"name":"Pipeline lead-uri și CRM","description":"Captare automată, scoring, stadii nou → contactat → calificat → câștigat."},
 {"@type":"ListItem","position":7,"name":"Programări automate","description":"Verifică agenda, oferă sloturi libere, confirmă, trimite reminder."},
-{"@type":"ListItem","position":8,"name":"Detectare frustrare live","description":"Tonul bot-ului se adaptează automat când clientul e nervos; escaladare la om instant."},
+{"@type":"ListItem","position":8,"name":"Detectare frustrare live","description":"Tonul agentului AI se adaptează automat când clientul e nervos; escaladare la om instant."},
 {"@type":"ListItem","position":9,"name":"Dashboard analitice","description":"Health score per bot, gap analysis, recomandări automate de conținut, top întrebări fără răspuns."},
 {"@type":"ListItem","position":10,"name":"Hosting în România GDPR-compliant","description":"PostgreSQL + pgvector + Redis pe servere RO, izolare per cont, fără transfer în afara UE."}
 ]}
@@ -41,7 +41,7 @@
             Tot ce ai nevoie pentru<br><span class="bg-gradient-to-r from-red-400 via-red-300 to-amber-300 bg-clip-text text-transparent">comunicare inteligentă cu AI</span>
         </h1>
         <p class="text-lg md:text-xl text-slate-400 max-w-3xl mx-auto leading-relaxed animate-fade-in">
-            De la chatbot text pe site-ul tău la apeluri vocale cu inteligență artificială. O singură platformă, o singură bază de cunoștințe, răspunsuri instantanee 24/7.
+            De la agent AI text pe site-ul tău la apeluri vocale cu inteligență artificială. O singură platformă, o singură bază de cunoștințe, răspunsuri instantanee 24/7.
         </p>
     </div>
 </section>
@@ -53,15 +53,15 @@
         <div class="text-center mb-14 lg:mb-20">
             <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-100 text-red-700 text-sm font-semibold mb-4">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                Chatbot Text AI
+                Agent AI Text AI
             </div>
-            <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Chatbot-ul care chiar înțelege afacerea ta</h2>
+            <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Agentul AI care chiar înțelege afacerea ta</h2>
             <p class="text-slate-600 max-w-3xl mx-auto text-lg leading-relaxed">
-                Nu e un simplu chatbot cu răspunsuri pre-definite. Sambla folosește modele AI avansate (GPT-4o, Claude) combinate cu baza ta de cunoștințe pentru a oferi răspunsuri precise, personalizate și contextuale.
+                Nu e un simplu agent AI cu răspunsuri pre-definite. Sambla folosește modele AI avansate (GPT-4o, Claude) combinate cu baza ta de cunoștințe pentru a oferi răspunsuri precise, personalizate și contextuale.
             </p>
         </div>
 
-        {{-- Grid cu funcționalități chatbot --}}
+        {{-- Grid cu funcționalități agent AI --}}
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
 
             {{-- 1. Bază de cunoștințe RAG --}}
@@ -159,7 +159,7 @@
                     </svg>
                 </div>
                 <h3 class="text-xl font-bold text-slate-900 mb-3">Integrare e-commerce nativă</h3>
-                <p class="text-slate-600 mb-4 leading-relaxed">Chatbot-ul afișează produse cu poze și prețuri, permite adăugarea în coș, caută comenzi și oferă tracking automat cu FanCourier, Cargus, DPD, SameDay.</p>
+                <p class="text-slate-600 mb-4 leading-relaxed">Agentul AI afișează produse cu poze și prețuri, permite adăugarea în coș, caută comenzi și oferă tracking automat cu FanCourier, Cargus, DPD, SameDay.</p>
                 <ul class="space-y-2">
                     <li class="flex items-center gap-2 text-sm text-slate-500">
                         <svg class="w-4 h-4 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
@@ -256,7 +256,7 @@
                 </div>
                 <h2 class="text-3xl md:text-4xl font-bold text-white mb-6">Conversații care se adaptează contextului</h2>
                 <p class="text-slate-400 text-lg leading-relaxed mb-8">
-                    Chatbot-ul Sambla nu e rigid. Își ajustează tonul, nivelul de detaliu și strategia în funcție de ce detectează: un client frustrat primește empatie, un client interesat de produse primește recomandări, iar un client care vrea ajutor rapid primește răspunsuri concise.
+                    Agentul AI Sambla nu e rigid. Își ajustează tonul, nivelul de detaliu și strategia în funcție de ce detectează: un client frustrat primește empatie, un client interesat de produse primește recomandări, iar un client care vrea ajutor rapid primește răspunsuri concise.
                 </p>
 
                 <div class="space-y-4">
@@ -439,7 +439,7 @@
                         </div>
                         <div>
                             <h4 class="font-semibold text-slate-900 mb-1">Răspunde la întrebări din baza de cunoștințe</h4>
-                            <p class="text-slate-500 text-sm">Acces la aceleași documente ca și chatbot-ul text. O singură bază de cunoștințe pentru ambele canale.</p>
+                            <p class="text-slate-500 text-sm">Acces la aceleași documente ca și agentul AI text. O singură bază de cunoștințe pentru ambele canale.</p>
                         </div>
                     </div>
                     <div class="flex items-start gap-4">
@@ -494,7 +494,7 @@
             </div>
             <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Totul măsurabil, totul vizibil</h2>
             <p class="text-slate-600 max-w-3xl mx-auto text-lg leading-relaxed">
-                Dashboard complet cu metrici în timp real. Știi exact ce face chatbot-ul tău, câți clienți ajută, ce produse recomandă și cât costă fiecare conversație.
+                Dashboard complet cu metrici în timp real. Știi exact ce face agentul AI tău, câți clienți ajută, ce produse recomandă și cât costă fiecare conversație.
             </p>
         </div>
 
@@ -753,7 +753,7 @@
 
 <x-cta-section
     title="Pregătit să automatizezi comunicarea?"
-    subtitle="Configurare în 10 minute. Fără card de credit. Chatbot-ul tău AI poate fi live azi."
+    subtitle="Configurare în 10 minute. Fără card de credit. Agentul AI tău AI poate fi live azi."
 />
 
 @endsection

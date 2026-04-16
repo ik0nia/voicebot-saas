@@ -42,14 +42,14 @@
                     Dashboard
                 </a>
 
-                {{-- Boți --}}
-                <a href="/dashboard/boti"
+                {{-- Agenți AI --}}
+                <a href="/dashboard/agenti"
                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-                          {{ request()->is('dashboard/boti*') ? 'bg-red-50 text-red-800 border-l-[3px] border-red-700 pl-[9px] font-semibold' : 'text-slate-600 hover:bg-red-50 hover:text-red-800' }}">
+                          {{ request()->is('dashboard/agenti*') || request()->is('dashboard/boti*') ? 'bg-red-50 text-red-800 border-l-[3px] border-red-700 pl-[9px] font-semibold' : 'text-slate-600 hover:bg-red-50 hover:text-red-800' }}">
                     <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6m-6 4h6" />
                     </svg>
-                    Boți
+                    Agenți AI
                 </a>
 
                 {{-- Sites --}}
@@ -439,8 +439,8 @@
         </div>
     </div>
 
-    {{-- Chatbot widget: Sambla - Asistent Dashboard (bot #66, channel #2) --}}
-    <script src="{{ rtrim(config('app.url'), '/') }}/widget/sambla-chat.min.js" data-channel-id="2" data-bot-name="Sambla Assistant" data-color="#991b1b" data-lang="ro" data-greeting="Salut! 👋 Sunt aici să te ajut cu configurarea platformei. Pot să te ghidez prin setarea botului, baza de cunoștințe, canale sau orice altceva din dashboard. Ce ai nevoie?" async defer></script>
+    {{-- Agent AI widget: Sambla - Asistent Dashboard (bot #66, channel #2) --}}
+    <script src="{{ rtrim(config('app.url'), '/') }}/widget/sambla-chat.min.js" data-channel-id="2" data-bot-name="Sambla Assistant" data-color="#991b1b" data-lang="ro" data-greeting="Salut! 👋 Sunt aici să te ajut cu configurarea platformei. Pot să te ghidez prin setarea agentului AI, baza de cunoștințe, canale sau orice altceva din dashboard. Ce ai nevoie?" async defer></script>
 
     @stack('scripts')
 

@@ -54,7 +54,7 @@
             {{-- Embed code --}}
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
                 <div class="px-5 py-4 border-b border-slate-100">
-                    <h2 class="text-base font-semibold text-slate-900">Cod embed chatbot</h2>
+                    <h2 class="text-base font-semibold text-slate-900">Cod embed agent AI</h2>
                     <p class="mt-1 text-xs text-slate-500">Adaugă acest cod înainte de &lt;/body&gt; pe site-ul tău.</p>
                 </div>
                 <div class="p-5">
@@ -75,16 +75,16 @@
                             </div>
                         @endforeach
                     @else
-                        <p class="text-sm text-slate-400 italic">Niciun bot cu chatbot web activ. Creează un bot și activează canalul web chatbot.</p>
+                        <p class="text-sm text-slate-400 italic">Niciun bot cu agent AI web activ. Creează un agent AI și activează canalul web agent AI.</p>
                     @endif
                 </div>
             </div>
 
-            {{-- Boți asociați --}}
+            {{-- Agenți AI asociați --}}
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
                 <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-                    <h2 class="text-base font-semibold text-slate-900">Boți asociați</h2>
-                    <span class="text-xs font-medium text-slate-500">{{ $bots->count() }} {{ $bots->count() == 1 ? 'bot' : 'boți' }}</span>
+                    <h2 class="text-base font-semibold text-slate-900">Agenți AI asociați</h2>
+                    <span class="text-xs font-medium text-slate-500">{{ $bots->count() }} {{ $bots->count() == 1 ? 'bot' : 'agenți AI' }}</span>
                 </div>
                 @if($bots->isNotEmpty())
                     <div class="divide-y divide-slate-100">
@@ -104,7 +104,7 @@
                         @endforeach
                     </div>
                 @else
-                    <div class="px-5 py-8 text-center text-sm text-slate-400">Niciun bot asociat. <a href="{{ route('dashboard.bots.create') }}" class="text-red-700 hover:underline">Creează un bot</a></div>
+                    <div class="px-5 py-8 text-center text-sm text-slate-400">Niciun bot asociat. <a href="{{ route('dashboard.bots.create') }}" class="text-red-700 hover:underline">Creează un agent AI</a></div>
                 @endif
             </div>
         </div>
@@ -128,7 +128,7 @@
                         </span>
                     </div>
                     <div class="flex justify-between items-center">
-                        <span class="text-sm text-slate-500">Boți</span>
+                        <span class="text-sm text-slate-500">Agenți AI</span>
                         <span class="text-sm font-medium text-slate-900">{{ $bots->count() }}</span>
                     </div>
                     <div class="flex justify-between items-center">

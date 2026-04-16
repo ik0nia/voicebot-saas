@@ -77,7 +77,7 @@
                 @if($googleToken && $driveConnector)
                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Activ</span>
                 @elseif($googleToken)
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">Neactivat pentru acest bot</span>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">Neactivat pentru acest agent AI</span>
                 @else
                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Neconectat</span>
                 @endif
@@ -101,18 +101,18 @@
             {{-- STATE B: tenant connected, but bot has no Drive connector yet --}}
             <div class="rounded-lg bg-yellow-50 border border-yellow-100 p-4">
                 <p class="text-sm text-yellow-900 mb-3">
-                    Contul Google al tenantului e conectat, dar acest bot nu folosește încă Google Drive. Activează-l ca să poți importa fișiere.
+                    Contul Google al tenantului e conectat, dar acest agent AI nu folosește încă Google Drive. Activează-l ca să poți importa fișiere.
                 </p>
                 <form action="/dashboard/boti/{{ $bot->id }}/knowledge/connector" method="POST">
                     @csrf
                     <input type="hidden" name="type" value="google_drive">
                     <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-red-800 text-white text-sm font-semibold rounded-lg hover:bg-red-900 transition-colors shadow-sm">
-                        Activează Google Drive pentru acest bot
+                        Activează Google Drive pentru acest agent AI
                     </button>
                 </form>
                 <form action="{{ route('oauth.google.disconnect') }}" method="POST" class="mt-3 inline-block">
                     @csrf
-                    <button type="submit" onclick="return confirm('Sigur deconectezi contul Google al tenantului? Toate boții care folosesc Drive-ul vor pierde accesul.')"
+                    <button type="submit" onclick="return confirm('Sigur deconectezi contul Google al tenantului? Toate agenții AI care folosesc Drive-ul vor pierde accesul.')"
                             class="text-xs text-slate-500 hover:text-red-600">Deconectează contul Google al tenantului</button>
                 </form>
             </div>
@@ -180,7 +180,7 @@
 
                 <form action="{{ route('oauth.google.disconnect') }}" method="POST" class="pt-2">
                     @csrf
-                    <button type="submit" onclick="return confirm('Sigur deconectezi contul Google al tenantului? Toate boții care folosesc Drive-ul vor pierde accesul.')"
+                    <button type="submit" onclick="return confirm('Sigur deconectezi contul Google al tenantului? Toate agenții AI care folosesc Drive-ul vor pierde accesul.')"
                             class="text-xs text-slate-500 hover:text-red-600">Deconectează contul Google al tenantului</button>
                 </form>
             </div>
@@ -196,7 +196,7 @@
             <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
                 <div>
                     <h3 class="text-base font-semibold text-slate-900">Categorizează fișierele</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Spune-i botului ce reprezintă fiecare fișier — categoria îmbunătățește răspunsurile.</p>
+                    <p class="text-xs text-slate-500 mt-0.5">Spune-i agentului AI ce reprezintă fiecare fișier — categoria îmbunătățește răspunsurile.</p>
                 </div>
                 <button type="button" onclick="closeDriveModal()" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -288,7 +288,7 @@
                 <div id="woo-instructions" class="hidden mt-2 text-xs text-purple-600 space-y-1">
                     <p>1. In WooCommerce, mergi la <strong>Settings &rarr; Advanced &rarr; REST API</strong></p>
                     <p>2. Click <strong>Add Key</strong></p>
-                    <p>3. Description: "Voicebot SaaS", Permissions: <strong>Read</strong></p>
+                    <p>3. Description: "Agent AI vocal SaaS", Permissions: <strong>Read</strong></p>
                     <p>4. Click <strong>Generate API Key</strong></p>
                     <p>5. Copiaza Consumer Key (ck_...) si Consumer Secret (cs_...)</p>
                     <p class="text-purple-400 mt-1">Se importa: nume produs, descriere, pret, categorii, atribute</p>
@@ -522,7 +522,7 @@
                 html += '  <select onchange="updateDriveFileCategory(' + idx + ', this.value)" class="w-full mb-2 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none">';
                 html += catOptions;
                 html += '  </select>';
-                html += '  <label class="block text-[11px] font-medium text-slate-600 mb-1">Descriere (opțional, dar ajută botul)</label>';
+                html += '  <label class="block text-[11px] font-medium text-slate-600 mb-1">Descriere (opțional, dar ajută agentul AI)</label>';
                 html += '  <textarea onchange="updateDriveFileDescription(' + idx + ', this.value)" rows="2" maxlength="1000" placeholder="Ex: Lista de prețuri pentru pachetele Pro și Enterprise, valabilă din martie 2026" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none resize-none">' + escapeHtml(f.description || '') + '</textarea>';
                 html += '</div>';
             });

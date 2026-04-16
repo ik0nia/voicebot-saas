@@ -3,7 +3,7 @@
 @php
     /** @var \App\Models\Niche $niche */
     /** @var array $theme */
-    $metaTitle = $niche->meta_title ?: ("Agent AI și chatbot pentru {$niche->name} — Sambla");
+    $metaTitle = $niche->meta_title ?: ("Agent AI și agent AI pentru {$niche->name} — Sambla");
     $metaDesc = $niche->meta_description ?: ("Sambla oferă agenți AI conversaționali pentru " . $niche->vertical_label . " — răspund clienților 24/7, în limba română, pe chat și telefon.");
     $pageUrl = url()->current();
 
@@ -188,7 +188,7 @@
         <div class="max-w-3xl mx-auto text-center mb-14">
             <span class="inline-block text-xs font-bold uppercase tracking-widest {{ $p['text700'] }} mb-4">DEMO LIVE</span>
             <h2 class="text-3xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-[1.1] mb-5">
-                Iată cum vorbește bot-ul tău cu clienții
+                Iată cum vorbește agentul AI tău cu clienții
             </h2>
             <p class="text-lg text-slate-600 leading-relaxed">
                 Conversație reală, în limba română, antrenată pe afacerea ta. Conversa rulează aici live ↓

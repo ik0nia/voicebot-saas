@@ -191,9 +191,9 @@
             </div>
         </div>
 
-        {{-- Top boți - Horizontal bar chart --}}
+        {{-- Top agenți AI - Horizontal bar chart --}}
         <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 class="text-base font-semibold text-slate-900">Top boți</h3>
+            <h3 class="text-base font-semibold text-slate-900">Top agenți AI</h3>
             <div class="mt-4" style="height: 260px;">
                 <canvas id="topBotsChart"></canvas>
             </div>
@@ -212,7 +212,7 @@
     @if($topBots->isNotEmpty())
     <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
         <div class="border-b border-slate-200 px-5 py-4">
-            <h3 class="text-base font-semibold text-slate-900">Clasament boți</h3>
+            <h3 class="text-base font-semibold text-slate-900">Clasament agenți AI</h3>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-left text-sm">

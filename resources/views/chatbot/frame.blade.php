@@ -67,7 +67,7 @@
             addMsg(text, 'user');
             showTyping();
 
-            fetch(apiBase + '/api/v1/chatbot/' + channelId + '/message-stream', {
+            fetch(apiBase + '/api/v1/agent AI/' + channelId + '/message-stream', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
                 body: JSON.stringify({ message: text })
