@@ -50,7 +50,8 @@
                 $tabs = [
                     'general' => ['label' => 'General', 'icon' => 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z'],
                     'openai' => ['label' => 'OpenAI', 'icon' => 'M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 001.5 2.25M14.25 3.104c.251.023.501.05.75.082M19.5 14.5l-4.09-4.09a2.25 2.25 0 01-.66-1.591V3.186'],
-                    'telnyx' => ['label' => 'Telnyx', 'icon' => 'M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z'],
+                    'twilio' => ['label' => 'Twilio', 'icon' => 'M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z'],
+                    'telnyx' => ['label' => 'Telnyx (legacy)', 'icon' => 'M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z'],
                     'stripe' => ['label' => 'Stripe', 'icon' => 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'],
                     'email' => ['label' => 'Email', 'icon' => 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'],
                     'whatsapp' => ['label' => 'WhatsApp', 'icon' => 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z'],
@@ -323,12 +324,102 @@
     @endif
 
     {{-- ============================================================ --}}
-    {{-- TAB: Telnyx --}}
+    {{-- TAB: Twilio (primary telephony provider, post-migration)     --}}
+    {{-- ============================================================ --}}
+    @if($tab === 'twilio')
+        <div class="bg-white rounded-xl border border-slate-200 p-6">
+            <h2 class="text-lg font-semibold text-slate-900">Configurare Twilio</h2>
+            <p class="mt-1 text-sm text-slate-500">
+                Credențiale pentru furnizorul principal de telefonie. După migrare,
+                numerele noi sunt provisionate automat prin Twilio
+                (<code class="text-xs bg-slate-100 px-1 py-0.5 rounded">TELEPHONY_DEFAULT_PROVIDER=twilio</code>).
+            </p>
+
+            <form method="POST" action="{{ url('/admin/setari/twilio') }}" class="mt-6 space-y-5">
+                @csrf
+                @method('PUT')
+
+                <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                    {{-- Account SID --}}
+                    <div>
+                        <label for="twilio_account_sid" class="block text-sm font-medium text-slate-700">Account SID</label>
+                        <input type="text" name="twilio_account_sid" id="twilio_account_sid"
+                               value="{{ old('twilio_account_sid', $settings['twilio']['twilio_account_sid'] ?? '') }}"
+                               placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors font-mono text-xs"
+                               required>
+                    </div>
+
+                    {{-- Auth Token --}}
+                    <div>
+                        <label for="twilio_auth_token" class="block text-sm font-medium text-slate-700">Auth Token</label>
+                        <div class="relative mt-1.5">
+                            <input type="password" name="twilio_auth_token" id="twilio_auth_token"
+                                   value="{{ old('twilio_auth_token', '') }}"
+                                   placeholder="{{ ($settings['twilio']['twilio_auth_token__present'] ?? false) ? '•••••••• (salvat)' : 'Token de 32+ caractere' }}"
+                                   class="block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 pr-10 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors font-mono text-xs"
+                                   {{ ($settings['twilio']['twilio_auth_token__present'] ?? false) ? '' : 'required' }}>
+                            <button type="button" onclick="togglePassword('twilio_auth_token')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            </button>
+                        </div>
+                        <p class="mt-1 text-xs text-slate-500">Folosit și pentru verificarea semnăturii X-Twilio-Signature pe webhook-uri.</p>
+                    </div>
+
+                    {{-- TwiML App SID (optional) --}}
+                    <div>
+                        <label for="twilio_twiml_app_sid" class="block text-sm font-medium text-slate-700">TwiML App SID <span class="text-slate-400">(opțional)</span></label>
+                        <input type="text" name="twilio_twiml_app_sid" id="twilio_twiml_app_sid"
+                               value="{{ old('twilio_twiml_app_sid', $settings['twilio']['twilio_twiml_app_sid'] ?? '') }}"
+                               placeholder="APxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors font-mono text-xs">
+                        <p class="mt-1 text-xs text-slate-500">Pentru browser calling via Twilio Client SDK. Lasă gol dacă nu folosești.</p>
+                    </div>
+
+                    {{-- Webhook URL (display-only hint) --}}
+                    <div>
+                        <label for="twilio_webhook_url" class="block text-sm font-medium text-slate-700">Webhook URL <span class="text-slate-400">(pe numerele Twilio)</span></label>
+                        <input type="url" name="twilio_webhook_url" id="twilio_webhook_url"
+                               value="{{ old('twilio_webhook_url', $settings['twilio']['twilio_webhook_url'] ?? url('/webhook/twilio/voice')) }}"
+                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                        <p class="mt-1 text-xs text-slate-500">Setează pe fiecare număr în Twilio Console la "A Call Comes In".</p>
+                    </div>
+                </div>
+
+                {{-- Helper block with the two URLs the operator has to paste in Twilio Console --}}
+                <div class="mt-6 rounded-lg bg-blue-50 border border-blue-200 px-4 py-3 text-sm text-blue-900">
+                    <p class="font-semibold mb-2">În Twilio Console, pe fiecare număr cumpărat:</p>
+                    <ul class="space-y-1 text-xs font-mono">
+                        <li>Voice → "A Call Comes In" → Webhook → <code class="bg-white px-1 py-0.5 rounded">{{ url('/webhook/twilio/voice') }}</code></li>
+                        <li>Voice → "Call Status Changes" → <code class="bg-white px-1 py-0.5 rounded">{{ url('/webhook/twilio/status') }}</code></li>
+                    </ul>
+                    <p class="mt-2 text-xs">Media-stream WebSocket (pentru audio bidirecțional către OpenAI Realtime): <code class="bg-white px-1 py-0.5 rounded">wss://{{ request()->getHost() }}/ws/media-stream</code> — configurat via TwiML, nu direct în Console.</p>
+                </div>
+
+                <div class="flex justify-end pt-2">
+                    <button type="submit"
+                            class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-colors">
+                        Salvează setările Twilio
+                    </button>
+                </div>
+            </form>
+        </div>
+    @endif
+
+    {{-- ============================================================ --}}
+    {{-- TAB: Telnyx (legacy — kept for pre-migration numbers)         --}}
     {{-- ============================================================ --}}
     @if($tab === 'telnyx')
         <div class="bg-white rounded-xl border border-slate-200 p-6">
             <h2 class="text-lg font-semibold text-slate-900">Configurare Telnyx</h2>
             <p class="mt-1 text-sm text-slate-500">Credențiale și configurări pentru serviciul de telefonie Telnyx.</p>
+            <div class="mt-4 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-900">
+                <p class="font-semibold">⚠ Furnizor legacy.</p>
+                <p class="mt-1 text-xs">Telnyx rămâne activ doar pentru numerele provisionate înainte de migrare. Numerele noi se creează pe Twilio. Păstrează credențialele valide până la ultimul cutover per tenant (<code class="bg-white px-1 py-0.5 rounded">php artisan telephony:migrate-tenant &lt;slug&gt;</code>).</p>
+            </div>
 
             <form method="POST" action="{{ url('/admin/setari/telnyx') }}" class="mt-6 space-y-5">
                 @csrf
