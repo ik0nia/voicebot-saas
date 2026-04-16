@@ -77,33 +77,42 @@ Route::post('/v1/webhooks/woocommerce/{bot}/purchase', [\App\Http\Controllers\Ap
 // Plugin update check (public, no auth - called by WordPress updater)
 Route::get('v1/plugin/update-check', [\App\Http\Controllers\Api\V1\PluginUpdateController::class, 'check']);
 
-// API v1 - requires Sanctum auth
+// API v1 — Sanctum-authed. Every route below carries an `abilities:`
+// middleware so the token's stored scopes are actually enforced at
+// request time. Without this the scope allowlist at mint time was
+// theater — a token with `bots:read` could still POST to
+// /integrations/sync-products. Legacy tokens that were minted with
+// `*` continue to satisfy any abilities: check (Sanctum treats `*`
+// as all abilities), so this is backward-compatible.
 Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     // Bots
-    Route::apiResource('bots', BotApiController::class);
+    Route::get('bots', [BotApiController::class, 'index'])->middleware('abilities:bots:read');
+    Route::get('bots/{bot}', [BotApiController::class, 'show'])->middleware('abilities:bots:read');
+    Route::post('bots', [BotApiController::class, 'store'])->middleware('abilities:bots:write');
+    Route::put('bots/{bot}', [BotApiController::class, 'update'])->middleware('abilities:bots:write');
+    Route::patch('bots/{bot}', [BotApiController::class, 'update'])->middleware('abilities:bots:write');
+    Route::delete('bots/{bot}', [BotApiController::class, 'destroy'])->middleware('abilities:bots:write');
 
     // Calls
-    Route::get('calls', [CallApiController::class, 'index']);
-    Route::get('calls/{call}', [CallApiController::class, 'show']);
-    Route::get('calls/{call}/transcript', [CallApiController::class, 'transcript']);
-    Route::post('calls/outbound', [CallApiController::class, 'outbound']);
+    Route::get('calls', [CallApiController::class, 'index'])->middleware('abilities:calls:read');
+    Route::get('calls/{call}', [CallApiController::class, 'show'])->middleware('abilities:calls:read');
+    Route::get('calls/{call}/transcript', [CallApiController::class, 'transcript'])->middleware('abilities:calls:read');
+    Route::post('calls/outbound', [CallApiController::class, 'outbound'])->middleware('abilities:calls:write');
 
     // Analytics
-    Route::get('analytics/overview', [AnalyticsApiController::class, 'overview']);
-
-    // V2: Bot analytics (conversion funnel, attribution, outcomes)
-    Route::get('bots/{bot}/analytics', [\App\Http\Controllers\Api\BotAnalyticsController::class, 'overview']);
-    Route::get('usage', [AnalyticsApiController::class, 'usage']);
+    Route::get('analytics/overview', [AnalyticsApiController::class, 'overview'])->middleware('abilities:analytics:read');
+    Route::get('bots/{bot}/analytics', [\App\Http\Controllers\Api\BotAnalyticsController::class, 'overview'])->middleware('abilities:analytics:read');
+    Route::get('usage', [AnalyticsApiController::class, 'usage'])->middleware('abilities:analytics:read');
 
     // WooCommerce integration
-    Route::post('integrations/connect', [\App\Http\Controllers\Api\V1\IntegrationApiController::class, 'connect']);
-    Route::post('integrations/disconnect', [\App\Http\Controllers\Api\V1\IntegrationApiController::class, 'disconnect']);
-    Route::post('integrations/sync-products', [\App\Http\Controllers\Api\V1\IntegrationApiController::class, 'syncProducts']);
-    Route::post('integrations/sync-categories', [\App\Http\Controllers\Api\V1\IntegrationApiController::class, 'syncCategories']);
-    Route::post('integrations/sync-pages', [\App\Http\Controllers\Api\V1\IntegrationApiController::class, 'syncPages']);
-    Route::put('integrations/widget-config', [\App\Http\Controllers\Api\V1\IntegrationApiController::class, 'widgetConfig']);
-    Route::get('integrations/status', [\App\Http\Controllers\Api\V1\IntegrationApiController::class, 'status']);
-    Route::post('integrations/order-lookup', [\App\Http\Controllers\Api\V1\IntegrationApiController::class, 'orderLookup']);
+    Route::post('integrations/connect', [\App\Http\Controllers\Api\V1\IntegrationApiController::class, 'connect'])->middleware('abilities:integrations:write');
+    Route::post('integrations/disconnect', [\App\Http\Controllers\Api\V1\IntegrationApiController::class, 'disconnect'])->middleware('abilities:integrations:write');
+    Route::post('integrations/sync-products', [\App\Http\Controllers\Api\V1\IntegrationApiController::class, 'syncProducts'])->middleware('abilities:integrations:write');
+    Route::post('integrations/sync-categories', [\App\Http\Controllers\Api\V1\IntegrationApiController::class, 'syncCategories'])->middleware('abilities:integrations:write');
+    Route::post('integrations/sync-pages', [\App\Http\Controllers\Api\V1\IntegrationApiController::class, 'syncPages'])->middleware('abilities:integrations:write');
+    Route::put('integrations/widget-config', [\App\Http\Controllers\Api\V1\IntegrationApiController::class, 'widgetConfig'])->middleware('abilities:integrations:write');
+    Route::get('integrations/status', [\App\Http\Controllers\Api\V1\IntegrationApiController::class, 'status'])->middleware('abilities:integrations:read');
+    Route::post('integrations/order-lookup', [\App\Http\Controllers\Api\V1\IntegrationApiController::class, 'orderLookup'])->middleware('abilities:integrations:read');
 });
 
 // API docs placeholder
