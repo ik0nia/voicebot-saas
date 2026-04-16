@@ -10,6 +10,19 @@
     $categories = $cfg->consentCategories();
 @endphp
 @if($enabled)
+{{-- Alpine.js — public layout doesn't bundle it, dashboard/admin do.
+     Loading a second time on dashboard/admin is harmless; Alpine's
+     own guard against double-init means we only pay the fetch cost
+     once thanks to browser caching. --}}
+<script>
+    if (!window.Alpine && !document.getElementById('sambla-alpine-cdn')) {
+        var _s = document.createElement('script');
+        _s.id = 'sambla-alpine-cdn';
+        _s.defer = true;
+        _s.src = 'https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js';
+        document.head.appendChild(_s);
+    }
+</script>
 <div x-data="samblaConsent({
         version: @js($version),
         categories: @js($categories),
