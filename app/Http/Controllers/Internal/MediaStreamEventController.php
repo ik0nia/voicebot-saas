@@ -224,6 +224,21 @@ class MediaStreamEventController extends Controller
                 ]);
             });
         }
+
+        // Lead extraction — runs on every response.done. The method
+        // is idempotent (cache lock + duplicate check on tenant +
+        // call_id), so firing per-turn just refines the existing
+        // lead rather than creating dupes. Wrap in try/catch so an
+        // extraction failure never tanks usage ingest.
+        try {
+            $session = new \App\Services\RealtimeSession($call->bot, $call, null);
+            $session->tryExtractVoiceLead();
+        } catch (\Throwable $e) {
+            Log::warning('MediaStreamEvent: voice lead extraction failed', [
+                'call_id' => $call->id,
+                'err' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

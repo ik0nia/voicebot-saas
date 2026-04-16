@@ -76,7 +76,17 @@ class RealtimeClient
                 'input_audio_format' => 'g711_ulaw',
                 'output_audio_format' => 'g711_ulaw',
                 'input_audio_transcription' => [
-                    'model' => 'whisper-1',
+                    // gpt-4o-mini-transcribe > whisper-1 on narrowband
+                    // (phone) audio and stays accurate on Romanian
+                    // accent — adopted 2026-04-16 after production
+                    // calls surfaced language drift (RO → ES / PT / PL)
+                    // with auto-detect whisper-1.
+                    'model' => $options['transcribe_model'] ?? 'gpt-4o-mini-transcribe',
+                    // Lock the ASR language when known — callers pass
+                    // the bot's language ISO code. Omitting the key
+                    // restores whisper auto-detect behaviour.
+                    'language' => $options['transcribe_language'] ?? null,
+                    'prompt' => $options['transcribe_prompt'] ?? null,
                 ],
                 'turn_detection' => [
                     'type' => $options['vad_type'] ?? 'semantic_vad',

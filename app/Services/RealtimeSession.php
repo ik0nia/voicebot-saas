@@ -833,7 +833,14 @@ class RealtimeSession
      * V2: Detect and extract lead data (name + phone) from voice transcripts.
      * Runs after each assistant response to check if contact data was exchanged.
      */
-    private function tryExtractVoiceLead(): void
+    /**
+     * Extract a Lead from the call transcripts — phone number +
+     * buying-intent detection + product matching. Public so the
+     * phone-path ingest (MediaStreamEventController::recordUsage)
+     * can invoke it on every response.done. Idempotent via a cache
+     * lock + duplicate-lead check, so firing per-turn is safe.
+     */
+    public function tryExtractVoiceLead(): void
     {
         // Atomic lock to prevent duplicate leads from concurrent response.done events
         $lockKey = "voice_lead_extract:{$this->call->id}";
