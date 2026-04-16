@@ -103,20 +103,12 @@
                         <p class="mt-1 text-xs text-slate-500">Bifează toate limbile pe care agentul le poate folosi. LLM-ul răspunde în limba clientului.</p>
                     </div>
 
-                    {{-- Limbă pentru apeluri vocale (ASR locked pe una singură) --}}
-                    @php $voiceLang = old('voice_language', $bot->settings['voice_language'] ?? $bot->language); @endphp
-                    <div>
-                        <label for="voice_language" class="block text-sm font-medium text-slate-700 mb-1.5">Limba apelurilor vocale</label>
-                        <select name="voice_language" id="voice_language"
-                                class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition">
-                            <option value="ro" {{ $voiceLang === 'ro' ? 'selected' : '' }}>Română</option>
-                            <option value="en" {{ $voiceLang === 'en' ? 'selected' : '' }}>English</option>
-                            <option value="de" {{ $voiceLang === 'de' ? 'selected' : '' }}>Deutsch</option>
-                            <option value="fr" {{ $voiceLang === 'fr' ? 'selected' : '' }}>Français</option>
-                            <option value="es" {{ $voiceLang === 'es' ? 'selected' : '' }}>Español</option>
-                        </select>
-                        <p class="mt-1 text-xs text-slate-500">ASR-ul are nevoie de o limbă locked. Un apel bilingv ar necesita două modele în paralel — dublu cost.</p>
-                    </div>
+                    {{-- Limba apelurilor vocale — ascuns din UI 2026-04-16.
+                         ASR-ul e locked platform-wide pe română momentan;
+                         dacă se deschide multilang voice, reafișează
+                         selector-ul. Backend rămâne wired pe
+                         bot.settings.voice_language → bot.language. --}}
+                    <input type="hidden" name="voice_language" value="ro">
 
                     {{-- Voce --}}
                     <div>
