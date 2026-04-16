@@ -48,6 +48,7 @@ export function connectOpenai(botCtx, twilioSink, config, callMeta = {}) {
 
     let sessionReady = false;
     let receivedFirstFrame = false;
+    let responseActive = false;
     const firstFrameTimer = setTimeout(() => {
         if (!receivedFirstFrame) {
             logger.warn({ botId: botCtx.botId }, 'OpenAI first-frame timeout');
@@ -90,12 +91,17 @@ export function connectOpenai(botCtx, twilioSink, config, callMeta = {}) {
                 input_audio_transcription: { model: 'whisper-1' },
                 turn_detection: {
                     type: 'server_vad',
-                    threshold: botCtx.vadThreshold,
+                    // pg client may deliver numerics (temperature /
+                    // vad_threshold from bots.settings jsonb) as either
+                    // JS numbers or strings depending on column type +
+                    // driver version. Coerce to float so OpenAI's strict
+                    // validator doesn't reject the whole session.update.
+                    threshold: Number(botCtx.vadThreshold) || 0.5,
                     prefix_padding_ms: 300,
                     silence_duration_ms: 500,
                     create_response: true,
                 },
-                temperature: botCtx.temperature,
+                temperature: Number(botCtx.temperature) || 0.7,
             },
         }));
 
@@ -127,9 +133,12 @@ export function connectOpenai(botCtx, twilioSink, config, callMeta = {}) {
         switch (event.type) {
             case 'session.created':
             case 'session.updated':
-            case 'response.created':
             case 'response.output_item.added':
             case 'response.content_part.added':
+                break;
+
+            case 'response.created':
+                responseActive = true;
                 break;
 
             case 'response.audio.delta': {
@@ -164,16 +173,22 @@ export function connectOpenai(botCtx, twilioSink, config, callMeta = {}) {
             case 'input_audio_buffer.speech_started':
                 // User started talking. Cancel any in-flight assistant
                 // response so the bot stops talking over the user.
+                // Only send cancel if a response is actually active —
+                // otherwise OpenAI errors with
+                // response_cancel_not_active (harmless but noisy).
                 twilioSink(null, { type: 'user_interrupted' });
-                try {
-                    ws.send(JSON.stringify({ type: 'response.cancel' }));
-                } catch (_) {}
+                if (responseActive) {
+                    try {
+                        ws.send(JSON.stringify({ type: 'response.cancel' }));
+                    } catch (_) {}
+                }
                 break;
 
             case 'input_audio_buffer.speech_stopped':
                 break;
 
             case 'response.done':
+                responseActive = false;
                 // Flush any in-flight assistant transcript chunks as
                 // one completed utterance, then persist usage so
                 // analytics / billing have per-call token counts.
