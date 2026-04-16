@@ -1931,10 +1931,10 @@
             // Horizontal slider — cards on one row, users swipe /
             // scroll through them. Keeps the message area compact
             // regardless of how many products the bot suggested.
-            // Explicit height + align-self:stretch so the column
-            // flex parent (messagesContainer) can't squish us.
+            // Fixed height so the slider row reserves its space
+            // even in a column flex parent that'd otherwise squish.
             var wrap = document.createElement('div');
-            wrap.style.cssText = 'display:flex;flex-direction:row;align-items:flex-start;gap:8px;padding:4px 0 10px;width:100%;height:220px;min-height:220px;flex-shrink:0;align-self:stretch;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:thin;';
+            wrap.style.cssText = 'display:flex;flex-direction:row;align-items:flex-start;gap:8px;padding:4px 0 10px;width:100%;height:260px;min-height:260px;flex-shrink:0;align-self:stretch;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:thin;';
             wrap.setAttribute('role', 'list');
             wrap.setAttribute('aria-label', 'Products');
 
@@ -1948,58 +1948,62 @@
                 }
 
                 var card = document.createElement('div');
-                // Slider card: fixed width + fixed height so the
-                // vertical stack inside (image + text) always
-                // renders regardless of parent flex quirks.
-                card.style.cssText = 'flex:0 0 160px;width:160px;height:200px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.04);cursor:pointer;transition:box-shadow 0.2s,transform 0.15s;display:flex;flex-direction:column;scroll-snap-align:start;';
+                // Fixed 160×240 card so every slot (image 100px,
+                // name 2-line clamp, price row, ATC button at
+                // bottom) has deterministic space regardless of
+                // which products the bot returned.
+                card.style.cssText = 'flex:0 0 160px;width:160px;height:240px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.04);cursor:pointer;transition:box-shadow 0.2s,transform 0.15s;display:flex;flex-direction:column;scroll-snap-align:start;';
                 card.setAttribute('role', 'listitem');
                 card.setAttribute('tabindex', '0');
                 card.setAttribute('aria-label', stripAllHtml(p.name || ''));
 
                 var h = '';
 
-                // Image (top of the card, full width)
+                // Image — ALWAYS 100px tall, full card width.
+                // Fallback placeholder keeps card height identical
+                // between products that have images and those that
+                // don't, so the grid stays aligned.
+                h += '<div style="width:100%;height:100px;flex-shrink:0;overflow:hidden;background:#f8fafc;">';
                 if (p.image_url && isValidUrl(p.image_url)) {
-                    h += '<div style="width:100%;height:100px;flex-shrink:0;overflow:hidden;background:#f8fafc;">';
                     h += '<img src="' + sanitizeHtml(p.image_url) + '" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" alt="' + sanitizeHtml(p.name || '') + '">';
-                    h += '</div>';
-                }
-
-                // Content (bottom of the card) — no flex:1 so it
-                // doesn't try to stretch to a zero-height parent.
-                h += '<div style="padding:8px 10px;display:flex;flex-direction:column;gap:2px;min-width:0;">';
-
-                // Product name
-                h += '<div style="font-size:13px;font-weight:600;color:#1e293b;line-height:1.3;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">' + sanitizeHtml(p.name) + '</div>';
-
-                // Short description (if available, max 60 chars)
-                if (p.short_description) {
-                    var desc = stripAllHtml(p.short_description).substring(0, 60);
-                    if (desc.length > 0) {
-                        h += '<div style="font-size:11px;color:#64748b;line-height:1.3;margin-bottom:4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + sanitizeHtml(desc) + '</div>';
-                    }
-                }
-
-                // Price row
-                var safeCurrency = sanitizeCurrency(p.currency);
-                h += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">';
-                if (sanitizePrice(p.sale_price) && sanitizePrice(p.regular_price)) {
-                    h += '<span style="font-size:15px;font-weight:700;color:#dc2626;">' + sanitizePrice(p.sale_price) + ' ' + safeCurrency + '</span>';
-                    h += '<span style="font-size:11px;color:#94a3b8;text-decoration:line-through;">' + sanitizePrice(p.regular_price) + '</span>';
-                } else if (sanitizePrice(p.price)) {
-                    h += '<span style="font-size:15px;font-weight:700;color:#1e293b;">' + sanitizePrice(p.price) + ' ' + safeCurrency + '</span>';
-                }
-
-                // Stock badge
-                if (p.stock_status === 'outofstock') {
-                    h += '<span style="font-size:9px;color:#dc2626;background:#fef2f2;padding:1px 6px;border-radius:4px;font-weight:600;">Indisponibil</span>';
-                } else if (p.stock_status === 'instock') {
-                    h += '<span style="font-size:9px;color:#16a34a;background:#f0fdf4;padding:1px 6px;border-radius:4px;font-weight:600;">In stoc</span>';
+                } else {
+                    h += '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#cbd5e1;font-size:11px;">fără imagine</div>';
                 }
                 h += '</div>';
 
-                // ATC button placeholder
-                h += '<div class="sambla-atc-slot"></div>';
+                // Content — fills the remaining 140px. Internal
+                // stack: fixed-height name (2-line clamp), then
+                // price row pinned just below, then ATC pushed to
+                // the bottom via margin-top:auto. That way the
+                // button is ALWAYS at the same y-coordinate
+                // across every card, regardless of name length.
+                h += '<div style="padding:8px 10px;flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;">';
+
+                // Name — fixed 2-line box (≈ 34px). Longer names
+                // get ellipsis'd; shorter ones leave the second
+                // line blank but still reserve the space.
+                h += '<div style="height:34px;font-size:13px;font-weight:600;color:#1e293b;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:4px;">' + sanitizeHtml(p.name) + '</div>';
+
+                // Price row
+                var safeCurrency = sanitizeCurrency(p.currency);
+                h += '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">';
+                if (sanitizePrice(p.sale_price) && sanitizePrice(p.regular_price)) {
+                    h += '<span style="font-size:14px;font-weight:700;color:#dc2626;">' + sanitizePrice(p.sale_price) + ' ' + safeCurrency + '</span>';
+                    h += '<span style="font-size:10px;color:#94a3b8;text-decoration:line-through;">' + sanitizePrice(p.regular_price) + '</span>';
+                } else if (sanitizePrice(p.price)) {
+                    h += '<span style="font-size:14px;font-weight:700;color:#1e293b;">' + sanitizePrice(p.price) + ' ' + safeCurrency + '</span>';
+                }
+                if (p.stock_status === 'outofstock') {
+                    h += '<span style="font-size:9px;color:#dc2626;background:#fef2f2;padding:1px 5px;border-radius:4px;font-weight:600;">Indisp</span>';
+                } else if (p.stock_status === 'instock') {
+                    h += '<span style="font-size:9px;color:#16a34a;background:#f0fdf4;padding:1px 5px;border-radius:4px;font-weight:600;">In stoc</span>';
+                }
+                h += '</div>';
+
+                // ATC button slot — margin-top:auto docks it at
+                // the bottom of the content area, so the Y
+                // position is consistent across cards.
+                h += '<div class="sambla-atc-slot" style="margin-top:auto;min-height:28px;display:flex;align-items:flex-end;"></div>';
 
                 h += '</div>';
                 card.innerHTML = h;
