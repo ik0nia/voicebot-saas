@@ -17,6 +17,21 @@ import { getLaravelSink } from './laravelSink.js';
 
 const OPENAI_REALTIME_URL = 'wss://api.openai.com/v1/realtime';
 
+// OpenAI Realtime accepts only a subset of the voices that work for
+// regular TTS. If a bot is configured with a voice outside this list
+// (e.g. a legacy 'nova' that pre-dated the Realtime API), fall back
+// to 'alloy' instead of crashing the session. Audited 2026-04 — keep
+// in sync with the Realtime error message when OpenAI expands the
+// list.
+const REALTIME_VOICES = new Set([
+    'alloy', 'ash', 'ballad', 'coral', 'echo',
+    'sage', 'shimmer', 'verse', 'marin', 'cedar',
+]);
+
+function safeRealtimeVoice(voice) {
+    return REALTIME_VOICES.has(voice) ? voice : 'alloy';
+}
+
 export function connectOpenai(botCtx, twilioSink, config, callMeta = {}) {
     const url = `${OPENAI_REALTIME_URL}?model=${encodeURIComponent(config.openaiRealtimeModel)}`;
     const sink = getLaravelSink(config);
@@ -69,7 +84,7 @@ export function connectOpenai(botCtx, twilioSink, config, callMeta = {}) {
             session: {
                 modalities: ['text', 'audio'],
                 instructions,
-                voice: botCtx.voice,
+                voice: safeRealtimeVoice(botCtx.voice),
                 input_audio_format: 'pcm16',
                 output_audio_format: 'pcm16',
                 input_audio_transcription: { model: 'whisper-1' },
