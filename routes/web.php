@@ -455,6 +455,7 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
     Route::put('/setari/openai', [AdminSettingsController::class, 'updateOpenai'])->name('admin.settings.updateOpenai');
     Route::put('/setari/telnyx', [AdminSettingsController::class, 'updateTelnyx'])->name('admin.settings.updateTelnyx');
     Route::put('/setari/twilio', [AdminSettingsController::class, 'updateTwilio'])->name('admin.settings.updateTwilio');
+    Route::get('/twilio/consum', [\App\Http\Controllers\Admin\TwilioUsageController::class, 'index'])->name('admin.twilio.usage');
     Route::put('/setari/stripe', [AdminSettingsController::class, 'updateStripe'])->name('admin.settings.updateStripe');
     Route::put('/setari/email', [AdminSettingsController::class, 'updateEmail'])->name('admin.settings.updateEmail');
     Route::put('/setari/whatsapp', [AdminSettingsController::class, 'updateWhatsapp'])->name('admin.settings.updateWhatsapp');
