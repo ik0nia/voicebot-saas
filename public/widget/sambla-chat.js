@@ -1931,8 +1931,10 @@
             // Horizontal slider — cards on one row, users swipe /
             // scroll through them. Keeps the message area compact
             // regardless of how many products the bot suggested.
+            // Explicit height + align-self:stretch so the column
+            // flex parent (messagesContainer) can't squish us.
             var wrap = document.createElement('div');
-            wrap.style.cssText = 'display:flex;flex-direction:row;align-items:stretch;gap:8px;padding:8px 0 12px;width:100%;overflow-x:auto;overflow-y:visible;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:thin;';
+            wrap.style.cssText = 'display:flex;flex-direction:row;align-items:flex-start;gap:8px;padding:4px 0 10px;width:100%;height:220px;min-height:220px;flex-shrink:0;align-self:stretch;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:thin;';
             wrap.setAttribute('role', 'list');
             wrap.setAttribute('aria-label', 'Products');
 
@@ -1946,13 +1948,10 @@
                 }
 
                 var card = document.createElement('div');
-                // Slider card: fixed width per card + scroll-snap so
-                // swipes land on a clean boundary. Vertical layout
-                // (image top, text below) fits the narrow widget
-                // width and shows more cards per row. min-height
-                // guarantees the card doesn't collapse when the
-                // message flex parent hasn't set a row height.
-                card.style.cssText = 'flex:0 0 160px;width:160px;min-height:200px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.04);cursor:pointer;transition:box-shadow 0.2s,transform 0.15s;display:flex;flex-direction:column;scroll-snap-align:start;';
+                // Slider card: fixed width + fixed height so the
+                // vertical stack inside (image + text) always
+                // renders regardless of parent flex quirks.
+                card.style.cssText = 'flex:0 0 160px;width:160px;height:200px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.04);cursor:pointer;transition:box-shadow 0.2s,transform 0.15s;display:flex;flex-direction:column;scroll-snap-align:start;';
                 card.setAttribute('role', 'listitem');
                 card.setAttribute('tabindex', '0');
                 card.setAttribute('aria-label', stripAllHtml(p.name || ''));
