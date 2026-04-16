@@ -80,14 +80,42 @@ class SettingsController extends Controller
         return back()->with('success', 'Preferințele de notificare au fost salvate.');
     }
 
+    /**
+     * Scopes available for user-generated API tokens. Keep this small and
+     * explicit — the old code accepted `$request->get('scopes', ['*'])`,
+     * which meant any user could POST a wildcard scope and receive a token
+     * with unrestricted access to the entire API. Tokens should be
+     * capability-limited; anything outside this list is silently dropped.
+     */
+    private const ALLOWED_API_SCOPES = [
+        'bots:read',
+        'bots:write',
+        'calls:read',
+        'calls:write',
+        'conversations:read',
+        'phone-numbers:read',
+        'phone-numbers:write',
+        'analytics:read',
+    ];
+
     public function generateApiKey(Request $request)
     {
-        $user = auth()->user();
-        // Use Sanctum to create API token
-        $token = $user->createToken(
-            $request->get('name', 'API Key'),
-            $request->get('scopes', ['*'])
-        );
+        $validated = $request->validate([
+            'name' => 'required|string|max:80',
+            'scopes' => 'nullable|array',
+            'scopes.*' => ['string', 'in:' . implode(',', self::ALLOWED_API_SCOPES)],
+        ]);
+
+        $requested = $validated['scopes'] ?? [];
+        // Intersect with allowlist defensively; validation already restricts
+        // to ALLOWED_API_SCOPES but this keeps the invariant explicit at
+        // the boundary where the token is actually minted.
+        $scopes = array_values(array_intersect($requested, self::ALLOWED_API_SCOPES));
+        if (empty($scopes)) {
+            $scopes = ['bots:read'];
+        }
+
+        $token = auth()->user()->createToken($validated['name'], $scopes);
 
         return back()->with('success', 'Cheia API a fost creată. Copiază-o acum — nu va mai fi afișată.')
                     ->with('new_api_key', $token->plainTextToken);

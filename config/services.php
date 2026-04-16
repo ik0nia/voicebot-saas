@@ -70,4 +70,28 @@ return [
         'kb_folder_name' => env('GOOGLE_KB_FOLDER_NAME', 'Sambla Knowledge Base'),
     ],
 
+    // Meta (Facebook/WhatsApp/Instagram) webhook signing secret. Must exist
+    // in config/ so `php artisan config:cache` captures it — otherwise
+    // callers resort to env() which returns null after caching and the
+    // webhook middleware loses its fail-closed guarantee.
+    'meta' => [
+        'app_secret' => env('META_APP_SECRET'),
+    ],
+
+    'whatsapp' => [
+        'token' => env('WHATSAPP_TOKEN'),
+        'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
+        'verify_token' => env('WHATSAPP_VERIFY_TOKEN'),
+    ],
+
+    'facebook' => [
+        'page_access_token' => env('FACEBOOK_PAGE_ACCESS_TOKEN'),
+        'verify_token' => env('FACEBOOK_VERIFY_TOKEN'),
+    ],
+
+    'instagram' => [
+        'page_access_token' => env('INSTAGRAM_PAGE_ACCESS_TOKEN'),
+        'verify_token' => env('INSTAGRAM_VERIFY_TOKEN'),
+    ],
+
 ];

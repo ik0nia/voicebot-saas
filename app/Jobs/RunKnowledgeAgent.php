@@ -24,7 +24,13 @@ class RunKnowledgeAgent implements ShouldQueue
 
     public function __construct(public KnowledgeAgentRun $run)
     {
-        $this->onQueue('agents');
+        // Route onto 'knowledge' — the only Horizon supervisor heavy enough
+        // to run these LLM-backed jobs. Previously this was 'agents', but no
+        // supervisor in config/horizon.php listens on that queue, so every
+        // dispatched run silently sat in Redis forever. The knowledge
+        // supervisor has max=3 workers, 600s timeout, 512MB memory, which
+        // fits this job's profile.
+        $this->onQueue('knowledge');
     }
 
     public function middleware(): array
