@@ -37,6 +37,7 @@
             <li>Mesajele schimbate cu agentul (text sau transcript audio)</li>
             <li>Pentru apeluri vocale: durata, număr de telefon (anonimizat la 30 zile), înregistrare audio (ștearsă la 30 zile)</li>
             <li>Metadate: bot-ul folosit, canalul, datele colectate explicit de tine (dacă lași lead)</li>
+            <li><strong>URL-ul paginii</strong> de pe care ai trimis fiecare mesaj — păstrăm doar schema + host + path + parametrii UTM, filtrând automat orice parametru sensibil (token, password, code, email, phone, auth etc.). Ne ajută pe noi și pe operatorul agentului să înțelegem contextul conversației (ex: dacă ai scris de pe pagina de prețuri, răspunsul va fi despre prețuri).</li>
         </ul>
 
         <h2>3. Temeiul legal</h2>

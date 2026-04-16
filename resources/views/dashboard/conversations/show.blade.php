@@ -24,14 +24,30 @@
 @section('content')
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div class="flex items-center gap-3">
-            <h1 class="text-2xl font-bold text-slate-900">Conversație #{{ $conversation->id }}</h1>
-            @if($conversation->status === 'active')
-                <span class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-sm font-medium text-emerald-800">Activă</span>
-            @elseif($conversation->status === 'completed')
-                <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700">Completată</span>
-            @else
-                <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700">{{ $conversation->status }}</span>
+        <div class="flex flex-col gap-1">
+            <div class="flex items-center gap-3">
+                <h1 class="text-2xl font-bold text-slate-900">Conversație #{{ $conversation->id }}</h1>
+                @if($conversation->status === 'active')
+                    <span class="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-sm font-medium text-emerald-800">Activă</span>
+                @elseif($conversation->status === 'completed')
+                    <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700">Completată</span>
+                @else
+                    <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700">{{ $conversation->status }}</span>
+                @endif
+            </div>
+            @if(!empty($conversation->metadata['initial_url']))
+                <div class="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5">
+                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                    </svg>
+                    <span>A scris de pe:</span>
+                    <a href="{{ $conversation->metadata['initial_url'] }}" target="_blank" rel="noopener" class="text-red-700 hover:underline truncate max-w-md font-mono" title="{{ $conversation->metadata['initial_url'] }}">
+                        {{ $conversation->metadata['initial_path'] ?? $conversation->metadata['initial_url'] }}
+                    </a>
+                    @if(!empty($conversation->metadata['initial_niche']))
+                        <span class="ml-2 inline-flex px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 text-[11px] font-semibold">{{ $conversation->metadata['initial_niche'] }}</span>
+                    @endif
+                </div>
             @endif
         </div>
         <div class="flex items-center gap-2">

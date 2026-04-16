@@ -1340,7 +1340,7 @@ class ChatbotApiController extends Controller
         $prechatName = $validated['prechat_name'] ?? null;
         $prechatEmail = $validated['prechat_email'] ?? null;
         $prechatPhone = $validated['prechat_phone'] ?? null;
-        $pageContext = $validated['page_context'] ?? null;
+        $pageContext = $this->sanitizePageContext($validated['page_context'] ?? null);
 
         // Rate limiting
         $rateLimitKey = 'chatbot:msg:' . $request->ip() . ':' . $channelId;
@@ -1400,6 +1400,20 @@ class ChatbotApiController extends Controller
         if (!$conversation) {
             $sessionId = Str::uuid()->toString();
             $sessionToken = hash_hmac('sha256', $sessionId . $channelId, config('app.key'));
+
+            // Landing context for the conversation — the URL where
+            // the visitor sent their first message tells the tenant
+            // (and the bot) where the conversation came from.
+            // /pentru/{slug} paths carry a niche we auto-extract so
+            // tenants can filter conversations by niche without
+            // post-hoc string matching.
+            $initialUrl = $pageContext['page_url'] ?? null;
+            $initialPath = $pageContext['page_path'] ?? null;
+            $initialNiche = null;
+            if ($initialPath && preg_match('#^/pentru/([^/?#]+)#', $initialPath, $m)) {
+                $initialNiche = $m[1];
+            }
+
             $conversation = Conversation::create([
                 'tenant_id' => $bot->tenant_id,
                 'bot_id' => $bot->id,
@@ -1408,10 +1422,15 @@ class ChatbotApiController extends Controller
                 'contact_identifier' => $request->ip(),
                 'visitor_id' => $request->input('visitor_id'),
                 'status' => 'active',
-                'metadata' => [
+                'metadata' => array_filter([
                     'user_agent' => $request->userAgent(),
                     'origin' => $request->header('Origin', ''),
-                ],
+                    'initial_url' => $initialUrl,
+                    'initial_path' => $initialPath,
+                    'initial_title' => $pageContext['page_title'] ?? null,
+                    'initial_referrer' => $pageContext['referrer'] ?? null,
+                    'initial_niche' => $initialNiche,
+                ], fn($v) => $v !== null && $v !== ''),
                 'started_at' => now(),
             ]);
 
@@ -2018,5 +2037,56 @@ class ChatbotApiController extends Controller
         ]);
 
         return response()->json(['success' => true, 'rating_id' => $rating->id]);
+    }
+
+    /**
+     * Strip risky query parameters from the page URL the widget
+     * reports with each message, before we persist it. We keep
+     * the scheme/host/path + marketing attribution params (utm_*,
+     * click IDs) so tenants get useful context, and drop anything
+     * that might carry a secret (tokens, codes, keys, emails,
+     * phones). Applied to page_url and referrer both; page_title
+     * + page_path pass through untouched.
+     */
+    private function sanitizePageContext(?array $ctx): ?array
+    {
+        if (!$ctx) return null;
+        if (isset($ctx['page_url']))  $ctx['page_url']  = $this->sanitizeUrl($ctx['page_url']);
+        if (isset($ctx['referrer']))  $ctx['referrer']  = $this->sanitizeUrl($ctx['referrer']);
+        return $ctx;
+    }
+
+    private function sanitizeUrl(?string $url): ?string
+    {
+        if (!$url) return $url;
+        // Patterns that usually carry secrets or PII — drop matching
+        // keys outright. If a suspicious key shows up even once the
+        // whole URL is rebuilt without it so partial leaks can't
+        // slip through via concatenation.
+        static $denyPatterns = [
+            '/token/i', '/secret/i', '/password/i', '/passwd/i',
+            '/auth/i', '/oauth/i', '/jwt/i', '/api[_-]?key/i',
+            '/session/i', '/bearer/i', '/csrf/i', '/\bstate\b/i',
+            '/\bcode\b/i', '/credential/i', '/access[_-]?token/i',
+            '/^email$/i', '/^phone$/i', '/ssn/i', '/signature/i',
+            '/hash/i', '/verif/i',
+        ];
+        $parts = parse_url($url);
+        if ($parts === false) return null;
+
+        $clean = ($parts['scheme'] ?? 'https') . '://' . ($parts['host'] ?? '') . ($parts['path'] ?? '');
+
+        if (!empty($parts['query'])) {
+            parse_str($parts['query'], $qs);
+            foreach (array_keys($qs) as $k) {
+                foreach ($denyPatterns as $pat) {
+                    if (preg_match($pat, $k)) { unset($qs[$k]); break; }
+                }
+            }
+            if (!empty($qs)) $clean .= '?' . http_build_query($qs);
+        }
+        if (!empty($parts['fragment'])) $clean .= '#' . $parts['fragment'];
+
+        return mb_substr($clean, 0, 2000);
     }
 }
