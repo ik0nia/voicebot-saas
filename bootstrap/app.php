@@ -57,6 +57,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant.role' => \App\Http\Middleware\EnsureTenantRole::class,
             'telnyx.verify' => \App\Http\Middleware\VerifyTelnyxSignature::class,
             'twilio.verify' => \App\Http\Middleware\VerifyTwilioSignature::class,
+            'internal.service' => \App\Http\Middleware\VerifyInternalServiceToken::class,
             'api.rate' => \App\Http\Middleware\ApiRateLimit::class,
             'super_admin' => \App\Http\Middleware\EnsureSuperAdmin::class,
             'plan.limit' => \App\Http\Middleware\CheckPlanLimits::class,

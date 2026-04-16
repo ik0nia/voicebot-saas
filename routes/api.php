@@ -12,6 +12,16 @@ Route::get('/health', function () {
     return response()->json(['status' => 'ok', 'timestamp' => now()->toIso8601String()]);
 });
 
+// Internal service endpoints (Bearer INTERNAL_SERVICE_TOKEN).
+// Used by services/media-stream to persist transcripts + OpenAI usage
+// without bypassing validation/audit paths by writing straight to
+// Postgres. Not exposed publicly — traffic should be loopback or VPC.
+Route::middleware('internal.service')->prefix('internal')->group(function () {
+    Route::post('/media-stream/events', [
+        \App\Http\Controllers\Internal\MediaStreamEventController::class, 'store'
+    ])->name('internal.mediaStream.events');
+});
+
 // Platform logo upload endpoints. Super-admin only, rate-limited, and the
 // URL variant runs through SsrfGuard before any network I/O. See
 // LogoUploadController for the history of the vulnerabilities this replaces.

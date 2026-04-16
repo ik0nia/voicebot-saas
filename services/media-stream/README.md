@@ -44,6 +44,10 @@ Optional:
 | `BOT_CONFIG_CACHE_TTL` | `3600` | Seconds to cache per-bot config in Redis |
 | `OPENAI_FIRST_FRAME_TIMEOUT_MS` | `8000` | Hang up if OpenAI doesn't start speaking within this window |
 | `LOG_LEVEL` | `info` | `debug` / `info` / `warn` / `error` |
+| `LARAVEL_EVENTS_URL` | — | `https://sambla.ro/api/internal/media-stream/events` — where transcript + usage batches are POSTed |
+| `INTERNAL_SERVICE_TOKEN` | — | Shared secret for service-to-service auth with Laravel. Bearer header. Same value on both containers |
+| `LARAVEL_SINK_BATCH` | `20` | How many events to batch before a POST |
+| `LARAVEL_SINK_FLUSH_MS` | `2000` | Also flush on this interval regardless of batch size |
 
 ## Running locally
 
@@ -101,7 +105,6 @@ Key events to alert on:
 
 ## What's intentionally not here yet
 
-- **Transcript persistence.** `response.audio_transcript.delta` and user ASR events arrive; plumbing them into the Laravel `transcripts` table is a follow-up iter.
-- **Cost tracking per call.** `response.done.usage` is logged but not written back to `credit_transactions`. Next iter once we validate the token/minute math against live calls.
 - **DTMF handling.** Events are received and logged; no UX decision yet on what digits should do per bot.
-- **Answering-machine detection, call recording, mid-call transfer.** Not in Phase 1.
+- **Answering-machine detection, call recording, mid-call transfer.** Product decisions, not platform debt.
+- **Refined per-minute cost math.** Iter 20 ships a rough audio-token-based charge so tenants see non-zero usage; tighten once we have live invoices to reconcile against.

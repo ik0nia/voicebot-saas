@@ -111,7 +111,7 @@ export async function handleTwilioConnection(ws, { config }) {
                     tenantId: botCtx.tenantId,
                 }, 'Stream started');
 
-                openai = connectOpenai(botCtx, sendToTwilio, config);
+                openai = connectOpenai(botCtx, sendToTwilio, config, { callId });
                 break;
             }
 

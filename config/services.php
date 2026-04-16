@@ -47,6 +47,13 @@ return [
         'twiml_app_sid' => env('TWILIO_TWIML_APP_SID'),
     ],
 
+    'internal' => [
+        // Shared secret for in-platform service-to-service calls
+        // (currently: media-stream → Laravel for transcript + usage).
+        // Env-only on purpose — keeps the token out of the DB.
+        'service_token' => env('INTERNAL_SERVICE_TOKEN'),
+    ],
+
     'anthropic' => [
         'api_key' => env('ANTHROPIC_API_KEY'),
     ],

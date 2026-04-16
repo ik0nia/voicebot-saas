@@ -1,6 +1,7 @@
 import WebSocket from 'ws';
 import { logger } from './logger.js';
 import { encodeOpenaiFrameToTwilio } from './audio.js';
+import { getLaravelSink } from './laravelSink.js';
 
 /*
  * Open and manage a WebSocket to OpenAI Realtime for one call.
@@ -16,8 +17,12 @@ import { encodeOpenaiFrameToTwilio } from './audio.js';
 
 const OPENAI_REALTIME_URL = 'wss://api.openai.com/v1/realtime';
 
-export function connectOpenai(botCtx, twilioSink, config) {
+export function connectOpenai(botCtx, twilioSink, config, callMeta = {}) {
     const url = `${OPENAI_REALTIME_URL}?model=${encodeURIComponent(config.openaiRealtimeModel)}`;
+    const sink = getLaravelSink(config);
+    const callStartedAt = Date.now();
+    const callId = callMeta.callId ? parseInt(callMeta.callId, 10) : null;
+    let assistantChunk = ''; // accumulate audio_transcript deltas into full utterances
 
     const ws = new WebSocket(url, {
         headers: {
@@ -34,6 +39,19 @@ export function connectOpenai(botCtx, twilioSink, config) {
             twilioSink(null, { type: 'upstream_timeout' });
         }
     }, config.openaiFirstFrameTimeoutMs);
+
+    const flushAssistantTurn = () => {
+        if (assistantChunk.trim() && callId) {
+            sink.push({
+                type: 'transcript',
+                call_id: callId,
+                role: 'assistant',
+                content: assistantChunk,
+                timestamp_ms: Date.now() - callStartedAt,
+            });
+        }
+        assistantChunk = '';
+    };
 
     ws.on('open', () => {
         logger.info({ botId: botCtx.botId }, 'OpenAI Realtime connected');
@@ -108,13 +126,24 @@ export function connectOpenai(botCtx, twilioSink, config) {
             }
 
             case 'response.audio_transcript.delta':
-                // Assistant's spoken text arriving in chunks. Could be
-                // persisted to transcripts table for analytics; left to
-                // a follow-up iter.
+                // Assistant's spoken text arriving in chunks. Accumulate
+                // until the turn ends (response.done), then flush as a
+                // single transcript row — one row per utterance is nicer
+                // to render than one per delta.
+                if (event.delta) assistantChunk += event.delta;
                 break;
 
             case 'conversation.item.input_audio_transcription.completed':
-                // User's spoken text (ASR result). Same — persist later.
+                // User's spoken text (ASR result) — final, complete.
+                if (callId && event.transcript) {
+                    sink.push({
+                        type: 'transcript',
+                        call_id: callId,
+                        role: 'user',
+                        content: event.transcript,
+                        timestamp_ms: Date.now() - callStartedAt,
+                    });
+                }
                 break;
 
             case 'input_audio_buffer.speech_started':
@@ -130,14 +159,22 @@ export function connectOpenai(botCtx, twilioSink, config) {
                 break;
 
             case 'response.done':
-                // Usage token counts land here. Plumbing to
-                // credit_transactions is a follow-up iter — for now log
-                // so we can eyeball spend during integration testing.
+                // Flush any in-flight assistant transcript chunks as
+                // one completed utterance, then persist usage so
+                // analytics / billing have per-call token counts.
+                flushAssistantTurn();
                 if (event.response && event.response.usage) {
                     logger.info({
                         botId: botCtx.botId,
                         usage: event.response.usage,
                     }, 'OpenAI response.done');
+                    if (callId) {
+                        sink.push({
+                            type: 'usage',
+                            call_id: callId,
+                            usage: event.response.usage,
+                        });
+                    }
                 }
                 break;
 
