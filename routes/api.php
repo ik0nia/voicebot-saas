@@ -12,30 +12,15 @@ Route::get('/health', function () {
     return response()->json(['status' => 'ok', 'timestamp' => now()->toIso8601String()]);
 });
 
-// Logo upload endpoints (simple, no auth — protected by obscurity + rate limit)
-Route::post('/upload-logo', function (\Illuminate\Http\Request $request) {
-    $request->validate([
-        'logo' => 'required|file|max:2048|mimes:png,jpg,jpeg,svg,webp',
-        'type' => 'required|in:light,dark',
-    ]);
-    $file = $request->file('logo');
-    $ext = $file->getClientOriginalExtension() ?: 'png';
-    $name = $request->type === 'light' ? 'logo-light.' . $ext : 'logo-dark.' . $ext;
-    $file->move(public_path('images'), $name);
-    return response()->json(['success' => true, 'path' => '/images/' . $name, 'filename' => $name]);
-})->middleware('throttle:10,1');
-
-Route::post('/upload-logo-url', function (\Illuminate\Http\Request $request) {
-    $request->validate(['url' => 'required|url|max:2000', 'type' => 'required|in:light,dark']);
-    $url = $request->url;
-    $ext = pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'png';
-    if (!in_array($ext, ['png','jpg','jpeg','svg','webp'])) $ext = 'png';
-    $name = $request->type === 'light' ? 'logo-light.' . $ext : 'logo-dark.' . $ext;
-    $contents = @file_get_contents($url);
-    if ($contents === false) return response()->json(['error' => 'Nu am putut descărca fișierul'], 422);
-    file_put_contents(public_path('images/' . $name), $contents);
-    return response()->json(['success' => true, 'path' => '/images/' . $name, 'filename' => $name]);
-})->middleware('throttle:10,1');
+// Platform logo upload endpoints. Super-admin only, rate-limited, and the
+// URL variant runs through SsrfGuard before any network I/O. See
+// LogoUploadController for the history of the vulnerabilities this replaces.
+Route::middleware(['auth:sanctum,web', 'throttle:10,1'])->group(function () {
+    Route::post('/upload-logo', [\App\Http\Controllers\Admin\LogoUploadController::class, 'uploadFile'])
+        ->name('admin.logo.upload');
+    Route::post('/upload-logo-url', [\App\Http\Controllers\Admin\LogoUploadController::class, 'uploadFromUrl'])
+        ->name('admin.logo.uploadFromUrl');
+});
 
 // Test vocal endpoint (uses web session auth via CSRF, no Sanctum needed)
 Route::post('/v1/bots/{bot}/test-vocal', [TestVocalController::class, 'handle']);
