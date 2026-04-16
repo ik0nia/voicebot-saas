@@ -130,6 +130,37 @@ class TenantRoleEnforcementTest extends TestCase
         $this->assertDatabaseHas('tenants', ['id' => $this->tenant->id, 'name' => 'Acme']);
     }
 
+    public function test_viewer_cannot_mutate_phone_numbers(): void
+    {
+        $viewer = $this->userWithRole('tenant_viewer');
+
+        $this->actingAs($viewer)
+            ->post('/dashboard/numere', ['number' => '+40700000000', 'provider' => 'manual'])
+            ->assertStatus(403);
+
+        $this->actingAs($viewer)
+            ->post('/dashboard/numere/sync-statuses')
+            ->assertStatus(403);
+    }
+
+    public function test_viewer_cannot_mutate_sites(): void
+    {
+        $this->actingAs($this->userWithRole('tenant_viewer'))
+            ->post('/dashboard/sites', ['url' => 'https://example.com'])
+            ->assertStatus(403);
+    }
+
+    public function test_manager_can_mutate_phone_numbers_route_is_reachable(): void
+    {
+        // We can't actually test full happy path without stubbing Telnyx,
+        // but the route-level gate must not 403 a manager. The controller
+        // will then do its own validation — any status other than 403
+        // proves the middleware allowed the request through.
+        $response = $this->actingAs($this->userWithRole('tenant_manager'))
+            ->post('/dashboard/numere/sync-statuses');
+        $this->assertNotSame(403, $response->status());
+    }
+
     public function test_super_admin_bypasses_tenant_role_middleware(): void
     {
         $otherTenant = Tenant::create([

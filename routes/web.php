@@ -216,13 +216,16 @@ Route::middleware('auth')->prefix('dashboard/agenti')->group(function () {
     Route::patch('/{bot}/update-field', [BotController::class, 'updateField'])->name('dashboard.bots.updateField');
     Route::post('/{bot}/policy', [BotController::class, 'updatePolicy'])->name('dashboard.bots.updatePolicy');
 
-    // Voice cloning
+    // Voice cloning — ElevenLabs jobs are billable and identity-sensitive
+    // (a cloned voice gets attached to outbound calls). Admin/manager only.
     Route::get('/{bot}/voice-clone', [ClonedVoiceController::class, 'create'])->name('dashboard.bots.voiceClone.create');
-    Route::post('/{bot}/voice-clone', [ClonedVoiceController::class, 'store'])->name('dashboard.bots.voiceClone.store');
-    Route::post('/{bot}/voice-clone/{clonedVoice}/activate', [ClonedVoiceController::class, 'activate'])->name('dashboard.bots.voiceClone.activate');
-    Route::post('/{bot}/voice-clone/deactivate', [ClonedVoiceController::class, 'deactivate'])->name('dashboard.bots.voiceClone.deactivate');
-    Route::delete('/{bot}/voice-clone/{clonedVoice}', [ClonedVoiceController::class, 'destroy'])->name('dashboard.bots.voiceClone.destroy');
     Route::get('/{bot}/voice-clone/{clonedVoice}/status', [ClonedVoiceController::class, 'status'])->name('dashboard.bots.voiceClone.status');
+    Route::middleware('tenant.role:tenant_admin,tenant_manager')->group(function () {
+        Route::post('/{bot}/voice-clone', [ClonedVoiceController::class, 'store'])->name('dashboard.bots.voiceClone.store');
+        Route::post('/{bot}/voice-clone/{clonedVoice}/activate', [ClonedVoiceController::class, 'activate'])->name('dashboard.bots.voiceClone.activate');
+        Route::post('/{bot}/voice-clone/deactivate', [ClonedVoiceController::class, 'deactivate'])->name('dashboard.bots.voiceClone.deactivate');
+        Route::delete('/{bot}/voice-clone/{clonedVoice}', [ClonedVoiceController::class, 'destroy'])->name('dashboard.bots.voiceClone.destroy');
+    });
 });
 
 // Calls routes (dashboard)
@@ -250,11 +253,17 @@ Route::middleware('auth')->prefix('dashboard/analiza')->group(function () {
 Route::middleware('auth')->prefix('dashboard/numere')->group(function () {
     Route::get('/', [PhoneNumberController::class, 'index'])->name('dashboard.numbers.index');
     Route::get('/available', [PhoneNumberController::class, 'availableNumbers'])->name('dashboard.numbers.available');
-    Route::post('/', [PhoneNumberController::class, 'store'])->name('dashboard.numbers.store');
-    Route::put('/{phoneNumber}', [PhoneNumberController::class, 'update'])->name('dashboard.numbers.update');
-    Route::delete('/{phoneNumber}', [PhoneNumberController::class, 'destroy'])->name('dashboard.numbers.destroy');
-    Route::patch('/{phoneNumber}/toggle', [PhoneNumberController::class, 'toggleActive'])->name('dashboard.numbers.toggle');
-    Route::post('/sync-statuses', [PhoneNumberController::class, 'syncStatuses'])->name('dashboard.numbers.syncStatuses');
+
+    // Mutation surface — admin or manager only. Previously a tenant_viewer
+    // could provision numbers (billable Telnyx orders) or toggle/delete the
+    // tenant's telephony inventory.
+    Route::middleware('tenant.role:tenant_admin,tenant_manager')->group(function () {
+        Route::post('/', [PhoneNumberController::class, 'store'])->name('dashboard.numbers.store');
+        Route::put('/{phoneNumber}', [PhoneNumberController::class, 'update'])->name('dashboard.numbers.update');
+        Route::delete('/{phoneNumber}', [PhoneNumberController::class, 'destroy'])->name('dashboard.numbers.destroy');
+        Route::patch('/{phoneNumber}/toggle', [PhoneNumberController::class, 'toggleActive'])->name('dashboard.numbers.toggle');
+        Route::post('/sync-statuses', [PhoneNumberController::class, 'syncStatuses'])->name('dashboard.numbers.syncStatuses');
+    });
 });
 
 // Team routes (dashboard).
@@ -299,24 +308,31 @@ Route::middleware('auth')->prefix('dashboard/setari')->group(function () {
         ->name('dashboard.settings.destroyAccount');
 });
 
-// Channel management routes (dashboard)
+// Channel management routes (dashboard).
+// Channels hold per-integration credentials (webhook tokens, page IDs,
+// API keys). Mutating them lets an attacker redirect inbound traffic or
+// disconnect real channels — manager-level action.
 Route::middleware('auth')->prefix('dashboard/agenti/{bot}/canale')->group(function () {
     Route::get('/', [ChannelController::class, 'index'])->name('dashboard.bots.channels.index');
-    Route::post('/', [ChannelController::class, 'store'])->name('dashboard.bots.channels.store');
-    Route::put('/{channel}', [ChannelController::class, 'update'])->name('dashboard.bots.channels.update');
-    Route::delete('/{channel}', [ChannelController::class, 'destroy'])->name('dashboard.bots.channels.destroy');
-    Route::patch('/{channel}/toggle', [ChannelController::class, 'toggleActive'])->name('dashboard.bots.channels.toggle');
+    Route::middleware('tenant.role:tenant_admin,tenant_manager')->group(function () {
+        Route::post('/', [ChannelController::class, 'store'])->name('dashboard.bots.channels.store');
+        Route::put('/{channel}', [ChannelController::class, 'update'])->name('dashboard.bots.channels.update');
+        Route::delete('/{channel}', [ChannelController::class, 'destroy'])->name('dashboard.bots.channels.destroy');
+        Route::patch('/{channel}/toggle', [ChannelController::class, 'toggleActive'])->name('dashboard.bots.channels.toggle');
+    });
 });
 
 // Site management routes (dashboard)
 Route::middleware('auth')->prefix('dashboard/sites')->group(function () {
     Route::get('/', [SiteController::class, 'index'])->name('dashboard.sites.index');
     Route::get('/new', [SiteController::class, 'create'])->name('dashboard.sites.create');
-    Route::post('/', [SiteController::class, 'store'])->name('dashboard.sites.store');
     Route::get('/{site}', [SiteController::class, 'show'])->name('dashboard.sites.show');
-    Route::put('/{site}', [SiteController::class, 'update'])->name('dashboard.sites.update');
-    Route::delete('/{site}', [SiteController::class, 'destroy'])->name('dashboard.sites.destroy');
-    Route::post('/{site}/verify', [SiteController::class, 'verify'])->name('dashboard.sites.verify');
+    Route::middleware('tenant.role:tenant_admin,tenant_manager')->group(function () {
+        Route::post('/', [SiteController::class, 'store'])->name('dashboard.sites.store');
+        Route::put('/{site}', [SiteController::class, 'update'])->name('dashboard.sites.update');
+        Route::delete('/{site}', [SiteController::class, 'destroy'])->name('dashboard.sites.destroy');
+        Route::post('/{site}/verify', [SiteController::class, 'verify'])->name('dashboard.sites.verify');
+    });
 });
 
 // V2: Leads, Opportunities, Commerce Analytics (dashboard)
@@ -357,13 +373,19 @@ Route::middleware('auth')->prefix('oauth/google')->group(function () {
     Route::post('/disconnect', [\App\Http\Controllers\Auth\GoogleOAuthController::class, 'disconnect'])->name('oauth.google.disconnect');
 });
 
-// Knowledge base routes (dashboard)
+// Knowledge base routes (dashboard).
+// Writes to the knowledge base feed straight into the RAG prompt the
+// agent answers customers with — a malicious viewer could poison answers
+// or wipe the store. Gate writes behind admin/manager; reads stay open
+// to everyone in the tenant.
 Route::middleware('auth')->prefix('dashboard/agenti/{bot}')->group(function () {
     Route::get('/knowledge', [KnowledgeController::class, 'index'])->name('dashboard.bots.knowledge.index');
-    Route::delete('/knowledge/{title}', [KnowledgeController::class, 'destroy'])->name('dashboard.bots.knowledge.destroy');
+    Route::delete('/knowledge/{title}', [KnowledgeController::class, 'destroy'])
+        ->middleware('tenant.role:tenant_admin,tenant_manager')
+        ->name('dashboard.bots.knowledge.destroy');
 
     // Rate-limited mutation routes (10 requests per minute per user)
-    Route::middleware('throttle:10,1')->group(function () {
+    Route::middleware(['throttle:10,1', 'tenant.role:tenant_admin,tenant_manager'])->group(function () {
         Route::post('/knowledge', [KnowledgeController::class, 'store'])->name('dashboard.bots.knowledge.store');
 
         // AI Agents
