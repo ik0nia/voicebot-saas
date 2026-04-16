@@ -19,6 +19,11 @@ Schedule::command('stripe:sync-plans --mode=test')->dailyAt('03:20')->withoutOve
 // Trial reminders + expiration sweep.
 Schedule::command('billing:trial-lifecycle')->dailyAt('08:00')->withoutOverlapping();
 
+// Daily per-tenant + per-bot cost rollup. Runs at 00:05 UTC — 5 min
+// after midnight so the day boundary has fully flushed any late
+// response.done events / status webhooks that arrived at 23:59.
+Schedule::command('costs:rollup')->dailyAt('00:05')->withoutOverlapping();
+
 // Social media: generate posts daily at 07:00
 // PAUSED 2026-04-14: backlog de 306 grupuri draft + texte/imagini cu limbaj vechi.
 // Reactivează după curățarea backlog-ului și după fix logo (image-to-image cu ref).
