@@ -1,7 +1,13 @@
 import { logger } from './logger.js';
-import { decodeTwilioFrameToOpenai } from './audio.js';
 import { connectOpenai } from './openaiBridge.js';
 import { resolveBotContext, reserveStreamSlot, releaseStreamSlot } from './tenantContext.js';
+
+// Audio transcoding was removed on 2026-04-16: OpenAI Realtime now
+// accepts g711_ulaw directly on both input and output, matching
+// Twilio's native format. The bridge passes mulaw bytes through
+// without decoding / resampling / re-encoding. The src/audio.js
+// module is kept in the repo for reference and for any future
+// provider that does need PCM16.
 
 /*
  * Per-connection Twilio Media Stream handler.
@@ -117,7 +123,8 @@ export async function handleTwilioConnection(ws, { config }) {
 
             case 'media':
                 if (!openai) return;
-                openai.sendInputAudio(decodeTwilioFrameToOpenai(msg.media.payload));
+                // Raw mulaw base64 — no transcoding.
+                openai.sendInputAudio(msg.media.payload);
                 break;
 
             case 'dtmf':

@@ -20,6 +20,9 @@ Route::middleware('internal.service')->prefix('internal')->group(function () {
     Route::post('/media-stream/events', [
         \App\Http\Controllers\Internal\MediaStreamEventController::class, 'store'
     ])->name('internal.mediaStream.events');
+    Route::post('/media-stream/session-config', [
+        \App\Http\Controllers\Internal\MediaStreamEventController::class, 'sessionConfig'
+    ])->name('internal.mediaStream.sessionConfig');
 });
 
 // Platform logo upload endpoints. Super-admin only, rate-limited, and the

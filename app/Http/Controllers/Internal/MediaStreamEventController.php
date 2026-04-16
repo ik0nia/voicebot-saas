@@ -29,6 +29,38 @@ use Illuminate\Support\Facades\Log;
  */
 class MediaStreamEventController extends Controller
 {
+    /**
+     * Return the OpenAI session.update payload for a specific call.
+     * The bridge calls this on stream `start` so the session config
+     * (instructions, knowledge-base context, tool list, voice, VAD
+     * settings) comes from the same builder as the web demo — no
+     * drift between voice and phone calls.
+     */
+    public function sessionConfig(Request $request)
+    {
+        $validated = $request->validate([
+            'call_id' => 'required|integer',
+        ]);
+
+        $call = \App\Models\Call::withoutGlobalScopes()->find($validated['call_id']);
+        if (!$call || !$call->bot) {
+            return response()->json(['error' => 'call not found'], 404);
+        }
+
+        // Reuse RealtimeSession's exact session config so telephone
+        // and browser calls behave identically. Null ttsStrategy →
+        // RealtimeSession picks the default (OpenAI integrated voice),
+        // matching the web demo's standard path.
+        $session = new \App\Services\RealtimeSession($call->bot, $call, null);
+        $payload = $session->getSessionConfig();
+
+        return response()->json([
+            'session_update' => $payload,
+            'greeting' => $call->bot->greeting_message,
+            'language' => $call->bot->language ?: 'ro',
+        ]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
