@@ -1,0 +1,68 @@
+# Coolify-ready Compose definition for the Sambla media-stream bridge.
+#
+# Drop this into a new Coolify application (Type: Docker Compose) and
+# point the build context at this directory. Environment variables
+# live in Coolify's UI — populate them from the checklist below; they
+# are NOT committed to git.
+#
+# The bridge is stateless per process. Scale horizontally by bumping
+# `replicas` and keeping Traefik sticky sessions (ms_backend cookie)
+# so a WebSocket reconnect lands on the same backend that owns the
+# call.
+
+services:
+  media-stream:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    # deploy.replicas is only honoured by Swarm; Coolify's own UI
+    # handles replicas outside Compose. Pin a single logical process
+    # here and let the orchestrator fan out.
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://127.0.0.1:8080/health"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    environment:
+      # ── Required ─────────────────────────────────────────────────
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+
+      # ── Service-to-service auth (must match Laravel .env) ───────
+      LARAVEL_EVENTS_URL: ${LARAVEL_EVENTS_URL}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN}
+
+      # ── Optional (defaults shown) ───────────────────────────────
+      PORT: "8080"
+      REDIS_URL: ${REDIS_URL:-redis://127.0.0.1:6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      OPENAI_REALTIME_MODEL: ${OPENAI_REALTIME_MODEL:-gpt-4o-realtime-preview-2024-12-17}
+      MAX_STREAMS_PER_TENANT: ${MAX_STREAMS_PER_TENANT:-10}
+      BOT_CONFIG_CACHE_TTL: ${BOT_CONFIG_CACHE_TTL:-3600}
+      OPENAI_FIRST_FRAME_TIMEOUT_MS: ${OPENAI_FIRST_FRAME_TIMEOUT_MS:-8000}
+      LARAVEL_SINK_BATCH: ${LARAVEL_SINK_BATCH:-20}
+      LARAVEL_SINK_FLUSH_MS: ${LARAVEL_SINK_FLUSH_MS:-2000}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    expose:
+      - "8080"
+    labels:
+      # Traefik picks this container up on the sambla.ro host for the
+      # /ws/media-stream path. Sticky cookie keeps a single WebSocket
+      # lifetime on one replica.
+      - "traefik.enable=true"
+      - "traefik.http.routers.media-stream.rule=Host(`sambla.ro`) && PathPrefix(`/ws/media-stream`)"
+      - "traefik.http.routers.media-stream.entrypoints=websecure"
+      - "traefik.http.routers.media-stream.tls=true"
+      - "traefik.http.routers.media-stream.tls.certresolver=letsencrypt"
+      - "traefik.http.services.media-stream.loadbalancer.server.port=8080"
+      - "traefik.http.services.media-stream.loadbalancer.sticky=true"
+      - "traefik.http.services.media-stream.loadbalancer.sticky.cookie.name=ms_backend"
+      - "traefik.http.services.media-stream.loadbalancer.sticky.cookie.httpOnly=true"
+      - "traefik.http.services.media-stream.loadbalancer.sticky.cookie.secure=true"
+      - "traefik.http.services.media-stream.loadbalancer.sticky.cookie.sameSite=none"
