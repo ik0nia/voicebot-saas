@@ -182,6 +182,26 @@ class Sambla_Product_Sync {
             }
         }
 
+        // Unit of measure — most WP themes / plugins stash it in a
+        // product meta. We probe the keys we've seen in the wild,
+        // in order of specificity. First hit wins; NULL if none set.
+        // Extend the list when a new theme / plugin shows up.
+        $price_unit = null;
+        $unit_meta_keys = [
+            'woodmart_price_unit_of_measure',  // Woodmart theme (malinco.ro)
+            '_price_unit',
+            '_unit_of_measure',
+            '_sale_unit',
+            '_wc_measurement_unit',
+        ];
+        foreach ($unit_meta_keys as $key) {
+            $val = $product->get_meta($key, true);
+            if (is_string($val) && trim($val) !== '') {
+                $price_unit = trim($val);
+                break;
+            }
+        }
+
         return [
             'wc_product_id' => $product->get_id(),
             'name' => $product->get_name(),
@@ -198,6 +218,7 @@ class Sambla_Product_Sync {
             'category_ids' => $cat_ids,
             'attributes' => $attrs,
             'permalink' => $product->get_permalink(),
+            'price_unit' => $price_unit,
         ];
     }
 }

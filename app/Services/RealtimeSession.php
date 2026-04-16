@@ -190,7 +190,8 @@ class RealtimeSession
                     if (!empty($popular)) {
                         $base .= "\n\nProduse populare din magazin:\n";
                         foreach ($popular as $p) {
-                            $base .= "- {$p->name}: {$p->price} {$p->currency}\n";
+                            $unit = $p->price_unit ? " / {$p->price_unit}" : '';
+                            $base .= "- {$p->name}: {$p->price} {$p->currency}{$unit}\n";
                         }
                     }
                 } catch (\Throwable $e) {
@@ -589,7 +590,8 @@ class RealtimeSession
                                 $foundProducts = true;
                                 $context .= "\n\nProduse găsite relevant pentru cererea clientului:\n";
                                 foreach ($products as $p) {
-                                    $line = "- {$p->name}: {$p->price} {$p->currency}";
+                                    $unit = $p->price_unit ? " / {$p->price_unit}" : '';
+                                    $line = "- {$p->name}: {$p->price} {$p->currency}{$unit}";
                                     if ($p->sale_price && $p->regular_price && $p->sale_price < $p->regular_price) {
                                         $line .= " (redus de la {$p->regular_price} {$p->currency})";
                                     }

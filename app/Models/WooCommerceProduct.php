@@ -20,6 +20,10 @@ class WooCommerceProduct extends Model
         'regular_price',
         'sale_price',
         'currency',
+        // Unit of measure — populated from Woodmart meta
+        // `woodmart_price_unit_of_measure` on sync (bax / kg / m² / buc).
+        // Nullable when the WP theme doesn't expose one.
+        'price_unit',
         'sku',
         'stock_status',
         'image_url',

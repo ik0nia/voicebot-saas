@@ -174,6 +174,7 @@ class IntegrationApiController extends Controller
             'products.*.category_ids.*' => 'integer',
             'products.*.attributes' => 'nullable|array',
             'products.*.permalink' => 'required|url|max:2000',
+            'products.*.price_unit' => 'nullable|string|max:40',
             'site_url' => 'required|url|max:500',
             'deleted_ids' => 'nullable|array',
             'deleted_ids.*' => 'integer',
@@ -214,6 +215,7 @@ class IntegrationApiController extends Controller
                     'permalink' => $productData['permalink'],
                     'categories' => $productData['categories'] ?? null,
                     'attributes' => $productData['attributes'] ?? null,
+                    'price_unit' => $productData['price_unit'] ?? null,
                     'site_url' => $siteUrl,
                 ]
             );
