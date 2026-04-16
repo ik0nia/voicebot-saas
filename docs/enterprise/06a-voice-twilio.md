@@ -14,14 +14,18 @@ order approval lifecycle — numbers go live the moment the API returns
 2xx. Both webhook routes are guarded by `VerifyTwilioSignature`
 (HMAC-SHA1 over URL + sorted POST params keyed with the Auth Token).
 
-**Critical gap** — same as Telnyx, inherited by this provider: the
-`wss://{host}/ws/media-stream` WebSocket bridge is not in this repo
-yet. OpenAI publishes a reference implementation
-(`openai/openai-realtime-twilio-demo`) that is ~80% of what we need;
-the remaining work is per-tenant `streamSid → bot_id` routing, token
-accounting, and transcript persistence. Without it, inbound calls
-answer, play the `<Say>` greeting, and then go silent after
-`<Connect><Stream>`. This is the top item on the migration roadmap.
+Inbound calls reach the media-stream bridge at
+`services/media-stream/` — a Node.js service deployed as a separate
+container. It answers the WebSocket at `wss://sambla.ro/ws/media-stream`,
+resolves the bot context from Postgres/Redis via the custom
+parameters Twilio sends on the `start` event, opens a parallel WS to
+OpenAI Realtime, transcodes audio (mulaw 8k ↔ PCM16 24k), and handles
+barge-in / DTMF / call teardown. See
+`services/media-stream/README.md` for the deployment model, env vars,
+and observability hooks. **Follow-up work**: transcript persistence
+back into the `transcripts` table, cost tracking per
+`response.done.usage` → `credit_transactions`, DTMF-to-agent
+plumbing.
 
 Relevant files:
 

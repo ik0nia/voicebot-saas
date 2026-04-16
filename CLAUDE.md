@@ -37,7 +37,7 @@ Multi-tenant SaaS platform for AI-powered voice bots. Businesses can create, con
 1. **Tenant Management** – registration, onboarding wizard, settings, trial lifecycle (reminder + expiry)
 2. **Voice Bot Builder** – prompt configuration, personality, knowledge base, A/B prompt variants
 3. **Phone Numbers** – Twilio number provisioning per tenant (inbound + outbound); Telnyx numbers kept active via dual-provider support in `TelephonyManager::forNumber()` until cutover
-4. **Call Handling** – Twilio webhooks at `/webhook/twilio/{voice,status}` (X-Twilio-Signature HMAC-SHA1 verified); Telnyx webhooks at `/webhook/telnyx/*` (ed25519 + timestamp replay window, iter 10) still live for pre-migration numbers. OpenAI Realtime session handler exists in PHP, **but the `wss://host/ws/media-stream` WebSocket bridge (Twilio Media Streams ↔ OpenAI Realtime: mulaw 8k ↔ PCM16 24k, barge-in, DTMF) is NOT in this repo yet** — see `ROADMAP.md`
+4. **Call Handling** – Twilio webhooks at `/webhook/twilio/{voice,status}` (X-Twilio-Signature HMAC-SHA1 + CallSid idempotency + state machine, iter 18); Telnyx webhooks at `/webhook/telnyx/*` (ed25519 + timestamp replay window, iter 10) still live for pre-migration numbers. Media stream bridge at `services/media-stream/` (Node.js, deployed as a separate container) accepts Twilio WebSocket at `wss://host/ws/media-stream`, transcodes audio (mulaw 8k ↔ PCM16 24k), bridges to OpenAI Realtime, handles barge-in / DTMF. Stateless — resolves bot config from Postgres + Redis on stream start.
 5. **Knowledge Base** – document upload, pgvector embeddings with HNSW + FTS (hybrid RAG with RRF + sibling chunks), re-embed on change
 6. **Chat / Messaging** – web chatbot widget (embeddable), SSE streaming endpoint, per-channel config
 7. **Channels** – WhatsApp / Facebook / Instagram inbound webhooks with HMAC signature verification (outbound send paths partial)
@@ -54,7 +54,8 @@ Multi-tenant SaaS platform for AI-powered voice bots. Businesses can create, con
 - `nginx` - Web server with WebSocket proxy
 - `queue` - Laravel queue worker (Redis)
 - `scheduler` - Laravel task scheduler
-- `reverb` - WebSocket server (Laravel Reverb)
+- `reverb` - WebSocket server (Laravel Reverb, dashboard realtime events)
+- `media-stream` - Node.js Twilio ↔ OpenAI Realtime bridge (separate container, `services/media-stream/`)
 
 ## Commands
 - `composer install` - Install PHP dependencies

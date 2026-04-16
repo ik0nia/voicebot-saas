@@ -1,0 +1,20 @@
+{
+  "name": "sambla-media-stream",
+  "version": "1.0.0",
+  "description": "WebSocket bridge between Twilio Media Streams and OpenAI Realtime API. Each Twilio inbound call lands on wss://host/ws/media-stream; this service resolves the call's bot context, opens a parallel WS to OpenAI Realtime, transcodes audio (Twilio mulaw 8kHz ↔ OpenAI PCM16 24kHz), and handles barge-in / DTMF / call teardown.",
+  "private": true,
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "ws": "^8.18.0",
+    "ioredis": "^5.4.1",
+    "pg": "^8.13.0"
+  }
+}
