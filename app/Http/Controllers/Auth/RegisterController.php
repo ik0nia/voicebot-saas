@@ -74,6 +74,17 @@ class RegisterController extends Controller
         // 5. Login the user
         Auth::login($user);
 
+        // Analytics: flash sign_up + tenant_created so the next page's
+        // dataLayer picks them up. GA4 maps to the sign_up recommended
+        // event; Meta + Google Ads use Lead / CompleteRegistration.
+        app(\App\Services\Analytics\AnalyticsTracker::class)->flash('sign_up', [
+            'method' => 'email',
+            'tenant_id' => $user->tenant_id,
+        ]);
+        app(\App\Services\Analytics\AnalyticsTracker::class)->flash('tenant_created', [
+            'tenant_id' => $user->tenant_id,
+        ]);
+
         // 6. Redirect to setup wizard (new users) or dashboard (existing)
         return redirect('/dashboard/setup');
     }

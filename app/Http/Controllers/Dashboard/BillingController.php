@@ -17,9 +17,57 @@ class BillingController extends Controller
         private PlanLimitService $planLimitService,
     ) {}
 
-    public function index()
+    public function index(Request $request)
     {
         $tenant = auth()->user()->tenant;
+
+        // Analytics: Stripe sends users back to this page with
+        // ?subscribed=1 or ?topup=ok after a successful checkout.
+        // The flash-events partial emits the purchase event on the
+        // very next render. transaction_id uses the latest Stripe
+        // subscription/invoice row so GA4 dedupes + attributes.
+        if ($tenant) {
+            if ($request->boolean('subscribed')) {
+                $sub = $tenant->subscriptions()->latest()->first();
+                $plan = Plan::where('stripe_price_id_monthly_live', $sub?->stripe_price)
+                    ->orWhere('stripe_price_id_monthly_test', $sub?->stripe_price)
+                    ->orWhere('stripe_price_id_yearly_live', $sub?->stripe_price)
+                    ->orWhere('stripe_price_id_yearly_test', $sub?->stripe_price)
+                    ->first();
+                $isYearly = $sub && in_array($sub->stripe_price, [
+                    $plan?->stripe_price_id_yearly_live,
+                    $plan?->stripe_price_id_yearly_test,
+                ], true);
+                $value = (float) ($isYearly ? ($plan?->price_yearly ?? 0) : ($plan?->price_monthly ?? 0));
+                app(\App\Services\Analytics\AnalyticsTracker::class)->flash('purchase', [
+                    'transaction_id' => $sub?->stripe_id ?: ('sub_' . time()),
+                    'currency'       => 'RON',
+                    'value'          => $value,
+                    'items'          => $plan ? [[
+                        'item_id'       => (string) $plan->slug,
+                        'item_name'     => $plan->name,
+                        'price'         => $value,
+                        'item_category' => $isYearly ? 'yearly' : 'monthly',
+                        'quantity'      => 1,
+                    ]] : [],
+                ]);
+            } elseif ($request->boolean('topup') || $request->get('topup') === 'ok') {
+                $latest = CreditPurchase::where('tenant_id', $tenant->id)->latest()->first();
+                if ($latest) {
+                    app(\App\Services\Analytics\AnalyticsTracker::class)->flash('purchase', [
+                        'transaction_id' => 'topup_' . $latest->id,
+                        'currency'       => 'RON',
+                        'value'          => (float) ($latest->amount_cents ?? 0) / 100,
+                        'items'          => [[
+                            'item_id'       => 'topup',
+                            'item_name'     => 'Credit top-up',
+                            'price'         => (float) ($latest->amount_cents ?? 0) / 100,
+                            'quantity'      => 1,
+                        ]],
+                    ]);
+                }
+            }
+        }
 
         if (!$tenant) {
             return view('dashboard.billing.index', [
@@ -107,6 +155,11 @@ class BillingController extends Controller
 
         $checkout = $tenant->newSubscription('default', $priceId)->checkout($sessionOptions);
 
+        // Note: begin_checkout / select_item fire client-side on the
+        // "Subscribe" button click (data-analytics-event wiring on the
+        // plan card), not here — server-side flash would be lost the
+        // moment we redirect to stripe.com, since the user leaves our
+        // domain before any page renders the event.
         return redirect($checkout->url);
     }
 

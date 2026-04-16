@@ -19,6 +19,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
     @include('partials.analytics.head')
+    @include('partials.analytics.flash-events')
 </head>
 <body class="bg-slate-50 font-sans antialiased">
     @include('partials.analytics.body')

@@ -434,7 +434,36 @@
 
 @push('scripts')
 <script>
+    // GA4 ecommerce — fire view_item_list when the pricing grid
+    // renders, plus select_item on any plan CTA click. Falls back
+    // to a silent no-op if GTM isn't loaded yet (consent denied).
     document.addEventListener('DOMContentLoaded', function () {
+        window.dataLayer = window.dataLayer || [];
+
+        window.dataLayer.push({
+            event: 'view_item_list',
+            item_list_name: 'pachete',
+            items: [
+                { item_id: 'chat-starter',      item_name: 'Chat Starter',      price: 29,  item_category: 'monthly', quantity: 1 },
+                { item_id: 'chat-professional', item_name: 'Chat Professional', price: 79,  item_category: 'monthly', quantity: 1 },
+                { item_id: 'chat-business',     item_name: 'Chat Business',     price: 199, item_category: 'monthly', quantity: 1 },
+            ],
+        });
+
+        // Click handler on any anchor with data-analytics-plan —
+        // treats it as select_item + begin_checkout in one shot,
+        // since clicking a plan CTA sends us straight to Stripe.
+        document.querySelectorAll('[data-analytics-plan]').forEach(function (el) {
+            el.addEventListener('click', function () {
+                var planId   = el.getAttribute('data-analytics-plan');
+                var planName = el.getAttribute('data-analytics-plan-name') || planId;
+                var price    = parseFloat(el.getAttribute('data-analytics-price') || '0');
+                var interval = el.getAttribute('data-analytics-interval') || 'monthly';
+                var item = { item_id: planId, item_name: planName, price: price, item_category: interval, quantity: 1 };
+                window.dataLayer.push({ event: 'select_item', item_list_name: 'pachete', items: [item] });
+                window.dataLayer.push({ event: 'begin_checkout', currency: 'RON', value: price, items: [item] });
+            });
+        });
 
         // Billing toggle
         var toggle = document.getElementById('billing-toggle');

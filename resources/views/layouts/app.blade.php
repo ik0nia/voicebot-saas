@@ -29,6 +29,7 @@
          fire as early as possible, before any tag can attempt
          storage access. --}}
     @include('partials.analytics.head')
+    @include('partials.analytics.flash-events')
 
     @yield('jsonld')
 

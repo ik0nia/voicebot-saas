@@ -11,6 +11,7 @@
     @stack('styles')
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
     @include('partials.analytics.head')
+    @include('partials.analytics.flash-events')
 </head>
 <body class="bg-slate-50 font-sans antialiased">
     @include('partials.analytics.body')

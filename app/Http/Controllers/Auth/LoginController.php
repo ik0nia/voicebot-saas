@@ -30,6 +30,10 @@ class LoginController extends Controller
                 'last_login_at' => now(),
             ]);
 
+            app(\App\Services\Analytics\AnalyticsTracker::class)->flash('login', [
+                'method' => 'email',
+            ]);
+
             return redirect('/dashboard');
         }
 
