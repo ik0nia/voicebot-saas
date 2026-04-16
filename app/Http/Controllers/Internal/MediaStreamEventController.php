@@ -107,24 +107,77 @@ class MediaStreamEventController extends Controller
             $call->update(['metadata' => $metadata]);
         });
 
-        // Credit consumption — rough per-call accounting. Refined
-        // per-minute math lands once we can reconcile against OpenAI's
-        // live invoice pricing. For now: audio seconds ≈
-        // (input_audio_tokens + output_audio_tokens) / 100, because
-        // OpenAI Realtime encodes ~100 audio tokens per second at
-        // 24kHz. Emits a CreditConsumption row keyed on the call id.
+        // Cost + consumption. Two outputs:
+        //
+        //   1. CreditConsumption (unit=call_seconds) — the granular
+        //      event stream the billing layer consumes to compute
+        //      period totals.
+        //   2. calls.cost_cents — the legacy flat sum per call row,
+        //      used by admin reports + per-call UI display.
+        //
+        // Cost formula: audio seconds ≈
+        //   (input_audio_tokens + output_audio_tokens) / 100
+        // (OpenAI Realtime encodes ~100 audio tokens per second at
+        // 24kHz PCM16), then seconds × platform-configured cents-per-
+        // second. ElevenLabs-voiced calls cost more than OpenAI
+        // default voices; the per-voice rate lookup matches the pre-
+        // Twilio flow so existing per-bot pricing overrides still
+        // apply.
         $audioInputTokens = (int) ($usage['input_token_details']['audio_tokens'] ?? 0);
         $audioOutputTokens = (int) ($usage['output_token_details']['audio_tokens'] ?? 0);
         $estimatedSeconds = (int) round(($audioInputTokens + $audioOutputTokens) / 100);
-        if ($estimatedSeconds > 0) {
-            CreditConsumption::create([
-                'tenant_id' => $call->tenant_id,
-                'unit' => 'call_seconds',
-                'quantity' => $estimatedSeconds,
-                'source' => 'media-stream',
-                'reference_id' => (string) $call->id,
-            ]);
+
+        if ($estimatedSeconds <= 0) {
+            return;
         }
+
+        CreditConsumption::create([
+            'tenant_id' => $call->tenant_id,
+            'unit' => 'call_seconds',
+            'quantity' => $estimatedSeconds,
+            'source' => 'media-stream',
+            'reference_id' => (string) $call->id,
+        ]);
+
+        // Compute cents for this response.done batch and accumulate
+        // onto calls.cost_cents. Multiple response.done events per call
+        // are normal (multi-turn conversation) — each adds its own
+        // delta so the final cost is the sum.
+        $centsPerSecond = $this->centsPerSecondFor($call);
+        $deltaCents = (int) round($estimatedSeconds * $centsPerSecond);
+        if ($deltaCents > 0) {
+            DB::transaction(function () use ($call, $deltaCents) {
+                $call->refresh();
+                $call->update([
+                    'cost_cents' => ((int) $call->cost_cents) + $deltaCents,
+                ]);
+            });
+        }
+    }
+
+    /**
+     * Cost per audio-second in cents, driven by PlatformSetting with
+     * a 1¢ default so an unconfigured platform still emits non-zero
+     * costs (helpful for early telemetry). ElevenLabs voices have a
+     * higher rate; we infer that from the bot's cloned_voice
+     * attachment — bot-level setting beats platform default.
+     */
+    private function centsPerSecondFor(Call $call): float
+    {
+        $defaultCents = (float) \App\Models\PlatformSetting::get('voice_cost_per_second_cents', 1);
+
+        if (!$call->bot_id) {
+            return $defaultCents;
+        }
+
+        $bot = \App\Models\Bot::withoutGlobalScopes()->find($call->bot_id);
+        if ($bot && $bot->cloned_voice_id) {
+            return (float) \App\Models\PlatformSetting::get(
+                'voice_cost_per_second_cents_elevenlabs',
+                $defaultCents * 1.35,
+            );
+        }
+        return $defaultCents;
     }
 
     /**
