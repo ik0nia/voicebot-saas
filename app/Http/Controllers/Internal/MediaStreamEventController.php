@@ -54,6 +54,21 @@ class MediaStreamEventController extends Controller
         $session = new \App\Services\RealtimeSession($call->bot, $call, null);
         $payload = $session->getSessionConfig();
 
+        // bots.settings is jsonb and numeric values (temperature,
+        // max_tokens) can come back as strings depending on the pg
+        // driver. OpenAI Realtime's validator rejects the entire
+        // session.update if any type is wrong. Coerce every numeric
+        // field defensively before we ship it out.
+        if (isset($payload['session'])) {
+            $s = &$payload['session'];
+            if (isset($s['temperature']))                  $s['temperature'] = (float) $s['temperature'];
+            if (isset($s['max_response_output_tokens']))   $s['max_response_output_tokens'] = (int) $s['max_response_output_tokens'];
+            if (isset($s['turn_detection']['threshold']))  $s['turn_detection']['threshold'] = (float) $s['turn_detection']['threshold'];
+            if (isset($s['turn_detection']['prefix_padding_ms']))  $s['turn_detection']['prefix_padding_ms'] = (int) $s['turn_detection']['prefix_padding_ms'];
+            if (isset($s['turn_detection']['silence_duration_ms'])) $s['turn_detection']['silence_duration_ms'] = (int) $s['turn_detection']['silence_duration_ms'];
+            unset($s);
+        }
+
         return response()->json([
             'session_update' => $payload,
             'greeting' => $call->bot->greeting_message,

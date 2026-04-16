@@ -31,19 +31,27 @@ class LaravelSink {
             logger.warn({}, 'LARAVEL_EVENTS_URL / INTERNAL_SERVICE_TOKEN not set — transcript + usage events will be dropped');
             this.disabled = true;
         } else {
+            // NOT unref'd — the timer needs to keep firing for the
+            // whole process lifetime so queued events always reach
+            // Laravel. unref() would let the loop exit between calls
+            // if nothing else holds it open.
             this.timer = setInterval(() => this.flush(), this.flushIntervalMs);
-            this.timer.unref();
+            logger.info({ endpoint: this.endpoint, batchSize: this.batchSize, flushMs: this.flushIntervalMs }, 'Laravel sink initialized');
         }
     }
 
     push(event) {
-        if (this.disabled) return;
+        if (this.disabled) {
+            logger.warn({ reason: 'disabled' }, 'Laravel sink push dropped');
+            return;
+        }
         if (this.queue.length >= MAX_QUEUE_LEN) {
             // Back-pressure: drop oldest rather than OOM the process.
             logger.warn({ queueLen: this.queue.length }, 'Laravel sink queue full — dropping oldest');
             this.queue.shift();
         }
         this.queue.push(event);
+        logger.debug({ type: event.type, queueLen: this.queue.length }, 'Laravel sink push');
         if (this.queue.length >= this.batchSize) {
             // Fire-and-forget flush to avoid blocking audio path.
             this.flush();
@@ -63,20 +71,19 @@ class LaravelSink {
                     'Accept': 'application/json',
                 },
                 body: JSON.stringify({ events: batch }),
-                // Short timeout — audio path must not stall on this.
                 signal: AbortSignal.timeout(5000),
             });
             if (!res.ok) {
                 const body = await res.text().catch(() => '');
-                logger.warn({ status: res.status, body: body.slice(0, 200) }, 'Laravel sink rejected batch');
-                // On transient 5xx, re-queue the batch. On 4xx (probably
-                // our bug), drop it — retrying won't help.
+                logger.warn({ status: res.status, body: body.slice(0, 200), batchSize: batch.length }, 'Laravel sink rejected batch');
                 if (res.status >= 500) {
                     this.queue.unshift(...batch);
                 }
+            } else {
+                logger.info({ status: res.status, batchSize: batch.length }, 'Laravel sink batch accepted');
             }
         } catch (err) {
-            logger.warn({ err: err.message }, 'Laravel sink POST failed, re-queuing');
+            logger.warn({ err: err.message, batchSize: batch.length }, 'Laravel sink POST failed, re-queuing');
             this.queue.unshift(...batch);
         } finally {
             this.flushing = false;

@@ -255,7 +255,10 @@ export function connectOpenai(botCtx, twilioSink, config, callMeta = {}) {
 
     ws.on('close', (code, reason) => {
         clearTimeout(firstFrameTimer);
-        logger.info({ code, reason: reason.toString(), botId: botCtx.botId }, 'OpenAI socket closed');
+        logger.info({ code, reason: reason.toString(), botId: botCtx.botId, callId }, 'OpenAI socket closed');
+        // Force-flush pending transcript + usage events so they don't
+        // sit in the sink's in-memory queue past call end.
+        sink.flush().catch(() => {});
         twilioSink(null, { type: 'upstream_closed' });
     });
 
