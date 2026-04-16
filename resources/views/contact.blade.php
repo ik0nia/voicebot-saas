@@ -46,8 +46,26 @@
                         </div>
                     </div>
 
-                    <form id="contact-form" action="/contact" method="POST">
+                    @if(session('contact_success'))
+                        <div class="mb-8 p-6 bg-emerald-50 border border-emerald-200 rounded-xl">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-6 h-6 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <p class="text-emerald-800 font-medium">Mulțumim! Mesajul a fost trimis. Îți răspundem în scurt timp.</p>
+                            </div>
+                        </div>
+                    @endif
+                    @if($errors->any())
+                        <div class="mb-8 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-800">
+                            @foreach($errors->all() as $err)<p>{{ $err }}</p>@endforeach
+                        </div>
+                    @endif
+                    <form id="contact-form" action="{{ route('contact.store') }}" method="POST">
                         @csrf
+                        {{-- Honeypot — real users leave it blank. --}}
+                        <input type="text" name="website" tabindex="-1" autocomplete="off" class="hidden" aria-hidden="true">
+                        <input type="hidden" name="source" value="contact_form">
                         <div class="grid sm:grid-cols-2 gap-6 mb-6">
                             {{-- Nume --}}
                             <div>
@@ -453,18 +471,19 @@
         var form = document.getElementById('contact-form');
         var success = document.getElementById('contact-success');
 
+        // Let the form POST for real — the controller saves the
+        // message, emails support, flashes generate_lead, and
+        // redirects back with session('contact_success'). The
+        // Blade block above renders the success message on return.
+        // We keep only client-side dataLayer signals pre-submit so
+        // GA4 / Meta can attribute the intent.
         if (form) {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-
-                if (!form.checkValidity()) {
-                    form.reportValidity();
-                    return;
-                }
-
-                form.style.display = 'none';
-                success.classList.remove('hidden');
-                success.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            form.addEventListener('submit', function() {
+                window.dataLayer = window.dataLayer || [];
+                window.dataLayer.push({
+                    event: 'form_submit',
+                    form_name: 'contact',
+                });
             });
         }
     })();

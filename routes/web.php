@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\ConsentController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\Dashboard\AnalyticsController;
 use App\Http\Controllers\Dashboard\BillingController;
 use App\Http\Controllers\Dashboard\BotController;
@@ -49,6 +50,13 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->midd
 Route::post('/consent', [ConsentController::class, 'store'])
     ->middleware('throttle:20,1')
     ->name('consent.store');
+
+// Public contact form — saves to contact_messages, notifies
+// support, fires generate_lead in the analytics stack. Throttled
+// to stop form-spam bots from flooding the support inbox.
+Route::post('/contact', [ContactController::class, 'store'])
+    ->middleware('throttle:5,1')
+    ->name('contact.store');
 
 // Email verification
 Route::middleware('auth')->group(function () {
@@ -509,6 +517,12 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
     // Costs & Profitability (daily rollup viewer + ad-hoc re-aggregate)
     Route::get('costuri', [\App\Http\Controllers\Admin\AdminCostReportController::class, 'index'])->name('admin.costs.index');
     Route::post('costuri/reaggregate', [\App\Http\Controllers\Admin\AdminCostReportController::class, 'reaggregate'])->name('admin.costs.reaggregate');
+
+    // SaaS lead inbox (contact form + niche landing unified)
+    Route::get('lead-uri', [\App\Http\Controllers\Admin\AdminLeadController::class, 'index'])->name('admin.leads.index');
+    Route::get('lead-uri/{lead}', [\App\Http\Controllers\Admin\AdminLeadController::class, 'show'])->name('admin.leads.show');
+    Route::post('lead-uri/{lead}/status', [\App\Http\Controllers\Admin\AdminLeadController::class, 'updateStatus'])->name('admin.leads.updateStatus');
+    Route::post('lead-uri/{lead}/reply', [\App\Http\Controllers\Admin\AdminLeadController::class, 'reply'])->name('admin.leads.reply');
 
     // Marketing & Analytics platform settings
     Route::put('/setari/marketing', [AdminSettingsController::class, 'updateMarketing'])->name('admin.settings.updateMarketing');

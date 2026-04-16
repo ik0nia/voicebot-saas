@@ -2,10 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ContactMessage;
 use App\Models\Niche;
 use App\Models\NicheLead;
+use App\Models\PlatformSetting;
+use App\Notifications\ContactMessageReceived;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 
 class NicheLandingController extends Controller
 {
@@ -27,7 +32,7 @@ class NicheLandingController extends Controller
             'source_url' => ['nullable', 'string', 'max:500'],
         ]);
 
-        NicheLead::create([
+        $lead = NicheLead::create([
             'niche_id' => $niche->id,
             'name' => $data['name'],
             'business_name' => $data['website_url'] ?? null,
@@ -36,6 +41,42 @@ class NicheLandingController extends Controller
             'message' => $data['message'] ?? null,
             'source_url' => $data['source_url'] ?? $request->fullUrl(),
             'ip' => $request->ip(),
+        ]);
+
+        // Mirror into the unified contact_messages inbox so the
+        // admin sees every SaaS lead (contact + niche) in one
+        // place + the support email fires regardless of source.
+        $attribution = $request->session()->get('attribution_last', $request->session()->get('attribution_first', []));
+        $mirror = ContactMessage::create([
+            'name'       => $data['name'],
+            'email'      => $data['email'],
+            'phone'      => $data['phone'],
+            'company'    => $data['website_url'] ?? null,
+            'subject'    => 'Cerere demo — ' . $niche->name,
+            'message'    => $data['message'] ?? ('Cerere demo pentru nișa: ' . $niche->name),
+            'source'     => 'niche_landing',
+            'source_url' => $data['source_url'] ?? $request->fullUrl(),
+            'utm_source'   => $attribution['utm_source']   ?? null,
+            'utm_medium'   => $attribution['utm_medium']   ?? null,
+            'utm_campaign' => $attribution['utm_campaign'] ?? null,
+            'gclid'        => $attribution['gclid']        ?? null,
+            'fbclid'       => $attribution['fbclid']       ?? null,
+            'ip'         => $request->ip(),
+            'user_agent' => mb_substr((string) $request->userAgent(), 0, 2000),
+        ]);
+
+        $supportEmail = PlatformSetting::get('support_email') ?: 'servus@sambla.ro';
+        try {
+            Notification::route('mail', $supportEmail)->notify(new ContactMessageReceived($mirror));
+        } catch (\Throwable $e) {
+            Log::warning('NicheLandingController: notification failed', ['err' => $e->getMessage()]);
+        }
+
+        app(\App\Services\Analytics\AnalyticsTracker::class)->flash('generate_lead', [
+            'lead_source' => 'niche_landing',
+            'niche'       => $niche->slug,
+            'value'       => 80,
+            'currency'    => 'EUR',
         ]);
 
         return back()
