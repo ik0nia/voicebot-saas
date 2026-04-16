@@ -38,7 +38,9 @@ class AuthTest extends TestCase
             'password_confirmation' => 'password',
         ]);
 
-        $response->assertRedirect('/dashboard');
+        // Registration now routes fresh tenants into the onboarding
+        // wizard at /dashboard/setup instead of straight to /dashboard.
+        $response->assertRedirect('/dashboard/setup');
         $this->assertDatabaseHas('users', ['email' => 'test@example.com']);
         $this->assertDatabaseCount('tenants', 1);
     }

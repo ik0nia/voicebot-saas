@@ -60,6 +60,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'super_admin' => \App\Http\Middleware\EnsureSuperAdmin::class,
             'plan.limit' => \App\Http\Middleware\CheckPlanLimits::class,
             'chatbot.domain' => \App\Http\Middleware\VerifyChatbotDomain::class,
+            // Sanctum's token-ability guards — wired up in iter 7 on the
+            // v1 API routes but the alias was never registered, so every
+            // request to /api/v1/... 500'd in CI with "Target class
+            // [abilities] does not exist" and all of ApiTest went red.
+            'abilities' => \Laravel\Sanctum\Http\Middleware\CheckAbilities::class,
+            'ability' => \Laravel\Sanctum\Http\Middleware\CheckForAnyAbility::class,
         ]);
 
         // Stripe sends webhook POSTs without our CSRF token; Cashier's

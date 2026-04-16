@@ -6,6 +6,7 @@ use App\Models\Bot;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class BotTest extends TestCase
@@ -19,20 +20,27 @@ class BotTest extends TestCase
     {
         parent::setUp();
 
+        // Iter 12 wired BotPolicy — create/update/delete require
+        // tenant_admin or tenant_manager, so the test user needs a role.
+        foreach (['tenant_admin', 'tenant_manager', 'tenant_viewer'] as $role) {
+            Role::findOrCreate($role, 'web');
+        }
+
         $this->tenant = Tenant::factory()->create();
         $this->user = User::factory()->create(['tenant_id' => $this->tenant->id]);
+        $this->user->assignRole('tenant_admin');
     }
 
     public function test_bot_list_page_loads_for_authenticated_user(): void
     {
-        $response = $this->actingAs($this->user)->get('/dashboard/boti');
+        $response = $this->actingAs($this->user)->get('/dashboard/agenti');
 
         $response->assertStatus(200);
     }
 
     public function test_can_create_bot(): void
     {
-        $response = $this->actingAs($this->user)->post('/dashboard/boti', [
+        $response = $this->actingAs($this->user)->post('/dashboard/agenti', [
             'name' => 'My Test Bot',
             'system_prompt' => 'Ești un asistent vocal de test.',
             'voice' => 'alloy',
@@ -50,7 +58,7 @@ class BotTest extends TestCase
     {
         $bot = Bot::factory()->create(['tenant_id' => $this->tenant->id]);
 
-        $response = $this->actingAs($this->user)->put("/dashboard/boti/{$bot->id}", [
+        $response = $this->actingAs($this->user)->put("/dashboard/agenti/{$bot->id}", [
             'name' => 'Updated Bot Name',
             'system_prompt' => $bot->system_prompt,
             'voice' => $bot->voice,
@@ -68,7 +76,7 @@ class BotTest extends TestCase
     {
         $bot = Bot::factory()->create(['tenant_id' => $this->tenant->id]);
 
-        $response = $this->actingAs($this->user)->delete("/dashboard/boti/{$bot->id}");
+        $response = $this->actingAs($this->user)->delete("/dashboard/agenti/{$bot->id}");
 
         $response->assertRedirect();
         $this->assertDatabaseMissing('bots', ['id' => $bot->id]);
@@ -81,7 +89,7 @@ class BotTest extends TestCase
             'is_active' => true,
         ]);
 
-        $response = $this->actingAs($this->user)->patch("/dashboard/boti/{$bot->id}/toggle");
+        $response = $this->actingAs($this->user)->patch("/dashboard/agenti/{$bot->id}/toggle");
 
         $response->assertRedirect();
         $this->assertDatabaseHas('bots', [
@@ -99,7 +107,7 @@ class BotTest extends TestCase
         $userB = User::factory()->create(['tenant_id' => $tenantB->id]);
 
         // User B should not see Tenant A's bot
-        $response = $this->actingAs($userB)->get("/dashboard/boti/{$botA->id}");
+        $response = $this->actingAs($userB)->get("/dashboard/agenti/{$botA->id}");
 
         $response->assertStatus(404);
     }

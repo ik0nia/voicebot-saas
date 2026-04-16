@@ -36,7 +36,7 @@ class TelnyxReplayProtectionTest extends TestCase
         $response = $this->withHeaders([
             'telnyx-signature-ed25519' => base64_encode('x'),
             'telnyx-timestamp' => (string) (time() - 3600),  // 1h old
-        ])->post('/webhook/telnyx', ['event_type' => 'call.initiated']);
+        ])->post('/webhook/telnyx/voice', ['event_type' => 'call.initiated']);
 
         $response->assertStatus(403);
     }
@@ -49,7 +49,7 @@ class TelnyxReplayProtectionTest extends TestCase
         $response = $this->withHeaders([
             'telnyx-signature-ed25519' => base64_encode('x'),
             // no telnyx-timestamp header
-        ])->post('/webhook/telnyx', ['event_type' => 'call.initiated']);
+        ])->post('/webhook/telnyx/voice', ['event_type' => 'call.initiated']);
 
         $response->assertStatus(403);
     }
@@ -62,7 +62,7 @@ class TelnyxReplayProtectionTest extends TestCase
         $response = $this->withHeaders([
             'telnyx-signature-ed25519' => base64_encode('x'),
             'telnyx-timestamp' => 'not-a-number',
-        ])->post('/webhook/telnyx', ['event_type' => 'call.initiated']);
+        ])->post('/webhook/telnyx/voice', ['event_type' => 'call.initiated']);
 
         $response->assertStatus(403);
     }

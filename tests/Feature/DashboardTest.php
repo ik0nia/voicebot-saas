@@ -68,7 +68,7 @@ class DashboardTest extends TestCase
     {
         return [
             'dashboard' => ['/dashboard'],
-            'bots' => ['/dashboard/boti'],
+            'bots' => ['/dashboard/agenti'],
             'calls' => ['/dashboard/apeluri'],
             'analytics' => ['/dashboard/analiza'],
             'phone numbers' => ['/dashboard/numere'],
