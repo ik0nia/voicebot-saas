@@ -25,6 +25,9 @@ class Bot extends Model
         'voice',
         'cloned_voice_id',
         'language',
+        'engine_type',
+        'niche_slug',
+        'archetype_config',
         'settings',
         'woocommerce_capabilities',
         'is_active',
@@ -38,9 +41,20 @@ class Bot extends Model
         return [
             'settings' => 'array',
             'woocommerce_capabilities' => 'array',
+            'archetype_config' => 'array',
             'is_active' => 'boolean',
             'calls_count' => 'integer',
         ];
+    }
+
+    /**
+     * Concrete BotEngine instance for this bot. Never returns null —
+     * legacy bots get a NullEngine with empty defaults, so call sites
+     * can always depend on a concrete object.
+     */
+    public function engine(): \App\Engines\Contracts\BotEngine
+    {
+        return app(\App\Engines\EngineResolver::class)->resolve($this);
     }
 
     protected static function booted(): void
