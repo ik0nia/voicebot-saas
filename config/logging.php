@@ -123,8 +123,16 @@ return [
             'handler' => NullHandler::class,
         ],
 
+        // "emergency" is Laravel's fallback when a configured channel itself
+        // errors. Without a driver it defaulted to writing plain
+        // storage/logs/laravel.log with no rotation — which grew to 9GB of
+        // Redis/Horizon noise. Use the daily driver so this also rotates.
         'emergency' => [
-            'path' => storage_path('logs/laravel.log'),
+            'driver' => 'daily',
+            'path' => storage_path('logs/laravel-emergency.log'),
+            'level' => 'error',
+            'days' => 7,
+            'replace_placeholders' => true,
         ],
 
         'knowledge' => [

@@ -64,6 +64,16 @@ class PhoneNumberController extends Controller
             'provider' => 'string|in:telnyx,manual',
         ]);
 
+        // bot_id only existence-checked above; confirm it belongs to the
+        // current tenant so a crafted request can't assign a phone number to
+        // another tenant's bot (and leak its name into Telnyx tags).
+        if (!empty($validated['bot_id'])) {
+            $ownsBot = Bot::where('id', $validated['bot_id'])->exists();
+            if (!$ownsBot) {
+                return back()->withErrors(['bot_id' => 'Botul selectat nu aparține contului tău.'])->withInput();
+            }
+        }
+
         $validated['tenant_id'] = auth()->user()->tenant_id;
 
         // Cost: tenant override > platform setting > 27 lei default
@@ -119,6 +129,16 @@ class PhoneNumberController extends Controller
             'bot_id' => 'nullable|exists:bots,id',
             'friendly_name' => 'nullable|string|max:255',
         ]);
+
+        // Same tenant-ownership guard as store(): "exists:bots,id" alone is
+        // global and would let a request rebind this number to another
+        // tenant's bot.
+        if (!empty($validated['bot_id'])) {
+            $ownsBot = Bot::where('id', $validated['bot_id'])->exists();
+            if (!$ownsBot) {
+                return back()->withErrors(['bot_id' => 'Botul selectat nu aparține contului tău.'])->withInput();
+            }
+        }
 
         $phoneNumber->update($validated);
 
