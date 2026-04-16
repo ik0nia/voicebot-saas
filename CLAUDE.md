@@ -1,7 +1,7 @@
 # Sambla - Architecture Document
 
 ## Overview
-Multi-tenant SaaS platform for AI-powered voice bots. Businesses can create, configure, and deploy conversational voice agents that handle inbound/outbound phone calls using OpenAI's Realtime API and Telnyx for telephony.
+Multi-tenant SaaS platform for AI-powered voice bots. Businesses can create, configure, and deploy conversational voice agents that handle inbound/outbound phone calls using OpenAI's Realtime API and Twilio for telephony (migrating off Telnyx due to contractual issues and slow number approval — existing Telnyx numbers keep working until cutover).
 
 ## Domain
 - Production: https://sambla.ro
@@ -14,7 +14,7 @@ Multi-tenant SaaS platform for AI-powered voice bots. Businesses can create, con
 - **Cache/Queue/Session:** Redis 7
 - **WebSocket:** Laravel Reverb
 - **AI Voice:** OpenAI Realtime API (GPT-4o voice)
-- **Telephony:** Telnyx (voice calls, phone numbers)
+- **Telephony:** Twilio (voice calls, phone numbers). Abstracted behind `App\Services\Telephony\TelephonyProvider`; Telnyx (`TelnyxService`) kept as secondary implementation for numbers provisioned before cutover. Default selected via `config('telephony.default')` / `TELEPHONY_DEFAULT_PROVIDER`.
 - **Payments:** Stripe via Laravel Cashier
 - **Auth/Permissions:** Laravel Sanctum + spatie/laravel-permission
 - **Error Tracking:** Sentry
@@ -36,8 +36,8 @@ Multi-tenant SaaS platform for AI-powered voice bots. Businesses can create, con
 ## Key Modules
 1. **Tenant Management** – registration, onboarding wizard, settings, trial lifecycle (reminder + expiry)
 2. **Voice Bot Builder** – prompt configuration, personality, knowledge base, A/B prompt variants
-3. **Phone Numbers** – Telnyx number provisioning per tenant (inbound + outbound)
-4. **Call Handling** – Telnyx webhooks (state-machine + signature verified); OpenAI Realtime session handler exists in PHP, **but the `wss://host/ws/media-stream` WebSocket server that Telnyx streams into is NOT in this repo yet** — see `ROADMAP.md`
+3. **Phone Numbers** – Twilio number provisioning per tenant (inbound + outbound); Telnyx numbers kept active via dual-provider support in `TelephonyManager::forNumber()` until cutover
+4. **Call Handling** – Twilio webhooks at `/webhook/twilio/{voice,status}` (X-Twilio-Signature HMAC-SHA1 verified); Telnyx webhooks at `/webhook/telnyx/*` (ed25519 + timestamp replay window, iter 10) still live for pre-migration numbers. OpenAI Realtime session handler exists in PHP, **but the `wss://host/ws/media-stream` WebSocket bridge (Twilio Media Streams ↔ OpenAI Realtime: mulaw 8k ↔ PCM16 24k, barge-in, DTMF) is NOT in this repo yet** — see `ROADMAP.md`
 5. **Knowledge Base** – document upload, pgvector embeddings with HNSW + FTS (hybrid RAG with RRF + sibling chunks), re-embed on change
 6. **Chat / Messaging** – web chatbot widget (embeddable), SSE streaming endpoint, per-channel config
 7. **Channels** – WhatsApp / Facebook / Instagram inbound webhooks with HMAC signature verification (outbound send paths partial)

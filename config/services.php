@@ -41,6 +41,12 @@ return [
         'public_key' => env('TELNYX_PUBLIC_KEY'),
     ],
 
+    'twilio' => [
+        'account_sid' => env('TWILIO_ACCOUNT_SID'),
+        'auth_token' => env('TWILIO_AUTH_TOKEN'),
+        'twiml_app_sid' => env('TWILIO_TWIML_APP_SID'),
+    ],
+
     'anthropic' => [
         'api_key' => env('ANTHROPIC_API_KEY'),
     ],

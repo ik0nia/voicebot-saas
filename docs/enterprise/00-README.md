@@ -42,7 +42,8 @@ The Laravel application is a pure state machine and event translator: it never h
 | 03 | [Multi-tenancy](03-multi-tenancy.md) | `TenantScope`, `BelongsToTenant`, triple super-admin check |
 | 04 | [Settings & secrets](04-settings-secrets.md) | `platform_settings` DB-backed config, encryption at rest |
 | 05 | [Auth](05-auth.md) | Session + Sanctum, Spatie roles, verification, reset, known gaps |
-| 06 | [Voice — Telnyx](06-voice-telnyx.md) | Webhooks, state machine, ED25519 verify, cost model, sidecar gap |
+| 06 | [Voice — Telnyx (legacy)](06-voice-telnyx.md) | Legacy; kept during migration for existing numbers. ED25519 verify, cost model |
+| 06a | [Voice — Twilio](06a-voice-twilio.md) | **Current provider.** TelephonyProvider abstraction, HMAC-SHA1 verify, cutover playbook |
 | 07 | [Voice — Realtime & cloning](07-voice-realtime.md) | `RealtimeSession`, filler latency guard, ElevenLabs clone pipeline |
 | 08 | [Chat widget](08-chat-widget.md) | 2.4k-line JS widget, SSE streaming, variants, product grounding |
 | 09 | [Channels](09-channels.md) | WhatsApp, FB, IG inbound; outbound partial |
@@ -84,7 +85,7 @@ None of these are architectural dead-ends; all are tracked in `ROADMAP.md` and c
 
 1. [01 — Infrastructure](01-infrastructure.md) — 10 min, full deploy picture.
 2. [03 — Multi-tenancy](03-multi-tenancy.md) — 10 min, the single most load-bearing piece of code in the repo.
-3. [06 — Voice / Telnyx](06-voice-telnyx.md) — 10 min, and the sidecar gap.
+3. [06a — Voice / Twilio](06a-voice-twilio.md) — 10 min; current provider, abstraction, cutover plan. (Telnyx doc at `06-voice-telnyx.md` is legacy.)
 4. [11 — Stripe wiring](11-billing-stripe-wiring.md) + [13 — VAT](13-billing-tax.md) — 15 min on the money path.
 5. [19 — Security](19-security.md) — 15 min, the consolidated posture.
 

@@ -3,33 +3,36 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
-use App\Models\PhoneNumber;
 use App\Models\Bot;
+use App\Models\PhoneNumber;
 use App\Models\PlatformSetting;
 use App\Models\Tenant;
-use App\Services\TelnyxService;
+use App\Services\Telephony\TelephonyManager;
 use Illuminate\Http\Request;
 
 class PhoneNumberController extends Controller
 {
+    public function __construct(
+        private TelephonyManager $telephony,
+    ) {}
+
     public function index()
     {
-        // Auto-sync pending numbers with Telnyx on page load
+        // Auto-sync pending numbers on page load. Routes to the owning
+        // provider per number so the page works while Telnyx and Twilio
+        // co-exist during the migration.
         $pendingNumbers = PhoneNumber::where('status', PhoneNumber::STATUS_PENDING)
-            ->where('provider', 'telnyx')
+            ->whereIn('provider', ['telnyx', 'twilio'])
             ->get();
 
-        if ($pendingNumbers->isNotEmpty()) {
-            $service = app(TelnyxService::class);
-            foreach ($pendingNumbers as $number) {
-                try {
-                    $telnyxStatus = $service->getNumberStatus($number->number);
-                    if ($telnyxStatus === 'active') {
-                        $number->update(['status' => PhoneNumber::STATUS_ACTIVE, 'is_active' => true]);
-                    }
-                } catch (\Exception $e) {
-                    // Silently skip - don't block page load
+        foreach ($pendingNumbers as $number) {
+            try {
+                $providerStatus = $this->telephony->forNumber($number)->getNumberStatus($number->number);
+                if ($providerStatus === 'active') {
+                    $number->update(['status' => PhoneNumber::STATUS_ACTIVE, 'is_active' => true]);
                 }
+            } catch (\Exception $e) {
+                // Silently skip — don't block page load on a provider hiccup.
             }
         }
 
@@ -41,14 +44,15 @@ class PhoneNumberController extends Controller
 
     public function availableNumbers(Request $request)
     {
+        // New numbers always go through the default provider — the
+        // migration target. Existing Telnyx numbers keep working via
+        // forNumber() on the individual resources.
         try {
-            $service = app(TelnyxService::class);
-            $numbers = $service->getAvailableNumbers(
+            $numbers = $this->telephony->default()->getAvailableNumbers(
                 $request->get('country', 'RO'),
                 'local',
                 5
             );
-
             return response()->json(['numbers' => $numbers]);
         } catch (\Exception $e) {
             return response()->json(['numbers' => [], 'error' => 'Nu s-au putut încărca numerele disponibile.'], 500);
@@ -57,16 +61,15 @@ class PhoneNumberController extends Controller
 
     public function store(Request $request)
     {
+        $defaultProvider = config('telephony.default', 'twilio');
+
         $validated = $request->validate([
             'number' => 'required|string|unique:phone_numbers,number',
             'friendly_name' => 'nullable|string|max:255',
             'bot_id' => 'nullable|exists:bots,id',
-            'provider' => 'string|in:telnyx,manual',
+            'provider' => 'string|in:telnyx,twilio,manual',
         ]);
 
-        // bot_id only existence-checked above; confirm it belongs to the
-        // current tenant so a crafted request can't assign a phone number to
-        // another tenant's bot (and leak its name into Telnyx tags).
         if (!empty($validated['bot_id'])) {
             $ownsBot = Bot::where('id', $validated['bot_id'])->exists();
             if (!$ownsBot) {
@@ -75,26 +78,33 @@ class PhoneNumberController extends Controller
         }
 
         $validated['tenant_id'] = auth()->user()->tenant_id;
+        $validated['provider'] = $validated['provider'] ?? $defaultProvider;
 
-        // Cost: tenant override > platform setting > 27 lei default
         $tenant = Tenant::find($validated['tenant_id']);
         $tenantCostLei = $tenant?->plan_overrides['phone_number_monthly_cost_lei'] ?? null;
         $platformCostLei = $tenantCostLei ?? PlatformSetting::get('phone_number_monthly_cost_lei', 27);
         $validated['monthly_cost_cents'] = (int) round($platformCostLei * 100);
 
-        // If provider is telnyx, purchase the number
-        if (($validated['provider'] ?? 'telnyx') === 'telnyx') {
+        if ($validated['provider'] !== 'manual') {
             try {
-                $service = app(TelnyxService::class);
-                $result = $service->purchaseNumber($validated['number']);
+                $provider = $this->telephony->for($validated['provider']);
+                $result = $provider->purchaseNumber($validated['number']);
 
                 if (!$result) {
                     return back()->with('error', 'Nu s-a putut achiziționa numărul. Încearcă alt număr.')->withInput();
                 }
 
-                $validated['status'] = PhoneNumber::STATUS_PENDING;
-                $validated['is_active'] = false;
-                $validated['telnyx_order_id'] = $result->id ?? null;
+                // Twilio provisioning is synchronous → active immediately.
+                // Telnyx provisioning opens a number_order that may sit in
+                // 'pending' for 1-2 days while regulatory verification runs.
+                if ($validated['provider'] === 'telnyx') {
+                    $validated['status'] = PhoneNumber::STATUS_PENDING;
+                    $validated['is_active'] = false;
+                    $validated['telnyx_order_id'] = $result->id ?? null;
+                } else {
+                    $validated['status'] = PhoneNumber::STATUS_ACTIVE;
+                    $validated['is_active'] = true;
+                }
             } catch (\Exception $e) {
                 return back()->with('error', 'Eroare la achiziția numărului: ' . $e->getMessage())->withInput();
             }
@@ -105,11 +115,10 @@ class PhoneNumberController extends Controller
 
         $phoneNumber = PhoneNumber::create($validated);
 
-        // Set tags in Telnyx with bot name
-        if ($phoneNumber->bot_id && $phoneNumber->provider === 'telnyx') {
+        if ($phoneNumber->bot_id && $phoneNumber->provider !== 'manual') {
             $bot = Bot::find($phoneNumber->bot_id);
             if ($bot) {
-                app(TelnyxService::class)->updateNumberTags($phoneNumber->number, [
+                $this->telephony->forNumber($phoneNumber)->updateNumberTags($phoneNumber->number, [
                     'bot' => $bot->name,
                     'tenant_id' => (string) $phoneNumber->tenant_id,
                 ]);
@@ -130,9 +139,6 @@ class PhoneNumberController extends Controller
             'friendly_name' => 'nullable|string|max:255',
         ]);
 
-        // Same tenant-ownership guard as store(): "exists:bots,id" alone is
-        // global and would let a request rebind this number to another
-        // tenant's bot.
         if (!empty($validated['bot_id'])) {
             $ownsBot = Bot::where('id', $validated['bot_id'])->exists();
             if (!$ownsBot) {
@@ -142,8 +148,7 @@ class PhoneNumberController extends Controller
 
         $phoneNumber->update($validated);
 
-        // Update tags in Telnyx when bot association changes
-        if ($phoneNumber->provider === 'telnyx' && array_key_exists('bot_id', $validated)) {
+        if ($phoneNumber->provider !== 'manual' && array_key_exists('bot_id', $validated)) {
             $tags = ['tenant_id' => (string) $phoneNumber->tenant_id];
             if ($phoneNumber->bot_id) {
                 $bot = Bot::find($phoneNumber->bot_id);
@@ -151,7 +156,7 @@ class PhoneNumberController extends Controller
                     $tags['bot'] = $bot->name;
                 }
             }
-            app(TelnyxService::class)->updateNumberTags($phoneNumber->number, $tags);
+            $this->telephony->forNumber($phoneNumber)->updateNumberTags($phoneNumber->number, $tags);
         }
 
         return back()->with('success', 'Numărul a fost actualizat.');
@@ -171,17 +176,20 @@ class PhoneNumberController extends Controller
 
     public function syncStatuses()
     {
-        $service = app(TelnyxService::class);
-        $numbers = PhoneNumber::where('provider', 'telnyx')->get();
+        $numbers = PhoneNumber::whereIn('provider', ['telnyx', 'twilio'])->get();
         $synced = 0;
 
         foreach ($numbers as $number) {
-            $telnyxStatus = $service->getNumberStatus($number->number);
+            try {
+                $providerStatus = $this->telephony->forNumber($number)->getNumberStatus($number->number);
+            } catch (\Exception $e) {
+                continue;
+            }
 
-            if ($telnyxStatus === 'active' && $number->status !== PhoneNumber::STATUS_ACTIVE) {
+            if ($providerStatus === 'active' && $number->status !== PhoneNumber::STATUS_ACTIVE) {
                 $number->update(['status' => PhoneNumber::STATUS_ACTIVE, 'is_active' => true]);
                 $synced++;
-            } elseif ($telnyxStatus === 'pending' && $number->status === PhoneNumber::STATUS_ACTIVE) {
+            } elseif ($providerStatus === 'pending' && $number->status === PhoneNumber::STATUS_ACTIVE) {
                 $number->update(['status' => PhoneNumber::STATUS_PENDING, 'is_active' => false]);
                 $synced++;
             }

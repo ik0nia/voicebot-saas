@@ -1,4 +1,16 @@
-# Voice — Telnyx Integration
+# Voice — Telnyx Integration (legacy, migrating to Twilio)
+
+> **🚨 Migration notice (2026-04-16).** Telephony is moving from Telnyx
+> to Twilio due to contractual issues and slow number approval blocking
+> customer onboarding. Provider is abstracted behind
+> `App\Services\Telephony\TelephonyProvider` — existing Telnyx numbers
+> keep working via `TelephonyManager::forNumber()`, but new provisioning
+> goes through Twilio by default (`config('telephony.default')`).
+> Twilio-specific setup is documented in `06-voice-twilio.md`. This
+> document is kept for historical reference and for operators managing
+> pre-migration numbers. Do not write new integrations against
+> `TelnyxService` directly; depend on `TelephonyProvider` or
+> `TelephonyManager` instead.
 
 ## TL;DR
 

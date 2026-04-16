@@ -2,12 +2,18 @@
 
 namespace App\Services;
 
+use App\Services\Telephony\TelephonyProvider;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class TelnyxService
+class TelnyxService implements TelephonyProvider
 {
     protected const BASE_URL = 'https://api.telnyx.com/v2';
+
+    public function name(): string
+    {
+        return 'telnyx';
+    }
 
     protected ?string $apiKey = null;
     protected ?string $connectionId = null;

@@ -121,6 +121,22 @@ class AdminSettingsController extends Controller
         return back()->with('success', 'Setările Telnyx au fost actualizate.');
     }
 
+    public function updateTwilio(Request $request)
+    {
+        $validated = $request->validate([
+            'twilio_account_sid' => 'required|string|max:255',
+            'twilio_auth_token' => 'required|string|max:255',
+            'twilio_twiml_app_sid' => 'nullable|string|max:255',
+            'twilio_webhook_url' => 'nullable|url|max:255',
+        ]);
+
+        foreach ($validated as $key => $value) {
+            PlatformSetting::set($key, $value ?? '', 'string', 'twilio');
+        }
+
+        return back()->with('success', 'Setările Twilio au fost actualizate.');
+    }
+
     public function updateStripe(Request $request)
     {
         $validated = $request->validate([

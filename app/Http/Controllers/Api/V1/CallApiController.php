@@ -8,7 +8,7 @@ use App\Http\Resources\TranscriptResource;
 use App\Models\Bot;
 use App\Models\Call;
 use App\Models\PhoneNumber;
-use App\Services\TelnyxService;
+use App\Services\Telephony\TelephonyManager;
 use Illuminate\Http\Request;
 
 class CallApiController extends Controller
@@ -56,20 +56,31 @@ class CallApiController extends Controller
         $bot = Bot::where('tenant_id', $request->user()->tenant_id)
             ->findOrFail($validated['bot_id']);
 
-        $from = $validated['from'] ?? PhoneNumber::where('tenant_id', $request->user()->tenant_id)
-            ->where('is_active', true)
-            ->first()?->number;
+        // Prefer a number owned by the caller's tenant, and route the
+        // outbound call through whatever provider owns it — Twilio for
+        // newly provisioned lines, Telnyx for any pre-migration holdovers.
+        $phoneNumber = $validated['from']
+            ? PhoneNumber::where('tenant_id', $request->user()->tenant_id)
+                ->where('number', $validated['from'])->first()
+            : PhoneNumber::where('tenant_id', $request->user()->tenant_id)
+                ->where('is_active', true)->first();
 
-        if (!$from) {
+        if (!$phoneNumber) {
             return response()->json(['error' => 'No phone number available.'], 422);
         }
 
         try {
-            $telnyx = app(TelnyxService::class);
-            $telnyxCall = $telnyx->makeCall(
+            $telephony = app(TelephonyManager::class);
+            $provider = $telephony->forNumber($phoneNumber);
+
+            $webhookRoute = $provider->name() === 'twilio'
+                ? route('webhook.twilio.voice')
+                : route('webhook.telnyx.voice');
+
+            $providerCall = $provider->makeCall(
                 $validated['to'],
-                $from,
-                route('webhook.telnyx.voice')
+                $phoneNumber->number,
+                $webhookRoute
             );
 
             $call = Call::create([
@@ -78,7 +89,14 @@ class CallApiController extends Controller
                 'caller_number' => $validated['to'],
                 'direction' => 'outbound',
                 'status' => 'initiated',
-                'metadata' => ['telnyx_call_control_id' => $telnyxCall->call_control_id],
+                'metadata' => [
+                    'provider' => $provider->name(),
+                    'provider_call_id' => $providerCall->id ?? null,
+                    // Legacy key preserved so existing observability
+                    // dashboards that filter on telnyx_call_control_id
+                    // keep lighting up for Telnyx calls during cutover.
+                    'telnyx_call_control_id' => $providerCall->call_control_id ?? null,
+                ],
                 'started_at' => now(),
             ]);
 
