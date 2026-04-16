@@ -142,8 +142,11 @@
         lang: scriptTag.getAttribute('data-lang') || 'ro',
         iconUrl: scriptTag.getAttribute('data-icon-url') || '',
         prechat: scriptTag.getAttribute('data-prechat') === 'true',
-        width: parseInt(scriptTag.getAttribute('data-width'), 10) || 380,
-        height: parseInt(scriptTag.getAttribute('data-height'), 10) || 520,
+        width: parseInt(scriptTag.getAttribute('data-width'), 10) || 400,
+        // Taller default on desktop so conversations don't feel
+        // cramped — mobile still honours max-height:calc(100vh-120px)
+        // so it won't spill off small screens.
+        height: parseInt(scriptTag.getAttribute('data-height'), 10) || 640,
         maxMessages: parseInt(scriptTag.getAttribute('data-max-messages'), 10) || 200
     };
 
