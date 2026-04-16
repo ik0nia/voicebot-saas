@@ -33,6 +33,7 @@ class AuthTest extends TestCase
             'name' => 'Test User',
             'email' => 'test@example.com',
             'company_name' => 'Test Company',
+            'website' => 'https://example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
         ]);

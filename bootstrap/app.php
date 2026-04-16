@@ -73,11 +73,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // though every manual PhpRedis auth (same host, same password, same
         // config) succeeds. The supervisor keeps retrying and jobs still
         // process, but the log was growing ~180 ERROR entries/min — that's
-        // how laravel.log reached 8.6GB. Silence only this specific error
-        // from the reporter; real Redis auth regressions on other code
-        // paths still surface.
-        $exceptions->dontReport(function (\Throwable $e) {
-            return $e instanceof \RedisException
-                && str_contains($e->getMessage(), 'WRONGPASS');
+        // how laravel.log reached 8.6GB. Silence only this specific error;
+        // other Redis errors (NOAUTH, connection refused, a real password
+        // change) still report normally.
+        $exceptions->reportable(function (\RedisException $e) {
+            if (str_contains($e->getMessage(), 'WRONGPASS')) {
+                return false;
+            }
         });
     })->create();
