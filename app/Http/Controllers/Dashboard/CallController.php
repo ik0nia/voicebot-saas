@@ -49,6 +49,7 @@ class CallController extends Controller
 
     public function destroy(Call $call)
     {
+        $this->authorize('delete', $call);
         $call->delete();
         return redirect()->route('dashboard.calls.index')
             ->with('success', 'Apelul a fost șters.');

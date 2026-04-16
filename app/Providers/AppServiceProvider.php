@@ -7,6 +7,7 @@ use App\View\Composers\TranscriptSidebarComposer;
 use Illuminate\Console\Events\CommandStarting;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -40,6 +41,15 @@ class AppServiceProvider extends ServiceProvider
         \Laravel\Cashier\Cashier::useCustomerModel(\App\Models\Tenant::class);
 
         \App\Models\Plan::observe(\App\Observers\PlanObserver::class);
+
+        // Super-admin bypasses every policy. Matches the dashboard behaviour
+        // where super_admin already gets withoutGlobalScopes on tenant-scoped
+        // queries (see BotController::resolveBot) — without this bypass, the
+        // per-model policies added in iter 12 would 403 a super_admin
+        // inspecting another tenant's bot.
+        Gate::before(function ($user, $ability) {
+            return $user->hasRole('super_admin') ? true : null;
+        });
 
         View::composer('layouts.dashboard', TranscriptSidebarComposer::class);
 

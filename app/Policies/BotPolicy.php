@@ -19,13 +19,13 @@ class BotPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasAnyRole(['tenant_admin', 'manager']);
+        return $user->hasAnyRole(['tenant_admin', 'tenant_manager']);
     }
 
     public function update(User $user, Bot $bot): bool
     {
         return $user->tenant_id === $bot->tenant_id
-            && $user->hasAnyRole(['tenant_admin', 'manager']);
+            && $user->hasAnyRole(['tenant_admin', 'tenant_manager']);
     }
 
     public function delete(User $user, Bot $bot): bool

@@ -71,6 +71,8 @@ class BotController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('create', Bot::class);
+
         $tenant = auth()->user()->tenant;
         $limitCheck = $this->planLimitService->canCreateBot($tenant);
         if (!$limitCheck->allowed) {
@@ -210,6 +212,7 @@ class BotController extends Controller
     public function edit($botId)
     {
         $bot = $this->resolveBot($botId);
+        $this->authorize('update', $bot);
         $bot->load('clonedVoice');
         $sites = auth()->user()->tenant?->sites()->where('status', 'active')->get() ?? collect();
 
@@ -224,6 +227,7 @@ class BotController extends Controller
     public function update(Request $request, $botId)
     {
         $bot = $this->resolveBot($botId);
+        $this->authorize('update', $bot);
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'site_id' => 'nullable|exists:sites,id',
@@ -270,6 +274,7 @@ class BotController extends Controller
     public function destroy($botId)
     {
         $bot = $this->resolveBot($botId);
+        $this->authorize('delete', $bot);
         $bot->delete();
         return redirect()->route('dashboard.bots.index')
             ->with('success', 'Agentul AI a fost șters.');
@@ -278,6 +283,7 @@ class BotController extends Controller
     public function toggleActive($botId)
     {
         $bot = $this->resolveBot($botId);
+        $this->authorize('update', $bot);
         $bot->update(['is_active' => !$bot->is_active]);
         return back()->with('success', $bot->is_active ? 'Agent AI activat.' : 'Agent AI dezactivat.');
     }
@@ -285,6 +291,7 @@ class BotController extends Controller
     public function updatePolicy(Request $request, $botId)
     {
         $bot = $this->resolveBot($botId);
+        $this->authorize('update', $bot);
 
         $validated = $request->validate([
             'tone' => 'nullable|in:professional,friendly,technical,casual',
@@ -319,6 +326,7 @@ class BotController extends Controller
     public function updateField(Request $request, $botId)
     {
         $bot = $this->resolveBot($botId);
+        $this->authorize('update', $bot);
         $field = $request->input('field');
         $value = $request->input('value');
 
