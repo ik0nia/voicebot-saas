@@ -172,6 +172,14 @@ Route::middleware('auth')->prefix('dashboard/setup')->group(function () {
 // Dashboard home
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth'])->name('dashboard');
 Route::post('/dashboard/toggle-admin-view', [DashboardController::class, 'toggleAdminView'])->middleware(['auth'])->name('dashboard.toggleAdminView');
+Route::middleware(['auth'])->group(function () {
+    // "stop" must be declared BEFORE the {tenant} route, otherwise Laravel
+    // matches /admin/view-as/stop against {tenant} and tries to resolve a
+    // tenant named "stop".
+    Route::post('/admin/view-as/stop', [DashboardController::class, 'stopViewingAs'])->name('admin.viewAs.stop');
+    Route::post('/admin/view-as/{tenant}', [DashboardController::class, 'viewAsTenant'])->name('admin.viewAs.enter');
+    Route::get('/admin/tenants/search', [DashboardController::class, 'searchTenants'])->name('admin.tenants.search');
+});
 
 // Billing routes (dashboard)
 Route::middleware('auth')->prefix('dashboard/facturare')->group(function () {

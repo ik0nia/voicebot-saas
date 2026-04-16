@@ -14,18 +14,29 @@ class TenantScope implements Scope
 
         $user = auth()->user();
 
-        // Super admin with "view all" toggle: bypass scope entirely.
-        // The role check runs every query (not just at toggle time) so
-        // demoting a user takes effect immediately even if their session
-        // still has the flag; the role re-read uses the permissions cache.
-        if (session('admin_view_all', false)
-            && method_exists($user, 'isSuperAdmin')
+        $isSuperAdmin = method_exists($user, 'isSuperAdmin')
             && $user->isSuperAdmin()
-            && $user->hasRole('super_admin')) {
-            return;
+            && $user->hasRole('super_admin');
+
+        // Super-admin "view as tenant": filter every tenant-scoped query to
+        // the impersonated tenant. Triple-check the super-admin claim on every
+        // query so demoting a user takes effect immediately even if the
+        // session still carries the impersonation key.
+        if ($isSuperAdmin) {
+            $asTenantId = session('admin_as_tenant_id');
+            if ($asTenantId) {
+                $builder->where($model->getTable() . '.tenant_id', (int) $asTenantId);
+                return;
+            }
+
+            // Aggregate "view all tenants" mode — used by cross-tenant
+            // dashboards. Kept separate from impersonation.
+            if (session('admin_view_all', false)) {
+                return;
+            }
         }
 
-        // Everyone else (including super admin with toggle OFF): filter to own tenant
+        // Everyone else: filter to own tenant
         if ($user->tenant_id) {
             $builder->where($model->getTable() . '.tenant_id', $user->tenant_id);
         }

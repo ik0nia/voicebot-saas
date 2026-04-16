@@ -29,16 +29,15 @@ class DashboardController extends Controller
 
     public function toggleAdminView(Request $request)
     {
-        $user = auth()->user();
-        // Belt-and-braces: both the role AND the isSuperAdmin flag must
-        // agree; either alone can be wrong (a renamed role, a missing
-        // column) and we would silently leak data across tenants.
-        if (! $user->hasRole('super_admin') || ! $user->isSuperAdmin()) {
-            abort(403);
-        }
+        $user = $this->assertSuperAdmin();
 
+        // Entering "all tenants" mode implicitly exits impersonation —
+        // the two modes are mutually exclusive in the UI.
         $newValue = ! session('admin_view_all', false);
         session(['admin_view_all' => $newValue]);
+        if ($newValue) {
+            session()->forget('admin_as_tenant_id');
+        }
 
         \App\Models\AdminAuditLog::record(
             $newValue ? 'admin.view_all.enabled' : 'admin.view_all.disabled',
@@ -47,6 +46,105 @@ class DashboardController extends Controller
         );
 
         return back();
+    }
+
+    public function viewAsTenant(Request $request, Tenant $tenant)
+    {
+        $user = $this->assertSuperAdmin();
+
+        session([
+            'admin_as_tenant_id' => $tenant->id,
+        ]);
+        session()->forget('admin_view_all');
+
+        \App\Models\AdminAuditLog::record(
+            'admin.view_as.enter',
+            null,
+            [
+                'actor_id' => $user->id,
+                'actor_email' => $user->email,
+                'target_tenant_id' => $tenant->id,
+                'target_tenant_name' => $tenant->name,
+            ]
+        );
+
+        return redirect()->route('dashboard')->with(
+            'view_as_entered',
+            'Vezi acum platforma ca ' . $tenant->name . '.'
+        );
+    }
+
+    public function stopViewingAs(Request $request)
+    {
+        $user = $this->assertSuperAdmin();
+
+        // "Doar eu" — reset both special modes to a clean "own tenant only" view.
+        // This is bound both to the impersonation banner's exit button AND the
+        // dropdown's "Doar eu" option, so clearing view_all here keeps the UI in sync.
+        $tenantId = session('admin_as_tenant_id');
+        $wasViewAll = session('admin_view_all', false);
+        session()->forget('admin_as_tenant_id');
+        session()->forget('admin_view_all');
+
+        if ($tenantId) {
+            \App\Models\AdminAuditLog::record(
+                'admin.view_as.exit',
+                null,
+                [
+                    'actor_id' => $user->id,
+                    'actor_email' => $user->email,
+                    'target_tenant_id' => (int) $tenantId,
+                ]
+            );
+        } elseif ($wasViewAll) {
+            \App\Models\AdminAuditLog::record(
+                'admin.view_all.disabled',
+                null,
+                ['actor_id' => $user->id, 'actor_email' => $user->email]
+            );
+        }
+
+        return back();
+    }
+
+    public function searchTenants(Request $request)
+    {
+        $this->assertSuperAdmin();
+
+        $q = trim((string) $request->query('q', ''));
+
+        $query = Tenant::query()
+            ->select(['id', 'name', 'slug', 'plan'])
+            ->orderBy('name')
+            ->limit(20);
+
+        if ($q !== '') {
+            $query->where(function ($b) use ($q) {
+                $b->where('name', 'ilike', '%' . $q . '%')
+                  ->orWhere('slug', 'ilike', '%' . $q . '%');
+            });
+        }
+
+        return response()->json([
+            'results' => $query->get()->map(fn ($t) => [
+                'id' => $t->id,
+                'name' => $t->name,
+                'slug' => $t->slug,
+                'plan' => $t->plan,
+            ])->values(),
+        ]);
+    }
+
+    private function assertSuperAdmin()
+    {
+        $user = auth()->user();
+        // Belt-and-braces: both the role AND the isSuperAdmin flag must
+        // agree; either alone can be wrong (a renamed role, a missing
+        // column) and we would silently leak data across tenants.
+        if (! $user || ! $user->hasRole('super_admin') || ! $user->isSuperAdmin()) {
+            abort(403);
+        }
+        return $user;
     }
 
     private function superAdminDashboard(Request $request)

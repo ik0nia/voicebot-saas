@@ -296,17 +296,66 @@
                     </div>
                 </div>
 
-                {{-- Right: admin toggle + notifications + user --}}
+                {{-- Right: admin view-as + notifications + user --}}
                 <div class="flex items-center gap-2">
-                    {{-- Super Admin: View All Toggle --}}
+                    {{-- Super Admin: View-as tenant combobox --}}
                     @if(auth()->user()->isSuperAdmin())
-                    <form method="POST" action="{{ route('dashboard.toggleAdminView') }}" class="flex items-center">
-                        @csrf
-                        <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors {{ session('admin_view_all', false) ? 'bg-amber-100 text-amber-800 hover:bg-amber-200' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}" title="{{ session('admin_view_all', false) ? 'Vizualizezi toate datele' : 'Vizualizezi doar datele tale' }}">
+                    @php
+                        $asTenantId = session('admin_as_tenant_id');
+                        $viewAll = session('admin_view_all', false);
+                        $asTenantName = $asTenantId ? optional(\App\Models\Tenant::find($asTenantId))->name : null;
+                        if ($asTenantId && $asTenantName) {
+                            $pillLabel = 'Vezi ca: ' . $asTenantName;
+                            $pillClass = 'bg-orange-100 text-orange-800 hover:bg-orange-200';
+                        } elseif ($viewAll) {
+                            $pillLabel = 'Toți tenanții';
+                            $pillClass = 'bg-amber-100 text-amber-800 hover:bg-amber-200';
+                        } else {
+                            $pillLabel = 'Doar eu';
+                            $pillClass = 'bg-slate-100 text-slate-600 hover:bg-slate-200';
+                        }
+                    @endphp
+                    <div x-data="viewAsWidget()" class="relative">
+                        <button type="button" @click="toggle()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors {{ $pillClass }}" :aria-expanded="open">
                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                            {{ session('admin_view_all', false) ? 'Toti' : 'Doar eu' }}
+                            <span>{{ $pillLabel }}</span>
+                            <svg class="w-3 h-3 text-current/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                         </button>
-                    </form>
+                        <div x-show="open" x-cloak @click.outside="open=false" class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl ring-1 ring-slate-200 z-50 overflow-hidden">
+                            <div class="p-2 border-b border-slate-100">
+                                <input x-ref="search" type="text" x-model="q" @input.debounce.200ms="search()" placeholder="Caută tenant…" class="w-full px-3 py-1.5 text-xs rounded border border-slate-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent">
+                            </div>
+                            <div class="py-1 text-xs">
+                                <button type="button" @click="postStop()" class="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center justify-between">
+                                    <span class="font-medium text-slate-700">Doar eu</span>
+                                    @if(!$asTenantId && !$viewAll)<span class="text-slate-400">●</span>@endif
+                                </button>
+                                <button type="button" @click="postAll()" class="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center justify-between">
+                                    <span class="font-medium text-slate-700">Toți tenanții (agregat)</span>
+                                    @if($viewAll)<span class="text-amber-600">●</span>@endif
+                                </button>
+                            </div>
+                            <div class="border-t border-slate-100 max-h-72 overflow-y-auto py-1 text-xs">
+                                <template x-if="loading">
+                                    <div class="px-4 py-2 text-slate-400">Se caută…</div>
+                                </template>
+                                <template x-if="!loading && results.length === 0">
+                                    <div class="px-4 py-2 text-slate-400">Niciun tenant.</div>
+                                </template>
+                                <template x-for="t in results" :key="t.id">
+                                    <button type="button" @click="postAs(t.id)" class="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center justify-between">
+                                        <span>
+                                            <span class="font-medium text-slate-700" x-text="t.name"></span>
+                                            <span class="text-slate-400" x-text="' · ' + (t.plan || 'starter')"></span>
+                                        </span>
+                                        @if($asTenantId)
+                                            <span class="text-orange-600" x-show="t.id === {{ (int) $asTenantId }}">●</span>
+                                        @endif
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
                     @endif
 
                     {{-- Notifications --}}
@@ -362,6 +411,26 @@
                     </div>
                 </div>
             </header>
+
+            {{-- Super-admin impersonation banner --}}
+            @if(auth()->user()->isSuperAdmin() && session('admin_as_tenant_id'))
+                @php($_banner_tenant = \App\Models\Tenant::find(session('admin_as_tenant_id')))
+                @if($_banner_tenant)
+                <div class="bg-orange-600 text-white px-4 py-2 flex items-center justify-between text-sm shrink-0">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        <span>Vezi platforma ca <strong>{{ $_banner_tenant->name }}</strong> (tenant #{{ $_banner_tenant->id }}). Acțiunile tale vor fi atribuite acestui tenant.</span>
+                    </div>
+                    <form method="POST" action="{{ route('admin.viewAs.stop') }}">
+                        @csrf
+                        <button type="submit" class="inline-flex items-center gap-1 px-3 py-1 rounded bg-white/20 hover:bg-white/30 text-white text-xs font-medium transition-colors">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                            Ieși din impersonare
+                        </button>
+                    </form>
+                </div>
+                @endif
+            @endif
 
             {{-- Page content --}}
             <main class="flex-1 overflow-y-auto p-6 lg:p-8">
@@ -419,6 +488,52 @@
                 closeSidebar();
             }
         });
+
+        // Super-admin "view as tenant" combobox
+        function viewAsWidget() {
+            return {
+                open: false,
+                q: '',
+                results: [],
+                loading: false,
+                csrf: document.querySelector('meta[name="csrf-token"]')?.content || '',
+                toggle() {
+                    this.open = !this.open;
+                    if (this.open) {
+                        this.$nextTick(() => this.$refs.search?.focus());
+                        if (this.results.length === 0) this.search();
+                    }
+                },
+                async search() {
+                    this.loading = true;
+                    try {
+                        const url = '/admin/tenants/search?q=' + encodeURIComponent(this.q);
+                        const r = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                        const d = await r.json();
+                        this.results = d.results || [];
+                    } catch (e) {
+                        this.results = [];
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+                _submit(url) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = url;
+                    const t = document.createElement('input');
+                    t.type = 'hidden';
+                    t.name = '_token';
+                    t.value = this.csrf;
+                    form.appendChild(t);
+                    document.body.appendChild(form);
+                    form.submit();
+                },
+                postAs(id) { this._submit('/admin/view-as/' + id); },
+                postStop() { this._submit('/admin/view-as/stop'); },
+                postAll() { this._submit('/dashboard/toggle-admin-view'); },
+            };
+        }
     </script>
 </body>
 </html>
