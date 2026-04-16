@@ -35,16 +35,31 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ChatbotApiController extends Controller
 {
+    /**
+     * Fetch an active Channel by id with a cache fallback.
+     *
+     * Extracted from two inline duplicates (config() + preprocessMessage())
+     * so the (cache, fallback, withoutGlobalScopes, is_active=1) contract
+     * lives in one place. If Redis is unavailable the cache read throws —
+     * degrade to a direct DB query rather than killing the whole request.
+     */
+    private function resolveActiveChannel(int|string $channelId): ?Channel
+    {
+        $dbQuery = fn () => Channel::withoutGlobalScopes()
+            ->where('id', $channelId)
+            ->where('is_active', true)
+            ->first();
+
+        try {
+            return Cache::remember("channel_{$channelId}", 1800, $dbQuery);
+        } catch (\Throwable $e) {
+            return $dbQuery();
+        }
+    }
+
     public function config(Request $request, $channelId): JsonResponse
     {
-        try {
-            $channel = Cache::remember("channel_{$channelId}", 1800, function() use ($channelId) {
-                return Channel::withoutGlobalScopes()->where('id', $channelId)->where('is_active', true)->first();
-            });
-        } catch (\Throwable $e) {
-            $channel = Channel::withoutGlobalScopes()->where('id', $channelId)->where('is_active', true)->first();
-        }
-
+        $channel = $this->resolveActiveChannel($channelId);
         if (!$channel) {
             return response()->json(['error' => 'Canal invalid.'], 404);
         }
@@ -1299,14 +1314,7 @@ class ChatbotApiController extends Controller
      */
     private function preprocessMessage(Request $request, $channelId): array
     {
-        try {
-            $channel = Cache::remember("channel_{$channelId}", 1800, function() use ($channelId) {
-                return Channel::withoutGlobalScopes()->where('id', $channelId)->where('is_active', true)->first();
-            });
-        } catch (\Throwable $e) {
-            $channel = Channel::withoutGlobalScopes()->where('id', $channelId)->where('is_active', true)->first();
-        }
-
+        $channel = $this->resolveActiveChannel($channelId);
         if (!$channel) {
             return ['error' => 'Canal invalid.', 'status' => 404];
         }

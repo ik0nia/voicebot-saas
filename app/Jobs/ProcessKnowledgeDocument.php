@@ -176,10 +176,52 @@ class ProcessKnowledgeDocument implements ShouldQueue
                 'bot_id' => $this->knowledge->bot_id,
                 'title' => $this->knowledge->title,
                 'error' => $e->getMessage(),
+                'terminal' => $this->isTerminalError($e),
             ]);
             $this->knowledge->update(['status' => 'failed']);
+
+            // Non-transient errors (bad API key, malformed file, PDF parse
+            // failure, content policy violations) will not be fixed by
+            // waiting — each retry only repeats the embedding cost and the
+            // same failure. Call fail() explicitly so Horizon routes to
+            // failed_jobs immediately without burning the remaining tries.
+            if ($this->isTerminalError($e)) {
+                $this->fail($e);
+                return;
+            }
             throw $e;
         }
+    }
+
+    /**
+     * Heuristic: distinguish errors that won't improve on retry from
+     * transient ones like network blips or OpenAI 5xx.
+     */
+    private function isTerminalError(\Throwable $e): bool
+    {
+        $msg = $e->getMessage();
+
+        // OpenAI client errors we don't retry
+        if ($e instanceof \OpenAI\Exceptions\ErrorException) {
+            // Auth / billing / quota misconfigurations
+            if (str_contains($msg, 'Incorrect API key')
+                || str_contains($msg, 'You exceeded your current quota')
+                || str_contains($msg, 'invalid_api_key')
+                || str_contains($msg, 'content policy')
+                || str_contains($msg, 'content_policy_violation')) {
+                return true;
+            }
+        }
+
+        // File / parse failures that won't self-heal
+        if (str_contains($msg, 'could not parse PDF')
+            || str_contains($msg, 'Invalid PDF')
+            || str_contains($msg, 'Unsupported file format')
+            || str_contains($msg, 'empty document')) {
+            return true;
+        }
+
+        return false;
     }
 
     public function failed(\Throwable $e): void
