@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdminAuditLog;
 use App\Models\CreditPurchase;
 use App\Models\Plan;
 use App\Models\PlatformSetting;
@@ -358,6 +359,10 @@ class BillingController extends Controller
             return back()->withErrors(['cancel' => 'Anularea a eșuat: ' . $e->getMessage()]);
         }
 
+        AdminAuditLog::record('billing.cancel', $tenant, [
+            'stripe_id' => $subscription->stripe_id,
+        ]);
+
         return back()->with('success', 'Abonamentul va fi anulat la finalul ciclului curent. Până atunci ai acces complet.');
     }
 
@@ -375,6 +380,9 @@ class BillingController extends Controller
             return back()->withErrors(['resume' => 'Abonamentul nu poate fi resumed acum.']);
         }
         $subscription->resume();
+        AdminAuditLog::record('billing.resume', $tenant, [
+            'stripe_id' => $subscription->stripe_id,
+        ]);
         return back()->with('success', 'Abonamentul a fost reactivat.');
     }
 

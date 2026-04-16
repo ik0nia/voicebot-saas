@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdminAuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -55,9 +56,14 @@ class SettingsController extends Controller
             'settings.industry' => 'nullable|string',
         ]);
 
+        $previousName = $tenant->name;
         $tenant->update([
             'name' => $validated['name'],
             'settings' => array_merge($tenant->settings ?? [], $validated['settings'] ?? []),
+        ]);
+
+        AdminAuditLog::record('tenant.update_company', $tenant, [
+            'name' => [$previousName, $validated['name']],
         ]);
 
         return back()->with('success', 'Datele companiei au fost actualizate.');
@@ -101,13 +107,25 @@ class SettingsController extends Controller
 
         $token = auth()->user()->createToken($validated['name'], $scopes);
 
+        AdminAuditLog::record('api_key.created', auth()->user(), [
+            'name' => $validated['name'],
+            'scopes' => $scopes,
+        ]);
+
         return back()->with('success', 'Cheia API a fost creată. Copiază-o acum — nu va mai fi afișată.')
                     ->with('new_api_key', $token->plainTextToken);
     }
 
     public function revokeApiKey(Request $request, $tokenId)
     {
+        $token = auth()->user()->tokens()->where('id', $tokenId)->first();
         auth()->user()->tokens()->where('id', $tokenId)->delete();
+        if ($token) {
+            AdminAuditLog::record('api_key.revoked', auth()->user(), [
+                'token_id' => $tokenId,
+                'name' => $token->name,
+            ]);
+        }
         return back()->with('success', 'Cheia API a fost revocată.');
     }
 
@@ -118,6 +136,13 @@ class SettingsController extends Controller
         ]);
 
         $tenant = auth()->user()->tenant;
+        // Record before delete — the audit row outlives the tenant
+        // (admin_audit_log has user_id nullOnDelete but keeps the row).
+        AdminAuditLog::record('tenant.destroy', $tenant, [
+            'name' => $tenant->name,
+            'by_user' => auth()->user()?->email,
+        ]);
+
         auth()->logout();
         $tenant->delete(); // Cascade deletes users, bots, etc.
 

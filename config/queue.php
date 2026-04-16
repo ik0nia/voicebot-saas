@@ -15,6 +15,13 @@ return [
 
     'default' => env('QUEUE_CONNECTION', 'database'),
 
+    // Debounce window for JobFailed → Sentry dispatch. When a
+    // dependency is hard-down the same job class fails in a tight loop;
+    // this cap prevents Sentry quota exhaustion. Log::error still fires
+    // on every failure, only the Sentry capture is rate-limited.
+    // See app/Listeners/ReportFailedJob.
+    'failure_alert_debounce_seconds' => env('QUEUE_FAILURE_ALERT_DEBOUNCE_SECONDS', 300),
+
     /*
     |--------------------------------------------------------------------------
     | Queue Connections

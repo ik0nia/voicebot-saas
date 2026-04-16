@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use Illuminate\Queue\Events\JobFailed;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -32,6 +33,20 @@ class ReportFailedJob
             'attempts' => $event->job->attempts(),
             'exception' => $exception->getMessage(),
         ]);
+
+        // Rate-limit Sentry dispatch per job class. When a dependency
+        // goes hard-down (OpenAI 500s, Telnyx API outage, DB pool
+        // exhaustion) the queue will fail the same job class in a loop
+        // and Sentry's per-project quota can be exhausted in minutes.
+        // Cache::add is atomic: first failure in the window fires,
+        // every subsequent copy of the same job class short-circuits
+        // until the TTL expires. Log::error above still fires on every
+        // failure so grep-based triage isn't affected.
+        $debounceKey = 'report_failed_job:debounce:' . md5($jobClass);
+        $debounceTtl = (int) config('queue.failure_alert_debounce_seconds', 300);
+        if (!Cache::add($debounceKey, true, $debounceTtl)) {
+            return;
+        }
 
         if (app()->bound('sentry')) {
             try {

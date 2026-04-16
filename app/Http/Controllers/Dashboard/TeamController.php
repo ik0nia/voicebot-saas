@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdminAuditLog;
 use App\Models\User;
 use App\Notifications\TeamInvitation;
 use Illuminate\Http\Request;
@@ -40,6 +41,11 @@ class TeamController extends Controller
 
         $user->assignRole($validated['role']);
 
+        AdminAuditLog::record('team.invite', $user, [
+            'email' => $validated['email'],
+            'role' => $validated['role'],
+        ]);
+
         try {
             $user->notify(new TeamInvitation(auth()->user(), $tempPassword));
         } catch (\Exception $e) {
@@ -59,7 +65,12 @@ class TeamController extends Controller
             'role' => 'required|in:tenant_admin,tenant_manager,tenant_viewer',
         ]);
 
+        $previousRoles = $user->roles->pluck('name')->toArray();
         $user->syncRoles([$validated['role']]);
+
+        AdminAuditLog::record('team.role_change', $user, [
+            'role' => [implode(',', $previousRoles), $validated['role']],
+        ]);
 
         return back()->with('success', 'Rolul a fost actualizat.');
     }
@@ -72,6 +83,13 @@ class TeamController extends Controller
         if ($user->tenant_id !== auth()->user()->tenant_id) {
             abort(403);
         }
+
+        // Record before delete so the audit row carries the target's
+        // email / role (post-delete the model is gone).
+        AdminAuditLog::record('team.remove', $user, [
+            'email' => $user->email,
+            'roles' => $user->roles->pluck('name')->toArray(),
+        ]);
 
         $user->delete();
 
