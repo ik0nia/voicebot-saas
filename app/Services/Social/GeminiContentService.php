@@ -27,7 +27,7 @@ class GeminiContentService
         $dbKey = \DB::table('settings')->where('key', 'gemini_api_key')->value('value');
         $this->geminiApiKey = $dbKey ? decrypt($dbKey) : config('services.gemini.api_key', '');
         $this->imageModel = \DB::table('settings')->where('key', 'gemini_image_model')->value('value')
-            ?: env('GEMINI_IMAGE_MODEL', 'gemini-3.1-flash');
+            ?: config('services.gemini.image_model');
         $this->serviceAccountPath = storage_path('app/google-service-account-sambla.json');
     }
 

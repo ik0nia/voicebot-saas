@@ -97,7 +97,12 @@ class ChannelMessagingService
 
     private function sendFacebook(string $recipientId, string $message, array $options): array
     {
-        $token = config('services.facebook.page_token', env('FACEBOOK_PAGE_TOKEN'));
+        // Align with config/services.php — the key there is
+        // 'page_access_token' fed from FACEBOOK_PAGE_ACCESS_TOKEN. The old
+        // read of 'page_token' / FACEBOOK_PAGE_TOKEN was a different key
+        // neither config nor .env actually set, so outbound Facebook
+        // messages silently returned "not configured".
+        $token = config('services.facebook.page_access_token');
 
         if (empty($token)) {
             return ['success' => false, 'message_id' => null, 'error' => 'Facebook not configured'];
@@ -122,7 +127,8 @@ class ChannelMessagingService
 
     private function sendInstagram(string $recipientId, string $message, array $options): array
     {
-        $token = config('services.instagram.page_token', env('INSTAGRAM_PAGE_TOKEN'));
+        // Same alignment as sendFacebook() — config has 'page_access_token'.
+        $token = config('services.instagram.page_access_token');
 
         if (empty($token)) {
             return ['success' => false, 'message_id' => null, 'error' => 'Instagram not configured'];

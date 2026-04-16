@@ -272,7 +272,12 @@ Route::middleware('auth')->prefix('dashboard/setari')->group(function () {
     Route::put('/password', [SettingsController::class, 'updatePassword'])->name('dashboard.settings.updatePassword');
     Route::put('/company', [SettingsController::class, 'updateCompany'])->name('dashboard.settings.updateCompany');
     Route::put('/notifications', [SettingsController::class, 'updateNotifications'])->name('dashboard.settings.updateNotifications');
-    Route::post('/api-keys', [SettingsController::class, 'generateApiKey'])->name('dashboard.settings.generateApiKey');
+    // Rate-limit token mint to 5/min per user. Without it an account that
+    // leaks session cookies once can mint hundreds of long-lived tokens
+    // before the user notices and rotates the session.
+    Route::post('/api-keys', [SettingsController::class, 'generateApiKey'])
+        ->middleware('throttle:5,1')
+        ->name('dashboard.settings.generateApiKey');
     Route::delete('/api-keys/{tokenId}', [SettingsController::class, 'revokeApiKey'])->name('dashboard.settings.revokeApiKey');
     Route::delete('/account', [SettingsController::class, 'destroyAccount'])->name('dashboard.settings.destroyAccount');
 });
