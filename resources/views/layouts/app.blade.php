@@ -25,6 +25,11 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
 
+    {{-- Marketing & analytics: Consent Mode v2 defaults + GTM must
+         fire as early as possible, before any tag can attempt
+         storage access. --}}
+    @include('partials.analytics.head')
+
     @yield('jsonld')
 
     {{-- Structured data: Organization + SoftwareApplication. Helps Google,
@@ -108,6 +113,7 @@
     </script>
 </head>
 <body class="bg-white min-h-screen flex flex-col">
+    @include('partials.analytics.body')
     @include('components.navbar')
 
     <main class="flex-1">
@@ -115,6 +121,10 @@
     </main>
 
     @include('components.footer')
+
+    {{-- GDPR cookie consent (Consent Mode v2 widget). Alpine + local
+         persistence + server-side audit log. --}}
+    @include('partials.analytics.consent-widget')
 
     {{-- Agent AI widget served from CDN. async + defer so it never blocks render. --}}
     <script src="{{ rtrim(config('app.cdn_url') ?: config('app.url'), '/') }}/widget/sambla-chat.min.js" data-channel-id="1" data-bot-name="Sambla" data-color="#991b1b" data-lang="ro" data-greeting="Salut! 👋 Sunt Sambla, asistentul virtual al platformei. Pot să îți povestesc cum funcționează agentul AI și agent AI vocal-ul nostru AI, sau să te ajut cu orice întrebare. Cu ce pot să te ajut?" async defer></script>

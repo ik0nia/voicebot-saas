@@ -13,6 +13,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // UTM + click-ID capture runs on every web GET that carries
+        // marketing params, writing first/last-touch attribution
+        // rows for campaign performance analysis.
+        $middleware->web(append: [
+            \App\Http\Middleware\CaptureUtmParams::class,
+        ]);
+
         // Trust the local container network (Coolify Traefik → nginx → app)
         // and Cloudflare's published IPv4/IPv6 ranges so request->ip()
         // returns the real visitor IP via X-Forwarded-For instead of an

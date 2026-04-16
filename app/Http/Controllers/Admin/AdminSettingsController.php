@@ -310,6 +310,50 @@ class AdminSettingsController extends Controller
     }
 
     /**
+     * Marketing + analytics IDs (GTM / GA4 / Google Ads / Meta / sGTM).
+     * Everything lives in PlatformSetting + gets read at runtime by
+     * AnalyticsConfig — changes reflect on the next page load without
+     * a deploy. Secrets (CAPI tokens, GA4 API secrets) go through the
+     * encrypted PlatformSetting accessor.
+     */
+    public function updateMarketing(Request $request)
+    {
+        $validated = $request->validate([
+            'gtm_container_id'            => 'nullable|string|max:32',
+            'ga4_measurement_id'          => 'nullable|string|max:32',
+            'ga4_api_secret'              => 'nullable|string|max:100',
+            'google_ads_conversion_id'    => 'nullable|string|max:32',
+            'meta_pixel_id'               => 'nullable|string|max:32',
+            'meta_capi_access_token'      => 'nullable|string|max:300',
+            'meta_test_event_code'        => 'nullable|string|max:40',
+            'sgtm_url'                    => 'nullable|url|max:200',
+            'analytics_enabled'           => 'nullable|boolean',
+            'cookie_consent_enabled'      => 'nullable|boolean',
+        ]);
+
+        $plain = ['gtm_container_id','ga4_measurement_id','google_ads_conversion_id','meta_pixel_id','sgtm_url','meta_test_event_code'];
+        $secrets = ['ga4_api_secret','meta_capi_access_token'];
+        $bools = ['analytics_enabled','cookie_consent_enabled'];
+
+        foreach ($plain as $key) {
+            PlatformSetting::set($key, $validated[$key] ?? '', 'string', 'marketing');
+        }
+        foreach ($secrets as $key) {
+            // Only overwrite secrets if the operator actually typed a
+            // new value — an empty input means "leave the saved secret
+            // alone" (matches the masked-secret UX elsewhere).
+            if (!empty($validated[$key])) {
+                PlatformSetting::set($key, $validated[$key], 'string', 'marketing');
+            }
+        }
+        foreach ($bools as $key) {
+            PlatformSetting::set($key, $validated[$key] ?? false ? '1' : '0', 'boolean', 'marketing');
+        }
+
+        return back()->with('success', 'Setările Marketing & Analytics au fost actualizate.');
+    }
+
+    /**
      * Sync a key to .env if writable, otherwise just log.
      * Platform settings (DB) is the primary source — .env is optional sync.
      */

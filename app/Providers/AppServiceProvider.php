@@ -20,6 +20,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // AnalyticsConfig — per-request cache of marketing IDs read
+        // from PlatformSetting. Singleton so the head partial, body
+        // partial, and widget all hit the same resolved values.
+        $this->app->singleton(\App\Services\Analytics\AnalyticsConfig::class);
+
         // Anthropic client singleton — uses anthropic-ai/sdk directly
         $this->app->singleton(\Anthropic\Client::class, function () {
             $apiKey = config('services.anthropic.api_key', env('ANTHROPIC_API_KEY'));

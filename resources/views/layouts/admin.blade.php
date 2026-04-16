@@ -18,8 +18,10 @@
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
+    @include('partials.analytics.head')
 </head>
 <body class="bg-slate-50 font-sans antialiased">
+    @include('partials.analytics.body')
     <div class="flex h-screen overflow-hidden">
 
         <div id="sidebar-overlay" class="fixed inset-0 z-30 bg-slate-900/50 hidden lg:hidden" onclick="closeSidebar()"></div>
@@ -129,5 +131,6 @@
             });
         }
     </script>
+    @include('partials.analytics.consent-widget')
 </body>
 </html>

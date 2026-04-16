@@ -10,8 +10,10 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+    @include('partials.analytics.head')
 </head>
 <body class="bg-slate-50 font-sans antialiased">
+    @include('partials.analytics.body')
     <div class="flex h-screen overflow-hidden">
 
         {{-- Mobile sidebar overlay --}}
@@ -535,5 +537,6 @@
             };
         }
     </script>
+    @include('partials.analytics.consent-widget')
 </body>
 </html>

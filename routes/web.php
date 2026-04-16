@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\ConsentController;
 use App\Http\Controllers\Dashboard\AnalyticsController;
 use App\Http\Controllers\Dashboard\BillingController;
 use App\Http\Controllers\Dashboard\BotController;
@@ -41,6 +42,13 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
+
+// GDPR consent log — client widget POSTs here on every consent
+// change so we have proof-of-consent per the ePrivacy directive.
+// Rate-limited to stop a noisy banner from filling the table.
+Route::post('/consent', [ConsentController::class, 'store'])
+    ->middleware('throttle:20,1')
+    ->name('consent.store');
 
 // Email verification
 Route::middleware('auth')->group(function () {
@@ -501,6 +509,9 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
     // Costs & Profitability (daily rollup viewer + ad-hoc re-aggregate)
     Route::get('costuri', [\App\Http\Controllers\Admin\AdminCostReportController::class, 'index'])->name('admin.costs.index');
     Route::post('costuri/reaggregate', [\App\Http\Controllers\Admin\AdminCostReportController::class, 'reaggregate'])->name('admin.costs.reaggregate');
+
+    // Marketing & Analytics platform settings
+    Route::put('/setari/marketing', [AdminSettingsController::class, 'updateMarketing'])->name('admin.settings.updateMarketing');
 
     // System Health
     Route::get('/system', [\App\Http\Controllers\Admin\AdminSystemController::class, 'index'])->name('admin.system.index');

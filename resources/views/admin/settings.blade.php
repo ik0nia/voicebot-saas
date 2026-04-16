@@ -58,6 +58,7 @@
                     'facebook' => ['label' => 'Facebook', 'icon' => 'M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z'],
                     'instagram' => ['label' => 'Instagram', 'icon' => 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'],
                     'elevenlabs' => ['label' => 'ElevenLabs', 'icon' => 'M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z'],
+                    'marketing' => ['label' => 'Marketing & Analytics', 'icon' => 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'],
                     'securitate' => ['label' => 'Securitate', 'icon' => 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z'],
                     'tenanti' => ['label' => 'Tenanți', 'icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4'],
                     'planuri' => ['label' => 'Planuri', 'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01'],
@@ -1085,6 +1086,141 @@
                     <button type="submit"
                             class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-colors">
                         Salvează setările Instagram
+                    </button>
+                </div>
+            </form>
+        </div>
+    @endif
+
+    {{-- ============================================================ --}}
+    {{-- TAB: Marketing & Analytics --}}
+    {{-- ============================================================ --}}
+    @if($tab === 'marketing')
+        <div class="bg-white rounded-xl border border-slate-200 p-6">
+            <h2 class="text-lg font-semibold text-slate-900">Marketing & Analytics</h2>
+            <p class="mt-1 text-sm text-slate-500">Google Tag Manager, GA4, Google Ads, Meta Pixel, Consent Mode v2.</p>
+
+            <form method="POST" action="{{ url('/admin/setari/marketing') }}" class="mt-6 space-y-6">
+                @csrf
+                @method('PUT')
+
+                {{-- Toggles --}}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <label class="flex items-start gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 cursor-pointer">
+                        <input type="checkbox" name="analytics_enabled" value="1" class="mt-0.5"
+                               {{ ($settings['marketing']['analytics_enabled'] ?? '1') === '1' ? 'checked' : '' }}>
+                        <div>
+                            <p class="text-sm font-semibold text-slate-900">Analytics activat</p>
+                            <p class="text-xs text-slate-500 mt-0.5">Master switch — dezactivează GTM + orice tag.</p>
+                        </div>
+                    </label>
+                    <label class="flex items-start gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 cursor-pointer">
+                        <input type="checkbox" name="cookie_consent_enabled" value="1" class="mt-0.5"
+                               {{ ($settings['marketing']['cookie_consent_enabled'] ?? '1') === '1' ? 'checked' : '' }}>
+                        <div>
+                            <p class="text-sm font-semibold text-slate-900">Widget consent activ</p>
+                            <p class="text-xs text-slate-500 mt-0.5">Banner cookie + Consent Mode v2 (GDPR).</p>
+                        </div>
+                    </label>
+                </div>
+
+                {{-- Google Tag Manager --}}
+                <div class="pt-4 border-t border-slate-200">
+                    <h3 class="text-sm font-semibold text-slate-900">Google Tag Manager</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Containerul prin care livrezi toate tag-urile (GA4, Ads, Meta).</p>
+                    <div class="mt-3">
+                        <label for="gtm_container_id" class="block text-sm font-medium text-slate-700">GTM Container ID</label>
+                        <input type="text" name="gtm_container_id" id="gtm_container_id" placeholder="GTM-XXXXXXX"
+                               value="{{ old('gtm_container_id', $settings['marketing']['gtm_container_id'] ?? '') }}"
+                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                    </div>
+                </div>
+
+                {{-- GA4 --}}
+                <div class="pt-4 border-t border-slate-200">
+                    <h3 class="text-sm font-semibold text-slate-900">Google Analytics 4</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Property ID + API secret pentru Measurement Protocol (conversii server-side).</p>
+                    <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="ga4_measurement_id" class="block text-sm font-medium text-slate-700">Measurement ID</label>
+                            <input type="text" name="ga4_measurement_id" id="ga4_measurement_id" placeholder="G-XXXXXXXXXX"
+                                   value="{{ old('ga4_measurement_id', $settings['marketing']['ga4_measurement_id'] ?? '') }}"
+                                   class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                        </div>
+                        <div>
+                            <label for="ga4_api_secret" class="block text-sm font-medium text-slate-700">
+                                API Secret
+                                @if($settings['marketing']['ga4_api_secret__present'] ?? false)
+                                    <span class="ml-1 text-xs text-emerald-600">(setat)</span>
+                                @endif
+                            </label>
+                            <input type="password" name="ga4_api_secret" id="ga4_api_secret" placeholder="••••••••••"
+                                   autocomplete="new-password"
+                                   class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                            <p class="mt-1 text-xs text-slate-500">Lasă gol ca să păstrezi valoarea curentă.</p>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Google Ads --}}
+                <div class="pt-4 border-t border-slate-200">
+                    <h3 class="text-sm font-semibold text-slate-900">Google Ads</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Conversion ID-ul din contul Google Ads (label-urile pentru sign_up/lead/purchase se setează în GTM).</p>
+                    <div class="mt-3">
+                        <label for="google_ads_conversion_id" class="block text-sm font-medium text-slate-700">Conversion ID</label>
+                        <input type="text" name="google_ads_conversion_id" id="google_ads_conversion_id" placeholder="AW-123456789"
+                               value="{{ old('google_ads_conversion_id', $settings['marketing']['google_ads_conversion_id'] ?? '') }}"
+                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                    </div>
+                </div>
+
+                {{-- Meta Pixel + CAPI --}}
+                <div class="pt-4 border-t border-slate-200">
+                    <h3 class="text-sm font-semibold text-slate-900">Meta (Facebook / Instagram)</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Pixel ID + Conversions API token pentru event matching server-side.</p>
+                    <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="meta_pixel_id" class="block text-sm font-medium text-slate-700">Pixel ID</label>
+                            <input type="text" name="meta_pixel_id" id="meta_pixel_id" placeholder="123456789012345"
+                                   value="{{ old('meta_pixel_id', $settings['marketing']['meta_pixel_id'] ?? '') }}"
+                                   class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                        </div>
+                        <div>
+                            <label for="meta_capi_access_token" class="block text-sm font-medium text-slate-700">
+                                CAPI Access Token
+                                @if($settings['marketing']['meta_capi_access_token__present'] ?? false)
+                                    <span class="ml-1 text-xs text-emerald-600">(setat)</span>
+                                @endif
+                            </label>
+                            <input type="password" name="meta_capi_access_token" id="meta_capi_access_token" placeholder="••••••••••"
+                                   autocomplete="new-password"
+                                   class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                        </div>
+                        <div>
+                            <label for="meta_test_event_code" class="block text-sm font-medium text-slate-700">Test Event Code <span class="text-slate-400">(opțional)</span></label>
+                            <input type="text" name="meta_test_event_code" id="meta_test_event_code" placeholder="TEST12345"
+                                   value="{{ old('meta_test_event_code', $settings['marketing']['meta_test_event_code'] ?? '') }}"
+                                   class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                            <p class="mt-1 text-xs text-slate-500">Activează doar în timp ce verifici din Meta Event Manager — lasă gol în prod.</p>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Server-Side Tagging --}}
+                <div class="pt-4 border-t border-slate-200">
+                    <h3 class="text-sm font-semibold text-slate-900">Server-Side Tagging</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Dacă ai un sGTM self-hostat (ex. <span class="font-mono">tags.sambla.ro</span>), GTM + GA4 vor ruta prin el pentru fiabilitate față de ad-blockere.</p>
+                    <div class="mt-3">
+                        <label for="sgtm_url" class="block text-sm font-medium text-slate-700">sGTM URL</label>
+                        <input type="url" name="sgtm_url" id="sgtm_url" placeholder="https://tags.sambla.ro"
+                               value="{{ old('sgtm_url', $settings['marketing']['sgtm_url'] ?? '') }}"
+                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-200 flex justify-end">
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-red-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-800">
+                        Salvează
                     </button>
                 </div>
             </form>
