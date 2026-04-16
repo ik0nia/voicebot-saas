@@ -24,6 +24,11 @@ Schedule::command('billing:trial-lifecycle')->dailyAt('08:00')->withoutOverlappi
 // response.done events / status webhooks that arrived at 23:59.
 Schedule::command('costs:rollup')->dailyAt('00:05')->withoutOverlapping();
 
+// GDPR retention sweep — anonymises old IPs, deletes expired
+// conversations + call recordings. Declared in the privacy
+// policy at /confidentialitate.
+Schedule::command('privacy:retention')->dailyAt('03:25')->withoutOverlapping();
+
 // Social media: generate posts daily at 07:00
 // PAUSED 2026-04-14: backlog de 306 grupuri draft + texte/imagini cu limbaj vechi.
 // Reactivează după curățarea backlog-ului și după fix logo (image-to-image cu ref).

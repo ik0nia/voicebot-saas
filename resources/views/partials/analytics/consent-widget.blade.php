@@ -251,6 +251,12 @@
 
                 this.showBanner = false;
 
+                // Let other scripts on the page react (chat widget
+                // on sambla.ro defers its load until this fires).
+                try {
+                    window.dispatchEvent(new CustomEvent('sambla:consent-decided', { detail: signals }));
+                } catch (e) {}
+
                 // Server-side audit log (GDPR proof-of-consent).
                 fetch(this.endpoint, {
                     method: 'POST',

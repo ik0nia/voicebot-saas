@@ -128,8 +128,38 @@
          persistence + server-side audit log. --}}
     @include('partials.analytics.consent-widget')
 
-    {{-- Agent AI widget served from CDN. async + defer so it never blocks render. --}}
-    <script src="{{ rtrim(config('app.cdn_url') ?: config('app.url'), '/') }}/widget/sambla-chat.min.js" data-channel-id="1" data-bot-name="Sambla" data-color="#991b1b" data-lang="ro" data-greeting="Salut! 👋 Sunt Sambla, asistentul virtual al platformei. Pot să îți povestesc cum funcționează agentul AI și agent AI vocal-ul nostru AI, sau să te ajut cu orice întrebare. Cu ce pot să te ajut?" async defer></script>
+    {{-- Agent AI widget served from CDN. On sambla.ro we gate the
+         load behind the cookie consent decision — tenants who embed
+         the same snippet on their own site aren't affected (widget
+         loads as a strictly-necessary functional service, legal
+         under ePrivacy Art. 5(3), zero config). --}}
+    <script>
+    (function () {
+        var widgetUrl = '{{ rtrim(config('app.cdn_url') ?: config('app.url'), '/') }}/widget/sambla-chat.min.js';
+        function loadChatWidget() {
+            if (window.__samblaChatLoaded) return;
+            window.__samblaChatLoaded = true;
+            var s = document.createElement('script');
+            s.src = widgetUrl;
+            s.async = true; s.defer = true;
+            s.setAttribute('data-channel-id', '1');
+            s.setAttribute('data-bot-name', 'Sambla');
+            s.setAttribute('data-color', '#991b1b');
+            s.setAttribute('data-lang', 'ro');
+            s.setAttribute('data-greeting', 'Salut! 👋 Sunt Sambla, asistentul virtual al platformei. Pot să îți povestesc cum funcționează agentul AI și agent AI vocal-ul nostru AI, sau să te ajut cu orice întrebare. Cu ce pot să te ajut?');
+            document.body.appendChild(s);
+        }
+        var decided = false;
+        try { decided = !!localStorage.getItem('sambla_consent'); } catch (e) {}
+        if (decided) {
+            loadChatWidget();
+        } else {
+            // Banner not decided yet → wait. Consent widget emits
+            // this event on accept/reject.
+            window.addEventListener('sambla:consent-decided', loadChatWidget, { once: true });
+        }
+    })();
+    </script>
 
     @stack('scripts')
 </body>
