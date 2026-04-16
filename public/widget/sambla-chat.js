@@ -26,7 +26,7 @@
             closeChat: 'Inchide chat',
             online: 'Online',
             offline: 'Offline',
-            poweredBy: 'Powered by',
+            poweredBy: 'Oferit de',
             typeMessage: 'Scrie un mesaj...',
             send: 'Trimite',
             typing: 'Se scrie un mesaj',
