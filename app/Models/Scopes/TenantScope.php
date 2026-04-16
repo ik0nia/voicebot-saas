@@ -34,6 +34,14 @@ class TenantScope implements Scope
             if (session('admin_view_all', false)) {
                 return;
             }
+
+            // "Doar eu" default for super-admin (no tenant picked, no
+            // aggregate mode): filter to the super-admin's OWN tenant, or
+            // force an empty result if they have none. Previously this fell
+            // through with tenant_id=null, which added no WHERE and silently
+            // returned every tenant's rows.
+            $builder->where($model->getTable() . '.tenant_id', $user->tenant_id ?: 0);
+            return;
         }
 
         // Everyone else: filter to own tenant
