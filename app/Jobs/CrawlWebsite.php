@@ -51,7 +51,10 @@ class CrawlWebsite implements ShouldQueue
             $disallowed = [];
             try {
                 $robotsUrl = parse_url($baseUrl, PHP_URL_SCHEME) . '://' . parse_url($baseUrl, PHP_URL_HOST) . '/robots.txt';
-                $robotsResponse = Http::timeout(10)->get($robotsUrl);
+                // Same no-redirect policy as the main crawl loop — see below.
+                $robotsResponse = Http::timeout(10)
+                    ->withOptions(['allow_redirects' => false])
+                    ->get($robotsUrl);
                 if ($robotsResponse->successful()) {
                     $disallowed = $extractor->parseRobotsTxt($robotsResponse->body());
                 }
@@ -97,7 +100,14 @@ class CrawlWebsite implements ShouldQueue
                         sleep(1);
                     }
 
+                    // Do NOT follow redirects automatically — a public URL
+                    // could 302 to http://10.0.1.12:6379/ (internal Redis)
+                    // or any other private endpoint, silently bypassing the
+                    // SsrfGuard check we did above. If we need redirect
+                    // support later, re-validate each hop through SsrfGuard
+                    // before following it.
                     $response = Http::timeout(15)
+                        ->withOptions(['allow_redirects' => false])
                         ->withHeaders(['User-Agent' => 'VoicebotSaaS-Scanner/1.0'])
                         ->get($url);
 

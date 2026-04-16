@@ -294,21 +294,20 @@ class RealtimeSessionController extends Controller
 
     /**
      * Verify HMAC call_token for transcript/end endpoints.
-     * Falls back to accepting requests without token for backward compatibility
-     * with calls created before this security patch (they lack hmac_secret).
+     *
+     * HMAC secrets are now stamped onto every call at creation time, and a
+     * DB check at fix time showed zero calls from the last 48h without one.
+     * The previous "< 48h window" backward-compat branch was therefore a
+     * standing 48-hour write-access grant to any call whose id was guessed,
+     * with no upside. Removed — calls without an hmac_secret now fail
+     * verification like any other missing-token case.
      */
     private function verifyCallToken(Request $request, Call $call): bool
     {
         $callToken = $request->header('X-Call-Token') ?? $request->input('call_token');
         $hmacSecret = $call->metadata['hmac_secret'] ?? null;
 
-        // Calls created before security patch don't have hmac_secret.
-        // Allow only if call is recent (< 48h) to limit the backward compat window.
-        if ($hmacSecret === null) {
-            return $call->created_at && $call->created_at->gt(now()->subHours(48));
-        }
-
-        if (empty($callToken)) {
+        if (empty($hmacSecret) || empty($callToken)) {
             return false;
         }
 
