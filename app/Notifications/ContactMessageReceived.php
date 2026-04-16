@@ -45,7 +45,7 @@ class ContactMessageReceived extends Notification implements ShouldQueue
         }
 
         return $mail
-            ->action('Vezi în admin', url('/admin/contact-messages/' . $m->id))
+            ->action('Vezi în admin', url('/admin/lead-uri/' . $m->id))
             ->line('Răspunde direct pe email — câmpul reply-to e setat pe adresa vizitatorului.')
             ->replyTo($m->email, $m->name);
     }
