@@ -94,20 +94,28 @@ class TwilioService implements TelephonyProvider
 
             $numbers = $list->read([], $limit);
 
-            return array_map(fn ($n) => [
-                'number' => $n->phoneNumber,
-                'friendly_name' => $n->friendlyName ?: $n->phoneNumber,
-                'capabilities' => [
-                    'voice' => (bool) ($n->capabilities['voice'] ?? false),
-                    'sms' => (bool) ($n->capabilities['SMS'] ?? false),
-                ],
-                'region' => array_filter([
-                    'region_name' => $n->region ?: null,
-                    'locality' => $n->locality ?: null,
-                    'iso_country' => $n->isoCountry ?: null,
-                ]),
-                'monthly_cost' => 1.00,
-            ], $numbers);
+            return array_map(function ($n) {
+                // Twilio SDK returns PhoneNumberCapabilities as an object
+                // with getters, not an array. The same "capabilities" key
+                // cohabits as an array on other SDK response types, which
+                // makes it easy to reach for $n->capabilities['voice']
+                // and get a runtime TypeError. Route through the getters.
+                $caps = $n->capabilities;
+                return [
+                    'number' => $n->phoneNumber,
+                    'friendly_name' => $n->friendlyName ?: $n->phoneNumber,
+                    'capabilities' => [
+                        'voice' => is_object($caps) ? (bool) $caps->getVoice() : (bool) ($caps['voice'] ?? false),
+                        'sms' => is_object($caps) ? (bool) $caps->getSms() : (bool) ($caps['SMS'] ?? false),
+                    ],
+                    'region' => array_filter([
+                        'region_name' => $n->region ?: null,
+                        'locality' => $n->locality ?: null,
+                        'iso_country' => $n->isoCountry ?: null,
+                    ]),
+                    'monthly_cost' => 1.00,
+                ];
+            }, $numbers);
         } catch (RestException $e) {
             Log::warning('TwilioService: getAvailableNumbers failed', [
                 'country' => $country,
