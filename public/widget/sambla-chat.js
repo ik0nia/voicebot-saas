@@ -167,6 +167,7 @@
     var MESSAGES_KEY = 'sambla_chat_messages_' + config.channelId;
     var LAST_ACTIVITY_KEY = 'sambla_chat_activity_' + config.channelId;
     var OFFLINE_QUEUE_KEY = 'sambla_chat_offline_' + config.channelId;
+    var OPEN_STATE_KEY = 'sambla_chat_open_' + config.channelId;
     var SESSION_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
     var PRECHAT_KEY = 'sambla_prechat_' + config.channelId;
 
@@ -1445,6 +1446,12 @@
             bubble.setAttribute('aria-label', isOpen ? t('closeChat') : t('openChat'));
             bubble.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
 
+            // Persist open/closed state so page navigations restore
+            // the widget to where the visitor left it. Fails silently
+            // when storage is disabled — that's fine, widget just
+            // falls back to its default-closed behavior.
+            try { localStorage.setItem(OPEN_STATE_KEY, isOpen ? '1' : '0'); } catch(e) {}
+
             trackEvent(isOpen ? 'widget_opened' : 'widget_closed');
 
             if (isOpen) {
@@ -1921,8 +1928,11 @@
             });
             if (products.length === 0) return;
 
+            // Horizontal slider — cards on one row, users swipe /
+            // scroll through them. Keeps the message area compact
+            // regardless of how many products the bot suggested.
             var wrap = document.createElement('div');
-            wrap.style.cssText = 'display:flex;flex-direction:column;gap:8px;padding:8px 0;width:100%;flex-shrink:0;';
+            wrap.style.cssText = 'display:flex;flex-direction:row;gap:8px;padding:8px 0 4px;width:100%;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:thin;';
             wrap.setAttribute('role', 'list');
             wrap.setAttribute('aria-label', 'Products');
 
@@ -1936,22 +1946,26 @@
                 }
 
                 var card = document.createElement('div');
-                card.style.cssText = 'width:100%;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.04);cursor:pointer;transition:box-shadow 0.2s,transform 0.15s;display:flex;flex-direction:row;align-items:stretch;';
+                // Slider card: fixed width per card + scroll-snap so
+                // swipes land on a clean boundary. Vertical layout
+                // (image top, text below) fits the narrow widget
+                // width and shows more cards per row.
+                card.style.cssText = 'flex:0 0 160px;width:160px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.04);cursor:pointer;transition:box-shadow 0.2s,transform 0.15s;display:flex;flex-direction:column;scroll-snap-align:start;';
                 card.setAttribute('role', 'listitem');
                 card.setAttribute('tabindex', '0');
                 card.setAttribute('aria-label', stripAllHtml(p.name || ''));
 
                 var h = '';
 
-                // Image (left side, square)
+                // Image (top of the card, full width)
                 if (p.image_url && isValidUrl(p.image_url)) {
-                    h += '<div style="width:90px;min-height:90px;flex-shrink:0;overflow:hidden;background:#f8fafc;">';
+                    h += '<div style="width:100%;height:100px;flex-shrink:0;overflow:hidden;background:#f8fafc;">';
                     h += '<img src="' + sanitizeHtml(p.image_url) + '" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" alt="' + sanitizeHtml(p.name || '') + '">';
                     h += '</div>';
                 }
 
-                // Content (right side)
-                h += '<div style="padding:10px 12px;flex:1;display:flex;flex-direction:column;justify-content:center;min-width:0;">';
+                // Content (bottom of the card)
+                h += '<div style="padding:8px 10px;flex:1;display:flex;flex-direction:column;min-width:0;">';
 
                 // Product name
                 h += '<div style="font-size:13px;font-weight:600;color:#1e293b;line-height:1.3;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">' + sanitizeHtml(p.name) + '</div>';
@@ -2119,6 +2133,14 @@
         // Event listeners
         bubble.addEventListener('click', toggleChat);
         bubble.setAttribute('aria-expanded', 'false');
+
+        // Restore previous open/closed state across page navigation.
+        // Short defer so the open-animation runs after layout settles.
+        try {
+            if (localStorage.getItem(OPEN_STATE_KEY) === '1') {
+                setTimeout(function() { if (!isOpen) toggleChat(); }, 50);
+            }
+        } catch(e) {}
 
         // Close button — use event delegation since element may move between DOM roots
         function handleCloseClick(e) {
