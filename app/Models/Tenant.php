@@ -42,6 +42,11 @@ class Tenant extends Model
         'message_credits',
         'minute_credits',
         'product_credits',
+        // Twilio subaccount for this tenant. Populated on first number
+        // purchase via TwilioService::ensureSubaccount(). When null,
+        // the tenant routes through the master Twilio account.
+        'telephony_subaccount_sid',
+        'telephony_subaccount_auth_token',
     ];
 
     protected function casts(): array
@@ -50,6 +55,10 @@ class Tenant extends Model
             'settings' => 'array',
             'plan_overrides' => 'array',
             'trial_ends_at' => 'datetime',
+            // Encrypted at rest — Eloquent casts handle decryption on read
+            // and encryption on write. A leaked DB dump stays short of
+            // per-tenant Twilio API credentials.
+            'telephony_subaccount_auth_token' => 'encrypted',
         ];
     }
 

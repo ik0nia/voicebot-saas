@@ -87,7 +87,21 @@ class PhoneNumberController extends Controller
 
         if ($validated['provider'] !== 'manual') {
             try {
-                $provider = $this->telephony->for($validated['provider']);
+                // For Twilio, ensure the tenant has a subaccount before
+                // purchase so the number lands on the subaccount
+                // directly (avoiding a later transfer, which Twilio
+                // charges and sometimes refuses). Telnyx has no
+                // subaccount concept; we use the direct provider.
+                if ($validated['provider'] === 'twilio') {
+                    $twilio = $this->telephony->for('twilio');
+                    if ($twilio instanceof \App\Services\TwilioService) {
+                        $twilio->ensureSubaccount($tenant);
+                    }
+                    $provider = $this->telephony->forTenant($tenant);
+                } else {
+                    $provider = $this->telephony->for($validated['provider']);
+                }
+
                 $result = $provider->purchaseNumber($validated['number']);
 
                 if (!$result) {

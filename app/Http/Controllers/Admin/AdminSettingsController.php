@@ -125,12 +125,22 @@ class AdminSettingsController extends Controller
     {
         $validated = $request->validate([
             'twilio_account_sid' => 'required|string|max:255',
-            'twilio_auth_token' => 'required|string|max:255',
+            // auth_token is optional on update — the form shows "••• (saved)"
+            // placeholder when a value already exists, so an empty submission
+            // means "keep what's there" rather than "clear it".
+            'twilio_auth_token' => 'nullable|string|max:255',
             'twilio_twiml_app_sid' => 'nullable|string|max:255',
             'twilio_webhook_url' => 'nullable|url|max:255',
+            // Regulatory Bundle + Address (RO) — shared by all subaccounts
+            // per Twilio's subaccount regulatory inheritance.
+            'twilio_ro_bundle_sid' => 'nullable|string|starts_with:BU|max:64',
+            'twilio_ro_address_sid' => 'nullable|string|starts_with:AD|max:64',
         ]);
 
         foreach ($validated as $key => $value) {
+            if ($key === 'twilio_auth_token' && ($value === null || $value === '')) {
+                continue; // preserve existing token when form submitted blank
+            }
             PlatformSetting::set($key, $value ?? '', 'string', 'twilio');
         }
 

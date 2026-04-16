@@ -32,6 +32,18 @@ class TwilioService implements TelephonyProvider
 {
     protected ?Client $client = null;
 
+    /**
+     * Override credentials for this instance. Used by
+     * TelephonyManager::forTenant() to return a TwilioService
+     * authenticated as a tenant's subaccount. When both are null the
+     * service uses master platform credentials from PlatformSetting /
+     * config — the legacy single-account path.
+     */
+    public function __construct(
+        protected ?string $overrideSid = null,
+        protected ?string $overrideToken = null,
+    ) {}
+
     public function name(): string
     {
         return 'twilio';
@@ -43,14 +55,73 @@ class TwilioService implements TelephonyProvider
             return $this->client;
         }
 
-        $sid = PlatformSetting::get('twilio_account_sid') ?: config('services.twilio.account_sid');
-        $token = PlatformSetting::get('twilio_auth_token') ?: config('services.twilio.auth_token');
+        $sid = $this->overrideSid
+            ?: (PlatformSetting::get('twilio_account_sid') ?: config('services.twilio.account_sid'));
+        $token = $this->overrideToken
+            ?: (PlatformSetting::get('twilio_auth_token') ?: config('services.twilio.auth_token'));
 
         if (empty($sid) || empty($token)) {
             throw new \RuntimeException('Twilio credentials not configured. Set them in Admin → Settings → Twilio.');
         }
 
         return $this->client = new Client($sid, $token);
+    }
+
+    /**
+     * Master-account client — used for administrative operations that
+     * can't run on a subaccount (subaccount creation itself, listing
+     * all subaccounts for audit). Always authenticates with the
+     * platform-level credentials, ignoring any overrides.
+     */
+    protected function masterClient(): Client
+    {
+        $sid = PlatformSetting::get('twilio_account_sid') ?: config('services.twilio.account_sid');
+        $token = PlatformSetting::get('twilio_auth_token') ?: config('services.twilio.auth_token');
+
+        if (empty($sid) || empty($token)) {
+            throw new \RuntimeException('Twilio master credentials not configured.');
+        }
+        return new Client($sid, $token);
+    }
+
+    /**
+     * Ensure the given tenant has a Twilio subaccount, creating one on
+     * first call. The returned array is suitable for populating
+     * tenants.telephony_subaccount_{sid,auth_token}. Idempotent —
+     * subsequent calls with populated columns return them unchanged
+     * without touching the Twilio API.
+     *
+     * Shared Bundle / Address means the subaccount inherits
+     * regulatory eligibility from the master account per Twilio's
+     * "Subaccount Regulatory" feature — no document re-submission.
+     *
+     * @return array{sid: string, auth_token: string}
+     */
+    public function ensureSubaccount(\App\Models\Tenant $tenant): array
+    {
+        if ($tenant->telephony_subaccount_sid && $tenant->telephony_subaccount_auth_token) {
+            return [
+                'sid' => $tenant->telephony_subaccount_sid,
+                'auth_token' => $tenant->telephony_subaccount_auth_token,
+            ];
+        }
+
+        $friendlyName = substr("Sambla · {$tenant->name} (#{$tenant->id})", 0, 64);
+        $sub = $this->masterClient()->api->v2010->accounts->create([
+            'friendlyName' => $friendlyName,
+        ]);
+
+        $tenant->forceFill([
+            'telephony_subaccount_sid' => $sub->sid,
+            'telephony_subaccount_auth_token' => $sub->authToken,
+        ])->save();
+
+        Log::info('TwilioService: provisioned subaccount', [
+            'tenant_id' => $tenant->id,
+            'subaccount_sid' => $sub->sid,
+        ]);
+
+        return ['sid' => $sub->sid, 'auth_token' => $sub->authToken];
     }
 
     public function makeCall(string $to, string $from, string $webhookUrl): object
@@ -128,9 +199,34 @@ class TwilioService implements TelephonyProvider
     public function purchaseNumber(string $phoneNumber): ?object
     {
         try {
-            $number = $this->client()->incomingPhoneNumbers->create([
+            // Regulatory bundle + address are required for RO (and most
+            // non-US countries). Twilio rejects the purchase with
+            // error 21649 ("RegulatoryBundleSid is required") without
+            // them. We infer country from the number prefix and look
+            // up the configured SIDs; US numbers go through without
+            // bundle (not required).
+            $country = $this->countryFromNumber($phoneNumber);
+            $options = [
                 'phoneNumber' => $phoneNumber,
-            ]);
+            ];
+
+            $bundleSid = $country
+                ? (PlatformSetting::get("twilio_{$country}_bundle_sid")
+                    ?: config("services.twilio.bundle_sid_{$country}"))
+                : null;
+            $addressSid = $country
+                ? (PlatformSetting::get("twilio_{$country}_address_sid")
+                    ?: config("services.twilio.address_sid_{$country}"))
+                : null;
+
+            if ($bundleSid) {
+                $options['bundleSid'] = $bundleSid;
+            }
+            if ($addressSid) {
+                $options['addressSid'] = $addressSid;
+            }
+
+            $number = $this->client()->incomingPhoneNumbers->create($options);
 
             return (object) [
                 'id' => $number->sid,
@@ -144,6 +240,34 @@ class TwilioService implements TelephonyProvider
             ]);
             return null;
         }
+    }
+
+    /**
+     * Best-effort country code from a phone number. E.164 numbers start
+     * with a country calling code, but Twilio Bundle keys use ISO 3166
+     * country codes (RO, DE, FR…). Map the handful of countries we
+     * actually support; extend as needed.
+     */
+    private function countryFromNumber(string $phoneNumber): ?string
+    {
+        $prefixes = [
+            '+40' => 'ro',
+            '+44' => 'gb',
+            '+49' => 'de',
+            '+33' => 'fr',
+            '+34' => 'es',
+            '+39' => 'it',
+            '+31' => 'nl',
+            // US numbers don't require a Bundle — returning null skips
+            // bundle/address lookup entirely.
+            '+1' => null,
+        ];
+        foreach ($prefixes as $prefix => $iso) {
+            if (str_starts_with($phoneNumber, $prefix)) {
+                return $iso;
+            }
+        }
+        return null;
     }
 
     public function releaseNumber(string $externalId): bool

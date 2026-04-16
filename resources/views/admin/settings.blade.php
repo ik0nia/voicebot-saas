@@ -389,6 +389,33 @@
                     </div>
                 </div>
 
+                {{-- Regulatory Bundle (RO) — required for RO number provisioning.
+                     Shared across subaccounts, depus o singură dată la nivel platform. --}}
+                <div class="mt-6 pt-5 border-t border-slate-200">
+                    <h3 class="text-sm font-semibold text-slate-900 mb-1">Regulatory Bundle — România</h3>
+                    <p class="text-xs text-slate-500 mb-3">
+                        Twilio cere un Bundle regulatory + Address pentru numere RO. Depui o singură dată
+                        (CUI Sambla + adresă sediu), iar toate subaccount-urile clienților îl folosesc.
+                        Găsești SID-urile în Twilio Console → <strong>Regulatory Compliance</strong> (Bundle, <code>BU...</code>) și <strong>Addresses</strong> (<code>AD...</code>).
+                    </p>
+                    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                        <div>
+                            <label for="twilio_ro_bundle_sid" class="block text-sm font-medium text-slate-700">RO Bundle SID</label>
+                            <input type="text" name="twilio_ro_bundle_sid" id="twilio_ro_bundle_sid"
+                                   value="{{ old('twilio_ro_bundle_sid', $settings['twilio']['twilio_ro_bundle_sid'] ?? '') }}"
+                                   placeholder="BUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                                   class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors font-mono text-xs">
+                        </div>
+                        <div>
+                            <label for="twilio_ro_address_sid" class="block text-sm font-medium text-slate-700">RO Address SID</label>
+                            <input type="text" name="twilio_ro_address_sid" id="twilio_ro_address_sid"
+                                   value="{{ old('twilio_ro_address_sid', $settings['twilio']['twilio_ro_address_sid'] ?? '') }}"
+                                   placeholder="ADxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                                   class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors font-mono text-xs">
+                        </div>
+                    </div>
+                </div>
+
                 {{-- Helper block with the two URLs the operator has to paste in Twilio Console --}}
                 <div class="mt-6 rounded-lg bg-blue-50 border border-blue-200 px-4 py-3 text-sm text-blue-900">
                     <p class="font-semibold mb-2">În Twilio Console, pe fiecare număr cumpărat:</p>

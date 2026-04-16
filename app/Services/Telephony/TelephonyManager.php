@@ -3,6 +3,7 @@
 namespace App\Services\Telephony;
 
 use App\Models\PhoneNumber;
+use App\Models\Tenant;
 use App\Services\TelnyxService;
 use App\Services\TwilioService;
 
@@ -52,6 +53,41 @@ class TelephonyManager
         if ($name === 'manual') {
             return $this->default();
         }
+
+        if ($name === 'twilio' && $number->tenant_id) {
+            $tenant = Tenant::withoutGlobalScopes()->find($number->tenant_id);
+            if ($tenant) {
+                return $this->forTenant($tenant);
+            }
+        }
+
         return $this->for($name);
+    }
+
+    /**
+     * Return a Twilio provider authenticated as the tenant's subaccount
+     * if one exists; falls back to master credentials otherwise. The
+     * subaccount is NOT auto-created here (cheap lookup on every
+     * resolve). Caller (PhoneNumberController::store, cutover command)
+     * invokes TwilioService::ensureSubaccount explicitly before the
+     * first number purchase so the write lands on the subaccount from
+     * day one.
+     */
+    public function forTenant(Tenant $tenant): TelephonyProvider
+    {
+        $defaultName = config('telephony.default', 'twilio');
+
+        if ($defaultName !== 'twilio') {
+            return $this->for($defaultName);
+        }
+
+        if ($tenant->telephony_subaccount_sid && $tenant->telephony_subaccount_auth_token) {
+            return new TwilioService(
+                $tenant->telephony_subaccount_sid,
+                $tenant->telephony_subaccount_auth_token,
+            );
+        }
+
+        return $this->twilio;
     }
 }

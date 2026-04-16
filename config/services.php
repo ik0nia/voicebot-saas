@@ -45,6 +45,12 @@ return [
         'account_sid' => env('TWILIO_ACCOUNT_SID'),
         'auth_token' => env('TWILIO_AUTH_TOKEN'),
         'twiml_app_sid' => env('TWILIO_TWIML_APP_SID'),
+        // Regulatory Bundle + Address — required to purchase numbers in
+        // regulated countries (RO, DE, FR, GB, …). Submitted and
+        // approved once at the platform level; subaccounts share it per
+        // Twilio's "subaccount regulatory inheritance" feature.
+        'bundle_sid_ro' => env('TWILIO_RO_BUNDLE_SID'),
+        'address_sid_ro' => env('TWILIO_RO_ADDRESS_SID'),
     ],
 
     'internal' => [
