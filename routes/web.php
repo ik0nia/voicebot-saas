@@ -257,12 +257,22 @@ Route::middleware('auth')->prefix('dashboard/numere')->group(function () {
     Route::post('/sync-statuses', [PhoneNumberController::class, 'syncStatuses'])->name('dashboard.numbers.syncStatuses');
 });
 
-// Team routes (dashboard)
+// Team routes (dashboard).
+// Invite / role-change / remove are admin-only — before iter 13 they were
+// guarded only by a same-tenant check, so any tenant_viewer could invite
+// new users and `updateRole` themselves to `tenant_admin`. Full privilege
+// escalation path from a viewer account.
 Route::middleware('auth')->prefix('dashboard/echipa')->group(function () {
     Route::get('/', [TeamController::class, 'index'])->name('dashboard.team.index');
-    Route::post('/invite', [TeamController::class, 'invite'])->name('dashboard.team.invite');
-    Route::patch('/{user}/role', [TeamController::class, 'updateRole'])->name('dashboard.team.updateRole');
-    Route::delete('/{user}/remove', [TeamController::class, 'remove'])->name('dashboard.team.remove');
+    Route::post('/invite', [TeamController::class, 'invite'])
+        ->middleware('tenant.role:tenant_admin')
+        ->name('dashboard.team.invite');
+    Route::patch('/{user}/role', [TeamController::class, 'updateRole'])
+        ->middleware('tenant.role:tenant_admin')
+        ->name('dashboard.team.updateRole');
+    Route::delete('/{user}/remove', [TeamController::class, 'remove'])
+        ->middleware('tenant.role:tenant_admin')
+        ->name('dashboard.team.remove');
 });
 
 // Settings routes (dashboard)
@@ -270,7 +280,9 @@ Route::middleware('auth')->prefix('dashboard/setari')->group(function () {
     Route::get('/', [SettingsController::class, 'index'])->name('dashboard.settings.index');
     Route::put('/profile', [SettingsController::class, 'updateProfile'])->name('dashboard.settings.updateProfile');
     Route::put('/password', [SettingsController::class, 'updatePassword'])->name('dashboard.settings.updatePassword');
-    Route::put('/company', [SettingsController::class, 'updateCompany'])->name('dashboard.settings.updateCompany');
+    Route::put('/company', [SettingsController::class, 'updateCompany'])
+        ->middleware('tenant.role:tenant_admin')
+        ->name('dashboard.settings.updateCompany');
     Route::put('/notifications', [SettingsController::class, 'updateNotifications'])->name('dashboard.settings.updateNotifications');
     // Rate-limit token mint to 5/min per user. Without it an account that
     // leaks session cookies once can mint hundreds of long-lived tokens
@@ -279,7 +291,12 @@ Route::middleware('auth')->prefix('dashboard/setari')->group(function () {
         ->middleware('throttle:5,1')
         ->name('dashboard.settings.generateApiKey');
     Route::delete('/api-keys/{tokenId}', [SettingsController::class, 'revokeApiKey'])->name('dashboard.settings.revokeApiKey');
-    Route::delete('/account', [SettingsController::class, 'destroyAccount'])->name('dashboard.settings.destroyAccount');
+    // destroyAccount cascade-deletes the tenant plus every user, bot, call,
+    // and credit record attached to it. Before iter 13 any tenant_viewer
+    // could POST STERGE and wipe the account for everybody.
+    Route::delete('/account', [SettingsController::class, 'destroyAccount'])
+        ->middleware('tenant.role:tenant_admin')
+        ->name('dashboard.settings.destroyAccount');
 });
 
 // Channel management routes (dashboard)
