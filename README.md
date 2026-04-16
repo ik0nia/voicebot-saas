@@ -1,66 +1,126 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Sambla
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Multi-tenant SaaS for AI-powered voice and chat agents. Businesses sign up, provision a Romanian phone number, configure a bot (persona, knowledge base, tools) and their customers then interact with that bot over phone, a web chat widget, WhatsApp, Facebook Messenger or Instagram DM.
 
-## About Laravel
+**Production:** https://sambla.ro
+**Stack:** Laravel 11 · PHP 8.3 · Inertia/Vue 3 · PostgreSQL 16 (pgvector) · Redis 7 · Laravel Reverb · OpenAI Realtime · Telnyx · Stripe (Cashier 16)
+**Deploy:** single Ubuntu 24.04 host via Coolify · Docker (app, nginx, queue, scheduler, reverb)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Documentation
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+The full technical architecture review is in [`docs/enterprise/`](docs/enterprise/00-README.md) — 20 code-grounded chapters covering infrastructure, multi-tenancy, voice, chat, channels, RAG, billing, analytics, security, and CI. Start at [`docs/enterprise/00-README.md`](docs/enterprise/00-README.md).
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Quick index:
 
-## Learning Laravel
+| Area | Doc |
+|---|---|
+| Deploy topology, volumes, TLS | [01-infrastructure](docs/enterprise/01-infrastructure.md) |
+| Horizon, crons, rate limiter | [02-queues-scheduler](docs/enterprise/02-queues-scheduler.md) |
+| `TenantScope`, role model | [03-multi-tenancy](docs/enterprise/03-multi-tenancy.md) |
+| DB-backed config + secrets | [04-settings-secrets](docs/enterprise/04-settings-secrets.md) |
+| Auth, Sanctum, Spatie roles | [05-auth](docs/enterprise/05-auth.md) |
+| Telnyx voice webhooks | [06-voice-telnyx](docs/enterprise/06-voice-telnyx.md) |
+| OpenAI Realtime + ElevenLabs | [07-voice-realtime](docs/enterprise/07-voice-realtime.md) |
+| Embeddable chat widget + SSE | [08-chat-widget](docs/enterprise/08-chat-widget.md) |
+| WhatsApp / FB / IG | [09-channels](docs/enterprise/09-channels.md) |
+| pgvector hybrid RAG | [10-knowledge-rag](docs/enterprise/10-knowledge-rag.md) |
+| Stripe wiring (Cashier) | [11-billing-stripe-wiring](docs/enterprise/11-billing-stripe-wiring.md) |
+| Plans, top-ups, custom pricing | [12-billing-plans-topups](docs/enterprise/12-billing-plans-topups.md) |
+| Romanian VAT (21% exclusive) | [13-billing-tax](docs/enterprise/13-billing-tax.md) |
+| Trials, dunning, lifecycle | [14-billing-lifecycle](docs/enterprise/14-billing-lifecycle.md) |
+| WooCommerce push sync | [15-woocommerce](docs/enterprise/15-woocommerce.md) |
+| Leads, callback widget | [16-leads-callbacks](docs/enterprise/16-leads-callbacks.md) |
+| Tenant + admin analytics | [17-analytics-reports](docs/enterprise/17-analytics-reports.md) |
+| Social media factory (paused) | [18-social-factory](docs/enterprise/18-social-factory.md) |
+| Security posture, gaps | [19-security](docs/enterprise/19-security.md) |
+| PHPUnit suite, CI | [20-testing-ci](docs/enterprise/20-testing-ci.md) |
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+Project notes that change frequently live in [`CLAUDE.md`](CLAUDE.md) and [`ROADMAP.md`](ROADMAP.md).
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## Local development
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Prerequisites: PHP 8.3, Composer 2.x, Node 20+, PostgreSQL 16 with the `vector` extension, Redis 7.
 
-## Laravel Sponsors
+```bash
+cp .env.example .env
+composer install
+npm install
+php artisan key:generate
+php artisan migrate
+npm run build
+php artisan serve
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+For hot-reload during frontend work:
 
-### Premium Partners
+```bash
+npm run dev
+```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+Queue worker (required for voice/RAG/social work):
 
-## Contributing
+```bash
+php artisan horizon
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Scheduler (required for trial lifecycle, knowledge batching, social posting):
 
-## Code of Conduct
+```bash
+php artisan schedule:work
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Reverb WebSocket server (required for live dashboard updates):
 
-## Security Vulnerabilities
+```bash
+php artisan reverb:start
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Docker
 
-## License
+```bash
+docker compose build
+docker compose up -d
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Five services come up: `app` (PHP-FPM), `nginx`, `queue` (Horizon), `scheduler`, `reverb`. See [`docker-compose.yml`](docker-compose.yml) and [`Dockerfile`](Dockerfile).
+
+## Testing
+
+```bash
+php artisan test
+```
+
+The suite is guarded by four independent production-DB safeguards (see [`20-testing-ci`](docs/enterprise/20-testing-ci.md)). CI runs the same command on every push via [`.github/workflows/tests.yml`](.github/workflows/tests.yml) against a Postgres 16 + pgvector service container.
+
+## Directory layout
+
+```
+app/
+  Http/Controllers/       thin HTTP layer
+  Services/               business logic (chat orchestration, RAG, billing, voice, social)
+  Actions/                single-purpose classes
+  Jobs/                   queue jobs (knowledge ingest, voice processing, Stripe sync, social publish)
+  Models/                 Eloquent models (~60)
+  Events/ Listeners/      domain events
+bootstrap/                Laravel bootstrap, middleware aliases
+config/                   static config; runtime overrides come from platform_settings table
+database/migrations/      ordered schema history
+docs/enterprise/          architecture review (this dossier)
+public/widget/            embeddable JS chat widget
+resources/js/             Inertia pages
+resources/views/          Blade views (admin, widget embeds)
+routes/                   web.php, api.php, admin.php, console.php, channels.php
+tests/                    Feature + Unit tests (PHPUnit)
+wordpress-plugin/         sambla-woocommerce WP plugin (push products → Sambla)
+```
+
+## Operational notes
+
+- **Secrets are DB-backed**, not `.env`-driven at runtime. Rotate from `/admin/setari` (OpenAI, Stripe, Telnyx, SMTP, Meta). `.env.example` lists the boot-time fallbacks only.
+- **Stripe mode switching** (live ↔ test) is done from the admin panel; the `BillingController` guard re-maps `tenants.stripe_id` if it belongs to the wrong mode.
+- **Telnyx Media Stream sidecar is not in this repo.** Inbound calls bridge through a separate WebSocket process — see [`06-voice-telnyx`](docs/enterprise/06-voice-telnyx.md) for the contract.
+- **Tenant isolation** relies on `App\Models\Scopes\TenantScope`. The super-admin bypass requires three independent checks (Spatie role + model accessor + session flag); never call `withoutGlobalScopes()` in tenant-facing controllers.
+
+## Licence
+
+Proprietary. All rights reserved.
