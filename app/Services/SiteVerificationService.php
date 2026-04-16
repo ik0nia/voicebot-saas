@@ -78,7 +78,11 @@ class SiteVerificationService
 
         SsrfGuard::validateUrl($url);
 
+        // No redirect following — a hostile or misconfigured tenant could
+        // have set up their site to 302 to an internal endpoint on our
+        // network. SsrfGuard validated the initial hop only.
         $response = Http::timeout(10)
+            ->withOptions(['allow_redirects' => false])
             ->withHeaders(['User-Agent' => 'SamblaBot/1.0 (site-verification)'])
             ->get($url);
 
@@ -156,7 +160,9 @@ class SiteVerificationService
 
         SsrfGuard::validateUrl($url);
 
+        // No redirect following — see verifyMetaTag() for rationale.
         $response = Http::timeout(10)
+            ->withOptions(['allow_redirects' => false])
             ->withHeaders(['User-Agent' => 'SamblaBot/1.0 (site-verification)'])
             ->get($url);
 

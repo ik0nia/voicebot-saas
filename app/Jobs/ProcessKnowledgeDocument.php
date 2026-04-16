@@ -265,7 +265,13 @@ class ProcessKnowledgeDocument implements ShouldQueue
         // SSRF protection: block internal/private URLs
         SsrfGuard::validateUrl($url);
 
-        $response = Http::timeout(30)->get($url);
+        // Disable redirect following — a public URL can 302 to an internal
+        // endpoint (e.g. Redis, metadata service), which would slip past
+        // the SsrfGuard check above. See iter 5 CrawlWebsite fix for the
+        // same pattern.
+        $response = Http::timeout(30)
+            ->withOptions(['allow_redirects' => false])
+            ->get($url);
         $html = $response->body();
 
         return $this->htmlToText($html);

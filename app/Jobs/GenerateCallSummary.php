@@ -16,6 +16,10 @@ class GenerateCallSummary implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
+    // Cap the whole job (OpenAI chat call) so a hung API doesn't park a
+    // worker past Horizon's supervisor timeout (which would then kill and
+    // retry the job anyway, more noisily).
+    public int $timeout = 120;
     public array $backoff = [10, 30, 120];
 
     public function __construct(

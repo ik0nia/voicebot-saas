@@ -20,6 +20,11 @@ class RunKnowledgeAgent implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
+    // Explicit job-level cap so a hung LLM call can't run until Horizon's
+    // own supervisor timeout (which would then force-kill it). 300s is
+    // half of the knowledge supervisor's 600s window, keeping two retry
+    // rounds safely within the supervisor's tolerance.
+    public int $timeout = 300;
     public array $backoff = [15, 60, 180];
 
     public function __construct(public KnowledgeAgentRun $run)

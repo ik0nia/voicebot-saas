@@ -10,12 +10,14 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Services\Security\SsrfGuard;
 
 class SendCallEndedWebhook implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
+    public int $timeout = 30;
     public array $backoff = [10, 30, 120];
 
     public function __construct(
@@ -50,8 +52,25 @@ class SendCallEndedWebhook implements ShouldQueue
             $headers['X-Webhook-Signature'] = $signature;
         }
 
+        // Tenant-supplied webhook URL — without this guard a tenant could
+        // point their callback at http://10.0.1.12:6379/ or the cloud
+        // metadata service and let our server probe them via timing.
+        try {
+            SsrfGuard::validateUrl($this->webhookUrl);
+        } catch (\InvalidArgumentException $e) {
+            Log::warning('SendCallEndedWebhook: blocked unsafe URL', [
+                'call_id' => $this->callId,
+                'url' => $this->webhookUrl,
+                'reason' => $e->getMessage(),
+            ]);
+            // Don't retry — the URL won't become safe on its own.
+            $this->fail($e);
+            return;
+        }
+
         try {
             $response = Http::timeout(10)
+                ->withOptions(['allow_redirects' => false])
                 ->withHeaders($headers)
                 ->post($this->webhookUrl, $payload);
 
