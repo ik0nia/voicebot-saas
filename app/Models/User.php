@@ -61,6 +61,49 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsTo(Tenant::class);
     }
 
+    /**
+     * Accessor: when the AUTHENTICATED super-admin is impersonating a tenant,
+     * $user->tenant and $user->tenant_id transparently return the impersonated
+     * tenant instead of the super-admin's own. This makes impersonation
+     * propagate through any controller that reads tenant info from the current
+     * user (e.g. $user->tenant->sites()). It ONLY affects the authenticated
+     * user's own instance — other User rows loaded from the DB keep their real
+     * tenant_id, so team/user lists stay correct.
+     *
+     * The raw values stay available via getRelationValue('tenant') and the
+     * $attributes array — this is strictly a read-time override.
+     */
+    public function getTenantAttribute()
+    {
+        if ($this->actingAsImpersonatedTenant()) {
+            if (!array_key_exists('__impersonatedTenant', $this->relations)) {
+                $this->relations['__impersonatedTenant'] = Tenant::find((int) session('admin_as_tenant_id'));
+            }
+            return $this->relations['__impersonatedTenant'];
+        }
+        return $this->getRelationValue('tenant');
+    }
+
+    public function getTenantIdAttribute($value)
+    {
+        if ($this->actingAsImpersonatedTenant()) {
+            return (int) session('admin_as_tenant_id');
+        }
+        return $value;
+    }
+
+    protected function actingAsImpersonatedTenant(): bool
+    {
+        $authId = auth()->id();
+        if (!$authId || $this->getKey() !== $authId) {
+            return false;
+        }
+        if (!session()->isStarted() || !session('admin_as_tenant_id')) {
+            return false;
+        }
+        return $this->hasRole('super_admin');
+    }
+
     // Methods
 
     public function isAdmin(): bool

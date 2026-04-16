@@ -19,11 +19,14 @@ class BotController extends Controller
     {
         $user = auth()->user();
         $isSuperAdmin = $user->hasRole('super_admin');
+        $viewingAll = $isSuperAdmin && session('admin_view_all', false) && !session('admin_as_tenant_id');
 
-        // Super admin vede TOȚI boții din toate tenant-urile
-        $query = $isSuperAdmin
+        // Super-admin: bypass tenant scope ONLY in aggregate "toți tenanții" mode.
+        // While impersonating (admin_as_tenant_id set) the scope filters to that
+        // tenant, so we must NOT use withoutGlobalScopes there.
+        $query = $viewingAll
             ? Bot::withoutGlobalScopes()->withCount('calls')->with(['site', 'tenant'])
-            : Bot::query()->withCount('calls')->with('site');
+            : Bot::query()->withCount('calls')->with($isSuperAdmin ? ['site', 'tenant'] : 'site');
 
         if ($search = $request->get('search')) {
             $query->where('name', 'like', "%{$search}%");
