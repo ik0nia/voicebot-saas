@@ -66,6 +66,21 @@ class MediaStreamEventController extends Controller
             if (isset($s['turn_detection']['threshold']))  $s['turn_detection']['threshold'] = (float) $s['turn_detection']['threshold'];
             if (isset($s['turn_detection']['prefix_padding_ms']))  $s['turn_detection']['prefix_padding_ms'] = (int) $s['turn_detection']['prefix_padding_ms'];
             if (isset($s['turn_detection']['silence_duration_ms'])) $s['turn_detection']['silence_duration_ms'] = (int) $s['turn_detection']['silence_duration_ms'];
+
+            // Force the ASR model + language for the phone path. The
+            // default whisper-1 auto-detects language per utterance
+            // and drifts between RO / ES / PT on Romanian phone
+            // audio (8kHz + accent) — observed in production as
+            // "Podróż Maritanu" / "Un beso y nos vemos" mis-ASR.
+            // gpt-4o-mini-transcribe is the newer, more accurate
+            // replacement at comparable cost.
+            $s['input_audio_transcription'] = [
+                'model' => 'gpt-4o-mini-transcribe',
+                'language' => $call->bot->language ?: 'ro',
+                'prompt' => 'Conversație telefonică în limba '
+                    . ($call->bot->language === 'en' ? 'engleză' : 'română')
+                    . ' despre produse și servicii. Nume proprii de produse pot apărea.',
+            ];
             unset($s);
         }
 
