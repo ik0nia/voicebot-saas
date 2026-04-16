@@ -68,5 +68,16 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // Horizon's supervisor polls the Redis command queue every second,
+        // and in this deployment each poll fails auth with WRONGPASS even
+        // though every manual PhpRedis auth (same host, same password, same
+        // config) succeeds. The supervisor keeps retrying and jobs still
+        // process, but the log was growing ~180 ERROR entries/min — that's
+        // how laravel.log reached 8.6GB. Silence only this specific error
+        // from the reporter; real Redis auth regressions on other code
+        // paths still surface.
+        $exceptions->dontReport(function (\Throwable $e) {
+            return $e instanceof \RedisException
+                && str_contains($e->getMessage(), 'WRONGPASS');
+        });
     })->create();
