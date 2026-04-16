@@ -8,8 +8,25 @@
 @section('content')
 <div class="space-y-6">
 
+    {{-- Super-admin "Doar eu" without an own tenant: explain the empty state.
+         Without this the dashboard looks broken — every stat card shows 0
+         because TenantScope filters to tenant_id=0 in this mode. --}}
+    @if(auth()->user()->hasRole('super_admin') && !auth()->user()->getAttributes()['tenant_id'] && !session('admin_as_tenant_id') && !session('admin_view_all', false))
+    <div class="rounded-xl border border-slate-200 bg-slate-50 p-6">
+        <div class="flex items-start gap-4">
+            <div class="shrink-0 w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center">
+                <svg class="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-base font-semibold text-slate-900">Nu ai date proprii în acest dashboard</h3>
+                <p class="mt-1 text-sm text-slate-600">Ești logat ca super admin fără tenant propriu. Folosește selectorul din dreapta-sus („<span class="font-medium">Doar eu</span>") ca să vizualizezi platforma ca un tenant anume sau să vezi agregat toate tenant-urile.</p>
+            </div>
+        </div>
+    </div>
+    @endif
+
     {{-- No Sites Banner --}}
-    @if(auth()->user()->tenant?->sites()->count() === 0)
+    @if(auth()->user()->tenant?->sites()->count() === 0 && auth()->user()->tenant)
     <div class="bg-gradient-to-r from-red-50 to-amber-50 border border-red-200 rounded-xl p-6">
         <h3 class="text-lg font-bold text-slate-900 mb-2">Incepe prin adaugarea site-ului tau</h3>
         <p class="text-sm text-slate-600 mb-4">Pentru a folosi chatbot-ul, trebuie mai intai sa adaugi si verifici domeniul site-ului tau.</p>
