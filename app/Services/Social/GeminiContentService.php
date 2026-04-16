@@ -234,60 +234,6 @@ class GeminiContentService
         return null;
     }
 
-    /**
-     * Composite the Sambla logo badge (white rounded bg + shadow) onto
-     * the bottom-left corner of a generated image.
-     */
-    private function compositeLogoBadge(string $relativePath): void
-    {
-        try {
-            $imagePath = public_path($relativePath);
-            $logoPath = public_path('images/social/logo-light.png');
-
-            if (!file_exists($imagePath) || !file_exists($logoPath)) {
-                return;
-            }
-
-            // Get image width to scale logo proportionally (~17% of image width)
-            $imageSize = getimagesize($imagePath);
-            if (!$imageSize) return;
-            $logoWidth = (int) ($imageSize[0] * 0.17);
-            $pad = (int) max(8, $logoWidth * 0.07);
-            $radius = (int) max(6, $logoWidth * 0.07);
-            $margin = (int) ($imageSize[0] * 0.03);
-
-            // Logo source is 420x120 (3.5:1 ratio)
-            $logoHeight = (int) round($logoWidth / 3.5);
-            $bgW = $logoWidth + $pad * 2;
-            $bgH = $logoHeight + $pad * 2;
-
-            // ImageMagick: create badge (white rounded rect + shadow) then composite
-            $cmd = sprintf(
-                'convert %s '
-                . '\( \( -size %dx%d xc:none -fill white -draw "roundrectangle 0,0,%d,%d,%d,%d" \) '
-                . '\( +clone -background "rgba(0,0,0,0.2)" -shadow 60x3+0+2 \) '
-                . '+swap -background none -layers merge +repage '
-                . '\( %s -resize %dx%d\! \) -gravity center -composite \) '
-                . '-gravity southwest -geometry +%d+%d -composite %s',
-                escapeshellarg($imagePath),
-                $bgW, $bgH,
-                $bgW - 1, $bgH - 1,
-                $radius, $radius,
-                escapeshellarg($logoPath),
-                $logoWidth, $logoHeight,
-                $margin, $margin,
-                escapeshellarg($imagePath)
-            );
-
-            exec($cmd . ' 2>&1', $output, $exitCode);
-            if ($exitCode !== 0) {
-                Log::warning('Logo composite failed', ['cmd' => $cmd, 'output' => implode("\n", $output)]);
-            }
-        } catch (\Throwable $e) {
-            Log::warning('Logo composite exception', ['error' => $e->getMessage()]);
-        }
-    }
-
     private function generateImageVertex(string $prompt, string $aspectRatio = '1:1', ?string $style = null): ?array
     {
         try {

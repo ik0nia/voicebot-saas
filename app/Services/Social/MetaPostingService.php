@@ -90,8 +90,21 @@ class MetaPostingService
     {
         $path = parse_url($url, PHP_URL_PATH) ?: '';
         if ($path === '') return null;
-        $local = public_path(ltrim($path, '/'));
-        return $local;
+
+        // Canonicalize the resolved path and refuse anything that escapes
+        // public/. A URL like /../../etc/passwd would otherwise produce a
+        // path we could then stat via is_file()/getimagesize(), leaking
+        // existence of system files. realpath() returns false for missing
+        // files, which is fine — the caller already checks is_file().
+        $publicRoot = realpath(public_path()) ?: public_path();
+        $candidate = public_path(ltrim($path, '/'));
+        $resolved = realpath($candidate);
+        if ($resolved === false) {
+            // File may legitimately not exist yet; allow only if the
+            // unresolved candidate is textually under public_root.
+            return str_starts_with($candidate, $publicRoot . DIRECTORY_SEPARATOR) ? $candidate : null;
+        }
+        return str_starts_with($resolved, $publicRoot . DIRECTORY_SEPARATOR) ? $resolved : null;
     }
 
     /**
