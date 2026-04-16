@@ -33,3 +33,4 @@ docker-compose.override.yml
 /public/malinco_*.html
 # Enterprise architecture PDF — served behind obscured URL, not for GitHub
 /public/downloads/sambla-enterprise-*.pdf
+.openai-admin-credentials

@@ -195,33 +195,36 @@ class MediaStreamEventController extends Controller
         // default voices; the per-voice rate lookup matches the pre-
         // Twilio flow so existing per-bot pricing overrides still
         // apply.
+        // CallCostCalculator computes OpenAI cents from token counts
+        // using the actual Realtime rates. Replaces the old naive
+        // "audio_seconds × 1c" approximation.
+        $calculator = app(\App\Services\Cost\CallCostCalculator::class);
+        $openaiDelta = $calculator->openaiFromUsage($usage);
+
         $audioInputTokens = (int) ($usage['input_token_details']['audio_tokens'] ?? 0);
         $audioOutputTokens = (int) ($usage['output_token_details']['audio_tokens'] ?? 0);
         $estimatedSeconds = (int) round(($audioInputTokens + $audioOutputTokens) / 100);
 
-        if ($estimatedSeconds <= 0) {
-            return;
+        if ($estimatedSeconds > 0) {
+            CreditConsumption::create([
+                'tenant_id' => $call->tenant_id,
+                'unit' => 'call_seconds',
+                'quantity' => $estimatedSeconds,
+                'source' => 'media-stream',
+                'reference_id' => (string) $call->id,
+            ]);
         }
 
-        CreditConsumption::create([
-            'tenant_id' => $call->tenant_id,
-            'unit' => 'call_seconds',
-            'quantity' => $estimatedSeconds,
-            'source' => 'media-stream',
-            'reference_id' => (string) $call->id,
-        ]);
-
-        // Compute cents for this response.done batch and accumulate
-        // onto calls.cost_cents. Multiple response.done events per call
-        // are normal (multi-turn conversation) — each adds its own
-        // delta so the final cost is the sum.
-        $centsPerSecond = $this->centsPerSecondFor($call);
-        $deltaCents = (int) round($estimatedSeconds * $centsPerSecond);
-        if ($deltaCents > 0) {
-            DB::transaction(function () use ($call, $deltaCents) {
+        if ($openaiDelta > 0) {
+            // openai_cost_cents accumulates per response.done; cost_cents
+            // is the grand total (OpenAI + Twilio + embeddings). Twilio
+            // lands on the status webhook; embeddings (tiny) are added
+            // at knowledge-context fetch time.
+            DB::transaction(function () use ($call, $openaiDelta) {
                 $call->refresh();
                 $call->update([
-                    'cost_cents' => ((int) $call->cost_cents) + $deltaCents,
+                    'openai_cost_cents' => ((int) $call->openai_cost_cents) + $openaiDelta,
+                    'cost_cents'        => ((int) $call->cost_cents) + $openaiDelta,
                 ]);
             });
         }

@@ -73,7 +73,7 @@ class TwilioService implements TelephonyProvider
      * all subaccounts for audit). Always authenticates with the
      * platform-level credentials, ignoring any overrides.
      */
-    protected function masterClient(): Client
+    public function masterClient(): Client
     {
         $sid = PlatformSetting::get('twilio_account_sid') ?: config('services.twilio.account_sid');
         $token = PlatformSetting::get('twilio_auth_token') ?: config('services.twilio.auth_token');

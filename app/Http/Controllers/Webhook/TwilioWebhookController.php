@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Webhook;
 use App\Http\Controllers\Controller;
 use App\Models\Call;
 use App\Models\PhoneNumber;
+use App\Services\Cost\CallCostCalculator;
 use App\Services\TwilioService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -193,6 +194,34 @@ class TwilioWebhookController extends Controller
         }
         if (in_array($normalised, ['completed', 'failed', 'busy', 'no_answer'], true)) {
             $update['ended_at'] = now();
+
+            // Pull Twilio's own reported price via Call API. This is
+            // more accurate than computing from duration × rate because
+            // Twilio rounds up per-minute differently for inbound /
+            // outbound / country and we don't want to double-track
+            // pricing tables. Falls back to the calculator if the API
+            // call fails.
+            $twilioCents = 0;
+            try {
+                $client = $this->twilio->masterClient();
+                $tc = $client->calls($callSid)->fetch();
+                if ($tc->price !== null) {
+                    // Twilio returns a negative decimal in USD (debit
+                    // notation). Absolute value → cents.
+                    $twilioCents = (int) round(abs((float) $tc->price) * 100);
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Twilio status webhook: price fetch failed', [
+                    'sid' => $callSid,
+                    'err' => $e->getMessage(),
+                ]);
+                // Fall back to the local calculator so we still show
+                // something instead of $0 on the call detail page.
+                $twilioCents = app(CallCostCalculator::class)
+                    ->twilioForNumber($request->input('To'), $duration);
+            }
+            $update['twilio_cost_cents'] = $twilioCents;
+            $update['cost_cents'] = ((int) $call->cost_cents) + $twilioCents;
         }
 
         $call->update($update);

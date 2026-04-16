@@ -33,7 +33,12 @@ class Call extends Model
         'direction',
         'status',
         'duration_seconds',
+        // cost_cents = OpenAI + Twilio + embeddings (total).
+        // Breakdown columns below for admin / per-call attribution.
         'cost_cents',
+        'openai_cost_cents',
+        'twilio_cost_cents',
+        'embedding_cost_cents',
         'sentiment_score',
         'sentiment_label',
         'recording_url',
@@ -51,6 +56,9 @@ class Call extends Model
             'ended_at' => 'datetime',
             'duration_seconds' => 'integer',
             'cost_cents' => 'integer',
+            'openai_cost_cents' => 'integer',
+            'twilio_cost_cents' => 'integer',
+            'embedding_cost_cents' => 'integer',
             'sentiment_score' => 'decimal:3',
         ];
     }
