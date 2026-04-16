@@ -64,6 +64,22 @@ class BackfillCostBreakdown extends Command
                     }
                 }
 
+                // Legacy fallback: pre-breakdown calls have cost_cents
+                // set by the old "audio_seconds × 0.23¢" estimator,
+                // but no usage metadata to decompose. The old tracker
+                // only priced OpenAI Realtime (Twilio + embeddings
+                // weren't attributed), so attribute the full cost_cents
+                // to openai_cost_cents. More honest than leaving an
+                // "unattributed" bucket that masks real spend.
+                if (!isset($update['openai_cost_cents'])
+                    && empty((float) $call->openai_cost_cents)
+                    && empty((float) $call->twilio_cost_cents)
+                    && (float) $call->cost_cents > 0
+                    && $provider !== 'twilio') {
+                    $update['openai_cost_cents'] = (float) $call->cost_cents;
+                    $stats['legacy_attributed'] = ($stats['legacy_attributed'] ?? 0) + 1;
+                }
+
                 // Twilio — only when the call actually used Twilio.
                 // Demo / test-vocal / web sessions have no provider
                 // (or something other than 'twilio') and shouldn't be
@@ -104,9 +120,9 @@ class BackfillCostBreakdown extends Command
         });
 
         $this->info(sprintf(
-            "Done. seen=%d, openai_set=%d, twilio_set=%d, twilio_zeroed=%d, skipped=%d%s",
-            $stats['seen'], $stats['openai'], $stats['twilio'],
-            $stats['zeroed_twilio'], $stats['skipped'],
+            "Done. seen=%d, openai_set=%d, legacy_attributed=%d, twilio_set=%d, twilio_zeroed=%d, skipped=%d%s",
+            $stats['seen'], $stats['openai'], $stats['legacy_attributed'] ?? 0,
+            $stats['twilio'], $stats['zeroed_twilio'], $stats['skipped'],
             $dry ? ' [DRY RUN]' : ''
         ));
         return self::SUCCESS;
