@@ -16,7 +16,7 @@ order approval lifecycle — numbers go live the moment the API returns
 
 Inbound calls reach the media-stream bridge at
 `services/media-stream/` — a Node.js service deployed as a separate
-container. It answers the WebSocket at `wss://sambla.ro/ws/media-stream`,
+container. It answers the WebSocket at `wss://ms.sambla.ro/ws/media-stream`,
 resolves the bot context from Postgres/Redis via the custom
 parameters Twilio sends on the `start` event, opens a parallel WS to
 OpenAI Realtime, transcodes audio (mulaw 8k ↔ PCM16 24k), and handles

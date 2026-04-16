@@ -375,7 +375,11 @@ class TwilioService implements TelephonyProvider
 
     public function generateMediaStreamTexml(string $botId, string $callId): string
     {
-        $host = config('app.url_host', 'sambla.ro');
+        // The media-stream bridge lives on its own subdomain so the cert
+        // / sticky-session policy is independent of the main app. Fall
+        // back to the legacy path-style URL only if explicitly
+        // overridden via config (useful for local dev without DNS).
+        $host = config('telephony.media_stream_host', 'ms.sambla.ro');
         $wsUrl = "wss://{$host}/ws/media-stream";
 
         // TwiML grammar — same shape as Telnyx TeXML with one important

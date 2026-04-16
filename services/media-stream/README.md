@@ -11,7 +11,7 @@ This is the piece that turns a provisioned phone number into a working voice bot
      │
      ▼
   Twilio voice leg (mulaw 8k)
-     │  <Connect><Stream url="wss://sambla.ro/ws/media-stream"/>
+     │  <Connect><Stream url="wss://ms.sambla.ro/ws/media-stream"/>
      ▼
   [ this service ]  ──► Postgres (bot config on start)
      │               ──► Redis (bot config cache + per-tenant cap)

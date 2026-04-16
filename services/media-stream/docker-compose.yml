@@ -52,11 +52,12 @@ services:
     expose:
       - "8080"
     labels:
-      # Traefik picks this container up on the sambla.ro host for the
-      # /ws/media-stream path. Sticky cookie keeps a single WebSocket
-      # lifetime on one replica.
+      # Dedicated subdomain ms.sambla.ro — cleaner than path-routing
+      # off the main host, and Coolify / Traefik can issue the Let's
+      # Encrypt cert automatically per its FQDN setting on this app.
+      # Sticky cookie keeps a single WebSocket lifetime on one replica.
       - "traefik.enable=true"
-      - "traefik.http.routers.media-stream.rule=Host(`sambla.ro`) && PathPrefix(`/ws/media-stream`)"
+      - "traefik.http.routers.media-stream.rule=Host(`ms.sambla.ro`)"
       - "traefik.http.routers.media-stream.entrypoints=websecure"
       - "traefik.http.routers.media-stream.tls=true"
       - "traefik.http.routers.media-stream.tls.certresolver=letsencrypt"
