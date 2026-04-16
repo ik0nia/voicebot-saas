@@ -9,6 +9,13 @@ use Symfony\Component\HttpFoundation\Response;
 
 class VerifyTelnyxSignature
 {
+    /**
+     * Maximum clock skew accepted between us and Telnyx. Telnyx's own
+     * guidance recommends 5 minutes; this leaves room for slow network
+     * delivery while still making replay cost-bound.
+     */
+    private const TIMESTAMP_TOLERANCE_SECONDS = 300;
+
     public function handle(Request $request, Closure $next): Response
     {
         if (app()->environment('local', 'testing')) {
@@ -33,6 +40,22 @@ class VerifyTelnyxSignature
                 'has_timestamp' => !empty($timestamp),
             ]);
             abort(403, 'Missing Telnyx signature headers.');
+        }
+
+        // Replay protection: the signature alone stays valid forever, so a
+        // payload captured once (log leak, MITM at any point) could be
+        // replayed to trigger duplicate call.started / message.received
+        // events — each of which runs real work (LLM spend, DB writes).
+        // Reject anything outside a ±5m clock-skew window before the
+        // cryptographic check so we don't even spend CPU on replays.
+        $timestampInt = (int) $timestamp;
+        if ($timestampInt <= 0 || abs(time() - $timestampInt) > self::TIMESTAMP_TOLERANCE_SECONDS) {
+            Log::warning('VerifyTelnyxSignature: timestamp outside tolerance window', [
+                'received' => $timestamp,
+                'now' => time(),
+                'skew_seconds' => abs(time() - $timestampInt),
+            ]);
+            abort(403, 'Stale Telnyx webhook.');
         }
 
         $payload = $request->getContent();
