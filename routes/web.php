@@ -170,12 +170,15 @@ Route::any('/dashboard/boti/{rest?}', function ($rest = '') {
     return redirect($target, 301);
 })->where('rest', '.*');
 
-// Setup wizard (onboarding)
+// Setup wizard (onboarding). The wizard seeds a bot + prompt and sets
+// tenant-level onboarding flags. Only admin runs onboarding.
 Route::middleware('auth')->prefix('dashboard/setup')->group(function () {
     Route::get('/', [\App\Http\Controllers\Dashboard\SetupWizardController::class, 'index'])->name('dashboard.setup.index');
-    Route::post('/business-type', [\App\Http\Controllers\Dashboard\SetupWizardController::class, 'storeBusinessType'])->name('dashboard.setup.businessType');
-    Route::post('/generate-prompt', [\App\Http\Controllers\Dashboard\SetupWizardController::class, 'generatePrompt'])->name('dashboard.setup.generatePrompt');
-    Route::post('/complete', [\App\Http\Controllers\Dashboard\SetupWizardController::class, 'complete'])->name('dashboard.setup.complete');
+    Route::middleware('tenant.role:tenant_admin')->group(function () {
+        Route::post('/business-type', [\App\Http\Controllers\Dashboard\SetupWizardController::class, 'storeBusinessType'])->name('dashboard.setup.businessType');
+        Route::post('/generate-prompt', [\App\Http\Controllers\Dashboard\SetupWizardController::class, 'generatePrompt'])->name('dashboard.setup.generatePrompt');
+        Route::post('/complete', [\App\Http\Controllers\Dashboard\SetupWizardController::class, 'complete'])->name('dashboard.setup.complete');
+    });
 });
 
 // Dashboard home
@@ -190,17 +193,24 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/tenants/search', [DashboardController::class, 'searchTenants'])->name('admin.tenants.search');
 });
 
-// Billing routes (dashboard)
+// Billing routes (dashboard).
+// Plan changes, cancellations, top-ups and the Stripe portal all touch
+// the tenant's subscription and card file — a tenant_viewer canceling
+// the subscription would stop the entire tenant from operating. Admin
+// only.
 Route::middleware('auth')->prefix('dashboard/facturare')->group(function () {
     Route::get('/', [BillingController::class, 'index'])->name('dashboard.billing.index');
-    Route::post('/subscribe/{plan}', [BillingController::class, 'subscribe'])->name('dashboard.billing.subscribe');
-    Route::post('/change-plan/{plan}', [BillingController::class, 'changePlan'])->name('dashboard.billing.changePlan');
-    Route::post('/cancel', [BillingController::class, 'cancelSubscription'])->name('dashboard.billing.cancel');
-    Route::post('/resume', [BillingController::class, 'resumeSubscription'])->name('dashboard.billing.resume');
-    Route::post('/topup/{plan}/{bundleIndex}', [BillingController::class, 'topup'])->name('dashboard.billing.topup');
-    Route::get('/portal', [BillingController::class, 'portal'])->name('dashboard.billing.portal');
     Route::get('/facturi', [BillingController::class, 'invoices'])->name('dashboard.billing.invoices');
     Route::get('/facturi/{invoice}/download', [BillingController::class, 'downloadInvoice'])->name('dashboard.billing.downloadInvoice');
+
+    Route::middleware('tenant.role:tenant_admin')->group(function () {
+        Route::post('/subscribe/{plan}', [BillingController::class, 'subscribe'])->name('dashboard.billing.subscribe');
+        Route::post('/change-plan/{plan}', [BillingController::class, 'changePlan'])->name('dashboard.billing.changePlan');
+        Route::post('/cancel', [BillingController::class, 'cancelSubscription'])->name('dashboard.billing.cancel');
+        Route::post('/resume', [BillingController::class, 'resumeSubscription'])->name('dashboard.billing.resume');
+        Route::post('/topup/{plan}/{bundleIndex}', [BillingController::class, 'topup'])->name('dashboard.billing.topup');
+        Route::get('/portal', [BillingController::class, 'portal'])->name('dashboard.billing.portal');
+    });
 });
 
 // Bot routes (dashboard)
@@ -239,7 +249,9 @@ Route::middleware('auth')->prefix('dashboard/apeluri')->group(function () {
 // Conversations routes (dashboard) — text-based channels
 Route::middleware('auth')->prefix('dashboard/transcrieri')->group(function () {
     Route::get('/conversatie/{conversation}', [ConversationController::class, 'show'])->name('dashboard.conversations.show');
-    Route::delete('/conversatie/{conversation}', [ConversationController::class, 'destroy'])->name('dashboard.conversations.destroy');
+    Route::delete('/conversatie/{conversation}', [ConversationController::class, 'destroy'])
+        ->middleware('tenant.role:tenant_admin,tenant_manager')
+        ->name('dashboard.conversations.destroy');
     Route::get('/{channelType}', [ConversationController::class, 'index'])->name('dashboard.conversations.index');
 });
 

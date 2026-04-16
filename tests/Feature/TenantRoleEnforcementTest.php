@@ -161,6 +161,31 @@ class TenantRoleEnforcementTest extends TestCase
         $this->assertNotSame(403, $response->status());
     }
 
+    public function test_viewer_cannot_cancel_subscription(): void
+    {
+        // Worst case for a billing gap: a rogue viewer cancels the plan
+        // and the entire tenant stops operating.
+        $response = $this->actingAs($this->userWithRole('tenant_viewer'))
+            ->post('/dashboard/facturare/cancel');
+        $response->assertStatus(403);
+    }
+
+    public function test_manager_cannot_change_plan(): void
+    {
+        // Plan changes are admin-only — manager handles day-to-day
+        // operations, not billing.
+        $response = $this->actingAs($this->userWithRole('tenant_manager'))
+            ->post('/dashboard/facturare/cancel');
+        $response->assertStatus(403);
+    }
+
+    public function test_viewer_cannot_complete_setup_wizard(): void
+    {
+        $response = $this->actingAs($this->userWithRole('tenant_viewer'))
+            ->post('/dashboard/setup/complete');
+        $response->assertStatus(403);
+    }
+
     public function test_super_admin_bypasses_tenant_role_middleware(): void
     {
         $otherTenant = Tenant::create([
