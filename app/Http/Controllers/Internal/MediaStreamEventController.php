@@ -82,13 +82,22 @@ class MediaStreamEventController extends Controller
             'events' => 'required|array|min:1|max:200',
             'events.*.type' => 'required|string|in:transcript,usage',
             'events.*.call_id' => 'required|integer',
+            // Declared (optional) so $request->validate returns them
+            // in the validated array. Without these keys listed,
+            // Laravel strips unrecognised fields and the loop below
+            // sees only {type, call_id} — which fails the per-type
+            // guard in recordTranscript / recordUsage.
+            'events.*.role' => 'nullable|string',
+            'events.*.content' => 'nullable|string',
+            'events.*.timestamp_ms' => 'nullable|integer',
+            'events.*.usage' => 'nullable|array',
         ]);
 
         $accepted = 0;
         $skipped = 0;
 
         foreach ($validated['events'] as $event) {
-            $call = Call::find($event['call_id']);
+            $call = Call::withoutGlobalScopes()->find($event['call_id']);
             if (!$call) {
                 $skipped++;
                 continue;
