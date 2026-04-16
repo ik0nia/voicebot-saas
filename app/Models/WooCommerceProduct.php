@@ -30,6 +30,9 @@ class WooCommerceProduct extends Model
         'permalink',
         'categories',
         'attributes',
+        // Flattened meta values driven by WcMetaMapping rules. Shape
+        // is whatever the tenant mapped — see WcMetaMapping.php.
+        'extracted_meta',
         'site_url',
         'semantic_text',
     ];
@@ -42,6 +45,7 @@ class WooCommerceProduct extends Model
             'sale_price' => 'decimal:2',
             'categories' => 'array',
             'attributes' => 'array',
+            'extracted_meta' => 'array',
         ];
     }
 

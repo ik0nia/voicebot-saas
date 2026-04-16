@@ -219,6 +219,38 @@ class Sambla_Product_Sync {
             'attributes' => $attrs,
             'permalink' => $product->get_permalink(),
             'price_unit' => $price_unit,
+            // Send the full meta snapshot so the platform can build the
+            // tenant-facing mapping UI. Complex (array / object) values
+            // get JSON-encoded; bool / numeric stay as strings for a
+            // uniform transport shape. WP-internal keys prefixed with
+            // `_` are included too — the operator can ignore them
+            // explicitly, which is more informative than pre-filtering.
+            'meta_data' => $this->collect_meta_data($product),
         ];
+    }
+
+    /**
+     * Flatten WC meta_data into [{key, value}] pairs, string values,
+     * JSON-encoded for complex ones. Skips empty values to keep the
+     * payload small.
+     *
+     * @return array<int, array{key: string, value: string}>
+     */
+    protected function collect_meta_data($product): array
+    {
+        $out = [];
+        foreach ($product->get_meta_data() as $m) {
+            $data = $m->get_data();
+            $key = $data['key'] ?? '';
+            $value = $data['value'] ?? null;
+            if ($key === '' || $value === null || $value === '') continue;
+            if (is_array($value) || is_object($value)) {
+                $value = wp_json_encode($value);
+            } else {
+                $value = (string) $value;
+            }
+            $out[] = ['key' => $key, 'value' => $value];
+        }
+        return $out;
     }
 }

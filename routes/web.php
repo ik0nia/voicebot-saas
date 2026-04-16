@@ -227,6 +227,16 @@ Route::middleware('auth')->prefix('dashboard/agenti')->group(function () {
     Route::patch('/{bot}/update-field', [BotController::class, 'updateField'])->name('dashboard.bots.updateField');
     Route::post('/{bot}/policy', [BotController::class, 'updatePolicy'])->name('dashboard.bots.updatePolicy');
 
+    // WooCommerce meta-mapping UI — tenant admin decides how raw
+    // WP meta keys map onto standardized product fields the bot
+    // prompt consumes. Gated by tenant.role because it's a data-
+    // structure decision, not a daily operation.
+    Route::get('/{bot}/wc-meta', [\App\Http\Controllers\Dashboard\WcMetaMappingController::class, 'index'])
+        ->name('dashboard.bots.wcMeta.index');
+    Route::put('/{bot}/wc-meta', [\App\Http\Controllers\Dashboard\WcMetaMappingController::class, 'update'])
+        ->middleware('tenant.role:tenant_admin,tenant_manager')
+        ->name('dashboard.bots.wcMeta.update');
+
     // Voice cloning — ElevenLabs jobs are billable and identity-sensitive
     // (a cloned voice gets attached to outbound calls). Admin/manager only.
     Route::get('/{bot}/voice-clone', [ClonedVoiceController::class, 'create'])->name('dashboard.bots.voiceClone.create');

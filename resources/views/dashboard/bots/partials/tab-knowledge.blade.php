@@ -18,10 +18,22 @@
                     </div>
                     <h2 class="text-base font-semibold text-slate-900">Knowledge Base</h2>
                 </div>
-                <a href="{{ route('dashboard.bots.knowledge.index', $bot) }}"
-                   class="inline-flex items-center gap-1.5 rounded-lg bg-red-800 px-4 py-2 text-sm font-medium text-white hover:bg-red-900 transition-colors">
-                    Gestioneaza Knowledge Base
-                </a>
+                <div class="flex items-center gap-2">
+                    @if(!empty($wcConnector) && ($wcConnector->status ?? null) === 'connected')
+                        <a href="{{ route('dashboard.bots.wcMeta.index', $bot) }}"
+                           class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                           title="Spune platformei cum se numesc câmpurile custom de pe magazinul tău">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7" />
+                            </svg>
+                            Mapări WooCommerce
+                        </a>
+                    @endif
+                    <a href="{{ route('dashboard.bots.knowledge.index', $bot) }}"
+                       class="inline-flex items-center gap-1.5 rounded-lg bg-red-800 px-4 py-2 text-sm font-medium text-white hover:bg-red-900 transition-colors">
+                        Gestioneaza Knowledge Base
+                    </a>
+                </div>
             </div>
             <div class="p-5">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -175,6 +175,11 @@ class IntegrationApiController extends Controller
             'products.*.attributes' => 'nullable|array',
             'products.*.permalink' => 'required|url|max:2000',
             'products.*.price_unit' => 'nullable|string|max:40',
+            // Full meta snapshot — WP plugin sends it so the platform
+            // can build the discover-and-map UI. We don't persist raw
+            // meta on the product row; we keep a deduped registry in
+            // wc_meta_mappings instead.
+            'products.*.meta_data' => 'nullable|array',
             'site_url' => 'required|url|max:500',
             'deleted_ids' => 'nullable|array',
             'deleted_ids.*' => 'integer',
@@ -198,8 +203,50 @@ class IntegrationApiController extends Controller
         $synced = 0;
         $deleted = 0;
 
+        // Load existing mappings for this connector — drives
+        // both the registry update (track sample + coverage for UI)
+        // and the extracted_meta projection written onto each product.
+        $mappings = \App\Models\WcMetaMapping::where('connector_id', $connector->id)
+            ->get()
+            ->keyBy('meta_key');
+
+        // Dedup: one meta_key appears on many products; only write
+        // the first-seen sample per batch to avoid N writes for the
+        // same key.
+        $registryUpdates = [];
+
         // Sync products
         foreach ($request->input('products', []) as $productData) {
+            // Apply mappings to get extracted_meta for this product.
+            $productMeta = $productData['meta_data'] ?? [];
+            $extracted = [];
+            foreach ($productMeta as $m) {
+                $key = $m['key'] ?? null;
+                $value = $m['value'] ?? null;
+                if (!$key) continue;
+
+                // Track the meta key in the registry even if it's not
+                // yet mapped — so the UI can show it next time. Count
+                // and sample are overwritten, not cumulatively merged,
+                // because the last sync is the current source of truth.
+                if (!isset($registryUpdates[$key])) {
+                    $registryUpdates[$key] = [
+                        'sample' => is_scalar($value) ? (string) $value : json_encode($value),
+                        'count' => 0,
+                    ];
+                }
+                $registryUpdates[$key]['count']++;
+
+                // Apply mapping if operator has set one.
+                if (isset($mappings[$key])) {
+                    $mapping = $mappings[$key];
+                    if ($mapping->standard_field) {
+                        $extracted[$mapping->standard_field] = is_scalar($value) ? $value : json_encode($value);
+                    }
+                    // standard_field === null means ignore; no write.
+                }
+            }
+
             $product = WooCommerceProduct::updateOrCreate(
                 ['bot_id' => $bot->id, 'wc_product_id' => $productData['wc_product_id']],
                 [
@@ -215,7 +262,13 @@ class IntegrationApiController extends Controller
                     'permalink' => $productData['permalink'],
                     'categories' => $productData['categories'] ?? null,
                     'attributes' => $productData['attributes'] ?? null,
-                    'price_unit' => $productData['price_unit'] ?? null,
+                    // price_unit stays as a fast-access dedicated column
+                    // but is also written via the mapping pipeline — if a
+                    // mapping produced it, the mapping wins. Keeps the
+                    // narrow-fix behaviour until every tenant has mapped.
+                    'price_unit' => $extracted['price_unit']
+                        ?? ($productData['price_unit'] ?? null),
+                    'extracted_meta' => empty($extracted) ? null : $extracted,
                     'site_url' => $siteUrl,
                 ]
             );
@@ -254,6 +307,22 @@ class IntegrationApiController extends Controller
             // Dispatch embedding job
             ProcessKnowledgeDocument::dispatch($knowledge);
             $synced++;
+        }
+
+        // Flush the meta-key registry. One row per distinct key seen
+        // in this sync batch. Coverage count is "how many products in
+        // this batch carried this key" — UI uses it to sort keys by
+        // usefulness. Ignored keys (already-mapped standard_field =
+        // null) still get their sample + count updated so the operator
+        // can change their mind later without a forced re-sync.
+        foreach ($registryUpdates as $metaKey => $info) {
+            \App\Models\WcMetaMapping::updateOrCreate(
+                ['connector_id' => $connector->id, 'meta_key' => $metaKey],
+                [
+                    'sample_value' => mb_substr($info['sample'] ?? '', 0, 500),
+                    'product_count' => $info['count'],
+                ]
+            );
         }
 
         // Delete removed products
