@@ -69,9 +69,9 @@
                         @endif
                     </div>
 
-                    {{-- Limbă --}}
+                    {{-- Limbă — principală (fallback pentru orice canal) --}}
                     <div>
-                        <label for="language" class="block text-sm font-medium text-slate-700 mb-1.5">Limbă <span class="text-red-500">*</span></label>
+                        <label for="language" class="block text-sm font-medium text-slate-700 mb-1.5">Limbă principală <span class="text-red-500">*</span></label>
                         <select name="language" id="language" required
                                 class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition">
                             <option value="ro" {{ old('language', $bot->language) === 'ro' ? 'selected' : '' }}>Română</option>
@@ -80,6 +80,42 @@
                             <option value="fr" {{ old('language', $bot->language) === 'fr' ? 'selected' : '' }}>Français</option>
                             <option value="es" {{ old('language', $bot->language) === 'es' ? 'selected' : '' }}>Español</option>
                         </select>
+                        <p class="mt-1 text-xs text-slate-500">Folosită ca fallback când nu ai setat ceva specific pentru chat sau voce.</p>
+                    </div>
+
+                    {{-- Limbi suportate pe web chat + Meta --}}
+                    @php
+                        $chatLangs = old('chat_languages', $bot->settings['chat_languages'] ?? [$bot->language]);
+                        if (!is_array($chatLangs)) $chatLangs = [$bot->language];
+                    @endphp
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1.5">Limbi pentru chat web + Meta</label>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            @foreach (['ro' => 'Română', 'en' => 'English', 'de' => 'Deutsch', 'fr' => 'Français', 'es' => 'Español'] as $code => $label)
+                                <label class="flex items-center gap-2 text-sm text-slate-700 border border-slate-200 rounded-lg px-3 py-2 hover:bg-slate-50 cursor-pointer">
+                                    <input type="checkbox" name="chat_languages[]" value="{{ $code }}"
+                                           {{ in_array($code, $chatLangs, true) ? 'checked' : '' }}
+                                           class="rounded border-slate-300 text-red-700 focus:ring-red-700/20">
+                                    {{ $label }}
+                                </label>
+                            @endforeach
+                        </div>
+                        <p class="mt-1 text-xs text-slate-500">Bifează toate limbile pe care agentul le poate folosi. LLM-ul răspunde în limba clientului.</p>
+                    </div>
+
+                    {{-- Limbă pentru apeluri vocale (ASR locked pe una singură) --}}
+                    @php $voiceLang = old('voice_language', $bot->settings['voice_language'] ?? $bot->language); @endphp
+                    <div>
+                        <label for="voice_language" class="block text-sm font-medium text-slate-700 mb-1.5">Limba apelurilor vocale</label>
+                        <select name="voice_language" id="voice_language"
+                                class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition">
+                            <option value="ro" {{ $voiceLang === 'ro' ? 'selected' : '' }}>Română</option>
+                            <option value="en" {{ $voiceLang === 'en' ? 'selected' : '' }}>English</option>
+                            <option value="de" {{ $voiceLang === 'de' ? 'selected' : '' }}>Deutsch</option>
+                            <option value="fr" {{ $voiceLang === 'fr' ? 'selected' : '' }}>Français</option>
+                            <option value="es" {{ $voiceLang === 'es' ? 'selected' : '' }}>Español</option>
+                        </select>
+                        <p class="mt-1 text-xs text-slate-500">ASR-ul are nevoie de o limbă locked. Un apel bilingv ar necesita două modele în paralel — dublu cost.</p>
                     </div>
 
                     {{-- Voce --}}
@@ -87,12 +123,19 @@
                         <label for="voice" class="block text-sm font-medium text-slate-700 mb-1.5">Voce <span class="text-red-500">*</span></label>
                         <select name="voice" id="voice" required
                                 class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition">
-                            <option value="alloy" {{ old('voice', $bot->voice) === 'alloy' ? 'selected' : '' }}>Alloy (neutru)</option>
-                            <option value="echo" {{ old('voice', $bot->voice) === 'echo' ? 'selected' : '' }}>Echo (masculin)</option>
-                            <option value="fable" {{ old('voice', $bot->voice) === 'fable' ? 'selected' : '' }}>Fable (expresiv)</option>
-                            <option value="onyx" {{ old('voice', $bot->voice) === 'onyx' ? 'selected' : '' }}>Onyx (profund)</option>
-                            <option value="nova" {{ old('voice', $bot->voice) === 'nova' ? 'selected' : '' }}>Nova (feminin)</option>
-                            <option value="shimmer" {{ old('voice', $bot->voice) === 'shimmer' ? 'selected' : '' }}>Shimmer (cald)</option>
+                            {{-- OpenAI Realtime supported voices (all others are silently
+                                 downgraded to "alloy" by the bridge). List ordered by our
+                                 recommendation for Romanian. --}}
+                            <option value="coral"   {{ old('voice', $bot->voice) === 'coral' ? 'selected' : '' }}>Coral (feminin, cald)</option>
+                            <option value="sage"    {{ old('voice', $bot->voice) === 'sage' ? 'selected' : '' }}>Sage (feminin, clar)</option>
+                            <option value="shimmer" {{ old('voice', $bot->voice) === 'shimmer' ? 'selected' : '' }}>Shimmer (feminin)</option>
+                            <option value="ballad"  {{ old('voice', $bot->voice) === 'ballad' ? 'selected' : '' }}>Ballad (masculin, blând)</option>
+                            <option value="verse"   {{ old('voice', $bot->voice) === 'verse' ? 'selected' : '' }}>Verse (masculin, expresiv)</option>
+                            <option value="ash"     {{ old('voice', $bot->voice) === 'ash' ? 'selected' : '' }}>Ash (masculin, neutru)</option>
+                            <option value="alloy"   {{ old('voice', $bot->voice) === 'alloy' ? 'selected' : '' }}>Alloy (neutru)</option>
+                            <option value="echo"    {{ old('voice', $bot->voice) === 'echo' ? 'selected' : '' }}>Echo (masculin)</option>
+                            <option value="marin"   {{ old('voice', $bot->voice) === 'marin' ? 'selected' : '' }}>Marin</option>
+                            <option value="cedar"   {{ old('voice', $bot->voice) === 'cedar' ? 'selected' : '' }}>Cedar</option>
                         </select>
 
                         {{-- Voice Cloning Section --}}

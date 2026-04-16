@@ -108,6 +108,9 @@ class RealtimeSession
         $instructions = $this->buildInstructions();
         $settings = $this->bot->settings ?? [];
 
+        $voiceLang = $settings['voice_language'] ?? $this->bot->language ?? 'ro';
+        $langLabelMap = ['ro' => 'română', 'en' => 'engleză', 'de' => 'germană', 'fr' => 'franceză', 'es' => 'spaniolă'];
+
         return $this->client->buildSessionConfig([
             'instructions' => $instructions,
             'voice' => $this->bot->voice ?? 'alloy',
@@ -116,6 +119,15 @@ class RealtimeSession
             'vad_eagerness' => $settings['vad_eagerness'] ?? 'low',
             'temperature' => $settings['temperature'] ?? 0.7,
             'max_tokens' => $settings['max_tokens'] ?? 1024,
+            // Lock ASR to the bot's configured voice language — fixes
+            // narrowband-phone drift (RO → ES / PT / PL) and keeps
+            // web-demo transcripts aligned with what the bot actually
+            // responds in.
+            'transcribe_model' => 'gpt-4o-mini-transcribe',
+            'transcribe_language' => $voiceLang,
+            'transcribe_prompt' => 'Conversație în limba '
+                . ($langLabelMap[$voiceLang] ?? 'română')
+                . ' despre produse și servicii.',
         ]);
     }
 
@@ -191,7 +203,12 @@ class RealtimeSession
             ]);
         }
 
-        $language = $this->bot->language ?? 'română';
+        // Voice path picks the per-bot voice_language override when
+        // set, falling back to the primary language. Lets bots serve
+        // EN chat + RO phone without cross-channel bleed.
+        $language = $this->bot->settings['voice_language']
+            ?? $this->bot->language
+            ?? 'română';
 
         // Add category tree context for guided navigation
         if ($this->hasProducts) {

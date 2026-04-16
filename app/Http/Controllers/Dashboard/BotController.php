@@ -231,7 +231,7 @@ class BotController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'site_id' => 'nullable|exists:sites,id',
-            'language' => 'required|string',
+            'language' => 'required|string|in:ro,en,de,fr,es',
             'voice' => 'required|string',
             'system_prompt' => 'nullable|string|max:10000',
             'greeting_message' => 'nullable|string|max:500',
@@ -239,7 +239,25 @@ class BotController extends Controller
             'is_active' => 'boolean',
             'knowledge_search_limit' => 'nullable|integer|min:1|max:20',
             'max_call_duration_minutes' => 'nullable|integer|min:5|max:60',
+            // New: separate chat vs voice language settings.
+            // chat_languages is multi-select (LLM handles any of them
+            // at no extra cost). voice_language is single — ASR needs
+            // a locked language per call.
+            'chat_languages' => 'nullable|array',
+            'chat_languages.*' => 'string|in:ro,en,de,fr,es',
+            'voice_language' => 'nullable|string|in:ro,en,de,fr,es',
         ]);
+
+        // Persist chat_languages + voice_language into bot.settings
+        // jsonb so we don't need new columns. Fallback: if
+        // chat_languages is empty, default to [primary language].
+        $settings = $bot->settings ?? [];
+        $settings['chat_languages'] = !empty($validated['chat_languages'])
+            ? array_values($validated['chat_languages'])
+            : [$validated['language']];
+        $settings['voice_language'] = $validated['voice_language'] ?: $validated['language'];
+        $validated['settings'] = array_merge($settings, $validated['settings'] ?? []);
+        unset($validated['chat_languages'], $validated['voice_language']);
 
         // Convert minutes to seconds for max_call_duration
         if (isset($validated['max_call_duration_minutes'])) {
