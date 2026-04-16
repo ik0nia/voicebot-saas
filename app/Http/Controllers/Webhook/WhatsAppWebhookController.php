@@ -7,6 +7,7 @@ use App\Jobs\ProcessChannelMessage;
 use App\Models\Channel;
 use App\Services\ChannelMessageService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class WhatsAppWebhookController extends Controller
@@ -102,6 +103,29 @@ class WhatsAppWebhookController extends Controller
                         $messageText = $message['text']['body'] ?? '';
 
                         if (empty($messageText)) {
+                            continue;
+                        }
+
+                        // Per-message idempotency: Meta signs payloads without a
+                        // timestamp (unlike Telnyx), so we can't bound replays
+                        // with a skew window. Instead we dedupe on the
+                        // Cloud-API-issued wamid — globally unique per message.
+                        // Blocks replay attacks (captured payload resent later
+                        // triggers zero LLM spend) and legitimate Meta retries
+                        // on non-2xx/timeout from double-dispatching the job.
+                        $messageId = $message['id'] ?? null;
+                        if (!$messageId) {
+                            Log::warning('WhatsApp webhook: message missing id — skipping dedup', [
+                                'channel_id' => $channel->id,
+                            ]);
+                            continue;
+                        }
+                        $dedupeKey = "meta_webhook:wa:{$channel->id}:{$messageId}";
+                        if (!Cache::add($dedupeKey, true, now()->addHours(24))) {
+                            Log::info('WhatsApp webhook: duplicate message skipped', [
+                                'channel_id' => $channel->id,
+                                'wamid' => $messageId,
+                            ]);
                             continue;
                         }
 

@@ -7,6 +7,7 @@ use App\Jobs\ProcessChannelMessage;
 use App\Models\Channel;
 use App\Services\ChannelMessageService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class InstagramWebhookController extends Controller
@@ -87,6 +88,23 @@ class InstagramWebhookController extends Controller
 
                     if (!$channel) {
                         Log::warning('Instagram DM channel not found', ['instagram_id' => $instagramId]);
+                        continue;
+                    }
+
+                    // Per-message idempotency — see WhatsAppWebhookController.
+                    $messageId = $event['message']['mid'] ?? null;
+                    if (!$messageId) {
+                        Log::warning('Instagram webhook: message missing mid — skipping dedup', [
+                            'channel_id' => $channel->id,
+                        ]);
+                        continue;
+                    }
+                    $dedupeKey = "meta_webhook:ig:{$channel->id}:{$messageId}";
+                    if (!Cache::add($dedupeKey, true, now()->addHours(24))) {
+                        Log::info('Instagram webhook: duplicate message skipped', [
+                            'channel_id' => $channel->id,
+                            'mid' => $messageId,
+                        ]);
                         continue;
                     }
 

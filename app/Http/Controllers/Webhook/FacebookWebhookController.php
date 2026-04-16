@@ -7,6 +7,7 @@ use App\Jobs\ProcessChannelMessage;
 use App\Models\Channel;
 use App\Services\ChannelMessageService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class FacebookWebhookController extends Controller
@@ -88,6 +89,25 @@ class FacebookWebhookController extends Controller
 
                     if (!$channel) {
                         Log::warning('Facebook Messenger channel not found', ['page_id' => $pageId]);
+                        continue;
+                    }
+
+                    // Per-message idempotency — see WhatsAppWebhookController.
+                    // Meta signs without a timestamp so a replay window check
+                    // isn't possible; dedupe on the Messenger-issued `mid`.
+                    $messageId = $event['message']['mid'] ?? null;
+                    if (!$messageId) {
+                        Log::warning('Facebook webhook: message missing mid — skipping dedup', [
+                            'channel_id' => $channel->id,
+                        ]);
+                        continue;
+                    }
+                    $dedupeKey = "meta_webhook:fb:{$channel->id}:{$messageId}";
+                    if (!Cache::add($dedupeKey, true, now()->addHours(24))) {
+                        Log::info('Facebook webhook: duplicate message skipped', [
+                            'channel_id' => $channel->id,
+                            'mid' => $messageId,
+                        ]);
                         continue;
                     }
 
