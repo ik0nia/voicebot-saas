@@ -31,3 +31,5 @@ docker-compose.override.yml
 .mailcow-credentials
 # Chatbot QA reports — generated locally, served from public/, not in git
 /public/malinco_*.html
+# Enterprise architecture PDF — served behind obscured URL, not for GitHub
+/public/downloads/sambla-enterprise-*.pdf
