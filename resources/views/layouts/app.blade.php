@@ -30,6 +30,7 @@
          storage access. --}}
     @include('partials.analytics.head')
     @include('partials.analytics.flash-events')
+    @include('partials.analytics.enterprise-tracking')
 
     @yield('jsonld')
 

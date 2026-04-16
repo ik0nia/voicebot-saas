@@ -20,6 +20,7 @@
     @stack('styles')
     @include('partials.analytics.head')
     @include('partials.analytics.flash-events')
+    @include('partials.analytics.enterprise-tracking')
 </head>
 <body class="bg-slate-50 font-sans antialiased">
     @include('partials.analytics.body')

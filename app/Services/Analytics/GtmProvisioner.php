@@ -30,26 +30,37 @@ class GtmProvisioner
     // Re-discovery via API is trivial but avoids extra 404 handling.
     public const ACCOUNT_ID = '6350231815';
     public const CONTAINER_ID = '249603368';
-    public const WORKSPACE_ID = '2';
+    // Workspace ID is resolved dynamically from the Default
+    // Workspace at run-time — GTM auto-rolls the default whenever
+    // a version is published (2 → 3 → 6 → …), so hard-coding
+    // doesn't survive across provisioning runs.
     public const NAME_PREFIX = 'sambla/';
 
     // Built-in "All Pages" trigger ID in every GTM container.
     public const TRIGGER_ALL_PAGES = '2147479553';
 
     private ?string $accessToken = null;
-    private string $workspacePath;
+    private ?string $workspacePath = null;
 
     // GTM API limit is 30 QPM/user. We leave 10% headroom by
     // pacing to 27/min — 2.2s between calls.
     private const API_CALL_SPACING_MS = 2300;
     private float $lastApiCallAt = 0;
 
-    public function __construct(private AnalyticsConfig $cfg)
+    public function __construct(private AnalyticsConfig $cfg) {}
+
+    private function resolveWorkspace(): void
     {
-        $this->workspacePath = sprintf(
-            'accounts/%s/containers/%s/workspaces/%s',
-            self::ACCOUNT_ID, self::CONTAINER_ID, self::WORKSPACE_ID
-        );
+        $ws = $this->api('GET', sprintf(
+            'accounts/%s/containers/%s/workspaces',
+            self::ACCOUNT_ID, self::CONTAINER_ID
+        ));
+        $default = collect($ws['workspace'] ?? [])
+            ->firstWhere('name', 'Default Workspace');
+        if (!$default) {
+            throw new \RuntimeException('Default Workspace not found in container');
+        }
+        $this->workspacePath = $default['path'];
     }
 
     /**
@@ -59,6 +70,8 @@ class GtmProvisioner
     {
         $log ??= fn($m) => null;
         $this->authenticate();
+        $this->resolveWorkspace();
+        $log('• Using workspace: ' . $this->workspacePath);
 
         $log('• Fetching existing state');
         $existingVars = $this->listAll('variables', 'variable');
@@ -109,6 +122,11 @@ class GtmProvisioner
             // select_item / begin_checkout as a fallback when the
             // items array isn't present.
             'item_id', 'item_name', 'item_category', 'price', 'quantity',
+            // Enterprise interaction tracking
+            'link_url', 'phone_number', 'email', 'social_network',
+            'scroll_depth', 'engagement_seconds',
+            'error_message', 'error_source', 'error_line',
+            'message_count', 'duration',
         ];
     }
 
@@ -139,14 +157,24 @@ class GtmProvisioner
     private function eventTriggerNames(): array
     {
         return [
+            // Auth + onboarding
             'sign_up', 'login', 'tenant_created',
+            // Lead + contact
             'generate_lead', 'callback_requested', 'form_submit',
+            // Ecommerce
             'view_item_list', 'select_item', 'begin_checkout',
             'add_payment_info', 'purchase',
+            // Subscription lifecycle
             'trial_start', 'trial_convert',
             'subscription_renewed', 'subscription_canceled',
+            // Product engagement
             'chat_session_start', 'chat_session_end',
             'voice_call_started', 'voice_call_completed',
+            // Enterprise interaction tracking
+            'phone_click', 'email_click', 'social_click',
+            'niche_view',
+            'scroll_milestone', 'engagement_time', 'js_error',
+            'chat_widget_opened', 'chat_widget_closed', 'chat_engaged',
         ];
     }
 
@@ -247,12 +275,13 @@ class GtmProvisioner
                     ]],
                 ],
                 'firingTriggerId' => [self::TRIGGER_ALL_PAGES],
-                'consentSettings' => [
-                    'consentStatus' => 'needed',
-                    'consentType' => ['type' => 'list', 'list' => [
-                        ['type' => 'template', 'value' => 'analytics_storage'],
-                    ]],
-                ],
+                // Advanced Consent Mode: GA4 tag fires on every
+                // pageview regardless of consent. The gtag SDK sends
+                // cookieless / redacted pings when analytics_storage
+                // is denied — which is both compliant and still
+                // measurable (Google uses these for conversion
+                // modeling in GA4 + Ads).
+                'consentSettings' => ['consentStatus' => 'notSet'],
             ];
             $out[$name] = $this->upsertEntity('tags', $byName[$name] ?? null, $body);
             $log('  - tag: ' . $name);
@@ -277,12 +306,8 @@ class GtmProvisioner
                         empty($eventParams) ? null : ['type' => 'list', 'key' => 'eventParameters', 'list' => $eventParams],
                     ]),
                     'firingTriggerId' => [(string) $trigger['triggerId']],
-                    'consentSettings' => [
-                        'consentStatus' => 'needed',
-                        'consentType' => ['type' => 'list', 'list' => [
-                            ['type' => 'template', 'value' => 'analytics_storage'],
-                        ]],
-                    ],
+                    // Advanced Consent Mode — see GA4 Config note.
+                    'consentSettings' => ['consentStatus' => 'notSet'],
                 ];
                 $out[$name] = $this->upsertEntity('tags', $byName[$name] ?? null, $body);
                 $log('  - tag: ' . $name);
@@ -407,6 +432,15 @@ class GtmProvisioner
             'begin_checkout', 'add_payment_info', 'purchase' => $ecommerce,
             'view_item_list', 'select_item' => [$mk('item_list_name', $dl('item_list_name'))],
             'form_submit' => [$mk('form_name', $dl('form_name'))],
+            'phone_click' => [$mk('link_url', $dl('link_url')), $mk('phone_number', $dl('phone_number'))],
+            'email_click' => [$mk('link_url', $dl('link_url')), $mk('email', $dl('email'))],
+            'social_click' => [$mk('link_url', $dl('link_url')), $mk('social_network', $dl('social_network'))],
+            'niche_view' => [$mk('niche', $dl('niche'))],
+            'scroll_milestone' => [$mk('scroll_depth', $dl('scroll_depth'))],
+            'engagement_time' => [$mk('engagement_seconds', $dl('engagement_seconds'))],
+            'js_error' => [$mk('error_message', $dl('error_message')), $mk('error_source', $dl('error_source'))],
+            'chat_widget_closed' => [$mk('duration', $dl('duration'))],
+            'chat_engaged' => [$mk('message_count', $dl('message_count'))],
             default => [],
         };
     }
@@ -517,9 +551,10 @@ HTML;
         // with "Root element must be a message".
         $send = function () use ($method, $req, $url, $body) {
             return match ($method) {
-                'GET'  => $req->get($url),
-                'POST' => $body === null ? $req->send('POST', $url) : $req->asJson()->post($url, $body),
-                'PUT'  => $body === null ? $req->send('PUT', $url)  : $req->asJson()->put($url, $body),
+                'GET'    => $req->get($url),
+                'POST'   => $body === null ? $req->send('POST', $url) : $req->asJson()->post($url, $body),
+                'PUT'    => $body === null ? $req->send('PUT', $url)  : $req->asJson()->put($url, $body),
+                'DELETE' => $req->delete($url),
             };
         };
         $resp = $send();
