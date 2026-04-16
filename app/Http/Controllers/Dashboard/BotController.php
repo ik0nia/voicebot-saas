@@ -346,7 +346,14 @@ class BotController extends Controller
     private function resolveBot($botId): Bot
     {
         $user = auth()->user();
-        return $user->hasRole('super_admin')
+        // Skip TenantScope ONLY in the explicit "toți tenanții" aggregate mode.
+        // During impersonation (admin_as_tenant_id set) we MUST keep the scope
+        // so a super-admin viewing-as tenant A can't reach tenant B's bots.
+        $canSkipScope = $user->hasRole('super_admin')
+            && session('admin_view_all', false)
+            && !session('admin_as_tenant_id');
+
+        return $canSkipScope
             ? Bot::withoutGlobalScopes()->findOrFail($botId)
             : Bot::findOrFail($botId);
     }

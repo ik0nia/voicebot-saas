@@ -24,6 +24,13 @@ class DashboardController extends Controller
 
     public function admin(Request $request)
     {
+        // While impersonating a tenant, the aggregate super-admin dashboard is
+        // misleading — its queries all use withoutGlobalScopes and would leak
+        // cross-tenant numbers into the "viewing as" session. Force the user
+        // back to the tenant dashboard until they explicitly exit impersonation.
+        if (session('admin_as_tenant_id')) {
+            return redirect()->route('dashboard');
+        }
         return $this->superAdminDashboard($request);
     }
 
