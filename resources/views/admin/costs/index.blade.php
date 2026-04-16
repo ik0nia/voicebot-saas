@@ -99,19 +99,25 @@
 @if($total['voice_total'] > 0)
     <div class="bg-white rounded-xl border border-slate-200 p-4 mb-6">
         <p class="text-xs font-semibold text-slate-600 uppercase mb-2">Defalcare voice</p>
-        <div class="grid grid-cols-3 gap-2 text-sm">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
             <div>
                 <p class="text-slate-500">OpenAI Realtime</p>
-                <p class="font-mono font-semibold">${{ number_format($total['voice_openai']/100, 2) }}</p>
+                <p class="font-mono font-semibold">${{ number_format($total['voice_openai']/100, 4) }}</p>
             </div>
             <div>
                 <p class="text-slate-500">Twilio voice</p>
-                <p class="font-mono font-semibold">${{ number_format($total['voice_twilio']/100, 2) }}</p>
+                <p class="font-mono font-semibold">${{ number_format($total['voice_twilio']/100, 4) }}</p>
             </div>
             <div>
                 <p class="text-slate-500">Embeddings</p>
                 <p class="font-mono font-semibold">${{ number_format($total['voice_embedding']/100, 4) }}</p>
             </div>
+            @if($total['voice_unattributed'] > 0)
+                <div title="Cost din apeluri vechi, înainte să tragem breakdown-ul OpenAI/Twilio. Apelurile noi au defalcare completă.">
+                    <p class="text-slate-500">Istoric (neatribuit)</p>
+                    <p class="font-mono font-semibold text-amber-700">${{ number_format($total['voice_unattributed']/100, 4) }}</p>
+                </div>
+            @endif
         </div>
     </div>
 @endif

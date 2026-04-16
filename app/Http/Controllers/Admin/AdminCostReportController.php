@@ -45,17 +45,28 @@ class AdminCostReportController extends Controller
         $rows = $query->orderByDesc('total_cents')->get();
 
         // Top-level totals
+        $voiceTotal = (float) $rows->sum('voice_total_cents');
+        $voiceOpenai = (float) $rows->sum('voice_openai_cents');
+        $voiceTwilio = (float) $rows->sum('voice_twilio_cents');
+        $voiceEmb = (float) $rows->sum('voice_embedding_cents');
+        // Historical calls that landed before the per-call breakdown
+        // writer existed have cost_cents but no openai/twilio/embedding
+        // split. Surface the gap so the operator can see the totals
+        // still reconcile (breakdown + unattributed == voice_total).
+        $unattributed = max(0.0, round($voiceTotal - $voiceOpenai - $voiceTwilio - $voiceEmb, 4));
+
         $total = [
-            'voice_total' => $rows->sum('voice_total_cents'),
-            'voice_openai' => $rows->sum('voice_openai_cents'),
-            'voice_twilio' => $rows->sum('voice_twilio_cents'),
-            'voice_embedding' => $rows->sum('voice_embedding_cents'),
-            'chat_cost' => $rows->sum('chat_cost_cents'),
-            'grand_total' => $rows->sum('total_cents'),
-            'calls' => $rows->sum('voice_calls_count'),
-            'seconds' => $rows->sum('voice_seconds'),
-            'conversations' => $rows->sum('chat_conversations_count'),
-            'messages' => $rows->sum('chat_messages_count'),
+            'voice_total' => $voiceTotal,
+            'voice_openai' => $voiceOpenai,
+            'voice_twilio' => $voiceTwilio,
+            'voice_embedding' => $voiceEmb,
+            'voice_unattributed' => $unattributed,
+            'chat_cost' => (float) $rows->sum('chat_cost_cents'),
+            'grand_total' => (float) $rows->sum('total_cents'),
+            'calls' => (int) $rows->sum('voice_calls_count'),
+            'seconds' => (int) $rows->sum('voice_seconds'),
+            'conversations' => (int) $rows->sum('chat_conversations_count'),
+            'messages' => (int) $rows->sum('chat_messages_count'),
         ];
 
         // Grouped to one row per (tenant or bot) for the table
