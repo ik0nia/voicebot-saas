@@ -21,7 +21,13 @@ class VerifyInternalServiceToken
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $expected = config('services.internal.service_token');
+        // Env is the canonical source but fall back to PlatformSetting
+        // so the operator can rotate the token via Admin UI without a
+        // full app redeploy. Rotation flow: set the new token in both
+        // Laravel and the media-stream container, verify both update,
+        // then clear from PlatformSetting to leave env as SSOT again.
+        $expected = config('services.internal.service_token')
+            ?: \App\Models\PlatformSetting::get('internal_service_token');
         if (empty($expected)) {
             Log::error('VerifyInternalServiceToken: INTERNAL_SERVICE_TOKEN not configured');
             abort(503, 'Internal service auth not configured.');

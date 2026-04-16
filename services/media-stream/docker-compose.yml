@@ -10,12 +10,23 @@
 # so a WebSocket reconnect lands on the same backend that owns the
 # call.
 
+networks:
+  # Coolify's main network — joining it lets this container reach
+  # the Coolify-managed Postgres + Redis by their container UUIDs
+  # (which Coolify uses as internal DNS names). The network is
+  # created by Coolify at install time, not by us.
+  coolify:
+    external: true
+
 services:
   media-stream:
     build:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
+    networks:
+      - default
+      - coolify
     # deploy.replicas is only honoured by Swarm; Coolify's own UI
     # handles replicas outside Compose. Pin a single logical process
     # here and let the orchestrator fan out.
