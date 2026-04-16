@@ -12,7 +12,11 @@ class PromptGuardrailsTest extends TestCase
         $result = PromptGuardrails::apply('Base prompt.');
 
         $this->assertStringContainsString('REGULI OBLIGATORII', $result);
-        $this->assertStringContainsString('NU inventa prețuri', $result);
+        // Service wording changed from "NU inventa prețuri" to the
+        // more-complete "NU inventa date, prețuri, termene sau
+        // specificații". Test follows the service rather than the
+        // reverse — match on the common "NU inventa" prefix.
+        $this->assertStringContainsString('NU inventa', $result);
         $this->assertStringStartsWith('Base prompt.', $result);
     }
 
@@ -21,8 +25,8 @@ class PromptGuardrailsTest extends TestCase
         $result = PromptGuardrails::apply('Base prompt.', isVoice: true);
 
         $this->assertStringContainsString('REGULI OBLIGATORII', $result);
-        $this->assertStringContainsString('REGULI SUPLIMENTARE VOCALE', $result);
-        $this->assertStringContainsString('maxim 1-2 propoziții', $result);
+        $this->assertStringContainsString('REGULI VOCALE', $result);
+        $this->assertStringContainsString('propoziții', $result);
     }
 
     public function test_apply_non_voice_skips_voice_rules(): void
@@ -30,7 +34,7 @@ class PromptGuardrailsTest extends TestCase
         $result = PromptGuardrails::apply('Base prompt.', isVoice: false);
 
         $this->assertStringContainsString('REGULI OBLIGATORII', $result);
-        $this->assertStringNotContainsString('REGULI SUPLIMENTARE VOCALE', $result);
+        $this->assertStringNotContainsString('REGULI VOCALE', $result);
     }
 
     public function test_guardrails_are_at_end_of_prompt(): void

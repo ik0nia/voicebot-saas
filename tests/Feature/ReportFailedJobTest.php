@@ -25,18 +25,29 @@ class ReportFailedJobTest extends TestCase
 {
     public function test_listener_logs_job_failure(): void
     {
-        Log::spy();
+        // Flip to array log driver so the listener writes somewhere we
+        // can introspect without mocking Mockery-vs-Laravel signature
+        // incompatibilities (Log::spy + withArgs closure fails on
+        // Laravel 11 + Mockery 1.7).
+        config(['logging.default' => 'single']);
+        Log::swap(new \Illuminate\Log\Logger(
+            new \Monolog\Logger('test', [new \Monolog\Handler\TestHandler()]),
+        ));
 
         $job = $this->makeJob('App\\Jobs\\ProcessChannelMessage');
         $event = new JobFailed('redis', $job, new \RuntimeException('boom'));
 
         app(ReportFailedJob::class)->handle($event);
 
-        Log::shouldHaveReceived('error')->withArgs(function ($message, $context) {
-            return $message === 'Queue job failed'
-                && ($context['job'] ?? null) === 'App\\Jobs\\ProcessChannelMessage'
-                && ($context['exception'] ?? null) === 'boom';
-        })->once();
+        $handler = Log::getLogger()->getHandlers()[0];
+        $records = $handler->getRecords();
+
+        $match = collect($records)->first(
+            fn ($r) => $r['message'] === 'Queue job failed'
+                && ($r['context']['job'] ?? null) === 'App\\Jobs\\ProcessChannelMessage'
+                && ($r['context']['exception'] ?? null) === 'boom',
+        );
+        $this->assertNotNull($match, 'Expected Queue job failed log not emitted');
     }
 
     public function test_listener_dispatches_to_sentry_when_bound(): void

@@ -17,6 +17,10 @@ class ConversationEventServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        // chat_events has a NOT NULL + FK tenant_id; the test relies
+        // on tenant id = 1 existing, so seed it once here rather than
+        // letting every test rediscover the constraint.
+        \App\Models\Tenant::factory()->create(['id' => 1]);
         $this->service = new ConversationEventService();
     }
 

@@ -30,7 +30,7 @@ class ProductSearchServiceTest extends TestCase
 
     public function test_extract_search_words_removes_stopwords(): void
     {
-        $words = $this->callPrivateMethod('extractSearchWords', ['vreau pentru casa un produs']);
+        $words = $this->callPrivateMethod('extractTokens', ['vreau pentru casa un produs']);
 
         // "vreau", "pentru", "un" are stopwords and should be removed
         $this->assertNotContains('vreau', $words);
@@ -40,7 +40,7 @@ class ProductSearchServiceTest extends TestCase
 
     public function test_extract_search_words_keeps_meaningful_words(): void
     {
-        $words = $this->callPrivateMethod('extractSearchWords', ['laptop gaming performant']);
+        $words = $this->callPrivateMethod('extractTokens', ['laptop gaming performant']);
 
         $this->assertContains('laptop', $words);
         $this->assertContains('gaming', $words);
@@ -50,14 +50,14 @@ class ProductSearchServiceTest extends TestCase
     public function test_extract_search_words_keeps_short_alphanumeric(): void
     {
         // 2-char words that are alphanumeric should be kept (e.g. product codes)
-        $words = $this->callPrivateMethod('extractSearchWords', ['produs a5 beton']);
+        $words = $this->callPrivateMethod('extractTokens', ['produs a5 beton']);
 
         $this->assertContains('a5', $words);
     }
 
     public function test_extract_search_words_removes_color_stopwords(): void
     {
-        $words = $this->callPrivateMethod('extractSearchWords', ['tricou rosu negru']);
+        $words = $this->callPrivateMethod('extractTokens', ['tricou rosu negru']);
 
         $this->assertNotContains('rosu', $words);
         $this->assertNotContains('negru', $words);
@@ -66,7 +66,7 @@ class ProductSearchServiceTest extends TestCase
 
     public function test_extract_search_words_removes_size_stopwords(): void
     {
-        $words = $this->callPrivateMethod('extractSearchWords', ['cutie mare produs']);
+        $words = $this->callPrivateMethod('extractTokens', ['cutie mare produs']);
 
         $this->assertNotContains('mare', $words);
         $this->assertNotContains('cutie', $words); // "cutie" is also a stopword
@@ -75,7 +75,7 @@ class ProductSearchServiceTest extends TestCase
 
     public function test_extract_search_words_empty_query_returns_empty(): void
     {
-        $words = $this->callPrivateMethod('extractSearchWords', ['de la pe in']);
+        $words = $this->callPrivateMethod('extractTokens', ['de la pe in']);
 
         $this->assertEmpty($words);
     }

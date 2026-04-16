@@ -3,14 +3,9 @@
 namespace Tests\Unit;
 
 use App\Services\CategoryNavigationService;
-use Illuminate\Cache\ArrayStore;
-use Illuminate\Cache\CacheManager;
-use Illuminate\Cache\Repository;
-use Illuminate\Container\Container;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Facade;
-use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
+use Tests\TestCase;
 
 class CategoryNavigationLogicTest extends TestCase
 {
@@ -21,35 +16,9 @@ class CategoryNavigationLogicTest extends TestCase
     {
         parent::setUp();
 
-        // Set up a minimal in-memory Cache facade so public methods
-        // can call Cache::remember without a real database.
-        $app = new Container();
-        $cacheRepo = new Repository(new ArrayStore());
-
-        $manager = new class ($cacheRepo) extends CacheManager {
-            private Repository $repo;
-
-            public function __construct(Repository $repo)
-            {
-                $this->repo = $repo;
-            }
-
-            public function store($name = null)
-            {
-                return $this->repo;
-            }
-
-            public function __call($method, $parameters)
-            {
-                return $this->repo->$method(...$parameters);
-            }
-        };
-
-        $app->instance('cache', $manager);
-        Facade::setFacadeApplication($app);
-
-        // Pre-seed cache keys for bot_id=0 so the Cache::remember closure
-        // (which would hit Eloquent/DB) is never executed.
+        // Pre-seed cache keys for bot_id=0 so Cache::remember closures
+        // inside the service never hit Eloquent / DB — the tests here
+        // only exercise the pure-PHP helpers (removeDiacritics etc).
         Cache::put('bot_brands_0', [], 3600);
         Cache::put('bot_categories_0', [], 3600);
 
@@ -57,14 +26,6 @@ class CategoryNavigationLogicTest extends TestCase
 
         $this->removeDiacritics = new ReflectionMethod(CategoryNavigationService::class, 'removeDiacritics');
         $this->removeDiacritics->setAccessible(true);
-    }
-
-    protected function tearDown(): void
-    {
-        Facade::clearResolvedInstances();
-        Facade::setFacadeApplication(null);
-
-        parent::tearDown();
     }
 
     // ------------------------------------------------------------------
