@@ -1932,7 +1932,7 @@
             // scroll through them. Keeps the message area compact
             // regardless of how many products the bot suggested.
             var wrap = document.createElement('div');
-            wrap.style.cssText = 'display:flex;flex-direction:row;gap:8px;padding:8px 0 4px;width:100%;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:thin;';
+            wrap.style.cssText = 'display:flex;flex-direction:row;align-items:stretch;gap:8px;padding:8px 0 12px;width:100%;overflow-x:auto;overflow-y:visible;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:thin;';
             wrap.setAttribute('role', 'list');
             wrap.setAttribute('aria-label', 'Products');
 
@@ -1949,8 +1949,10 @@
                 // Slider card: fixed width per card + scroll-snap so
                 // swipes land on a clean boundary. Vertical layout
                 // (image top, text below) fits the narrow widget
-                // width and shows more cards per row.
-                card.style.cssText = 'flex:0 0 160px;width:160px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.04);cursor:pointer;transition:box-shadow 0.2s,transform 0.15s;display:flex;flex-direction:column;scroll-snap-align:start;';
+                // width and shows more cards per row. min-height
+                // guarantees the card doesn't collapse when the
+                // message flex parent hasn't set a row height.
+                card.style.cssText = 'flex:0 0 160px;width:160px;min-height:200px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.04);cursor:pointer;transition:box-shadow 0.2s,transform 0.15s;display:flex;flex-direction:column;scroll-snap-align:start;';
                 card.setAttribute('role', 'listitem');
                 card.setAttribute('tabindex', '0');
                 card.setAttribute('aria-label', stripAllHtml(p.name || ''));
@@ -1964,8 +1966,9 @@
                     h += '</div>';
                 }
 
-                // Content (bottom of the card)
-                h += '<div style="padding:8px 10px;flex:1;display:flex;flex-direction:column;min-width:0;">';
+                // Content (bottom of the card) — no flex:1 so it
+                // doesn't try to stretch to a zero-height parent.
+                h += '<div style="padding:8px 10px;display:flex;flex-direction:column;gap:2px;min-width:0;">';
 
                 // Product name
                 h += '<div style="font-size:13px;font-weight:600;color:#1e293b;line-height:1.3;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">' + sanitizeHtml(p.name) + '</div>';
