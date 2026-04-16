@@ -7,25 +7,52 @@ use App\Models\Call;
 use App\Models\PhoneNumber;
 use App\Services\TwilioService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Twilio voice webhooks. Unlike Telnyx (JSON bodies, rich event types),
- * Twilio posts form-encoded params with a CallStatus string and expects
- * TwiML XML back for answer / call-progress callbacks. The handler is
- * intentionally thin for Phase 1 of the migration — it answers inbound
- * calls with the media-stream bridge and persists state transitions.
- * Outbound call state machine and advanced features (recording, SIP
- * transfer, answering machine detection) land in later iters.
+ * Twilio voice webhooks. Unlike Telnyx (JSON bodies, rich event types
+ * with full state transition metadata), Twilio posts form-encoded
+ * params with a CallStatus string and expects TwiML XML back for
+ * answer / call-progress callbacks.
+ *
+ * Hardening applied on top of Phase 1:
+ *
+ *  - Per-CallSid idempotency on both routes. Twilio retries the status
+ *    callback on any non-2xx / timeout and an attacker with a captured
+ *    payload can replay freely (X-Twilio-Signature has no timestamp,
+ *    unlike Telnyx's ed25519 + ts — iter 10). Cache::add on the
+ *    CallSid+event tuple short-circuits replays and legitimate
+ *    duplicates alike, mirroring the Meta dedupe pattern (iter 11).
+ *
+ *  - State-machine guard ported from TelnyxWebhookController so a
+ *    "completed" call doesn't get shoved back into "in_progress" by a
+ *    late or replayed status update.
  */
 class TwilioWebhookController extends Controller
 {
+    /**
+     * Same terminal / transition matrix as the Telnyx controller — our
+     * calls.status column is the single source of truth, normalised
+     * from whatever the provider uses.
+     */
+    private const VALID_STATUS_TRANSITIONS = [
+        'initiated'   => ['ringing', 'in_progress', 'failed', 'canceled'],
+        'ringing'     => ['in_progress', 'completed', 'failed', 'busy', 'no_answer', 'canceled'],
+        'in_progress' => ['completed', 'failed'],
+        'completed'   => [],
+        'failed'      => [],
+        'busy'        => [],
+        'no_answer'   => [],
+        'canceled'    => [],
+    ];
+
     public function __construct(private TwilioService $twilio) {}
 
     /**
      * Inbound-voice answer URL. Twilio POSTs with CallSid / From / To
-     * and we respond with TwiML that bridges the leg into our media
-     * stream — same pattern as Telnyx's generateMediaStreamTexml but
+     * and expects TwiML back that bridges the call leg into our media
+     * stream — same intent as Telnyx's generateMediaStreamTexml but
      * wired for Twilio's `<Connect><Stream>` grammar.
      */
     public function handleVoice(Request $request)
@@ -36,6 +63,22 @@ class TwilioWebhookController extends Controller
 
         if (!$callSid || !$to) {
             return response('Missing CallSid or To', 400);
+        }
+
+        // Idempotency — if this CallSid already has a Call row, return
+        // the same TwiML. Twilio retries on non-2xx and a replayed
+        // webhook otherwise creates duplicate Call records.
+        $cacheKey = "twilio_webhook:voice:{$callSid}";
+        $existingCallId = Cache::get($cacheKey);
+        if ($existingCallId) {
+            $call = Call::find($existingCallId);
+            if ($call) {
+                $twiml = $this->twilio->generateMediaStreamTexml(
+                    (string) $call->bot_id,
+                    (string) $call->id,
+                );
+                return response($twiml, 200)->header('Content-Type', 'text/xml');
+            }
         }
 
         $phoneNumber = PhoneNumber::where('number', $to)
@@ -62,6 +105,10 @@ class TwilioWebhookController extends Controller
             'started_at' => now(),
         ]);
 
+        // Cache CallSid → call.id for 24h so retries and status
+        // callbacks find the same row without a DB scan.
+        Cache::put($cacheKey, $call->id, now()->addHours(24));
+
         $twiml = $this->twilio->generateMediaStreamTexml(
             (string) $phoneNumber->bot_id,
             (string) $call->id,
@@ -73,9 +120,10 @@ class TwilioWebhookController extends Controller
     /**
      * Call-progress status callback. Twilio posts CallSid + CallStatus
      * at lifecycle events (ringing, in-progress, completed, failed,
-     * busy, no-answer). We normalise the status and mirror it onto
-     * calls.status — the legacy Telnyx controller keeps a valid-transition
-     * table, which we can port over once we see real traffic.
+     * busy, no-answer). Idempotency is keyed on (CallSid, status) so
+     * a replayed "completed" doesn't double-run terminal-state logic
+     * (duration writes, billing hooks) but the initial legitimate
+     * status transition is still honoured.
      */
     public function handleStatus(Request $request)
     {
@@ -87,12 +135,23 @@ class TwilioWebhookController extends Controller
             return response('Missing CallSid or CallStatus', 400);
         }
 
+        // Idempotency — reject replays of the same (call, status)
+        // tuple. A slow 500 from us normally causes Twilio to retry
+        // the same status up to a handful of times within a minute.
+        $dedupeKey = "twilio_webhook:status:{$callSid}:{$status}";
+        if (!Cache::add($dedupeKey, true, now()->addHours(24))) {
+            return response('OK', 200);
+        }
+
         $call = Call::where('metadata->provider', 'twilio')
             ->where('metadata->provider_call_id', $callSid)
             ->first();
 
         if (!$call) {
-            Log::info('Twilio status webhook: call not tracked', ['sid' => $callSid, 'status' => $status]);
+            Log::info('Twilio status webhook: call not tracked', [
+                'sid' => $callSid,
+                'status' => $status,
+            ]);
             return response('OK', 200);
         }
 
@@ -103,8 +162,30 @@ class TwilioWebhookController extends Controller
             'failed', 'canceled' => 'failed',
             'busy' => 'busy',
             'no-answer' => 'no_answer',
-            default => $call->status,
+            default => null,
         };
+
+        if ($normalised === null) {
+            // Unknown status — log but don't clobber existing state.
+            Log::info('Twilio status webhook: unknown status', [
+                'sid' => $callSid,
+                'status' => $status,
+            ]);
+            return response('OK', 200);
+        }
+
+        // State-machine guard: refuse regressions. Without this a late
+        // or replayed "ringing" after "completed" would resurrect the
+        // call row.
+        $allowed = self::VALID_STATUS_TRANSITIONS[$call->status] ?? [];
+        if ($normalised !== $call->status && !in_array($normalised, $allowed, true)) {
+            Log::warning('Twilio status webhook: illegal state transition', [
+                'sid' => $callSid,
+                'from' => $call->status,
+                'to' => $normalised,
+            ]);
+            return response('OK', 200);
+        }
 
         $update = ['status' => $normalised];
         if ($duration > 0) {
