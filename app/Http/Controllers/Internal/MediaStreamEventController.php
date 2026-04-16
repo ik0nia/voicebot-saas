@@ -223,8 +223,8 @@ class MediaStreamEventController extends Controller
             DB::transaction(function () use ($call, $openaiDelta) {
                 $call->refresh();
                 $call->update([
-                    'openai_cost_cents' => ((int) $call->openai_cost_cents) + $openaiDelta,
-                    'cost_cents'        => ((int) $call->cost_cents) + $openaiDelta,
+                    'openai_cost_cents' => (float) $call->openai_cost_cents + $openaiDelta,
+                    'cost_cents'        => (float) $call->cost_cents + $openaiDelta,
                 ]);
             });
         }

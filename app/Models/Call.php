@@ -55,10 +55,12 @@ class Call extends Model
             'started_at' => 'datetime',
             'ended_at' => 'datetime',
             'duration_seconds' => 'integer',
-            'cost_cents' => 'integer',
-            'openai_cost_cents' => 'integer',
-            'twilio_cost_cents' => 'integer',
-            'embedding_cost_cents' => 'integer',
+            // Stored numeric(12,4) — preserve sub-cent precision
+            // (RO Twilio inbound ≈ 0.34c for a short call).
+            'cost_cents' => 'float',
+            'openai_cost_cents' => 'float',
+            'twilio_cost_cents' => 'float',
+            'embedding_cost_cents' => 'float',
             'sentiment_score' => 'decimal:3',
         ];
     }

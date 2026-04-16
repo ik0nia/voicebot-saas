@@ -29,6 +29,11 @@ class DailyCostAggregator
         $end = $date->copy()->endOfDay();
         $ratePerUsd = $this->bnr->usdToRon();
 
+        // Wipe this day's rows first so dropped activity (e.g. a call
+        // that was soft-deleted) doesn't leave stale per-bot rows
+        // behind. updateOrCreate only adds/updates; it never removes.
+        DailyCostRollup::whereDate('date', $start->toDateString())->delete();
+
         $written = 0;
 
         foreach (Tenant::withoutGlobalScopes()->cursor() as $tenant) {
@@ -40,7 +45,7 @@ class DailyCostAggregator
                 ->selectRaw('
                     bot_id,
                     COUNT(*) as calls_count,
-                    COALESCE(SUM(duration_seconds), 0) as seconds,
+                    COALESCE(SUM(GREATEST(duration_seconds, 0)), 0) as seconds,
                     COALESCE(SUM(openai_cost_cents), 0) as openai_cents,
                     COALESCE(SUM(twilio_cost_cents), 0) as twilio_cents,
                     COALESCE(SUM(embedding_cost_cents), 0) as embedding_cents,
@@ -79,11 +84,11 @@ class DailyCostAggregator
                 $v = $voiceByBot->get($botId);
                 $c = $chatByBot->get($botId);
 
-                $voiceTotal = $v ? (int) $v->total_cents : 0;
-                $chatCost   = $c ? (int) $c->cost_cents : 0;
+                $voiceTotal = $v ? (float) $v->total_cents : 0.0;
+                $chatCost   = $c ? (float) $c->cost_cents : 0.0;
                 $total      = $voiceTotal + $chatCost;
 
-                if ($total === 0 && ($v->calls_count ?? 0) === 0 && ($c->conv_count ?? 0) === 0) {
+                if ($total == 0.0 && ($v->calls_count ?? 0) === 0 && ($c->conv_count ?? 0) === 0) {
                     continue; // nothing happened for this bot that day
                 }
 
@@ -96,9 +101,9 @@ class DailyCostAggregator
                     [
                         'voice_calls_count' => (int) ($v->calls_count ?? 0),
                         'voice_seconds' => (int) ($v->seconds ?? 0),
-                        'voice_openai_cents' => (int) ($v->openai_cents ?? 0),
-                        'voice_twilio_cents' => (int) ($v->twilio_cents ?? 0),
-                        'voice_embedding_cents' => (int) ($v->embedding_cents ?? 0),
+                        'voice_openai_cents' => (float) ($v->openai_cents ?? 0),
+                        'voice_twilio_cents' => (float) ($v->twilio_cents ?? 0),
+                        'voice_embedding_cents' => (float) ($v->embedding_cents ?? 0),
                         'voice_total_cents' => $voiceTotal,
                         'chat_conversations_count' => (int) ($c->conv_count ?? 0),
                         'chat_messages_count' => (int) ($c->msg_count ?? 0),
@@ -111,9 +116,9 @@ class DailyCostAggregator
 
                 $tenantVoice['count']   += (int) ($v->calls_count ?? 0);
                 $tenantVoice['seconds'] += (int) ($v->seconds ?? 0);
-                $tenantVoice['openai']  += (int) ($v->openai_cents ?? 0);
-                $tenantVoice['twilio']  += (int) ($v->twilio_cents ?? 0);
-                $tenantVoice['emb']     += (int) ($v->embedding_cents ?? 0);
+                $tenantVoice['openai']  += (float) ($v->openai_cents ?? 0);
+                $tenantVoice['twilio']  += (float) ($v->twilio_cents ?? 0);
+                $tenantVoice['emb']     += (float) ($v->embedding_cents ?? 0);
                 $tenantVoice['total']   += $voiceTotal;
                 $tenantChat['conv']     += (int) ($c->conv_count ?? 0);
                 $tenantChat['msg']      += (int) ($c->msg_count ?? 0);

@@ -201,14 +201,15 @@ class TwilioWebhookController extends Controller
             // outbound / country and we don't want to double-track
             // pricing tables. Falls back to the calculator if the API
             // call fails.
-            $twilioCents = 0;
+            $twilioCents = 0.0;
             try {
                 $client = $this->twilio->masterClient();
                 $tc = $client->calls($callSid)->fetch();
                 if ($tc->price !== null) {
                     // Twilio returns a negative decimal in USD (debit
-                    // notation). Absolute value → cents.
-                    $twilioCents = (int) round(abs((float) $tc->price) * 100);
+                    // notation). Keep 4 decimals so sub-cent values
+                    // (common for short RO inbound calls) aren't lost.
+                    $twilioCents = round(abs((float) $tc->price) * 100, 4);
                 }
             } catch (\Throwable $e) {
                 Log::warning('Twilio status webhook: price fetch failed', [
@@ -221,7 +222,7 @@ class TwilioWebhookController extends Controller
                     ->twilioForNumber($request->input('To'), $duration);
             }
             $update['twilio_cost_cents'] = $twilioCents;
-            $update['cost_cents'] = ((int) $call->cost_cents) + $twilioCents;
+            $update['cost_cents'] = (float) $call->cost_cents + $twilioCents;
         }
 
         $call->update($update);

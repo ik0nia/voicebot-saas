@@ -63,8 +63,11 @@ class CallCostCalculator
      * Cents from an OpenAI Realtime `response.done.usage` payload.
      * Expects the shape OpenAI returns (input_tokens,
      * input_token_details, output_token_details, cached_tokens_details).
+     *
+     * Returns a float — column is numeric(12,4) so sub-cent amounts
+     * (text-input tokens often < 1¢ per turn) aren't truncated to 0.
      */
-    public function openaiFromUsage(array $usage): int
+    public function openaiFromUsage(array $usage): float
     {
         $audioIn  = (int) ($usage['input_token_details']['audio_tokens'] ?? 0);
         $audioInC = (int) ($usage['input_token_details']['cached_tokens_details']['audio_tokens'] ?? 0);
@@ -84,7 +87,7 @@ class CallCostCalculator
         $cents += $textInC      * $this->rate('text_input_cached') / 1_000_000;
         $cents += $textOut      * $this->rate('text_output') / 1_000_000;
 
-        return (int) round($cents);
+        return round($cents, 4);
     }
 
     /**
@@ -92,15 +95,15 @@ class CallCostCalculator
      *
      * @param string|null $phoneNumber  Dialed number in E.164 form (+40..., +1...).
      * @param int $durationSeconds
-     * @return int  Cents (rounded).
+     * @return float  Cents, 4-decimal precision (numeric(12,4) column).
      */
-    public function twilioForNumber(?string $phoneNumber, int $durationSeconds): int
+    public function twilioForNumber(?string $phoneNumber, int $durationSeconds): float
     {
-        if ($durationSeconds <= 0) return 0;
+        if ($durationSeconds <= 0) return 0.0;
         $country = $this->countryFromE164($phoneNumber);
         $ratePerMin = $this->twilioRateForCountry($country);
         $minutes = $durationSeconds / 60;
-        return (int) round($minutes * $ratePerMin);
+        return round($minutes * $ratePerMin, 4);
     }
 
     private function twilioRateForCountry(string $countryCode): float
