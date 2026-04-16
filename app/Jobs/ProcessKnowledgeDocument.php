@@ -583,6 +583,7 @@ class ProcessKnowledgeDocument implements ShouldQueue
                     'error_type' => null,
                     'bot_id' => $botId,
                     'tenant_id' => $tenantId,
+                    'purpose' => 'kb_indexing',
                 ]);
             } catch (\Exception $e) {
                 Log::warning('Failed to record API metric', ['error' => $e->getMessage()]);

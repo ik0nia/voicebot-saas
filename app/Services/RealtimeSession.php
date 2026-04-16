@@ -1097,6 +1097,8 @@ class RealtimeSession
                 'status' => 'success',
                 'bot_id' => $this->bot->id,
                 'tenant_id' => $this->bot->tenant_id,
+                'call_id' => $this->call->id ?? null,
+                'purpose' => 'voice_realtime',
             ]);
         } catch (\Throwable $e) {
             Log::debug("RealtimeSession: failed to track token usage for call {$this->call->id}", [

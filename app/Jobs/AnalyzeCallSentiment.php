@@ -134,6 +134,8 @@ class AnalyzeCallSentiment implements ShouldQueue
                 'error_type' => null,
                 'bot_id' => $call->bot_id ?? null,
                 'tenant_id' => $call->tenant_id ?? null,
+                'call_id' => $call->id ?? null,
+                'purpose' => 'call_sentiment',
             ]);
         } catch (\Exception $e) {
             Log::warning('Failed to record API metric', ['error' => $e->getMessage()]);

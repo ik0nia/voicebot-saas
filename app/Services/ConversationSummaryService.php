@@ -92,14 +92,14 @@ class ConversationSummaryService
         $cacheKey = "conv_summary_{$conversation->id}_" . md5(implode(',', $messageIds));
 
         return Cache::remember($cacheKey, now()->addHours(2), function () use ($olderMessages, $conversation) {
-            return $this->generateSummary($olderMessages, $conversation->bot_id ?? null, $conversation->tenant_id ?? null);
+            return $this->generateSummary($olderMessages, $conversation->bot_id ?? null, $conversation->tenant_id ?? null, $conversation->id ?? null);
         });
     }
 
     /**
      * Call LLM to generate a concise summary of conversation messages.
      */
-    private function generateSummary($messages, ?int $botId = null, ?int $tenantId = null): ?string
+    private function generateSummary($messages, ?int $botId = null, ?int $tenantId = null, ?int $conversationId = null): ?string
     {
         if ($messages->isEmpty()) {
             return null;
@@ -149,6 +149,8 @@ class ConversationSummaryService
                     'error_type' => null,
                     'bot_id' => $botId,
                     'tenant_id' => $tenantId,
+                    'conversation_id' => $conversationId,
+                    'purpose' => 'conversation_summary',
                 ]);
             } catch (\Exception $e) {
                 Log::warning('Failed to record API metric', ['error' => $e->getMessage()]);
@@ -171,6 +173,8 @@ class ConversationSummaryService
                     'error_type' => get_class($e),
                     'bot_id' => $botId,
                     'tenant_id' => $tenantId,
+                    'conversation_id' => $conversationId,
+                    'purpose' => 'conversation_summary',
                 ]);
             } catch (\Exception $metricEx) {
                 Log::warning('Failed to record API metric', ['error' => $metricEx->getMessage()]);

@@ -118,6 +118,7 @@ class RunKnowledgeAgent implements ShouldQueue
                     'error_type' => null,
                     'bot_id' => $this->run->bot_id,
                     'tenant_id' => $this->run->bot?->tenant_id,
+                    'purpose' => 'kb_agent_scan',
                 ]);
             } catch (\Exception $metricEx) {
                 Log::warning('Failed to record API metric', ['error' => $metricEx->getMessage()]);
@@ -169,6 +170,7 @@ class RunKnowledgeAgent implements ShouldQueue
                     'error_type' => get_class($e),
                     'bot_id' => $this->run->bot_id,
                     'tenant_id' => $this->run->bot?->tenant_id,
+                    'purpose' => 'kb_agent_scan',
                 ]);
             } catch (\Exception $metricEx) {
                 Log::warning('Failed to record API metric', ['error' => $metricEx->getMessage()]);

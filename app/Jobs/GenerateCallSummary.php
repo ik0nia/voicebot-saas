@@ -71,6 +71,8 @@ class GenerateCallSummary implements ShouldQueue
                     'error_type' => null,
                     'bot_id' => $call->bot_id ?? null,
                     'tenant_id' => $call->tenant_id ?? null,
+                    'call_id' => $call->id ?? null,
+                    'purpose' => 'call_summary',
                 ]);
             } catch (\Exception $e) {
                 Log::warning('Failed to record API metric', ['error' => $e->getMessage()]);
@@ -95,6 +97,8 @@ class GenerateCallSummary implements ShouldQueue
                     'error_type' => get_class($e),
                     'bot_id' => $call->bot_id ?? null,
                     'tenant_id' => $call->tenant_id ?? null,
+                    'call_id' => $call->id ?? null,
+                    'purpose' => 'call_summary',
                 ]);
             } catch (\Exception $metricEx) {
                 Log::warning('Failed to record API metric', ['error' => $metricEx->getMessage()]);

@@ -55,6 +55,8 @@ class ElevenLabsService
                     \App\Models\AiApiMetric::create([
                         'provider' => 'elevenlabs',
                         'model' => 'voice-cloning',
+                    'purpose' => 'voice_cloning',
+                        'purpose' => 'voice_cloning',
                         'input_tokens' => 0,
                         'output_tokens' => 0,
                         'cost_cents' => 10.0, // ~$0.10 per clone
@@ -78,6 +80,7 @@ class ElevenLabsService
                 \App\Models\AiApiMetric::create([
                     'provider' => 'elevenlabs',
                     'model' => 'voice-cloning',
+                    'purpose' => 'voice_cloning',
                     'input_tokens' => 0,
                     'output_tokens' => 0,
                     'cost_cents' => 0,
@@ -103,6 +106,7 @@ class ElevenLabsService
                 \App\Models\AiApiMetric::create([
                     'provider' => 'elevenlabs',
                     'model' => 'voice-cloning',
+                    'purpose' => 'voice_cloning',
                     'input_tokens' => 0,
                     'output_tokens' => 0,
                     'cost_cents' => 0,
@@ -182,6 +186,8 @@ class ElevenLabsService
                     \App\Models\AiApiMetric::create([
                         'provider' => 'elevenlabs',
                         'model' => 'tts',
+                    'purpose' => 'voice_tts',
+                        'purpose' => 'voice_tts',
                         'input_tokens' => 0,
                         'output_tokens' => $charCount,
                         'cost_cents' => $costCents,
@@ -202,6 +208,7 @@ class ElevenLabsService
                 \App\Models\AiApiMetric::create([
                     'provider' => 'elevenlabs',
                     'model' => 'tts',
+                    'purpose' => 'voice_tts',
                     'input_tokens' => 0,
                     'output_tokens' => $charCount,
                     'cost_cents' => 0,
@@ -227,6 +234,7 @@ class ElevenLabsService
                 \App\Models\AiApiMetric::create([
                     'provider' => 'elevenlabs',
                     'model' => 'tts',
+                    'purpose' => 'voice_tts',
                     'input_tokens' => 0,
                     'output_tokens' => $charCount,
                     'cost_cents' => 0,
@@ -287,6 +295,8 @@ class ElevenLabsService
                     \App\Models\AiApiMetric::create([
                         'provider' => 'elevenlabs',
                         'model' => 'tts',
+                    'purpose' => 'voice_tts',
+                        'purpose' => 'voice_tts',
                         'input_tokens' => 0,
                         'output_tokens' => $charCount,
                         'cost_cents' => $costCents,
@@ -322,6 +332,8 @@ class ElevenLabsService
                     \App\Models\AiApiMetric::create([
                         'provider' => 'elevenlabs',
                         'model' => 'tts',
+                    'purpose' => 'voice_tts',
+                        'purpose' => 'voice_tts',
                         'input_tokens' => 0,
                         'output_tokens' => $charCount,
                         'cost_cents' => 0,
@@ -347,6 +359,7 @@ class ElevenLabsService
                 \App\Models\AiApiMetric::create([
                     'provider' => 'elevenlabs',
                     'model' => 'tts',
+                    'purpose' => 'voice_tts',
                     'input_tokens' => 0,
                     'output_tokens' => $charCount,
                     'cost_cents' => 0,

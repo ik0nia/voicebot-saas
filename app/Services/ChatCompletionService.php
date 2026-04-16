@@ -409,8 +409,18 @@ class ChatCompletionService
         }
 
         $content = $response->content[0]?->text ?? '';
-        $inputTokens = $response->usage?->inputTokens ?? 0;
-        $outputTokens = $response->usage?->outputTokens ?? 0;
+
+        // Anthropic SDK has shipped both camelCase (inputTokens) and
+        // snake_case (input_tokens) property names across recent
+        // majors; a toArray() fallback catches either. The 0/0 we
+        // were seeing before was this mismatch silently collapsing
+        // to defaults, which made every chat look free.
+        $usage = $response->usage ?? null;
+        $usageArr = is_object($usage) && method_exists($usage, 'toArray')
+            ? $usage->toArray()
+            : (array) $usage;
+        $inputTokens  = (int) ($usage?->inputTokens  ?? $usage?->input_tokens  ?? $usageArr['input_tokens']  ?? $usageArr['inputTokens']  ?? 0);
+        $outputTokens = (int) ($usage?->outputTokens ?? $usage?->output_tokens ?? $usageArr['output_tokens'] ?? $usageArr['outputTokens'] ?? 0);
 
         return [
             'content' => $content,
@@ -523,6 +533,7 @@ class ChatCompletionService
                 'error_type' => $errorType,
                 'bot_id' => $botId,
                 'tenant_id' => $tenantId,
+                'purpose' => 'chat_completion',
             ]);
         } catch (\Exception $e) {
             Log::warning('ChatCompletionService: failed to record metric', ['error' => $e->getMessage()]);

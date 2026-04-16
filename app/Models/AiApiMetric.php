@@ -19,6 +19,10 @@ class AiApiMetric extends Model
         'error_type',
         'bot_id',
         'tenant_id',
+        'call_id',
+        'conversation_id',
+        'message_id',
+        'purpose',
     ];
 
     protected $casts = [
@@ -27,4 +31,19 @@ class AiApiMetric extends Model
         'cost_cents' => 'decimal:4',
         'response_time_ms' => 'integer',
     ];
+
+    public function call()
+    {
+        return $this->belongsTo(Call::class);
+    }
+
+    public function conversation()
+    {
+        return $this->belongsTo(Conversation::class);
+    }
+
+    public function message()
+    {
+        return $this->belongsTo(Message::class);
+    }
 }

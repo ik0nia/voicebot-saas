@@ -527,7 +527,8 @@ class GeminiContentService
                 'cost_cents' => $costCents,
                 'response_time_ms' => $responseTimeMs,
                 'status' => $status,
-                'error_type' => 'social_image',
+                'error_type' => null,
+                'purpose' => 'social_image_generation',
             ]);
         } catch (\Throwable $e) {}
     }
@@ -595,7 +596,8 @@ class GeminiContentService
                     'cost_cents' => $costCents,
                     'response_time_ms' => 0,
                     'status' => 'success',
-                    'error_type' => 'social_text',
+                    'error_type' => null,
+                    'purpose' => 'social_text_generation',
                 ]);
             } catch (\Throwable $e) {}
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AiApiMetric;
 use App\Models\Bot;
 use App\Models\DailyCostRollup;
 use App\Models\Tenant;
@@ -10,6 +11,7 @@ use App\Services\Cost\BnrExchangeRate;
 use App\Services\Cost\DailyCostAggregator;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Aggregate profitability view — one admin page to answer "how much
@@ -94,6 +96,25 @@ class AdminCostReportController extends Controller
             ? Bot::withoutGlobalScopes()->where('tenant_id', $tenantFilter)->orderBy('name')->get(['id', 'name'])
             : collect();
 
+        // Platform overhead — background AI work not chargeable to a
+        // specific tenant conversation (doc indexing, KB agent web
+        // scans, social image generation, voice cloning training).
+        // Those land in ai_api_metrics with no call/conversation/
+        // message link; grouping by purpose + provider makes the
+        // spend legible. Tenant-scoped rows with NO context IDs
+        // still show here — the cost exists, it's just not attached
+        // to billable activity yet.
+        $platform = AiApiMetric::query()
+            ->whereBetween('created_at', [$start->copy()->startOfDay(), $end->copy()->endOfDay()])
+            ->whereNull('call_id')
+            ->whereNull('conversation_id')
+            ->whereNull('message_id')
+            ->selectRaw('COALESCE(purpose, provider || \':\' || model) as label, provider, model, purpose, SUM(cost_cents) as cost_cents, COUNT(*) as n')
+            ->groupBy('purpose', 'provider', 'model')
+            ->orderByDesc('cost_cents')
+            ->get();
+        $platformTotal = (float) $platform->sum('cost_cents');
+
         return view('admin.costs.index', [
             'period' => $period,
             'start' => $start,
@@ -105,6 +126,8 @@ class AdminCostReportController extends Controller
             'bots' => $bots,
             'total' => $total,
             'grouped' => $grouped,
+            'platform' => $platform,
+            'platformTotal' => $platformTotal,
             'usdRon' => $bnr->usdToRon(),
         ]);
     }

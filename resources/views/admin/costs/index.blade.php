@@ -168,6 +168,45 @@
     </table>
 </div>
 
+{{-- Platform overhead — AI calls not attached to a tenant conversation --}}
+@if($platformTotal > 0)
+    <div class="mt-6 bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div class="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+            <div>
+                <p class="text-xs font-semibold text-slate-600 uppercase">Overhead platformă</p>
+                <p class="text-xs text-slate-500 mt-0.5">API-uri care nu se atribuie unui tenant / conversație: indexare KB, agent web-scan, imagini social, voice cloning.</p>
+            </div>
+            <div class="text-right">
+                <p class="text-xs text-slate-500">Total</p>
+                <p class="text-lg font-bold text-slate-900 font-mono">${{ number_format($platformTotal/100, 4) }}</p>
+                <p class="text-xs text-slate-500">≈ {{ number_format($platformTotal/100*$usdRon, 2) }} lei</p>
+            </div>
+        </div>
+        <table class="w-full text-sm">
+            <thead class="bg-slate-50 text-slate-600 text-xs uppercase">
+                <tr>
+                    <th class="px-4 py-2 text-left">Scop</th>
+                    <th class="px-4 py-2 text-left">Provider / model</th>
+                    <th class="px-4 py-2 text-right">Apeluri API</th>
+                    <th class="px-4 py-2 text-right">Cost $</th>
+                    <th class="px-4 py-2 text-right">Cost lei</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                @foreach($platform as $p)
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-2 font-medium text-slate-900">{{ $p->purpose ?? '—' }}</td>
+                        <td class="px-4 py-2 text-xs text-slate-600">{{ $p->provider }} / {{ $p->model }}</td>
+                        <td class="px-4 py-2 text-right tabular-nums">{{ number_format($p->n) }}</td>
+                        <td class="px-4 py-2 text-right font-mono">${{ number_format($p->cost_cents/100, 4) }}</td>
+                        <td class="px-4 py-2 text-right font-mono">{{ number_format($p->cost_cents/100*$usdRon, 2) }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+@endif
+
 {{-- Re-agregare manuală --}}
 <form method="POST" action="{{ route('admin.costs.reaggregate') }}" class="mt-6 bg-slate-50 rounded-xl border border-slate-200 p-4 flex flex-wrap items-end gap-3">
     @csrf

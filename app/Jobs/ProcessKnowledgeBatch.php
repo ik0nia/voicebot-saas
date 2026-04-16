@@ -181,6 +181,7 @@ class ProcessKnowledgeBatch implements ShouldQueue
                     'error_type' => null,
                     'bot_id' => $this->botId,
                     'tenant_id' => \App\Models\Bot::where('id', $this->botId)->value('tenant_id'),
+                    'purpose' => 'kb_indexing',
                 ]);
             } catch (\Exception $e) {
                 Log::warning('Failed to record API metric', ['error' => $e->getMessage()]);
@@ -202,6 +203,7 @@ class ProcessKnowledgeBatch implements ShouldQueue
                     'error_type' => get_class($e),
                     'bot_id' => $this->botId,
                     'tenant_id' => \App\Models\Bot::where('id', $this->botId)->value('tenant_id'),
+                    'purpose' => 'kb_indexing',
                 ]);
             } catch (\Exception $metricEx) {
                 Log::warning('Failed to record API metric', ['error' => $metricEx->getMessage()]);
