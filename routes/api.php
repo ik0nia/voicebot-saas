@@ -41,20 +41,35 @@ Route::get('/v1/chatbot/embed', [\App\Http\Controllers\Api\ChatbotEmbedControlle
 Route::get('/v1/chatbot/check-domain', [\App\Http\Controllers\Api\ChatbotEmbedController::class, 'checkDomain'])->name('chatbot.check-domain');
 Route::get('/v1/chatbot/{channel}/frame', [\App\Http\Controllers\Api\ChatbotEmbedController::class, 'frame'])->name('chatbot.frame');
 
-// Public chatbot widget API (no auth required)
-Route::post('/v1/chatbot/{channel}/message', [ChatbotApiController::class, 'message']);
-Route::post('/v1/chatbot/{channel}/message-stream', [ChatbotApiController::class, 'messageStream']);
-Route::get('/v1/chatbot/{channel}/config', [ChatbotApiController::class, 'config']);
-Route::get('/v1/chatbot/{channel}/products', [ChatbotApiController::class, 'searchProducts']);
+// Public chatbot widget API (no auth required).
+//
+// Every message / stream call spawns an LLM request (OpenAI or Anthropic)
+// on the tenant's quota. Before throttling, the bare routes let a remote
+// caller burn a tenant's entire monthly LLM budget in seconds — just hit
+// /message in a tight loop. Throttles below are per-IP:
+//   - message / stream: 30/min (well above any legitimate widget user,
+//     conversations average ~5 msgs/min)
+//   - products: 30/min (embedding search is expensive too)
+//   - config: 60/min (cheap but enumerable by channel_id)
+//
+// If legitimate multi-user traffic from a single NAT starts hitting
+// these, revisit with per-(channel, visitor_id) limits instead.
+Route::post('/v1/chatbot/{channel}/message', [ChatbotApiController::class, 'message'])->middleware('throttle:30,1');
+Route::post('/v1/chatbot/{channel}/message-stream', [ChatbotApiController::class, 'messageStream'])->middleware('throttle:30,1');
+Route::get('/v1/chatbot/{channel}/config', [ChatbotApiController::class, 'config'])->middleware('throttle:60,1');
+Route::get('/v1/chatbot/{channel}/products', [ChatbotApiController::class, 'searchProducts'])->middleware('throttle:30,1');
 Route::post('/v1/chatbot/{channel}/feedback', [ChatbotApiController::class, 'feedback'])->middleware('throttle:30,1');
 Route::post('/v1/chatbot/{channel}/rate', [ChatbotApiController::class, 'rateConversation'])->middleware('throttle:10,1');
 
-// V2 Analytics, Capabilities & Lead capture (public, widget-facing)
-Route::post('/v1/chatbot/{channel}/events', [\App\Http\Controllers\Api\EventTrackingController::class, 'trackBatch']);
-Route::get('/v1/chatbot/{channel}/capabilities', [\App\Http\Controllers\Api\EventTrackingController::class, 'capabilities']);
-Route::post('/v1/chatbot/{channel}/lead', [\App\Http\Controllers\Api\EventTrackingController::class, 'captureLead']);
-Route::post('/v1/chatbot/{channel}/callback', [\App\Http\Controllers\Api\CallbackController::class, 'store']);
-Route::get('/v1/chatbot/{channel}/callback/services', [\App\Http\Controllers\Api\CallbackController::class, 'services']);
+// V2 Analytics, Capabilities & Lead capture (public, widget-facing).
+// Event batches accept up to 50 rows each; keep the batch endpoint tight
+// so a bot can't flood chat_events. Lead / callback endpoints write to
+// leads + send notifications (email/SMS cost) so cap those aggressively.
+Route::post('/v1/chatbot/{channel}/events', [\App\Http\Controllers\Api\EventTrackingController::class, 'trackBatch'])->middleware('throttle:120,1');
+Route::get('/v1/chatbot/{channel}/capabilities', [\App\Http\Controllers\Api\EventTrackingController::class, 'capabilities'])->middleware('throttle:60,1');
+Route::post('/v1/chatbot/{channel}/lead', [\App\Http\Controllers\Api\EventTrackingController::class, 'captureLead'])->middleware('throttle:5,1');
+Route::post('/v1/chatbot/{channel}/callback', [\App\Http\Controllers\Api\CallbackController::class, 'store'])->middleware('throttle:5,1');
+Route::get('/v1/chatbot/{channel}/callback/services', [\App\Http\Controllers\Api\CallbackController::class, 'services'])->middleware('throttle:60,1');
 
 // V2 Purchase webhook from WordPress companion plugin (signed, no auth)
 Route::post('/v1/webhooks/woocommerce/{bot}/purchase', [\App\Http\Controllers\Api\PurchaseWebhookController::class, 'handle']);

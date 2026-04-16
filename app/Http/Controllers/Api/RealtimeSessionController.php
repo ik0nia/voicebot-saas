@@ -349,6 +349,14 @@ class RealtimeSessionController extends Controller
     public function synthesize(Request $request, int $bot): \Illuminate\Http\Response|JsonResponse
     {
         $bot = Bot::withoutGlobalScopes()->findOrFail($bot);
+
+        // Inactive bots must not be callable — without this gate, a
+        // disabled bot can still be invoked to burn ElevenLabs credits.
+        // create() already enforces it; mirror the check here.
+        if (!$bot->is_active) {
+            return response()->json(['error' => 'Bot is not active'], 404);
+        }
+
         $bot->load('clonedVoice');
 
         if (!$bot->usesClonedVoice()) {
@@ -383,6 +391,12 @@ class RealtimeSessionController extends Controller
     public function searchProducts(Request $request, int $bot): JsonResponse
     {
         $bot = Bot::withoutGlobalScopes()->findOrFail($bot);
+
+        // Same is_active gate as create() / synthesize() — disabled bots
+        // mustn't accept voice-mode tool calls.
+        if (!$bot->is_active) {
+            return response()->json(['error' => 'Bot is not active'], 404);
+        }
 
         $request->validate([
             'query' => 'required|string|max:500',
