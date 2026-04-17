@@ -34,6 +34,12 @@ Schedule::command('privacy:retention')->dailyAt('03:25')->withoutOverlapping();
 // Runs 10 min after costs rollup so both numbers land together.
 Schedule::command('outcomes:rollup')->dailyAt('00:15')->withoutOverlapping();
 
+// Opt-in automations. Scanners run often; jobs themselves recheck
+// per-bot feature flags at execute time, so nothing sends for bots
+// that haven't turned them on in bot.settings.automations.
+Schedule::command('appointments:send-reminders')->everyFifteenMinutes()->withoutOverlapping();
+Schedule::command('calls:handle-missed')->everyFiveMinutes()->withoutOverlapping();
+
 // Social media: generate posts daily at 07:00
 // PAUSED 2026-04-14: backlog de 306 grupuri draft + texte/imagini cu limbaj vechi.
 // Reactivează după curățarea backlog-ului și după fix logo (image-to-image cu ref).
