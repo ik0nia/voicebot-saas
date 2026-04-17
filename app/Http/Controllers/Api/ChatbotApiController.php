@@ -741,167 +741,31 @@ class ChatbotApiController extends Controller
         $logger->set('conversation_id', $conversation->id);
 
         try {
-            $intentService = app(IntentDetectionService::class);
             $tokenCounter = app(TokenCounterService::class);
-
-            // Use prompt versioning (A/B testing) if available
             $promptVersion = BotPromptVersion::selectForBot($bot->id);
 
-            // Cache static system prompt + product rules per bot.
-            // Flag state is baked into the cache key so toggling
-            // use_structured_prompt on a live bot doesn't keep serving
-            // the pre-toggle composition for the 10-minute TTL.
-            //
-            // X2: user_state is NOT baked into the cache key. The base
-            // prompt is cached, and the state-steering block (short,
-            // ~300 chars) is prepended post-cache in the consumer
-            // right after Cache::remember returns. Keeps cache tight.
-            $structuredOn = $bot->usesStructuredPrompt();
-            $cacheKey = "bot_system_prompt_{$bot->id}_" . ($structuredOn ? 'structured' : 'legacy');
-            $systemPrompt = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($bot, $promptVersion, $structuredOn) {
-                if ($structuredOn) {
-                    $prompt = app(StructuredPromptBuilder::class)->build($bot);
-                    if (trim($prompt) === '') {
-                        // Empty structured config — fall back to freeform
-                        // rather than sending an empty system prompt.
-                        $prompt = $promptVersion?->system_prompt ?? $bot->system_prompt ?? 'Ești un asistent virtual. Răspunde scurt și util.';
-                    }
-                } else {
-                    $prompt = $promptVersion?->system_prompt ?? $bot->system_prompt ?? 'Ești un asistent virtual. Răspunde scurt și util.';
-                }
+            // All system-prompt composition (base + product contract +
+            // state steering + knowledge + extra + last-product + order
+            // rules + conversation policy + guardrails) lives inside
+            // ChatPromptAssembler. Caller is responsible only for the
+            // logger fields it cares about.
+            $assembled = app(\App\Services\Chat\ChatPromptAssembler::class)->assemble(
+                $bot,
+                $conversation,
+                $userMessage,
+                $extraContext,
+                $channel,
+                $this->getValidLastProductContext($conversation, $userMessage),
+            );
 
-                $hasProducts = false;
-                try {
-                    $hasProducts = Cache::remember("bot_{$bot->id}_has_products", 3600, function() use ($bot) {
-                        return WooCommerceProduct::where('bot_id', $bot->id)->exists();
-                    });
-                } catch (\Throwable $e) {
-                    $hasProducts = WooCommerceProduct::where('bot_id', $bot->id)->exists();
-                }
-                if ($hasProducts) {
-                    $prompt .= "\n\n"
-                        . "Ești asistentul unui magazin online cu carduri vizuale."
-                        . "\n"
-                        . "\nCÂND CONTEXTUL CONȚINE 'PRODUSELE AFIȘATE CLIENTULUI' (sau '[CARDURI PRODUSE'):"
-                        . "\nLista de produse de acolo este AFIȘATĂ AUTOMAT ca CARDURI vizuale sub mesajul tău — clientul le vede direct, cu imagine, nume și preț. Te folosești de listă ca SURSĂ DE ADEVĂR pentru ce spui, dar NU O REPETI."
-                        . "\n"
-                        . "\nFORMAT răspuns pentru căutare de produse:"
-                        . "\n  1) O propoziție de intro care menționează tipul/categoria (30-100 caractere)."
-                        . "\n  2) Opțional o întrebare scurtă de follow-up (ex: 'Ce grosime cauți?')."
-                        . "\n  3) STOP. Nu mai scrie nimic."
-                        . "\nExemple bune: 'Am găsit câteva variante de polistiren pentru tine. Ce grosime cauți?' / 'Uite 4 opțiuni de vopsele lavabile disponibile.'"
-                        . "\nExemple REFUZATE: orice răspuns cu listă numerotată sau bullet-uri care repetă numele produselor (cardurile le arată deja)."
-                        . "\n"
-                        . "\nFORMAT răspuns pentru întrebări de comparație/preț:"
-                        . "\nRăspunde la întrebare folosind nume și prețuri EXACTE din lista din context (1-3 propoziții). Ex: 'Cel mai ieftin este Polistiren Eps 80 5 Cm la 63.50 RON.'"
-                        . "\n"
-                        . "\nGROUNDING CRITIC: dacă produsele din context sunt complet nepotrivite pentru întrebare (client a întrebat X, lista arată Y din altă categorie), SPUNE EXPLICIT 'N-am găsit exact ce cauți' și cere clarificare. Răspunsul tău nu trebuie să se contrazică cu lista."
-                        . "\n"
-                        . "\nAlte reguli:"
-                        . "\n- Dacă contextul conține '[NU s-au găsit produse relevante]', poți spune că nu ai găsit."
-                        . "\n- Dacă întrebarea NU e despre produse (livrare, retur, contact), răspunde la întrebare fără a menționa produse."
-                        . "\n- NU inventa produse, prețuri sau specificații. Răspunde doar din datele furnizate."
-                        . "\n- Fii natural, concis și util.";
-                }
-
-                return $prompt;
-            });
-
-            // X2: state-aware steering. Resolved per-turn, prepended
-            // to the cached base prompt so the LLM's tone adapts to
-            // the user's current state without busting the 10-min
-            // base-prompt cache. No-op when state is 'browsing'.
-            if ($structuredOn) {
-                try {
-                    $stateInfo = app(\App\Services\Widget\UserStateResolver::class)
-                        ->resolve($conversation, $userMessage, []);
-                    if (!empty($stateInfo['state']) && $stateInfo['state'] !== 'browsing') {
-                        $steerMap = [
-                            'high_intent'     => "=== STARE CLIENT: HIGH INTENT ===\nClientul e gata să acționeze. Răspunsuri SCURTE (max 2-3 propoziții), orientate pe pași concreți. Confirmă acțiunea, nu pune întrebări de discovery.",
-                            'stuck'           => "=== STARE CLIENT: STUCK / CONFUZ ===\nClientul e blocat. Răspunsuri SIMPLE, un singur pas. Evită jargon. Propune TU o direcție în loc să ceri mai multe detalii.",
-                            'price_sensitive' => "=== STARE CLIENT: PRICE SENSITIVE ===\nClientul caută cea mai bună valoare. Prioritizează opțiuni ieftine de calitate, menționează promoții. Evită premium dacă nu e cerut.",
-                            'comparing'       => "=== STARE CLIENT: COMPARĂ ===\nClientul cântărește alternative. Dă o comparație structurată scurtă și recomandă clar câștigătorul la final.",
-                        ];
-                        $steer = $steerMap[$stateInfo['state']] ?? '';
-                        if ($steer !== '') {
-                            $systemPrompt = $steer . "\n\n" . $systemPrompt;
-                        }
-                    }
-                } catch (\Throwable $e) {
-                    Log::debug('state steering skipped', ['err' => $e->getMessage()]);
-                }
+            $systemPrompt = $assembled->systemPrompt;
+            $logger->set('intents', $assembled->intents);
+            $logger->set('skip_knowledge', $assembled->skipKnowledge);
+            $logger->set('knowledge_chars', $assembled->knowledgeChars);
+            if ($assembled->policyApplied) {
+                $logger->set('policy_applied', true);
+                $logger->set('policy_tone', $assembled->policyTone);
             }
-
-            // Intent detection — replaces fragile str_contains checks
-            $intents = $intentService->detect($userMessage);
-            $skipKnowledge = $intentService->shouldSkipKnowledge($userMessage);
-            $logger->set('intents', $intents);
-            $logger->set('skip_knowledge', $skipKnowledge);
-
-            // Search Knowledge Base — skip for trivial messages
-            $hasProducts = false;
-            try {
-                $hasProducts = Cache::remember("bot_{$bot->id}_has_products", 3600, function() use ($bot) {
-                    return WooCommerceProduct::where('bot_id', $bot->id)->exists();
-                });
-            } catch (\Throwable $e) {
-                $hasProducts = WooCommerceProduct::where('bot_id', $bot->id)->exists();
-            }
-            $searchLimit = $bot->knowledge_search_limit ?? ($hasProducts ? 8 : 5);
-
-            $knowledgeContext = '';
-            if (!$skipKnowledge) {
-                try {
-                    $searchService = app(KnowledgeSearchService::class);
-                    $knowledgeContext = $searchService->buildContext($bot->id, $userMessage, $searchLimit);
-                    $logger->set('knowledge_chars', mb_strlen($knowledgeContext));
-                } catch (\Exception $e) {
-                    Log::warning('Knowledge search failed for chatbot', ['bot_id' => $bot->id, 'error' => $e->getMessage()]);
-                }
-            }
-
-            if (!empty($knowledgeContext)) {
-                $systemPrompt .= "\n\n" . $knowledgeContext;
-            }
-
-            if (!empty($extraContext)) {
-                $systemPrompt .= $extraContext;
-            }
-
-            // Inject last product context for memory ("pe ăla vreau să îl comand")
-            // Use TTL-aware getter (Bug 3) so old topic references don't leak.
-            $lastProduct = $this->getValidLastProductContext($conversation, $userMessage);
-            if ($lastProduct) {
-                $systemPrompt .= "\n\nPRODUS DISCUTAT ANTERIOR: {$lastProduct['name']} — {$lastProduct['price']} {$lastProduct['currency']}"
-                    . "\nDacă clientul face referire la \"ăla\", \"acela\", \"produsul\", sau vrea să comande fără a specifica — folosește ACEST produs.";
-            }
-
-            // Order intent rules
-            $systemPrompt .= "\n\nREGULI COMENZI:"
-                . "\n- Dacă clientul vrea să PLASEZE o comandă nouă: ajută-l. NU cere număr de comandă. NU cere email pentru verificare."
-                . "\n- Dacă clientul vrea să VERIFICE o comandă existentă: cere-i numărul comenzii sau emailul."
-                . "\n- \"Vreau să comand\" = comandă NOUĂ. \"Unde e comanda mea\" = verificare EXISTENTĂ.";
-
-            // V2: Inject conversation policy instructions (feature flag: bot.settings.v2_policies)
-            if (!empty($bot->settings['v2_policies'])) {
-                try {
-                    $policyService = app(\App\Services\ConversationPolicyService::class);
-                    $policy = $policyService->getPolicy($bot, $channel ?? null);
-                    $policyInstructions = $policyService->toPromptInstructions($policy);
-                    if (!empty($policyInstructions)) {
-                        $systemPrompt .= "\n\n" . $policyInstructions;
-                        $logger->set('policy_applied', true);
-                        $logger->set('policy_tone', $policy['tone'] ?? 'default');
-                    }
-                } catch (\Throwable $e) {
-                    Log::warning('ConversationPolicy injection failed, skipping', [
-                        'bot_id' => $bot->id, 'error' => $e->getMessage(),
-                    ]);
-                }
-            }
-
-            // Apply centralized anti-hallucination guardrails (ALWAYS LAST — highest priority)
-            $systemPrompt = PromptGuardrails::apply($systemPrompt);
 
             // Load messages ONCE — shared between summary service and model routing
             $recentHistory = Message::where('conversation_id', $conversation->id)
@@ -979,7 +843,7 @@ class ChatbotApiController extends Controller
                 Log::warning('Chatbot: fallback level 1 — retrying without knowledge', [
                     'bot_id' => $bot->id,
                     'error' => $e->getMessage(),
-                    'knowledge_chars' => mb_strlen($knowledgeContext),
+                    'knowledge_chars' => $assembled->knowledgeChars,
                 ]);
                 $logger->set('fallback_level', 1);
                 $logger->set('fallback_reason', $e->getMessage());
@@ -2290,122 +2154,19 @@ class ChatbotApiController extends Controller
      */
     private function buildPromptForStream(Bot $bot, Conversation $conversation, string $userMessage, string $extraContext = '', ?Channel $channel = null): array
     {
-        $intentService = app(IntentDetectionService::class);
         $tokenCounter = app(TokenCounterService::class);
 
-        $promptVersion = BotPromptVersion::selectForBot($bot->id);
-
-        $structuredOn = $bot->usesStructuredPrompt();
-        $cacheKey = "bot_system_prompt_{$bot->id}_" . ($structuredOn ? 'structured' : 'legacy');
-        $systemPrompt = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($bot, $promptVersion, $structuredOn) {
-            if ($structuredOn) {
-                $prompt = app(StructuredPromptBuilder::class)->build($bot);
-                if (trim($prompt) === '') {
-                    $prompt = $promptVersion?->system_prompt ?? $bot->system_prompt ?? 'Ești un asistent virtual. Răspunde scurt și util.';
-                }
-            } else {
-                $prompt = $promptVersion?->system_prompt ?? $bot->system_prompt ?? 'Ești un asistent virtual. Răspunde scurt și util.';
-            }
-
-            $hasProducts = false;
-            try {
-                $hasProducts = Cache::remember("bot_{$bot->id}_has_products", 3600, function() use ($bot) {
-                    return WooCommerceProduct::where('bot_id', $bot->id)->exists();
-                });
-            } catch (\Throwable $e) {
-                $hasProducts = WooCommerceProduct::where('bot_id', $bot->id)->exists();
-            }
-            if ($hasProducts) {
-                $prompt .= "\n\n"
-                    . "Ești asistentul unui magazin online cu carduri vizuale."
-                    . "\n"
-                    . "\nCÂND CONTEXTUL CONȚINE 'PRODUSELE AFIȘATE CLIENTULUI' (sau '[CARDURI PRODUSE'):"
-                    . "\nLista de produse de acolo este AFIȘATĂ AUTOMAT ca CARDURI vizuale sub mesajul tău — clientul le vede direct, cu imagine, nume și preț. Te folosești de listă ca SURSĂ DE ADEVĂR pentru ce spui, dar NU O REPETI."
-                    . "\n"
-                    . "\nFORMAT răspuns pentru căutare de produse:"
-                    . "\n  1) O propoziție de intro care menționează tipul/categoria (30-100 caractere)."
-                    . "\n  2) Opțional o întrebare scurtă de follow-up (ex: 'Ce grosime cauți?')."
-                    . "\n  3) STOP. Nu mai scrie nimic."
-                    . "\nExemple bune: 'Am găsit câteva variante de polistiren pentru tine. Ce grosime cauți?' / 'Uite 4 opțiuni de vopsele lavabile disponibile.'"
-                    . "\nExemple REFUZATE: orice răspuns cu listă numerotată sau bullet-uri care repetă numele produselor (cardurile le arată deja)."
-                    . "\n"
-                    . "\nFORMAT răspuns pentru întrebări de comparație/preț:"
-                    . "\nRăspunde la întrebare folosind nume și prețuri EXACTE din lista din context (1-3 propoziții). Ex: 'Cel mai ieftin este Polistiren Eps 80 5 Cm la 63.50 RON.'"
-                    . "\n"
-                    . "\nGROUNDING CRITIC: dacă produsele din context sunt complet nepotrivite pentru întrebare (client a întrebat X, lista arată Y din altă categorie), SPUNE EXPLICIT 'N-am găsit exact ce cauți' și cere clarificare. Răspunsul tău nu trebuie să se contrazică cu lista."
-                    . "\n"
-                    . "\nAlte reguli:"
-                    . "\n- Dacă contextul conține '[NU s-au găsit produse relevante]', poți spune că nu ai găsit."
-                    . "\n- Dacă întrebarea NU e despre produse (livrare, retur, contact), răspunde la întrebare fără a menționa produse."
-                    . "\n- NU inventa produse, prețuri sau specificații. Răspunde doar din datele furnizate."
-                    . "\n- Fii natural, concis și util.";
-            }
-
-            return $prompt;
-        });
-
-        // Knowledge search
-        $intents = $intentService->detect($userMessage);
-        $skipKnowledge = $intentService->shouldSkipKnowledge($userMessage);
-
-        $hasProducts = false;
-        try {
-            $hasProducts = Cache::remember("bot_{$bot->id}_has_products", 3600, function() use ($bot) {
-                return WooCommerceProduct::where('bot_id', $bot->id)->exists();
-            });
-        } catch (\Throwable $e) {
-            $hasProducts = WooCommerceProduct::where('bot_id', $bot->id)->exists();
-        }
-        $searchLimit = $bot->knowledge_search_limit ?? ($hasProducts ? 8 : 5);
-
-        $knowledgeContext = '';
-        if (!$skipKnowledge) {
-            try {
-                $searchService = app(KnowledgeSearchService::class);
-                $knowledgeContext = $searchService->buildContext($bot->id, $userMessage, $searchLimit);
-            } catch (\Exception $e) {
-                Log::warning('Knowledge search failed for chatbot stream', ['bot_id' => $bot->id, 'error' => $e->getMessage()]);
-            }
-        }
-
-        if (!empty($knowledgeContext)) {
-            $systemPrompt .= "\n\n" . $knowledgeContext;
-        }
-        if (!empty($extraContext)) {
-            $systemPrompt .= $extraContext;
-        }
-
-        // Inject last product context (TTL-aware per Bug 3).
-        $lastProduct = $this->getValidLastProductContext($conversation, $userMessage);
-        if ($lastProduct) {
-            $systemPrompt .= "\n\nPRODUS DISCUTAT ANTERIOR: {$lastProduct['name']} — {$lastProduct['price']} {$lastProduct['currency']}"
-                . "\nDacă clientul face referire la \"ăla\", \"acela\", \"produsul\", sau vrea să comande fără a specifica — folosește ACEST produs.";
-        }
-
-        // Order intent rules
-        $systemPrompt .= "\n\nREGULI COMENZI:"
-            . "\n- Dacă clientul vrea să PLASEZE o comandă nouă: ajută-l. NU cere număr de comandă. NU cere email pentru verificare."
-            . "\n- Dacă clientul vrea să VERIFICE o comandă existentă: cere-i numărul comenzii sau emailul."
-            . "\n- \"Vreau să comand\" = comandă NOUĂ. \"Unde e comanda mea\" = verificare EXISTENTĂ.";
-
-        // V2: Conversation policies
-        if (!empty($bot->settings['v2_policies'])) {
-            try {
-                $policyService = app(\App\Services\ConversationPolicyService::class);
-                $policy = $policyService->getPolicy($bot, $channel ?? null);
-                $policyInstructions = $policyService->toPromptInstructions($policy);
-                if (!empty($policyInstructions)) {
-                    $systemPrompt .= "\n\n" . $policyInstructions;
-                }
-            } catch (\Throwable $e) {
-                Log::warning('ConversationPolicy injection failed in stream', [
-                    'bot_id' => $bot->id, 'error' => $e->getMessage(),
-                ]);
-            }
-        }
-
-        // Guardrails
-        $systemPrompt = PromptGuardrails::apply($systemPrompt);
+        // Shares the same composition with the non-streaming path (see
+        // generateAIResponse). Byte-exact equivalence is asserted by
+        // ChatbotPromptCharacterizationTest snapshots.
+        $systemPrompt = app(\App\Services\Chat\ChatPromptAssembler::class)->assemble(
+            $bot,
+            $conversation,
+            $userMessage,
+            $extraContext,
+            $channel,
+            $this->getValidLastProductContext($conversation, $userMessage),
+        )->systemPrompt;
 
         // Build messages with summarization
         $recentHistory = Message::where('conversation_id', $conversation->id)
