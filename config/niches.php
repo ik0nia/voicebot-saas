@@ -385,6 +385,19 @@ PROMPT,
         'kb_seed_hints' => ['/meniu', '/rezervari', '/evenimente', '/contact'],
         'wow_demo'      => 'Vreau o masă pentru 4 persoane sâmbătă seara, pe la 20:00, de preferat pe terasă.',
         'chat_tools'    => ['check_table_availability', 'reserve_table', 'search_menu'],
+        // Default inventory seeded by `hospitality:seed-defaults`.
+        // Operators edit / add on top; the command is idempotent by
+        // (bot_id, kind, name) so re-runs never duplicate.
+        'default_resources' => [
+            ['kind' => 'table', 'name' => 'Masa 1', 'capacity' => 2, 'zone' => 'salon'],
+            ['kind' => 'table', 'name' => 'Masa 2', 'capacity' => 2, 'zone' => 'salon'],
+            ['kind' => 'table', 'name' => 'Masa 3', 'capacity' => 4, 'zone' => 'salon'],
+            ['kind' => 'table', 'name' => 'Masa 4', 'capacity' => 4, 'zone' => 'salon'],
+            ['kind' => 'table', 'name' => 'Masa 5', 'capacity' => 6, 'zone' => 'salon'],
+            ['kind' => 'table', 'name' => 'Masa T1', 'capacity' => 2, 'zone' => 'terasa'],
+            ['kind' => 'table', 'name' => 'Masa T2', 'capacity' => 4, 'zone' => 'terasa'],
+            ['kind' => 'table', 'name' => 'Masa T3', 'capacity' => 4, 'zone' => 'terasa'],
+        ],
     ],
 
     'hoteluri-pensiuni' => [
@@ -403,6 +416,17 @@ PROMPT,
         'kb_seed_hints' => ['/camere', '/tarife', '/facilitati', '/politica', '/contact'],
         'wow_demo'      => '2 camere duble pentru 3 nopți în weekend-ul 25-28 august, cu mic-dejun.',
         'chat_tools'    => ['check_room_availability', 'reserve_room', 'create_payment_link'],
+        // Default inventory — small pensiune with mixed room types.
+        // Operator edits `base_price` per actual tariff; the seed
+        // ships sensible starting values.
+        'default_resources' => [
+            ['kind' => 'room', 'name' => 'Camera 101', 'capacity' => 2, 'zone' => 'etaj_1', 'base_price' => 250, 'attributes' => ['type' => 'double', 'view' => 'street']],
+            ['kind' => 'room', 'name' => 'Camera 102', 'capacity' => 2, 'zone' => 'etaj_1', 'base_price' => 250, 'attributes' => ['type' => 'double']],
+            ['kind' => 'room', 'name' => 'Camera 103', 'capacity' => 1, 'zone' => 'etaj_1', 'base_price' => 180, 'attributes' => ['type' => 'single']],
+            ['kind' => 'room', 'name' => 'Camera 201', 'capacity' => 2, 'zone' => 'etaj_2', 'base_price' => 280, 'attributes' => ['type' => 'double', 'view' => 'garden']],
+            ['kind' => 'room', 'name' => 'Camera 202', 'capacity' => 4, 'zone' => 'etaj_2', 'base_price' => 420, 'attributes' => ['type' => 'apartment', 'view' => 'garden']],
+            ['kind' => 'room', 'name' => 'Camera 203', 'capacity' => 2, 'zone' => 'etaj_2', 'base_price' => 280, 'attributes' => ['type' => 'double']],
+        ],
     ],
 
 ];
