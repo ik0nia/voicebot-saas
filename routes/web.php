@@ -552,6 +552,8 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
 
     // Marketing & Analytics platform settings
     Route::put('/setari/marketing', [AdminSettingsController::class, 'updateMarketing'])->name('admin.settings.updateMarketing');
+    // Onboarding rollout switch (setup-wow vs legacy setup)
+    Route::put('/setari/onboarding', [AdminSettingsController::class, 'updateOnboarding'])->name('admin.settings.updateOnboarding');
 
     // System Health
     Route::get('/system', [\App\Http\Controllers\Admin\AdminSystemController::class, 'index'])->name('admin.system.index');

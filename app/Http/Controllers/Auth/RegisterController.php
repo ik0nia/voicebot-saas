@@ -85,7 +85,10 @@ class RegisterController extends Controller
             'tenant_id' => $user->tenant_id,
         ]);
 
-        // 6. Redirect to setup wizard (new users) or dashboard (existing)
-        return redirect('/dashboard/setup');
+        // 6. Redirect to setup wizard. New niche-driven wizard
+        // is gated behind a platform_setting so the legacy flow
+        // stays the default until we're confident in the rollout.
+        $useV2 = (bool) \App\Models\PlatformSetting::get('onboarding_v2_enabled', false);
+        return redirect($useV2 ? '/dashboard/setup-wow' : '/dashboard/setup');
     }
 }

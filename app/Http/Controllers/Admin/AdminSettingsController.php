@@ -354,6 +354,23 @@ class AdminSettingsController extends Controller
     }
 
     /**
+     * Simple boolean toggle for rolling out the niche-driven
+     * onboarding wizard (/dashboard/setup-wow) to new sign-ups.
+     * When off, legacy /dashboard/setup stays the entry point.
+     */
+    public function updateOnboarding(Request $request)
+    {
+        $request->validate(['onboarding_v2_enabled' => 'nullable|boolean']);
+        PlatformSetting::set(
+            'onboarding_v2_enabled',
+            $request->boolean('onboarding_v2_enabled') ? '1' : '0',
+            'boolean',
+            'onboarding'
+        );
+        return back()->with('success', 'Setarea onboarding a fost salvată.');
+    }
+
+    /**
      * Sync a key to .env if writable, otherwise just log.
      * Platform settings (DB) is the primary source — .env is optional sync.
      */

@@ -1225,6 +1225,31 @@
                 </div>
             </form>
         </div>
+
+        {{-- Onboarding rollout switch — separate card so it has its
+             own save action and doesn't mix with analytics config. --}}
+        <div class="bg-white rounded-xl border border-slate-200 p-6 mt-4">
+            <h2 class="text-lg font-semibold text-slate-900">Onboarding nou (niche-driven)</h2>
+            <p class="mt-1 text-sm text-slate-500">Când e activ, utilizatorii nou-înregistrați intră în <code class="text-xs bg-slate-100 px-1.5 py-0.5 rounded">/dashboard/setup-wow</code> (nișă → site → agent → test). Altfel, rămân pe wizardul legacy.</p>
+            <form method="POST" action="{{ url('/admin/setari/onboarding') }}" class="mt-5">
+                @csrf
+                @method('PUT')
+                <label class="flex items-start gap-3 p-4 rounded-lg border border-slate-200 cursor-pointer hover:border-slate-300">
+                    <input type="checkbox" name="onboarding_v2_enabled" value="1"
+                           {{ ($settings['onboarding']['onboarding_v2_enabled'] ?? '0') === '1' ? 'checked' : '' }}
+                           class="mt-0.5">
+                    <div>
+                        <p class="text-sm font-semibold text-slate-900">Trimite utilizatorii noi la noul wizard cu nișe</p>
+                        <p class="text-xs text-slate-500 mt-0.5">Flipul se aplică doar sign-up-urilor de după salvare — utilizatorii existenți nu sunt afectați.</p>
+                    </div>
+                </label>
+                <div class="mt-4 flex justify-end">
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-red-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-800">
+                        Salvează
+                    </button>
+                </div>
+            </form>
+        </div>
     @endif
 
     {{-- ============================================================ --}}
