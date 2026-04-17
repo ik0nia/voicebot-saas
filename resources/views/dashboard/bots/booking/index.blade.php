@@ -113,6 +113,23 @@
         </form>
     </div>
 
+    {{-- Readiness banner — bot can only accept bookings when it has
+         at least one service AND at least one staff member. Otherwise
+         check_availability returns empty and the LLM has nothing to
+         offer, which feels broken to the end caller. --}}
+    <div x-show="services.length === 0 || staff.length === 0"
+         class="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-900 flex items-start gap-3">
+        <span class="text-lg">⚠️</span>
+        <div>
+            <div class="font-semibold">Agentul nu poate face programări încă</div>
+            <div class="mt-0.5">
+                <span x-show="services.length === 0">Adaugă cel puțin un serviciu.</span>
+                <span x-show="staff.length === 0 && services.length > 0">Adaugă cel puțin o persoană.</span>
+                <span x-show="services.length === 0 && staff.length === 0"> Și cel puțin o persoană.</span>
+            </div>
+        </div>
+    </div>
+
     {{-- ================= SECTION: SERVICES ================= --}}
     <section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-6">
         <div class="flex items-start justify-between mb-4">
@@ -340,6 +357,8 @@
                 <p class="text-sm text-slate-500">Când se pot face programări. Bot-ul propune sloturi doar în acest interval.</p>
             </div>
             <button type="button" @click="submitHours()"
+                    :disabled="staff.length === 0"
+                    :class="staff.length === 0 ? 'opacity-50 cursor-not-allowed' : ''"
                     class="px-4 py-2 text-sm font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">
                 Salvează programul
             </button>
