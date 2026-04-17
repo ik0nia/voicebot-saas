@@ -26,16 +26,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('ai_api_metrics', function (Blueprint $table) {
-            // Nullable — legacy writers never populated this and the
-            // background jobs (embeddings, summaries) have no user.
-            $table->foreignId('user_id')->nullable()->after('tenant_id')
-                ->constrained('users')->nullOnDelete();
-
-            // jsonb on Postgres (Laravel's ->json() picks jsonb when
-            // the driver supports it). Default NULL — writers that
-            // don't need structured context stay unchanged.
-            $table->jsonb('metadata')->nullable()->after('purpose');
-
+            if (!Schema::hasColumn('ai_api_metrics', 'user_id')) {
+                $table->foreignId('user_id')->nullable()->after('tenant_id')
+                    ->constrained('users')->nullOnDelete();
+            }
+            if (!Schema::hasColumn('ai_api_metrics', 'metadata')) {
+                $table->jsonb('metadata')->nullable()->after('purpose');
+            }
             $table->index(['tenant_id', 'purpose', 'created_at'], 'ai_metrics_tenant_purpose_created_idx');
             $table->index(['user_id', 'created_at'], 'ai_metrics_user_created_idx');
         });
@@ -46,8 +43,6 @@ return new class extends Migration
         Schema::table('ai_api_metrics', function (Blueprint $table) {
             $table->dropIndex('ai_metrics_tenant_purpose_created_idx');
             $table->dropIndex('ai_metrics_user_created_idx');
-            $table->dropForeign(['user_id']);
-            $table->dropColumn(['user_id', 'metadata']);
         });
     }
 };
