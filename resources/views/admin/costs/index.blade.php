@@ -66,12 +66,22 @@
     <div class="mb-4 rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-900">{{ session('success') }}</div>
 @endif
 
+{{-- Filter chip: setup-AI only detail view --}}
+<div class="mb-4 flex flex-wrap items-center gap-2 text-xs">
+    <a href="{{ route('admin.costs.index', array_merge(request()->except('setup_ai_only', 'page'), ['setup_ai_only' => 1])) }}"
+       class="inline-flex items-center gap-1.5 rounded-full border border-red-700 bg-red-50 px-3 py-1 font-medium text-red-800 hover:bg-red-100">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+        Doar setup AI
+    </a>
+    <span class="text-slate-500">Afișează activitatea AI de configurare a agenților per-metric, pentru investigare de abuzuri.</span>
+</div>
+
 {{-- KPI-uri top --}}
-<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+<div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
     <div class="bg-white rounded-xl border border-slate-200 p-4">
         <p class="text-xs text-slate-500">Cost total</p>
-        <p class="text-lg font-bold text-slate-900 mt-1">${{ number_format($total['grand_total']/100, 2) }}</p>
-        <p class="text-xs text-slate-500 mt-0.5">≈ {{ number_format($total['grand_total']/100*$usdRon, 2) }} lei</p>
+        <p class="text-lg font-bold text-slate-900 mt-1">${{ number_format(($total['grand_total']+$setupAiTotals['cost_cents'])/100, 2) }}</p>
+        <p class="text-xs text-slate-500 mt-0.5">≈ {{ number_format(($total['grand_total']+$setupAiTotals['cost_cents'])/100*$usdRon, 2) }} lei</p>
     </div>
     <div class="bg-white rounded-xl border border-slate-200 p-4">
         <p class="text-xs text-slate-500">Voice (apeluri)</p>
@@ -92,6 +102,13 @@
         @php $perMin = $total['seconds'] > 0 ? ($total['voice_total']/100) / ($total['seconds']/60) : 0; @endphp
         <p class="text-lg font-bold text-slate-900 mt-1">${{ number_format($perMin, 3) }}</p>
         <p class="text-xs text-slate-500 mt-0.5">≈ {{ number_format($perMin*$usdRon, 3) }} lei/min</p>
+    </div>
+    <div class="bg-white rounded-xl border border-slate-200 p-4">
+        <p class="text-xs text-slate-500">Configurare agenți (AI)</p>
+        <p class="text-lg font-bold text-slate-900 mt-1">${{ number_format($setupAiTotals['cost_usd'], 4) }}</p>
+        <p class="text-xs text-slate-500 mt-0.5">
+            {{ number_format($setupAiTotals['cost_ron'], 2) }} lei &middot; {{ number_format($setupAiTotals['call_count']) }} apeluri
+        </p>
     </div>
 </div>
 
@@ -136,14 +153,41 @@
                 <th class="px-4 py-2 text-right">Voice $</th>
                 <th class="px-4 py-2 text-right">Conv / msg</th>
                 <th class="px-4 py-2 text-right">Chat $</th>
+                @if($mode === 'tenant')
+                    <th class="px-4 py-2 text-right" title="Cost Claude Haiku pentru generare FAQ/reguli/ton în builder.">Setup AI $</th>
+                @endif
                 <th class="px-4 py-2 text-right">Total $</th>
                 <th class="px-4 py-2 text-right">Total lei</th>
             </tr>
         </thead>
         <tbody class="divide-y divide-slate-100">
             @forelse($grouped as $r)
-                <tr class="hover:bg-slate-50">
-                    <td class="px-4 py-2 font-medium text-slate-900">{{ $r['name'] }}</td>
+                @php
+                    // Tenant-mode rows can carry a per-tenant setup-AI
+                    // cost; bot-mode rows can't (setup-AI isn't part
+                    // of the DailyCostRollup) — leave the column off.
+                    $setupRow = $mode === 'tenant' ? ($setupAiByTenant[$r['id']] ?? null) : null;
+                    $setupCents = $setupRow?->cost_cents ?? 0;
+                    $setup30d = $mode === 'tenant' ? ($setupAi30dByTenant[$r['id']] ?? null) : null;
+                    $setup30dRon = $setup30d?->cost_ron ?? 0;
+                    $highlight = match(true) {
+                        $setup30dRon > 50 => 'bg-red-50 border-l-4 border-red-500',
+                        $setup30dRon > 10 => 'bg-amber-50 border-l-4 border-amber-500',
+                        default => '',
+                    };
+                    $totalCents = $r['total'] + $setupCents;
+                @endphp
+                <tr class="hover:bg-slate-50 {{ $highlight }}">
+                    <td class="px-4 py-2 font-medium text-slate-900">
+                        {{ $r['name'] }}
+                        @if($mode === 'tenant' && $setup30dRon > 10)
+                            <span class="ml-1.5 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold
+                                {{ $setup30dRon > 50 ? 'bg-red-200 text-red-900' : 'bg-amber-200 text-amber-900' }}"
+                                title="Ultimele 30 zile: {{ number_format($setup30dRon, 2) }} lei pe setup-AI">
+                                {{ number_format($setup30dRon, 1) }} lei / 30d
+                            </span>
+                        @endif
+                    </td>
                     @if($mode === 'bot')
                         <td class="px-4 py-2 text-slate-600 text-xs">{{ $r['tenant_name'] }}</td>
                     @endif
@@ -152,12 +196,30 @@
                     <td class="px-4 py-2 text-right font-mono">${{ number_format($r['voice']/100, 3) }}</td>
                     <td class="px-4 py-2 text-right tabular-nums text-xs text-slate-500">{{ $r['conversations'] }} / {{ $r['messages'] }}</td>
                     <td class="px-4 py-2 text-right font-mono">${{ number_format($r['chat']/100, 3) }}</td>
-                    <td class="px-4 py-2 text-right font-mono font-semibold">${{ number_format($r['total']/100, 3) }}</td>
-                    <td class="px-4 py-2 text-right font-mono font-semibold text-slate-700">{{ number_format($r['total']/100*$usdRon, 2) }}</td>
+                    @if($mode === 'tenant')
+                        <td class="px-4 py-2 text-right font-mono text-xs">
+                            @if($setupCents > 0)
+                                <a href="{{ route('admin.costs.index', array_merge(request()->except('page'), ['setup_ai_only' => 1, 'tenant_id' => $r['id']])) }}"
+                                   class="text-red-700 hover:underline">
+                                    ${{ number_format($setupCents/100, 4) }}
+                                </a>
+                                <span class="block text-[10px] text-slate-500">{{ $setupRow->call_count }} req</span>
+                            @else
+                                <span class="text-slate-300">—</span>
+                            @endif
+                        </td>
+                    @endif
+                    <td class="px-4 py-2 text-right font-mono font-semibold">${{ number_format($totalCents/100, 3) }}</td>
+                    <td class="px-4 py-2 text-right font-mono font-semibold text-slate-700">{{ number_format($totalCents/100*$usdRon, 2) }}</td>
                 </tr>
             @empty
+                @php
+                    // 1 extra col when mode=bot (tenant_name), 1 extra
+                    // col when mode=tenant (setup-AI). Base 8 columns.
+                    $emptyCols = 8 + ($mode === 'bot' ? 1 : 0) + ($mode === 'tenant' ? 1 : 0);
+                @endphp
                 <tr>
-                    <td colspan="{{ $mode === 'bot' ? 9 : 8 }}" class="px-4 py-8 text-center text-sm text-slate-500">
+                    <td colspan="{{ $emptyCols }}" class="px-4 py-8 text-center text-sm text-slate-500">
                         Nicio activitate în perioada selectată. Rulează
                         <code class="bg-slate-100 px-1.5 py-0.5 rounded">php artisan costs:rollup --from=... --to=...</code>
                         dacă aștepți date vechi în rollup.
@@ -204,6 +266,108 @@
                 @endforeach
             </tbody>
         </table>
+    </div>
+@endif
+
+{{-- Top abusers panel --}}
+@if($topAbusers['by_cost']->isNotEmpty() || $topAbusers['by_count']->isNotEmpty())
+    <div class="mt-6 bg-white rounded-xl border border-slate-200 overflow-hidden"
+         x-data="{ openTenantId: null, limitValue: '' }">
+        <div class="px-4 py-3 border-b border-slate-200">
+            <p class="text-xs font-semibold text-slate-600 uppercase">Setup AI — top consumatori (ultimele 30 zile)</p>
+            <p class="text-xs text-slate-500 mt-0.5">
+                Fereastră: {{ $topAbusers['window_start']->format('d M') }} → {{ $topAbusers['window_end']->format('d M Y') }}.
+                Limita curentă e persistată pe <code class="bg-slate-100 px-1.5 py-0.5 rounded">tenant.settings.setup_ai_limit_ron</code>
+                — enforcement-ul efectiv e muncă viitoare.
+            </p>
+        </div>
+        <div class="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-200">
+            {{-- By cost --}}
+            <div class="p-4">
+                <p class="text-xs font-semibold text-slate-700 mb-2">Top 5 după cost</p>
+                @if($topAbusers['by_cost']->isEmpty())
+                    <p class="text-xs text-slate-400">Niciun tenant cu cost setup-AI &gt; 0 în perioada selectată.</p>
+                @else
+                    <table class="w-full text-sm">
+                        <thead class="text-xs uppercase text-slate-500">
+                            <tr>
+                                <th class="text-left pb-1">Tenant</th>
+                                <th class="text-right pb-1">Cost</th>
+                                <th class="text-right pb-1">Apeluri</th>
+                                <th class="text-right pb-1"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($topAbusers['by_cost'] as $row)
+                                @php
+                                    $tenant = $abuserTenants[$row->tenant_id] ?? null;
+                                    $currentLimit = $tenant?->settings['setup_ai_limit_ron'] ?? null;
+                                @endphp
+                                <tr class="border-t border-slate-100">
+                                    <td class="py-2 font-medium text-slate-900">
+                                        {{ $tenant?->name ?? '#'.$row->tenant_id }}
+                                        @if($currentLimit !== null)
+                                            <span class="ml-1 text-[10px] text-slate-500">(limită: {{ number_format((float)$currentLimit, 2) }} lei)</span>
+                                        @endif
+                                    </td>
+                                    <td class="py-2 text-right font-mono">{{ number_format($row->cost_ron, 2) }} lei</td>
+                                    <td class="py-2 text-right tabular-nums text-xs text-slate-500">{{ number_format($row->call_count) }}</td>
+                                    <td class="py-2 text-right">
+                                        <button type="button"
+                                                @click="openTenantId = openTenantId === {{ $row->tenant_id }} ? null : {{ $row->tenant_id }}; limitValue = '{{ $currentLimit ?? '' }}'"
+                                                class="text-xs rounded border border-slate-300 bg-white px-2 py-1 hover:bg-slate-50">
+                                            Set limită
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr x-show="openTenantId === {{ $row->tenant_id }}" x-cloak>
+                                    <td colspan="4" class="bg-slate-50 px-3 py-3">
+                                        <form method="POST" action="{{ route('admin.costs.setupAiLimit', ['tenantId' => $row->tenant_id]) }}" class="flex flex-wrap items-end gap-2">
+                                            @csrf
+                                            <div>
+                                                <label class="block text-[10px] font-semibold text-slate-600 uppercase mb-0.5">Max setup-AI RON / lună</label>
+                                                <input type="number" step="0.01" min="0" name="max_setup_ai_ron_per_month"
+                                                       x-model="limitValue"
+                                                       class="rounded border border-slate-300 px-2 py-1 text-sm font-mono w-32" required>
+                                            </div>
+                                            <button type="submit" class="rounded bg-red-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-800">Salvează</button>
+                                            <span class="text-xs text-slate-500">Enforcement în follow-up; acum doar persistă valoarea.</span>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @endif
+            </div>
+            {{-- By count --}}
+            <div class="p-4">
+                <p class="text-xs font-semibold text-slate-700 mb-2">Top 5 după număr de apeluri</p>
+                @if($topAbusers['by_count']->isEmpty())
+                    <p class="text-xs text-slate-400">Niciun tenant cu apeluri setup-AI în perioada selectată.</p>
+                @else
+                    <table class="w-full text-sm">
+                        <thead class="text-xs uppercase text-slate-500">
+                            <tr>
+                                <th class="text-left pb-1">Tenant</th>
+                                <th class="text-right pb-1">Apeluri</th>
+                                <th class="text-right pb-1">Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($topAbusers['by_count'] as $row)
+                                @php $tenant = $abuserTenants[$row->tenant_id] ?? null; @endphp
+                                <tr class="border-t border-slate-100">
+                                    <td class="py-2 font-medium text-slate-900">{{ $tenant?->name ?? '#'.$row->tenant_id }}</td>
+                                    <td class="py-2 text-right tabular-nums">{{ number_format($row->call_count) }}</td>
+                                    <td class="py-2 text-right font-mono text-xs text-slate-500">{{ number_format($row->cost_ron, 2) }} lei</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @endif
+            </div>
+        </div>
     </div>
 @endif
 
