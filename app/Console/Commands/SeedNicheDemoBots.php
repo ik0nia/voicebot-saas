@@ -183,9 +183,14 @@ class SeedNicheDemoBots extends Command
                         'use_structured_prompt' => true,
                         'is_demo'               => true,
                         'demo_db_niche_slug'    => $dbSlug,
-                        'faqs'                  => $nicheCfg['faqs'] ?? [],
-                        'dont_rules'            => $nicheCfg['dont_rules'] ?? [],
-                        'tone_guide'            => $nicheCfg['tone_guide'] ?? ($nicheCfg['tone'] ?? 'professional'),
+                        // Keys match config/niches.php — suggested_faqs,
+                        // standard_rules, default_tone — the same ones
+                        // SetupWowController copies into new bots.
+                        'faqs'                  => array_values(array_slice($nicheCfg['suggested_faqs'] ?? [], 0, 8)),
+                        'dont_rules'            => array_values($nicheCfg['standard_rules'] ?? []),
+                        'tone_guide'            => $nicheCfg['default_tone'] ?? [
+                            'length' => 'medium', 'register' => 'tu', 'emoji_ok' => false, 'languages' => ['ro'],
+                        ],
                     ],
                 ]);
                 $this->line("  + bot created: {$botSlug} (engine={$engine})");
@@ -194,9 +199,12 @@ class SeedNicheDemoBots extends Command
                 $settings['use_structured_prompt'] = true;
                 $settings['is_demo'] = true;
                 $settings['demo_db_niche_slug'] = $dbSlug;
-                $settings['faqs'] = $nicheCfg['faqs'] ?? ($settings['faqs'] ?? []);
-                $settings['dont_rules'] = $nicheCfg['dont_rules'] ?? ($settings['dont_rules'] ?? []);
-                $settings['tone_guide'] = $nicheCfg['tone_guide'] ?? ($settings['tone_guide'] ?? ($nicheCfg['tone'] ?? 'professional'));
+                $settings['faqs'] = array_values(array_slice($nicheCfg['suggested_faqs'] ?? [], 0, 8))
+                    ?: ($settings['faqs'] ?? []);
+                $settings['dont_rules'] = array_values($nicheCfg['standard_rules'] ?? [])
+                    ?: ($settings['dont_rules'] ?? []);
+                $settings['tone_guide'] = $nicheCfg['default_tone']
+                    ?? ($settings['tone_guide'] ?? ['length' => 'medium', 'register' => 'tu', 'emoji_ok' => false, 'languages' => ['ro']]);
                 $bot->fill([
                     'system_prompt'    => $systemPrompt,
                     'greeting_message' => $greeting,
