@@ -1719,6 +1719,33 @@ class ChatbotApiController extends Controller
             'page_context.page_path' => 'nullable|string|max:500',
             'page_context.time_on_page' => 'nullable|integer|min:0',
             'page_context.referrer' => 'nullable|string|max:2000',
+            // W3/W4/F-fix: these widget-provided signals were being
+            // silently stripped by Laravel's validator (any key not
+            // explicitly allowed is removed from $validated). The bot
+            // then saw no product_context and asked "despre ce produs
+            // e vorba?" even on a product page. Allowlist them here.
+            'page_context.page_type' => 'nullable|string|max:40',
+            'page_context.product_context' => 'nullable|array',
+            'page_context.product_context.product_id' => 'nullable|integer',
+            'page_context.product_context.variation_id' => 'nullable|integer',
+            'page_context.product_context.name' => 'nullable|string|max:500',
+            'page_context.product_context.price' => 'nullable|string|max:40',
+            'page_context.product_context.currency' => 'nullable|string|max:10',
+            'page_context.product_context.categories' => 'nullable|array|max:10',
+            'page_context.product_context.categories.*' => 'nullable|string|max:120',
+            'page_context.product_context.in_stock' => 'nullable|boolean',
+            'page_context.product_context.permalink' => 'nullable|string|max:2000',
+            'page_context.cart_context' => 'nullable|array',
+            'page_context.cart_context.items_count' => 'nullable|integer|min:0',
+            'page_context.cart_context.total' => 'nullable|string|max:100',
+            'page_context.cart_context.total_raw' => 'nullable|numeric',
+            'page_context.cart_context.currency' => 'nullable|string|max:10',
+            'page_context.cart_context.shipping_threshold' => 'nullable|numeric',
+            'page_context.cart_context.missing_amount_for_free_shipping' => 'nullable|numeric',
+            'page_context.cart_context.items' => 'nullable|array|max:20',
+            'page_context.cart_context.items.*.product_id' => 'nullable|integer',
+            'page_context.cart_context.items.*.name' => 'nullable|string|max:500',
+            'page_context.cart_context.items.*.qty' => 'nullable|integer|min:0',
         ]);
 
         $userMessage = $validated['message'];
@@ -2101,6 +2128,29 @@ class ChatbotApiController extends Controller
             }
 
             $extraContext = $orderContext . $productContext;
+        }
+
+        // Malinco fix: surface the CURRENT product page to the LLM
+        // when the plugin reports which product the user is viewing.
+        // Without this block the bot on a product page kept asking
+        // "despre ce produs e vorba?" even though samblaProductContext
+        // was right there in page_context. Mirrors the [CART CONTEXT]
+        // pattern below — short, prescriptive, no new tool-call.
+        $prodCtx = is_array($pageContext['product_context'] ?? null) ? $pageContext['product_context'] : null;
+        if ($prodCtx && !empty($prodCtx['product_id'])) {
+            $pieces = [];
+            if (!empty($prodCtx['name']))     $pieces[] = "nume: " . $prodCtx['name'];
+            if (!empty($prodCtx['price']))    $pieces[] = "preț: " . $prodCtx['price'] . ' ' . ($prodCtx['currency'] ?? '');
+            if (isset($prodCtx['in_stock']))  $pieces[] = "stoc: " . ($prodCtx['in_stock'] ? 'disponibil' : 'indisponibil');
+            if (!empty($prodCtx['categories']) && is_array($prodCtx['categories'])) {
+                $pieces[] = "categorii: " . implode(', ', array_slice($prodCtx['categories'], 0, 5));
+            }
+            $prodBlock = "\n\n[PAGE PRODUCT CONTEXT]\n"
+                . "Clientul este chiar acum pe pagina produsului #" . (int) $prodCtx['product_id']
+                . " — " . implode(' · ', $pieces) . ".\n"
+                . "Când clientul întreabă \"acest produs\" / \"la ce e bun\" / \"cât costă\" / etc. FĂRĂ să numească produsul, referința implicită ESTE acest produs — NU întreba \"despre ce produs e vorba\"."
+                . ($prodCtx['permalink'] ?? '' ? "\nLink: " . $prodCtx['permalink'] : '');
+            $extraContext .= $prodBlock;
         }
 
         // G1: surface cart threshold to the LLM when WooCommerce
