@@ -1,6 +1,42 @@
-/* sambla-chat v2.3 — contextual quick replies (W3) */
+/* sambla-chat v2.4 — contextual quick replies (W3) + F1/F2 polish */
 (function() {
     'use strict';
+
+    // F2: clean manual context API for SPA and non-WordPress embeds.
+    // Non-WP sites that can't rely on the WooCommerce plugin can
+    // still feed the widget with page/product/cart context by calling
+    //
+    //   window.sambla.setContext({
+    //     page_type: 'product',
+    //     product: { product_id: 42, name: '...', price: '99', currency: 'RON' },
+    //     cart:    { items_count: 2, total: '340 lei', items: [...] }
+    //   })
+    //
+    // Shape mirrors the WP plugin globals exactly — the widget reads
+    // the same keys either way. Safe to call before or after the
+    // widget script loads; repeated calls merge, null fields clear.
+    if (!window.sambla || typeof window.sambla !== 'object') {
+        window.sambla = {};
+    }
+    window.sambla.setContext = function(ctx) {
+        if (!ctx || typeof ctx !== 'object') return;
+        if (typeof ctx.page_type === 'string') window.samblaPageType = ctx.page_type;
+        if ('product' in ctx) window.samblaProductContext = ctx.product || null;
+        if ('cart' in ctx)    window.samblaCartContext    = ctx.cart    || null;
+        // SPA helper — fire a CustomEvent so the widget (already open)
+        // can re-render its context-aware chips without a reload.
+        try {
+            window.dispatchEvent(new CustomEvent('sambla:context-changed', { detail: ctx }));
+        } catch(e) {}
+    };
+    window.sambla.clearContext = function() {
+        window.samblaPageType = undefined;
+        window.samblaProductContext = null;
+        window.samblaCartContext = null;
+        try {
+            window.dispatchEvent(new CustomEvent('sambla:context-changed', { detail: {} }));
+        } catch(e) {}
+    };
 
     // Find the script tag to read data attributes
     var scriptTag = document.currentScript || (function() {
@@ -83,9 +119,12 @@
     // =========================================================================
     var pageLoadTime = Date.now();
 
-    // W3: page-type detection. Explicit host override wins, then
+    // W3 / F1: page-type detection. Explicit host override wins, then
     // globals injected by companion plugins, then URL heuristics.
-    // Keep kebab-safe — the backend map uses plain keys.
+    // URL patterns cover common stacks: WooCommerce, Shopify, Magento,
+    // PrestaShop, BigCommerce, OpenCart. Keep specific-first ordering
+    // so e.g. Shopify /products/ doesn't get mis-matched by the
+    // WooCommerce /product/ regex above it.
     function detectPageType() {
         try {
             if (window.samblaPageType && typeof window.samblaPageType === 'string') {
@@ -94,11 +133,22 @@
             if (window.samblaProductContext && window.samblaProductContext.product_id) return 'product';
             if (window.samblaCartContext && (window.samblaCartContext.items_count || window.samblaCartContext.item_count)) return 'cart';
             var p = (window.location.pathname || '').toLowerCase();
-            if (/(\/product\/|\/produs\/)/.test(p)) return 'product';
-            if (/(\/product-category\/|\/categorie\/|\/shop\/|\/magazin\/)/.test(p)) return 'category';
-            if (/(\/cart\/|\/cos\/?|\/checkout\/)/.test(p)) return 'cart';
-            if (/(\/rezervare|\/booking|\/programare)/.test(p)) return 'booking';
-            if (/(\/hotel|\/camere|\/rezerva-camera|\/restaurant|\/masa|\/tabel)/.test(p)) return 'hospitality';
+            // Cart / checkout first — some stores put the cart on a
+            // path segment that collides with product listings
+            // (e.g. Shopify /cart under /checkout domain).
+            if (/(\/cart\/?|\/cos\/?|\/checkout\/?|\/panier\/?|\/order\/?|\/commande\/?|\/warenkorb\/?)/.test(p)) return 'cart';
+            // Product — Shopify /products/<slug>, WC /product/<slug>,
+            // Magento /product/<slug>, PrestaShop /product/<slug>,
+            // BigCommerce /products/, plus RO "/produs/".
+            if (/(\/products?\/|\/produs\/|\/p\/[^\/]+)/.test(p)) return 'product';
+            // Category / listing — Shopify /collections/, WC
+            // /product-category/, Magento /catalog/category/,
+            // PrestaShop /category/, generic /shop/ /magazin/.
+            if (/(\/collections\/|\/product-category\/|\/product_list\/|\/catalog\/category\/|\/categorie\/|\/category\/|\/shop\/?|\/magazin\/?|\/catalog\/?)/.test(p)) return 'category';
+            // Booking / appointments — English + Romanian + common service paths.
+            if (/(\/rezervare|\/booking|\/programare|\/appointments?\/|\/book-now|\/schedule\/)/.test(p)) return 'booking';
+            // Hospitality — hotel, restaurant, reservation.
+            if (/(\/hotel|\/camere|\/rezerva-camera|\/restaurant|\/masa|\/tabel|\/reservations?\/|\/rooms?\/|\/dining\/)/.test(p)) return 'hospitality';
             if (p === '/' || p === '') return 'home';
         } catch(e) {}
         return 'general';
@@ -2075,6 +2125,25 @@
             _contextOpeningRendered = true;
             trackEvent('quick_replies_shown', { page_type: pick.page_type, count: replies.length });
         }
+
+        // F2: SPA navigation support. When the host calls
+        // window.sambla.setContext({...}) we rerun the initial chip
+        // pass so the widget reflects the new page without a reload.
+        // Guarded so an always-open widget doesn't spam chips while
+        // the user is mid-conversation — only refresh if the widget
+        // is actually open AND we're still at an empty chat state.
+        try {
+            window.addEventListener('sambla:context-changed', function() {
+                _contextOpeningRendered = false;
+                // Only re-render when the chat surface is visible and
+                // the conversation hasn't moved past the greeting.
+                try {
+                    if (typeof isOpen !== 'undefined' && isOpen && Array.isArray(messages) && messages.length <= 2) {
+                        renderInitialQuickReplies();
+                    }
+                } catch(e) {}
+            });
+        } catch(e) {}
 
         function renderProductCards(products) {
             if (!messagesContainer || !typingEl) return;

@@ -123,6 +123,9 @@ class ChatbotApiController extends Controller
         $detectedIntents = $preResult['detected_intents'];
         $pipelinesExecuted = $preResult['pipelines_executed'];
         $queryIntel = $preResult['query_intel'];
+        // F3: expose page_context to the non-streaming path so follow-up
+        // quick_replies are consistent between /message and /message-stream.
+        $pageContext = $preResult['page_context'] ?? [];
 
         // A/B Testing: check for active experiments
         $abVariant = app(\App\Services\AbTestingService::class)->getVariantForConversation($bot->id, $conversation->id);
@@ -404,7 +407,20 @@ class ChatbotApiController extends Controller
             ]);
         }
 
-        return response()->json([
+        // F3: contextual follow-up chips for the non-streaming path.
+        // Widget already handles a `quick_replies` key in JSON responses
+        // (see W3 notes). Fail-soft — any resolver hiccup just omits
+        // the key, keeping legacy response shape intact.
+        $quickReplies = [];
+        try {
+            $quickReplies = $this->buildFollowupQuickReplies(
+                $bot, $pageContext, $products, $botResponse ?? ''
+            );
+        } catch (\Throwable $e) {
+            Log::debug('followup quick_replies skipped (non-stream)', ['err' => $e->getMessage()]);
+        }
+
+        $response = [
             'response' => $botResponse,
             'reply' => $botResponse,
             'session_id' => $sessionId,
@@ -413,7 +429,11 @@ class ChatbotApiController extends Controller
             'products' => $products,
             'conversation_id' => $conversation->id,
             'message_id' => $botMessage->id,
-        ]);
+        ];
+        if (!empty($quickReplies)) {
+            $response['quick_replies'] = $quickReplies;
+        }
+        return response()->json($response);
     }
 
     /**

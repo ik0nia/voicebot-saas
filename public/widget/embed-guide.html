@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sambla Chat — Ghid de integrare</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #0f172a; max-width: 820px; margin: 2rem auto; padding: 0 1.25rem; line-height: 1.55; }
+        h1 { font-size: 1.85rem; color: #991b1b; margin-bottom: 0.25rem; }
+        h2 { font-size: 1.25rem; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e2e8f0; color: #0f172a; }
+        h3 { font-size: 1.05rem; margin-top: 1.4rem; color: #334155; }
+        code, pre { font-family: SFMono-Regular, Menlo, monospace; font-size: 13px; }
+        pre { background: #0f172a; color: #e2e8f0; padding: 1rem 1.25rem; border-radius: 8px; overflow-x: auto; }
+        code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; }
+        pre code { background: transparent; padding: 0; color: inherit; }
+        .lede { color: #475569; font-size: 1.05rem; margin-top: 0.25rem; }
+        .note { background: #fffbeb; border-left: 3px solid #f59e0b; padding: 10px 14px; margin: 1rem 0; font-size: 0.95rem; color: #78350f; border-radius: 4px; }
+        .ok   { background: #ecfdf5; border-left: 3px solid #10b981; padding: 10px 14px; margin: 1rem 0; font-size: 0.95rem; color: #064e3b; border-radius: 4px; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.95rem; }
+        th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e2e8f0; }
+        th { color: #475569; font-weight: 600; }
+        ul { padding-left: 1.25rem; }
+        li { margin: 0.25rem 0; }
+    </style>
+</head>
+<body>
+
+<h1>Sambla Chat — Ghid de integrare</h1>
+<p class="lede">Widget-ul merge pe orice site. Pe WordPress + WooCommerce, pluginul oficial face totul automat. Pe restul site-urilor (Shopify, Magento, SPA, landing pages), fie lași detectarea automată pe URL, fie trimiți context manual cu un singur apel JS.</p>
+
+<h2>1. Integrare minimă — orice site</h2>
+
+<pre><code>&lt;script
+  src="https://sambla.ro/widget/sambla-chat.js"
+  data-channel-id="YOUR_CHANNEL_ID"
+  data-color="#991b1b"
+  async defer&gt;&lt;/script&gt;</code></pre>
+
+<p>Atât. Widget-ul se încarcă, detectează tipul paginii din URL (vezi mai jos), iar utilizatorul poate conversa liber și vede chips contextuale dacă pagina se potrivește unui tipar cunoscut.</p>
+
+<h2>2. Detectare automată pe URL</h2>
+
+<p>Fără niciun cod suplimentar, widget-ul clasifică pagina curentă în una din aceste categorii, după URL:</p>
+
+<table>
+    <tr><th>Tip pagină</th><th>Modele de URL (primul match câștigă)</th></tr>
+    <tr><td><code>cart</code></td><td><code>/cart/</code>, <code>/cos/</code>, <code>/checkout/</code>, <code>/panier/</code>, <code>/order/</code>, <code>/commande/</code>, <code>/warenkorb/</code></td></tr>
+    <tr><td><code>product</code></td><td><code>/products/</code> (Shopify), <code>/product/</code> (WC, Magento, PrestaShop), <code>/produs/</code>, <code>/p/…</code></td></tr>
+    <tr><td><code>category</code></td><td><code>/collections/</code> (Shopify), <code>/product-category/</code> (WC), <code>/catalog/category/</code> (Magento), <code>/category/</code>, <code>/categorie/</code>, <code>/shop/</code>, <code>/magazin/</code>, <code>/catalog/</code></td></tr>
+    <tr><td><code>booking</code></td><td><code>/rezervare</code>, <code>/booking</code>, <code>/programare</code>, <code>/appointments/</code>, <code>/book-now</code>, <code>/schedule/</code></td></tr>
+    <tr><td><code>hospitality</code></td><td><code>/hotel</code>, <code>/camere</code>, <code>/restaurant</code>, <code>/masa</code>, <code>/reservations/</code>, <code>/rooms/</code>, <code>/dining/</code></td></tr>
+    <tr><td><code>home</code></td><td><code>/</code></td></tr>
+    <tr><td><code>general</code></td><td>orice altceva</td></tr>
+</table>
+
+<div class="ok">Pentru majoritatea site-urilor Shopify, WooCommerce, Magento sau PrestaShop, detectarea automată merge fără nicio configurare.</div>
+
+<h2>3. Trimitere context manual (recomandat pentru SPA / custom)</h2>
+
+<p>Dacă site-ul tău folosește URL-uri custom, framework SPA (React, Vue, Angular) sau vrei să oferi bot-ului detalii despre produsul curent, folosește API-ul <code>window.sambla.setContext(...)</code>:</p>
+
+<pre><code>&lt;script&gt;
+window.sambla = window.sambla || {};
+// Pe pagina de produs, înainte de script-ul widget-ului:
+window.sambla.setContext = window.sambla.setContext || function(ctx){
+  if (ctx.page_type) window.samblaPageType = ctx.page_type;
+  if ('product' in ctx) window.samblaProductContext = ctx.product;
+  if ('cart' in ctx)    window.samblaCartContext    = ctx.cart;
+};
+window.sambla.setContext({
+  page_type: 'product',
+  product: {
+    product_id: 42,
+    name: 'Bluza roșie XL',
+    price: '99.00',
+    currency: 'RON',
+    in_stock: true,
+    categories: ['Haine', 'Bluze']
+  }
+});
+&lt;/script&gt;</code></pre>
+
+<p>După ce widget-ul încarcă, <code>window.sambla.setContext</code> e disponibil direct — nu mai ai nevoie de stub-ul inline.</p>
+
+<h3>SPA — la schimbarea rutei</h3>
+
+<pre><code>// De fiecare dată când utilizatorul navighează între rute:
+router.afterEach((to) =&gt; {
+  if (to.meta.productId) {
+    window.sambla.setContext({
+      page_type: 'product',
+      product: to.meta.productContext
+    });
+  } else if (to.path === '/cart') {
+    window.sambla.setContext({ page_type: 'cart' });
+  } else {
+    window.sambla.clearContext();
+  }
+});</code></pre>
+
+<p>Dacă utilizatorul are deja fereastra de chat deschisă când navighează, widget-ul ascultă un <code>CustomEvent</code> <code>sambla:context-changed</code> și reîmprospătează chips-urile automat — nu e nevoie să refaci nimic.</p>
+
+<h2>4. Formele contextelor</h2>
+
+<h3>samblaProductContext</h3>
+<pre><code>{
+  product_id: 42,          // required — ID numeric
+  name:       'Bluza roșie XL',
+  price:      '99.00',
+  currency:   'RON',       // ISO 4217
+  categories: ['Haine', 'Bluze'],   // listă scurtă
+  in_stock:   true,        // opțional
+  permalink:  'https://site.ro/bluza-rosie-xl'  // opțional
+}</code></pre>
+
+<h3>samblaCartContext</h3>
+<pre><code>{
+  items_count: 2,
+  total:       '340 lei',
+  currency:    'RON',
+  items: [
+    { product_id: 42, name: 'Bluza roșie XL', qty: 1 },
+    { product_id: 17, name: 'Pantofi eleganți 42', qty: 1 }
+  ]
+}</code></pre>
+
+<h3>samblaPageType — valori valide</h3>
+<p><code>product</code>, <code>category</code>, <code>cart</code>, <code>booking</code>, <code>hospitality</code>, <code>home</code>, <code>general</code></p>
+
+<h2>5. Degradare gracefulă</h2>
+
+<div class="ok">
+    <strong>Widget-ul nu se rupe niciodată</strong> dacă contextul lipsește — cade pe detectare URL, apoi pe <code>general</code>. Freeform chat și răspunsul AI merg identic în toate cazurile.
+</div>
+
+<p>Ce pierzi când contextul lipsește:</p>
+<ul>
+    <li>Chips-uri specifice paginii (produs / coș / rezervare) — rămâi cu chips-uri de nișă generice</li>
+    <li>Bot-ul nu știe numele produsului curent în context la primul mesaj</li>
+    <li>Bot-ul nu vede conținutul coșului</li>
+</ul>
+
+<h2>6. Depanare rapidă</h2>
+
+<table>
+    <tr><th>Simptom</th><th>Cauza probabilă</th></tr>
+    <tr><td>Chips nu apar</td><td>Canal inactiv sau nișa botului nu are configurație contextuală în <code>config/widget_contexts.php</code></td></tr>
+    <tr><td>Chips generice pe pagina de produs</td><td>URL-ul nu face match cu regex-ul; folosește <code>window.sambla.setContext({page_type:'product', ...})</code></td></tr>
+    <tr><td>Widget-ul nu se încarcă</td><td>Verifică <code>data-channel-id</code> și că domeniul e permis în setările canalului (sambla.ro → Canale → Web chatbot)</td></tr>
+</table>
+
+<div class="note">
+    Pentru WooCommerce: folosește pluginul oficial <strong>Sambla ↔ WooCommerce</strong> (versiune 2.1+) — detectează automat produs/coș/categorie și injectează contextul, fără cod manual.
+</div>
+
+<p style="margin-top: 2.5rem; color: #94a3b8; font-size: 0.9rem;">Widget versiune 2.4 · Sambla.ro · <a href="mailto:support@sambla.ro" style="color: #991b1b;">support@sambla.ro</a></p>
+
+</body>
+</html>
