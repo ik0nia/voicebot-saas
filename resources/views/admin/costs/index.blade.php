@@ -207,6 +207,75 @@
     </div>
 @endif
 
+{{-- Niche demo landing pages — conversion funnel panel (Iteration F) --}}
+@if(!empty($demoStats))
+<div class="mt-8 bg-white rounded-xl border border-slate-200 p-5">
+    <div class="flex items-center justify-between mb-4">
+        <div>
+            <h2 class="text-base font-bold text-slate-900">Demo pe landing pages</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Ultimele 30 zile · Flag <code class="px-1 py-0.5 bg-slate-100 rounded">NICHE_PUBLIC_DEMO_ENABLED</code></p>
+        </div>
+        <a href="{{ route('admin.demo.index') }}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+            Vezi detaliat →
+        </a>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
+        <div class="bg-slate-50 rounded-lg p-3">
+            <div class="text-xs text-slate-500 font-semibold uppercase tracking-wide">Demo-uri vizualizate</div>
+            <div class="text-2xl font-bold text-slate-900 mt-1">{{ number_format($demoStats['viewed']) }}</div>
+        </div>
+        <div class="bg-slate-50 rounded-lg p-3">
+            <div class="text-xs text-slate-500 font-semibold uppercase tracking-wide">Mesaje trimise</div>
+            <div class="text-2xl font-bold text-slate-900 mt-1">{{ number_format($demoStats['messages']) }}</div>
+        </div>
+        <div class="bg-slate-50 rounded-lg p-3">
+            <div class="text-xs text-slate-500 font-semibold uppercase tracking-wide">Calificate (≥3 mesaje)</div>
+            <div class="text-2xl font-bold text-emerald-600 mt-1">{{ number_format($demoStats['qualified']) }}</div>
+        </div>
+        <div class="bg-slate-50 rounded-lg p-3">
+            <div class="text-xs text-slate-500 font-semibold uppercase tracking-wide">Rată calificare</div>
+            <div class="text-2xl font-bold text-slate-900 mt-1">{{ $demoStats['rate'] }}%</div>
+        </div>
+        <div class="bg-slate-50 rounded-lg p-3">
+            <div class="text-xs text-slate-500 font-semibold uppercase tracking-wide">Înregistrări (demo → signup)</div>
+            <div class="text-2xl font-bold text-indigo-600 mt-1">{{ number_format($demoStats['signups']) }}</div>
+        </div>
+    </div>
+
+    @if(!empty($demoStats['by_niche']))
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-left text-xs font-semibold text-slate-500 uppercase border-b border-slate-200">
+                        <th class="px-3 py-2">Nișă</th>
+                        <th class="px-3 py-2 text-right">Vizualizate</th>
+                        <th class="px-3 py-2 text-right">Mesaje</th>
+                        <th class="px-3 py-2 text-right">Calificate</th>
+                        <th class="px-3 py-2 text-right">Rata</th>
+                        <th class="px-3 py-2 text-right">Signups</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach(array_slice($demoStats['by_niche'], 0, 3) as $row)
+                        <tr class="border-b border-slate-100">
+                            <td class="px-3 py-2 font-mono text-xs">{{ $row['niche'] }}</td>
+                            <td class="px-3 py-2 text-right tabular-nums">{{ number_format($row['viewed']) }}</td>
+                            <td class="px-3 py-2 text-right tabular-nums text-slate-500">{{ number_format($row['messages']) }}</td>
+                            <td class="px-3 py-2 text-right tabular-nums text-emerald-600 font-semibold">{{ number_format($row['qualified']) }}</td>
+                            <td class="px-3 py-2 text-right tabular-nums">{{ $row['rate'] }}%</td>
+                            <td class="px-3 py-2 text-right tabular-nums text-indigo-600 font-semibold">{{ number_format($row['signups']) }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @else
+        <p class="text-xs text-slate-500">Încă niciun eveniment — ori flag-ul e oprit, ori landing-urile încă n-au primit trafic în ultimele 30 de zile.</p>
+    @endif
+</div>
+@endif
+
 {{-- Re-agregare manuală --}}
 <form method="POST" action="{{ route('admin.costs.reaggregate') }}" class="mt-6 bg-slate-50 rounded-xl border border-slate-200 p-4 flex flex-wrap items-end gap-3">
     @csrf

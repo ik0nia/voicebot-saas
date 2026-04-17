@@ -9,6 +9,7 @@ use App\Models\DailyCostRollup;
 use App\Models\Tenant;
 use App\Services\Cost\BnrExchangeRate;
 use App\Services\Cost\DailyCostAggregator;
+use App\Support\DemoConversionStats;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -123,6 +124,11 @@ class AdminCostReportController extends Controller
             ->get();
         $platformTotal = (float) $platform->sum('cost_cents');
 
+        // Niche-demo funnel summary — last 30 days. Surfaces on the
+        // costs page so the operator sees "did the landing pages pay
+        // off?" alongside the spend numbers.
+        $demoStats = DemoConversionStats::summary(30);
+
         return view('admin.costs.index', [
             'period' => $period,
             'start' => $start,
@@ -137,6 +143,7 @@ class AdminCostReportController extends Controller
             'platform' => $platform,
             'platformTotal' => $platformTotal,
             'usdRon' => $bnr->usdToRon(),
+            'demoStats' => $demoStats,
         ]);
     }
 

@@ -79,6 +79,13 @@ Route::post('/v1/chatbot/{channel}/rate', [ChatbotApiController::class, 'rateCon
 // so a bot can't flood chat_events. Lead / callback endpoints write to
 // leads + send notifications (email/SMS cost) so cap those aggressively.
 Route::post('/v1/chatbot/{channel}/events', [\App\Http\Controllers\Api\EventTrackingController::class, 'trackBatch'])->middleware('throttle:120,1');
+
+// Public niche-demo funnel tracking (demo_viewed / demo_message_sent /
+// demo_qualified). Rate-limit is enforced in the controller per IP; the
+// framework throttle here is a secondary belt. No auth, no CSRF — calls
+// come from a public landing page iframe parent.
+Route::post('/public/demo/event', [\App\Http\Controllers\Api\PublicDemoEventController::class, 'store'])
+    ->middleware('throttle:30,1');
 Route::get('/v1/chatbot/{channel}/capabilities', [\App\Http\Controllers\Api\EventTrackingController::class, 'capabilities'])->middleware('throttle:60,1');
 Route::post('/v1/chatbot/{channel}/lead', [\App\Http\Controllers\Api\EventTrackingController::class, 'captureLead'])->middleware('throttle:5,1');
 Route::post('/v1/chatbot/{channel}/callback', [\App\Http\Controllers\Api\CallbackController::class, 'store'])->middleware('throttle:5,1');

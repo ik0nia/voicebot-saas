@@ -60,6 +60,14 @@ class EventTaxonomy
     public const CLARIFICATION_ASKED = 'clarification_asked';
     public const CLARIFICATION_ANSWERED = 'clarification_answered';
 
+    // ─── Niche public demo funnel (Iteration F) ───
+    // These events are emitted by the niche landing pages when the
+    // NICHE_PUBLIC_DEMO_ENABLED flag is on. They feed a super-admin
+    // dashboard panel that tracks demo → signup conversion per niche.
+    public const DEMO_VIEWED = 'demo_viewed';
+    public const DEMO_MESSAGE_SENT = 'demo_message_sent';
+    public const DEMO_QUALIFIED = 'demo_qualified';
+
     // ─── Event sources ───
     public const SOURCE_WIDGET = 'widget';
     public const SOURCE_BACKEND = 'backend';
@@ -86,6 +94,7 @@ class EventTaxonomy
             self::HANDOFF_SENT, self::HANDOFF_RESOLVED,
             self::FALLBACK_TRIGGERED, self::NO_RESULTS,
             self::CLARIFICATION_ASKED, self::CLARIFICATION_ANSWERED,
+            self::DEMO_VIEWED, self::DEMO_MESSAGE_SENT, self::DEMO_QUALIFIED,
         ];
     }
 
