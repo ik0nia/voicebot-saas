@@ -39,14 +39,13 @@ class WorkspaceAutomationController extends Controller
         abort_unless($bot->tenant_id === auth()->user()->tenant_id || auth()->user()->isSuperAdmin(), 404);
 
         $nichConfig = $bot->niche_slug ? config('niches.' . $bot->niche_slug, []) : [];
-        $serviceTypes = [];
-        if (in_array($bot->engine_type, ['booking', 'hybrid'], true)) {
-            $serviceTypes = ServiceType::withoutGlobalScopes()
+        $serviceTypes = in_array($bot->engine_type, ['booking', 'hybrid'], true)
+            ? ServiceType::withoutGlobalScopes()
                 ->where('bot_id', $bot->id)
                 ->where('is_active', true)
                 ->orderBy('sort_order')
-                ->get();
-        }
+                ->get()
+            : collect();
 
         return view('dashboard.workspace.automations', [
             'bot'            => $bot,

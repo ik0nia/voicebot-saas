@@ -131,7 +131,7 @@
         <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
             <div class="flex items-center justify-between px-5 py-3 border-b border-slate-200">
                 <h2 class="font-semibold text-slate-900">Ultimele 10 conversații</h2>
-                <a href="{{ url('/dashboard/conversations?bot_id=' . $bot->id) }}" class="text-sm text-red-700 hover:underline">Vezi toate →</a>
+                <a href="{{ route('dashboard.conversations.index', ['channelType' => 'web_chatbot', 'bot' => $bot->id]) }}" class="text-sm text-red-700 hover:underline">Vezi toate →</a>
             </div>
             <table class="w-full text-sm">
                 <thead class="bg-slate-50 text-slate-600 text-xs uppercase">
@@ -151,7 +151,7 @@
                             <td class="px-4 py-2 text-right tabular-nums">{{ $c->messages_count }}</td>
                             <td class="px-4 py-2 text-xs text-slate-500">{{ $c->last_activity_at?->diffForHumans() ?? '—' }}</td>
                             <td class="px-4 py-2 text-right">
-                                <a href="{{ url('/dashboard/conversations/' . $c->id) }}" class="text-xs text-red-700 hover:underline">Deschide</a>
+                                <a href="{{ route('dashboard.conversations.show', $c->id) }}" class="text-xs text-red-700 hover:underline">Deschide</a>
                             </td>
                         </tr>
                     @empty
@@ -283,7 +283,7 @@
                 </p>
             </div>
         </div>
-        <a href="{{ url('/dashboard/knowledge?bot_id=' . $bot->id) }}" class="text-sm text-red-700 hover:underline">Gestionează baza de cunoștințe →</a>
+        <a href="{{ route('dashboard.bots.knowledge.index', $bot) }}" class="text-sm text-red-700 hover:underline">Gestionează baza de cunoștințe →</a>
     @endif
 
     {{-- Tab: Canale --}}
@@ -291,7 +291,7 @@
         <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
             <div class="flex items-center justify-between px-5 py-3 border-b border-slate-200">
                 <h2 class="font-semibold text-slate-900">Canale conectate</h2>
-                <a href="{{ url('/dashboard/channels?bot_id=' . $bot->id) }}" class="text-sm text-red-700 hover:underline">Configurează →</a>
+                <a href="{{ route('dashboard.bots.channels.index', $bot) }}" class="text-sm text-red-700 hover:underline">Configurează →</a>
             </div>
             <table class="w-full text-sm">
                 <thead class="bg-slate-50 text-slate-600 text-xs uppercase">

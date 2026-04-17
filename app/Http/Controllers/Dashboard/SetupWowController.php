@@ -162,9 +162,8 @@ class SetupWowController extends Controller
         // niche prompt only).
         try {
             WebsiteScan::create([
-                'tenant_id' => $tenant->id,
                 'bot_id'    => $bot->id,
-                'url'       => $state['website_url'],
+                'base_url'  => $state['website_url'],
                 'status'    => 'pending',
                 'max_pages' => 10,
             ]);
