@@ -49,7 +49,7 @@
                     @endif
 
                     @if($bot->cloned_voice_id === $clonedVoice->id)
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-600 border border-green-200">Activa pe bot</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-600 border border-green-200">Activă pe agent</span>
                     @endif
                 </div>
                 @if($clonedVoice->error_message)

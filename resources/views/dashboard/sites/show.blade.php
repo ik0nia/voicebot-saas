@@ -75,7 +75,7 @@
                             </div>
                         @endforeach
                     @else
-                        <p class="text-sm text-slate-400 italic">Niciun bot cu agent AI web activ. Creează un agent AI și activează canalul web agent AI.</p>
+                        <p class="text-sm text-slate-400 italic">Niciun agent AI cu canal web activ. Creează un agent AI și activează canalul web.</p>
                     @endif
                 </div>
             </div>
@@ -84,7 +84,7 @@
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
                 <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
                     <h2 class="text-base font-semibold text-slate-900">Agenți AI asociați</h2>
-                    <span class="text-xs font-medium text-slate-500">{{ $bots->count() }} {{ $bots->count() == 1 ? 'bot' : 'agenți AI' }}</span>
+                    <span class="text-xs font-medium text-slate-500">{{ $bots->count() }} {{ $bots->count() == 1 ? 'agent AI' : 'agenți AI' }}</span>
                 </div>
                 @if($bots->isNotEmpty())
                     <div class="divide-y divide-slate-100">
@@ -99,12 +99,12 @@
                                         <p class="text-xs text-slate-400">{{ $bot->is_active ? 'Activ' : 'Inactiv' }}</p>
                                     </div>
                                 </div>
-                                <a href="{{ route('dashboard.bots.show', $bot) }}" class="text-xs font-medium text-red-700 hover:text-red-900 transition-colors shrink-0">Vezi bot →</a>
+                                <a href="{{ route('dashboard.bots.show', $bot) }}" class="text-xs font-medium text-red-700 hover:text-red-900 transition-colors shrink-0">Vezi agentul →</a>
                             </div>
                         @endforeach
                     </div>
                 @else
-                    <div class="px-5 py-8 text-center text-sm text-slate-400">Niciun bot asociat. <a href="{{ route('dashboard.bots.create') }}" class="text-red-700 hover:underline">Creează un agent AI</a></div>
+                    <div class="px-5 py-8 text-center text-sm text-slate-400">Niciun agent AI asociat. <a href="{{ route('dashboard.bots.create') }}" class="text-red-700 hover:underline">Creează un agent AI</a></div>
                 @endif
             </div>
         </div>

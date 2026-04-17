@@ -106,7 +106,7 @@
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
             <div class="flex items-center justify-between mb-2">
                 <div>
-                    <label class="block text-sm font-medium text-slate-800">Instructiuni pentru bot</label>
+                    <label class="block text-sm font-medium text-slate-800">Instrucțiuni pentru agent</label>
                     <p class="text-[11px] text-slate-500">Regulile pe care le urmeaza agentul AI in fiecare conversatie.</p>
                 </div>
                 <span class="text-[10px] text-slate-400" x-text="prompt.length + ' caractere'"></span>

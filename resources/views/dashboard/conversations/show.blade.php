@@ -60,7 +60,7 @@
     {{-- Info cards --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
         <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <p class="text-sm font-medium text-slate-500">Bot</p>
+            <p class="text-sm font-medium text-slate-500">Agent AI</p>
             <p class="mt-1 text-lg font-semibold text-slate-900">{{ $conversation->bot?->name ?? '—' }}</p>
         </div>
         <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">

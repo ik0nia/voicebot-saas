@@ -215,7 +215,7 @@
                 </p>
             @endif
             @if($usage['bots']['overage_unit_cost'] > 0)
-                <p class="text-xs text-slate-400 mt-1">Bot suplimentar: &euro;{{ number_format($usage['bots']['overage_unit_cost'], 0) }}/lună</p>
+                <p class="text-xs text-slate-400 mt-1">Agent AI suplimentar: &euro;{{ number_format($usage['bots']['overage_unit_cost'], 0) }}/lună</p>
             @endif
         </div>
 

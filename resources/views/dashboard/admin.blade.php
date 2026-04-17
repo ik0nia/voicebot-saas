@@ -143,14 +143,14 @@
 @if($botCosts->count() > 0)
 <div class="bg-white rounded-xl border border-slate-200 mb-8">
     <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-        <h3 class="font-semibold text-slate-900">Costuri per bot (toată platforma)</h3>
+        <h3 class="font-semibold text-slate-900">Costuri per agent AI (toată platforma)</h3>
         <span class="text-sm font-medium text-slate-500">Total: {{ number_format($botCosts->sum('calls_sum_cost_cents') / 100, 2) }}€</span>
     </div>
     <div class="overflow-x-auto">
         <table class="w-full">
             <thead>
                 <tr class="text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    <th class="px-6 py-3">Bot</th>
+                    <th class="px-6 py-3">Agent AI</th>
                     <th class="px-6 py-3">Tenant</th>
                     <th class="px-6 py-3">Apeluri</th>
                     <th class="px-6 py-3">Minute</th>
@@ -183,7 +183,7 @@
             <thead>
                 <tr class="text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                     <th class="px-6 py-3">Tenant</th>
-                    <th class="px-6 py-3">Bot</th>
+                    <th class="px-6 py-3">Agent AI</th>
                     <th class="px-6 py-3">Apelant</th>
                     <th class="px-6 py-3">Status</th>
                     <th class="px-6 py-3">Durată</th>
@@ -233,7 +233,7 @@
         <table class="w-full text-sm">
             <thead>
                 <tr class="border-b border-slate-100 text-left">
-                    <th class="px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-500">Bot</th>
+                    <th class="px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-500">Agent AI</th>
                     <th class="px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-500">Tenant</th>
                     <th class="px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-500">Contact</th>
                     <th class="px-6 py-3 text-xs font-medium uppercase tracking-wider text-slate-500">Mesaje</th>

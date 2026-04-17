@@ -184,7 +184,7 @@
                 </svg>
             </div>
             <h3 class="text-lg font-semibold text-slate-900 mb-1">Nu ai niciun agent AI încă</h3>
-            <p class="text-sm text-slate-500 mb-6 text-center max-w-sm">Creează primul tău asistent vocal pentru a începe să automatizezi apelurile telefonice.</p>
+            <p class="text-sm text-slate-500 mb-6 text-center max-w-sm">Creează primul tău agent AI pentru a începe să automatizezi apelurile telefonice.</p>
             <a href="{{ route('dashboard.bots.create') }}"
                class="inline-flex items-center gap-2 rounded-lg bg-red-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 transition-colors">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

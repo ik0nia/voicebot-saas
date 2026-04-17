@@ -96,7 +96,7 @@
     @endif
         @php
             $stats = [
-                ['label' => 'Boti activi', 'value' => $activeBots, 'sub' => null, 'icon' => 'M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25zm.75-12h9v9h-9v-9z', 'cardBg' => 'bg-red-50 border-red-100', 'iconBg' => 'bg-red-100 text-red-700', 'valueColor' => 'text-red-700'],
+                ['label' => 'Agenți activi', 'value' => $activeBots, 'sub' => null, 'icon' => 'M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25zm.75-12h9v9h-9v-9z', 'cardBg' => 'bg-red-50 border-red-100', 'iconBg' => 'bg-red-100 text-red-700', 'valueColor' => 'text-red-700'],
                 ['label' => 'Conversatii', 'value' => $conversationsToday, 'sub' => $messagesToday . ' mesaje azi', 'icon' => 'M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z', 'cardBg' => 'bg-blue-50 border-blue-100', 'iconBg' => 'bg-blue-100 text-blue-700', 'valueColor' => 'text-blue-700'],
                 ['label' => 'Leads noi', 'value' => $leadsToday, 'sub' => $leadsNew . ' necontactate', 'icon' => 'M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z', 'cardBg' => 'bg-emerald-50 border-emerald-100', 'iconBg' => 'bg-emerald-100 text-emerald-700', 'valueColor' => 'text-emerald-700'],
                 ['label' => 'Adaugari cos', 'value' => $addToCartToday, 'sub' => $productClicksToday . ' clickuri', 'icon' => 'M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121 0 2.09-.773 2.34-1.87l1.5-6.69a1.5 1.5 0 00-1.467-1.837H5.106l-.382-1.428A1.5 1.5 0 003.636 1.5H2.25', 'cardBg' => 'bg-purple-50 border-purple-100', 'iconBg' => 'bg-purple-100 text-purple-700', 'valueColor' => 'text-purple-700'],
@@ -142,7 +142,7 @@
         @endif
             @foreach([
                 ['label' => 'Mesaje', 'data' => $planUsage['messages'], 'barColor' => 'bg-blue-500'],
-                ['label' => 'Chatboti', 'data' => $planUsage['bots'], 'barColor' => 'bg-red-500'],
+                ['label' => 'Agenți AI', 'data' => $planUsage['bots'], 'barColor' => 'bg-red-500'],
             ] as $usage)
             <div>
                 <div class="flex items-center justify-between text-xs mb-1.5">
