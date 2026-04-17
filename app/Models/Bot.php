@@ -57,6 +57,18 @@ class Bot extends Model
         return app(\App\Engines\EngineResolver::class)->resolve($this);
     }
 
+    /**
+     * Opt-in automation feature flag. Stored under
+     * bot.settings.automations as flat bool keys. Defaults to
+     * false when absent, so a misread of the settings JSON still
+     * resolves to "off" — no silent SMS sends possible.
+     */
+    public function hasAutomation(string $key): bool
+    {
+        $automations = $this->settings['automations'] ?? [];
+        return !empty($automations[$key]);
+    }
+
     protected static function booted(): void
     {
         static::creating(function (Bot $bot) {
