@@ -592,6 +592,10 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
     // → signup pipeline driven by the public landing pages.
     Route::get('demo', [\App\Http\Controllers\Admin\AdminDemoFunnelController::class, 'index'])->name('admin.demo.index');
 
+    // P5.4: chip conversion analytics — CTR per label × page_type.
+    Route::get('analytics/chips', [\App\Http\Controllers\Admin\AdminChipAnalyticsController::class, 'index'])
+        ->name('admin.analytics.chips');
+
     // Outcomes (what the agent earned — mirrors /costuri)
     Route::get('venituri', [\App\Http\Controllers\Admin\AdminOutcomeReportController::class, 'index'])->name('admin.outcomes.index');
 

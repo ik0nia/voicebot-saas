@@ -68,6 +68,13 @@ class EventTaxonomy
     public const DEMO_MESSAGE_SENT = 'demo_message_sent';
     public const DEMO_QUALIFIED = 'demo_qualified';
 
+    // P5.3 — chip conversion telemetry. Emitted server-side when a
+    // quick-reply strip is rendered; the click counterpart
+    // (quick_reply_clicked) is already emitted by the widget JS
+    // since W3 and lands on this same taxonomy.
+    public const CHIP_SHOWN = 'chip_shown';
+    public const CHIP_CLICKED = 'quick_reply_clicked';
+
     // ─── Event sources ───
     public const SOURCE_WIDGET = 'widget';
     public const SOURCE_BACKEND = 'backend';
@@ -95,6 +102,7 @@ class EventTaxonomy
             self::FALLBACK_TRIGGERED, self::NO_RESULTS,
             self::CLARIFICATION_ASKED, self::CLARIFICATION_ANSWERED,
             self::DEMO_VIEWED, self::DEMO_MESSAGE_SENT, self::DEMO_QUALIFIED,
+            self::CHIP_SHOWN, self::CHIP_CLICKED,
         ];
     }
 

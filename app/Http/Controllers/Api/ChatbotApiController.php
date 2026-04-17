@@ -405,8 +405,40 @@ class ChatbotApiController extends Controller
                 $meta['last_product_cards'] = $products;
                 // Stamp current outbound turn for Bug 3 TTL (see getValidLastProductContext).
                 $meta['last_product_context_turn'] = (int) ($conversation->messages_count ?? 0);
+
+                // P5.6: also remember the product's first category so
+                // the widget can offer "vezi mai multe din {categorie}"
+                // continuity chips later. Best-effort — first product
+                // in result set, first category on it.
+                $cats = $firstProduct['categories'] ?? null;
+                if (is_array($cats) && !empty($cats)) {
+                    $firstCat = $cats[0];
+                    $meta['last_category'] = is_array($firstCat)
+                        ? (string) ($firstCat['name'] ?? $firstCat['slug'] ?? '')
+                        : (string) $firstCat;
+                }
+
                 $conversation->update(['metadata' => $meta]);
             }
+        }
+
+        // P5.6: always stamp last_intent from detected intents so the
+        // memory layer sees what the user was asking about, not just
+        // what the bot returned. Separate from product memory so a
+        // "cost de livrare" question still remembers the intent even
+        // if no product came back.
+        if (!empty($detectedIntents) && $conversation) {
+            try {
+                $intentName = is_array($detectedIntents[0] ?? null)
+                    ? (string) ($detectedIntents[0]['name'] ?? '')
+                    : (string) $detectedIntents[0];
+                if ($intentName !== '') {
+                    $meta = $conversation->metadata ?? [];
+                    $meta['last_intent'] = $intentName;
+                    $meta['last_intent_turn'] = (int) ($conversation->messages_count ?? 0);
+                    $conversation->update(['metadata' => $meta]);
+                }
+            } catch (\Throwable $e) { /* best-effort */ }
         }
 
         // A/B Testing: record metrics for this conversation
@@ -426,7 +458,7 @@ class ChatbotApiController extends Controller
         $quickReplies = [];
         try {
             $quickReplies = $this->buildFollowupQuickReplies(
-                $bot, $pageContext, $products, $botResponse ?? '', $conversation
+                $bot, $pageContext, $products, $botResponse ?? '', $conversation, $userMessage ?? null
             );
         } catch (\Throwable $e) {
             Log::debug('followup quick_replies skipped (non-stream)', ['err' => $e->getMessage()]);
@@ -1538,10 +1570,34 @@ class ChatbotApiController extends Controller
                 // next actions, not chat-restart noise.
                 try {
                     $followups = $this->buildFollowupQuickReplies(
-                        $bot, $pageContext ?? [], $products, $fullContent ?? '', $conversation
+                        $bot, $pageContext ?? [], $products, $fullContent ?? '', $conversation, $userMessage ?? null
                     );
                     if (!empty($followups)) {
                         $this->sendSSE('quick_replies', ['replies' => $followups]);
+                        // P5.3: chip_shown event for conversion analytics.
+                        // One row per render, with state + labels; the click
+                        // counterpart (quick_reply_clicked) fires from the
+                        // widget JS on tap and lands on the same taxonomy.
+                        try {
+                            $stateInfo = app(\App\Services\Widget\UserStateResolver::class)
+                                ->resolve($conversation, $userMessage ?? '', $pageContext ?? []);
+                            app(\App\Services\EventService::class)->track(EventTaxonomy::CHIP_SHOWN, [
+                                'source'     => EventTaxonomy::SOURCE_BACKEND,
+                                'channel_id' => $channel->id,
+                                'conversation_id' => $conversation->id,
+                                'message_id' => $botMessage->id ?? null,
+                                'properties' => [
+                                    'page_type'  => $pageContext['page_type'] ?? null,
+                                    'user_state' => $stateInfo['state'] ?? null,
+                                    'labels'     => array_slice(array_column($followups, 'label'), 0, 4),
+                                    'stream'     => true,
+                                ],
+                            ], [
+                                'idempotency_key' => 'chip_shown:' . ($botMessage->id ?? 'no-msg'),
+                            ]);
+                        } catch (\Throwable $eTrack) {
+                            // never fail a successful stream over analytics
+                        }
                     }
                 } catch (\Throwable $e) {
                     // Never fail a successful response over a follow-up strip.
@@ -2239,12 +2295,19 @@ class ChatbotApiController extends Controller
      *                           declined — e.g. out of stock).
      * @return array<int, array{label:string, text:string}>
      */
-    private function buildFollowupQuickReplies(Bot $bot, array $pageContext, array $products, string $response, ?Conversation $conversation = null): array
+    private function buildFollowupQuickReplies(Bot $bot, array $pageContext, array $products, string $response, ?Conversation $conversation = null, ?string $userMessage = null): array
     {
         $pageType = (string) ($pageContext['page_type'] ?? '');
         if ($pageType === '' || $pageType === 'home') {
             return [];
         }
+
+        // P5.1: infer user state from recent turns. Heuristic — zero
+        // extra LLM calls. Used to bias the chip strip toward the
+        // decision the user is most likely to want next.
+        $stateInfo = app(\App\Services\Widget\UserStateResolver::class)
+            ->resolve($conversation, (string) $userMessage, $pageContext);
+        $userState = $stateInfo['state'];
 
         // G5: bail-signal detection. When the bot bails ("nu am acea
         // informație", "contactați-ne", "nu pot răspunde") skip the
@@ -2337,6 +2400,31 @@ class ChatbotApiController extends Controller
                 ['label' => 'Pe buget',        'text' => 'Caut o variantă pe buget.'],
                 ['label' => 'Pentru 2 adulți', 'text' => 'Vreau pentru 2 adulți.'],
             ];
+        }
+
+        // P5.2: adaptive chips — overlay state-aware replacements
+        // on top of page-type defaults. Targeted swaps only, not
+        // a full rewrite, so page-specific context stays visible.
+        if ($userState === \App\Services\Widget\UserStateResolver::HIGH_INTENT) {
+            $replies = array_merge([
+                ['label' => 'Vreau să comand',      'text' => 'Vreau să comand — ghidează-mă.'],
+                ['label' => 'Finalizează comanda',  'text' => 'Ghidează-mă să finalizez comanda acum.'],
+            ], $replies);
+        } elseif ($userState === \App\Services\Widget\UserStateResolver::STUCK) {
+            $replies = array_merge([
+                ['label' => 'Alege tu pentru mine', 'text' => 'Alege tu varianta cea mai potrivită pentru mine și explică de ce.'],
+                ['label' => 'Explică-mi pe scurt',  'text' => 'Rezumă-mi în 3 rânduri ce e mai important de știut.'],
+            ], $replies);
+        } elseif ($userState === \App\Services\Widget\UserStateResolver::PRICE_SENSITIVE) {
+            $replies = array_merge([
+                ['label' => 'Mai ieftin',           'text' => 'Ai ceva mai ieftin dar de calitate bună?'],
+                ['label' => 'Reduceri active',      'text' => 'Ce reduceri active aveți acum?'],
+            ], $replies);
+        } elseif ($userState === \App\Services\Widget\UserStateResolver::COMPARING) {
+            $replies = array_merge([
+                ['label' => 'Ce îmi recomanzi',     'text' => 'Dintre opțiuni, care îmi recomanzi tu și de ce?'],
+                ['label' => 'Compară tabelar',      'text' => 'Compară-mi cele 2 opțiuni tabelar — avantaje și dezavantaje.'],
+            ], $replies);
         }
 
         // G7: if we have a remembered product AND there's room AND
