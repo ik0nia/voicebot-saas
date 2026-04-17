@@ -47,28 +47,7 @@ class ChatbotApiController extends Controller
      */
     private function resolveActiveChannel(int|string $channelId): ?Channel
     {
-        $dbQuery = function () use ($channelId) {
-            $channel = Channel::withoutGlobalScopes()
-                ->where('id', $channelId)
-                ->where('is_active', true)
-                ->first();
-            if (!$channel) return null;
-            // QA-H2: a paused bot must not keep serving widget config.
-            // Previously only channel.is_active gated access, so a
-            // tenant who disabled their bot saw the widget continue to
-            // greet users and show chips — users then hit a 403 on the
-            // first message. Block at config-resolve so the widget
-            // script simply doesn't render.
-            $bot = Bot::withoutGlobalScopes()->find($channel->bot_id);
-            if (!$bot || !$bot->is_active) return null;
-            return $channel;
-        };
-
-        try {
-            return Cache::remember("channel_{$channelId}", 1800, $dbQuery);
-        } catch (\Throwable $e) {
-            return $dbQuery();
-        }
+        return app(\App\Services\Chat\ChatRequestResolver::class)->findActiveChannel($channelId);
     }
 
     public function config(Request $request, $channelId): JsonResponse
@@ -636,91 +615,6 @@ class ChatbotApiController extends Controller
 
         } catch (\Throwable $e) {
             Log::debug("Chat lead extraction failed for conversation {$conversation->id}", [
-                'error' => $e->getMessage(),
-            ]);
-        }
-    }
-
-    /**
-     * Create a lead immediately from prechat form data.
-     * Called when the widget sends prechat_name/email/phone with actual contact info.
-     */
-    private function tryCreatePrechatLead(Bot $bot, Conversation $conversation, ?string $name, ?string $email, ?string $phone): void
-    {
-        try {
-            // Normalize email
-            $email = $email ? mb_strtolower(trim($email)) : null;
-            // Basic email validation
-            if ($email && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $email = null;
-            }
-            // Normalize phone — strip non-digits
-            if ($phone) {
-                $phone = trim($phone);
-                $digitsOnly = preg_replace('/[^\d]/', '', $phone);
-                // Accept Romanian mobile (07xxxxxxxx or 407xxxxxxxx)
-                if (preg_match('/^(07\d{8})$/', $digitsOnly)) {
-                    $phone = $digitsOnly;
-                } elseif (preg_match('/^(407\d{8})$/', $digitsOnly)) {
-                    $phone = '0' . substr($digitsOnly, 2);
-                } else {
-                    $phone = null; // Invalid format, discard
-                }
-            }
-            $name = $name ? trim($name) : null;
-
-            // Need at least email or phone to create a lead
-            if (!$email && !$phone) return;
-
-            // Check if we already have a lead for this conversation
-            $existingLead = \App\Models\Lead::where('conversation_id', $conversation->id)->first();
-            if ($existingLead) {
-                // Update existing lead with any missing fields from prechat
-                $updates = [];
-                if ($email && !$existingLead->email) $updates['email'] = $email;
-                if ($phone && !$existingLead->phone) $updates['phone'] = $phone;
-                if ($name && !$existingLead->name) $updates['name'] = $name;
-                if (!empty($updates)) {
-                    $newScore = $existingLead->qualification_score;
-                    if (isset($updates['email'])) $newScore += 30;
-                    if (isset($updates['phone'])) $newScore += 20;
-                    if (isset($updates['name'])) $newScore += 10;
-                    $updates['qualification_score'] = min(100, $newScore);
-                    if (!$existingLead->email && !$existingLead->phone && ($email || $phone)) {
-                        $updates['status'] = 'qualified';
-                    }
-                    $existingLead->update($updates);
-                }
-                return;
-            }
-
-            $qualificationScore = ($email ? 30 : 0) + ($phone ? 20 : 0) + ($name ? 10 : 0);
-
-            $lead = \App\Models\Lead::create([
-                'tenant_id' => $bot->tenant_id,
-                'bot_id' => $bot->id,
-                'conversation_id' => $conversation->id,
-                'name' => $name,
-                'email' => $email,
-                'phone' => $phone,
-                'status' => 'qualified',
-                'qualification_score' => $qualificationScore,
-                'capture_source' => 'chat',
-                'capture_reason' => 'prechat_form',
-            ]);
-
-            Log::info("Prechat lead created for conversation {$conversation->id}", [
-                'lead_id' => $lead->id,
-                'has_email' => (bool) $email,
-                'has_phone' => (bool) $phone,
-                'has_name' => (bool) $name,
-            ]);
-
-            // Update conversation lead score
-            $conversation->update(['lead_score' => max($conversation->lead_score ?? 0, $qualificationScore)]);
-
-        } catch (\Throwable $e) {
-            Log::debug("Prechat lead creation failed for conversation {$conversation->id}", [
                 'error' => $e->getMessage(),
             ]);
         }
@@ -1421,174 +1315,31 @@ class ChatbotApiController extends Controller
      */
     private function preprocessMessage(Request $request, $channelId): array
     {
-        $channel = $this->resolveActiveChannel($channelId);
-        if (!$channel) {
-            return ['error' => 'Canal invalid.', 'status' => 404];
+        // Validation + rate-limit + plan gate + session HMAC + Conversation
+        // lifecycle + user-message persistence + prechat lead capture now
+        // all live inside ChatRequestResolver. See that class for the side-
+        // effect contract; this caller only decides how to serialise a
+        // rejection back to the widget.
+        $resolved = app(\App\Services\Chat\ChatRequestResolver::class)->resolve($request, $channelId);
+        if ($resolved instanceof \App\Services\Chat\ChatRequestRejection) {
+            return array_merge(
+                ['error' => $resolved->message, 'status' => $resolved->status],
+                $resolved->extras,
+            );
         }
 
-        $validated = $request->validate([
-            'message' => 'required|string|max:2000',
-            'session_id' => 'nullable|string|max:255',
-            'session_token' => 'nullable|string|max:255',
-            'prechat_name' => 'nullable|string|max:255',
-            'prechat_email' => 'nullable|string|max:255',
-            'prechat_phone' => 'nullable|string|max:255',
-            'page_context' => 'nullable|array',
-            'page_context.page_url' => 'nullable|string|max:2000',
-            'page_context.page_title' => 'nullable|string|max:500',
-            'page_context.page_path' => 'nullable|string|max:500',
-            'page_context.time_on_page' => 'nullable|integer|min:0',
-            'page_context.referrer' => 'nullable|string|max:2000',
-            // W3/W4/F-fix: these widget-provided signals were being
-            // silently stripped by Laravel's validator (any key not
-            // explicitly allowed is removed from $validated). The bot
-            // then saw no product_context and asked "despre ce produs
-            // e vorba?" even on a product page. Allowlist them here.
-            'page_context.page_type' => 'nullable|string|max:40',
-            'page_context.product_context' => 'nullable|array',
-            'page_context.product_context.product_id' => 'nullable|integer',
-            'page_context.product_context.variation_id' => 'nullable|integer',
-            'page_context.product_context.name' => 'nullable|string|max:500',
-            'page_context.product_context.price' => 'nullable|string|max:40',
-            'page_context.product_context.currency' => 'nullable|string|max:10',
-            'page_context.product_context.categories' => 'nullable|array|max:10',
-            'page_context.product_context.categories.*' => 'nullable|string|max:120',
-            'page_context.product_context.in_stock' => 'nullable|boolean',
-            'page_context.product_context.permalink' => 'nullable|string|max:2000',
-            'page_context.cart_context' => 'nullable|array',
-            'page_context.cart_context.items_count' => 'nullable|integer|min:0',
-            'page_context.cart_context.total' => 'nullable|string|max:100',
-            'page_context.cart_context.total_raw' => 'nullable|numeric',
-            'page_context.cart_context.currency' => 'nullable|string|max:10',
-            'page_context.cart_context.shipping_threshold' => 'nullable|numeric',
-            'page_context.cart_context.missing_amount_for_free_shipping' => 'nullable|numeric',
-            'page_context.cart_context.items' => 'nullable|array|max:20',
-            'page_context.cart_context.items.*.product_id' => 'nullable|integer',
-            'page_context.cart_context.items.*.name' => 'nullable|string|max:500',
-            'page_context.cart_context.items.*.qty' => 'nullable|integer|min:0',
-        ]);
-
-        $userMessage = $validated['message'];
-        $sessionId = $validated['session_id'] ?? null;
-        $sessionToken = $validated['session_token'] ?? null;
-        $prechatName = $validated['prechat_name'] ?? null;
-        $prechatEmail = $validated['prechat_email'] ?? null;
-        $prechatPhone = $validated['prechat_phone'] ?? null;
-        $pageContext = $validated['page_context'] ?? null;
-
-        // Rate limiting
-        $rateLimitKey = 'chatbot:msg:' . $request->ip() . ':' . $channelId;
-        if (RateLimiter::tooManyAttempts($rateLimitKey, 30)) {
-            return ['error' => 'Prea multe mesaje. Încercați din nou în câteva secunde.', 'status' => 429];
-        }
-        RateLimiter::hit($rateLimitKey, 60);
-
-        $bot = Bot::withoutGlobalScopes()->find($channel->bot_id);
-
-        if (!$bot || !$bot->is_active) {
-            return ['error' => 'Bot inactiv.', 'status' => 403];
-        }
-
-        // Check message limit (bypassed for bots/tenants marked as test_mode —
-        // see PlanLimitService::canSendMessage() for docs).
-        $tenant = Tenant::find($bot->tenant_id);
-        if ($tenant) {
-            $limitCheck = app(PlanLimitService::class)->canSendMessage($tenant, $bot);
-            if (!$limitCheck->allowed) {
-                return ['error' => 'Limita de mesaje a fost atinsă. Contactați administratorul pentru upgrade.', 'status' => 429];
-            }
-        }
-
-        // Find or create conversation
-        $conversation = null;
-        $sessionExpired = false;
-        if ($sessionId && $sessionToken) {
-            $expectedToken = hash_hmac('sha256', $sessionId . $channelId, config('app.key'));
-            if (hash_equals($expectedToken, $sessionToken)) {
-                $conversation = Conversation::where('channel_id', $channel->id)
-                    ->where('external_conversation_id', $sessionId)
-                    ->where('status', 'active')
-                    ->first();
-
-                if ($conversation) {
-                    $lastMessage = $conversation->messages()->latest('id')->first();
-                    $lastActivity = $lastMessage ? $lastMessage->created_at : $conversation->created_at;
-
-                    if ($lastActivity->diffInMinutes(now()) >= 10) {
-                        $expiredConvId = $conversation->id;
-                        $conversation->update([
-                            'status' => 'completed',
-                            'ended_at' => $lastActivity,
-                        ]);
-
-                        \App\Jobs\DeriveConversationOutcomes::dispatch($expiredConvId)
-                            ->delay(now()->addSeconds(5));
-
-                        $conversation = null;
-                        $sessionExpired = true;
-                    }
-                }
-            }
-        }
-
-        if (!$conversation) {
-            $sessionId = Str::uuid()->toString();
-            $sessionToken = hash_hmac('sha256', $sessionId . $channelId, config('app.key'));
-            $conversation = Conversation::create([
-                'tenant_id' => $bot->tenant_id,
-                'bot_id' => $bot->id,
-                'channel_id' => $channel->id,
-                'external_conversation_id' => $sessionId,
-                'contact_identifier' => $request->ip(),
-                'visitor_id' => $request->input('visitor_id'),
-                'status' => 'active',
-                'metadata' => [
-                    'user_agent' => $request->userAgent(),
-                    'origin' => $request->header('Origin', ''),
-                ],
-                'started_at' => now(),
-            ]);
-
-            // V2: Track session start
-            $eventService = app(ConversationEventService::class);
-            $eventCtx = $eventService->buildContext($bot->tenant_id, $bot->id, $channel->id, $conversation->id, $sessionId);
-            $eventService->track(EventTaxonomy::SESSION_STARTED, [
-                'visitor_id' => $request->input('visitor_id'),
-                'user_agent' => $request->userAgent(),
-            ], array_merge($eventCtx, [
-                'idempotency_key' => $eventService->idempotencyKey((string) $conversation->id, 'session_started'),
-            ]));
-
-            // Save greeting as first message
-            $channelConfig = $channel->config ?? [];
-            $greetingText = $channelConfig['greeting'] ?? 'Bună! Cu ce te pot ajuta?';
-            Message::create([
-                'conversation_id' => $conversation->id,
-                'direction' => 'outbound',
-                'content' => $greetingText,
-                'content_type' => 'text',
-                'sent_at' => now(),
-            ]);
-            $conversation->increment('messages_count');
-        }
-
-        // Save user message
-        Message::create([
-            'conversation_id' => $conversation->id,
-            'direction' => 'inbound',
-            'content' => $userMessage,
-            'content_type' => 'text',
-            'metadata' => $pageContext ? ['page_context' => $pageContext] : null,
-            'sent_at' => now(),
-        ]);
-
-        $conversation->increment('messages_count');
-        $conversation->update(['last_activity_at' => now()]);
-
-        // Create lead from prechat form data
-        if ($prechatEmail || $prechatPhone) {
-            $this->tryCreatePrechatLead($bot, $conversation, $prechatName, $prechatEmail, $prechatPhone);
-        }
+        $channel = $resolved->channel;
+        $bot = $resolved->bot;
+        $tenant = $resolved->tenant;
+        $conversation = $resolved->conversation;
+        $sessionId = $resolved->sessionId;
+        $sessionToken = $resolved->sessionToken;
+        $sessionExpired = $resolved->sessionExpired;
+        $userMessage = $resolved->userMessage;
+        $pageContext = $resolved->pageContext;
+        $prechatName = $resolved->prechatName;
+        $prechatEmail = $resolved->prechatEmail;
+        $prechatPhone = $resolved->prechatPhone;
 
         // ── Conversation focus: augment query with active topic for follow-ups ──
         // The augmented query is used ONLY for product search (and the intent
