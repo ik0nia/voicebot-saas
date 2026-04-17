@@ -38,14 +38,28 @@ class BookingToolDispatcher
             ->where('bot_id', $bot->id)->where('id', $serviceId)->first();
         if (!$service) return ['error' => 'service not found'];
 
-        return $this->compute->handle(
+        // urgent_only mode: ASAP — only return the first few slots. We
+        // still compute against the full search window so the LLM gets
+        // _something_ even when no slot exists today, but we cap the
+        // output list to 3 to signal the triage intent to the caller.
+        $urgentOnly = !empty($params['urgent_only']);
+        $maxSlots = $urgentOnly
+            ? 3
+            : max(1, min(10, (int) ($params['max_slots'] ?? 6)));
+
+        $result = $this->compute->handle(
             $bot,
             $service,
             $params['preferred_from'] ?? null,
-            $params['staff_member_id'] ?? null,
+            isset($params['staff_member_id']) ? (int) $params['staff_member_id'] : null,
             max(1, min(30, (int) ($params['days_ahead'] ?? 7))),
-            max(1, min(10, (int) ($params['max_slots'] ?? 6))),
+            $maxSlots,
         );
+
+        // Echo the urgent flag back so the LLM understands the response
+        // size came from the mode, not from an empty calendar.
+        $result['mode'] = $urgentOnly ? 'urgent' : 'normal';
+        return $result;
     }
 
     public function bookAppointment(int $botId, array $params): array

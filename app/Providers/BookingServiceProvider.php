@@ -37,6 +37,8 @@ class BookingServiceProvider extends ServiceProvider
                     'service_type_id' => ['type' => 'integer', 'required' => true],
                     'preferred_from'  => ['type' => 'string'],
                     'days_ahead'      => ['type' => 'integer'],
+                    'staff_member_id' => ['type' => 'integer'],
+                    'urgent_only'     => ['type' => 'boolean'],
                 ],
                 'handler' => fn (int $botId, array $params) => $dispatcher->checkAvailability($botId, $params),
             ]);

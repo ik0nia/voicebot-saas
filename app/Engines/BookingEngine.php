@@ -42,6 +42,13 @@ class BookingEngine extends BaseBotEngine
                         'service_type_id' => ['type' => 'integer', 'description' => 'ID-ul serviciului (list_services înainte)'],
                         'preferred_from'  => ['type' => 'string', 'description' => 'ISO 8601, de ex "2026-04-18T09:00:00". Omis = de acum.'],
                         'days_ahead'      => ['type' => 'integer', 'description' => 'Câte zile în avans să caute. Default 7.'],
+                        // Specific-resource mode — cere sloturi doar pentru un
+                        // anumit doctor/coafor/avocat. Omis = orice persoană.
+                        'staff_member_id' => ['type' => 'integer', 'description' => 'Optional. Filtrează la un membru de personal specific (ex: doctorul preferat al clientului).'],
+                        // "First available" / ASAP mode — întoarce doar
+                        // primele 3 sloturi libere, prioritizând serviciile
+                        // marcate is_urgent.
+                        'urgent_only'     => ['type' => 'boolean', 'description' => 'Optional. Dacă true, întoarce doar primele 3 sloturi libere (ASAP) — util pentru urgențe medicale.'],
                     ],
                     'required' => ['service_type_id'],
                 ],

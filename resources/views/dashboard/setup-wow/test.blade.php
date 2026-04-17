@@ -6,6 +6,15 @@
 @php
     $channelId = session('wow_wizard.channel_id');
     $wowDemo = $bot && $bot->niche_slug ? (config('niches.' . $bot->niche_slug . '.wow_demo') ?? null) : null;
+
+    // For booking/hybrid bots, surface the count of seeded services so
+    // the tenant sees proof the wizard configured something (seeds ran
+    // silently in saveAgent before this card existed).
+    $bookingServicesCount = null;
+    if ($bot && in_array($bot->engine_type, ['booking', 'hybrid'], true)) {
+        $bookingServicesCount = \App\Models\ServiceType::withoutGlobalScopes()
+            ->where('bot_id', $bot->id)->count();
+    }
 @endphp
 <div class="max-w-3xl mx-auto py-8 px-4">
     <div class="mb-6">
@@ -21,6 +30,24 @@
     @if($wowDemo)
         <div class="mb-4 p-3 bg-indigo-50 border border-indigo-200 rounded-lg text-sm text-indigo-900">
             💡 <strong>Încearcă:</strong> „{{ $wowDemo }}"
+        </div>
+    @endif
+
+    @if($bookingServicesCount !== null)
+        <div class="mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-sm text-emerald-900 flex items-start gap-3">
+            <span class="text-lg">📅</span>
+            <div class="flex-1">
+                <div class="font-semibold">Programări pregătite</div>
+                <div class="mt-0.5">
+                    Am pregătit <strong>{{ $bookingServicesCount }}</strong>
+                    {{ $bookingServicesCount === 1 ? 'serviciu' : 'servicii' }}
+                    și program L-V 09:00-19:00. Poți edita oricând după ce termini.
+                </div>
+                <a href="{{ route('dashboard.bots.booking', $bot) }}"
+                   class="inline-flex items-center gap-1 mt-2 text-emerald-800 font-semibold hover:underline">
+                    Deschide Programări →
+                </a>
+            </div>
         </div>
     @endif
 
