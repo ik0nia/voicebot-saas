@@ -264,6 +264,17 @@ Route::middleware('auth')->prefix('dashboard/agenti')->group(function () {
     Route::get('/{bot}', [BotController::class, 'show'])->name('dashboard.bots.show');
     Route::get('/{bot}/editare', [BotController::class, 'edit'])->name('dashboard.bots.edit');
     Route::put('/{bot}', [BotController::class, 'update'])->name('dashboard.bots.update');
+
+    // Session-authenticated helpers for the structured-profile editor.
+    // These wrap the Sanctum-gated /api/v1 endpoints so the dashboard
+    // can call them with CSRF instead of minting a bearer token.
+    Route::post('/{bot}/ai-generate', [BotController::class, 'aiGenerate'])
+        ->name('dashboard.bots.ai-generate');
+    Route::get('/{bot}/prompt-preview', [BotController::class, 'promptPreview'])
+        ->name('dashboard.bots.prompt-preview');
+    Route::get('/{bot}/ai-cost-today', [BotController::class, 'aiCostToday'])
+        ->name('dashboard.bots.ai-cost-today');
+
     Route::delete('/{bot}', [BotController::class, 'destroy'])->name('dashboard.bots.destroy');
     Route::patch('/{bot}/toggle', [BotController::class, 'toggleActive'])->name('dashboard.bots.toggle');
     Route::patch('/{bot}/update-field', [BotController::class, 'updateField'])->name('dashboard.bots.updateField');
