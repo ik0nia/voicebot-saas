@@ -794,6 +794,23 @@ class ChatbotApiController extends Controller
                 }
             }
 
+            // Engine-level tools — strictly additive, gated on
+            // engine_type so non-booking bots see zero behavior
+            // change. Merges alongside v2_tool_calling defs when
+            // both are active. Execution happens through the same
+            // ToolRegistry the legacy path uses (booking handlers
+            // are registered globally by BookingServiceProvider).
+            if (isset($bot->engine_type) && $bot->engine_type === 'booking') {
+                $engineDefs = $bot->engine()->chatTools($bot);
+                if (!empty($engineDefs)) {
+                    $existingTools = $toolOptions['tools'] ?? [];
+                    $toolOptions = [
+                        'tools' => array_merge($existingTools, $engineDefs),
+                        'tool_choice' => 'auto',
+                    ];
+                }
+            }
+
             // Call AI — with cascading fallback
             $chatService = app(ChatCompletionService::class);
             try {
