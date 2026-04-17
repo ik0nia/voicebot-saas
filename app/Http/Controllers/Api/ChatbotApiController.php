@@ -811,6 +811,21 @@ class ChatbotApiController extends Controller
                 }
             }
 
+            // Hospitality — same shape as booking; separate branch
+            // so the engine check stays explicit and the blast
+            // radius is obvious. Mirrored by the provider that
+            // registers reserve/availability tool handlers.
+            if (isset($bot->engine_type) && $bot->engine_type === 'hospitality') {
+                $engineDefs = $bot->engine()->chatTools($bot);
+                if (!empty($engineDefs)) {
+                    $existingTools = $toolOptions['tools'] ?? [];
+                    $toolOptions = [
+                        'tools' => array_merge($existingTools, $engineDefs),
+                        'tool_choice' => 'auto',
+                    ];
+                }
+            }
+
             // Call AI — with cascading fallback
             $chatService = app(ChatCompletionService::class);
             try {
