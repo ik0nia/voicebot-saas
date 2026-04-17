@@ -19,10 +19,12 @@ class AiApiMetric extends Model
         'error_type',
         'bot_id',
         'tenant_id',
+        'user_id',
         'call_id',
         'conversation_id',
         'message_id',
         'purpose',
+        'metadata',
     ];
 
     protected $casts = [
@@ -30,6 +32,7 @@ class AiApiMetric extends Model
         'output_tokens' => 'integer',
         'cost_cents' => 'decimal:4',
         'response_time_ms' => 'integer',
+        'metadata' => 'array',
     ];
 
     public function call()

@@ -107,6 +107,14 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::patch('bots/{bot}', [BotApiController::class, 'update'])->middleware('abilities:bots:write');
     Route::delete('bots/{bot}', [BotApiController::class, 'destroy'])->middleware('abilities:bots:write');
 
+    // Universal AI generation endpoint for bot setup ("✨ generate" buttons).
+    // Tenant-scoped (controller enforces bot.tenant_id === user.tenant_id),
+    // per-tenant rate-limited (60/min + 10/min for full_profile), every
+    // call logs to ai_api_metrics with purpose=agent_setup_ai so spend
+    // shows up in existing cost dashboards.
+    Route::post('bots/{bot}/ai-generate', \App\Http\Controllers\Api\V1\BotAiGenerateController::class)
+        ->middleware('abilities:bots:write');
+
     // Calls
     Route::get('calls', [CallApiController::class, 'index'])->middleware('abilities:calls:read');
     Route::get('calls/{call}', [CallApiController::class, 'show'])->middleware('abilities:calls:read');
