@@ -81,8 +81,16 @@ class Sambla_Widget {
 
     /**
      * Cart summary — counts + total, plus a tiny list of items (id +
-     * name + qty). No payment details, no line totals; just enough to
-     * say "you have 3 items, total 340 lei; a phone case and ...".
+     * name + qty). Extended (G1) with free-shipping threshold data
+     * so the bot can surface "îți mai lipsesc X lei pentru livrare
+     * gratuită" conversion chips at the right moment.
+     *
+     * Threshold discovery order:
+     *   1. explicit `sambla_free_shipping_threshold` WP option — lets
+     *      the tenant set an exact value from the plugin settings
+     *      without reading shipping-zone internals.
+     *   2. scan registered free_shipping methods, take the smallest
+     *      min_amount — works automatically for most stores.
      */
     private function cart_context() {
         if (!function_exists('WC') || !WC() || !WC()->cart) return null;
@@ -98,12 +106,47 @@ class Sambla_Widget {
             if (count($items) >= 8) break;
         }
         if (empty($items)) return null;
+
+        $threshold = $this->free_shipping_threshold();
+        $cartSubtotal = method_exists($cart, 'get_subtotal') ? (float) $cart->get_subtotal() : (float) $cart->get_total('raw');
+        $missing = null;
+        if ($threshold !== null && $threshold > 0 && $cartSubtotal < $threshold) {
+            $missing = round($threshold - $cartSubtotal, 2);
+        }
+
         return [
             'items_count' => (int) $cart->get_cart_contents_count(),
             'total'       => (string) $cart->get_cart_total(),
+            'total_raw'   => round($cartSubtotal, 2),
             'currency'    => function_exists('get_woocommerce_currency') ? get_woocommerce_currency() : null,
             'items'       => $items,
+            'shipping_threshold' => $threshold,
+            'missing_amount_for_free_shipping' => $missing,
         ];
+    }
+
+    private function free_shipping_threshold() {
+        $explicit = (float) get_option('sambla_free_shipping_threshold', 0);
+        if ($explicit > 0) return round($explicit, 2);
+
+        if (!function_exists('WC') || !WC() || !WC()->shipping()) return null;
+        $lowest = null;
+        try {
+            $zones = class_exists('WC_Shipping_Zones') ? \WC_Shipping_Zones::get_zones() : [];
+            foreach ($zones as $zone) {
+                $methods = $zone['shipping_methods'] ?? [];
+                foreach ($methods as $method) {
+                    if (!is_object($method)) continue;
+                    if (($method->id ?? null) !== 'free_shipping') continue;
+                    if (!empty($method->enabled) && ($method->enabled !== 'yes' && $method->enabled !== true)) continue;
+                    $min = (float) (method_exists($method, 'get_option') ? $method->get_option('min_amount', 0) : 0);
+                    if ($min > 0 && ($lowest === null || $min < $lowest)) {
+                        $lowest = $min;
+                    }
+                }
+            }
+        } catch (\Throwable $e) { return null; }
+        return $lowest !== null ? round($lowest, 2) : null;
     }
 
     public function enqueue() {

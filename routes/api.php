@@ -92,10 +92,10 @@ Route::post('/v1/chatbot/{channel}/events', [\App\Http\Controllers\Api\EventTrac
 // come from a public landing page iframe parent.
 Route::post('/public/demo/event', [\App\Http\Controllers\Api\PublicDemoEventController::class, 'store'])
     ->middleware('throttle:30,1');
-Route::get('/v1/chatbot/{channel}/capabilities', [\App\Http\Controllers\Api\EventTrackingController::class, 'capabilities'])->middleware('throttle:60,1');
-Route::post('/v1/chatbot/{channel}/lead', [\App\Http\Controllers\Api\EventTrackingController::class, 'captureLead'])->middleware('throttle:5,1');
-Route::post('/v1/chatbot/{channel}/callback', [\App\Http\Controllers\Api\CallbackController::class, 'store'])->middleware('throttle:5,1');
-Route::get('/v1/chatbot/{channel}/callback/services', [\App\Http\Controllers\Api\CallbackController::class, 'services'])->middleware('throttle:60,1');
+Route::get('/v1/chatbot/{channel}/capabilities', [\App\Http\Controllers\Api\EventTrackingController::class, 'capabilities'])->middleware(['force.json', 'throttle:60,1']);
+Route::post('/v1/chatbot/{channel}/lead', [\App\Http\Controllers\Api\EventTrackingController::class, 'captureLead'])->middleware(['force.json', 'throttle:5,1']);
+Route::post('/v1/chatbot/{channel}/callback', [\App\Http\Controllers\Api\CallbackController::class, 'store'])->middleware(['force.json', 'throttle:5,1']);
+Route::get('/v1/chatbot/{channel}/callback/services', [\App\Http\Controllers\Api\CallbackController::class, 'services'])->middleware(['force.json', 'throttle:60,1']);
 
 // V2 Purchase webhook from WordPress companion plugin (signed, no auth)
 Route::post('/v1/webhooks/woocommerce/{bot}/purchase', [\App\Http\Controllers\Api\PurchaseWebhookController::class, 'handle']);

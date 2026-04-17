@@ -1,4 +1,4 @@
-/* sambla-chat v2.4 — contextual quick replies (W3) + F1/F2 polish */
+/* sambla-chat v2.5 — G6 micro-interactions + continuity cues */
 (function() {
     'use strict';
 
@@ -714,15 +714,17 @@
             }\
             /* W3: contextual quick-reply chips */\
             .sambla-qr-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 10px; padding: 0 12px; }\
-            .sambla-qr { background: #fff; border: 1px solid #e2e8f0; color: #334155; font-size: 13px; padding: 6px 12px; border-radius: 999px; cursor: pointer; transition: all .15s ease; font-family: inherit; line-height: 1.3; }\
-            .sambla-qr:hover { background: #f8fafc; border-color: #cbd5e1; }\
-            .sambla-qr:active { transform: scale(0.97); }\
+            .sambla-qr { background: #fff; border: 1px solid #e2e8f0; color: #334155; font-size: 13px; padding: 6px 12px; border-radius: 999px; cursor: pointer; font-family: inherit; line-height: 1.3; opacity: 0; transform: translateY(4px); animation: sambla-qr-in .25s ease-out forwards; transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .08s ease; }\
+            .sambla-qr:hover { background: #f8fafc; border-color: #cbd5e1; box-shadow: 0 1px 3px rgba(15,23,42,.06); }\
+            .sambla-qr:active { transform: scale(0.96); }\
             .sambla-qr:focus-visible { outline: 2px solid ' + config.color + '; outline-offset: 2px; }\
+            @keyframes sambla-qr-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }\
             @media (prefers-color-scheme: dark) {\
                 .sambla-qr { background: #1e293b; border-color: #334155; color: #e2e8f0; }\
                 .sambla-qr:hover { background: #334155; border-color: #475569; }\
             }\
             @media (max-width: 440px) { .sambla-qr { font-size: 12px; padding: 5px 10px; } }\
+            @media (prefers-reduced-motion: reduce) { .sambla-qr { animation: none; opacity: 1; transform: none; } }\
         ';
 
         var container = document.createElement('div');
@@ -2052,11 +2054,14 @@
             wrap.setAttribute('role', 'group');
             wrap.setAttribute('aria-label', 'Sugestii rapide');
 
-            replies.slice(0, 6).forEach(function(r) {
+            replies.slice(0, 6).forEach(function(r, i) {
                 if (!r || (!r.label && !r.text)) return;
                 var btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = 'sambla-qr';
+                // G6: stagger each chip's fade-in by 40ms so the strip
+                // animates in sequentially instead of as one block.
+                btn.style.animationDelay = (i * 40) + 'ms';
                 btn.textContent = String(r.label || r.text).substring(0, 80);
                 var payloadText = String(r.text || r.label || '').substring(0, 500);
                 btn.addEventListener('click', function() {

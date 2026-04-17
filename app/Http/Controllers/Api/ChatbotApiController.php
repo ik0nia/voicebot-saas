@@ -426,7 +426,7 @@ class ChatbotApiController extends Controller
         $quickReplies = [];
         try {
             $quickReplies = $this->buildFollowupQuickReplies(
-                $bot, $pageContext, $products, $botResponse ?? ''
+                $bot, $pageContext, $products, $botResponse ?? '', $conversation
             );
         } catch (\Throwable $e) {
             Log::debug('followup quick_replies skipped (non-stream)', ['err' => $e->getMessage()]);
@@ -1538,7 +1538,7 @@ class ChatbotApiController extends Controller
                 // next actions, not chat-restart noise.
                 try {
                     $followups = $this->buildFollowupQuickReplies(
-                        $bot, $pageContext ?? [], $products, $fullContent ?? ''
+                        $bot, $pageContext ?? [], $products, $fullContent ?? '', $conversation
                     );
                     if (!empty($followups)) {
                         $this->sendSSE('quick_replies', ['replies' => $followups]);
@@ -1981,6 +1981,28 @@ class ChatbotApiController extends Controller
             $extraContext = $orderContext . $productContext;
         }
 
+        // G1: surface cart threshold to the LLM when WooCommerce
+        // plugin reports it. One short block — the LLM uses it to
+        // mention "mai ai X lei până la livrare gratuită" naturally
+        // without needing its own tool-call. No-op when no cart.
+        $cartCtx = is_array($pageContext['cart_context'] ?? null) ? $pageContext['cart_context'] : null;
+        if ($cartCtx && !empty($cartCtx['items_count'])) {
+            $missing = (float) ($cartCtx['missing_amount_for_free_shipping'] ?? 0);
+            $threshold = (float) ($cartCtx['shipping_threshold'] ?? 0);
+            $currency = strtoupper((string) ($cartCtx['currency'] ?? 'RON')) === 'RON' ? 'lei' : ($cartCtx['currency'] ?? 'RON');
+            $cartBlock = "\n\n[CART CONTEXT]\n";
+            $cartBlock .= "Coș: {$cartCtx['items_count']} produse, total {$cartCtx['total']}.\n";
+            if ($threshold > 0 && $missing > 0 && $missing < $threshold) {
+                $missingFmt = number_format($missing, 2, ',', '.');
+                $thresholdFmt = number_format($threshold, 2, ',', '.');
+                $cartBlock .= "LIVRARE GRATUITĂ la comenzi peste {$thresholdFmt} {$currency}. Clientului îi mai lipsesc {$missingFmt} {$currency} până la prag.\n";
+                $cartBlock .= "Dacă clientul cere recomandări, prioritizează produse care să completeze comanda până la prag.\n";
+            } elseif ($threshold > 0 && $missing <= 0) {
+                $cartBlock .= "Clientul are deja pragul de livrare gratuită atins — felicită-l subtil dacă e relevant.\n";
+            }
+            $extraContext .= $cartBlock;
+        }
+
         // ── Update conversation focus based on raw user message + detected intents ──
         try {
             $focusService->updateFocus($conversation, $userMessage, $detectedIntents ?? []);
@@ -2217,23 +2239,40 @@ class ChatbotApiController extends Controller
      *                           declined — e.g. out of stock).
      * @return array<int, array{label:string, text:string}>
      */
-    private function buildFollowupQuickReplies(Bot $bot, array $pageContext, array $products, string $response): array
+    private function buildFollowupQuickReplies(Bot $bot, array $pageContext, array $products, string $response, ?Conversation $conversation = null): array
     {
         $pageType = (string) ($pageContext['page_type'] ?? '');
-        if ($pageType === '' || $pageType === 'general' || $pageType === 'home') {
+        if ($pageType === '' || $pageType === 'home') {
             return [];
         }
 
-        // If the bot said something bailing ("nu am acea informație",
-        // "contactați-ne", "nu pot") the last thing the UI needs is a
-        // chip strip pushing the caller forward. Keep it tight.
+        // G5: bail-signal detection. When the bot bails ("nu am acea
+        // informație", "contactați-ne", "nu pot răspunde") skip the
+        // normal chip strip and instead surface a single lead-capture
+        // chip so the user isn't left with a dead-end conversation.
         $responseLower = mb_strtolower($response);
         $bailSignals = ['nu am acea informați', 'contactați-ne', 'nu pot răspunde', 'voi reveni'];
         foreach ($bailSignals as $needle) {
-            if ($needle !== '' && str_contains($responseLower, $needle)) return [];
+            if ($needle !== '' && str_contains($responseLower, $needle)) {
+                return [
+                    ['label' => 'Lasă-mi datele', 'text' => 'Vreau să mă contactați voi — iau în jos datele mele.'],
+                ];
+            }
         }
 
         $replies = [];
+
+        // G7: memory-light. If we have a remembered product from a
+        // prior turn AND the user is on a non-product page now, offer
+        // a "reia produsul" chip so the conversation feels continuous.
+        $lastProduct = null;
+        if ($conversation) {
+            $meta = $conversation->metadata ?? [];
+            $lp = $meta['last_product_context'] ?? null;
+            if (is_array($lp) && !empty($lp['name'])) {
+                $lastProduct = $lp;
+            }
+        }
 
         if ($pageType === 'product' && !empty($products)) {
             // Product page + bot just returned product cards → convert the
@@ -2245,12 +2284,33 @@ class ChatbotApiController extends Controller
             ];
         } elseif ($pageType === 'cart') {
             $cart = $pageContext['cart_context'] ?? null;
+            $missing = is_array($cart) ? (float) ($cart['missing_amount_for_free_shipping'] ?? 0) : 0;
+            $threshold = is_array($cart) ? (float) ($cart['shipping_threshold'] ?? 0) : 0;
+            $currency = is_array($cart) ? (string) ($cart['currency'] ?? 'RON') : 'RON';
+            $currLabel = strtoupper($currency) === 'RON' ? 'lei' : $currency;
+
             $replies = [
                 ['label' => 'Livrare gratuită?',    'text' => 'Ajung la pragul de livrare gratuită? Cât mai lipsește?'],
                 ['label' => 'Accesorii compatibile', 'text' => 'Ce accesorii recomanzi să mai adaug?'],
                 ['label' => 'Cod promo activ?',      'text' => 'Există un cod promo pe care îl pot aplica?'],
                 ['label' => 'Finalizează comanda',   'text' => 'Ghidează-mă să finalizez comanda.'],
             ];
+
+            // G1: when the plugin reports a shipping threshold and the
+            // cart is sub-threshold, replace the generic chips with
+            // threshold-aware conversion chips. The LLM already has
+            // the threshold in context (injected via page_context in
+            // preprocessMessage), so these chips bootstrap the upsell.
+            if ($missing > 0 && $missing < $threshold) {
+                $missingFmt = number_format($missing, 2, ',', '.');
+                $replies = [
+                    ['label' => "Până la livrare gratuită", 'text' => "Îmi lipsesc {$missingFmt} {$currLabel} până la livrare gratuită. Ce îmi recomanzi să adaug?"],
+                    ['label' => 'Ceva ieftin ca top-up',   'text' => "Recomandă-mi 2 produse ieftine care să îmi completeze comanda până la pragul de livrare gratuită."],
+                    ['label' => 'Cod promo activ?',        'text' => 'Există un cod promo pe care îl pot aplica?'],
+                    ['label' => 'Finalizează oricum',      'text' => 'Finalizez oricum — ghidează-mă.'],
+                ];
+            }
+
             if (is_array($cart) && (int) ($cart['items_count'] ?? 0) === 0) {
                 $replies = [
                     ['label' => 'Recomandă-mi ceva', 'text' => 'Recomandă-mi 3 produse bune acum.'],
@@ -2277,6 +2337,23 @@ class ChatbotApiController extends Controller
                 ['label' => 'Pe buget',        'text' => 'Caut o variantă pe buget.'],
                 ['label' => 'Pentru 2 adulți', 'text' => 'Vreau pentru 2 adulți.'],
             ];
+        }
+
+        // G7: if we have a remembered product AND there's room AND
+        // we're not already on that product's page, prepend a
+        // continuity chip. Keeps the strip ≤ 4 total — trim the
+        // weakest (last) preset when we inject.
+        if ($lastProduct && $pageType !== 'product' && count($replies) > 0) {
+            $productName = trim((string) $lastProduct['name']);
+            if ($productName !== '') {
+                $short = mb_strlen($productName) > 18 ? mb_substr($productName, 0, 16) . '…' : $productName;
+                $continuity = [
+                    'label' => 'Reia „' . $short . '"',
+                    'text'  => 'Vreau să continuăm discuția despre ' . $productName . '.',
+                ];
+                // Prepend; cap to 4 below.
+                array_unshift($replies, $continuity);
+            }
         }
 
         // Cap labels and texts defensively; mirrors WidgetContextResolver.
