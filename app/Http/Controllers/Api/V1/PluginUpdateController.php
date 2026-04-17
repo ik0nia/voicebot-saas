@@ -23,7 +23,13 @@ class PluginUpdateController extends Controller
         }
 
         $latestVersion = config('sambla.plugin_version');
-        $downloadUrl = url('/downloads/sambla-woocommerce.zip');
+        // Versioned URL — every release gets a cache-fresh path
+        // so Cloudflare/any CDN never serves a stale ZIP. Falls back
+        // to the generic stable URL if the versioned ZIP is missing.
+        $versionedFile = public_path("/downloads/sambla-woocommerce-{$latestVersion}.zip");
+        $downloadUrl = is_file($versionedFile)
+            ? url("/downloads/sambla-woocommerce-{$latestVersion}.zip")
+            : url('/downloads/sambla-woocommerce.zip');
 
         $data = [
             'new_version' => $latestVersion,
