@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\BotResource;
 use App\Models\Bot;
+use App\Services\StructuredPromptBuilder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -74,5 +75,29 @@ class BotApiController extends Controller
         $bot->delete();
 
         return response()->json(['message' => 'Bot deleted.'], 200);
+    }
+
+    /**
+     * Preview the composed structured prompt for a bot.
+     *
+     * Shows each section individually plus the final stitched prompt —
+     * lets operators sanity-check what the PromptBuilder will send before
+     * flipping the use_structured_prompt flag on a live bot.
+     *
+     * Returns the composition even when the flag is off (flag_on reports
+     * runtime behaviour). Callers can therefore dry-run the new format
+     * side-by-side with the current freeform prompt.
+     */
+    public function promptPreview(Request $request, Bot $bot, StructuredPromptBuilder $builder)
+    {
+        if ($bot->tenant_id !== $request->user()->tenant_id) {
+            abort(403);
+        }
+
+        return response()->json([
+            'prompt' => $builder->build($bot),
+            'sections' => $builder->sections($bot),
+            'flag_on' => $bot->usesStructuredPrompt(),
+        ]);
     }
 }

@@ -13,6 +13,7 @@ use App\Models\Tenant;
 use App\Models\Transcript;
 use App\Services\ElevenLabsService;
 use App\Services\PlanLimitService;
+use App\Services\StructuredPromptBuilder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -80,8 +81,17 @@ class RealtimeSessionController extends Controller
             $elevenLabsVoiceId = $bot->clonedVoice->elevenlabs_voice_id;
         }
 
-        // Build system instructions with knowledge context
-        $botPrompt = $bot->system_prompt ?? 'Ești un asistent AI util.';
+        // Build system instructions with knowledge context.
+        // Structured composition is opt-in per bot via settings.use_structured_prompt;
+        // the freeform fallback keeps existing bots unchanged.
+        if ($bot->usesStructuredPrompt()) {
+            $botPrompt = app(StructuredPromptBuilder::class)->build($bot);
+            if (trim($botPrompt) === '') {
+                $botPrompt = $bot->system_prompt ?? 'Ești un asistent AI util.';
+            }
+        } else {
+            $botPrompt = $bot->system_prompt ?? 'Ești un asistent AI util.';
+        }
 
         // Inject knowledge base context + lightweight product info (NOT full catalog)
         $hasProducts = \App\Models\WooCommerceProduct::where('bot_id', $bot->id)->exists();

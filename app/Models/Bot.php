@@ -69,6 +69,17 @@ class Bot extends Model
         return !empty($automations[$key]);
     }
 
+    /**
+     * Feature flag for the structured prompt composition path
+     * (PromptBuilder). Defaults to false so bots keep using the
+     * freeform system_prompt until an operator flips the key on a
+     * per-bot basis — rollout is intentionally opt-in.
+     */
+    public function usesStructuredPrompt(): bool
+    {
+        return (bool) ($this->settings['use_structured_prompt'] ?? false);
+    }
+
     protected static function booted(): void
     {
         static::creating(function (Bot $bot) {
