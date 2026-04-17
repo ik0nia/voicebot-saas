@@ -71,6 +71,12 @@ Route::post('/v1/chatbot/{channel}/message', [ChatbotApiController::class, 'mess
 Route::post('/v1/chatbot/{channel}/message-stream', [ChatbotApiController::class, 'messageStream'])->middleware('throttle:30,1');
 Route::get('/v1/chatbot/{channel}/config', [ChatbotApiController::class, 'config'])->middleware('throttle:60,1');
 Route::get('/v1/chatbot/{channel}/products', [ChatbotApiController::class, 'searchProducts'])->middleware('throttle:30,1');
+
+// Non-LLM booking slot suggestions — widget renders 3-4 clickable
+// buttons without a chat round-trip. Delegates to ComputeAvailability
+// (same code path the LLM tool uses) so the widget always sees the
+// same slots the bot would propose.
+Route::get('/v1/chatbot/{channel}/booking-slots', [\App\Http\Controllers\Api\ChatbotBookingSlotsController::class, 'index'])->middleware('throttle:30,1');
 Route::post('/v1/chatbot/{channel}/feedback', [ChatbotApiController::class, 'feedback'])->middleware('throttle:30,1');
 Route::post('/v1/chatbot/{channel}/rate', [ChatbotApiController::class, 'rateConversation'])->middleware('throttle:10,1');
 

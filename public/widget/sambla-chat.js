@@ -1,3 +1,4 @@
+/* sambla-chat v2.3 — contextual quick replies (W3) */
 (function() {
     'use strict';
 
@@ -82,13 +83,40 @@
     // =========================================================================
     var pageLoadTime = Date.now();
 
+    // W3: page-type detection. Explicit host override wins, then
+    // globals injected by companion plugins, then URL heuristics.
+    // Keep kebab-safe — the backend map uses plain keys.
+    function detectPageType() {
+        try {
+            if (window.samblaPageType && typeof window.samblaPageType === 'string') {
+                return window.samblaPageType;
+            }
+            if (window.samblaProductContext && window.samblaProductContext.product_id) return 'product';
+            if (window.samblaCartContext && (window.samblaCartContext.items_count || window.samblaCartContext.item_count)) return 'cart';
+            var p = (window.location.pathname || '').toLowerCase();
+            if (/(\/product\/|\/produs\/)/.test(p)) return 'product';
+            if (/(\/product-category\/|\/categorie\/|\/shop\/|\/magazin\/)/.test(p)) return 'category';
+            if (/(\/cart\/|\/cos\/?|\/checkout\/)/.test(p)) return 'cart';
+            if (/(\/rezervare|\/booking|\/programare)/.test(p)) return 'booking';
+            if (/(\/hotel|\/camere|\/rezerva-camera|\/restaurant|\/masa|\/tabel)/.test(p)) return 'hospitality';
+            if (p === '/' || p === '') return 'home';
+        } catch(e) {}
+        return 'general';
+    }
+
     function getPageContext() {
         return {
             page_url: window.location.href,
             page_title: document.title || '',
             page_path: window.location.pathname,
             time_on_page: Math.round((Date.now() - pageLoadTime) / 1000),
-            referrer: document.referrer || ''
+            referrer: document.referrer || '',
+            // W3: contextual signals sent with every chat POST so the
+            // backend (and future SSE quick_replies event) can tailor
+            // the bot's behavior per page.
+            page_type: detectPageType(),
+            product_context: (window.samblaProductContext && typeof window.samblaProductContext === 'object') ? window.samblaProductContext : null,
+            cart_context: (window.samblaCartContext && typeof window.samblaCartContext === 'object') ? window.samblaCartContext : null
         };
     }
 
@@ -261,6 +289,11 @@
         try { localStorage.removeItem(OFFLINE_QUEUE_KEY); } catch(e) {}
     }
 
+    // W3: cached contexts payload (by_page_type + default_page_type).
+    // Lives at module scope so both createWidget() and any SSE
+    // handlers can read it. Populated by fetchConfig().
+    var _contextsCache = null;
+
     // Fetch channel config
     function fetchConfig(callback) {
         fetch(config.apiBase + '/api/v1/chatbot/' + config.channelId + '/config', {
@@ -272,6 +305,11 @@
             if (data.bot_name) config.botName = data.bot_name;
             if (data.greeting) config.greeting = data.greeting;
             if (data.color) config.color = data.color;
+            // W3: cache contexts for quick-reply chip rendering.
+            // Shape: { by_page_type: { general|product|... : { opening, quick_replies: [{label,text}] } }, default_page_type: 'general' }
+            if (data && data.contexts && typeof data.contexts === 'object') {
+                _contextsCache = data.contexts;
+            }
             if (callback) callback(data);
         })
         .catch(function() {
