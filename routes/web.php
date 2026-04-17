@@ -189,6 +189,14 @@ Route::any('/dashboard/boti/{rest?}', function ($rest = '') {
 
 // Setup wizard (onboarding). The wizard seeds a bot + prompt and sets
 // tenant-level onboarding flags. Only admin runs onboarding.
+// Bot Workspace — unified single-screen overview per bot.
+// Additive; all legacy dashboard routes remain canonical edit
+// surfaces. Workspace links out to them via "Deschide" buttons.
+Route::middleware('auth')->group(function () {
+    Route::get('/dashboard/workspace/{bot}', [\App\Http\Controllers\Dashboard\WorkspaceController::class, 'show'])
+        ->name('dashboard.workspace.show');
+});
+
 // Onboarding v2 — runs in parallel with legacy /dashboard/setup.
 // Tenants reach it via direct link (admin-gated rollout) until
 // the onboarding_v2_enabled platform flag is flipped for everyone.
