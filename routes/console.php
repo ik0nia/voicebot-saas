@@ -29,6 +29,11 @@ Schedule::command('costs:rollup')->dailyAt('00:05')->withoutOverlapping();
 // policy at /confidentialitate.
 Schedule::command('privacy:retention')->dailyAt('03:25')->withoutOverlapping();
 
+// "What the agent earned" daily rollup — companion to costs:rollup
+// so the admin reports can show spent-vs-earned side by side.
+// Runs 10 min after costs rollup so both numbers land together.
+Schedule::command('outcomes:rollup')->dailyAt('00:15')->withoutOverlapping();
+
 // Social media: generate posts daily at 07:00
 // PAUSED 2026-04-14: backlog de 306 grupuri draft + texte/imagini cu limbaj vechi.
 // Reactivează după curățarea backlog-ului și după fix logo (image-to-image cu ref).
