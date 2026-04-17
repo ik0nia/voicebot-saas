@@ -56,6 +56,26 @@
                     Agenți AI
                 </a>
 
+                {{-- Workspace — resolves to the tenant's first active
+                     bot's workspace. Link hidden when no bot exists.
+                     Additive: old "Agenți AI" entry stays canonical
+                     for list + multi-bot navigation. --}}
+                @php
+                    $firstBotId = \App\Models\Bot::where('tenant_id', auth()->user()->tenant_id ?? 0)
+                        ->where('is_active', true)->orderBy('id')->value('id');
+                @endphp
+                @if($firstBotId)
+                    <a href="/dashboard/workspace/{{ $firstBotId }}"
+                       class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                              {{ request()->is('dashboard/workspace*') ? 'bg-red-50 text-red-800 border-l-[3px] border-red-700 pl-[9px] font-semibold' : 'text-slate-600 hover:bg-red-50 hover:text-red-800' }}">
+                        <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                        Workspace
+                        <span class="ml-auto inline-flex items-center px-1.5 py-0 rounded-full bg-indigo-50 text-indigo-700 text-[9px] font-semibold uppercase">Nou</span>
+                    </a>
+                @endif
+
                 {{-- Sites --}}
                 <a href="/dashboard/sites"
                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
