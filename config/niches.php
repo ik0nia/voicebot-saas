@@ -93,15 +93,21 @@ PROMPT,
         'chat_tools'     => ['search_products', 'get_product_details', 'check_stock', 'get_order_status'],
         'onboarding_steps' => ['connect_store', 'test_demo'],
         'suggested_faqs' => [
-            ['question' => 'Cât durează livrarea?', 'answer' => 'Livrăm în 1-3 zile lucrătoare prin curier în toată țara. Pentru București livrarea poate fi chiar a doua zi.'],
-            ['question' => 'Acceptați plata cu cardul?', 'answer' => 'Da, acceptăm Visa și Mastercard, plata la livrare și transfer bancar.'],
-            ['question' => 'Pot returna un produs?', 'answer' => 'Da, ai 14 zile la dispoziție pentru retur fără motiv, conform legii.'],
-            ['question' => 'Cum știu dacă produsul e pe stoc?', 'answer' => 'Stocul apare în timp real pe pagina fiecărui produs. Pot verifica pentru tine dacă îmi spui ce anume cauți.'],
-            ['question' => 'Aveți factură pentru firmă?', 'answer' => 'Da, emitem factură fiscală pe firmă — completezi datele în checkout sau îmi spui mie CUI-ul și le trimit colegilor.'],
-            ['question' => 'Cât costă transportul?', 'answer' => 'Transportul e gratuit peste 200 de lei. Sub acest prag costul se afișează în coș înainte de finalizare.'],
-            ['question' => 'Pot schimba produsul cu altă mărime?', 'answer' => 'Da, schimbul e posibil în 14 zile cu produsul neutilizat și în ambalajul original.'],
-            ['question' => 'Unde e comanda mea?', 'answer' => 'Îmi spui numărul comenzii sau emailul și verific statusul imediat.'],
-            ['question' => 'Aveți și magazin fizic?', 'answer' => 'Îți spun imediat dacă avem punct de ridicare sau showroom în orașul tău.'],
+            // IMPORTANT: aceste FAQs sunt SUGESTII pre-populate la creare bot.
+            // Sunt scrise să nu facă promisiuni care depind de fiecare magazin
+            // (termen livrare, cost transport, prag gratuitate, metode plată).
+            // Default-urile de aici NU fac claim-uri specifice — direcționează
+            // întrebarea către KB / pagina de produs. Tenantul customizează
+            // apoi cu valorile lui exacte din dashboard după creare.
+            ['question' => 'Cât durează livrarea?', 'answer' => 'Termenele de livrare sunt afișate pe pagina de comandă. Îți pot spune mai exact dacă îmi zici localitatea de livrare.'],
+            ['question' => 'Cât costă transportul?', 'answer' => 'Costul de transport se calculează automat în coș, în funcție de produse și zona de livrare. Îți apare înainte să finalizezi comanda.'],
+            ['question' => 'Ce metode de plată acceptați?', 'answer' => 'Metodele de plată disponibile apar la checkout. Spune-mi ce ai în vedere (card, ramburs, transfer) și îți confirm dacă e disponibilă.'],
+            ['question' => 'Pot returna un produs?', 'answer' => 'Conform legii, ai dreptul la retur în 14 zile pentru produsele nefolosite și în ambalajul original. Îți trimit echipa pașii concreți.'],
+            ['question' => 'Cum știu dacă produsul e pe stoc?', 'answer' => 'Stocul apare pe pagina fiecărui produs în timp real. Dacă vrei, verific eu dacă îmi spui ce cauți.'],
+            ['question' => 'Aveți factură pentru firmă?', 'answer' => 'Poți completa datele firmei în checkout pentru factură. Îți trimit echipa detaliile exacte dacă ai nevoie.'],
+            ['question' => 'Pot schimba produsul cu altă mărime?', 'answer' => 'În general, schimbul e posibil în intervalul legal de retur (14 zile), cu produsul neutilizat. Confirmăm exact pașii la nevoie.'],
+            ['question' => 'Unde e comanda mea?', 'answer' => 'Spune-mi numărul comenzii sau emailul cu care ai comandat și verific statusul imediat.'],
+            ['question' => 'Aveți și magazin fizic?', 'answer' => 'Spune-mi orașul tău și îți confirm dacă avem punct de ridicare sau showroom în zonă.'],
         ],
         'standard_rules' => [
             // "Nu inventa produse/prețuri/stoc" intentionally omitted —
