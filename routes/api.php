@@ -101,6 +101,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     // Bots
     Route::get('bots', [BotApiController::class, 'index'])->middleware('abilities:bots:read');
     Route::get('bots/{bot}', [BotApiController::class, 'show'])->middleware('abilities:bots:read');
+    Route::get('bots/{bot}/prompt-preview', [BotApiController::class, 'promptPreview'])->middleware('abilities:bots:read');
     Route::post('bots', [BotApiController::class, 'store'])->middleware('abilities:bots:write');
     Route::put('bots/{bot}', [BotApiController::class, 'update'])->middleware('abilities:bots:write');
     Route::patch('bots/{bot}', [BotApiController::class, 'update'])->middleware('abilities:bots:write');

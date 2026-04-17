@@ -18,6 +18,7 @@ use App\Services\PlanLimitService;
 use App\Services\ConversationEventService;
 use App\Services\EventTaxonomy;
 use App\Services\ProductContextService;
+use App\Services\StructuredPromptBuilder;
 use App\Services\PromptGuardrails;
 use App\Services\TokenCounterService;
 use App\Models\BotPromptVersion;
@@ -647,9 +648,23 @@ class ChatbotApiController extends Controller
             // Use prompt versioning (A/B testing) if available
             $promptVersion = BotPromptVersion::selectForBot($bot->id);
 
-            // Cache static system prompt + product rules per bot
-            $systemPrompt = Cache::remember("bot_system_prompt_{$bot->id}", now()->addMinutes(10), function () use ($bot, $promptVersion) {
-                $prompt = $promptVersion?->system_prompt ?? $bot->system_prompt ?? 'Ești un asistent virtual. Răspunde scurt și util.';
+            // Cache static system prompt + product rules per bot.
+            // Flag state is baked into the cache key so toggling
+            // use_structured_prompt on a live bot doesn't keep serving
+            // the pre-toggle composition for the 10-minute TTL.
+            $structuredOn = $bot->usesStructuredPrompt();
+            $cacheKey = "bot_system_prompt_{$bot->id}_" . ($structuredOn ? 'structured' : 'legacy');
+            $systemPrompt = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($bot, $promptVersion, $structuredOn) {
+                if ($structuredOn) {
+                    $prompt = app(StructuredPromptBuilder::class)->build($bot);
+                    if (trim($prompt) === '') {
+                        // Empty structured config — fall back to freeform
+                        // rather than sending an empty system prompt.
+                        $prompt = $promptVersion?->system_prompt ?? $bot->system_prompt ?? 'Ești un asistent virtual. Răspunde scurt și util.';
+                    }
+                } else {
+                    $prompt = $promptVersion?->system_prompt ?? $bot->system_prompt ?? 'Ești un asistent virtual. Răspunde scurt și util.';
+                }
 
                 $hasProducts = false;
                 try {
@@ -1775,8 +1790,17 @@ class ChatbotApiController extends Controller
 
         $promptVersion = BotPromptVersion::selectForBot($bot->id);
 
-        $systemPrompt = Cache::remember("bot_system_prompt_{$bot->id}", now()->addMinutes(10), function () use ($bot, $promptVersion) {
-            $prompt = $promptVersion?->system_prompt ?? $bot->system_prompt ?? 'Ești un asistent virtual. Răspunde scurt și util.';
+        $structuredOn = $bot->usesStructuredPrompt();
+        $cacheKey = "bot_system_prompt_{$bot->id}_" . ($structuredOn ? 'structured' : 'legacy');
+        $systemPrompt = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($bot, $promptVersion, $structuredOn) {
+            if ($structuredOn) {
+                $prompt = app(StructuredPromptBuilder::class)->build($bot);
+                if (trim($prompt) === '') {
+                    $prompt = $promptVersion?->system_prompt ?? $bot->system_prompt ?? 'Ești un asistent virtual. Răspunde scurt și util.';
+                }
+            } else {
+                $prompt = $promptVersion?->system_prompt ?? $bot->system_prompt ?? 'Ești un asistent virtual. Răspunde scurt și util.';
+            }
 
             $hasProducts = false;
             try {
