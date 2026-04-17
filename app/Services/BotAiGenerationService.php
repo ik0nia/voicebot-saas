@@ -2,10 +2,13 @@
 
 namespace App\Services;
 
+use App\Exceptions\FullProfileDailyCapException;
 use App\Models\AiApiMetric;
 use App\Models\Bot;
 use App\Models\ModelPricing;
 use App\Services\Cost\BnrExchangeRate;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -37,6 +40,23 @@ class BotAiGenerationService
 {
     public const MODEL = 'claude-haiku-4-5-20251001';
     public const PURPOSE = 'agent_setup_ai';
+
+    /**
+     * Deterministic targets — same inputs should yield the same
+     * output within a short window, so we serve them from Redis to
+     * skip the LLM on repeat clicks. Iteration B.
+     *
+     * `full_profile` is intentionally NOT cached: it's advertised as
+     * "generate everything fresh" and users regenerate hoping for a
+     * different take. `rephrase` depends on the user's pasted text
+     * (already passed through via `hint`) so caching offers little.
+     */
+    private const CACHEABLE_TARGETS = [
+        'faq_bulk',
+        'rules_suggest',
+        'tone_suggest',
+        'extras_suggest',
+    ];
 
     /**
      * Approximate max tokens per target. Kept intentionally generous —
@@ -89,6 +109,73 @@ class BotAiGenerationService
         $sanitizedContext = $this->sanitizeContextArray($context);
         $count = max(1, min(20, $count));
 
+        // ── Iteration B: per-bot daily cap for the expensive target ──
+        // full_profile is the flagship "generate everything" button —
+        // cheap per-click but a runaway script can still rack up real
+        // spend on Haiku 4.5. Cap is enforced at the service layer so
+        // both the Sanctum API and the session dashboard route share it.
+        if ($target === 'full_profile') {
+            $dailyCap = (int) config('bot_ai.max_full_profile_per_bot_per_day', 20);
+            if ($dailyCap > 0) {
+                $usedToday = AiApiMetric::query()
+                    ->where('bot_id', $bot->id)
+                    ->where('purpose', self::PURPOSE)
+                    ->whereDate('created_at', today())
+                    ->where(function ($q) {
+                        // Postgres JSON containment; portable fallback for sqlite tests.
+                        $driver = DB::connection()->getDriverName();
+                        if ($driver === 'pgsql') {
+                            $q->whereRaw("metadata->>'target' = ?", ['full_profile']);
+                        } else {
+                            $q->where('metadata', 'like', '%"target":"full_profile"%');
+                        }
+                    })
+                    ->count();
+                if ($usedToday >= $dailyCap) {
+                    throw new FullProfileDailyCapException(
+                        "Daily profile generation limit reached for this bot",
+                        $dailyCap,
+                        $usedToday,
+                    );
+                }
+            }
+        }
+
+        // ── Iteration B: Redis cache on deterministic targets ──
+        // Skips the LLM entirely for repeat clicks. Still writes a
+        // zero-cost metric row with `from_cache=true` so admin
+        // reports see the request and can distinguish it from a real
+        // call.
+        $cacheKey = $this->cacheKey($bot, $target, $count, $sanitizedHint, $sanitizedContext);
+        if ($cacheKey !== null) {
+            try {
+                $cached = Cache::get($cacheKey);
+            } catch (\Throwable $e) {
+                $cached = null;
+            }
+            if (is_array($cached) && array_key_exists('generated', $cached)) {
+                $this->logMetric(
+                    bot: $bot,
+                    target: $target,
+                    userId: $userId,
+                    usage: ['input' => 0, 'output' => 0, 'cache_read' => 0, 'cache_write' => 0],
+                    costCents: 0.0,
+                    responseTimeMs: 0,
+                    hint: $sanitizedHint,
+                    count: $count,
+                    status: 'success',
+                    fromCache: true,
+                );
+                return [
+                    'generated' => $cached['generated'],
+                    'cost_ron' => 0.0,
+                    'tokens_in' => 0,
+                    'tokens_out' => 0,
+                    'from_cache' => true,
+                ];
+            }
+        }
+
         [$systemBlocks, $userMessage] = $this->buildPrompt(
             target: $target,
             niche: $niche,
@@ -123,12 +210,49 @@ class BotAiGenerationService
             status: 'success',
         );
 
+        // Populate the cache after a successful call so the next
+        // identical click within the TTL skips the LLM.
+        if ($cacheKey !== null) {
+            $ttl = (int) config('bot_ai.response_cache_ttl_seconds', 1800);
+            if ($ttl > 0) {
+                try {
+                    Cache::put($cacheKey, ['generated' => $generated], $ttl);
+                } catch (\Throwable $e) {
+                    // Cache write failed — nothing to do, we already
+                    // returned a real result.
+                }
+            }
+        }
+
         return [
             'generated' => $generated,
             'cost_ron' => $costRon,
             'tokens_in' => $usage['input'] + $usage['cache_read'] + $usage['cache_write'],
             'tokens_out' => $usage['output'],
         ];
+    }
+
+    /**
+     * Compose a deterministic cache key for cacheable targets. Returns
+     * null for targets we explicitly don't cache (full_profile,
+     * rephrase, per-item faq_question etc.) or when caching is disabled.
+     */
+    private function cacheKey(Bot $bot, string $target, int $count, string $hint, array $context): ?string
+    {
+        if (!in_array($target, self::CACHEABLE_TARGETS, true)) {
+            return null;
+        }
+        if ((int) config('bot_ai.response_cache_ttl_seconds', 1800) <= 0) {
+            return null;
+        }
+        $niche = (string) ($bot->niche_slug ?? 'generic');
+        $payload = [
+            'hint' => $hint,
+            'context' => $context,
+            'niche_addon' => config('niches.' . $niche . '.prompt_addon', ''),
+        ];
+        $hintHash = substr(md5(json_encode($payload, JSON_UNESCAPED_UNICODE)), 0, 16);
+        return "bot_ai:{$niche}:{$target}:{$count}:{$hintHash}";
     }
 
     // ───────────────────────── prompt assembly ─────────────────────────
@@ -529,6 +653,7 @@ class BotAiGenerationService
         string $hint,
         int $count,
         string $status,
+        bool $fromCache = false,
     ): void {
         try {
             AiApiMetric::create([
@@ -552,6 +677,7 @@ class BotAiGenerationService
                     'cache_read_tokens' => $usage['cache_read'],
                     'cache_write_tokens' => $usage['cache_write'],
                     'raw_input_tokens' => $usage['input'],
+                    'from_cache' => $fromCache,
                 ],
             ]);
         } catch (\Throwable $e) {

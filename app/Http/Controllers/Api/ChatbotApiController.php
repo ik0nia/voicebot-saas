@@ -12,6 +12,7 @@ use App\Models\WooCommerceProduct;
 use App\Services\ChatbotRequestLogger;
 use App\Services\ChatCompletionService;
 use App\Services\ChatModelRouter;
+use App\Services\Cost\DailyCostCeiling;
 use App\Services\IntentDetectionService;
 use App\Services\KnowledgeSearchService;
 use App\Services\PlanLimitService;
@@ -130,6 +131,20 @@ class ChatbotApiController extends Controller
                     }
                     break;
             }
+        }
+
+        // ── Daily cost ceiling (Iteration B, feature-flagged) ──
+        // Checked AFTER preprocessing so session/conversation are intact
+        // but BEFORE we pay for an LLM call. The ceiling is a hard stop:
+        // we return 429 and let the widget show a "limit reached" state.
+        $ceilingResult = app(DailyCostCeiling::class)->canSpend((int) $bot->tenant_id);
+        if (!$ceilingResult['allowed']) {
+            return response()->json([
+                'error' => 'Daily AI limit reached',
+                'limit_ron' => $ceilingResult['limit_ron'],
+                'spent_today_ron' => $ceilingResult['spent_today_ron'],
+                'limit_reached' => true,
+            ], 429);
         }
 
         // Generate AI response with cost tracking
@@ -1107,6 +1122,22 @@ class ChatbotApiController extends Controller
             }
         }
 
+        // ── Daily cost ceiling (Iteration B, feature-flagged) ──
+        // For streaming we return a short non-200 stream with an error
+        // event so the widget can show the limit message in-flow
+        // (some front-ends can't read a JSON 429 from an EventSource).
+        $ceilingResult = app(DailyCostCeiling::class)->canSpend((int) $bot->tenant_id);
+        if (!$ceilingResult['allowed']) {
+            return new StreamedResponse(function () use ($ceilingResult) {
+                $this->sendSSE('error', [
+                    'message' => 'Daily AI limit reached',
+                    'limit_reached' => true,
+                    'limit_ron' => $ceilingResult['limit_ron'],
+                    'spent_today_ron' => $ceilingResult['spent_today_ron'],
+                ]);
+            }, 429, $this->sseHeaders());
+        }
+
         return new StreamedResponse(function () use (
             $bot, $channel, $conversation, $userMessage, $extraContext,
             $sessionId, $sessionToken, $sessionExpired, $products,
@@ -1141,6 +1172,11 @@ class ChatbotApiController extends Controller
 
                 $fullContent = '';
                 $startTime = microtime(true);
+                // Iteration B — track usage so we can insert an
+                // ai_api_metrics row when the stream finishes.
+                $streamInputTokens = 0;
+                $streamOutputTokens = 0;
+                $streamPartial = false;
 
                 if ($provider === 'openai') {
                     $stream = OpenAI::chat()->createStreamed([
@@ -1148,6 +1184,11 @@ class ChatbotApiController extends Controller
                         'messages' => $messages,
                         'max_tokens' => $maxTokens,
                         'temperature' => $temperature,
+                        // Ask OpenAI to emit a final usage chunk. Newer
+                        // API versions support stream_options.include_usage;
+                        // older ones silently ignore it (we degrade to
+                        // tokenizer estimation).
+                        'stream_options' => ['include_usage' => true],
                     ]);
 
                     foreach ($stream as $response) {
@@ -1156,6 +1197,13 @@ class ChatbotApiController extends Controller
                             $fullContent .= $delta;
                             $this->sendSSE('delta', ['content' => $delta]);
                         }
+                        // Final chunk: OpenAI surfaces total usage via
+                        // ->usage when include_usage is set. Keep
+                        // overwriting so the last-seen value wins.
+                        if (isset($response->usage)) {
+                            $streamInputTokens  = (int) ($response->usage->promptTokens ?? $response->usage->prompt_tokens ?? 0);
+                            $streamOutputTokens = (int) ($response->usage->completionTokens ?? $response->usage->completion_tokens ?? 0);
+                        }
                     }
                 } else {
                     // Anthropic streaming
@@ -1163,14 +1211,18 @@ class ChatbotApiController extends Controller
                         ?: config('services.anthropic.api_key', env('ANTHROPIC_API_KEY'));
 
                     if (empty($anthropicKey)) {
-                        // Fallback to OpenAI
+                        // Fallback to OpenAI — cheaper tier, not gpt-4o.
+                        // Previously hard-coded `gpt-4o` which ~15x'd the
+                        // cost for the fallback path; mini is plenty
+                        // for a degraded-provider response.
                         $provider = 'openai';
-                        $model = 'gpt-4o';
+                        $model = 'gpt-4o-mini';
                         $stream = OpenAI::chat()->createStreamed([
                             'model' => $model,
                             'messages' => $messages,
                             'max_tokens' => $maxTokens,
                             'temperature' => $temperature,
+                            'stream_options' => ['include_usage' => true],
                         ]);
 
                         foreach ($stream as $response) {
@@ -1178,6 +1230,10 @@ class ChatbotApiController extends Controller
                             if ($delta !== '') {
                                 $fullContent .= $delta;
                                 $this->sendSSE('delta', ['content' => $delta]);
+                            }
+                            if (isset($response->usage)) {
+                                $streamInputTokens  = (int) ($response->usage->promptTokens ?? $response->usage->prompt_tokens ?? 0);
+                                $streamOutputTokens = (int) ($response->usage->completionTokens ?? $response->usage->completion_tokens ?? 0);
                             }
                         }
                     } else {
@@ -1205,13 +1261,60 @@ class ChatbotApiController extends Controller
                         ]);
 
                         foreach ($stream as $response) {
-                            if ($response->type === 'content_block_delta') {
+                            // Anthropic emits `message_start` with
+                            // input tokens and `message_delta` with the
+                            // running output token count. The final
+                            // `message_stop` carries totals via
+                            // message.usage on `message_start`, and we
+                            // accumulate output from deltas.
+                            $type = $response->type ?? null;
+                            if ($type === 'content_block_delta') {
                                 $delta = $response->delta->text ?? '';
                                 if ($delta !== '') {
                                     $fullContent .= $delta;
                                     $this->sendSSE('delta', ['content' => $delta]);
                                 }
+                            } elseif ($type === 'message_start') {
+                                $usage = $response->message->usage ?? null;
+                                if ($usage) {
+                                    $streamInputTokens  = (int) ($usage->inputTokens ?? $usage->input_tokens ?? 0);
+                                    $streamOutputTokens = (int) ($usage->outputTokens ?? $usage->output_tokens ?? 0);
+                                }
+                            } elseif ($type === 'message_delta') {
+                                $usage = $response->usage ?? null;
+                                if ($usage) {
+                                    // Anthropic reports *cumulative*
+                                    // output tokens in message_delta —
+                                    // replace, don't add.
+                                    $streamOutputTokens = (int) ($usage->outputTokens ?? $usage->output_tokens ?? $streamOutputTokens);
+                                }
                             }
+                        }
+                    }
+                }
+
+                // Fallback: if the provider didn't give us token counts
+                // (older SDK, partial stream), estimate from content so
+                // the spend row isn't silently zeroed. Mark it partial
+                // in metadata so ops can tell real counts from guesses.
+                if ($streamInputTokens === 0 || $streamOutputTokens === 0) {
+                    $streamPartial = true;
+                    try {
+                        $tokenizer = app(\App\Services\TokenizerService::class);
+                        if ($streamInputTokens === 0) {
+                            $streamInputTokens = $tokenizer->countMessages($messages);
+                        }
+                        if ($streamOutputTokens === 0) {
+                            $streamOutputTokens = $tokenizer->count($fullContent);
+                        }
+                    } catch (\Throwable $e) {
+                        // Rough char/4 guess — better than zero.
+                        if ($streamInputTokens === 0) {
+                            $encoded = array_sum(array_map(fn ($m) => mb_strlen((string) ($m['content'] ?? '')), $messages));
+                            $streamInputTokens = (int) ceil($encoded / 4);
+                        }
+                        if ($streamOutputTokens === 0) {
+                            $streamOutputTokens = (int) ceil(mb_strlen($fullContent) / 4);
                         }
                     }
                 }
@@ -1244,13 +1347,18 @@ class ChatbotApiController extends Controller
                 }
 
                 // ── Post-processing: save messages, track events (same as message()) ──
+                // Iteration B: compute cost from captured usage and
+                // record both the per-message row AND an ai_api_metrics
+                // row so streaming spend is visible in reports.
+                $streamCostCents = $this->computeStreamCost($model, $streamInputTokens, $streamOutputTokens);
+
                 $aiResult = [
                     'content' => $fullContent,
                     'model' => $model,
                     'provider' => $provider,
-                    'input_tokens' => 0,  // Not available in streaming mode
-                    'output_tokens' => 0,
-                    'cost_cents' => 0,
+                    'input_tokens' => $streamInputTokens,
+                    'output_tokens' => $streamOutputTokens,
+                    'cost_cents' => $streamCostCents,
                 ];
 
                 $botMessage = Message::create([
@@ -1260,14 +1368,43 @@ class ChatbotApiController extends Controller
                     'content_type' => 'text',
                     'ai_model' => $model,
                     'ai_provider' => $provider,
-                    'input_tokens' => 0,
-                    'output_tokens' => 0,
-                    'cost_cents' => 0,
+                    'input_tokens' => $streamInputTokens,
+                    'output_tokens' => $streamOutputTokens,
+                    'cost_cents' => $streamCostCents,
                     'metadata' => !empty($products) ? ['products' => $products] : null,
                     'detected_intents' => $detectedIntents,
                     'pipelines_executed' => $pipelinesExecuted,
                     'sent_at' => now(),
                 ]);
+
+                // Insert the cost row. Kept try/catch-bounded so a
+                // metrics write failure never kills the response stream.
+                try {
+                    \App\Models\AiApiMetric::create([
+                        'provider' => $provider,
+                        'model' => $model,
+                        'input_tokens' => $streamInputTokens,
+                        'output_tokens' => $streamOutputTokens,
+                        'cost_cents' => $streamCostCents,
+                        'response_time_ms' => $responseTimeMs,
+                        'status' => 'success',
+                        'error_type' => null,
+                        'bot_id' => $bot->id,
+                        'tenant_id' => $bot->tenant_id,
+                        'conversation_id' => $conversation->id,
+                        'message_id' => $botMessage->id,
+                        'purpose' => 'chat_stream',
+                        'metadata' => [
+                            'partial' => $streamPartial,
+                            'channel_id' => $conversation->channel_id,
+                        ],
+                    ]);
+                } catch (\Throwable $e) {
+                    Log::warning('messageStream: failed to record ai_api_metrics', [
+                        'error' => $e->getMessage(),
+                        'bot_id' => $bot->id,
+                    ]);
+                }
 
                 $conversation->increment('messages_count');
                 $conversation->update(['last_activity_at' => now()]);
@@ -1298,9 +1435,9 @@ class ChatbotApiController extends Controller
                 $eventService->track(EventTaxonomy::MESSAGE_REPLIED, [
                     'model' => $model,
                     'provider' => $provider,
-                    'input_tokens' => 0,
-                    'output_tokens' => 0,
-                    'cost_cents' => 0,
+                    'input_tokens' => $streamInputTokens,
+                    'output_tokens' => $streamOutputTokens,
+                    'cost_cents' => $streamCostCents,
                     'has_products' => !empty($products),
                     'products_count' => count($products),
                 ], array_merge($eventCtx, [
@@ -1350,6 +1487,32 @@ class ChatbotApiController extends Controller
                     'error' => $e->getMessage(),
                     'bot_id' => $bot->id ?? null,
                 ]);
+                // Log partial spend even on failure — if the stream got
+                // any usage info before the exception, that spend
+                // already happened on the provider side.
+                try {
+                    \App\Models\AiApiMetric::create([
+                        'provider' => $provider ?? 'openai',
+                        'model' => $model ?? 'unknown',
+                        'input_tokens' => $streamInputTokens ?? 0,
+                        'output_tokens' => $streamOutputTokens ?? 0,
+                        'cost_cents' => isset($streamInputTokens, $streamOutputTokens, $model)
+                            ? $this->computeStreamCost($model, $streamInputTokens, $streamOutputTokens)
+                            : 0,
+                        'status' => 'error',
+                        'error_type' => class_basename($e),
+                        'bot_id' => $bot->id ?? null,
+                        'tenant_id' => $bot->tenant_id ?? null,
+                        'conversation_id' => $conversation->id ?? null,
+                        'purpose' => 'chat_stream',
+                        'metadata' => [
+                            'partial' => true,
+                            'reason' => 'stream_exception',
+                        ],
+                    ]);
+                } catch (\Throwable $ignored) {
+                    // Logging failure can't be allowed to mask the real one.
+                }
                 $this->sendSSE('error', ['message' => 'A apărut o eroare. Te rog încearcă din nou.']);
             }
         }, 200, $this->sseHeaders());
@@ -1927,6 +2090,34 @@ class ChatbotApiController extends Controller
             'messages' => $messages,
             'model_config' => $modelConfig,
         ];
+    }
+
+    /**
+     * Compute the USD-cents cost of a streamed chat response.
+     *
+     * Uses the model_pricing DB table (via ModelPricing::getPricing)
+     * first, then falls back to the hard-coded table kept here for
+     * parity with ChatCompletionService. cost_cents is stored as a
+     * decimal(,4) in ai_api_metrics so fractional cents survive.
+     */
+    private function computeStreamCost(string $model, int $inputTokens, int $outputTokens): float
+    {
+        if ($inputTokens === 0 && $outputTokens === 0) {
+            return 0.0;
+        }
+        $pricing = \App\Models\ModelPricing::getPricing($model);
+        if (!$pricing) {
+            $fallback = [
+                'gpt-4o-mini'               => ['input' => 0.15, 'output' => 0.60],
+                'gpt-4o'                    => ['input' => 2.50, 'output' => 10.00],
+                'claude-haiku-4-5-20251001' => ['input' => 1.00, 'output' => 5.00],
+                'claude-sonnet-4-5-20241022'=> ['input' => 3.00, 'output' => 15.00],
+            ];
+            $pricing = $fallback[$model] ?? ['input' => 1.0, 'output' => 3.0];
+        }
+        $input  = ($inputTokens / 1_000_000) * (float) $pricing['input']  * 100;
+        $output = ($outputTokens / 1_000_000) * (float) $pricing['output'] * 100;
+        return round($input + $output, 4);
     }
 
     /**

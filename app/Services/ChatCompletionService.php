@@ -53,6 +53,45 @@ class ChatCompletionService
         $maxTokens = $modelConfig['max_tokens'] ?? 500;
         $temperature = $modelConfig['temperature'] ?? 0.6;
 
+        // ── Iteration B: idempotency ──
+        // A request_id passed in $options (callers will forward the
+        // inbound X-Request-Id / UUID) lets us dedupe retries on the
+        // same logical request. If a previous attempt already cached a
+        // result, return it verbatim — this closes the retry-multiplier
+        // window where an HTTP retry on our end spawned a fresh
+        // 3-attempt storm on the provider.
+        $requestId = (string) ($options['request_id'] ?? '');
+        if ($requestId !== '') {
+            try {
+                $cached = Cache::get("chat:result:{$requestId}");
+                if (is_array($cached) && !empty($cached['content'])) {
+                    Log::info('ChatCompletionService: idempotent replay', [
+                        'request_id' => $requestId,
+                        'model' => $cached['model'] ?? null,
+                    ]);
+                    return $cached;
+                }
+                // Take a soft lock so two parallel retries with the
+                // same id don't both hit the API. 200 ms back-off is
+                // enough for the leader to finish or fail over.
+                $lockKey = "chat:lock:{$requestId}";
+                for ($waits = 0; $waits < 5; $waits++) {
+                    if (!Cache::has($lockKey)) break;
+                    usleep(200_000);
+                    $cached = Cache::get("chat:result:{$requestId}");
+                    if (is_array($cached) && !empty($cached['content'])) {
+                        return $cached;
+                    }
+                }
+                Cache::put($lockKey, 1, 30);
+            } catch (\Throwable $e) {
+                // Cache flake — proceed without idempotency guarantees.
+                Log::debug('ChatCompletionService: idempotency cache unavailable', [
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
         // Cost control — enforce per-request limits
         $costControl = app(CostControlService::class);
         if (!$costControl->canCallLLM()) {
@@ -75,14 +114,18 @@ class ChatCompletionService
             );
         }
 
-        // Fallback to OpenAI if Anthropic key not set
+        // Fallback to OpenAI if Anthropic key not set.
+        // NOTE: The fallback model is gpt-4o-MINI (not gpt-4o) — this
+        // is the degraded-provider path, not a feature upgrade. Using
+        // gpt-4o here ~15x'd the cost of every call whenever Anthropic
+        // keys were temporarily missing (deploys, rotation). Iteration B.
         $anthropicKey = \App\Models\PlatformSetting::get('anthropic_api_key') ?: config('services.anthropic.api_key', env('ANTHROPIC_API_KEY'));
         if ($provider === 'anthropic' && empty($anthropicKey)) {
             Log::warning('ChatCompletionService: Anthropic API key not configured, falling back to OpenAI', [
-                'requested_model' => $model, 'fallback_model' => 'gpt-4o',
+                'requested_model' => $model, 'fallback_model' => 'gpt-4o-mini',
             ]);
             $provider = 'openai';
-            $model = 'gpt-4o';
+            $model = 'gpt-4o-mini';
         }
 
         // Circuit breaker
@@ -91,7 +134,8 @@ class ChatCompletionService
             if (!$this->isCircuitOpen($fallbackProvider)) {
                 Log::warning("ChatCompletionService: circuit open for {$provider}, falling back to {$fallbackProvider}");
                 $provider = $fallbackProvider;
-                $model = $fallbackProvider === 'openai' ? 'gpt-4o' : 'claude-sonnet-4-5-20241022';
+                // Fallback to mini-tier; see note above.
+                $model = $fallbackProvider === 'openai' ? 'gpt-4o-mini' : 'claude-haiku-4-5-20251001';
             }
         }
 
@@ -121,6 +165,14 @@ class ChatCompletionService
         $lastException = null;
         for ($attempt = 1; $attempt <= self::MAX_RETRIES; $attempt++) {
             $startTime = microtime(true);
+            Log::info('ChatCompletionService: LLM call', [
+                'provider' => $provider,
+                'model' => $model,
+                'attempt' => $attempt,
+                'request_id' => $requestId ?: null,
+                'bot_id' => $botId,
+                'tenant_id' => $tenantId,
+            ]);
             try {
                 $result = match ($provider) {
                     'anthropic' => $this->callAnthropic($messages, $model, $maxTokens, $temperature),
@@ -151,6 +203,15 @@ class ChatCompletionService
                         // Cache write failed, continue without caching
                     }
                 }
+                // Stamp the idempotency result so a late retry of the
+                // same request_id returns this response instead of
+                // paying for a fresh LLM call.
+                if ($requestId !== '') {
+                    try {
+                        Cache::put("chat:result:{$requestId}", $result, now()->addSeconds(60));
+                        Cache::forget("chat:lock:{$requestId}");
+                    } catch (\Throwable $ignored) {}
+                }
                 return $result;
 
             } catch (\Throwable $e) {
@@ -180,11 +241,14 @@ class ChatCompletionService
             }
         }
 
-        // Cross-provider fallback
+        // Cross-provider fallback.
+        // Down-tier models on purpose: if we've exhausted retries on
+        // the requested provider, we're in a degraded state — pay
+        // gpt-4o-mini / haiku prices, not flagship prices. Iteration B.
         $fallbackProvider = $provider === 'anthropic' ? 'openai' : 'anthropic';
         if (!$this->isCircuitOpen($fallbackProvider)) {
             try {
-                $fallbackModel = $fallbackProvider === 'openai' ? 'gpt-4o' : 'claude-sonnet-4-5-20241022';
+                $fallbackModel = $fallbackProvider === 'openai' ? 'gpt-4o-mini' : 'claude-haiku-4-5-20251001';
                 Log::warning("ChatCompletionService: all retries failed for {$provider}, attempting {$fallbackProvider}");
                 $startTime = microtime(true);
 
@@ -209,6 +273,12 @@ class ChatCompletionService
             } catch (ChatCompletionException $e) {
                 $this->recordFailure($fallbackProvider);
             }
+        }
+
+        // Release the idempotency lock even on total failure so a
+        // legitimate retry from the client gets a clean slate.
+        if ($requestId !== '') {
+            try { Cache::forget("chat:lock:{$requestId}"); } catch (\Throwable $ignored) {}
         }
 
         throw $lastException;

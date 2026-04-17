@@ -150,6 +150,23 @@
         </div>
     </div>
 
+    {{-- Booking callout — shown only for bots on the booking/hybrid
+         engine. Kept minimal (one banner) to avoid clashing with the
+         Iteration A restructuring of this file. --}}
+    @if(in_array($bot->engine_type, ['booking', 'hybrid'], true))
+        <div class="mb-6 flex items-center justify-between gap-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+            <div class="text-sm text-emerald-900">
+                <span class="mr-1">📅</span>
+                <strong>Configurează servicii și program</strong>
+                — editează serviciile, prețurile și orele de lucru.
+            </div>
+            <a href="{{ route('dashboard.bots.booking', $bot) }}"
+               class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 whitespace-nowrap">
+                Deschide Programări
+            </a>
+        </div>
+    @endif
+
     {{-- ============== MAIN FORM ============== --}}
     <form method="POST" action="{{ route('dashboard.bots.update', $bot) }}" x-ref="editForm">
         @csrf
@@ -767,8 +784,24 @@
 
             {{-- ============== ACTION BAR ============== --}}
             <div class="flex items-center justify-between gap-3 mt-6">
-                <div class="text-xs text-slate-400">
-                    AI folosit azi: <span x-text="aiCost.count"></span> (<span x-text="aiCost.cost_ron.toFixed(4)"></span> lei)
+                <div class="text-xs text-slate-400 flex items-center gap-3 flex-wrap">
+                    <span>
+                        AI folosit azi: <span x-text="aiCost.count"></span> (<span x-text="aiCost.cost_ron.toFixed(4)"></span> lei)
+                    </span>
+                    {{-- Iteration B: tenant-wide spend progress --}}
+                    <span x-show="tenantUsage.limit_ron > 0" class="flex items-center gap-2">
+                        <span class="inline-block w-24 h-1.5 bg-slate-200 rounded-full overflow-hidden align-middle">
+                            <span class="block h-full transition-all"
+                                  :class="tenantUsage.pct_of_limit >= 80 ? 'bg-red-500' : (tenantUsage.pct_of_limit >= 50 ? 'bg-amber-400' : 'bg-emerald-500')"
+                                  :style="'width: ' + Math.min(100, tenantUsage.pct_of_limit) + '%'"></span>
+                        </span>
+                        <span>
+                            <span x-text="tenantUsage.cost_ron.toFixed(2)"></span>
+                            / <span x-text="tenantUsage.limit_ron.toFixed(2)"></span> lei
+                            (<span x-text="Math.round(tenantUsage.pct_of_limit)"></span>%)
+                        </span>
+                        <span x-show="!tenantUsage.flag_enabled" class="text-slate-300" title="Limita nu este încă aplicată — doar vizualizare.">(info)</span>
+                    </span>
                 </div>
                 <div class="flex items-center gap-3">
                     <a href="{{ route('dashboard.bots.show', $bot) }}"
@@ -870,6 +903,8 @@ function botEditor(init) {
         nicheSlug: init.nicheSlug || null,
         aiLoading: {},
         aiCost: { count: 0, cost_ron: 0 },
+        // Iteration B: tenant-wide AI spend progress for the footer bar.
+        tenantUsage: { cost_ron: 0, limit_ron: 0, pct_of_limit: 0, calls: 0, flag_enabled: false },
         modal: { fullProfile: false, prompt: false },
         promptPreview: { loading: false, prompt: '', sections: [], flag_on: false },
 
@@ -879,6 +914,24 @@ function botEditor(init) {
                 headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
             }).then(r => r.ok ? r.json() : null)
               .then(d => { if (d) this.aiCost = { count: d.count || 0, cost_ron: d.cost_ron || 0 }; })
+              .catch(() => {});
+            this.refreshTenantUsage();
+        },
+
+        refreshTenantUsage() {
+            fetch('{{ route('dashboard.ai-usage-today') }}', {
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+            }).then(r => r.ok ? r.json() : null)
+              .then(d => {
+                  if (!d) return;
+                  this.tenantUsage = {
+                      cost_ron: Number(d.cost_ron) || 0,
+                      limit_ron: Number(d.limit_ron) || 0,
+                      pct_of_limit: Number(d.pct_of_limit) || 0,
+                      calls: Number(d.calls) || 0,
+                      flag_enabled: !!d.flag_enabled,
+                  };
+              })
               .catch(() => {});
         },
 
@@ -1073,6 +1126,23 @@ function botEditor(init) {
         },
 
         openFullProfileModal() {
+            // Iteration B: pre-click warning when projected spend would
+            // take the tenant past 80 % of the daily limit. Claude Haiku
+            // 4.5 full_profile ≈ 0.06 RON per call — tiny, but we still
+            // show a transparency prompt so the user knows.
+            const ESTIMATED_RON = 0.06;
+            const limit = this.tenantUsage.limit_ron || 0;
+            const spent = this.tenantUsage.cost_ron || 0;
+            if (limit > 0) {
+                const projected = spent + ESTIMATED_RON;
+                if (projected > limit * 0.8) {
+                    const msg = 'Aceasta va aduce costul total la aproximativ ' +
+                                projected.toFixed(2) + ' lei (din limitul ' + limit.toFixed(2) + ' lei). Continui?';
+                    if (!window.confirm(msg)) {
+                        return;
+                    }
+                }
+            }
             this.modal.fullProfile = true;
         },
 
@@ -1159,6 +1229,8 @@ function botEditor(init) {
                 this.aiCost.count += 1;
                 this.aiCost.cost_ron = Math.round((this.aiCost.cost_ron + delta) * 10000) / 10000;
             }
+            // Refresh tenant-wide usage bar in the background.
+            this.refreshTenantUsage();
         },
     }
 }

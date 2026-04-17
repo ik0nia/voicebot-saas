@@ -39,6 +39,37 @@ class AnalyzeCallSentiment implements ShouldQueue
             return;
         }
 
+        // Iteration B: skip ultra-short calls — 5s greeting-and-hangup
+        // calls have no meaningful sentiment signal, and they're a
+        // surprisingly large share of junk traffic.
+        $minDuration = (int) config('ai_jobs.min_duration_seconds', 30);
+        if (($call->duration_seconds ?? 0) < $minDuration) {
+            Log::info("AnalyzeCallSentiment: skipped — duration below {$minDuration}s", [
+                'call_id' => $this->callId,
+                'duration' => $call->duration_seconds ?? 0,
+            ]);
+            return;
+        }
+
+        // Iteration B: probabilistic sampling. Default 1.0 (run always)
+        // keeps current behavior; ops can dial down in .env once the
+        // dashboards show we're spending too much on sentiment.
+        $samplingRate = (float) config('ai_jobs.sentiment_sampling_rate', 1.0);
+        if ($samplingRate < 1.0 && $samplingRate > 0.0) {
+            if ((random_int(1, 10_000) / 10_000) > $samplingRate) {
+                Log::info('AnalyzeCallSentiment: skipped — sampling', [
+                    'call_id' => $this->callId,
+                    'rate' => $samplingRate,
+                ]);
+                return;
+            }
+        } elseif ($samplingRate <= 0.0) {
+            Log::info('AnalyzeCallSentiment: skipped — sampling rate 0', [
+                'call_id' => $this->callId,
+            ]);
+            return;
+        }
+
         $transcripts = $call->transcripts()->orderBy('timestamp_ms')->get();
 
         if ($transcripts->isEmpty()) {

@@ -91,6 +91,12 @@ class BotAiGenerateController extends Controller
             );
         } catch (\InvalidArgumentException $e) {
             return response()->json(['error' => $e->getMessage()], 422);
+        } catch (\App\Exceptions\FullProfileDailyCapException $e) {
+            return response()->json([
+                'error' => 'Daily profile generation limit reached for this bot',
+                'cap' => $e->cap,
+                'used_today' => $e->usedToday,
+            ], 429);
         } catch (\Throwable $e) {
             Log::error('BotAiGenerateController: generation failed', [
                 'bot_id' => $bot->id,

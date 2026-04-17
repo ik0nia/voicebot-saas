@@ -6,6 +6,7 @@ use App\Http\Controllers\ConsentController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\Dashboard\AnalyticsController;
 use App\Http\Controllers\Dashboard\BillingController;
+use App\Http\Controllers\Dashboard\BookingAdminController;
 use App\Http\Controllers\Dashboard\BotController;
 use App\Http\Controllers\Dashboard\ClonedVoiceController;
 use App\Http\Controllers\Dashboard\DashboardController;
@@ -227,6 +228,12 @@ Route::middleware('auth')->prefix('dashboard/setup')->group(function () {
 // Dashboard home
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth'])->name('dashboard');
 Route::post('/dashboard/toggle-admin-view', [DashboardController::class, 'toggleAdminView'])->middleware(['auth'])->name('dashboard.toggleAdminView');
+
+// Iteration B: tenant-scoped AI spend summary for today — feeds the
+// progress bar on the bot edit page and any future spend widgets.
+Route::get('/dashboard/ai-usage-today', [DashboardController::class, 'aiUsageToday'])
+    ->middleware(['auth'])
+    ->name('dashboard.ai-usage-today');
 Route::middleware(['auth'])->group(function () {
     // "stop" must be declared BEFORE the {tenant} route, otherwise Laravel
     // matches /admin/view-as/stop against {tenant} and tries to resolve a
@@ -307,6 +314,21 @@ Route::middleware('auth')->prefix('dashboard/agenti')->group(function () {
         Route::post('/{bot}/voice-clone/deactivate', [ClonedVoiceController::class, 'deactivate'])->name('dashboard.bots.voiceClone.deactivate');
         Route::delete('/{bot}/voice-clone/{clonedVoice}', [ClonedVoiceController::class, 'destroy'])->name('dashboard.bots.voiceClone.destroy');
     });
+});
+
+// Booking admin routes (Iteration E) — services / staff / hours CRUD for
+// bots on the booking/hybrid engine. Controller enforces bot tenancy +
+// engine_type check on every action; here we only gate on auth.
+Route::middleware('auth')->prefix('dashboard/agenti/{bot}/programari')->group(function () {
+    Route::get('/', [BookingAdminController::class, 'index'])->name('dashboard.bots.booking');
+    Route::post('/servicii',                         [BookingAdminController::class, 'storeService'])->name('dashboard.bots.booking.services.store');
+    Route::patch('/servicii/{serviceType}',          [BookingAdminController::class, 'updateService'])->name('dashboard.bots.booking.services.update');
+    Route::delete('/servicii/{serviceType}',         [BookingAdminController::class, 'destroyService'])->name('dashboard.bots.booking.services.destroy');
+    Route::post('/personal',                         [BookingAdminController::class, 'storeStaff'])->name('dashboard.bots.booking.staff.store');
+    Route::patch('/personal/{staff}',                [BookingAdminController::class, 'updateStaff'])->name('dashboard.bots.booking.staff.update');
+    Route::delete('/personal/{staff}',               [BookingAdminController::class, 'destroyStaff'])->name('dashboard.bots.booking.staff.destroy');
+    Route::put('/program',                           [BookingAdminController::class, 'updateHours'])->name('dashboard.bots.booking.hours.update');
+    Route::post('/advanced-mode',                    [BookingAdminController::class, 'toggleAdvanced'])->name('dashboard.bots.booking.advancedMode');
 });
 
 // Calls routes (dashboard)

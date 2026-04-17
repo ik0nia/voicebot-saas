@@ -33,6 +33,34 @@ class GenerateCallSummary implements ShouldQueue
             return;
         }
 
+        // Iteration B: skip ultra-short calls — nothing worth
+        // summarising under 30s by default.
+        $minDuration = (int) config('ai_jobs.min_duration_seconds', 30);
+        if (($call->duration_seconds ?? 0) < $minDuration) {
+            Log::info("GenerateCallSummary: skipped — duration below {$minDuration}s", [
+                'call_id' => $this->callId,
+                'duration' => $call->duration_seconds ?? 0,
+            ]);
+            return;
+        }
+
+        // Iteration B: sampling knob (1.0 default = always run).
+        $samplingRate = (float) config('ai_jobs.summary_sampling_rate', 1.0);
+        if ($samplingRate < 1.0 && $samplingRate > 0.0) {
+            if ((random_int(1, 10_000) / 10_000) > $samplingRate) {
+                Log::info('GenerateCallSummary: skipped — sampling', [
+                    'call_id' => $this->callId,
+                    'rate' => $samplingRate,
+                ]);
+                return;
+            }
+        } elseif ($samplingRate <= 0.0) {
+            Log::info('GenerateCallSummary: skipped — sampling rate 0', [
+                'call_id' => $this->callId,
+            ]);
+            return;
+        }
+
         $transcript = $call->transcripts
             ->sortBy('timestamp_ms')
             ->map(fn($t) => ($t->role === 'user' ? 'Client' : 'Agent') . ': ' . $t->content)

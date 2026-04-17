@@ -470,6 +470,13 @@ class BotController extends Controller
             );
         } catch (\InvalidArgumentException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
+        } catch (\App\Exceptions\FullProfileDailyCapException $e) {
+            return response()->json([
+                'message' => 'Ai atins limita zilnică de generări "Completează tot cu AI" pentru acest agent.',
+                'error' => 'Daily profile generation limit reached for this bot',
+                'cap' => $e->cap,
+                'used_today' => $e->usedToday,
+            ], 429);
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('BotController@aiGenerate failed', [
                 'bot_id' => $bot->id,

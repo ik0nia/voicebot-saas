@@ -402,4 +402,39 @@ class DashboardController extends Controller
             'onboarding', 'onboardingComplete', 'planUsage', 'hasVoice'
         ));
     }
+
+    /**
+     * Iteration B — tenant-scoped AI spend for today.
+     *
+     * Feeds the small progress bar on the bot-edit page and any future
+     * spend widgets. Returns real numbers even when the ceiling feature
+     * flag is off so the UI always has something to show.
+     *
+     * Shape: `{ cost_ron, calls, limit_ron, pct_of_limit, flag_enabled }`.
+     * The flag is exposed so the widget can make it clear the ceiling
+     * is/isn't currently enforced.
+     */
+    public function aiUsageToday(Request $request)
+    {
+        $user = $request->user();
+        $tenantId = (int) ($user?->tenant_id ?? 0);
+        if (!$tenantId) {
+            return response()->json(['error' => 'unauthenticated'], 401);
+        }
+
+        $ceiling = app(\App\Services\Cost\DailyCostCeiling::class)->canSpend($tenantId);
+
+        $calls = \App\Models\AiApiMetric::withoutGlobalScopes()
+            ->where('tenant_id', $tenantId)
+            ->whereDate('created_at', today())
+            ->count();
+
+        return response()->json([
+            'cost_ron' => $ceiling['spent_today_ron'],
+            'calls' => $calls,
+            'limit_ron' => $ceiling['limit_ron'],
+            'pct_of_limit' => $ceiling['pct_of_limit'] ?? 0,
+            'flag_enabled' => $ceiling['flag_enabled'] ?? false,
+        ]);
+    }
 }
