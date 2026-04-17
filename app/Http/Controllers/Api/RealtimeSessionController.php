@@ -45,6 +45,20 @@ class RealtimeSessionController extends Controller
             ], 429);
         }
 
+        // Daily AI cost ceiling (flag-gated, default off). Chat endpoints
+        // enforce this too (ChatbotApiController); voice went unguarded
+        // before. A tenant near their daily RON budget could still burn
+        // through it via /realtime-session while chat was blocked.
+        $ceilingResult = app(\App\Services\Cost\DailyCostCeiling::class)->canSpend((int) $bot->tenant_id);
+        if (!$ceilingResult['allowed']) {
+            return response()->json([
+                'error' => $ceilingResult['reason'] ?? 'Daily AI cost limit reached.',
+                'limit_reached' => true,
+                'spent_today_ron' => $ceilingResult['spent_today_ron'],
+                'limit_ron' => $ceilingResult['limit_ron'],
+            ], 429);
+        }
+
         $apiKey = PlatformSetting::get('openai_api_key', config('services.openai.api_key', ''));
 
         if (empty($apiKey) || str_starts_with($apiKey, 'sk-your')) {
