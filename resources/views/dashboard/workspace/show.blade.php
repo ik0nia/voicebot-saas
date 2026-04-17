@@ -35,9 +35,14 @@
             </div>
             <p class="text-sm text-slate-500">Vedere unificată — editările rămân pe paginile existente.</p>
         </div>
-        <a href="{{ url('/dashboard/agenti/' . $bot->id) }}" class="text-sm px-4 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50">
-            Editare detaliată →
-        </a>
+        <div class="flex items-center gap-2">
+            <a href="{{ route('dashboard.workspace.automations', $bot) }}" class="text-sm px-4 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50">
+                ⚙️ Automatizări
+            </a>
+            <a href="{{ url('/dashboard/agenti/' . $bot->id) }}" class="text-sm px-4 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50">
+                Editare detaliată →
+            </a>
+        </div>
     </div>
 
     {{-- Tabs --}}

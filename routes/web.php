@@ -195,6 +195,12 @@ Route::any('/dashboard/boti/{rest?}', function ($rest = '') {
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard/workspace/{bot}', [\App\Http\Controllers\Dashboard\WorkspaceController::class, 'show'])
         ->name('dashboard.workspace.show');
+    Route::get('/dashboard/workspace/{bot}/automations',
+        [\App\Http\Controllers\Dashboard\WorkspaceAutomationController::class, 'show'])
+        ->name('dashboard.workspace.automations');
+    Route::put('/dashboard/workspace/{bot}/automations',
+        [\App\Http\Controllers\Dashboard\WorkspaceAutomationController::class, 'update'])
+        ->name('dashboard.workspace.automations.update');
 });
 
 // Onboarding v2 — runs in parallel with legacy /dashboard/setup.
