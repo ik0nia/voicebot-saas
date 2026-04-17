@@ -115,6 +115,11 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::post('bots/{bot}/ai-generate', \App\Http\Controllers\Api\V1\BotAiGenerateController::class)
         ->middleware('abilities:bots:write');
 
+    // Setup-AI spend summary (today / last 30d / lifetime) for a
+    // single bot. Read-only — anybody with bots:read gets it.
+    Route::get('bots/{bot}/ai-cost-summary', [\App\Http\Controllers\Api\V1\BotAiCostSummaryController::class, 'show'])
+        ->middleware('abilities:bots:read');
+
     // Calls
     Route::get('calls', [CallApiController::class, 'index'])->middleware('abilities:calls:read');
     Route::get('calls/{call}', [CallApiController::class, 'show'])->middleware('abilities:calls:read');

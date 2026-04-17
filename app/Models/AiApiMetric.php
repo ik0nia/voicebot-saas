@@ -35,6 +35,14 @@ class AiApiMetric extends Model
         'metadata' => 'array',
     ];
 
+    /**
+     * Discriminator for AI calls triggered by the "setup my agent"
+     * UI (structured FAQ/rules/tone generation via Claude Haiku 4.5).
+     * Centralised so admin reports + the enforcement layer look at
+     * the same string — grep-ability matters.
+     */
+    public const PURPOSE_AGENT_SETUP_AI = 'agent_setup_ai';
+
     public function call()
     {
         return $this->belongsTo(Call::class);
@@ -48,5 +56,15 @@ class AiApiMetric extends Model
     public function message()
     {
         return $this->belongsTo(Message::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function bot()
+    {
+        return $this->belongsTo(Bot::class);
     }
 }

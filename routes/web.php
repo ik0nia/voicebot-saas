@@ -278,6 +278,13 @@ Route::middleware('auth')->prefix('dashboard/agenti')->group(function () {
     Route::delete('/{bot}', [BotController::class, 'destroy'])->name('dashboard.bots.destroy');
     Route::patch('/{bot}/toggle', [BotController::class, 'toggleActive'])->name('dashboard.bots.toggle');
     Route::patch('/{bot}/update-field', [BotController::class, 'updateField'])->name('dashboard.bots.updateField');
+
+    // Setup-AI cost summary (session-auth mirror of the Sanctum API).
+    // Lives here so the dashboard Blade/Alpine UI can hit it with
+    // CSRF + session cookie instead of minting a Sanctum token for
+    // the same logged-in user.
+    Route::get('/{bot}/ai-cost-summary', [\App\Http\Controllers\Api\V1\BotAiCostSummaryController::class, 'show'])
+        ->name('dashboard.bots.aiCostSummary');
     Route::post('/{bot}/policy', [BotController::class, 'updatePolicy'])->name('dashboard.bots.updatePolicy');
 
     // WooCommerce meta-mapping UI — tenant admin decides how raw
@@ -554,6 +561,10 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
     // Costs & Profitability (daily rollup viewer + ad-hoc re-aggregate)
     Route::get('costuri', [\App\Http\Controllers\Admin\AdminCostReportController::class, 'index'])->name('admin.costs.index');
     Route::post('costuri/reaggregate', [\App\Http\Controllers\Admin\AdminCostReportController::class, 'reaggregate'])->name('admin.costs.reaggregate');
+    // Setup-AI spend limit per tenant. Enforcement (hard-stop vs
+    // warn-only) is follow-up work — this endpoint only persists
+    // the threshold so ops can set it up-front.
+    Route::post('costuri/setup-ai/limita/{tenantId}', [\App\Http\Controllers\Admin\AdminCostReportController::class, 'setSetupAiLimit'])->name('admin.costs.setupAiLimit');
 
     // Outcomes (what the agent earned — mirrors /costuri)
     Route::get('venituri', [\App\Http\Controllers\Admin\AdminOutcomeReportController::class, 'index'])->name('admin.outcomes.index');

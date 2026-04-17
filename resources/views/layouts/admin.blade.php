@@ -17,6 +17,11 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    {{-- Alpine.js CDN — used by cost report top-abusers panel + a
+         handful of other admin widgets. Kept as CDN because we don't
+         bundle Alpine in app.js yet (dashboard layout does the same). --}}
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+    <style>[x-cloak] { display: none !important; }</style>
     @stack('styles')
     @include('partials.analytics.head')
     @include('partials.analytics.flash-events')
