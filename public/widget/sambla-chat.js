@@ -1,4 +1,4 @@
-/* sambla-chat v2.5 — G6 micro-interactions + continuity cues */
+/* sambla-chat v2.6 — Z1/Z2/Z4 action chips + confirmation cards + multi-step chains */
 (function() {
     'use strict';
 
@@ -718,13 +718,31 @@
             .sambla-qr:hover { background: #f8fafc; border-color: #cbd5e1; box-shadow: 0 1px 3px rgba(15,23,42,.06); }\
             .sambla-qr:active { transform: scale(0.96); }\
             .sambla-qr:focus-visible { outline: 2px solid ' + config.color + '; outline-offset: 2px; }\
+            .sambla-qr-action { background: #ecfdf5; border-color: #10b981; color: #065f46; font-weight: 600; padding-left: 10px; }\
+            .sambla-qr-action::before { content: "✓ "; color: #10b981; font-weight: 700; }\
+            .sambla-qr-action:hover { background: #d1fae5; border-color: #059669; box-shadow: 0 1px 4px rgba(16,185,129,.15); }\
+            .sambla-qr-action.busy { opacity: 0.6; pointer-events: none; }\
+            .sambla-qr-action.busy::before { content: "⏳ "; }\
+            .sambla-action-card { margin: 8px 12px; padding: 12px 14px; border-radius: 10px; background: #ecfdf5; border: 1px solid #a7f3d0; font-family: inherit; font-size: 13px; line-height: 1.45; opacity: 0; transform: translateY(6px); animation: sambla-qr-in .3s ease-out forwards; }\
+            .sambla-action-card-title { display: flex; align-items: center; gap: 6px; color: #065f46; font-weight: 600; font-size: 13px; margin-bottom: 4px; }\
+            .sambla-action-card-title::before { content: "✓"; display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; background: #10b981; color: #fff; border-radius: 50%; font-size: 11px; font-weight: 700; }\
+            .sambla-action-card-body { color: #064e3b; }\
+            .sambla-action-card dl { margin: 6px 0 0; display: grid; grid-template-columns: max-content 1fr; gap: 2px 10px; font-size: 12px; }\
+            .sambla-action-card dt { color: #047857; font-weight: 500; }\
+            .sambla-action-card dd { margin: 0; color: #064e3b; }\
             @keyframes sambla-qr-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }\
             @media (prefers-color-scheme: dark) {\
                 .sambla-qr { background: #1e293b; border-color: #334155; color: #e2e8f0; }\
                 .sambla-qr:hover { background: #334155; border-color: #475569; }\
+                .sambla-qr-action { background: #064e3b; border-color: #10b981; color: #a7f3d0; }\
+                .sambla-qr-action:hover { background: #065f46; }\
+                .sambla-action-card { background: #064e3b; border-color: #10b981; color: #a7f3d0; }\
+                .sambla-action-card-title { color: #6ee7b7; }\
+                .sambla-action-card dt { color: #6ee7b7; }\
+                .sambla-action-card dd { color: #d1fae5; }\
             }\
             @media (max-width: 440px) { .sambla-qr { font-size: 12px; padding: 5px 10px; } }\
-            @media (prefers-reduced-motion: reduce) { .sambla-qr { animation: none; opacity: 1; transform: none; } }\
+            @media (prefers-reduced-motion: reduce) { .sambla-qr, .sambla-action-card { animation: none; opacity: 1; transform: none; } }\
         ';
 
         var container = document.createElement('div');
@@ -2058,7 +2076,12 @@
                 if (!r || (!r.label && !r.text)) return;
                 var btn = document.createElement('button');
                 btn.type = 'button';
-                btn.className = 'sambla-qr';
+                // Z1: action-typed chips get a distinct green+✓ style
+                // so the user reads them as "this does something"
+                // (add to cart / confirm booking / etc.) rather than
+                // "this sends a chat message".
+                var isAction = r && typeof r.action === 'string' && r.action !== '';
+                btn.className = isAction ? 'sambla-qr sambla-qr-action' : 'sambla-qr';
                 // G6: stagger each chip's fade-in by 40ms so the strip
                 // animates in sequentially instead of as one block.
                 btn.style.animationDelay = (i * 40) + 'ms';
@@ -2068,6 +2091,25 @@
                     // Remove chip row immediately so users can't double-fire
                     // and to keep the thread clean.
                     if (wrap.parentNode) wrap.parentNode.removeChild(wrap);
+
+                    // Z1: dispatch action chips to the action handler
+                    // instead of the chat path. Falls through to text
+                    // if the action is unknown or errors — always
+                    // degrades gracefully.
+                    if (isAction && typeof handleActionChip === 'function') {
+                        trackEvent('quick_reply_clicked', {
+                            label: (r.label || '').substring(0, 80),
+                            page_type: detectPageType(),
+                            action: r.action,
+                        });
+                        try {
+                            handleActionChip(r.action, r.payload || {}, btn);
+                            return;
+                        } catch (e) {
+                            // fall through to chat path on any error
+                        }
+                    }
+
                     // Autofill input then reuse the normal submit path so
                     // rate limiting / offline queue / streaming all apply.
                     try {
@@ -2089,6 +2131,175 @@
                 requestAnimationFrame(function() { messagesContainer.scrollTop = messagesContainer.scrollHeight; });
             }
             return wrap;
+        }
+
+        // Z2: inline confirmation card — rendered after a successful
+        // action (add_to_cart, booking_confirm). Visually distinct
+        // from chat bubbles so the user perceives it as a state
+        // change, not just another message.
+        function renderActionCard(spec) {
+            if (!messagesContainer) return null;
+            var card = document.createElement('div');
+            card.className = 'sambla-action-card';
+            var title = document.createElement('div');
+            title.className = 'sambla-action-card-title';
+            title.textContent = String(spec.title || 'Gata!');
+            card.appendChild(title);
+            if (spec.body) {
+                var body = document.createElement('div');
+                body.className = 'sambla-action-card-body';
+                body.textContent = String(spec.body);
+                card.appendChild(body);
+            }
+            if (spec.fields && typeof spec.fields === 'object') {
+                var dl = document.createElement('dl');
+                Object.keys(spec.fields).forEach(function(k) {
+                    var v = spec.fields[k];
+                    if (v === null || v === undefined || v === '') return;
+                    var dt = document.createElement('dt'); dt.textContent = k;
+                    var dd = document.createElement('dd'); dd.textContent = String(v);
+                    dl.appendChild(dt); dl.appendChild(dd);
+                });
+                if (dl.firstChild) card.appendChild(dl);
+            }
+            var insertBefore = typingEl && typingEl.parentNode === messagesContainer ? typingEl : null;
+            if (insertBefore) messagesContainer.insertBefore(card, insertBefore);
+            else messagesContainer.appendChild(card);
+            requestAnimationFrame(function() { messagesContainer.scrollTop = messagesContainer.scrollHeight; });
+            return card;
+        }
+
+        // Z1/Z2/Z4 — central action dispatcher. Called from chip click
+        // when the chip carries an `action` field. Fails soft: any
+        // error routes back through the normal chat path so users
+        // never see a broken button.
+        function handleActionChip(action, payload, btn) {
+            if (btn) btn.classList.add('busy');
+            switch (action) {
+                case 'add_to_cart':
+                    return dispatchAddToCart(payload || {});
+                case 'booking_confirm':
+                    return dispatchBookingConfirm(payload || {});
+                default:
+                    throw new Error('unknown_action');
+            }
+        }
+
+        function dispatchAddToCart(payload) {
+            // Relies on the Sambla WP plugin's sambla-cart.js bridge.
+            // The bridge listens for postMessage on window and handles
+            // the actual WooCommerce cart mutation server-side.
+            if (!payload.product_id) {
+                throw new Error('missing_product_id');
+            }
+            var requestId = 'sambla_qr_' + Date.now();
+            var attribution = {
+                session_id: sessionId || null,
+                conversation_id: conversationId || null,
+                bot_id: config.channelId || null,
+                channel_id: config.channelId || null,
+                visitor_id: (window.samblaVisitorId || null),
+            };
+            try {
+                (window.parent || window).postMessage(Object.assign({
+                    type: 'sambla_add_to_cart',
+                    request_id: requestId,
+                    product_id: payload.product_id,
+                    quantity: payload.quantity || 1,
+                    variation_id: payload.variation_id || 0,
+                }, attribution), '*');
+            } catch (e) {
+                throw e;
+            }
+            // Register a one-shot listener for the bridge's reply.
+            var onReply = function(e) {
+                if (!e.data || e.data.type !== 'sambla_cart_result' || e.data.request_id !== requestId) return;
+                window.removeEventListener('message', onReply);
+                if (e.data.success) {
+                    renderActionCard({
+                        title: 'Produs adăugat în coș',
+                        body: (payload.product_name ? payload.product_name + ' este în coșul tău.' : 'Produsul este în coșul tău.'),
+                        fields: {
+                            Cantitate: payload.quantity || 1,
+                        },
+                    });
+                    // Z4: multi-step flow — after success, offer the next step.
+                    renderQuickReplies([
+                        { label: 'Finalizează comanda', text: 'Vreau să finalizez comanda acum.' },
+                        { label: 'Continuă cumpărăturile', text: 'Mai am nevoie de ceva — ce îmi mai recomanzi?' },
+                    ]);
+                    trackEvent('add_to_cart_success', { product_id: payload.product_id });
+                } else {
+                    addMessage('Nu am putut adăuga produsul în coș. Te pot ajuta altfel?', 'bot');
+                    trackEvent('add_to_cart_failure', { product_id: payload.product_id });
+                }
+            };
+            window.addEventListener('message', onReply);
+            // Safety timeout — if bridge never responds (non-WP site),
+            // fall back to an informational message.
+            setTimeout(function() {
+                window.removeEventListener('message', onReply);
+            }, 8000);
+        }
+
+        function dispatchBookingConfirm(payload) {
+            // Widget-initiated booking confirmation. Payload must
+            // include all booking-confirm required fields. Missing
+            // customer_name is the common case — if so, fall back
+            // to asking the user for it via chat.
+            if (!payload.service_type_id || !payload.staff_member_id || !payload.starts_at || !payload.ends_at) {
+                throw new Error('missing_slot_fields');
+            }
+            if (!payload.customer_name) {
+                addMessage('Îmi spui te rog numele tău complet ca să confirm?', 'bot');
+                return;
+            }
+            var apiBase = (config.apiBase || '').replace(/\/$/, '');
+            fetch(apiBase + '/api/v1/chatbot/' + config.channelId + '/booking-confirm', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({
+                    service_type_id: payload.service_type_id,
+                    staff_member_id: payload.staff_member_id,
+                    starts_at: payload.starts_at,
+                    ends_at: payload.ends_at,
+                    customer_name: payload.customer_name,
+                    customer_phone: payload.customer_phone || null,
+                    customer_email: payload.customer_email || null,
+                    conversation_id: conversationId || null,
+                }),
+            })
+            .then(function(r) { return r.json().then(function(b){ return { ok: r.ok, status: r.status, body: b }; }); })
+            .then(function(res) {
+                if (res.ok && res.body && res.body.success) {
+                    var c = res.body.confirmation || {};
+                    renderActionCard({
+                        title: 'Programare confirmată',
+                        body: 'Ai primit confirmare automată în chat.',
+                        fields: {
+                            Serviciu: c.service_name,
+                            Persoană: c.staff_name,
+                            Interval: c.label,
+                        },
+                    });
+                    renderQuickReplies([
+                        { label: 'Adaugă în calendar', text: 'Trimite-mi un link de calendar pentru această programare.' },
+                        { label: 'Am o întrebare', text: 'Am încă o întrebare despre programare.' },
+                    ]);
+                    trackEvent('booking_confirmed', { appointment_id: res.body.appointment_id });
+                } else {
+                    var msg = (res.body && res.body.error) ? res.body.error : 'Nu am putut confirma programarea.';
+                    addMessage(msg, 'bot');
+                    trackEvent('booking_confirm_failure', { status: res.status });
+                }
+            })
+            .catch(function() {
+                addMessage('Conexiunea a eșuat — încearcă din nou sau spune-mi ora preferată.', 'bot');
+            });
         }
 
         // Pick the context bucket for the current page. Falls back to

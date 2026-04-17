@@ -2375,6 +2375,24 @@ class ChatbotApiController extends Controller
                 ['label' => 'Compară cu altele',    'text' => 'Compară-mi acest produs cu 1-2 alternative.'],
                 ['label' => 'E potrivit pentru mine?', 'text' => 'Cum știu dacă e potrivit pentru mine?'],
             ];
+
+            // Z1: one-click add-to-cart chip when the page tells us
+            // which product. Widget dispatches via sambla_add_to_cart
+            // postMessage bridge — the WP plugin persists in WC cart.
+            $pc = is_array($pageContext['product_context'] ?? null) ? $pageContext['product_context'] : null;
+            $productId = $pc['product_id'] ?? null;
+            if ($productId) {
+                array_unshift($replies, [
+                    'label'   => 'Adaugă în coș',
+                    'text'    => 'Adaugă acest produs în coș.',
+                    'action'  => 'add_to_cart',
+                    'payload' => [
+                        'product_id'    => (int) $productId,
+                        'product_name'  => (string) ($pc['name'] ?? ''),
+                        'quantity'      => 1,
+                    ],
+                ]);
+            }
         } elseif ($pageType === 'cart') {
             $cart = $pageContext['cart_context'] ?? null;
             $missing = is_array($cart) ? (float) ($cart['missing_amount_for_free_shipping'] ?? 0) : 0;
@@ -2504,11 +2522,20 @@ class ChatbotApiController extends Controller
         }
 
         // Cap labels and texts defensively; mirrors WidgetContextResolver.
+        // Preserve optional action + payload fields (Z1) so action chips
+        // aren't accidentally stripped on their way to the widget.
         return array_slice(array_map(function ($r) {
-            return [
+            $out = [
                 'label' => mb_substr($r['label'], 0, 40),
                 'text'  => mb_substr($r['text'], 0, 500),
             ];
+            if (!empty($r['action']) && is_string($r['action'])) {
+                $out['action'] = $r['action'];
+            }
+            if (!empty($r['payload']) && is_array($r['payload'])) {
+                $out['payload'] = $r['payload'];
+            }
+            return $out;
         }, $replies), 0, 4);
     }
 
