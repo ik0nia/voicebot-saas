@@ -12,7 +12,7 @@ class BookableResource extends Model
     use BelongsToTenant;
 
     protected $fillable = [
-        'tenant_id', 'bot_id', 'department_id',
+        'tenant_id', 'bot_id', 'department_id', 'location_id',
         'kind', 'name', 'role', 'bio', 'avatar_url',
         'capacity', 'service_type_ids',
         'legacy_staff_member_id', 'legacy_resource_inventory_id',
@@ -38,6 +38,11 @@ class BookableResource extends Model
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(Location::class);
     }
 
     public function availabilityRules(): HasMany

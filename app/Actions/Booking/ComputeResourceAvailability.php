@@ -29,10 +29,10 @@ class ComputeResourceAvailability
     /**
      * @return array{
      *   service: ?array,
-     *   resources: array<int, array{id:int,name:string,kind:string}>,
+     *   resources: array<int, array{id:int,name:string,kind:string,department_id:?int,location_id:?int}>,
      *   slots: array<int, array{
-     *     resource_id:int, resource_name:string, starts_at:string,
-     *     ends_at:string, label:string
+     *     resource_id:int, resource_name:string, department_id:?int, location_id:?int,
+     *     starts_at:string, ends_at:string, label:string
      *   }>
      * }
      */
@@ -41,6 +41,7 @@ class ComputeResourceAvailability
         ?ServiceType $service = null,
         ?int $resourceId = null,
         ?int $departmentId = null,
+        ?int $locationId = null,
         ?string $preferredFromIso = null,
         int $daysAhead = 7,
         int $maxSlots = 6,
@@ -56,6 +57,7 @@ class ComputeResourceAvailability
             ->where('is_active', true);
         if ($resourceId)    $query->where('id', $resourceId);
         if ($departmentId)  $query->where('department_id', $departmentId);
+        if ($locationId)    $query->where('location_id', $locationId);
         if ($service) {
             $query->where(function ($q) use ($service) {
                 // Resource handles this service OR is an "any" resource.
@@ -121,6 +123,7 @@ class ComputeResourceAvailability
                                 'resource_id'   => $resource->id,
                                 'resource_name' => $resource->name,
                                 'department_id' => $resource->department_id,
+                                'location_id'   => $resource->location_id,
                                 'starts_at'     => $cursor->toIso8601String(),
                                 'ends_at'       => $candidateEnd->toIso8601String(),
                                 'label'         => $cursor->translatedFormat('D, j M, H:i'),
@@ -139,7 +142,10 @@ class ComputeResourceAvailability
 
         return [
             'service'   => $service ? $this->serializeService($service) : null,
-            'resources' => $resources->map(fn ($r) => ['id' => $r->id, 'name' => $r->name, 'kind' => $r->kind])->values()->all(),
+            'resources' => $resources->map(fn ($r) => [
+                'id' => $r->id, 'name' => $r->name, 'kind' => $r->kind,
+                'department_id' => $r->department_id, 'location_id' => $r->location_id,
+            ])->values()->all(),
             'slots'     => $slots,
         ];
     }

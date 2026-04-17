@@ -21,7 +21,7 @@ class Appointment extends Model
     protected $fillable = [
         'tenant_id', 'bot_id',
         'service_type_id', 'staff_member_id',
-        'bookable_resource_id', 'department_id',
+        'bookable_resource_id', 'department_id', 'location_id',
         'lead_id', 'conversation_id',
         'customer_name', 'customer_phone', 'customer_email', 'notes',
         'starts_at', 'ends_at',
