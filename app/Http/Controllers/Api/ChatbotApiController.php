@@ -2239,39 +2239,43 @@ class ChatbotApiController extends Controller
             // Product page + bot just returned product cards → convert the
             // conversation into a purchase-shaped next step.
             $replies = [
-                ['label' => 'Adaugă în coș',          'text' => 'Vreau să adaug produsul discutat în coș.'],
-                ['label' => 'Variante la preț similar', 'text' => 'Există variante la preț similar?'],
-                ['label' => 'Timp de livrare',         'text' => 'Cât durează livrarea?'],
+                ['label' => 'Vreau să comand',      'text' => 'Vreau să comand produsul discutat.'],
+                ['label' => 'Compară cu altele',    'text' => 'Compară-mi acest produs cu 1-2 alternative.'],
+                ['label' => 'E potrivit pentru mine?', 'text' => 'Cum știu dacă e potrivit pentru mine?'],
             ];
         } elseif ($pageType === 'cart') {
             $cart = $pageContext['cart_context'] ?? null;
             $replies = [
-                ['label' => 'Ce îmi mai lipsește?',   'text' => 'Ce accesorii lipsesc pentru produsele din coș?'],
-                ['label' => 'Există un cod promo?',    'text' => 'Există un cod promo activ?'],
-                ['label' => 'Finalizez comanda',      'text' => 'Cum finalizez comanda?'],
+                ['label' => 'Livrare gratuită?',    'text' => 'Ajung la pragul de livrare gratuită? Cât mai lipsește?'],
+                ['label' => 'Accesorii compatibile', 'text' => 'Ce accesorii recomanzi să mai adaug?'],
+                ['label' => 'Cod promo activ?',      'text' => 'Există un cod promo pe care îl pot aplica?'],
+                ['label' => 'Finalizează comanda',   'text' => 'Ghidează-mă să finalizez comanda.'],
             ];
             if (is_array($cart) && (int) ($cart['items_count'] ?? 0) === 0) {
                 $replies = [
-                    ['label' => 'Recomandă ceva', 'text' => 'Recomandă-mi câteva produse.'],
+                    ['label' => 'Recomandă-mi ceva', 'text' => 'Recomandă-mi 3 produse bune acum.'],
+                    ['label' => 'Cele mai populare', 'text' => 'Care sunt cele mai populare produse?'],
                 ];
             }
         } elseif ($pageType === 'category' && !empty($products)) {
             $replies = [
-                ['label' => 'Cele mai populare',  'text' => 'Arată-mi cele mai populare.'],
-                ['label' => 'Filtre după buget',  'text' => 'Filtrează în funcție de buget.'],
-                ['label' => 'Cele mai noi',       'text' => 'Arată-mi cele mai noi.'],
+                ['label' => 'Alege tu pentru mine', 'text' => 'Alege tu varianta cea mai potrivită pentru mine.'],
+                ['label' => 'Filtrează pe buget',   'text' => 'Filtrează în funcție de buget.'],
+                ['label' => 'Cele mai bine cotate', 'text' => 'Care sunt cele mai bine cotate?'],
             ];
         } elseif ($pageType === 'booking' && in_array($bot->engine_type, ['booking', 'hybrid'], true)) {
             $replies = [
                 ['label' => 'Primul loc liber',   'text' => 'Vreau primul loc disponibil.'],
                 ['label' => 'Mâine dimineață',    'text' => 'Vreau mâine dimineață.'],
                 ['label' => 'După ora 17:00',     'text' => 'Vreau o programare după ora 17:00.'],
+                ['label' => 'Am o urgență',       'text' => 'Am o urgență, când pot veni?'],
             ];
         } elseif ($pageType === 'hospitality' && $bot->engine_type === 'hospitality') {
             $replies = [
-                ['label' => 'În weekend',     'text' => 'Vreau pentru weekend.'],
+                ['label' => 'În weekend',     'text' => 'Vreau pentru weekend-ul acesta.'],
                 ['label' => 'Opțiuni premium', 'text' => 'Arată-mi opțiuni premium.'],
-                ['label' => 'Pe buget',        'text' => 'Caut pe buget.'],
+                ['label' => 'Pe buget',        'text' => 'Caut o variantă pe buget.'],
+                ['label' => 'Pentru 2 adulți', 'text' => 'Vreau pentru 2 adulți.'],
             ];
         }
 

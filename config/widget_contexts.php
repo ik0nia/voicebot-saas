@@ -48,37 +48,39 @@ return [
     // ────────────────────────────────────────────
     'magazin-online' => [
         'product' => [
-            'opening' => 'Ai nevoie de mai multe detalii despre acest produs?',
+            'opening' => 'Îți ofer rapid o părere sinceră pe produsul ăsta. Ce te interesează?',
             'quick_replies' => [
-                ['label' => 'Este în stoc?', 'text' => 'Este în stoc?'],
-                ['label' => 'Cât durează livrarea?', 'text' => 'Cât durează livrarea?'],
-                ['label' => 'Există reduceri?', 'text' => 'Există reduceri sau coduri promo active?'],
                 ['label' => 'E potrivit pentru mine?', 'text' => 'Cum știu dacă acest produs e potrivit pentru mine?'],
+                ['label' => 'Compară cu alternative', 'text' => 'Compară-mi acest produs cu alternative similare.'],
+                ['label' => 'Vreau să comand', 'text' => 'Cum comand acest produs?'],
+                ['label' => 'Livrare & retur', 'text' => 'Cât durează livrarea și care e politica de retur?'],
             ],
         ],
         'category' => [
-            'opening' => 'Cauți ceva anume din această categorie? Te ajut să alegi rapid.',
+            'opening' => 'Te ajut să alegi rapid, nu doar să cauți. Ce îți trebuie?',
             'quick_replies' => [
-                ['label' => 'Cele mai populare', 'text' => 'Arată-mi cele mai populare produse din categoria asta.'],
-                ['label' => 'Recomandare pe buget', 'text' => 'Recomandă-mi în funcție de buget.'],
-                ['label' => 'Cele mai bine cotate', 'text' => 'Care sunt cele mai bine cotate opțiuni?'],
+                ['label' => 'Alege pentru mine', 'text' => 'Alege tu produsul potrivit pentru mine în această categorie.'],
+                ['label' => 'Pe buget', 'text' => 'Recomandă-mi în funcție de buget.'],
+                ['label' => 'Cele mai populare', 'text' => 'Arată-mi cele mai populare 3 opțiuni.'],
+                ['label' => 'Cele mai bine cotate', 'text' => 'Care sunt cele mai bine cotate variante?'],
             ],
         ],
         'cart' => [
-            'opening' => 'Văd că ai produse în coș. Vrei să verific dacă mai lipsește ceva?',
+            'opening' => 'Văd coșul tău. Te ajut să finalizezi rapid și să eviți surprize la checkout.',
             'quick_replies' => [
-                ['label' => 'Îmi lipsesc accesorii?', 'text' => 'Am toate accesoriile de care am nevoie?'],
-                ['label' => 'Produsele sunt compatibile?', 'text' => 'Produsele din coș sunt compatibile între ele?'],
-                ['label' => 'Ai o variantă mai bună?', 'text' => 'Există o variantă mai bună la preț similar?'],
-                ['label' => 'Cost livrare?', 'text' => 'Cât costă livrarea pentru comanda asta?'],
+                ['label' => 'Livrare gratuită?', 'text' => 'Ajung la pragul pentru livrare gratuită? Cât îmi mai lipsește?'],
+                ['label' => 'Ce accesorii să adaug?', 'text' => 'Ce accesorii compatibile recomanzi pentru ce am în coș?'],
+                ['label' => 'Cod promo?', 'text' => 'Există un cod promo activ pe care îl pot aplica?'],
+                ['label' => 'Ajută-mă să finalizez', 'text' => 'Ghidează-mă să finalizez comanda.'],
             ],
         ],
         'general' => [
-            'opening' => 'Bună! Caut eu produsul potrivit pentru tine. Ce cauți?',
+            'opening' => 'Te ajut să alegi. Spune-mi ce cauți sau apasă o sugestie.',
             'quick_replies' => [
-                ['label' => 'Caut un cadou', 'text' => 'Caut un cadou.'],
-                ['label' => 'Livrare rapidă', 'text' => 'Ce produse se livrează astăzi?'],
-                ['label' => 'Politica de retur', 'text' => 'Care e politica de retur?'],
+                ['label' => 'Recomandă-mi ceva', 'text' => 'Recomandă-mi 3 produse care ți se par cele mai bune acum.'],
+                ['label' => 'Cadou sub 200 lei', 'text' => 'Caut un cadou cu un buget sub 200 lei.'],
+                ['label' => 'Livrare astăzi', 'text' => 'Ce produse pot primi astăzi?'],
+                ['label' => 'Cele mai populare', 'text' => 'Arată-mi cele mai populare produse acum.'],
             ],
         ],
     ],
@@ -190,20 +192,21 @@ return [
     // ────────────────────────────────────────────
     'restaurant' => [
         'hospitality' => [
-            'opening' => 'Te ajut cu rezervarea unei mese. Pentru câte persoane?',
+            'opening' => 'Îți fac rezervarea în sub un minut. Pentru câte persoane?',
             'quick_replies' => [
                 ['label' => 'Masă pentru 2', 'text' => 'Vreau o masă pentru 2 persoane.'],
                 ['label' => 'Masă pentru 4', 'text' => 'Vreau o masă pentru 4 persoane.'],
-                ['label' => 'Grup mare', 'text' => 'Am nevoie de o masă pentru un grup mare (6+).'],
+                ['label' => 'Astă-seară', 'text' => 'Ce disponibilitate aveți astă-seară?'],
                 ['label' => 'Eveniment privat', 'text' => 'Vreau să organizez un eveniment privat.'],
             ],
         ],
         'general' => [
-            'opening' => 'Bună! Te ajut cu o rezervare sau alte informații.',
+            'opening' => 'Rezervi masă sau vezi meniul? Îți răspund rapid la oricare.',
             'quick_replies' => [
-                ['label' => 'Meniu', 'text' => 'Vreau să văd meniul.'],
-                ['label' => 'Rezervare', 'text' => 'Vreau să fac o rezervare.'],
-                ['label' => 'Program', 'text' => 'Care este programul?'],
+                ['label' => 'Rezervă o masă', 'text' => 'Vreau să fac o rezervare.'],
+                ['label' => 'Vezi meniul', 'text' => 'Vreau să văd meniul.'],
+                ['label' => 'Oferte speciale', 'text' => 'Ce oferte speciale aveți astăzi sau săptămâna asta?'],
+                ['label' => 'Program', 'text' => 'Care este programul de astăzi?'],
             ],
         ],
     ],
@@ -225,23 +228,24 @@ return [
     // ────────────────────────────────────────────
     'avocatura' => [
         'general' => [
-            'opening' => 'Te pot ajuta cu o consultație sau informații generale.',
+            'opening' => 'Îți propun un pas concret pentru situația ta. Ce te interesează?',
             'quick_replies' => [
-                ['label' => 'Programare consultație', 'text' => 'Vreau o consultație.'],
-                ['label' => 'Domenii de activitate', 'text' => 'Ce domenii acoperiți?'],
-                ['label' => 'Tarife', 'text' => 'Cum calculați tarifele?'],
+                ['label' => 'Programează-mi o consultație', 'text' => 'Vreau o consultație cu un avocat.'],
+                ['label' => 'Cazul meu se încadrează?', 'text' => 'Descriu pe scurt situația și îmi spui dacă se încadrează în serviciile voastre.'],
+                ['label' => 'Tarife orientative', 'text' => 'Cum sunt calculate tarifele pentru cazul meu?'],
+                ['label' => 'Urgent', 'text' => 'Am o situație urgentă, când pot vorbi cu cineva?'],
             ],
         ],
     ],
 
     'imobiliare' => [
         'general' => [
-            'opening' => 'Te ajut să găsești repede proprietatea potrivită.',
+            'opening' => 'Te ajut să reduci lista la 3 proprietăți potrivite. Ce cauți?',
             'quick_replies' => [
-                ['label' => 'Caut apartament', 'text' => 'Caut un apartament.'],
-                ['label' => 'Caut casă', 'text' => 'Caut o casă.'],
-                ['label' => 'Vreau să închiriez', 'text' => 'Vreau să închiriez.'],
-                ['label' => 'Pe buget', 'text' => 'Caut în funcție de buget.'],
+                ['label' => 'Apartament de cumpărat', 'text' => 'Caut un apartament de cumpărat.'],
+                ['label' => 'Casă de cumpărat', 'text' => 'Caut o casă de cumpărat.'],
+                ['label' => 'Vreau să închiriez', 'text' => 'Vreau să închiriez o proprietate.'],
+                ['label' => 'Filtrează pe buget', 'text' => 'Am un buget și vreau să filtrezi opțiunile.'],
             ],
         ],
     ],
