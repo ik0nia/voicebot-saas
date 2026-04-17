@@ -10,6 +10,7 @@ use App\Models\Tenant;
 use App\Services\Cost\BnrExchangeRate;
 use App\Services\Cost\DailyCostAggregator;
 use App\Services\Cost\SetupAiCostReport;
+use App\Support\DemoConversionStats;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -144,8 +145,6 @@ class AdminCostReportController extends Controller
         $setupAiByTenant = $setupAi->tenantRollup($start, $end)
             ->keyBy('tenant_id');
 
-        // 30-day warning bucket keyed by tenant_id for the main
-        // tenant list highlighting.
         $setupAi30dEnd = Carbon::now();
         $setupAi30dStart = $setupAi30dEnd->copy()->subDays(30);
         $setupAi30dByTenant = $setupAi->tenantRollup($setupAi30dStart, $setupAi30dEnd)
@@ -163,6 +162,11 @@ class AdminCostReportController extends Controller
                 ->whereIn('id', $topAbuserTenantIds)
                 ->get(['id', 'name', 'settings'])
                 ->keyBy('id');
+
+        // Niche-demo funnel summary — last 30 days. Surfaces on the
+        // costs page so the operator sees "did the landing pages pay
+        // off?" alongside the spend numbers.
+        $demoStats = DemoConversionStats::summary(30);
 
         return view('admin.costs.index', [
             'period' => $period,
@@ -184,6 +188,7 @@ class AdminCostReportController extends Controller
             'topAbusers' => $topAbusers,
             'abuserTenants' => $abuserTenants,
             'setupAiOnly' => false,
+            'demoStats' => $demoStats,
         ]);
     }
 

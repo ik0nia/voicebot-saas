@@ -43,13 +43,48 @@ class RegisterController extends Controller
         $domain = parse_url($validated['website'], PHP_URL_HOST) ?: $validated['website'];
         $tenantName = preg_replace('/^www\./', '', $domain);
 
-        $user = DB::transaction(function () use ($validated, $tenantName) {
+        // Niche-demo attribution (Iteration F): if the visitor touched a
+        // demo widget before signing up, the landing page set a
+        // sambla_demo_session cookie. We match it against any
+        // demo_qualified event in the last 30 days and, if found, stamp
+        // the originating niche onto the tenant's settings. This powers
+        // the "demo → signup" funnel panel in the admin dashboard.
+        $demoSessionId = $request->cookie('sambla_demo_session');
+        $attributedNiche = null;
+        if ($demoSessionId) {
+            $attributedNiche = \App\Models\ChatEvent::query()
+                ->where('session_id', $demoSessionId)
+                ->where('event_name', \App\Services\EventTaxonomy::DEMO_QUALIFIED)
+                ->where('created_at', '>=', now()->subDays(30))
+                ->orderByDesc('created_at')
+                ->value('properties->niche_slug');
+            // Fall back to demo_viewed attribution when the visitor didn't
+            // hit the 3-message qualification bar.
+            if (!$attributedNiche) {
+                $attributedNiche = \App\Models\ChatEvent::query()
+                    ->where('session_id', $demoSessionId)
+                    ->where('event_name', \App\Services\EventTaxonomy::DEMO_VIEWED)
+                    ->where('created_at', '>=', now()->subDays(30))
+                    ->orderByDesc('created_at')
+                    ->value('properties->niche_slug');
+            }
+        }
+
+        $user = DB::transaction(function () use ($validated, $tenantName, $demoSessionId, $attributedNiche) {
             // 1. Create Tenant
+            $tenantSettings = [];
+            if ($attributedNiche) {
+                $tenantSettings['demo_qualified_from_niche'] = $attributedNiche;
+                $tenantSettings['demo_session_id'] = $demoSessionId;
+                $tenantSettings['demo_attributed_at'] = now()->toIso8601String();
+            }
+
             $tenant = Tenant::create([
                 'name' => $tenantName,
                 'slug' => Str::slug($tenantName),
                 'plan' => 'starter',
                 'trial_ends_at' => now()->addDays(7),
+                'settings' => $tenantSettings,
             ]);
 
             // 2. Create User

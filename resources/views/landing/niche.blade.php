@@ -204,7 +204,11 @@
             @endif
         </div>
 
-        <div class="max-w-2xl mx-auto">
+        <div class="max-w-2xl mx-auto"
+             data-niche-demo-root
+             data-niche-slug="{{ $niche->slug }}"
+             data-channel-id="{{ (int) $liveDemo['channel_id'] }}"
+             data-landing-path="/{{ request()->path() }}">
             <div class="relative">
                 <div class="absolute -inset-4 {{ $p['bg100'] }} rounded-[2.5rem] blur-2xl opacity-60"></div>
                 <div class="relative rounded-3xl overflow-hidden shadow-2xl border border-slate-200 bg-white">
@@ -220,11 +224,26 @@
                             </div>
                         </div>
                     </div>
+                    {{-- Error boundary: if the iframe doesn't fire `load` within 5s, show a retry UI. --}}
+                    <div id="niche-live-demo-fallback" class="hidden p-8 text-center">
+                        <div class="mx-auto w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mb-4">
+                            <svg class="w-7 h-7 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-2">Demo-ul nu a putut fi încărcat</h3>
+                        <p class="text-sm text-slate-600 mb-5">Ne pare rău — se poate întâmpla dacă rețeaua ta blochează widget-uri externe.</p>
+                        <div class="flex gap-3 justify-center">
+                            <button type="button" id="niche-live-demo-retry" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-white {{ $p['bg700'] }} hover:{{ $p['bg600'] }} transition">
+                                Încearcă din nou
+                            </button>
+                            <a href="#contact" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-slate-900 bg-white border-2 border-slate-900 hover:bg-slate-900 hover:text-white transition">
+                                Contactează-ne
+                            </a>
+                        </div>
+                    </div>
                     <iframe
                         id="niche-live-demo-frame"
                         src="{{ url('/api/v1/chatbot/' . $liveDemo['channel_id'] . '/frame') }}"
-                        class="w-full border-0 block bg-white"
-                        style="height: 540px;"
+                        class="w-full border-0 block bg-white niche-demo-iframe"
                         title="Demo live {{ $niche->name }}"
                         loading="lazy"
                         allow="microphone"
@@ -234,7 +253,23 @@
             <p class="text-center text-xs text-slate-500 mt-5">
                 Conversațiile din acest demo nu sunt asociate unui cont real și nu sunt păstrate permanent.
             </p>
+            {{-- No-JS fallback: scripted bubbles below still render server-side; linking down avoids a blank section. --}}
+            <noscript>
+                <p class="text-center text-xs text-slate-500 mt-3">
+                    Ai JavaScript dezactivat — derulează mai jos pentru o conversație demo preînregistrată.
+                </p>
+            </noscript>
         </div>
+        {{-- Mobile iframe height fix: clamp shrinks the frame on small
+             phones (down to 400px) so the CTAs below remain visible
+             without scrolling through the demo first. Desktop keeps
+             the original 540px cap. --}}
+        <style>
+            .niche-demo-iframe {
+                height: clamp(400px, 60vh, 540px);
+                max-height: 540px;
+            }
+        </style>
     </div>
 </section>
 @endif
@@ -712,6 +747,114 @@
         seedBtn.textContent = 'Copiat ✓ — lipește în chat';
         setTimeout(() => { seedBtn.textContent = original; }, 2200);
         frame.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+})();
+</script>
+
+{{-- Niche-demo funnel: emit demo_viewed / demo_message_sent / demo_qualified
+     events to /api/public/demo/event, and show a fallback UI if the iframe
+     never loads. Intentionally framework-free so it runs before Alpine
+     finishes bootstrapping. --}}
+<script>
+(() => {
+    const root = document.querySelector('[data-niche-demo-root]');
+    if (!root) return;
+    const frame = document.getElementById('niche-live-demo-frame');
+    const fallback = document.getElementById('niche-live-demo-fallback');
+    const retryBtn = document.getElementById('niche-live-demo-retry');
+    const niche = root.getAttribute('data-niche-slug') || '';
+    const channelId = parseInt(root.getAttribute('data-channel-id') || '0', 10);
+    const landingPath = root.getAttribute('data-landing-path') || location.pathname;
+
+    // Stable per-visitor demo session id (cookie + sessionStorage fallback).
+    // Persists across niches so cross-niche dedup is decided on the server
+    // by (session, niche, event) idempotency.
+    const COOKIE = 'sambla_demo_session';
+    const readCookie = (k) => {
+        const m = document.cookie.match(new RegExp('(?:^|; )' + k + '=([^;]*)'));
+        return m ? decodeURIComponent(m[1]) : null;
+    };
+    const setCookie = (k, v, days) => {
+        const d = new Date(); d.setTime(d.getTime() + days*86400000);
+        document.cookie = k + '=' + encodeURIComponent(v) + ';expires=' + d.toUTCString() + ';path=/;SameSite=Lax';
+    };
+    let sessionId = readCookie(COOKIE);
+    if (!sessionId) {
+        sessionId = 'ds_' + (crypto.randomUUID ? crypto.randomUUID() : (Date.now().toString(36) + Math.random().toString(36).slice(2)));
+        setCookie(COOKIE, sessionId, 180);
+    }
+
+    // Dedupe flag — don't double-fire demo_viewed on a retry.
+    const sentKey = 'sambla_demo_viewed:' + niche;
+    let viewed = sessionStorage.getItem(sentKey) === '1';
+
+    const postEvent = (eventName, extraProps = {}) => {
+        try {
+            fetch('/api/public/demo/event', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                credentials: 'same-origin',
+                keepalive: true,
+                body: JSON.stringify({
+                    event_name: eventName,
+                    niche_slug: niche,
+                    session_id: sessionId,
+                    landing_path: landingPath,
+                    properties: Object.assign({ channel_id: channelId }, extraProps),
+                }),
+            }).catch(() => {});
+        } catch (_) { /* never let analytics break the page */ }
+    };
+
+    // Error boundary: if the iframe hasn't fired `load` within 5s, hide it
+    // and show the retry UI. The fallback stays accessible via the scripted
+    // bubbles below.
+    let loaded = false;
+    const failTimer = setTimeout(() => {
+        if (loaded || !frame || !fallback) return;
+        frame.classList.add('hidden');
+        fallback.classList.remove('hidden');
+    }, 5000);
+
+    if (frame) {
+        frame.addEventListener('load', () => {
+            loaded = true;
+            clearTimeout(failTimer);
+            if (!viewed) {
+                postEvent('demo_viewed');
+                sessionStorage.setItem(sentKey, '1');
+                viewed = true;
+            }
+        });
+    }
+
+    if (retryBtn && frame && fallback) {
+        retryBtn.addEventListener('click', () => {
+            fallback.classList.add('hidden');
+            frame.classList.remove('hidden');
+            // Hard-reload the iframe; some browsers keep failed requests cached.
+            const src = frame.getAttribute('src');
+            frame.setAttribute('src', 'about:blank');
+            setTimeout(() => frame.setAttribute('src', src), 50);
+        });
+    }
+
+    // Message bus: the chat iframe posts `{type: 'sambla.message', role: 'user'|'bot'}`
+    // on every message. We count user messages; after 3, fire demo_qualified.
+    let userMsgs = 0;
+    const qualifiedKey = 'sambla_demo_qualified:' + niche;
+    const alreadyQualified = sessionStorage.getItem(qualifiedKey) === '1';
+    window.addEventListener('message', (e) => {
+        if (!e || !e.data || typeof e.data !== 'object') return;
+        if (e.data.type !== 'sambla.message') return;
+        postEvent('demo_message_sent', { role: e.data.role || 'user' });
+        if (e.data.role === 'user') {
+            userMsgs++;
+            if (userMsgs >= 3 && !sessionStorage.getItem(qualifiedKey)) {
+                postEvent('demo_qualified', { messages: userMsgs });
+                sessionStorage.setItem(qualifiedKey, '1');
+            }
+        }
     });
 })();
 </script>

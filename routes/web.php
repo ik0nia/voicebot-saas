@@ -588,6 +588,10 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
     // the threshold so ops can set it up-front.
     Route::post('costuri/setup-ai/limita/{tenantId}', [\App\Http\Controllers\Admin\AdminCostReportController::class, 'setSetupAiLimit'])->name('admin.costs.setupAiLimit');
 
+    // Niche-demo funnel (Iteration F) — per-niche breakdown of the demo
+    // → signup pipeline driven by the public landing pages.
+    Route::get('demo', [\App\Http\Controllers\Admin\AdminDemoFunnelController::class, 'index'])->name('admin.demo.index');
+
     // Outcomes (what the agent earned — mirrors /costuri)
     Route::get('venituri', [\App\Http\Controllers\Admin\AdminOutcomeReportController::class, 'index'])->name('admin.outcomes.index');
 
