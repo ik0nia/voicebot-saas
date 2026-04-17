@@ -544,6 +544,9 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
     Route::get('costuri', [\App\Http\Controllers\Admin\AdminCostReportController::class, 'index'])->name('admin.costs.index');
     Route::post('costuri/reaggregate', [\App\Http\Controllers\Admin\AdminCostReportController::class, 'reaggregate'])->name('admin.costs.reaggregate');
 
+    // Outcomes (what the agent earned — mirrors /costuri)
+    Route::get('venituri', [\App\Http\Controllers\Admin\AdminOutcomeReportController::class, 'index'])->name('admin.outcomes.index');
+
     // SaaS lead inbox (contact form + niche landing unified)
     Route::get('lead-uri', [\App\Http\Controllers\Admin\AdminLeadController::class, 'index'])->name('admin.leads.index');
     Route::get('lead-uri/{lead}', [\App\Http\Controllers\Admin\AdminLeadController::class, 'show'])->name('admin.leads.show');
