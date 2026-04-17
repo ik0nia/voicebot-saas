@@ -41,9 +41,21 @@ return [
                 // we want callers to engage the bot first. Handoff is
                 // still available via the G5 bail-signal fallback
                 // ('Lasă-mi datele'), which only fires when the bot
-                // itself can't answer. Keeping the default strip
-                // empty makes the widget feel confident, not defeated.
-                ['label' => 'Întrebări frecvente', 'text' => 'Vreau să văd întrebările frecvente.'],
+                // itself can't answer.
+                //
+                // Chip selection rationale:
+                //  1. 'Ce știi să faci?' — capability discovery.
+                //     Invites the bot to self-describe its range.
+                //     High engagement, zero commitment, works for
+                //     any business (service, product, info).
+                //  2. 'Am o întrebare rapidă' — low-friction opener
+                //     for users who know what they want. Functions
+                //     as an explicit 'go ahead, ask me' nudge.
+                //  3. 'Întrebări frecvente' — safe fallback for
+                //     users who prefer browsing to asking.
+                ['label' => 'Ce știi să faci?',      'text' => 'Ce mă poți ajuta mai exact? Ce ai disponibil?'],
+                ['label' => 'Am o întrebare rapidă', 'text' => 'Am o întrebare rapidă.'],
+                ['label' => 'Întrebări frecvente',   'text' => 'Vreau să văd întrebările frecvente.'],
             ],
         ],
     ],
