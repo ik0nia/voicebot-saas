@@ -37,6 +37,10 @@
     ];
     $p = $palettes[$niche->color_theme] ?? $palettes['red'];
 
+    // Resolve interactive demo (null when feature-disabled or no mapping).
+    $liveDemo = \App\Support\NicheDemoResolver::forNiche($niche->slug);
+    $wowDemoSeed = config('niches.' . $niche->slug . '.wow_demo');
+
     // Possessive form per niche — "cabinetul tău", "biroul tău", etc.
     // Used in headings where "afacerea ta" doesn't fit (notari, avocați, cabinete).
     $possessive = [
@@ -173,6 +177,67 @@
         </div>
     </div>
 </section>
+
+{{-- ============================== INTERACTIVE LIVE DEMO (feature-flagged) ============================== --}}
+@if($liveDemo)
+<section class="relative bg-slate-50 section-padding overflow-hidden" id="niche-live-demo">
+    @if(!empty($nicheIcons))
+        <svg class="absolute top-16 right-[6%] w-24 h-24 opacity-[0.06] {{ $p['text700'] }} rotate-6" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24">{!! $nicheIcons[0] !!}</svg>
+        <svg class="absolute bottom-20 left-[6%] w-28 h-28 opacity-[0.05] {{ $p['text700'] }} -rotate-12" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24">{!! $nicheIcons[1] ?? $nicheIcons[0] !!}</svg>
+    @endif
+    <div class="container-custom relative">
+        <div class="max-w-3xl mx-auto text-center mb-10">
+            <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider {{ $p['bg600'] }} text-white mb-5">
+                <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                LIVE · vorbește cu agentul
+            </span>
+            <h2 class="text-3xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-[1.1] mb-4">
+                Încearcă agentul AI pentru {{ $niche->vertical_label }}
+            </h2>
+            <p class="text-lg text-slate-700 leading-relaxed font-medium">
+                Scrie o întrebare reală — primești răspuns imediat, în română, de la agentul configurat pentru această nișă.
+            </p>
+            @if($wowDemoSeed)
+                <p class="mt-4 text-sm text-slate-500">
+                    Nu știi ce să întrebi? Încearcă: <button type="button" data-niche-demo-seed="{{ $wowDemoSeed }}" class="underline font-semibold {{ $p['text700'] }} hover:opacity-80">„{{ $wowDemoSeed }}”</button>
+                </p>
+            @endif
+        </div>
+
+        <div class="max-w-2xl mx-auto">
+            <div class="relative">
+                <div class="absolute -inset-4 {{ $p['bg100'] }} rounded-[2.5rem] blur-2xl opacity-60"></div>
+                <div class="relative rounded-3xl overflow-hidden shadow-2xl border border-slate-200 bg-white">
+                    <div class="flex items-center gap-3 px-5 py-3 text-white" style="background: linear-gradient(135deg, {{ $p['hex'] }}, {{ $p['hex'] }}dd);">
+                        <div class="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="font-semibold text-sm truncate">{{ $liveDemo['bot_name'] }}</div>
+                            <div class="flex items-center gap-1.5 text-[11px] text-white/85">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
+                                Online · răspunde live
+                            </div>
+                        </div>
+                    </div>
+                    <iframe
+                        id="niche-live-demo-frame"
+                        src="{{ url('/api/v1/chatbot/' . $liveDemo['channel_id'] . '/frame') }}"
+                        class="w-full border-0 block bg-white"
+                        style="height: 540px;"
+                        title="Demo live {{ $niche->name }}"
+                        loading="lazy"
+                        allow="microphone"
+                        sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>
+                </div>
+            </div>
+            <p class="text-center text-xs text-slate-500 mt-5">
+                Conversațiile din acest demo nu sunt asociate unui cont real și nu sunt păstrate permanent.
+            </p>
+        </div>
+    </div>
+</section>
+@endif
 
 {{-- ============================== ANNOTATED CHAT SHOWCASE ============================== --}}
 <section class="relative bg-white section-padding overflow-hidden">
@@ -631,6 +696,23 @@
 
     tick();
     timer = setInterval(tick, 3000);
+})();
+</script>
+
+{{-- Interactive live demo: clipboard-copy the suggested prompt + smooth-scroll to iframe. --}}
+<script>
+(() => {
+    const seedBtn = document.querySelector('[data-niche-demo-seed]');
+    const frame = document.getElementById('niche-live-demo-frame');
+    if (!seedBtn || !frame) return;
+    seedBtn.addEventListener('click', async () => {
+        const text = seedBtn.getAttribute('data-niche-demo-seed') || '';
+        try { await navigator.clipboard.writeText(text); } catch (_) {}
+        const original = seedBtn.textContent;
+        seedBtn.textContent = 'Copiat ✓ — lipește în chat';
+        setTimeout(() => { seedBtn.textContent = original; }, 2200);
+        frame.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
 })();
 </script>
 @endpush
