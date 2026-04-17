@@ -1499,6 +1499,23 @@ class ChatbotApiController extends Controller
                     ]);
                 }
 
+                // W6: context-aware follow-up quick replies. Only emitted
+                // when the current turn has a meaningful page_type and
+                // the conversation just produced material (products or
+                // substantive answer) — keeps the chip strip focused on
+                // next actions, not chat-restart noise.
+                try {
+                    $followups = $this->buildFollowupQuickReplies(
+                        $bot, $pageContext ?? [], $products, $fullContent ?? ''
+                    );
+                    if (!empty($followups)) {
+                        $this->sendSSE('quick_replies', ['replies' => $followups]);
+                    }
+                } catch (\Throwable $e) {
+                    // Never fail a successful response over a follow-up strip.
+                    Log::debug('followup quick_replies skipped', ['err' => $e->getMessage()]);
+                }
+
                 // 5. Send done event
                 $this->sendSSE('done', ['message_id' => $botMessage->id]);
 
@@ -2151,6 +2168,88 @@ class ChatbotApiController extends Controller
             ob_flush();
         }
         flush();
+    }
+
+    /**
+     * Build context-aware follow-up quick replies emitted after the
+     * bot response. The widget already has the full contexts map from
+     * /config, so we bias these to next-action nudges — "add to cart",
+     * "see more options" — rather than repeating the generic greeting
+     * chips. Returns [] when no clear next action exists so the strip
+     * stays off-screen instead of looking spammy.
+     *
+     * @param array $pageContext { page_type, product_context, cart_context, ... }
+     * @param array $products    Product cards returned this turn (maybe empty).
+     * @param string $response   Text the bot streamed (used to avoid
+     *                           nudging toward an action the bot already
+     *                           declined — e.g. out of stock).
+     * @return array<int, array{label:string, text:string}>
+     */
+    private function buildFollowupQuickReplies(Bot $bot, array $pageContext, array $products, string $response): array
+    {
+        $pageType = (string) ($pageContext['page_type'] ?? '');
+        if ($pageType === '' || $pageType === 'general' || $pageType === 'home') {
+            return [];
+        }
+
+        // If the bot said something bailing ("nu am acea informație",
+        // "contactați-ne", "nu pot") the last thing the UI needs is a
+        // chip strip pushing the caller forward. Keep it tight.
+        $responseLower = mb_strtolower($response);
+        $bailSignals = ['nu am acea informați', 'contactați-ne', 'nu pot răspunde', 'voi reveni'];
+        foreach ($bailSignals as $needle) {
+            if ($needle !== '' && str_contains($responseLower, $needle)) return [];
+        }
+
+        $replies = [];
+
+        if ($pageType === 'product' && !empty($products)) {
+            // Product page + bot just returned product cards → convert the
+            // conversation into a purchase-shaped next step.
+            $replies = [
+                ['label' => 'Adaugă în coș',          'text' => 'Vreau să adaug produsul discutat în coș.'],
+                ['label' => 'Variante la preț similar', 'text' => 'Există variante la preț similar?'],
+                ['label' => 'Timp de livrare',         'text' => 'Cât durează livrarea?'],
+            ];
+        } elseif ($pageType === 'cart') {
+            $cart = $pageContext['cart_context'] ?? null;
+            $replies = [
+                ['label' => 'Ce îmi mai lipsește?',   'text' => 'Ce accesorii lipsesc pentru produsele din coș?'],
+                ['label' => 'Există un cod promo?',    'text' => 'Există un cod promo activ?'],
+                ['label' => 'Finalizez comanda',      'text' => 'Cum finalizez comanda?'],
+            ];
+            if (is_array($cart) && (int) ($cart['items_count'] ?? 0) === 0) {
+                $replies = [
+                    ['label' => 'Recomandă ceva', 'text' => 'Recomandă-mi câteva produse.'],
+                ];
+            }
+        } elseif ($pageType === 'category' && !empty($products)) {
+            $replies = [
+                ['label' => 'Cele mai populare',  'text' => 'Arată-mi cele mai populare.'],
+                ['label' => 'Filtre după buget',  'text' => 'Filtrează în funcție de buget.'],
+                ['label' => 'Cele mai noi',       'text' => 'Arată-mi cele mai noi.'],
+            ];
+        } elseif ($pageType === 'booking' && in_array($bot->engine_type, ['booking', 'hybrid'], true)) {
+            $replies = [
+                ['label' => 'Primul loc liber',   'text' => 'Vreau primul loc disponibil.'],
+                ['label' => 'Mâine dimineață',    'text' => 'Vreau mâine dimineață.'],
+                ['label' => 'După ora 17:00',     'text' => 'Vreau o programare după ora 17:00.'],
+            ];
+        } elseif ($pageType === 'hospitality' && $bot->engine_type === 'hospitality') {
+            $replies = [
+                ['label' => 'În weekend',     'text' => 'Vreau pentru weekend.'],
+                ['label' => 'Opțiuni premium', 'text' => 'Arată-mi opțiuni premium.'],
+                ['label' => 'Pe buget',        'text' => 'Caut pe buget.'],
+            ];
+        }
+
+        // Cap labels and texts defensively; mirrors WidgetContextResolver.
+        return array_slice(array_map(function ($r) {
+            return [
+                'label' => mb_substr($r['label'], 0, 40),
+                'text'  => mb_substr($r['text'], 0, 500),
+            ];
+        }, $replies), 0, 4);
     }
 
     /**
