@@ -15,7 +15,7 @@ return [
         ],
         'smart' => [
             'provider' => 'anthropic',
-            'model' => 'claude-sonnet-4-5-20241022',
+            'model' => 'claude-sonnet-4-6',
             'max_tokens' => 800,
             'temperature' => 0.5,
         ],

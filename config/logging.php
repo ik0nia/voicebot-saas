@@ -63,6 +63,12 @@ return [
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'replace_placeholders' => true,
+            // Group-writable so a log file created by a `docker exec` as
+            // root (tinker, artisan one-offs) can still be appended to by
+            // php-fpm running as www-data. Without this, the first tinker
+            // write of the day locks out the web worker and every code
+            // path that hits Log::* returns a 500.
+            'permission' => 0664,
         ],
 
         'daily' => [
@@ -71,6 +77,7 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
+            'permission' => 0664,
         ],
 
         'slack' => [
@@ -133,6 +140,7 @@ return [
             'level' => 'error',
             'days' => 7,
             'replace_placeholders' => true,
+            'permission' => 0664,
         ],
 
         'knowledge' => [
@@ -141,6 +149,7 @@ return [
             'level' => 'debug',
             'days' => 30,
             'replace_placeholders' => true,
+            'permission' => 0664,
         ],
 
     ],

@@ -24,7 +24,7 @@ class ChatCompletionService
         'gpt-4o-mini'       => ['input' => 0.15,  'output' => 0.60],
         'gpt-4o'            => ['input' => 2.50,  'output' => 10.00],
         'claude-haiku-4-5-20251001' => ['input' => 0.80,  'output' => 4.00],
-        'claude-sonnet-4-5-20241022' => ['input' => 3.00,  'output' => 15.00],
+        'claude-sonnet-4-6' => ['input' => 3.00,  'output' => 15.00],
     ];
 
     private const TIMEOUTS = [
@@ -327,13 +327,13 @@ class ChatCompletionService
                         }
                     }
 
-                    $stream = $client->messages->createStream([
-                        'model' => $model,
-                        'max_tokens' => $maxTokens,
-                        'temperature' => $temperature,
-                        'system' => $system,
-                        'messages' => $anthropicMessages,
-                    ]);
+                    $stream = $client->messages->createStream(
+                        maxTokens: $maxTokens,
+                        messages: $anthropicMessages,
+                        model: $model,
+                        system: $system !== '' ? $system : null,
+                        temperature: $temperature,
+                    );
 
                     foreach ($stream as $response) {
                         if ($response->type === 'content_block_delta') {
@@ -467,13 +467,17 @@ class ChatCompletionService
         }
 
         try {
-            $response = $client->messages->create([
-                'model' => $model,
-                'max_tokens' => $maxTokens,
-                'temperature' => $temperature,
-                'system' => $system,
-                'messages' => $anthropicMessages,
-            ]);
+            // SDK v0.8 broke BC: create() now takes positional/named args,
+            // not an associative array. Passing the array was landing in
+            // $maxTokens, raising "Argument #1 must be of type int, array
+            // given" and tripping the retry chain.
+            $response = $client->messages->create(
+                maxTokens: $maxTokens,
+                messages: $anthropicMessages,
+                model: $model,
+                system: $system !== '' ? $system : null,
+                temperature: $temperature,
+            );
         } catch (\Throwable $e) {
             throw $this->classifyException($e, 'anthropic', $model);
         }
