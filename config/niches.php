@@ -83,7 +83,11 @@ PROMPT,
             ['question' => 'Aveți și magazin fizic?', 'answer' => 'Îți spun imediat dacă avem punct de ridicare sau showroom în orașul tău.'],
         ],
         'standard_rules' => [
-            'Nu inventa produse, prețuri sau stoc.',
+            // "Nu inventa produse/prețuri/stoc" intentionally omitted —
+            // already covered by niche prompt_addon ("REGULI DURE") and by
+            // PromptGuardrails::antiHallucination(). Keeping it here too
+            // would be the third repetition of the same rule and dilutes
+            // LLM attention. See Iteration C.
             'Nu promite termene de livrare fără verificare.',
             'Nu oferi coduri de reducere care nu sunt active în sistem.',
             'Nu cere niciodată numărul cardului sau CVV-ul — plata se face doar pe site.',
@@ -1174,9 +1178,11 @@ PROMPT,
             ['question' => 'Organizați evenimente private?', 'answer' => 'Da, putem închiria salonul pentru evenimente private. Îți programez o discuție cu managerul.'],
         ],
         'standard_rules' => [
+            // "Nu inventa preparate/ingrediente" intentionally omitted —
+            // already covered by niche prompt_addon ("REGULI DURE") and by
+            // PromptGuardrails::antiHallucination(). See Iteration C.
             'Nu confirma masă fără verificare în sistem.',
             'Nu promite o masă exactă — doar zona preferată.',
-            'Nu inventa preparate sau ingrediente care nu sunt în meniu.',
             'Nu minimiza alergiile — avertizează despre contaminare încrucișată în bucătărie.',
             'Nu garanta timpul de gătit sub 30 min pentru preparate elaborate.',
             'Nu prelua rezervări pentru grupuri peste 8 persoane fără confirmare manager.',

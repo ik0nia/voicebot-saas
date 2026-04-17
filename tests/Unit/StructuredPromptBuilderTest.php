@@ -104,8 +104,12 @@ class StructuredPromptBuilderTest extends TestCase
         }
     }
 
-    public function test_empty_sections_without_niche_produce_empty_string(): void
+    public function test_empty_sections_without_niche_fall_back_to_tone_default_only(): void
     {
+        // Iteration C: effectiveTone() always resolves to *something*
+        // (bot → niche → hardcoded fallback), so the tone block is now
+        // the minimum non-empty output for a fully-empty bot. Other
+        // sections stay empty.
         $bot = $this->makeBot([], [
             'use_structured_prompt' => true,
             'business_info' => [],
@@ -115,10 +119,13 @@ class StructuredPromptBuilderTest extends TestCase
         ]);
 
         $out = app(StructuredPromptBuilder::class)->build($bot);
-        $this->assertSame('', $out);
+        $this->assertStringContainsString('=== TON ȘI STIL ===', $out);
+        $this->assertStringNotContainsString('=== INFORMAȚII BUSINESS ===', $out);
+        $this->assertStringNotContainsString('=== ÎNTREBĂRI FRECVENTE ===', $out);
+        $this->assertStringNotContainsString('=== REGULI STRICTE', $out);
     }
 
-    public function test_empty_sections_with_niche_only_produce_niche_addon(): void
+    public function test_empty_sections_with_niche_only_produce_niche_addon_and_tone(): void
     {
         config()->set('niches.only-niche.prompt_addon', 'Just the niche.');
         $bot = $this->makeBot(['niche_slug' => 'only-niche'], [
@@ -126,7 +133,10 @@ class StructuredPromptBuilderTest extends TestCase
         ]);
 
         $out = app(StructuredPromptBuilder::class)->build($bot);
-        $this->assertSame('Just the niche.', $out);
+        $this->assertStringContainsString('Just the niche.', $out);
+        // effectiveTone falls back to hardcoded default for a niche
+        // with no default_tone, so the tone section is always present.
+        $this->assertStringContainsString('=== TON ȘI STIL ===', $out);
     }
 
     public function test_escape_hatch_is_last_when_flag_on(): void
