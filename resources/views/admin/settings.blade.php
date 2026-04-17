@@ -607,8 +607,12 @@
     @if($tab === 'stripe')
         @php
             $currentMode = old('stripe_mode', $settings['stripe']['stripe_mode'] ?? 'live');
-            $hasLive = !empty($settings['stripe']['stripe_secret_key'] ?? '');
-            $hasTest = !empty($settings['stripe']['stripe_test_secret_key'] ?? '');
+            // Secrets are blanked out in $settings by AdminSettingsController
+            // (so ciphertext doesn't leak to the view); presence is tracked
+            // via a __present marker. Checking the value directly always
+            // reported "Lipsesc cheile" even when the keys were saved.
+            $hasLive = !empty($settings['stripe']['stripe_secret_key__present'] ?? false);
+            $hasTest = !empty($settings['stripe']['stripe_test_secret_key__present'] ?? false);
         @endphp
         <div class="bg-white rounded-xl border border-slate-200 p-6">
             <h2 class="text-lg font-semibold text-slate-900">Configurare Stripe</h2>
