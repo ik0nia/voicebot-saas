@@ -751,6 +751,11 @@ class ChatbotApiController extends Controller
             // Flag state is baked into the cache key so toggling
             // use_structured_prompt on a live bot doesn't keep serving
             // the pre-toggle composition for the 10-minute TTL.
+            //
+            // X2: user_state is NOT baked into the cache key. The base
+            // prompt is cached, and the state-steering block (short,
+            // ~300 chars) is prepended post-cache in the consumer
+            // right after Cache::remember returns. Keeps cache tight.
             $structuredOn = $bot->usesStructuredPrompt();
             $cacheKey = "bot_system_prompt_{$bot->id}_" . ($structuredOn ? 'structured' : 'legacy');
             $systemPrompt = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($bot, $promptVersion, $structuredOn) {
@@ -801,6 +806,31 @@ class ChatbotApiController extends Controller
 
                 return $prompt;
             });
+
+            // X2: state-aware steering. Resolved per-turn, prepended
+            // to the cached base prompt so the LLM's tone adapts to
+            // the user's current state without busting the 10-min
+            // base-prompt cache. No-op when state is 'browsing'.
+            if ($structuredOn) {
+                try {
+                    $stateInfo = app(\App\Services\Widget\UserStateResolver::class)
+                        ->resolve($conversation, $userMessage, []);
+                    if (!empty($stateInfo['state']) && $stateInfo['state'] !== 'browsing') {
+                        $steerMap = [
+                            'high_intent'     => "=== STARE CLIENT: HIGH INTENT ===\nClientul e gata să acționeze. Răspunsuri SCURTE (max 2-3 propoziții), orientate pe pași concreți. Confirmă acțiunea, nu pune întrebări de discovery.",
+                            'stuck'           => "=== STARE CLIENT: STUCK / CONFUZ ===\nClientul e blocat. Răspunsuri SIMPLE, un singur pas. Evită jargon. Propune TU o direcție în loc să ceri mai multe detalii.",
+                            'price_sensitive' => "=== STARE CLIENT: PRICE SENSITIVE ===\nClientul caută cea mai bună valoare. Prioritizează opțiuni ieftine de calitate, menționează promoții. Evită premium dacă nu e cerut.",
+                            'comparing'       => "=== STARE CLIENT: COMPARĂ ===\nClientul cântărește alternative. Dă o comparație structurată scurtă și recomandă clar câștigătorul la final.",
+                        ];
+                        $steer = $steerMap[$stateInfo['state']] ?? '';
+                        if ($steer !== '') {
+                            $systemPrompt = $steer . "\n\n" . $systemPrompt;
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    Log::debug('state steering skipped', ['err' => $e->getMessage()]);
+                }
+            }
 
             // Intent detection — replaces fragile str_contains checks
             $intents = $intentService->detect($userMessage);
@@ -2425,6 +2455,35 @@ class ChatbotApiController extends Controller
                 ['label' => 'Ce îmi recomanzi',     'text' => 'Dintre opțiuni, care îmi recomanzi tu și de ce?'],
                 ['label' => 'Compară tabelar',      'text' => 'Compară-mi cele 2 opțiuni tabelar — avantaje și dezavantaje.'],
             ], $replies);
+        }
+
+        // X3: conversion closure. Scan the bot's response for any
+        // call-to-action phrase; if none present AND chips list has
+        // no action chip, append a neutral closure prompt so the
+        // user has a "what now" path. Kept subtle — one chip only.
+        $ctaPatterns = [
+            'vrei să', 'vrei sa', 'pot să', 'pot sa',
+            'te ajut cu', 'te ghidez', 'continuăm',
+            'finalizez', 'confirmi', 'rezerv',
+            'adaug în coș', 'adaug in cos',
+        ];
+        $hasCta = false;
+        $responseLowerFolded = strtr(mb_strtolower($response), ['ă'=>'a','â'=>'a','î'=>'i','ș'=>'s','ț'=>'t']);
+        foreach ($ctaPatterns as $p) {
+            $pFolded = strtr($p, ['ă'=>'a','â'=>'a','î'=>'i','ș'=>'s','ț'=>'t']);
+            if (str_contains($responseLowerFolded, $pFolded)) { $hasCta = true; break; }
+        }
+        if (!$hasCta && count($replies) > 0 && count($replies) < 4 && trim($response) !== '') {
+            $closureByPage = [
+                'product'     => ['label' => 'Vrei să continuăm?', 'text' => 'Da, vreau să continuăm discuția despre acest produs.'],
+                'category'    => ['label' => 'Alege tu pentru mine', 'text' => 'Alege tu varianta cea mai potrivită pentru mine.'],
+                'cart'        => ['label' => 'Finalizează comanda', 'text' => 'Ghidează-mă să finalizez comanda acum.'],
+                'booking'     => ['label' => 'Primul loc liber',    'text' => 'Vreau primul loc disponibil.'],
+                'hospitality' => ['label' => 'Vezi disponibilitate', 'text' => 'Arată-mi disponibilitatea pentru mine.'],
+            ];
+            if (isset($closureByPage[$pageType])) {
+                $replies[] = $closureByPage[$pageType];
+            }
         }
 
         // G7: if we have a remembered product AND there's room AND

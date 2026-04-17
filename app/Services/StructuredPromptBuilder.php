@@ -70,8 +70,14 @@ class StructuredPromptBuilder
 
     /**
      * Compose and return the final system prompt.
+     *
+     * @param string|null $userState X2 — optional state hint from
+     *    UserStateResolver ('browsing'|'comparing'|'high_intent'|'stuck'|'price_sensitive').
+     *    When present, prepends a short steering block so the LLM
+     *    adapts tone + verbosity without the chips having to do all
+     *    the work. Safe no-op when null.
      */
-    public function build(Bot $bot): string
+    public function build(Bot $bot, ?string $userState = null): string
     {
         $sections = $this->sections($bot);
 
@@ -84,6 +90,13 @@ class StructuredPromptBuilder
 
         $output = implode("\n\n", $parts);
 
+        if ($userState && $userState !== 'browsing') {
+            $steer = $this->stateSteeringBlock($userState);
+            if ($steer !== '') {
+                $output = $steer . "\n\n" . $output;
+            }
+        }
+
         // Alert on outlier bots. No truncation — the runtime callers
         // downstream may still accept large prompts; the warning is
         // informational so we notice when a tenant drifts into
@@ -94,6 +107,23 @@ class StructuredPromptBuilder
         }
 
         return $output;
+    }
+
+    /**
+     * X2: state-aware steering. Short, prescriptive; sits at the very
+     * top of the prompt because recency bias and primacy both want
+     * this: the LLM should absorb the user's mood before it even
+     * looks at niche defaults.
+     */
+    private function stateSteeringBlock(string $state): string
+    {
+        return match ($state) {
+            'high_intent' => "=== STARE CLIENT: HIGH INTENT ===\nClientul e gata să acționeze. Răspunsuri SCURTE (max 2-3 propoziții), orientate pe pași concreți. Confirmă acțiunea, nu pune întrebări de discovery.",
+            'stuck' => "=== STARE CLIENT: STUCK / CONFUZ ===\nClientul e blocat. Răspunsuri SIMPLE, un singur pas la un moment dat. Evită jargon. Propune TU o direcție în loc să ceri mai multe detalii.",
+            'price_sensitive' => "=== STARE CLIENT: PRICE SENSITIVE ===\nClientul caută cea mai bună valoare. Prioritizează opțiuni ieftine de calitate, menționează promoții active. Evită premium dacă nu e explicit cerut.",
+            'comparing' => "=== STARE CLIENT: COMPARĂ OPȚIUNI ===\nClientul cântărește alternative. Oferă COMPARAȚIE structurată (listă cu 2-3 bullets pe opțiune, avantaje/dezavantaje). Recomandă clar câștigătorul la final.",
+            default => '',
+        };
     }
 
     /**

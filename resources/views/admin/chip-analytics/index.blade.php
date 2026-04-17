@@ -96,6 +96,11 @@
                                         <span class="@if($r['ctr'] >= 20) text-emerald-700 font-semibold @elseif($r['ctr'] < 5) text-slate-400 @else text-slate-700 @endif">
                                             {{ $r['ctr'] }}%
                                         </span>
+                                        @if($r['shown'] >= 100 && $r['ctr'] < 1.0)
+                                            {{-- X6: CTR alert — chip had enough exposure to judge AND
+                                                 converts below 1%. Candidate for rewrite or removal. --}}
+                                            <span class="ml-1 inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-700 align-middle" title="Underperformer: >100 afișări, CTR <1%">⚠ slab</span>
+                                        @endif
                                     @endif
                                 </td>
                             </tr>

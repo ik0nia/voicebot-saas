@@ -77,6 +77,10 @@ Route::get('/v1/chatbot/{channel}/products', [ChatbotApiController::class, 'sear
 // (same code path the LLM tool uses) so the widget always sees the
 // same slots the bot would propose.
 Route::get('/v1/chatbot/{channel}/booking-slots', [\App\Http\Controllers\Api\ChatbotBookingSlotsController::class, 'index'])->middleware(['force.json', 'throttle:30,1']);
+// X1: one-click booking confirmation. Widget renders a confirm chip,
+// POSTs here with the selected slot + caller contact, appointment is
+// persisted with uniqueness guards and source='widget_action'.
+Route::post('/v1/chatbot/{channel}/booking-confirm', [\App\Http\Controllers\Api\ChatbotBookingConfirmController::class, 'store'])->middleware(['force.json', 'throttle:10,1']);
 Route::post('/v1/chatbot/{channel}/feedback', [ChatbotApiController::class, 'feedback'])->middleware(['force.json', 'throttle:30,1']);
 Route::post('/v1/chatbot/{channel}/rate', [ChatbotApiController::class, 'rateConversation'])->middleware(['force.json', 'throttle:10,1']);
 
