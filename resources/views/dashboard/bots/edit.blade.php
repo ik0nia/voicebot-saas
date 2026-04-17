@@ -1075,7 +1075,7 @@ function botEditor(init) {
         checklistOpen: false,
         nicheSlug: init.nicheSlug || null,
         aiLoading: {},
-        aiCost: { count: 0, cost_ron: 0 },
+        aiCost: { count: 0, cost_ron: 0, full_profile_today: 0, full_profile_daily_cap: 20 },
         // Iteration B: tenant-wide AI spend progress for the footer bar.
         tenantUsage: { cost_ron: 0, limit_ron: 0, pct_of_limit: 0, calls: 0, flag_enabled: false },
         modal: { fullProfile: false, prompt: false },
@@ -1086,7 +1086,12 @@ function botEditor(init) {
             fetch('{{ route('dashboard.bots.ai-cost-today', $bot) }}', {
                 headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
             }).then(r => r.ok ? r.json() : null)
-              .then(d => { if (d) this.aiCost = { count: d.count || 0, cost_ron: d.cost_ron || 0 }; })
+              .then(d => { if (d) this.aiCost = {
+                  count: d.count || 0,
+                  cost_ron: d.cost_ron || 0,
+                  full_profile_today: d.full_profile_today || 0,
+                  full_profile_daily_cap: d.full_profile_daily_cap || 20,
+              }; })
               .catch(() => {});
             this.refreshTenantUsage();
         },
@@ -1362,6 +1367,20 @@ function botEditor(init) {
                     if (!window.confirm(msg)) {
                         return;
                     }
+                }
+            }
+            // Hardening H3: per-bot full_profile has a daily cap. Warn
+            // before the user clicks into a guaranteed 429 so the UX
+            // explains the limit instead of showing a raw error.
+            const cap = this.aiCost.full_profile_daily_cap || 20;
+            const used = this.aiCost.full_profile_today || 0;
+            if (used >= cap) {
+                alert('Ai atins limita zilnică de ' + cap + ' generări complete pentru acest agent. Revino mâine sau editează manual.');
+                return;
+            }
+            if (used >= cap - 2) {
+                if (!window.confirm('Ai folosit ' + used + '/' + cap + ' generări complete azi pentru acest agent. Continui?')) {
+                    return;
                 }
             }
             this.modal.fullProfile = true;

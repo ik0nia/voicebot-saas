@@ -541,6 +541,28 @@ class BotController extends Controller
             ->where('purpose', \App\Services\BotAiGenerationService::PURPOSE)
             ->whereDate('created_at', today());
 
+        // Per-bot full_profile count — surfaced so the UI can warn
+        // before the tenant hits the 429 daily cap enforced by
+        // BotAiGenerationService (config bot_ai.max_full_profile_*).
+        // Uses jsonb extraction on Postgres; SQLite falls back to
+        // json_extract. Defensive on driver differences.
+        $driver = \DB::connection()->getDriverName();
+        $fullProfileCount = 0;
+        try {
+            if ($driver === 'pgsql') {
+                $fullProfileCount = (clone $today)
+                    ->whereRaw("metadata->>'target' = ?", ['full_profile'])
+                    ->count();
+            } else {
+                $fullProfileCount = (clone $today)
+                    ->whereRaw("json_extract(metadata, '$.target') = ?", ['full_profile'])
+                    ->count();
+            }
+        } catch (\Throwable $e) {
+            // Metadata filtering is a nice-to-have; never fail the
+            // whole cost endpoint over it.
+        }
+
         return response()->json([
             'count'    => (clone $today)->count(),
             // cost_cents is actually USD-cents in this table. Convert
@@ -551,6 +573,8 @@ class BotController extends Controller
                     ->convert((float) (clone $today)->sum('cost_cents') / 100.0),
                 4
             ),
+            'full_profile_today' => $fullProfileCount,
+            'full_profile_daily_cap' => (int) config('bot_ai.max_full_profile_per_bot_per_day', 20),
         ]);
     }
 
