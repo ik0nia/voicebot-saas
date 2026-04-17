@@ -835,7 +835,7 @@ class ChatbotApiController extends Controller
             }
 
             // Call AI — with cascading fallback
-            $chatService = app(ChatCompletionService::class);
+            $chatService = app(\App\Services\Chat\ChatResponder::class);
             try {
                 $result = $chatService->complete($messages, $modelConfig, $bot->id, $bot->tenant_id, $toolOptions);
             } catch (\Exception $e) {
@@ -1142,165 +1142,21 @@ class ChatbotApiController extends Controller
                 $messages = $promptData['messages'];
                 $modelConfig = $promptData['model_config'];
 
-                // 4. Stream LLM response
-                $provider = $modelConfig['provider'] ?? 'openai';
-                $model = $modelConfig['model'];
-                $maxTokens = $modelConfig['max_tokens'] ?? 500;
-                $temperature = $modelConfig['temperature'] ?? 0.6;
+                // 4. Stream LLM response via ChatResponder. Transport-
+                //    agnostic: we inject an SSE-emitting callback.
+                $streamResult = app(\App\Services\Chat\ChatResponder::class)->stream(
+                    $messages,
+                    $modelConfig,
+                    fn (string $delta) => $this->sendSSE('delta', ['content' => $delta]),
+                );
 
-                $fullContent = '';
-                $startTime = microtime(true);
-                // Iteration B — track usage so we can insert an
-                // ai_api_metrics row when the stream finishes.
-                $streamInputTokens = 0;
-                $streamOutputTokens = 0;
-                $streamPartial = false;
-
-                if ($provider === 'openai') {
-                    $stream = OpenAI::chat()->createStreamed([
-                        'model' => $model,
-                        'messages' => $messages,
-                        'max_tokens' => $maxTokens,
-                        'temperature' => $temperature,
-                        // Ask OpenAI to emit a final usage chunk. Newer
-                        // API versions support stream_options.include_usage;
-                        // older ones silently ignore it (we degrade to
-                        // tokenizer estimation).
-                        'stream_options' => ['include_usage' => true],
-                    ]);
-
-                    foreach ($stream as $response) {
-                        $delta = $response->choices[0]?->delta?->content ?? '';
-                        if ($delta !== '') {
-                            $fullContent .= $delta;
-                            $this->sendSSE('delta', ['content' => $delta]);
-                        }
-                        // Final chunk: OpenAI surfaces total usage via
-                        // ->usage when include_usage is set. Keep
-                        // overwriting so the last-seen value wins.
-                        if (isset($response->usage)) {
-                            $streamInputTokens  = (int) ($response->usage->promptTokens ?? $response->usage->prompt_tokens ?? 0);
-                            $streamOutputTokens = (int) ($response->usage->completionTokens ?? $response->usage->completion_tokens ?? 0);
-                        }
-                    }
-                } else {
-                    // Anthropic streaming
-                    $anthropicKey = \App\Models\PlatformSetting::get('anthropic_api_key')
-                        ?: config('services.anthropic.api_key', env('ANTHROPIC_API_KEY'));
-
-                    if (empty($anthropicKey)) {
-                        // Fallback to OpenAI — cheaper tier, not gpt-4o.
-                        // Previously hard-coded `gpt-4o` which ~15x'd the
-                        // cost for the fallback path; mini is plenty
-                        // for a degraded-provider response.
-                        $provider = 'openai';
-                        $model = 'gpt-4o-mini';
-                        $stream = OpenAI::chat()->createStreamed([
-                            'model' => $model,
-                            'messages' => $messages,
-                            'max_tokens' => $maxTokens,
-                            'temperature' => $temperature,
-                            'stream_options' => ['include_usage' => true],
-                        ]);
-
-                        foreach ($stream as $response) {
-                            $delta = $response->choices[0]?->delta?->content ?? '';
-                            if ($delta !== '') {
-                                $fullContent .= $delta;
-                                $this->sendSSE('delta', ['content' => $delta]);
-                            }
-                            if (isset($response->usage)) {
-                                $streamInputTokens  = (int) ($response->usage->promptTokens ?? $response->usage->prompt_tokens ?? 0);
-                                $streamOutputTokens = (int) ($response->usage->completionTokens ?? $response->usage->completion_tokens ?? 0);
-                            }
-                        }
-                    } else {
-                        // SDK v0.8: `\Anthropic::factory()` facade is gone
-                        // and `messages()->createStreamed([...])` was
-                        // renamed to `messages->createStream(...)` with
-                        // positional/named args. The old code crashed with
-                        // "Class 'Anthropic' not found" before even hitting
-                        // the network.
-                        $client = new \Anthropic\Client($anthropicKey);
-
-                        $system = '';
-                        $anthropicMessages = [];
-                        foreach ($messages as $msg) {
-                            if ($msg['role'] === 'system') {
-                                $system .= ($system ? "\n\n" : '') . $msg['content'];
-                            } else {
-                                $anthropicMessages[] = ['role' => $msg['role'], 'content' => $msg['content']];
-                            }
-                        }
-
-                        $stream = $client->messages->createStream(
-                            maxTokens: $maxTokens,
-                            messages: $anthropicMessages,
-                            model: $model,
-                            system: $system !== '' ? $system : null,
-                            temperature: $temperature,
-                        );
-
-                        foreach ($stream as $response) {
-                            // Anthropic emits `message_start` with
-                            // input tokens and `message_delta` with the
-                            // running output token count. The final
-                            // `message_stop` carries totals via
-                            // message.usage on `message_start`, and we
-                            // accumulate output from deltas.
-                            $type = $response->type ?? null;
-                            if ($type === 'content_block_delta') {
-                                $delta = $response->delta->text ?? '';
-                                if ($delta !== '') {
-                                    $fullContent .= $delta;
-                                    $this->sendSSE('delta', ['content' => $delta]);
-                                }
-                            } elseif ($type === 'message_start') {
-                                $usage = $response->message->usage ?? null;
-                                if ($usage) {
-                                    $streamInputTokens  = (int) ($usage->inputTokens ?? $usage->input_tokens ?? 0);
-                                    $streamOutputTokens = (int) ($usage->outputTokens ?? $usage->output_tokens ?? 0);
-                                }
-                            } elseif ($type === 'message_delta') {
-                                $usage = $response->usage ?? null;
-                                if ($usage) {
-                                    // Anthropic reports *cumulative*
-                                    // output tokens in message_delta —
-                                    // replace, don't add.
-                                    $streamOutputTokens = (int) ($usage->outputTokens ?? $usage->output_tokens ?? $streamOutputTokens);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Fallback: if the provider didn't give us token counts
-                // (older SDK, partial stream), estimate from content so
-                // the spend row isn't silently zeroed. Mark it partial
-                // in metadata so ops can tell real counts from guesses.
-                if ($streamInputTokens === 0 || $streamOutputTokens === 0) {
-                    $streamPartial = true;
-                    try {
-                        $tokenizer = app(\App\Services\TokenizerService::class);
-                        if ($streamInputTokens === 0) {
-                            $streamInputTokens = $tokenizer->countMessages($messages);
-                        }
-                        if ($streamOutputTokens === 0) {
-                            $streamOutputTokens = $tokenizer->count($fullContent);
-                        }
-                    } catch (\Throwable $e) {
-                        // Rough char/4 guess — better than zero.
-                        if ($streamInputTokens === 0) {
-                            $encoded = array_sum(array_map(fn ($m) => mb_strlen((string) ($m['content'] ?? '')), $messages));
-                            $streamInputTokens = (int) ceil($encoded / 4);
-                        }
-                        if ($streamOutputTokens === 0) {
-                            $streamOutputTokens = (int) ceil(mb_strlen($fullContent) / 4);
-                        }
-                    }
-                }
-
-                $responseTimeMs = (int) ((microtime(true) - $startTime) * 1000);
+                $fullContent = $streamResult->content;
+                $provider = $streamResult->provider;
+                $model = $streamResult->model;
+                $streamInputTokens = $streamResult->inputTokens;
+                $streamOutputTokens = $streamResult->outputTokens;
+                $streamPartial = $streamResult->partial;
+                $responseTimeMs = $streamResult->responseTimeMs;
 
                 // ── Post-response product relevance gate (same as message()) ──
                 $botResponse = $fullContent;
@@ -1350,10 +1206,7 @@ class ChatbotApiController extends Controller
                 }
 
                 // ── Post-processing: save messages, track events (same as message()) ──
-                // Iteration B: compute cost from captured usage and
-                // record both the per-message row AND an ai_api_metrics
-                // row so streaming spend is visible in reports.
-                $streamCostCents = $this->computeStreamCost($model, $streamInputTokens, $streamOutputTokens);
+                $streamCostCents = $streamResult->costCents;
 
                 $aiResult = [
                     'content' => $fullContent,
@@ -1541,7 +1394,7 @@ class ChatbotApiController extends Controller
                         'input_tokens' => $streamInputTokens ?? 0,
                         'output_tokens' => $streamOutputTokens ?? 0,
                         'cost_cents' => isset($streamInputTokens, $streamOutputTokens, $model)
-                            ? $this->computeStreamCost($model, $streamInputTokens, $streamOutputTokens)
+                            ? app(\App\Services\Chat\ChatResponder::class)->computeCost($model, $streamInputTokens, $streamOutputTokens)
                             : 0,
                         'status' => 'error',
                         'error_type' => class_basename($e),
@@ -2193,34 +2046,6 @@ class ChatbotApiController extends Controller
             'messages' => $messages,
             'model_config' => $modelConfig,
         ];
-    }
-
-    /**
-     * Compute the USD-cents cost of a streamed chat response.
-     *
-     * Uses the model_pricing DB table (via ModelPricing::getPricing)
-     * first, then falls back to the hard-coded table kept here for
-     * parity with ChatCompletionService. cost_cents is stored as a
-     * decimal(,4) in ai_api_metrics so fractional cents survive.
-     */
-    private function computeStreamCost(string $model, int $inputTokens, int $outputTokens): float
-    {
-        if ($inputTokens === 0 && $outputTokens === 0) {
-            return 0.0;
-        }
-        $pricing = \App\Models\ModelPricing::getPricing($model);
-        if (!$pricing) {
-            $fallback = [
-                'gpt-4o-mini'               => ['input' => 0.15, 'output' => 0.60],
-                'gpt-4o'                    => ['input' => 2.50, 'output' => 10.00],
-                'claude-haiku-4-5-20251001' => ['input' => 1.00, 'output' => 5.00],
-                'claude-sonnet-4-6'         => ['input' => 3.00, 'output' => 15.00],
-            ];
-            $pricing = $fallback[$model] ?? ['input' => 1.0, 'output' => 3.0];
-        }
-        $input  = ($inputTokens / 1_000_000) * (float) $pricing['input']  * 100;
-        $output = ($outputTokens / 1_000_000) * (float) $pricing['output'] * 100;
-        return round($input + $output, 4);
     }
 
     /**
