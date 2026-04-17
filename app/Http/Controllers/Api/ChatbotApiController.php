@@ -167,119 +167,23 @@ class ChatbotApiController extends Controller
         $botResponse = $aiResult['content'];
 
         // ── Post-response product relevance gate ──
-        // Ground truth: the AI text is what the user actually sees/hears. If the text
-        // says "I don't know" / "I don't have details", showing product cards alongside
-        // creates a contradictory UI. So: negative text → suppress cards, always.
-        if (!empty($products)) {
-            // Positive: AI clearly introduced/recommended products.
-            $hasPositiveProductMention = preg_match(
-                '/(?:recoman|suger[aă]m|am găsit|avem\s+(?:câteva|mai multe|urm[aă]toarele|aceste)|iată|uite\s+(?:ce|câteva|produsele)|produse?\s+(?:potrivit|relevant|disponibil)|po[țt]i\s+comanda|adaug[aă]\s+în\s+co[sș]|în\s+stoc|cel\s+mai\s+(?:ieftin|scump|bun|potrivit)|(?:varianta|optiunea|opțiunea)\s+de\s+\d|(?:primul|al\s+doilea|al\s+treilea|al\s+patrulea)\s+(?:produs|card|este))/iu',
-                $botResponse
+        // The AI text is the ground truth the user reads; never leave
+        // contradictory product cards next to a "no / don't know" reply.
+        // See ProductCardRelevanceGate for the full rule order.
+        [$products, $botResponse] = app(\App\Services\Chat\ProductCardRelevanceGate::class)
+            ->apply(
+                $products,
+                $botResponse,
+                $queryIntel ?? [],
+                $detectedIntents,
+                fn (): string => $this->buildProductIntroText($products, $userMessage),
             );
 
-            // With grounded context, the LLM may reference products by name or by their
-            // category word (e.g. "Polistiren" in "Cel mai ieftin este Polistiren Eps 80
-            // ...") — count that as a positive grounded reference so we don't rewrite
-            // a correct answer. The needle is the first word of each product name,
-            // lowercased (typically a category/type noun like "polistiren", "vopsea",
-            // "adeziv"), which is short enough to appear even in terse answers.
-            if (!$hasPositiveProductMention) {
-                $lowerResponse = mb_strtolower($botResponse);
-                $seenNeedles = [];
-                foreach ($products as $p) {
-                    $name = trim((string) ($p['name'] ?? ''));
-                    if ($name === '') continue;
-                    // First word, length ≥ 4 (skip "La", "De", etc).
-                    $first = (string) (preg_split('/\s+/u', $name)[0] ?? '');
-                    if (mb_strlen($first) < 4) continue;
-                    $needle = mb_strtolower($first);
-                    if (isset($seenNeedles[$needle])) continue;
-                    $seenNeedles[$needle] = true;
-                    if (mb_stripos($lowerResponse, $needle) !== false) {
-                        $hasPositiveProductMention = true;
-                        break;
-                    }
-                }
-            }
-
-            // Clarification: AI asked the user to specify what they want. Cards next
-            // to "tell me what type you're looking for" are contradictory — the bot
-            // just said it needs more info. Catches conv 126-128 ("spune-mi ce tip cauți").
-            $hasClarificationRequest = preg_match(
-                '/(?:spune[-\s]?mi\s+(?:ce|mai\s+multe|exact)|po[țt]i\s+(?:s[aă]\s+)?(?:îmi\s+)?spui|ce\s+(?:anume|tip|fel|model|dimensiune|marc[aă]|produs)|pentru\s+ce\s+(?:folose[șs]ti|ai\s+nevoie)|ce\s+cau[țt]i\s+(?:exact|mai)|dore[sș]ti\s+(?:ceva\s+)?anume|ai\s+(?:vreo\s+)?preferin[țt]|ce\s+buget)/iu',
-                $botResponse
-            );
-
-            // Negative: AI said it doesn't have / doesn't know / can't find / can't help.
-            // Handles both full forms ("nu am") and common Romanian contractions
-            // ("n-am", "n-avem"). Broadened to catch "nu am detalii",
-            // "momentan, nu am", "nu dispun", "îmi pare rău, nu ...",
-            // "contactează magazinul", etc.
-            $hasNegativeProductMention = preg_match(
-                '/(?:'
-                . '(?:nu\s+am|n-am)\s+(?:g[aă]sit|detalii|informa[tț]ii|date|suficiente?|acces|cum|exact)'
-                . '|(?:nu\s+avem|n-avem)\s+(?:g[aă]sit|informa[tț]ii|detalii|în\s+stoc|aceast[aă]|acest|exact)'
-                . '|nu\s+dispun(?:em)?\s+de'
-                . '|nu\s+(?:s[tț]iu|sunt\s+sigur)\s+(?:exact|sigur|momentan|dac[aă])?'
-                . '|(?:nu\s+pot|n-pot)\s+(?:g[aă]si|s[aă]\s+(?:g[aă]sesc|te\s+ajut|îți\s+spun|confirm)|oferi)'
-                . '|(?:momentan|din\s+p[aă]cate),?\s*(?:nu|n-)\s*(?:am|avem|dispun|g[aă]sesc|pot)'
-                . '|îmi\s+pare\s+r[aă]u,?\s*(?:dar\s+)?nu'
-                . '|indisponibil'
-                . '|n-?am\s+g[aă]sit\s+(?:nimic|exact|produse)'
-                . '|contacteaz[aă]\s+(?:magazinul|suportul|support|echipa)'
-                . '|(?:recomand|sugerez|î[tț]i\s+recomand)\s+s[aă]\s+contactezi'
-                . ')/iu',
-                $botResponse
-            );
-
-            // Determine the effective query type from whatever path was taken
-            $effectiveQueryType = $queryIntel['type']
-                ?? (is_array($detectedIntents) && isset($detectedIntents[0]['name']) ? $detectedIntents[0]['name'] : null)
-                ?? 'unknown';
-
-            // Explicitly transactional intents — user clearly asked for products.
-            $isExplicitProductIntent = in_array($effectiveQueryType, [
-                'transactional', 'product_search', 'category_recommendation', 'comparison', 'exploratory',
-            ]);
-
-            if ($hasNegativeProductMention) {
-                // Text is the ground truth: if AI said "no / don't know / contact support",
-                // never leave contradictory product cards next to it. Always suppress.
-                // Fixes the text/card desync where cards stayed alongside
-                // "Nu am detalii despre asta momentan".
-                $products = [];
-            } elseif ($hasClarificationRequest && !$hasPositiveProductMention) {
-                // AI is asking for clarification (e.g. "spune-mi ce tip cauți") and did
-                // NOT also affirm products — don't show cards while waiting for user
-                // to narrow down. Without this, Malinco conv 126-128 showed 4 adhesive
-                // cards next to "tell me what type you need".
-                $products = [];
-            } elseif (!$isExplicitProductIntent && !$hasPositiveProductMention) {
-                // Non-explicit intent AND AI didn't affirmatively talk about products →
-                // drop cards (e.g. knowledge/info queries that accidentally triggered search).
-                $products = [];
-            } elseif ($isExplicitProductIntent && !$hasPositiveProductMention && !empty($products) && mb_strlen(trim($botResponse)) < 25) {
-                // Rare recovery path: user explicitly asked for products, search found
-                // high-confidence matches, but the AI wrote a TRULY neutral/empty reply
-                // (under 25 chars, no positive phrase detected). Rewrite to an intro
-                // so the cards don't appear "orphaned".
-                //
-                // Length gate added after grounded context landed: with grounded data in
-                // the prompt, the LLM often writes legitimate follow-up questions or
-                // comparison answers that happen to not match the positive regex. Those
-                // responses are well-formed and must not be overwritten by a template.
-                $botResponse = $this->buildProductIntroText($products, $userMessage);
-            }
-
-            // TODO(bug2-confidence-gate): ProductSearchService::search() currently strips
-            // per-result scores before returning objects (see toCardArray), so we cannot
-            // inspect a max-relevance score here without modifying that service. A proper
-            // fix would either (a) have search() return score-annotated rows and have
-            // preprocessMessage() pass a $productsConfidence float through the return
-            // array, or (b) expose a $queryIntel['top_score'] field from the orchestrator
-            // / legacy path. For now Bug 1's stronger negative gate covers most of the
-            // observed desync cases; confidence-based suppression is deferred.
-        }
+        // TODO(bug2-confidence-gate): ProductSearchService::search()
+        // strips per-result scores before returning objects (see
+        // toCardArray), so we can't inspect a max-relevance score
+        // here yet. Proper fix: expose queryIntel.top_score from
+        // the orchestrator / legacy path.
 
         // ── Safety net: strip trailing list-announcement when no products ──
         // Language-agnostic rule: a trailing sentence ending with ":" announces
@@ -839,49 +743,12 @@ class ChatbotApiController extends Controller
 
                 // ── Post-response product relevance gate (same as message()) ──
                 $botResponse = $fullContent;
-                if (!empty($products)) {
-                    $hasPositiveProductMention = preg_match('/(?:recoman|suger[aă]m|am găsit|avem|iată|produse?\s+(?:potrivit|relevant|disponibil)|poți\s+comanda|adaugă\s+în\s+coș)/iu', $botResponse);
-                    // Malinco conv #453 fix — broadened to catch "n-am"
-                    // contraction + "nu am găsit exact/nimic" phrasing,
-                    // to match the richer non-stream regex at line 239.
-                    $hasNegativeProductMention = preg_match(
-                        '/(?:'
-                        . '(?:nu\s+am|n-am)\s+(?:g[aă]sit|detalii|informa[tț]ii|date|acces|exact)'
-                        . '|(?:nu\s+avem|n-avem)\s+(?:g[aă]sit|informa[tț]ii|în\s+stoc|aceast[aă]|acest|exact)'
-                        . '|nu\s+dispun(?:em)?\s+de'
-                        . '|nu\s+(?:s[tț]iu|sunt\s+sigur)\s+(?:exact|sigur|momentan|dac[aă])?'
-                        . '|(?:nu\s+pot|n-pot)\s+(?:g[aă]si|s[aă]\s+(?:g[aă]sesc|te\s+ajut|î[tț]i\s+spun))'
-                        . '|(?:momentan|din\s+p[aă]cate),?\s*(?:nu|n-)\s*(?:am|avem|dispun|g[aă]sesc|pot)'
-                        . '|îmi\s+pare\s+r[aă]u,?\s*(?:dar\s+)?nu'
-                        . '|indisponibil'
-                        . '|n-?am\s+g[aă]sit\s+(?:nimic|exact|produse)'
-                        . ')/iu',
-                        $botResponse
-                    );
-
-                    $effectiveQueryType = $queryIntel['type']
-                        ?? (is_array($detectedIntents) && isset($detectedIntents[0]['name']) ? $detectedIntents[0]['name'] : null)
-                        ?? 'unknown';
-
-                    $isExplicitProductIntent = in_array($effectiveQueryType, [
-                        'transactional', 'product_search', 'category_recommendation', 'comparison', 'exploratory',
-                    ]);
-
-                    // Malinco conv #453 fix — even on an explicit product
-                    // intent, when the bot's answer is a clear "n-am
-                    // găsit" we must retract the cards that already
-                    // streamed. The widget listens for an empty
-                    // products event and clears the row.
-                    if ($hasNegativeProductMention) {
-                        $products = [];
-                        $this->sendSSE('products', ['products' => []]);
-                    } elseif (!$isExplicitProductIntent && !$hasPositiveProductMention) {
-                        // Not asking for products AND AI didn't affirm them
-                        // — drop cards on non-product chit-chat (conv #458:
-                        // user says "telefon" in a lead-capture flow).
-                        $products = [];
-                        $this->sendSSE('products', ['products' => []]);
-                    }
+                [$products, $botResponse, $cardsSuppressed] = app(\App\Services\Chat\ProductCardRelevanceGate::class)
+                    ->apply($products, $botResponse, $queryIntel ?? [], $detectedIntents);
+                if ($cardsSuppressed) {
+                    // Retract already-streamed cards — widget listens
+                    // for an empty products event and clears the row.
+                    $this->sendSSE('products', ['products' => []]);
                 }
 
                 // ── Post-processing: save messages, track events (same as message()) ──
