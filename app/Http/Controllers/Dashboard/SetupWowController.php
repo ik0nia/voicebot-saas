@@ -132,6 +132,20 @@ class SetupWowController extends Controller
 
         // System prompt from niche template addon.
         $bot->system_prompt = trim($niche['prompt_addon'] ?? '');
+
+        // Copy niche defaults into structured settings so the tenant
+        // lands on a fully-configured bot, not an empty shell. Without
+        // this, the niche expansion (FAQ suggestions, standard rules,
+        // tone) is invisible at runtime because the structured prompt
+        // flag defaults off and settings.* are empty.
+        $settings = $bot->settings ?? [];
+        $settings['use_structured_prompt'] = true;
+        $settings['faqs'] = array_values(array_slice($niche['suggested_faqs'] ?? [], 0, 8));
+        $settings['dont_rules'] = array_values($niche['standard_rules'] ?? []);
+        $settings['tone_guide'] = $niche['default_tone']
+            ?? ($settings['tone_guide'] ?? ['length' => 'medium', 'register' => 'tu', 'emoji_ok' => false, 'languages' => ['ro']]);
+        $bot->settings = $settings;
+
         $bot->save();
 
         // Booking seeds (service types + staff + working hours)
