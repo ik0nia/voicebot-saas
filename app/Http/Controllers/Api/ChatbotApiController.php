@@ -1885,21 +1885,24 @@ class ChatbotApiController extends Controller
             $augmentedQuery = $userMessage;
         }
 
-        // Malinco conv #463 fix — when the plugin tells us which product
-        // page the caller is on AND the message is product-referential
-        // (scurt, "acest", "similar", "alternative"), augment the
-        // search query with the product's name + category so the bot
-        // actually finds alternatives instead of bailing with
-        // "N-am găsit exact ce cauți". The LLM sees the full
+        // Malinco fix — when the plugin reports the user is on a
+        // product page AND the user's message EXPLICITLY references
+        // that product ("acest", "similar", "la fel", etc.), augment
+        // the search query with the product's name + category so the
+        // bot finds related items. The LLM sees the full page
         // context via [PAGE PRODUCT CONTEXT]; this only biases the
         // vector + FTS search.
+        //
+        // Malinco conv 498 (19:52) bug fix: DO NOT augment just
+        // because the message is short. 'cleste' is 1 word but it's
+        // a NEW product query, not a reference to the current page.
+        // Only augment on unambiguous referential phrases.
         $pc = is_array($pageContext['product_context'] ?? null) ? $pageContext['product_context'] : null;
         if ($pc && !empty($pc['name'])) {
             $folded = strtr(mb_strtolower($userMessage), ['ă'=>'a','â'=>'a','î'=>'i','ș'=>'s','ț'=>'t']);
-            $wc = str_word_count($userMessage);
-            $refersToThis = (
-                $wc <= 6
-                || preg_match('/\b(acest|acesta|asta|similar|similare|alternati|alternative|altceva|alt\s|la\s+fel|ca\s+asta|ceva\s+asemanator)\b/u', $folded)
+            $refersToThis = (bool) preg_match(
+                '/\b(acest|acesta|asta|similar|similare|la\s+fel|ca\s+asta|ceva\s+asemanator|acelasi)\b/u',
+                $folded
             );
             if ($refersToThis) {
                 $productName = (string) $pc['name'];
