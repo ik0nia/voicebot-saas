@@ -69,11 +69,31 @@ class ChatbotApiController extends Controller
         $bot = Bot::withoutGlobalScopes()->find($channel->bot_id);
         $channelConfig = $channel->config ?? [];
 
+        // Contextual UX — per-niche + per-page_type opening messages
+        // and quick replies the widget renders as clickable chips.
+        // Resolver is defensive: returns empty sets when no config
+        // exists for the bot's niche, so old widgets keep working.
+        $contexts = ['by_page_type' => [], 'default_page_type' => 'general'];
+        try {
+            if ($bot) {
+                $contexts = app(\App\Services\Widget\WidgetContextResolver::class)
+                    ->forChannel($channel, $bot);
+            }
+        } catch (\Throwable $e) {
+            // Never fail the config endpoint over a resolver hiccup.
+            \Illuminate\Support\Facades\Log::warning('WidgetContextResolver failed', [
+                'channel' => $channel->id,
+                'err' => $e->getMessage(),
+            ]);
+        }
+
         return response()->json([
             'bot_name' => $bot?->name ?? 'Sambla Bot',
             'greeting' => $channelConfig['greeting'] ?? 'Bună! Cu ce te pot ajuta?',
             'color' => $channelConfig['color'] ?? '#991b1b',
             'language' => $bot?->language ?? 'ro',
+            // Additive: older widgets ignore this key.
+            'contexts' => $contexts,
         ]);
     }
 
