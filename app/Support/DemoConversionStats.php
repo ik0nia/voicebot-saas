@@ -26,18 +26,33 @@ class DemoConversionStats
     {
         $since = now()->subDays($days);
 
-        $events = ChatEvent::query()
-            ->withoutGlobalScopes()
-            ->whereIn('event_name', [
-                EventTaxonomy::DEMO_VIEWED,
-                EventTaxonomy::DEMO_QUALIFIED,
-                EventTaxonomy::DEMO_MESSAGE_SENT,
-            ])
-            ->where('created_at', '>=', $since)
-            // Pull the niche out of the JSONB properties blob.
-            ->selectRaw("event_name, properties->>'niche_slug' as niche_slug, count(*) as n")
-            ->groupBy('event_name', DB::raw("properties->>'niche_slug'"))
-            ->get();
+        // Driver-portable JSON extract. Production runs Postgres (->>)
+        // but tests and some dev envs run SQLite (json_extract) — we
+        // want both callable without throwing.
+        $driver = DB::connection()->getDriverName();
+        $nicheSlugExpr = $driver === 'pgsql'
+            ? "properties->>'niche_slug'"
+            : "json_extract(properties, '$.niche_slug')";
+        $demoNicheExpr = $driver === 'pgsql'
+            ? "settings->>'demo_qualified_from_niche'"
+            : "json_extract(settings, '$.demo_qualified_from_niche')";
+
+        try {
+            $events = ChatEvent::query()
+                ->withoutGlobalScopes()
+                ->whereIn('event_name', [
+                    EventTaxonomy::DEMO_VIEWED,
+                    EventTaxonomy::DEMO_QUALIFIED,
+                    EventTaxonomy::DEMO_MESSAGE_SENT,
+                ])
+                ->where('created_at', '>=', $since)
+                ->selectRaw("event_name, {$nicheSlugExpr} as niche_slug, count(*) as n")
+                ->groupBy('event_name', DB::raw($nicheSlugExpr))
+                ->get();
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('DemoConversionStats: event query failed', ['error' => $e->getMessage()]);
+            $events = collect();
+        }
 
         $byNiche = [];
         foreach ($events as $row) {
@@ -49,15 +64,20 @@ class DemoConversionStats
         }
 
         // Tenants that registered with a demo-attribution stamp.
-        // Uses JSONB -> access so Postgres does the filtering. Cheap
-        // — the tenants table is tiny compared to chat_events.
-        $signupsByNicheRows = \App\Models\Tenant::query()
-            ->withoutGlobalScopes()
-            ->where('created_at', '>=', $since)
-            ->whereNotNull(DB::raw("settings->>'demo_qualified_from_niche'"))
-            ->selectRaw("settings->>'demo_qualified_from_niche' as niche_slug, count(*) as n")
-            ->groupBy(DB::raw("settings->>'demo_qualified_from_niche'"))
-            ->get();
+        // Uses JSONB -> access on Postgres, json_extract on SQLite.
+        // Cheap — the tenants table is tiny compared to chat_events.
+        try {
+            $signupsByNicheRows = \App\Models\Tenant::query()
+                ->withoutGlobalScopes()
+                ->where('created_at', '>=', $since)
+                ->whereNotNull(DB::raw($demoNicheExpr))
+                ->selectRaw("{$demoNicheExpr} as niche_slug, count(*) as n")
+                ->groupBy(DB::raw($demoNicheExpr))
+                ->get();
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('DemoConversionStats: tenant signup query failed', ['error' => $e->getMessage()]);
+            $signupsByNicheRows = collect();
+        }
 
         $signupsByNiche = [];
         foreach ($signupsByNicheRows as $row) {
