@@ -23,7 +23,62 @@ class IntentDetectionService
             'is_followup' => $this->isFollowup($msg),
             'is_complaint' => $this->isComplaint($msg),
             'is_thanks' => $this->isThanks($msg),
+            'is_policy_question' => $this->isPolicyQuestion($msg),
         ];
+    }
+
+    /**
+     * Policy/service questions: pickup from store, delivery rules, returns,
+     * invoice, warranty, payment methods, showroom. These should be answered
+     * from the KB (Livrare/Retur/Termeni pages) — NOT by running a product
+     * search that would latch onto verb-forms like "ridic" / "livrez" and
+     * pull in unrelated products that happen to contain the verb stem in
+     * their name.
+     */
+    public function isPolicyQuestion(string $msg): bool
+    {
+        $msg = mb_strtolower($msg);
+
+        $patterns = [
+            // Pickup / showroom / physical store
+            '/\bridic\w*\s*(din|de\s+la|de\s+pe)?\b/u',         // "pot sa il ridic", "ridica din magazin"
+            '/\bridicare\b/u',                                  // "ridicare din depozit"
+            '/showroom/u',
+            '/\bdepozit\w*\b/u',                                // "depozit", "depozitul"
+            '/\bmagazin\w*\s+(fizic|real|propriu)/u',           // "magazin fizic"
+            '/pe\s+stoc\s+(la|in|î[nm])\s+(magazin|depozit|showroom)/u', // "pe stoc la magazin"
+            '/(vin|merg|trec)\s+(sa|să)\s+(il\s+)?ia\b/u',     // "vin să îl iau"
+            '/\bpunct\s+de\s+ridic/u',                          // "punct de ridicare"
+
+            // Delivery policy (not order status)
+            '/c[aâ]t\s+(cost[aă]|e|este|dureaz[aă]).*livr/u',   // "cât costă/durează livrarea"
+            '/livr[aăâ](re|ati|ează)\s+(in|î[nm])\s+(tot|toata|toată)/u', // "livrare în toată țara"
+            '/cum\s+(se\s+)?livreaz/u',                         // "cum se livrează"
+            '/timp\s+de\s+livr/u',                              // "timp de livrare"
+            '/modalit[aă]t[iî]\s+de\s+(livr|plat[aă])/u',       // "modalități de livrare/plată"
+
+            // Returns / warranty
+            '/\bretur/u',                                       // "retur", "returnez"
+            '/\bgaran[tț]ie\b/u',
+            '/\bpolit(ica|ici)\s+de\b/u',                       // "politică de retur"
+            '/drept\s+de\s+retrag/u',                           // "drept de retragere"
+
+            // Invoice / payment
+            '/\bfactur\w*\b/u',
+            '/(plata|plati|plă[tț]i)\s+(cu|prin|la)/u',         // "plată cu cardul", "plătesc prin ramburs"
+            '/ramburs/u',
+            '/metode\s+de\s+plat/u',
+
+            // Contact / program / locații
+            '/\b(program|orar|deschis|inchis|închis)\b/u',
+            '/\b(contact|telefon|e-?mail)\b\s+(voi|vostru|companie|firm|magazin)/u',
+            '/unde\s+(sunt|este|se\s+afl[aă])\s+(magazin|depozit|showroom|sediu)/u',
+        ];
+
+        foreach ($patterns as $p) {
+            if (preg_match($p, $msg)) return true;
+        }
+        return false;
     }
 
     /**

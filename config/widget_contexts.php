@@ -94,10 +94,15 @@ return [
         'general' => [
             'opening' => 'Te ajut să alegi. Spune-mi ce cauți sau apasă o sugestie.',
             'quick_replies' => [
-                ['label' => 'Recomandă-mi ceva', 'text' => 'Recomandă-mi 3 produse care ți se par cele mai bune acum.'],
-                ['label' => 'Cadou sub 200 lei', 'text' => 'Caut un cadou cu un buget sub 200 lei.'],
-                ['label' => 'Livrare astăzi', 'text' => 'Ce produse pot primi astăzi?'],
-                ['label' => 'Cele mai populare', 'text' => 'Arată-mi cele mai populare produse acum.'],
+                // Consultative opener — works for tools, construction, appliances,
+                // groceries, anything. Previous set ("Cadou sub 200 lei", "Livrare
+                // astăzi") leaked gift/same-day tropes that don't fit most
+                // magazin-online tenants; those can still be re-added as
+                // tenant-specific overrides via channel.config.widget_contexts.
+                ['label' => 'Ce produse aveți?',   'text' => 'Ce categorii de produse aveți și ce anume vindeți?'],
+                ['label' => 'Cum aleg ce-mi trebuie?', 'text' => 'Ajută-mă să aleg produsul potrivit — am nevoie de ghidaj.'],
+                ['label' => 'Cum livrați?',         'text' => 'Cum funcționează livrarea și pot ridica și din magazin?'],
+                ['label' => 'Cum fac retur?',       'text' => 'Care e politica de retur și în cât timp pot returna?'],
             ],
         ],
     ],

@@ -1351,10 +1351,13 @@ class ChatbotApiController extends Controller
                             }
                         }
                     } else {
-                        $client = \Anthropic::factory()
-                            ->withApiKey($anthropicKey)
-                            ->withHttpHeader('timeout', '60')
-                            ->make();
+                        // SDK v0.8: `\Anthropic::factory()` facade is gone
+                        // and `messages()->createStreamed([...])` was
+                        // renamed to `messages->createStream(...)` with
+                        // positional/named args. The old code crashed with
+                        // "Class 'Anthropic' not found" before even hitting
+                        // the network.
+                        $client = new \Anthropic\Client($anthropicKey);
 
                         $system = '';
                         $anthropicMessages = [];
@@ -1366,13 +1369,13 @@ class ChatbotApiController extends Controller
                             }
                         }
 
-                        $stream = $client->messages()->createStreamed([
-                            'model' => $model,
-                            'max_tokens' => $maxTokens,
-                            'temperature' => $temperature,
-                            'system' => $system,
-                            'messages' => $anthropicMessages,
-                        ]);
+                        $stream = $client->messages->createStream(
+                            maxTokens: $maxTokens,
+                            messages: $anthropicMessages,
+                            model: $model,
+                            system: $system !== '' ? $system : null,
+                            temperature: $temperature,
+                        );
 
                         foreach ($stream as $response) {
                             // Anthropic emits `message_start` with
@@ -2206,6 +2209,29 @@ class ChatbotApiController extends Controller
             $extraContext .= $prodBlock;
         }
 
+        // When the user is on a category archive page the plugin sends
+        // page_type=category + title/url but no structured category_context
+        // yet. Derive the category name from the page title (strip the
+        // "– Brand.ro" suffix) and surface it so the LLM can answer
+        // "alege-mi un produs din categoria asta" without asking which
+        // category — previously it kept asking "ce categorie?" even with
+        // the URL right there.
+        $pageType = (string) ($pageContext['page_type'] ?? '');
+        if ($pageType === 'category' && !$prodCtx) {
+            $rawTitle = (string) ($pageContext['page_title'] ?? '');
+            $catName = trim(preg_split('/\s[–—-]\s/u', $rawTitle, 2)[0] ?? '');
+            $catUrl = (string) ($pageContext['page_url'] ?? '');
+            if ($catName !== '') {
+                $extraContext .= "\n\n[PAGE CATEGORY CONTEXT]\n"
+                    . "Clientul este chiar acum pe pagina categoriei \"{$catName}\""
+                    . ($catUrl !== '' ? " ({$catUrl})" : '') . ".\n"
+                    . "REGULI:\n"
+                    . "1. Când clientul cere „alege-mi un produs\" / „recomandă-mi ceva\" / „ce e mai bun\" / „din categoria asta\" FĂRĂ să specifice alta, referința implicită ESTE această categorie — NU întreba „ce categorie?\".\n"
+                    . "2. Propune 2-3 produse concrete din această categorie folosind informațiile din catalog; dacă ai nevoie de criterii (buget, utilizare), cere-le scurt.\n"
+                    . "3. Dacă clientul schimbă explicit categoria („altceva\" / „vreau din X\"), urmează noua direcție.";
+            }
+        }
+
         // G1: surface cart threshold to the LLM when WooCommerce
         // plugin reports it. One short block — the LLM uses it to
         // mention "mai ai X lei până la livrare gratuită" naturally
@@ -2427,7 +2453,7 @@ class ChatbotApiController extends Controller
                 'gpt-4o-mini'               => ['input' => 0.15, 'output' => 0.60],
                 'gpt-4o'                    => ['input' => 2.50, 'output' => 10.00],
                 'claude-haiku-4-5-20251001' => ['input' => 1.00, 'output' => 5.00],
-                'claude-sonnet-4-5-20241022'=> ['input' => 3.00, 'output' => 15.00],
+                'claude-sonnet-4-6'         => ['input' => 3.00, 'output' => 15.00],
             ];
             $pricing = $fallback[$model] ?? ['input' => 1.0, 'output' => 3.0];
         }

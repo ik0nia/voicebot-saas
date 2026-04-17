@@ -61,6 +61,23 @@ class ConversationFocusService
         'aveti', 'avem', 'are', 'au', 'ati', 'aveau',
         'puteti', 'pot', 'poti', 'putem', 'recomanda', 'sugerati',
         'gasiti', 'vinde', 'vand', 'vindeti',
+        // Policy / service verbs — pickup, delivery, returns, payment.
+        // These are conversational (e.g. "pot să îl ridic?", "cum se
+        // livrează?") and must NEVER become a product topic. Without
+        // this list, "ridic" latched on as a topic and the next turn's
+        // product search returned unrelated items that happened to
+        // contain the verb stem (e.g. any "lifting" / "hoisting" SKU).
+        'ridic', 'ridica', 'ridicat', 'ridicata', 'ridicare', 'ridicarea',
+        'iau', 'iei', 'ia', 'luat', 'luam',
+        'livrez', 'livrea', 'livrat', 'livrati', 'livrare', 'livrarea',
+        'trimite', 'trimiti', 'trimis', 'trimiteti',
+        'plata', 'platesc', 'platim', 'platit', 'platiti',
+        'factur', 'factura', 'factureaz',
+        'retur', 'retu', 'returnez', 'returnat', 'returneaz',
+        'garantie', 'garanti',
+        'showroom', 'magazin', 'magazinul', 'depozit', 'depozitul', 'sediu',
+        'program', 'orar', 'deschis', 'inchis',
+        'contact', 'telefon', 'email', 'adresa',
         // "produse" / generic product noun
         'produs', 'produse', 'produsul', 'produsele', 'articol',
         // Units

@@ -470,7 +470,13 @@ class IntentOrchestratorService
         }
 
         // Product search — score based on specificity
-        if (!($detected['is_greeting'] ?? false) && !($detected['is_thanks'] ?? false) && !($detected['is_new_order_intent'] ?? false)) {
+        // Policy questions (pickup/livrare/retur/garanție/plată) are service
+        // questions, NOT product searches — skip the heuristic that would
+        // otherwise match every ≥2-word message and surface products whose
+        // names accidentally share a verb stem with the question. Those
+        // go through knowledge_query instead.
+        if (!($detected['is_greeting'] ?? false) && !($detected['is_thanks'] ?? false) && !($detected['is_new_order_intent'] ?? false)
+            && !($detected['is_policy_question'] ?? false)) {
             $words = preg_split('/\s+/', $msg);
             // Explicit product intent from IntentDetectionService always triggers product search.
             // Otherwise, require ≥2 words as a heuristic signal.
@@ -501,10 +507,16 @@ class IntentOrchestratorService
             $intents[] = new DetectedIntent('category_recommendation', 0.85, ['concept' => $concept], 20);
         }
 
-        // Knowledge query — almost always (unless greeting/thanks/followup)
+        // Knowledge query — almost always (unless greeting/thanks/followup).
+        // Policy questions get higher confidence + priority so the KB hits
+        // Livrare/Retur/Termeni pages ahead of any other pipeline.
         if (!($detected['is_greeting'] ?? false) && !($detected['is_thanks'] ?? false) &&
             !($detected['is_followup'] ?? false)) {
-            $intents[] = new DetectedIntent('knowledge_query', 0.5, ['query' => $message], 30);
+            if ($detected['is_policy_question'] ?? false) {
+                $intents[] = new DetectedIntent('knowledge_query', 0.9, ['query' => $message], 10);
+            } else {
+                $intents[] = new DetectedIntent('knowledge_query', 0.5, ['query' => $message], 30);
+            }
         }
 
         // Handoff intent
