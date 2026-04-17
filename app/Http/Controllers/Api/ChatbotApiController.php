@@ -1028,7 +1028,7 @@ class ChatbotApiController extends Controller
             $userMessage,
             $extraContext,
             $channel,
-            $this->getValidLastProductContext($conversation, $userMessage),
+            \App\Services\Chat\ConversationProductMemory::resolveLast($conversation, $userMessage),
         )->systemPrompt;
 
         // Build messages with summarization
