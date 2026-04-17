@@ -34,4 +34,35 @@ class BotFactory extends Factory
     {
         return $this->state(fn () => ['is_active' => false]);
     }
+
+    public function structuredPrompt(): static
+    {
+        return $this->state(fn (array $attrs) => [
+            'settings' => array_merge(
+                $attrs['settings'] ?? [],
+                ['use_structured_prompt' => true]
+            ),
+        ]);
+    }
+
+    public function forNiche(string $nicheSlug): static
+    {
+        return $this->state(fn () => ['niche_slug' => $nicheSlug]);
+    }
+
+    public function florarie(): static
+    {
+        return $this->forNiche('florarie')->state(fn () => [
+            'name' => 'Asistent Florărie',
+            'language' => 'ro',
+        ]);
+    }
+
+    public function magazinOnline(): static
+    {
+        return $this->forNiche('magazin-online')->state(fn () => [
+            'name' => 'Asistent Magazin Online',
+            'language' => 'ro',
+        ]);
+    }
 }
