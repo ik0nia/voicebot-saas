@@ -60,12 +60,37 @@
 
     {{-- Tab: Acum --}}
     @if($tab === 'acum')
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        {{-- Archetype-aware headline banner --}}
+        <div class="mb-4 rounded-xl border border-red-100 bg-gradient-to-r from-red-50 to-orange-50 p-4">
+            <p class="text-base font-semibold text-red-900">{{ $headline }}</p>
+            <p class="text-xs text-red-700/70 mt-1">Azi, {{ now()->translatedFormat('l, j F') }} · Toate valorile se actualizează la fiecare conversație.</p>
+        </div>
+
+        @php
+            $spark = function(array $trend, string $key, string $stroke = '#dc2626'): string {
+                $values = array_column($trend, $key);
+                $max = max($values) ?: 1;
+                $count = count($values);
+                if ($count < 2) return '';
+                $points = [];
+                foreach ($values as $i => $v) {
+                    $x = ($i / ($count - 1)) * 80;
+                    $y = 24 - (($v / $max) * 20);
+                    $points[] = round($x, 1) . ',' . round($y, 1);
+                }
+                return '<svg viewBox="0 0 80 24" class="w-full h-6" preserveAspectRatio="none">' .
+                    '<polyline fill="none" stroke="' . $stroke . '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" points="' . implode(' ', $points) . '"/>' .
+                '</svg>';
+            };
+        @endphp
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-2">
             @if(in_array($archetype, ['booking', 'hybrid']))
                 <div class="bg-white p-4 rounded-xl border border-slate-200">
                     <p class="text-xs text-slate-500 uppercase font-semibold">{{ $labels['kpi_today'] ?? 'Programări azi' }}</p>
                     <p class="mt-1 text-2xl font-bold text-slate-900">{{ $outcomes['bookings_requested'] }}</p>
                     <p class="text-xs text-emerald-600 mt-0.5">{{ $outcomes['bookings_confirmed'] }} confirmate</p>
+                    <div class="mt-2">{!! $spark($trend, 'bookings') !!}</div>
                 </div>
             @endif
             @if(in_array($archetype, ['lead', 'hybrid', 'none']))
@@ -73,21 +98,25 @@
                     <p class="text-xs text-slate-500 uppercase font-semibold">Lead-uri azi</p>
                     <p class="mt-1 text-2xl font-bold text-slate-900">{{ $outcomes['leads_generated'] }}</p>
                     <p class="text-xs text-slate-500 mt-0.5">{{ $outcomes['callbacks_requested'] }} cereri callback</p>
+                    <div class="mt-2">{!! $spark($trend, 'leads', '#d97706') !!}</div>
                 </div>
             @endif
             @if(in_array($archetype, ['ecommerce', 'hybrid']))
                 <div class="bg-white p-4 rounded-xl border border-slate-200">
-                    <p class="text-xs text-slate-500 uppercase font-semibold">Comenzi influențate azi</p>
-                    <p class="mt-1 text-2xl font-bold text-slate-900">{{ $outcomes['orders_influenced'] }}</p>
-                    <p class="text-xs text-slate-500 mt-0.5">{{ number_format(($outcomes['revenue_booked_cents'] ?? 0) / 100, 0) }} RON</p>
+                    <p class="text-xs text-slate-500 uppercase font-semibold">Venit atribuit azi</p>
+                    <p class="mt-1 text-2xl font-bold text-slate-900">{{ number_format(($outcomes['revenue_booked_cents'] ?? 0) / 100 * $bnrRate, 0, ',', '.') }}<span class="text-sm text-slate-400 font-medium ml-1">lei</span></p>
+                    <p class="text-xs text-slate-500 mt-0.5">{{ $outcomes['orders_influenced'] }} comenzi</p>
+                    <div class="mt-2">{!! $spark($trend, 'revenue_ron', '#059669') !!}</div>
                 </div>
             @endif
             <div class="bg-white p-4 rounded-xl border border-slate-200">
                 <p class="text-xs text-slate-500 uppercase font-semibold">Conversații azi</p>
                 <p class="mt-1 text-2xl font-bold text-slate-900">{{ $outcomes['conversations_count'] }}</p>
                 <p class="text-xs text-slate-500 mt-0.5">{{ $outcomes['voice_calls_count'] }} apeluri voce</p>
+                <div class="mt-2">{!! $spark($trend, 'conversations', '#6366f1') !!}</div>
             </div>
         </div>
+        <p class="text-xs text-slate-400 mb-6">Linia arată tendința ultimele 7 zile; cifra mare e de azi.</p>
 
         @if($archetype === 'none')
             <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-900">
