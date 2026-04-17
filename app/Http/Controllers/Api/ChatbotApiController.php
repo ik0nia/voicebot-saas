@@ -334,7 +334,13 @@ class ChatbotApiController extends Controller
 
         // ── Auto-extract lead from chat messages ──
         // If user provides email/phone in conversation, create/update Lead automatically.
-        $this->tryExtractChatLead($bot, $conversation, $userMessage, $products, $eventService ?? null, $eventCtx ?? []);
+        app(\App\Services\Chat\ChatLeadExtractor::class)->extract(
+            $bot,
+            $conversation,
+            $userMessage,
+            $products,
+            $eventCtx ?? [],
+        );
 
         // V2: Track analytics events (reuse $eventService if already instantiated above)
         if (!isset($eventService)) {
@@ -457,167 +463,6 @@ class ChatbotApiController extends Controller
             $response['quick_replies'] = $quickReplies;
         }
         return response()->json($response);
-    }
-
-    /**
-     * Auto-extract lead data (email, phone, name) from chat messages.
-     * Creates or updates a Lead record when contact info is detected.
-     */
-    private function tryExtractChatLead(
-        Bot $bot,
-        Conversation $conversation,
-        string $userMessage,
-        array $products,
-        ?ConversationEventService $eventService = null,
-        array $eventCtx = []
-    ): void {
-        try {
-            // Check if we already have a qualified lead for this conversation
-            $existingLead = \App\Models\Lead::where('conversation_id', $conversation->id)
-                ->where('status', 'qualified')
-                ->first();
-
-            // Extract email
-            $email = null;
-            if (preg_match('/[\w.+-]+@[\w.-]+\.\w{2,}/', $userMessage, $m)) {
-                $email = mb_strtolower($m[0]);
-            }
-
-            // Extract Romanian phone number
-            $phone = null;
-            $digitsOnly = preg_replace('/[^\d]/', '', $userMessage);
-            if (preg_match('/(07\d{8})/', $digitsOnly, $m)) {
-                $phone = $m[1];
-            } elseif (preg_match('/(407\d{8})/', $digitsOnly, $m)) {
-                $phone = '0' . substr(preg_replace('/\D/', '', $m[1]), 2);
-            }
-            // Flexible spacing: 07xx xxx xxx
-            if (!$phone && preg_match('/0\s*7[\s.-]?\d[\s.-]?\d[\s.-]?\d[\s.-]?\d[\s.-]?\d[\s.-]?\d[\s.-]?\d[\s.-]?\d/', $userMessage, $m)) {
-                $phone = preg_replace('/[\s.-]/', '', $m[0]);
-            }
-
-            // Extract name from "Mă numesc X", "Sunt X", "Numele meu e X"
-            $name = null;
-            if (preg_match('/(?:mă numesc|ma numesc|sunt|numele meu e|numele meu este|eu sunt|mă cheamă|ma cheama)\s+([A-ZĂÂÎȘȚ][a-zăâîșț]+(?:\s+[A-ZĂÂÎȘȚ][a-zăâîșț]+)?)/ui', $userMessage, $m)) {
-                $name = trim($m[1]);
-            }
-
-            if (!$email && !$phone && !$name) return;
-
-            // If we already have a qualified lead, just update with new data
-            if ($existingLead) {
-                $updates = [];
-                if ($email && !$existingLead->email) $updates['email'] = $email;
-                if ($phone && !$existingLead->phone) $updates['phone'] = $phone;
-                if ($name && !$existingLead->name) $updates['name'] = $name;
-
-                if (!empty($updates)) {
-                    // Recalculate score
-                    $newScore = $existingLead->qualification_score;
-                    if (isset($updates['email'])) $newScore += 30;
-                    if (isset($updates['phone'])) $newScore += 20;
-                    if (isset($updates['name'])) $newScore += 10;
-                    $updates['qualification_score'] = min(100, $newScore);
-
-                    $existingLead->update($updates);
-
-                    Log::info("Chat lead updated for conversation {$conversation->id}", [
-                        'lead_id' => $existingLead->id,
-                        'new_fields' => array_keys($updates),
-                    ]);
-                }
-                return;
-            }
-
-            // Fix B: If user provided email or phone, ALWAYS create the lead.
-            // No score threshold needed — having contact info is enough.
-            if ($email || $phone) {
-                // Contact info found — proceed to create lead unconditionally.
-                $botAskedForContact = true; // for capture_reason below
-            } else {
-                // Only have a name — verify context: was the bot asking for contact info?
-                // Fix C: Check last 3 bot messages instead of just the last one
-                $recentBotMessages = Message::where('conversation_id', $conversation->id)
-                    ->where('direction', 'outbound')
-                    ->orderByDesc('id')
-                    ->limit(3)
-                    ->pluck('content');
-
-                $botAskedForContact = $recentBotMessages->contains(function ($msg) {
-                    return $msg && (
-                        str_contains($msg, 'email') ||
-                        str_contains($msg, 'telefon') ||
-                        str_contains($msg, 'contact') ||
-                        str_contains($msg, 'număr') ||
-                        str_contains($msg, 'numar') ||
-                        str_contains($msg, 'adresa ta') ||
-                        str_contains($msg, 'date de contact')
-                    );
-                });
-
-                $leadScore = $conversation->lead_score ?? 0;
-
-                // Only name, no email/phone: require bot context or lead score
-                if (!$botAskedForContact && $leadScore < 20) return;
-            }
-
-            // Build products shown array
-            $productsShown = null;
-            $lastCards = ($conversation->metadata ?? [])['last_product_cards'] ?? null;
-            if (!empty($lastCards)) {
-                $productsShown = array_map(fn($p) => [
-                    'id' => $p['id'] ?? null,
-                    'name' => $p['name'] ?? '',
-                    'price' => $p['price'] ?? '',
-                    'currency' => $p['currency'] ?? 'RON',
-                ], array_slice($lastCards, 0, 10));
-            }
-
-            $qualificationScore = ($email ? 30 : 0) + ($phone ? 20 : 0) + ($name ? 10 : 0);
-
-            $lead = \App\Models\Lead::create([
-                'tenant_id' => $bot->tenant_id,
-                'bot_id' => $bot->id,
-                'conversation_id' => $conversation->id,
-                'name' => $name,
-                'email' => $email,
-                'phone' => $phone,
-                'status' => ($email || $phone) ? 'qualified' : 'partial',
-                'qualification_score' => $qualificationScore,
-                'capture_source' => 'chat',
-                'capture_reason' => ($email || $phone) ? 'contact_info_provided' : ($botAskedForContact ? 'bot_asked_contact' : 'high_lead_score'),
-                'products_shown' => $productsShown,
-            ]);
-
-            Log::info("Chat lead auto-captured for conversation {$conversation->id}", [
-                'lead_id' => $lead->id,
-                'has_email' => (bool) $email,
-                'has_phone' => (bool) $phone,
-                'has_name' => (bool) $name,
-            ]);
-
-            // Track lead event
-            if ($eventService) {
-                $eventService->track(EventTaxonomy::LEAD_COMPLETED, [
-                    'lead_id' => $lead->id,
-                    'source' => 'chat',
-                    'has_email' => (bool) $email,
-                    'has_phone' => (bool) $phone,
-                    'has_name' => (bool) $name,
-                ], array_merge($eventCtx, [
-                    'idempotency_key' => "chat_lead:{$conversation->id}:{$lead->id}",
-                ]));
-            }
-
-            // Update conversation lead score
-            $currentLeadScore = $conversation->lead_score ?? 0;
-            $conversation->update(['lead_score' => max($currentLeadScore, $qualificationScore)]);
-
-        } catch (\Throwable $e) {
-            Log::debug("Chat lead extraction failed for conversation {$conversation->id}", [
-                'error' => $e->getMessage(),
-            ]);
-        }
     }
 
     /**
@@ -1109,7 +954,12 @@ class ChatbotApiController extends Controller
                 }
 
                 // Auto-extract lead from chat messages
-                $this->tryExtractChatLead($bot, $conversation, $userMessage, $products);
+                app(\App\Services\Chat\ChatLeadExtractor::class)->extract(
+                    $bot,
+                    $conversation,
+                    $userMessage,
+                    $products,
+                );
 
                 // V2: Track analytics events
                 $eventService = app(ConversationEventService::class);

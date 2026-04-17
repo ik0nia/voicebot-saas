@@ -1,0 +1,272 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services\Chat;
+
+use App\Models\Bot;
+use App\Models\Conversation;
+use App\Models\Lead;
+use App\Models\Message;
+use App\Services\ConversationEventService;
+use App\Services\EventTaxonomy;
+use Illuminate\Support\Facades\Log;
+
+/**
+ * Scans an inbound user turn for contact data (email, phone, name) and
+ * persists a Lead row when enough is found. Runs every turn — cheap
+ * regex work, no LLM call — so the moment a visitor types
+ * "ma cheama Maria, numarul meu e 0722..." we have a qualified lead
+ * without another round-trip to the model.
+ *
+ * Rules (aligned with PrechatLeadCreator to keep capture-source
+ * analytics comparable):
+ *   - email: lowercased, basic RFC format match
+ *   - phone: Romanian mobile 07xxxxxxxx or 407xxxxxxxx, with forgiving
+ *     spacing/punctuation; canonicalised to 07xxxxxxxx
+ *   - name: captured after "mă numesc"/"sunt"/"mă cheamă"/etc.
+ *   - contact-info alone → always create (status=qualified)
+ *   - only-a-name → require bot context (last three outbound messages
+ *     mention contact/email/telefon/etc.) OR lead_score ≥ 20
+ *   - scoring: email +30, phone +20, name +10, cap 100
+ *
+ * Re-running on a conversation that already has a qualified lead
+ * enriches it with missing fields and bumps the score, never
+ * downgrades. Silent on errors — this runs in the hot path and
+ * must not break the /message response on a regex glitch.
+ */
+final class ChatLeadExtractor
+{
+    private const SCORE_EMAIL = 30;
+    private const SCORE_PHONE = 20;
+    private const SCORE_NAME = 10;
+    private const SCORE_MAX = 100;
+    private const LEAD_SCORE_THRESHOLD_NAME_ONLY = 20;
+    private const RECENT_BOT_MESSAGES_LOOKBACK = 3;
+
+    public function __construct(
+        private readonly ConversationEventService $eventService,
+    ) {}
+
+    /**
+     * @param array<int, array<string, mixed>> $products
+     * @param array<string, mixed>             $eventCtx When provided,
+     *                                                   a LEAD_COMPLETED
+     *                                                   event is tracked
+     *                                                   alongside the
+     *                                                   insert.
+     */
+    public function extract(
+        Bot $bot,
+        Conversation $conversation,
+        string $userMessage,
+        array $products,
+        array $eventCtx = [],
+    ): void {
+        try {
+            $email = $this->extractEmail($userMessage);
+            $phone = $this->extractPhone($userMessage);
+            $name = $this->extractName($userMessage);
+
+            if ($email === null && $phone === null && $name === null) {
+                return;
+            }
+
+            $existingLead = Lead::where('conversation_id', $conversation->id)
+                ->where('status', 'qualified')
+                ->first();
+
+            if ($existingLead !== null) {
+                $this->enrichExistingLead($existingLead, $conversation, $name, $email, $phone);
+                return;
+            }
+
+            // Only-a-name requires context — either the bot was asking
+            // for contact info or the conversation already earned some
+            // lead score. Contact info alone is always enough.
+            $hasContact = $email !== null || $phone !== null;
+            $botAskedForContact = $hasContact
+                ? true
+                : $this->recentBotMessagesAskedForContact($conversation);
+
+            if (!$hasContact && !$botAskedForContact && ($conversation->lead_score ?? 0) < self::LEAD_SCORE_THRESHOLD_NAME_ONLY) {
+                return;
+            }
+
+            $score = ($email !== null ? self::SCORE_EMAIL : 0)
+                + ($phone !== null ? self::SCORE_PHONE : 0)
+                + ($name !== null ? self::SCORE_NAME : 0);
+
+            $lead = Lead::create([
+                'tenant_id' => $bot->tenant_id,
+                'bot_id' => $bot->id,
+                'conversation_id' => $conversation->id,
+                'name' => $name,
+                'email' => $email,
+                'phone' => $phone,
+                'status' => $hasContact ? 'qualified' : 'partial',
+                'qualification_score' => $score,
+                'capture_source' => 'chat',
+                'capture_reason' => $hasContact
+                    ? 'contact_info_provided'
+                    : ($botAskedForContact ? 'bot_asked_contact' : 'high_lead_score'),
+                'products_shown' => $this->productsShownFromMemory($conversation),
+            ]);
+
+            Log::info("Chat lead auto-captured for conversation {$conversation->id}", [
+                'lead_id' => $lead->id,
+                'has_email' => $email !== null,
+                'has_phone' => $phone !== null,
+                'has_name' => $name !== null,
+            ]);
+
+            if (!empty($eventCtx)) {
+                $this->eventService->track(
+                    EventTaxonomy::LEAD_COMPLETED,
+                    [
+                        'lead_id' => $lead->id,
+                        'source' => 'chat',
+                        'has_email' => $email !== null,
+                        'has_phone' => $phone !== null,
+                        'has_name' => $name !== null,
+                    ],
+                    array_merge($eventCtx, [
+                        'idempotency_key' => "chat_lead:{$conversation->id}:{$lead->id}",
+                    ]),
+                );
+            }
+
+            $conversation->update([
+                'lead_score' => max($conversation->lead_score ?? 0, $score),
+            ]);
+        } catch (\Throwable $e) {
+            Log::debug("Chat lead extraction failed for conversation {$conversation->id}", [
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    private function extractEmail(string $userMessage): ?string
+    {
+        if (preg_match('/[\w.+-]+@[\w.-]+\.\w{2,}/', $userMessage, $m)) {
+            return mb_strtolower($m[0]);
+        }
+        return null;
+    }
+
+    private function extractPhone(string $userMessage): ?string
+    {
+        $digitsOnly = preg_replace('/[^\d]/', '', $userMessage);
+        if (preg_match('/(07\d{8})/', $digitsOnly, $m)) {
+            return $m[1];
+        }
+        if (preg_match('/(407\d{8})/', $digitsOnly, $m)) {
+            return '0' . substr(preg_replace('/\D/', '', $m[1]), 2);
+        }
+        // Tolerate spaced/punctuated layouts like "07xx xxx xxx".
+        if (preg_match('/0\s*7[\s.-]?\d[\s.-]?\d[\s.-]?\d[\s.-]?\d[\s.-]?\d[\s.-]?\d[\s.-]?\d[\s.-]?\d/', $userMessage, $m)) {
+            return preg_replace('/[\s.-]/', '', $m[0]);
+        }
+        return null;
+    }
+
+    private function extractName(string $userMessage): ?string
+    {
+        $pattern = '/(?:mă numesc|ma numesc|sunt|numele meu e|numele meu este|eu sunt|mă cheamă|ma cheama)\s+([A-ZĂÂÎȘȚ][a-zăâîșț]+(?:\s+[A-ZĂÂÎȘȚ][a-zăâîșț]+)?)/ui';
+        if (preg_match($pattern, $userMessage, $m)) {
+            return trim($m[1]);
+        }
+        return null;
+    }
+
+    private function enrichExistingLead(
+        Lead $lead,
+        Conversation $conversation,
+        ?string $name,
+        ?string $email,
+        ?string $phone,
+    ): void {
+        $updates = [];
+        if ($email !== null && !$lead->email) {
+            $updates['email'] = $email;
+        }
+        if ($phone !== null && !$lead->phone) {
+            $updates['phone'] = $phone;
+        }
+        if ($name !== null && !$lead->name) {
+            $updates['name'] = $name;
+        }
+        if ($updates === []) {
+            return;
+        }
+
+        $score = $lead->qualification_score;
+        if (isset($updates['email'])) {
+            $score += self::SCORE_EMAIL;
+        }
+        if (isset($updates['phone'])) {
+            $score += self::SCORE_PHONE;
+        }
+        if (isset($updates['name'])) {
+            $score += self::SCORE_NAME;
+        }
+        $updates['qualification_score'] = min(self::SCORE_MAX, $score);
+
+        $lead->update($updates);
+
+        Log::info("Chat lead updated for conversation {$conversation->id}", [
+            'lead_id' => $lead->id,
+            'new_fields' => array_keys($updates),
+        ]);
+    }
+
+    /**
+     * Fix C: inspect the last few outbound turns, not just the most
+     * recent one — if the bot asked for contact info two turns ago and
+     * the user only now complied (mentioning just their name), we
+     * still want to treat that as a bot-prompted capture.
+     */
+    private function recentBotMessagesAskedForContact(Conversation $conversation): bool
+    {
+        $recent = Message::where('conversation_id', $conversation->id)
+            ->where('direction', 'outbound')
+            ->orderByDesc('id')
+            ->limit(self::RECENT_BOT_MESSAGES_LOOKBACK)
+            ->pluck('content');
+
+        $needles = ['email', 'telefon', 'contact', 'număr', 'numar', 'adresa ta', 'date de contact'];
+
+        return $recent->contains(function ($msg) use ($needles): bool {
+            if (!$msg) {
+                return false;
+            }
+            foreach ($needles as $needle) {
+                if (str_contains($msg, $needle)) {
+                    return true;
+                }
+            }
+            return false;
+        });
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>|null
+     */
+    private function productsShownFromMemory(Conversation $conversation): ?array
+    {
+        $lastCards = ($conversation->metadata ?? [])['last_product_cards'] ?? null;
+        if (empty($lastCards)) {
+            return null;
+        }
+
+        return array_map(
+            fn ($p) => [
+                'id' => $p['id'] ?? null,
+                'name' => $p['name'] ?? '',
+                'price' => $p['price'] ?? '',
+                'currency' => $p['currency'] ?? 'RON',
+            ],
+            array_slice($lastCards, 0, 10),
+        );
+    }
+}
