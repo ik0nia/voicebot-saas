@@ -189,6 +189,18 @@ Route::any('/dashboard/boti/{rest?}', function ($rest = '') {
 
 // Setup wizard (onboarding). The wizard seeds a bot + prompt and sets
 // tenant-level onboarding flags. Only admin runs onboarding.
+// Onboarding v2 — runs in parallel with legacy /dashboard/setup.
+// Tenants reach it via direct link (admin-gated rollout) until
+// the onboarding_v2_enabled platform flag is flipped for everyone.
+Route::middleware('auth')->prefix('dashboard/setup-wow')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Dashboard\SetupWowController::class, 'start'])->name('dashboard.setup-wow.start');
+    Route::get('/{step}', [\App\Http\Controllers\Dashboard\SetupWowController::class, 'step'])->name('dashboard.setup-wow.step');
+    Route::post('/niche',   [\App\Http\Controllers\Dashboard\SetupWowController::class, 'saveNiche'])->name('dashboard.setup-wow.saveNiche');
+    Route::post('/website', [\App\Http\Controllers\Dashboard\SetupWowController::class, 'saveWebsite'])->name('dashboard.setup-wow.saveWebsite');
+    Route::post('/agent',   [\App\Http\Controllers\Dashboard\SetupWowController::class, 'saveAgent'])->name('dashboard.setup-wow.saveAgent');
+    Route::post('/publish', [\App\Http\Controllers\Dashboard\SetupWowController::class, 'publish'])->name('dashboard.setup-wow.publish');
+});
+
 Route::middleware('auth')->prefix('dashboard/setup')->group(function () {
     Route::get('/', [\App\Http\Controllers\Dashboard\SetupWizardController::class, 'index'])->name('dashboard.setup.index');
     Route::middleware('tenant.role:tenant_admin')->group(function () {
