@@ -67,18 +67,18 @@ Route::get('/v1/chatbot/{channel}/frame', [\App\Http\Controllers\Api\ChatbotEmbe
 //
 // If legitimate multi-user traffic from a single NAT starts hitting
 // these, revisit with per-(channel, visitor_id) limits instead.
-Route::post('/v1/chatbot/{channel}/message', [ChatbotApiController::class, 'message'])->middleware('throttle:30,1');
-Route::post('/v1/chatbot/{channel}/message-stream', [ChatbotApiController::class, 'messageStream'])->middleware('throttle:30,1');
-Route::get('/v1/chatbot/{channel}/config', [ChatbotApiController::class, 'config'])->middleware('throttle:60,1');
-Route::get('/v1/chatbot/{channel}/products', [ChatbotApiController::class, 'searchProducts'])->middleware('throttle:30,1');
+Route::post('/v1/chatbot/{channel}/message', [ChatbotApiController::class, 'message'])->middleware(['force.json', 'throttle:30,1']);
+Route::post('/v1/chatbot/{channel}/message-stream', [ChatbotApiController::class, 'messageStream'])->middleware(['force.json', 'throttle:30,1']);
+Route::get('/v1/chatbot/{channel}/config', [ChatbotApiController::class, 'config'])->middleware(['force.json', 'throttle:60,1']);
+Route::get('/v1/chatbot/{channel}/products', [ChatbotApiController::class, 'searchProducts'])->middleware(['force.json', 'throttle:30,1']);
 
 // Non-LLM booking slot suggestions — widget renders 3-4 clickable
 // buttons without a chat round-trip. Delegates to ComputeAvailability
 // (same code path the LLM tool uses) so the widget always sees the
 // same slots the bot would propose.
-Route::get('/v1/chatbot/{channel}/booking-slots', [\App\Http\Controllers\Api\ChatbotBookingSlotsController::class, 'index'])->middleware('throttle:30,1');
-Route::post('/v1/chatbot/{channel}/feedback', [ChatbotApiController::class, 'feedback'])->middleware('throttle:30,1');
-Route::post('/v1/chatbot/{channel}/rate', [ChatbotApiController::class, 'rateConversation'])->middleware('throttle:10,1');
+Route::get('/v1/chatbot/{channel}/booking-slots', [\App\Http\Controllers\Api\ChatbotBookingSlotsController::class, 'index'])->middleware(['force.json', 'throttle:30,1']);
+Route::post('/v1/chatbot/{channel}/feedback', [ChatbotApiController::class, 'feedback'])->middleware(['force.json', 'throttle:30,1']);
+Route::post('/v1/chatbot/{channel}/rate', [ChatbotApiController::class, 'rateConversation'])->middleware(['force.json', 'throttle:10,1']);
 
 // V2 Analytics, Capabilities & Lead capture (public, widget-facing).
 // Event batches accept up to 50 rows each; keep the batch endpoint tight

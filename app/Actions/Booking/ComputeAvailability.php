@@ -96,6 +96,13 @@ class ComputeAvailability
                     $slotEnd   = Carbon::parse($day->format('Y-m-d') . ' ' . $block->end_time);
 
                     $cursor = $slotStart->copy();
+                    // QA-M1: explicit per-bot locale so a bot configured
+                    // language='ro' doesn't emit "Fri, 17 Apr, 16:30" —
+                    // translatedFormat uses the app locale, which is
+                    // 'en' by default. isoFormat with a per-call locale
+                    // gives us consistent ro/en/hu without mutating
+                    // global state.
+                    $slotLocale = $bot->language ?: 'ro';
                     while ($cursor->copy()->addMinutes($service->duration_minutes)->lte($slotEnd)) {
                         $candidateEnd = $cursor->copy()->addMinutes($service->duration_minutes);
 
@@ -106,7 +113,7 @@ class ComputeAvailability
                                 'staff_name'      => $staff->name,
                                 'starts_at'       => $cursor->toIso8601String(),
                                 'ends_at'         => $candidateEnd->toIso8601String(),
-                                'label'           => $cursor->translatedFormat('D, j M, H:i'),
+                                'label'           => $cursor->copy()->locale($slotLocale)->isoFormat('ddd, D MMM, HH:mm'),
                             ];
                             if (count($allSlots) >= $maxSlots * 3) {
                                 break 3; // enough raw candidates to pick from

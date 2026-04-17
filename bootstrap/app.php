@@ -75,6 +75,10 @@ return Application::configure(basePath: dirname(__DIR__))
             // [abilities] does not exist" and all of ApiTest went red.
             'abilities' => \Laravel\Sanctum\Http\Middleware\CheckAbilities::class,
             'ability' => \Laravel\Sanctum\Http\Middleware\CheckForAnyAbility::class,
+            // QA-M2: force JSON on widget-facing public routes so a
+            // fetch() that forgot to set Accept gets a clean 422
+            // instead of a redirect to the homepage.
+            'force.json' => \App\Http\Middleware\ForceJsonResponse::class,
         ]);
 
         // Stripe sends webhook POSTs without our CSRF token; Cashier's

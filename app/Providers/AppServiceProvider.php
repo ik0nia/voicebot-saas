@@ -46,6 +46,10 @@ class AppServiceProvider extends ServiceProvider
         \Laravel\Cashier\Cashier::useCustomerModel(\App\Models\Tenant::class);
 
         \App\Models\Plan::observe(\App\Observers\PlanObserver::class);
+        // QA-M4: instant widget-config cache invalidation when a
+        // channel or its owning bot toggles active/inactive.
+        \App\Models\Channel::observe(\App\Observers\ChannelCacheObserver::class);
+        \App\Models\Bot::observe(\App\Observers\BotChannelCacheObserver::class);
 
         // Super-admin bypasses every policy. Matches the dashboard behaviour
         // where super_admin already gets withoutGlobalScopes on tenant-scoped

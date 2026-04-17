@@ -47,10 +47,22 @@ class ChatbotApiController extends Controller
      */
     private function resolveActiveChannel(int|string $channelId): ?Channel
     {
-        $dbQuery = fn () => Channel::withoutGlobalScopes()
-            ->where('id', $channelId)
-            ->where('is_active', true)
-            ->first();
+        $dbQuery = function () use ($channelId) {
+            $channel = Channel::withoutGlobalScopes()
+                ->where('id', $channelId)
+                ->where('is_active', true)
+                ->first();
+            if (!$channel) return null;
+            // QA-H2: a paused bot must not keep serving widget config.
+            // Previously only channel.is_active gated access, so a
+            // tenant who disabled their bot saw the widget continue to
+            // greet users and show chips — users then hit a 403 on the
+            // first message. Block at config-resolve so the widget
+            // script simply doesn't render.
+            $bot = Bot::withoutGlobalScopes()->find($channel->bot_id);
+            if (!$bot || !$bot->is_active) return null;
+            return $channel;
+        };
 
         try {
             return Cache::remember("channel_{$channelId}", 1800, $dbQuery);
