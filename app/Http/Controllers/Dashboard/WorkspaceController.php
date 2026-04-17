@@ -40,7 +40,53 @@ class WorkspaceController extends Controller
             'recentConversations' => $this->loadRecentConversations($bot),
             'kbStats' => $bot->knowledgeStats(),
             'channels' => $bot->channels()->orderBy('is_active', 'desc')->get(),
+            'ecomStatus' => $this->loadEcomStatus($bot),
         ]);
+    }
+
+    /**
+     * Read-only diagnostic for WooCommerce attribution on ecommerce /
+     * hybrid bots. Never writes, never refactors the attribution
+     * flow — just counts existing rows so the Agent tab can show
+     * "connected / not connected / attributing".
+     *
+     * @return array{connector_configured: bool, products_synced: int, attributions_30d: int, revenue_30d_cents: float, last_attribution: ?string}
+     */
+    private function loadEcomStatus(\App\Models\Bot $bot): array
+    {
+        // Only relevant for ecommerce / hybrid engines; skip the
+        // DB round-trips otherwise.
+        if (!in_array($bot->engine_type, ['ecommerce', 'hybrid'], true)) {
+            return [
+                'connector_configured' => false,
+                'products_synced'      => 0,
+                'attributions_30d'     => 0,
+                'revenue_30d_cents'    => 0.0,
+                'last_attribution'     => null,
+            ];
+        }
+
+        $hasConnector = \App\Models\KnowledgeConnector::where('bot_id', $bot->id)
+            ->where('type', 'woocommerce')
+            ->exists();
+
+        $productsCount = \App\Models\BotKnowledge::where('bot_id', $bot->id)
+            ->where('source_type', 'connector')
+            ->count();
+
+        $last30 = \App\Models\PurchaseAttribution::withoutGlobalScopes()
+            ->where('bot_id', $bot->id)
+            ->where('created_at', '>=', now()->subDays(30))
+            ->selectRaw('COUNT(*) AS n, COALESCE(SUM(order_total_cents), 0) AS revenue, MAX(created_at) AS last_at')
+            ->first();
+
+        return [
+            'connector_configured' => $hasConnector,
+            'products_synced'      => $productsCount,
+            'attributions_30d'     => (int) ($last30->n ?? 0),
+            'revenue_30d_cents'    => (float) ($last30->revenue ?? 0),
+            'last_attribution'     => $last30?->last_at,
+        ];
     }
 
     /**

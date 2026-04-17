@@ -164,6 +164,80 @@
 
     {{-- Tab: Agent --}}
     @if($tab === 'agent')
+        @if(in_array($archetype, ['ecommerce', 'hybrid']))
+            @php
+                $ec = $ecomStatus;
+                $attributing = $ec['attributions_30d'] > 0;
+                $stateColor = $attributing ? 'emerald' : ($ec['connector_configured'] ? 'amber' : 'slate');
+            @endphp
+            <div class="bg-white rounded-xl border border-slate-200 p-5 mb-4">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-xs font-semibold uppercase text-slate-500">Integrare WooCommerce</p>
+                        <h2 class="text-lg font-bold text-slate-900 mt-1">
+                            @if($attributing)
+                                ✅ Conectat și atribuie comenzi
+                            @elseif($ec['connector_configured'])
+                                ⏳ Conectat, dar încă fără comenzi atribuite
+                            @else
+                                ⚠️ Neconectat
+                            @endif
+                        </h2>
+                    </div>
+                    @if($ec['last_attribution'])
+                        <p class="text-xs text-slate-500">Ultima atribuire: {{ \Carbon\Carbon::parse($ec['last_attribution'])->diffForHumans() }}</p>
+                    @endif
+                </div>
+
+                <ul class="mt-4 space-y-2 text-sm">
+                    <li class="flex items-center gap-2">
+                        @if($ec['connector_configured'])
+                            <span class="text-emerald-600">✓</span>
+                            <span class="text-slate-700">Conector WooCommerce configurat</span>
+                        @else
+                            <span class="text-slate-400">○</span>
+                            <span class="text-slate-700">Conector WooCommerce <span class="font-semibold">lipsă</span> — adaugă-l din tab Cunoștințe</span>
+                        @endif
+                    </li>
+                    <li class="flex items-center gap-2">
+                        @if($ec['products_synced'] > 0)
+                            <span class="text-emerald-600">✓</span>
+                            <span class="text-slate-700">{{ $ec['products_synced'] }} produse sincronizate</span>
+                        @else
+                            <span class="text-slate-400">○</span>
+                            <span class="text-slate-700">Niciun produs sincronizat încă</span>
+                        @endif
+                    </li>
+                    <li class="flex items-center gap-2">
+                        @if($attributing)
+                            <span class="text-emerald-600">✓</span>
+                            <span class="text-slate-700">{{ $ec['attributions_30d'] }} comenzi atribuite în ultimele 30 zile · {{ number_format(($ec['revenue_30d_cents'] / 100) * $bnrRate, 0, ',', '.') }} lei</span>
+                        @else
+                            <span class="text-slate-400">○</span>
+                            <span class="text-slate-700">Niciun webhook de comandă procesat încă — verifică-ți setările WC și plugin-ul Sambla</span>
+                        @endif
+                    </li>
+                </ul>
+
+                @if(!$ec['connector_configured'] || !$attributing)
+                    <div class="mt-4 p-3 bg-slate-50 rounded-lg text-xs text-slate-600">
+                        💡 <strong>Ce să verifici:</strong>
+                        <ol class="list-decimal list-inside mt-1 space-y-0.5">
+                            @if(!$ec['connector_configured'])
+                                <li>Adaugă conectorul WooCommerce din tab Cunoștințe (URL + Consumer Key + Secret).</li>
+                            @endif
+                            @if($ec['connector_configured'] && $ec['products_synced'] === 0)
+                                <li>Pornește sincronizarea de produse din conectorul existent.</li>
+                            @endif
+                            @if($ec['products_synced'] > 0 && !$attributing)
+                                <li>Instalează plugin-ul WordPress Sambla (sau webhook direct) ca să trimită comenzile noi.</li>
+                                <li>Fă o comandă de test — ar trebui să apară în listă în ~1 minut.</li>
+                            @endif
+                        </ol>
+                    </div>
+                @endif
+            </div>
+        @endif
         <div class="grid md:grid-cols-3 gap-4">
             <div class="md:col-span-2 bg-white rounded-xl border border-slate-200 p-5">
                 <h2 class="font-semibold text-slate-900 mb-3">Prompt de sistem</h2>
