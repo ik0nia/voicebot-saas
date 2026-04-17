@@ -111,9 +111,9 @@ class SetupWowController extends Controller
             ->where('tenant_id', $tenant->id)->first();
         if (!$site) {
             $site = Site::create([
-                'tenant_id'   => $tenant->id,
-                'domain'      => parse_url($state['website_url'], PHP_URL_HOST) ?: 'unknown.local',
-                'display_name' => $state['business_name'] ?: $tenant->name,
+                'tenant_id' => $tenant->id,
+                'domain'    => parse_url($state['website_url'], PHP_URL_HOST) ?: 'unknown.local',
+                'name'      => $state['business_name'] ?: $tenant->name,
             ]);
         }
 

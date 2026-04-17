@@ -37,7 +37,7 @@ class ChatCompletionService
     private ?TokenizerService $tokenizer = null;
 
     public function __construct(
-        private readonly ?\Anthropic\Contracts\ClientContract $anthropicClient = null,
+        private readonly ?\Anthropic\Client $anthropicClient = null,
     ) {}
 
     /**
@@ -327,7 +327,7 @@ class ChatCompletionService
                         }
                     }
 
-                    $stream = $client->messages()->createStreamed([
+                    $stream = $client->messages->createStream([
                         'model' => $model,
                         'max_tokens' => $maxTokens,
                         'temperature' => $temperature,
@@ -467,7 +467,7 @@ class ChatCompletionService
         }
 
         try {
-            $response = $client->messages()->create([
+            $response = $client->messages->create([
                 'model' => $model,
                 'max_tokens' => $maxTokens,
                 'temperature' => $temperature,
@@ -503,12 +503,20 @@ class ChatCompletionService
     }
 
     /**
-     * Get Anthropic client (singleton via service container or create new).
+     * Resolve the Anthropic client. Prefer the DI-provided singleton
+     * (bound in AppServiceProvider); fall back to constructing one
+     * from PlatformSetting / env when the singleton wasn't wired —
+     * tests and the early-boot path don't have the container.
      */
-    private function getAnthropicClient(): \Anthropic\Contracts\ClientContract
+    private function getAnthropicClient(): \Anthropic\Client
     {
         if ($this->anthropicClient) {
             return $this->anthropicClient;
+        }
+
+        $container = app(\Anthropic\Client::class);
+        if ($container instanceof \Anthropic\Client) {
+            return $container;
         }
 
         $apiKey = \App\Models\PlatformSetting::get('anthropic_api_key') ?: config('services.anthropic.api_key', env('ANTHROPIC_API_KEY'));
@@ -516,10 +524,7 @@ class ChatCompletionService
             throw new ApiAuthenticationException('Anthropic API key not configured', 'anthropic', '');
         }
 
-        return \Anthropic::factory()
-            ->withApiKey($apiKey)
-            ->withHttpHeader('timeout', (string) self::TIMEOUTS['anthropic'])
-            ->make();
+        return new \Anthropic\Client($apiKey);
     }
 
     /**
