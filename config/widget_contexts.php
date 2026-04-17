@@ -68,7 +68,7 @@ return [
             'opening' => 'Îți ofer rapid o părere sinceră pe produsul ăsta. Ce te interesează?',
             'quick_replies' => [
                 ['label' => 'E potrivit pentru mine?', 'text' => 'Cum știu dacă acest produs e potrivit pentru mine?'],
-                ['label' => 'Compară cu alternative', 'text' => 'Compară-mi acest produs cu alternative similare.'],
+                ['label' => 'Compară cu alte variante', 'text' => 'Compară-mi acest produs cu 1-2 variante asemănătoare.'],
                 ['label' => 'Vreau să comand', 'text' => 'Cum comand acest produs?'],
                 ['label' => 'Livrare & retur', 'text' => 'Cât durează livrarea și care e politica de retur?'],
             ],
@@ -111,7 +111,7 @@ return [
             'quick_replies' => [
                 ['label' => 'Livrare azi/mâine?', 'text' => 'Puteți livra astăzi sau mâine?'],
                 ['label' => 'Pot personaliza?', 'text' => 'Pot să adaug un mesaj sau să personalizez aranjamentul?'],
-                ['label' => 'Există alternative?', 'text' => 'Aveți alternative la acest buchet?'],
+                ['label' => 'Aveți variante?', 'text' => 'Aveți și alte variante la acest buchet?'],
             ],
         ],
         'general' => [

@@ -2508,7 +2508,7 @@ class ChatbotApiController extends Controller
             // conversation into a purchase-shaped next step.
             $replies = [
                 ['label' => 'Vreau să comand',      'text' => 'Vreau să comand produsul discutat.'],
-                ['label' => 'Compară cu altele',    'text' => 'Compară-mi acest produs cu 1-2 alternative.'],
+                ['label' => 'Compară cu altele',    'text' => 'Compară-mi acest produs cu 1-2 variante asemănătoare.'],
                 ['label' => 'E potrivit pentru mine?', 'text' => 'Cum știu dacă e potrivit pentru mine?'],
             ];
 
