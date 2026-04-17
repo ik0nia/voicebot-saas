@@ -61,8 +61,12 @@
 <script>
 document.querySelectorAll('.niche-card').forEach(function (btn) {
     btn.addEventListener('click', function () {
-        document.querySelectorAll('.niche-card').forEach(b => b.classList.remove('border-red-500', 'bg-red-50'));
-        btn.classList.add('border-red-500', 'bg-red-50');
+        document.querySelectorAll('.niche-card').forEach(function (b) {
+            b.classList.remove('border-red-500', 'bg-red-50', 'ring-2', 'ring-red-500');
+            b.classList.add('border-slate-200', 'bg-white');
+        });
+        btn.classList.remove('border-slate-200', 'bg-white');
+        btn.classList.add('border-red-500', 'bg-red-50', 'ring-2', 'ring-red-500');
         document.getElementById('niche_slug').value = btn.dataset.slug;
         document.getElementById('niche-submit').disabled = false;
     });
