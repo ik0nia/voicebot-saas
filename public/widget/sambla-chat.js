@@ -1,3 +1,4 @@
+/* sambla-chat v2.3 — contextual quick replies (W3) */
 (function() {
     'use strict';
 
@@ -82,13 +83,40 @@
     // =========================================================================
     var pageLoadTime = Date.now();
 
+    // W3: page-type detection. Explicit host override wins, then
+    // globals injected by companion plugins, then URL heuristics.
+    // Keep kebab-safe — the backend map uses plain keys.
+    function detectPageType() {
+        try {
+            if (window.samblaPageType && typeof window.samblaPageType === 'string') {
+                return window.samblaPageType;
+            }
+            if (window.samblaProductContext && window.samblaProductContext.product_id) return 'product';
+            if (window.samblaCartContext && (window.samblaCartContext.items_count || window.samblaCartContext.item_count)) return 'cart';
+            var p = (window.location.pathname || '').toLowerCase();
+            if (/(\/product\/|\/produs\/)/.test(p)) return 'product';
+            if (/(\/product-category\/|\/categorie\/|\/shop\/|\/magazin\/)/.test(p)) return 'category';
+            if (/(\/cart\/|\/cos\/?|\/checkout\/)/.test(p)) return 'cart';
+            if (/(\/rezervare|\/booking|\/programare)/.test(p)) return 'booking';
+            if (/(\/hotel|\/camere|\/rezerva-camera|\/restaurant|\/masa|\/tabel)/.test(p)) return 'hospitality';
+            if (p === '/' || p === '') return 'home';
+        } catch(e) {}
+        return 'general';
+    }
+
     function getPageContext() {
         return {
             page_url: window.location.href,
             page_title: document.title || '',
             page_path: window.location.pathname,
             time_on_page: Math.round((Date.now() - pageLoadTime) / 1000),
-            referrer: document.referrer || ''
+            referrer: document.referrer || '',
+            // W3: contextual signals sent with every chat POST so the
+            // backend (and future SSE quick_replies event) can tailor
+            // the bot's behavior per page.
+            page_type: detectPageType(),
+            product_context: (window.samblaProductContext && typeof window.samblaProductContext === 'object') ? window.samblaProductContext : null,
+            cart_context: (window.samblaCartContext && typeof window.samblaCartContext === 'object') ? window.samblaCartContext : null
         };
     }
 
@@ -261,6 +289,11 @@
         try { localStorage.removeItem(OFFLINE_QUEUE_KEY); } catch(e) {}
     }
 
+    // W3: cached contexts payload (by_page_type + default_page_type).
+    // Lives at module scope so both createWidget() and any SSE
+    // handlers can read it. Populated by fetchConfig().
+    var _contextsCache = null;
+
     // Fetch channel config
     function fetchConfig(callback) {
         fetch(config.apiBase + '/api/v1/chatbot/' + config.channelId + '/config', {
@@ -272,6 +305,11 @@
             if (data.bot_name) config.botName = data.bot_name;
             if (data.greeting) config.greeting = data.greeting;
             if (data.color) config.color = data.color;
+            // W3: cache contexts for quick-reply chip rendering.
+            // Shape: { by_page_type: { general|product|... : { opening, quick_replies: [{label,text}] } }, default_page_type: 'general' }
+            if (data && data.contexts && typeof data.contexts === 'object') {
+                _contextsCache = data.contexts;
+            }
             if (callback) callback(data);
         })
         .catch(function() {
@@ -624,6 +662,17 @@
                 .sambla-window .sambla-input-area { flex-shrink: 0 !important; }\
                 .sambla-bubble { bottom: 16px; right: 16px; }\
             }\
+            /* W3: contextual quick-reply chips */\
+            .sambla-qr-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 10px; padding: 0 12px; }\
+            .sambla-qr { background: #fff; border: 1px solid #e2e8f0; color: #334155; font-size: 13px; padding: 6px 12px; border-radius: 999px; cursor: pointer; transition: all .15s ease; font-family: inherit; line-height: 1.3; }\
+            .sambla-qr:hover { background: #f8fafc; border-color: #cbd5e1; }\
+            .sambla-qr:active { transform: scale(0.97); }\
+            .sambla-qr:focus-visible { outline: 2px solid ' + config.color + '; outline-offset: 2px; }\
+            @media (prefers-color-scheme: dark) {\
+                .sambla-qr { background: #1e293b; border-color: #334155; color: #e2e8f0; }\
+                .sambla-qr:hover { background: #334155; border-color: #475569; }\
+            }\
+            @media (max-width: 440px) { .sambla-qr { font-size: 12px; padding: 5px 10px; } }\
         ';
 
         var container = document.createElement('div');
@@ -1291,6 +1340,9 @@
 
             // Show greeting
             addMessage(config.greeting, 'bot');
+            // W3: show context chips again for the new session.
+            _contextOpeningRendered = false;
+            try { renderInitialQuickReplies(); } catch(e) {}
             input.focus();
         }
 
@@ -1436,6 +1488,8 @@
                 inputArea.style.display = '';
                 if (offBanner) offBanner.style.display = '';
                 addMessage(config.greeting, 'bot');
+                // W3: show contextual chips after prechat greeting too.
+                try { renderInitialQuickReplies(); } catch(e) {}
                 input.focus();
             });
 
@@ -1666,6 +1720,11 @@
                 var products = (data.products && data.products.length > 0) ? data.products : null;
                 addMessage(responseText, 'bot', null, products, null, data.message_id || null);
                 trackEvent('message_received', { hasProducts: !!products });
+                // W3: if the classic endpoint ever returns contextual
+                // follow-up chips, render them. Safe if missing.
+                if (data && Array.isArray(data.quick_replies) && data.quick_replies.length) {
+                    try { renderQuickReplies(data.quick_replies); } catch(e) {}
+                }
             })
             .catch(function(err) {
                 hideTyping();
@@ -1798,6 +1857,12 @@
                                 updateMessageText(msgEl, botText);
                             } else if (event.type === 'products') {
                                 products = event.products || [];
+                            } else if (event.type === 'quick_replies') {
+                                // W3: stubbed handler — server may emit
+                                // contextual follow-up chips after a bot
+                                // response. Render them below the current
+                                // bot message. Safe if server never sends.
+                                try { renderQuickReplies(event.replies || event.quick_replies || []); } catch(e) {}
                             } else if (event.type === 'done') {
                                 streamMessageId = event.message_id || null;
                             } else if (event.type === 'error') {
@@ -1921,6 +1986,95 @@
                 }
             }
         });
+
+        // =====================================================================
+        // W3: Contextual quick-reply chips
+        // =====================================================================
+        // Renders a row of clickable chips under the typing indicator.
+        // Each chip, when clicked, autofills the textarea with its text
+        // and submits via the normal send path — so HMAC session check,
+        // rate limiter, offline queue, and SSE streaming all apply.
+        function renderQuickReplies(replies, options) {
+            if (!replies || !replies.length || !messagesContainer || !typingEl) return null;
+            options = options || {};
+            var wrap = document.createElement('div');
+            wrap.className = 'sambla-qr-wrap';
+            wrap.setAttribute('role', 'group');
+            wrap.setAttribute('aria-label', 'Sugestii rapide');
+
+            replies.slice(0, 6).forEach(function(r) {
+                if (!r || (!r.label && !r.text)) return;
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'sambla-qr';
+                btn.textContent = String(r.label || r.text).substring(0, 80);
+                var payloadText = String(r.text || r.label || '').substring(0, 500);
+                btn.addEventListener('click', function() {
+                    // Remove chip row immediately so users can't double-fire
+                    // and to keep the thread clean.
+                    if (wrap.parentNode) wrap.parentNode.removeChild(wrap);
+                    // Autofill input then reuse the normal submit path so
+                    // rate limiting / offline queue / streaming all apply.
+                    try {
+                        input.value = payloadText;
+                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                    } catch(e) {}
+                    trackEvent('quick_reply_clicked', {
+                        label: (r.label || '').substring(0, 80),
+                        page_type: detectPageType()
+                    });
+                    sendMessage();
+                });
+                wrap.appendChild(btn);
+            });
+
+            if (!wrap.firstChild) return null;
+            messagesContainer.insertBefore(wrap, typingEl);
+            if (!options.noScroll) {
+                requestAnimationFrame(function() { messagesContainer.scrollTop = messagesContainer.scrollHeight; });
+            }
+            return wrap;
+        }
+
+        // Pick the context bucket for the current page. Falls back to
+        // default_page_type, then 'general', then null.
+        function pickContextForPage() {
+            if (!_contextsCache || !_contextsCache.by_page_type) return null;
+            var map = _contextsCache.by_page_type;
+            var pt = detectPageType();
+            if (map[pt]) return { page_type: pt, bucket: map[pt] };
+            var fallback = _contextsCache.default_page_type || 'general';
+            if (map[fallback]) return { page_type: fallback, bucket: map[fallback] };
+            return null;
+        }
+
+        // Render the opening chips (+ optional opening message) after the
+        // initial greeting. Called whenever contexts arrive.
+        var _contextOpeningRendered = false;
+        function renderInitialQuickReplies() {
+            if (_contextOpeningRendered) return;
+            var pick = pickContextForPage();
+            if (!pick || !pick.bucket) return;
+            var b = pick.bucket;
+            var replies = Array.isArray(b.quick_replies) ? b.quick_replies : [];
+            if (!replies.length) return;
+
+            // If backend provides an opening line that differs from the
+            // legacy greeting, surface it above the chips so the chips
+            // feel contextually anchored.
+            if (b.opening && typeof b.opening === 'string' && b.opening.trim() && b.opening.trim() !== (config.greeting || '').trim()) {
+                // Only show opening if we haven't already shown a bot
+                // message for this same text — avoid duplicates.
+                var already = messages.some(function(m) { return m.sender === 'bot' && m.text === b.opening; });
+                if (!already) {
+                    addMessage(b.opening, 'bot');
+                }
+            }
+
+            renderQuickReplies(replies);
+            _contextOpeningRendered = true;
+            trackEvent('quick_replies_shown', { page_type: pick.page_type, count: replies.length });
+        }
 
         function renderProductCards(products) {
             if (!messagesContainer || !typingEl) return;
@@ -2319,6 +2473,10 @@
             if (data && data.bot_name) {
                 headerName.textContent = data.bot_name;
             }
+            // W3: once contexts are cached, surface contextual quick-reply
+            // chips under the initial greeting. No-op if the backend
+            // returned no contexts (older API) or no match for this page.
+            try { renderInitialQuickReplies(); } catch(e) {}
         });
 
         // =========================================================================
