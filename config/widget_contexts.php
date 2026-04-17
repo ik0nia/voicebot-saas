@@ -37,8 +37,13 @@ return [
         'general' => [
             'opening' => 'Bună! Cu ce te pot ajuta astăzi?',
             'quick_replies' => [
+                // Intentionally NO 'talk to operator' chip upfront —
+                // we want callers to engage the bot first. Handoff is
+                // still available via the G5 bail-signal fallback
+                // ('Lasă-mi datele'), which only fires when the bot
+                // itself can't answer. Keeping the default strip
+                // empty makes the widget feel confident, not defeated.
                 ['label' => 'Întrebări frecvente', 'text' => 'Vreau să văd întrebările frecvente.'],
-                ['label' => 'Vorbesc cu cineva', 'text' => 'Vreau să vorbesc cu un operator.'],
             ],
         ],
     ],

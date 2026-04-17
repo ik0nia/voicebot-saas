@@ -1439,7 +1439,23 @@ class ChatbotApiController extends Controller
                 $botResponse = $fullContent;
                 if (!empty($products)) {
                     $hasPositiveProductMention = preg_match('/(?:recoman|suger[aă]m|am găsit|avem|iată|produse?\s+(?:potrivit|relevant|disponibil)|poți\s+comanda|adaugă\s+în\s+coș)/iu', $botResponse);
-                    $hasNegativeProductMention = preg_match('/(?:nu\s+am\s+(?:găsit|gasit)|nu\s+avem|indisponibil|nu\s+(?:știu|stiu)|nu\s+pot\s+(?:găsi|gasi))/iu', $botResponse);
+                    // Malinco conv #453 fix — broadened to catch "n-am"
+                    // contraction + "nu am găsit exact/nimic" phrasing,
+                    // to match the richer non-stream regex at line 239.
+                    $hasNegativeProductMention = preg_match(
+                        '/(?:'
+                        . '(?:nu\s+am|n-am)\s+(?:g[aă]sit|detalii|informa[tț]ii|date|acces|exact)'
+                        . '|(?:nu\s+avem|n-avem)\s+(?:g[aă]sit|informa[tț]ii|în\s+stoc|aceast[aă]|acest|exact)'
+                        . '|nu\s+dispun(?:em)?\s+de'
+                        . '|nu\s+(?:s[tț]iu|sunt\s+sigur)\s+(?:exact|sigur|momentan|dac[aă])?'
+                        . '|(?:nu\s+pot|n-pot)\s+(?:g[aă]si|s[aă]\s+(?:g[aă]sesc|te\s+ajut|î[tț]i\s+spun))'
+                        . '|(?:momentan|din\s+p[aă]cate),?\s*(?:nu|n-)\s*(?:am|avem|dispun|g[aă]sesc|pot)'
+                        . '|îmi\s+pare\s+r[aă]u,?\s*(?:dar\s+)?nu'
+                        . '|indisponibil'
+                        . '|n-?am\s+g[aă]sit\s+(?:nimic|exact|produse)'
+                        . ')/iu',
+                        $botResponse
+                    );
 
                     $effectiveQueryType = $queryIntel['type']
                         ?? (is_array($detectedIntents) && isset($detectedIntents[0]['name']) ? $detectedIntents[0]['name'] : null)
@@ -1449,13 +1465,19 @@ class ChatbotApiController extends Controller
                         'transactional', 'product_search', 'category_recommendation', 'comparison', 'exploratory',
                     ]);
 
-                    if ($isExplicitProductIntent) {
-                        if ($hasNegativeProductMention && !empty($products)) {
-                            // Note: for streaming, the text is already sent. We can't unsend it.
-                            // The product cards were already sent before text, so they'll show.
-                        }
-                    } elseif ($hasNegativeProductMention || !$hasPositiveProductMention) {
-                        $products = []; // Suppress — but cards already sent. Send a clear event.
+                    // Malinco conv #453 fix — even on an explicit product
+                    // intent, when the bot's answer is a clear "n-am
+                    // găsit" we must retract the cards that already
+                    // streamed. The widget listens for an empty
+                    // products event and clears the row.
+                    if ($hasNegativeProductMention) {
+                        $products = [];
+                        $this->sendSSE('products', ['products' => []]);
+                    } elseif (!$isExplicitProductIntent && !$hasPositiveProductMention) {
+                        // Not asking for products AND AI didn't affirm them
+                        // — drop cards on non-product chit-chat (conv #458:
+                        // user says "telefon" in a lead-capture flow).
+                        $products = [];
                         $this->sendSSE('products', ['products' => []]);
                     }
                 }
@@ -2022,7 +2044,21 @@ class ChatbotApiController extends Controller
                     $wordCount = str_word_count($userMessage);
                     $isGenericChat = $wordCount <= 5 && preg_match('/^(cum|ce|de ce|cine|unde|cand|cat|poti|puteti|ajut|help|info|detalii)\b/iu', trim($userMessage));
 
-                    if (!$isGenericChat) {
+                    // Malinco conv #458 fix — when the user is in a
+                    // lead-capture reply (short message that's mostly
+                    // a phone number, email, or standalone "telefon"/
+                    // "email" token) do NOT run product search. These
+                    // inputs never mean "show me products", but the
+                    // full-text search is permissive enough to return
+                    // unrelated cards anyway.
+                    $trimmed = trim($userMessage);
+                    $isLeadReply = (bool) (
+                        preg_match('/^[\d\s\+\-\(\)\.]{7,}$/', $trimmed)
+                        || preg_match('/^[^\s@]+@[^\s@]+\.[^\s@]+$/i', $trimmed)
+                        || preg_match('/^(telefon|numar|email|mail|adresa|adresă)\s*[:\-]?\s*$/iu', $trimmed)
+                    );
+
+                    if (!$isGenericChat && !$isLeadReply) {
                         $products = $this->searchProductCards($bot->id, $augmentedQuery);
                         if (!empty($products)) {
                             $groundedSvc = app(\App\Services\GroundedProductContextService::class);
