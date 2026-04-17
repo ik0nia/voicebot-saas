@@ -36,7 +36,7 @@
                     <th class="text-left px-4 py-3 text-slate-600 font-medium">Mesaje</th>
                     <th class="text-left px-4 py-3 text-slate-600 font-medium">Intent</th>
                     <th class="text-left px-4 py-3 text-slate-600 font-medium">Motive</th>
-                    <th class="text-left px-4 py-3 text-slate-600 font-medium">Bot</th>
+                    <th class="text-left px-4 py-3 text-slate-600 font-medium">Agent AI</th>
                     <th class="text-left px-4 py-3 text-slate-600 font-medium">Data</th>
                     <th class="text-left px-4 py-3 text-slate-600 font-medium"></th>
                 </tr>

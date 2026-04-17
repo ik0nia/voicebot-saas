@@ -392,6 +392,16 @@ class BotController extends Controller
 
         $bot->update($validated);
 
+        // Iter A (UX): when the save originates from the Bază (Quick Setup)
+        // tab, nudge the user to test the agent instead of dumping them on
+        // the plain show page without a clear next step.
+        if ($request->input('origin') === 'baza') {
+            return redirect()->route('dashboard.bots.show', $bot)
+                ->with('success', '✅ Setup de bază salvat. Vrei să testezi?')
+                ->with('test_cta_url', route('dashboard.bots.testVocal', $bot))
+                ->with('test_cta_label', '🎙 Testează agentul');
+        }
+
         return redirect()->route('dashboard.bots.show', $bot)
             ->with('success', 'Agentul AI a fost actualizat!');
     }

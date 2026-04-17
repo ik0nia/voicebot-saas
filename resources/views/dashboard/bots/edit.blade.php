@@ -92,6 +92,16 @@
         ],
         'businessInfo' => (array) $businessInfo,
         'nicheSlug' => $bot->niche_slug,
+        // Iter A: core "basic" fields kept reactive so the Bază tab and the
+        // classic tabs share the same state. The name="..." posted inputs
+        // live canonically inside the Bază section; the other tabs mirror
+        // them via x-model (no name attribute, so they don't resubmit).
+        'core' => [
+            'name'             => old('name', $bot->name),
+            'voice'            => old('voice', $bot->voice),
+            'greeting'         => old('greeting_message', $bot->greeting_message),
+            'is_active'        => (bool) old('is_active', $bot->is_active),
+        ],
     ];
 @endphp
 
@@ -123,15 +133,42 @@
                     </span>
                 @endif
             </p>
-            {{-- Completeness badge (computed client-side) --}}
-            <div class="mt-3 flex items-center gap-3">
-                <div class="flex items-center gap-2 text-xs text-slate-600">
-                    <span>Profil:</span>
-                    <span class="font-semibold text-slate-800" x-text="completenessPercent() + '%'"></span>
-                </div>
-                <div class="w-40 h-2 bg-slate-200 rounded-full overflow-hidden">
-                    <div class="h-full bg-gradient-to-r from-red-500 to-red-700 transition-all duration-300"
-                         :style="'width: ' + completenessPercent() + '%'"></div>
+            {{-- Completeness badge — clickable to show per-item breakdown (Iter A) --}}
+            <div class="mt-3 relative inline-block" @click.away="checklistOpen = false">
+                <button type="button" @click="checklistOpen = !checklistOpen"
+                        class="group inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 hover:border-red-300 hover:shadow-sm transition text-left">
+                    <span class="text-xs text-slate-600">Profil:</span>
+                    <span class="text-xs font-semibold text-slate-800" x-text="completenessPercent() + '%'"></span>
+                    <div class="w-28 h-2 bg-slate-200 rounded-full overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-red-500 to-red-700 transition-all duration-300"
+                             :style="'width: ' + completenessPercent() + '%'"></div>
+                    </div>
+                    <svg class="w-3 h-3 text-slate-400 group-hover:text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+                <div x-show="checklistOpen" x-cloak x-transition.origin.top.left
+                     class="absolute z-40 mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-lg shadow-lg border border-slate-200 p-3 left-0">
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Ce-ți mai trebuie agentului</p>
+                    <ul class="space-y-1 text-sm">
+                        <template x-for="(item, i) in completenessItems()" :key="'chk_' + i">
+                            <li>
+                                <button type="button"
+                                        @click="item.done ? (checklistOpen = false) : (tab = item.tab, checklistOpen = false, $nextTick(() => focusFieldInTab(item.focus)))"
+                                        class="w-full flex items-start gap-2 text-left px-2 py-1.5 rounded hover:bg-slate-50 transition">
+                                    <span class="mt-0.5 font-bold" x-text="item.done ? '✓' : '○'"
+                                          :class="item.done ? 'text-green-600' : 'text-slate-300'"></span>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="text-xs font-medium" :class="item.done ? 'text-slate-500' : 'text-slate-700'" x-text="item.label"></div>
+                                        <div x-show="item.hint" class="text-[11px] text-slate-400" x-text="item.hint"></div>
+                                    </div>
+                                    <svg x-show="!item.done" class="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
+                            </li>
+                        </template>
+                    </ul>
                 </div>
             </div>
         </div>
@@ -173,19 +210,31 @@
         @method('PUT')
 
         <div class="flex flex-col lg:flex-row gap-6">
-            {{-- ============== LEFT TAB NAV (desktop) / ACCORDION (mobile) ============== --}}
+            {{-- ============== LEFT TAB NAV (desktop) / SELECT DROPDOWN (mobile) ============== --}}
+            @php
+                $tabs = [
+                    ['id' => 'baza',        'label' => 'Bază',                'icon' => '⚡'],
+                    ['id' => 'identitate',  'label' => 'Identitate',          'icon' => '🎯'],
+                    ['id' => 'business',    'label' => 'Informații business', 'icon' => '🏢'],
+                    ['id' => 'faq',         'label' => 'FAQ',                 'icon' => '💬'],
+                    ['id' => 'reguli',      'label' => 'Reguli stricte',      'icon' => '🚫'],
+                    ['id' => 'ton',         'label' => 'Ton & stil',          'icon' => '🎨'],
+                    ['id' => 'avansat',     'label' => 'Avansat',             'icon' => '⚙️'],
+                ];
+            @endphp
             <aside class="lg:w-56 lg:shrink-0">
-                <nav class="bg-white rounded-xl border border-slate-200 shadow-sm p-1.5 flex lg:flex-col gap-1 overflow-x-auto">
-                    @php
-                        $tabs = [
-                            ['id' => 'identitate',  'label' => 'Identitate',          'icon' => '🎯'],
-                            ['id' => 'business',    'label' => 'Informații business', 'icon' => '🏢'],
-                            ['id' => 'faq',         'label' => 'FAQ',                 'icon' => '💬'],
-                            ['id' => 'reguli',      'label' => 'Reguli stricte',      'icon' => '🚫'],
-                            ['id' => 'ton',         'label' => 'Ton & stil',          'icon' => '🎨'],
-                            ['id' => 'avansat',     'label' => 'Avansat',             'icon' => '⚙️'],
-                        ];
-                    @endphp
+                {{-- Mobile: single-select dropdown (stacks cleaner than horizontal scroll) --}}
+                <div class="lg:hidden mb-4">
+                    <label for="tab-select-mobile" class="sr-only">Secțiune</label>
+                    <select id="tab-select-mobile" x-model="tab"
+                            class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none">
+                        @foreach($tabs as $t)
+                            <option value="{{ $t['id'] }}">{{ $t['icon'] }}  {{ $t['label'] }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                {{-- Desktop: vertical tab nav --}}
+                <nav class="hidden lg:flex bg-white rounded-xl border border-slate-200 shadow-sm p-1.5 flex-col gap-1">
                     @foreach($tabs as $t)
                     <button type="button"
                             @click="tab = '{{ $t['id'] }}'"
@@ -200,6 +249,103 @@
 
             <div class="flex-1 min-w-0">
 
+            {{-- ============== TAB 0: BAZĂ (Quick Setup) — Iteration A ============== --}}
+            <section x-show="tab === 'baza'" x-cloak class="space-y-6">
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+                    <div class="flex items-start justify-between mb-1 gap-3">
+                        <div>
+                            <h2 class="text-lg font-semibold text-slate-900">Setup de bază</h2>
+                            <p class="text-sm text-slate-500">Strictul necesar ca agentul să fie funcțional. Restul setărilor pot fi ajustate mai târziu din celelalte secțiuni.</p>
+                        </div>
+                        <span class="hidden sm:inline-flex items-center gap-1 shrink-0 px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-medium">⚡ Rapid</span>
+                    </div>
+
+                    <div class="mt-5 space-y-5">
+                        {{-- Nume agent (canonical) --}}
+                        <div>
+                            <label for="baza_name" class="block text-sm font-medium text-slate-700 mb-1.5">Nume agent AI <span class="text-red-500">*</span></label>
+                            <input type="text" name="name" id="baza_name" x-model="core.name" required
+                                   class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none" />
+                        </div>
+
+                        {{-- Voce (canonical) --}}
+                        <div>
+                            <label for="baza_voice" class="block text-sm font-medium text-slate-700 mb-1.5">Voce <span class="text-red-500">*</span></label>
+                            <select name="voice" id="baza_voice" x-model="core.voice" required
+                                    class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none">
+                                <option value="coral">Coral (feminin, cald)</option>
+                                <option value="sage">Sage (feminin, clar)</option>
+                                <option value="shimmer">Shimmer (feminin)</option>
+                                <option value="ballad">Ballad (masculin, blând)</option>
+                                <option value="verse">Verse (masculin, expresiv)</option>
+                                <option value="ash">Ash (masculin, neutru)</option>
+                                <option value="alloy">Alloy (neutru)</option>
+                                <option value="echo">Echo (masculin)</option>
+                                <option value="marin">Marin</option>
+                                <option value="cedar">Cedar</option>
+                            </select>
+                        </div>
+
+                        {{-- Greeting (canonical) --}}
+                        <div>
+                            <label for="baza_greeting" class="block text-sm font-medium text-slate-700 mb-1.5">Mesaj de întâmpinare</label>
+                            <p class="text-xs text-slate-500 mb-2">Textul pe care îl spune agentul când răspunde. Lasă gol dacă preferi să aștepte clientul să vorbească primul.</p>
+                            <input type="text" name="greeting_message" id="baza_greeting" x-model="core.greeting"
+                                   placeholder="Bună ziua, sunt Greg de la Sambla. Cu ce vă pot ajuta?"
+                                   class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none">
+                        </div>
+
+                        {{-- Adresă + Telefon + Email (canonical for business_info.address/phone/email) --}}
+                        <div>
+                            <label for="baza_address" class="block text-sm font-medium text-slate-700 mb-1.5">Adresă business</label>
+                            <textarea name="settings[business_info][address]" id="baza_address" rows="2" x-model="businessInfo.address"
+                                      placeholder="Str. Victoriei 10, Cluj-Napoca, jud. Cluj"
+                                      class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none resize-y"></textarea>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label for="baza_phone" class="block text-sm font-medium text-slate-700 mb-1.5">Telefon</label>
+                                <div class="flex rounded-lg border border-slate-300 overflow-hidden focus-within:border-red-700 focus-within:ring-2 focus-within:ring-red-700/20 bg-white">
+                                    <span class="inline-flex items-center gap-1 px-3 text-sm text-slate-600 bg-slate-50 border-r border-slate-200">🇷🇴 +40</span>
+                                    <input type="tel" name="settings[business_info][phone]" id="baza_phone" x-model="businessInfo.phone"
+                                           @blur="normalizePhone()"
+                                           placeholder="721 234 567" class="flex-1 px-3 py-2.5 text-sm outline-none bg-transparent">
+                                </div>
+                            </div>
+                            <div>
+                                <label for="baza_email" class="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
+                                <input type="email" name="settings[business_info][email]" id="baza_email"
+                                       x-model="businessInfo.email"
+                                       placeholder="contact@exemplu.ro"
+                                       class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none">
+                            </div>
+                        </div>
+
+                        {{-- Active toggle (canonical) --}}
+                        <div>
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="hidden" name="is_active" value="0" />
+                                <input type="checkbox" name="is_active" value="1" x-model="core.is_active"
+                                       class="w-5 h-5 rounded border-slate-300 text-red-800 focus:ring-red-700/20" />
+                                <div>
+                                    <span class="text-sm font-medium text-slate-700">Agent AI activ</span>
+                                    <p class="text-xs text-slate-400">Poate primi și efectua apeluri / conversații.</p>
+                                </div>
+                            </label>
+                        </div>
+
+                        {{-- Marker that this save came from Bază tab — controller uses it for post-save CTA --}}
+                        <input type="hidden" name="origin" value="baza" x-bind:value="tab === 'baza' ? 'baza' : ''">
+
+                        <div class="pt-2 flex items-start gap-2 text-xs text-slate-500">
+                            <span>💡</span>
+                            <span>Pentru FAQ-uri, reguli sau ton, folosește secțiunile din stânga. Agentul merge și doar cu setările de aici.</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {{-- ============== TAB 1: IDENTITATE ============== --}}
             <section x-show="tab === 'identitate'" x-cloak class="space-y-6">
                 <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
@@ -208,8 +354,9 @@
 
                     <div class="space-y-5">
                         <div>
-                            <label for="name" class="block text-sm font-medium text-slate-700 mb-1.5">Nume agent AI <span class="text-red-500">*</span></label>
-                            <input type="text" name="name" id="name" value="{{ old('name', $bot->name) }}" required
+                            <label for="ident_name" class="block text-sm font-medium text-slate-700 mb-1.5">Nume agent AI <span class="text-red-500">*</span></label>
+                            {{-- Iter A: mirror only (canonical input lives in Bază tab). --}}
+                            <input type="text" id="ident_name" x-model="core.name" required
                                    class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none" />
                         </div>
 
@@ -270,35 +417,36 @@
                         <input type="hidden" name="voice_language" value="ro">
 
                         <div>
-                            <label for="voice" class="block text-sm font-medium text-slate-700 mb-1.5">Voce <span class="text-red-500">*</span></label>
-                            <select name="voice" id="voice" required
+                            <label for="ident_voice" class="block text-sm font-medium text-slate-700 mb-1.5">Voce <span class="text-red-500">*</span></label>
+                            {{-- Iter A: mirror only (canonical lives in Bază tab). --}}
+                            <select id="ident_voice" x-model="core.voice" required
                                     class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none">
-                                <option value="coral"   {{ old('voice', $bot->voice) === 'coral' ? 'selected' : '' }}>Coral (feminin, cald)</option>
-                                <option value="sage"    {{ old('voice', $bot->voice) === 'sage' ? 'selected' : '' }}>Sage (feminin, clar)</option>
-                                <option value="shimmer" {{ old('voice', $bot->voice) === 'shimmer' ? 'selected' : '' }}>Shimmer (feminin)</option>
-                                <option value="ballad"  {{ old('voice', $bot->voice) === 'ballad' ? 'selected' : '' }}>Ballad (masculin, blând)</option>
-                                <option value="verse"   {{ old('voice', $bot->voice) === 'verse' ? 'selected' : '' }}>Verse (masculin, expresiv)</option>
-                                <option value="ash"     {{ old('voice', $bot->voice) === 'ash' ? 'selected' : '' }}>Ash (masculin, neutru)</option>
-                                <option value="alloy"   {{ old('voice', $bot->voice) === 'alloy' ? 'selected' : '' }}>Alloy (neutru)</option>
-                                <option value="echo"    {{ old('voice', $bot->voice) === 'echo' ? 'selected' : '' }}>Echo (masculin)</option>
-                                <option value="marin"   {{ old('voice', $bot->voice) === 'marin' ? 'selected' : '' }}>Marin</option>
-                                <option value="cedar"   {{ old('voice', $bot->voice) === 'cedar' ? 'selected' : '' }}>Cedar</option>
+                                <option value="coral">Coral (feminin, cald)</option>
+                                <option value="sage">Sage (feminin, clar)</option>
+                                <option value="shimmer">Shimmer (feminin)</option>
+                                <option value="ballad">Ballad (masculin, blând)</option>
+                                <option value="verse">Verse (masculin, expresiv)</option>
+                                <option value="ash">Ash (masculin, neutru)</option>
+                                <option value="alloy">Alloy (neutru)</option>
+                                <option value="echo">Echo (masculin)</option>
+                                <option value="marin">Marin</option>
+                                <option value="cedar">Cedar</option>
                             </select>
                         </div>
 
                         <div>
-                            <label for="greeting_message" class="block text-sm font-medium text-slate-700 mb-1.5">Mesaj de întâmpinare</label>
+                            <label for="ident_greeting" class="block text-sm font-medium text-slate-700 mb-1.5">Mesaj de întâmpinare</label>
                             <p class="text-xs text-slate-500 mb-2">Textul pe care îl spune agentul când răspunde. Lasă gol dacă vrei să aștepte clientul să vorbească primul.</p>
-                            <input type="text" name="greeting_message" id="greeting_message"
-                                   value="{{ old('greeting_message', $bot->greeting_message) }}"
+                            {{-- Iter A: mirror only. --}}
+                            <input type="text" id="ident_greeting" x-model="core.greeting"
                                    placeholder="Bună ziua, sunt Greg de la Sambla. Cu ce vă pot ajuta?"
                                    class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none">
                         </div>
 
                         <div>
                             <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="hidden" name="is_active" value="0" />
-                                <input type="checkbox" name="is_active" value="1" {{ old('is_active', $bot->is_active) ? 'checked' : '' }}
+                                {{-- Iter A: mirror only, canonical is_active posts from Bază tab. --}}
+                                <input type="checkbox" x-model="core.is_active"
                                        class="w-5 h-5 rounded border-slate-300 text-red-800 focus:ring-red-700/20" />
                                 <div>
                                     <span class="text-sm font-medium text-slate-700">Agent AI activ</span>
@@ -320,10 +468,10 @@
                     <p class="text-sm text-slate-500 mb-6">Ce spune agentul când clienții întreabă despre program, adresă, contact etc.</p>
 
                     <div class="space-y-6">
-                        {{-- Adresă --}}
+                        {{-- Adresă (Iter A: mirror only; canonical lives in Bază) --}}
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1.5">Adresă</label>
-                            <textarea name="settings[business_info][address]" rows="2" x-model="businessInfo.address"
+                            <textarea rows="2" x-model="businessInfo.address"
                                       placeholder="Str. Victoriei 10, Cluj-Napoca, jud. Cluj"
                                       class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none resize-y"></textarea>
                             <div class="mt-2">
@@ -339,23 +487,26 @@
                         {{-- Program de lucru --}}
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-2">Program de lucru</label>
+                            {{-- Iter A: stacked cards on mobile, 12-col grid on sm+ --}}
                             <div class="border border-slate-200 rounded-lg divide-y divide-slate-100 bg-slate-50/30">
                                 <template x-for="(day, idx) in days" :key="day.key">
-                                    <div class="grid grid-cols-12 gap-2 items-center px-3 py-2.5">
-                                        <div class="col-span-12 sm:col-span-2 text-sm font-medium text-slate-700" x-text="day.label"></div>
-                                        <label class="col-span-6 sm:col-span-2 flex items-center gap-2 text-sm text-slate-600">
+                                    <div class="flex flex-col sm:grid sm:grid-cols-12 sm:gap-2 sm:items-center px-3 py-3">
+                                        <div class="sm:col-span-2 text-sm font-semibold text-slate-800 sm:font-medium sm:text-slate-700 mb-2 sm:mb-0" x-text="day.label"></div>
+                                        <label class="sm:col-span-2 flex items-center gap-2 text-sm text-slate-600 mb-2 sm:mb-0">
                                             <input type="checkbox" x-model="day.closed" class="rounded border-slate-300 text-red-700 focus:ring-red-700/20">
                                             <span>Închis</span>
                                         </label>
-                                        <div class="col-span-3 sm:col-span-2">
+                                        <div class="sm:col-span-2 flex items-center gap-1 mb-2 sm:mb-0">
+                                            <span class="sm:hidden text-[11px] text-slate-500 w-20">Deschis</span>
                                             <input type="time" x-model="day.open" :disabled="day.closed"
                                                    class="w-full rounded-md border border-slate-300 px-2 py-1 text-xs disabled:bg-slate-100 disabled:text-slate-400">
                                         </div>
-                                        <div class="col-span-3 sm:col-span-2">
+                                        <div class="sm:col-span-2 flex items-center gap-1 mb-2 sm:mb-0">
+                                            <span class="sm:hidden text-[11px] text-slate-500 w-20">Închide</span>
                                             <input type="time" x-model="day.close" :disabled="day.closed"
                                                    class="w-full rounded-md border border-slate-300 px-2 py-1 text-xs disabled:bg-slate-100 disabled:text-slate-400">
                                         </div>
-                                        <div class="col-span-12 sm:col-span-4 flex items-center gap-2">
+                                        <div class="sm:col-span-4 flex flex-wrap items-center gap-2">
                                             <button type="button" @click="toggleBreak(day)" :disabled="day.closed"
                                                     class="text-xs text-slate-600 hover:text-red-700 disabled:opacity-40 px-2 py-1">
                                                 <span x-text="day.break_start ? '✎ Pauză' : '+ Pauză'"></span>
@@ -398,14 +549,16 @@
                                 <label class="block text-sm font-medium text-slate-700 mb-1.5">Telefon</label>
                                 <div class="flex rounded-lg border border-slate-300 overflow-hidden focus-within:border-red-700 focus-within:ring-2 focus-within:ring-red-700/20 bg-white">
                                     <span class="inline-flex items-center gap-1 px-3 text-sm text-slate-600 bg-slate-50 border-r border-slate-200">🇷🇴 +40</span>
-                                    <input type="tel" name="settings[business_info][phone]" x-model="businessInfo.phone"
+                                    {{-- Iter A: mirror only. --}}
+                                    <input type="tel" x-model="businessInfo.phone"
                                            @blur="normalizePhone()"
                                            placeholder="721 234 567" class="flex-1 px-3 py-2.5 text-sm outline-none bg-transparent">
                                 </div>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
-                                <input type="email" name="settings[business_info][email]" value="{{ $businessInfo['email'] ?? '' }}"
+                                {{-- Iter A: mirror only; canonical posts from Bază. Email is a plain input so we sync via Alpine. --}}
+                                <input type="email" x-model="businessInfo.email"
                                        placeholder="contact@exemplu.ro"
                                        class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none">
                             </div>
@@ -502,8 +655,9 @@
                                 </div>
                                 <input x-model="faq.question" placeholder="Întrebare..." maxlength="300"
                                        class="w-full mb-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-medium focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none">
+                                {{-- Iter A: taller on mobile for easier editing. --}}
                                 <textarea x-model="faq.answer" rows="3" placeholder="Răspuns..." maxlength="2000"
-                                          class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none resize-y"></textarea>
+                                          class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none resize-y min-h-[7rem] sm:min-h-[5rem]"></textarea>
                                 <div class="flex flex-wrap items-center gap-2 mt-2">
                                     <button type="button" @click="rephraseFaqAnswer(idx)"
                                             :disabled="aiLoading['faq_a_' + idx] || !faq.question"
@@ -782,8 +936,8 @@
                 </div>
             </section>
 
-            {{-- ============== ACTION BAR ============== --}}
-            <div class="flex items-center justify-between gap-3 mt-6">
+            {{-- ============== ACTION BAR (desktop) ============== --}}
+            <div class="hidden sm:flex items-center justify-between gap-3 mt-6 pb-2">
                 <div class="text-xs text-slate-400 flex items-center gap-3 flex-wrap">
                     <span>
                         AI folosit azi: <span x-text="aiCost.count"></span> (<span x-text="aiCost.cost_ron.toFixed(4)"></span> lei)
@@ -816,8 +970,24 @@
                 </div>
             </div>
 
+            {{-- Spacer so the sticky bar on mobile doesn't cover content. --}}
+            <div class="sm:hidden h-20"></div>
+
             </div>{{-- /main col --}}
         </div>{{-- /flex --}}
+
+        {{-- Iter A: sticky bottom save bar on mobile --}}
+        <div class="sm:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur border-t border-slate-200 px-4 py-3 flex items-center gap-2 shadow-lg">
+            <a href="{{ route('dashboard.bots.show', $bot) }}"
+               class="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition shrink-0">
+                Anulează
+            </a>
+            <button type="submit"
+                    class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-red-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 transition">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                Salvează
+            </button>
+        </div>
     </form>
 
     {{-- ============== MODAL: Full profile AI ============== --}}
@@ -892,14 +1062,17 @@
 <script>
 function botEditor(init) {
     return {
-        tab: 'identitate',
+        // Iter A: Bază (Quick Setup) is the landing tab.
+        tab: 'baza',
         faqs: (init.faqs || []).map(f => ({ question: f.question || '', answer: f.answer || '', _new: false })),
         days: init.days || [],
         standard: init.standard || {},
         standardTexts: init.standardTexts || [],
         customLines: init.customLines || '',
         tone: init.tone || { length: 'medium', register: 'tu', emoji_ok: false, languages: ['ro'] },
-        businessInfo: Object.assign({ address: '', phone: '', website: '' }, init.businessInfo || {}),
+        businessInfo: Object.assign({ address: '', phone: '', website: '', email: '' }, init.businessInfo || {}),
+        core: Object.assign({ name: '', voice: 'coral', greeting: '', is_active: false }, init.core || {}),
+        checklistOpen: false,
         nicheSlug: init.nicheSlug || null,
         aiLoading: {},
         aiCost: { count: 0, cost_ron: 0 },
@@ -937,15 +1110,63 @@ function botEditor(init) {
 
         // ---------- Completeness ----------
         completenessPercent() {
-            let score = 0;
-            if ((this.businessInfo.address || '').trim() !== '' || (this.businessInfo.phone || '').trim() !== '') score += 20;
-            if (this.faqs.length >= 3) score += 20;
-            if (this.mergedRules().length >= 1) score += 20;
-            if (this.tone.length && this.tone.register) score += 20;
-            // Greeting lives on the main form (not in our businessInfo), read directly from DOM.
-            const greet = document.getElementById('greeting_message');
-            if (greet && greet.value.trim() !== '') score += 20;
-            return score;
+            return this.completenessItems().filter(i => i.done).length * 20;
+        },
+
+        // Iter A: list form of the completeness check — each item tracks
+        // which tab to jump to and which DOM id to focus on.
+        completenessItems() {
+            const hasContact = (this.businessInfo.address || '').trim() !== ''
+                || (this.businessInfo.phone || '').trim() !== ''
+                || (this.businessInfo.email || '').trim() !== '';
+            const greetingFilled = (this.core && (this.core.greeting || '').trim() !== '');
+            const hasHours = Array.isArray(this.days) && this.days.some(d => !d.closed && d.open && d.close);
+            return [
+                {
+                    label: 'Nume + voce',
+                    hint: (this.core.name || '').trim() && this.core.voice ? '' : 'Dă-i un nume și alege vocea agentului',
+                    done: !!(this.core.name && (this.core.name).trim() && this.core.voice),
+                    tab: 'baza',
+                    focus: 'baza_name',
+                },
+                {
+                    label: 'Mesaj de întâmpinare',
+                    hint: greetingFilled ? '' : 'Ce spune agentul când preia apelul',
+                    done: greetingFilled,
+                    tab: 'baza',
+                    focus: 'baza_greeting',
+                },
+                {
+                    label: 'Contact (telefon, email sau adresă)',
+                    hint: hasContact ? '' : 'Cel puțin una: telefon, email sau adresă',
+                    done: hasContact,
+                    tab: 'baza',
+                    focus: 'baza_phone',
+                },
+                {
+                    label: 'Program de lucru',
+                    hint: hasHours ? '' : 'Definește orele și zilele în care agentul răspunde',
+                    done: hasHours,
+                    tab: 'business',
+                    focus: null,
+                },
+                {
+                    label: 'FAQ-uri (recomandat 3+)',
+                    hint: this.faqs.length >= 3 ? '' : `Ai ${this.faqs.length}/3 întrebări frecvente`,
+                    done: this.faqs.length >= 3,
+                    tab: 'faq',
+                    focus: null,
+                },
+            ];
+        },
+
+        focusFieldInTab(focusId) {
+            if (!focusId) return;
+            const el = document.getElementById(focusId);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); }
+            }
         },
 
         // ---------- Schedule ----------

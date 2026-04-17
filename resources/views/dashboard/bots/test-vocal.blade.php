@@ -4,7 +4,7 @@
 
 @section('breadcrumb')
     <span class="text-slate-400">/</span>
-    <a href="{{ route('dashboard.bots.index') }}" class="text-slate-500 hover:text-slate-700 transition-colors">Boti</a>
+    <a href="{{ route('dashboard.bots.index') }}" class="text-slate-500 hover:text-slate-700 transition-colors">Agenți AI</a>
     <span class="text-slate-400">/</span>
     <a href="{{ route('dashboard.bots.show', $bot) }}" class="text-slate-500 hover:text-slate-700 transition-colors">{{ $bot->name }}</a>
     <span class="text-slate-400">/</span>

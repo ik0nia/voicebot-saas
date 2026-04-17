@@ -94,7 +94,7 @@
                     <thead>
                         <tr class="border-b border-slate-100 bg-slate-50/50">
                             <th class="px-5 py-3 font-medium text-slate-500">#</th>
-                            <th class="px-5 py-3 font-medium text-slate-500">Bot</th>
+                            <th class="px-5 py-3 font-medium text-slate-500">Agent AI</th>
                             <th class="px-5 py-3 font-medium text-slate-500">Contact</th>
                             <th class="px-5 py-3 font-medium text-slate-500">Mesaje</th>
                             <th class="px-5 py-3 font-medium text-slate-500">Status</th>

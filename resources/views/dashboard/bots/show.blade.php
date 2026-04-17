@@ -4,17 +4,23 @@
 
 @section('breadcrumb')
     <span class="text-slate-400">/</span>
-    <a href="{{ route('dashboard.bots.index') }}" class="text-slate-500 hover:text-slate-700 transition-colors">Boti</a>
+    <a href="{{ route('dashboard.bots.index') }}" class="text-slate-500 hover:text-slate-700 transition-colors">Agenți AI</a>
     <span class="text-slate-400">/</span>
     <span class="font-medium text-slate-700">{{ $bot->name }}</span>
 @endsection
 
 @section('content')
-    {{-- Flash message --}}
+    {{-- Flash message (Iter A: supports optional test-agent CTA button) --}}
     @if(session('success'))
         <div class="mb-4 flex items-center gap-3 rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
             <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            {{ session('success') }}
+            <span class="flex-1">{{ session('success') }}</span>
+            @if(session('test_cta_url') && session('test_cta_label'))
+                <a href="{{ session('test_cta_url') }}" target="_blank"
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-green-600 text-white text-xs font-semibold shadow-sm hover:bg-green-700 transition shrink-0">
+                    {{ session('test_cta_label') }}
+                </a>
+            @endif
         </div>
     @endif
 

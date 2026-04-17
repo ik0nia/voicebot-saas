@@ -44,7 +44,7 @@
         <form method="GET" class="flex flex-wrap gap-3 items-end">
             @if(request('stage'))<input type="hidden" name="stage" value="{{ request('stage') }}">@endif
             <div>
-                <label class="text-xs text-slate-500">Bot</label>
+                <label class="text-xs text-slate-500">Agent AI</label>
                 <select name="bot_id" class="block mt-1 border-slate-300 rounded-lg text-sm">
                     <option value="">Toți</option>
                     @foreach($bots as $bot)

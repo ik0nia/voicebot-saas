@@ -51,7 +51,7 @@
                 @if($lead->estimated_value)<div><dt class="text-slate-400 text-xs">Valoare est.</dt><dd class="font-medium text-emerald-600">{{ number_format($lead->estimated_value, 0) }} RON</dd></div>@endif
                 <div><dt class="text-slate-400 text-xs">Scor</dt><dd class="font-bold text-lg {{ $lead->qualification_score >= 60 ? 'text-emerald-600' : 'text-amber-600' }}">{{ $lead->qualification_score }}/100</dd></div>
                 <div><dt class="text-slate-400 text-xs">Sursă</dt><dd class="text-slate-600">{{ $lead->capture_source }} — {{ $lead->capture_reason }}</dd></div>
-                <div><dt class="text-slate-400 text-xs">Bot</dt><dd class="text-slate-600">{{ $lead->bot?->name ?: '—' }}</dd></div>
+                <div><dt class="text-slate-400 text-xs">Agent AI</dt><dd class="text-slate-600">{{ $lead->bot?->name ?: '—' }}</dd></div>
             </dl>
 
             {{-- Products of interest --}}

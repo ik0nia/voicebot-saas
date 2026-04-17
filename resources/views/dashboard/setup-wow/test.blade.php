@@ -4,8 +4,10 @@
 
 @section('content')
 @php
-    $channelId = session('wow_wizard.channel_id');
-    $wowDemo = $bot && $bot->niche_slug ? (config('niches.' . $bot->niche_slug . '.wow_demo') ?? null) : null;
+    $channelId  = session('wow_wizard.channel_id');
+    $nicheCfg   = $bot && $bot->niche_slug ? config('niches.' . $bot->niche_slug) : null;
+    $wowDemo    = $nicheCfg['wow_demo'] ?? null;
+    $nicheLabel = $nicheCfg['display_name'] ?? ($bot?->niche_slug ?? 'afacerea ta');
 
     // For booking/hybrid bots, surface the count of seeded services so
     // the tenant sees proof the wizard configured something (seeds ran
@@ -65,14 +67,34 @@
         @endif
     </div>
 
-    <div class="mt-6 flex items-center justify-between gap-4">
+    {{-- Iter A (UX): purposeful post-wizard CTAs instead of a single "publish" button. --}}
+    <div class="mt-6 p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-white border border-emerald-200">
+        <p class="text-sm font-semibold text-emerald-900">🎉 Agentul tău e gata! Configurat automat pentru {{ $nicheLabel }}.</p>
+        <p class="mt-1 text-xs text-slate-600">Testează-l prin voce, ajustează detaliile, sau intră direct în dashboard.</p>
+
+        <div class="mt-4 flex flex-col sm:flex-row sm:items-stretch gap-2">
+            @if($bot)
+                <a href="{{ route('dashboard.bots.testVocal', $bot) }}" target="_blank"
+                   class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-red-700 text-white text-sm font-semibold hover:bg-red-800 shadow-sm transition">
+                    🎙 Testează prin voce
+                </a>
+                <a href="{{ route('dashboard.bots.edit', $bot) }}"
+                   class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 transition">
+                    📝 Editează detaliile
+                </a>
+            @endif
+            <form method="POST" action="{{ route('dashboard.setup-wow.publish') }}" class="inline-flex">
+                @csrf
+                <button type="submit"
+                        class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-emerald-600 text-emerald-700 text-sm font-medium hover:bg-emerald-50 transition">
+                    Du-mă în dashboard →
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="mt-4 flex items-center justify-between gap-4">
         <a href="{{ route('dashboard.setup-wow.step', ['step' => 'agent']) }}" class="text-sm text-slate-600 hover:text-slate-900">← Modifică agentul</a>
-        <form method="POST" action="{{ route('dashboard.setup-wow.publish') }}">
-            @csrf
-            <button type="submit" class="px-6 py-2.5 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700">
-                ✓ Publică agentul și intră în dashboard
-            </button>
-        </form>
     </div>
 </div>
 @endsection

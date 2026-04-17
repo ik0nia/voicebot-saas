@@ -14,7 +14,7 @@
         {{-- Header --}}
         <div class="mb-8">
             <h1 class="text-2xl font-bold text-slate-900">Creează agent AI nou</h1>
-            <p class="mt-1 text-sm text-slate-500">Configurează un nou asistent vocal în 3 pași simpli.</p>
+            <p class="mt-1 text-sm text-slate-500">Configurează un nou agent AI în 3 pași simpli.</p>
         </div>
 
         {{-- Step indicators --}}
