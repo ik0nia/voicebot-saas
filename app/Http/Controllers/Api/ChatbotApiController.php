@@ -1885,6 +1885,48 @@ class ChatbotApiController extends Controller
             $augmentedQuery = $userMessage;
         }
 
+        // Malinco conv #463 fix — when the plugin tells us which product
+        // page the caller is on AND the message is product-referential
+        // (scurt, "acest", "similar", "alternative"), augment the
+        // search query with the product's name + category so the bot
+        // actually finds alternatives instead of bailing with
+        // "N-am găsit exact ce cauți". The LLM sees the full
+        // context via [PAGE PRODUCT CONTEXT]; this only biases the
+        // vector + FTS search.
+        $pc = is_array($pageContext['product_context'] ?? null) ? $pageContext['product_context'] : null;
+        if ($pc && !empty($pc['name'])) {
+            $folded = strtr(mb_strtolower($userMessage), ['ă'=>'a','â'=>'a','î'=>'i','ș'=>'s','ț'=>'t']);
+            $wc = str_word_count($userMessage);
+            $refersToThis = (
+                $wc <= 6
+                || preg_match('/\b(acest|acesta|asta|similar|similare|alternati|alternative|altceva|alt\s|la\s+fel|ca\s+asta|ceva\s+asemanator)\b/u', $folded)
+            );
+            if ($refersToThis) {
+                $productName = (string) $pc['name'];
+                $cats = is_array($pc['categories'] ?? null) ? implode(' ', array_slice($pc['categories'], 0, 3)) : '';
+                $augmentedQuery = trim($userMessage . ' ' . $productName . ' ' . $cats);
+            }
+
+            // Stamp last_product_context from page signal so the
+            // G7 memory chip and downstream continuity features work
+            // even when the user never triggered a normal product
+            // search (e.g. first question on a product page).
+            try {
+                $meta = $conversation->metadata ?? [];
+                $meta['last_product_context'] = [
+                    'id' => $pc['product_id'] ?? null,
+                    'name' => $pc['name'] ?? '',
+                    'price' => $pc['price'] ?? '',
+                    'currency' => $pc['currency'] ?? 'RON',
+                ];
+                $meta['last_product_context_turn'] = (int) ($conversation->messages_count ?? 0);
+                if (!empty($pc['categories'][0])) {
+                    $meta['last_category'] = (string) $pc['categories'][0];
+                }
+                $conversation->update(['metadata' => $meta]);
+            } catch (\Throwable $e) { /* best-effort */ }
+        }
+
         // ── Intent detection & pipeline execution ──
         $products = [];
         $extraContext = '';
@@ -2145,10 +2187,18 @@ class ChatbotApiController extends Controller
             if (!empty($prodCtx['categories']) && is_array($prodCtx['categories'])) {
                 $pieces[] = "categorii: " . implode(', ', array_slice($prodCtx['categories'], 0, 5));
             }
+            $catStr = !empty($prodCtx['categories']) && is_array($prodCtx['categories'])
+                ? implode(', ', array_slice($prodCtx['categories'], 0, 3))
+                : '';
             $prodBlock = "\n\n[PAGE PRODUCT CONTEXT]\n"
                 . "Clientul este chiar acum pe pagina produsului #" . (int) $prodCtx['product_id']
                 . " — " . implode(' · ', $pieces) . ".\n"
-                . "Când clientul întreabă \"acest produs\" / \"la ce e bun\" / \"cât costă\" / etc. FĂRĂ să numească produsul, referința implicită ESTE acest produs — NU întreba \"despre ce produs e vorba\"."
+                . "REGULI:\n"
+                . "1. Când clientul întreabă „acest produs\" / „la ce e bun\" / „cât costă\" / „cum se folosește\" FĂRĂ să numească produsul, referința implicită ESTE acest produs — NU întreba „despre ce produs e vorba\".\n"
+                . "2. Când clientul cere „alternative\" / „similar\" / „altceva\" / „ceva la fel\", caută în catalog produse DIN ACEEAȘI CATEGORIE"
+                . ($catStr !== '' ? " (" . $catStr . ")" : '')
+                . " sau cu nume similar. Propune 2-3 alternative concrete cu preț. NU răspunde „N-am găsit\" fără să fi căutat activ folosind numele sau categoria acestui produs.\n"
+                . "3. Dacă clientul cere „mai ieftin\" / „mai bun\", compară explicit cu prețul " . ($prodCtx['price'] ?? '') . " " . ($prodCtx['currency'] ?? '') . "."
                 . ($prodCtx['permalink'] ?? '' ? "\nLink: " . $prodCtx['permalink'] : '');
             $extraContext .= $prodBlock;
         }
