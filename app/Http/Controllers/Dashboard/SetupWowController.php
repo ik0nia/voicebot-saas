@@ -154,6 +154,15 @@ class SetupWowController extends Controller
             Artisan::call('booking:seed-defaults', ['bot_id' => $bot->id]);
         }
 
+        // Hospitality seeds (resource_inventory — tables / rooms)
+        // for restaurant / hoteluri-pensiuni niches. Previously only
+        // the booking engine got seeded from setup-wow, so hospitality
+        // bots landed with an empty inventory and the first reservation
+        // tool-call had nothing to return.
+        if ($engine === 'hospitality') {
+            Artisan::call('hospitality:seed-defaults', ['bot_id' => $bot->id]);
+        }
+
         // Web-chatbot channel — required for the widget embed the
         // test step uses. Skip if one already exists for the bot.
         $channel = Channel::firstOrCreate(

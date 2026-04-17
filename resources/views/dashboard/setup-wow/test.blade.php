@@ -17,6 +17,14 @@
         $bookingServicesCount = \App\Models\ServiceType::withoutGlobalScopes()
             ->where('bot_id', $bot->id)->count();
     }
+
+    // Same idea for hospitality bots — surface seeded resource_inventory
+    // (tables / rooms) so the tenant sees the wizard did configure them.
+    $hospitalityResourceCount = null;
+    if ($bot && $bot->engine_type === 'hospitality') {
+        $hospitalityResourceCount = \App\Models\ResourceInventory::withoutGlobalScopes()
+            ->where('bot_id', $bot->id)->count();
+    }
 @endphp
 <div class="max-w-3xl mx-auto py-8 px-4">
     <div class="mb-6">
@@ -49,6 +57,20 @@
                    class="inline-flex items-center gap-1 mt-2 text-emerald-800 font-semibold hover:underline">
                     Deschide Programări →
                 </a>
+            </div>
+        </div>
+    @endif
+
+    @if($hospitalityResourceCount !== null && $hospitalityResourceCount > 0)
+        <div class="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-900 flex items-start gap-3">
+            <span class="text-lg">🪑</span>
+            <div class="flex-1">
+                <div class="font-semibold">Rezervări pregătite</div>
+                <div class="mt-0.5">
+                    Am pregătit <strong>{{ $hospitalityResourceCount }}</strong>
+                    {{ $hospitalityResourceCount === 1 ? 'resursă' : 'resurse' }}
+                    (mese / camere). Poți edita capacitățile și prețurile după ce termini.
+                </div>
             </div>
         </div>
     @endif
