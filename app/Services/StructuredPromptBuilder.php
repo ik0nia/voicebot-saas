@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Bot;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Composes a bot's final system prompt from structured settings.
@@ -60,6 +61,14 @@ class StructuredPromptBuilder
     ];
 
     /**
+     * Rough upper bound on composed prompt size before we log a warning.
+     * 20000 chars ≈ 5000 tokens; legitimate bots should sit well under
+     * this. Outlier bots (50 FAQs + 30 rules + long freeform extras) may
+     * trip it — we warn, we don't truncate.
+     */
+    private const PROMPT_SIZE_WARN_THRESHOLD = 20000;
+
+    /**
      * Compose and return the final system prompt.
      */
     public function build(Bot $bot): string
@@ -73,7 +82,59 @@ class StructuredPromptBuilder
             }
         }
 
-        return implode("\n\n", $parts);
+        $output = implode("\n\n", $parts);
+
+        // Alert on outlier bots. No truncation — the runtime callers
+        // downstream may still accept large prompts; the warning is
+        // informational so we notice when a tenant drifts into
+        // "50 FAQs + 30 rules" territory.
+        $size = strlen($output);
+        if ($size > self::PROMPT_SIZE_WARN_THRESHOLD) {
+            Log::warning('Prompt size exceeds 20K chars for bot #' . $bot->id . ': ' . $size . ' chars');
+        }
+
+        return $output;
+    }
+
+    /**
+     * Resolve the tone used for prompt composition for this bot.
+     *
+     * Precedence (first non-empty wins):
+     *   1. bot.settings.tone_guide     — tenant customised tone
+     *   2. niche default_tone          — niche template default
+     *   3. hardcoded fallback          — safe neutral
+     *
+     * Kept deliberately narrow: we only fall through to the next level
+     * when the current one is missing/empty — a bot with a partially
+     * filled tone_guide (e.g. only `length` set) still wins over the
+     * niche default, because tenants who edit any tone field expect
+     * their choice to stick.
+     *
+     * @return array{length?: string, register?: string, emoji_ok?: bool, languages?: array<int, string>}
+     */
+    public function effectiveTone(Bot $bot): array
+    {
+        $settings = is_array($bot->settings) ? $bot->settings : [];
+        $botTone = $settings['tone_guide'] ?? null;
+        if (is_array($botTone) && !empty($botTone)) {
+            return $botTone;
+        }
+
+        if (!empty($bot->niche_slug)) {
+            $nicheTone = config('niches.' . $bot->niche_slug . '.default_tone');
+            if (is_array($nicheTone) && !empty($nicheTone)) {
+                return $nicheTone;
+            }
+        }
+
+        // Hardcoded safe fallback — matches the tone seeded by Iteration D
+        // when a niche has no default_tone of its own.
+        return [
+            'length' => 'medium',
+            'register' => 'tu',
+            'emoji_ok' => false,
+            'languages' => ['ro'],
+        ];
     }
 
     /**
@@ -111,7 +172,11 @@ class StructuredPromptBuilder
             [
                 'name' => 'tone_guide',
                 'enabled' => true,
-                'content' => $this->toneGuideBlock($settings['tone_guide'] ?? []),
+                // Resolved via effectiveTone() so the section falls back
+                // to the niche default when the bot's own tone_guide is
+                // empty. See the toneGuideBlock() doc comment for the
+                // precedence rules.
+                'content' => $this->toneGuideBlock($this->effectiveTone($bot)),
             ],
             [
                 'name' => 'escape_hatch',
@@ -242,6 +307,18 @@ class StructuredPromptBuilder
     }
 
     /**
+     * Render the TON ȘI STIL block.
+     *
+     * Tone guide is emitted AFTER the niche addon. This means a tenant's
+     * explicit tone_guide settings override niche defaults via LLM
+     * recency bias. Behavior is intentional — tenants customizing tone
+     * win over niche templates. If you need niche tone to win, set the
+     * bot's tone_guide to the niche's default_tone values.
+     *
+     * Callers should pass the array returned by effectiveTone() — that
+     * helper already applies the bot → niche → fallback precedence, so
+     * this method only has to format whichever tone won.
+     *
      * @param array<string, mixed> $tone
      */
     private function toneGuideBlock(array $tone): string
