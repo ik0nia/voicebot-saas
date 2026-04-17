@@ -221,7 +221,16 @@ class BotController extends Controller
             ->latest()
             ->first();
 
-        return view('dashboard.bots.edit', compact('bot', 'sites', 'clonedVoice'));
+        // Niche metadata powers the structured-profile UI (suggested
+        // FAQs, standard-rules checklist, default tone hints). `null`
+        // when the bot has no niche_slug — the view falls back to
+        // generic copy in that case.
+        $niche = $bot->niche_slug ? config('niches.' . $bot->niche_slug) : null;
+        $niches = config('niches', []);
+
+        return view('dashboard.bots.edit', compact(
+            'bot', 'sites', 'clonedVoice', 'niche', 'niches'
+        ));
     }
 
     public function update(Request $request, $botId)
@@ -246,17 +255,115 @@ class BotController extends Controller
             'chat_languages' => 'nullable|array',
             'chat_languages.*' => 'string|in:ro,en,de,fr,es',
             'voice_language' => 'nullable|string|in:ro,en,de,fr,es',
+            // Structured-profile editor (new).
+            'settings.use_structured_prompt' => 'nullable|boolean',
+            'settings.business_info' => 'nullable|array',
+            'settings.business_info.address' => 'nullable|string|max:500',
+            'settings.business_info.hours_text' => 'nullable|string|max:500',
+            'settings.business_info.hours_schedule' => 'nullable|string', // JSON blob from Alpine hidden input
+            'settings.business_info.phone' => 'nullable|string|max:30',
+            'settings.business_info.email' => 'nullable|email|max:255',
+            'settings.business_info.website' => 'nullable|url|max:500',
+            'settings.business_info.whatsapp' => 'nullable|string|max:30',
+            'settings.business_info.facebook' => 'nullable|string|max:255',
+            'settings.business_info.instagram' => 'nullable|string|max:255',
+            'settings.business_info.extras' => 'nullable|string|max:2000',
+            'settings.faqs' => 'nullable|array|max:50',
+            'settings.faqs.*.question' => 'required_with:settings.faqs.*.answer|string|max:300',
+            'settings.faqs.*.answer' => 'required_with:settings.faqs.*.question|string|max:2000',
+            'settings.dont_rules' => 'nullable|array|max:30',
+            'settings.dont_rules.*' => 'string|max:300',
+            'settings.tone_guide' => 'nullable|array',
+            'settings.tone_guide.length' => 'nullable|string|in:short,medium,long',
+            'settings.tone_guide.register' => 'nullable|string|in:tu,dvs',
+            'settings.tone_guide.emoji_ok' => 'nullable|boolean',
+            'settings.tone_guide.languages' => 'nullable|array',
+            'settings.tone_guide.languages.*' => 'string|in:ro,en,hu,de,fr',
         ]);
 
         // Persist chat_languages + voice_language into bot.settings
         // jsonb so we don't need new columns. Fallback: if
         // chat_languages is empty, default to [primary language].
-        $settings = $bot->settings ?? [];
-        $settings['chat_languages'] = !empty($validated['chat_languages'])
+        $existing = $bot->settings ?? [];
+        $incoming = $validated['settings'] ?? [];
+
+        // hours_schedule comes through as a JSON-encoded string (Alpine
+        // serializes the repeater array into a hidden input). Decode it
+        // back into an array before persisting so StructuredPromptBuilder
+        // can iterate over it. On malformed JSON we drop the key rather
+        // than failing the whole save.
+        if (isset($incoming['business_info']['hours_schedule'])
+            && is_string($incoming['business_info']['hours_schedule'])) {
+            $decoded = json_decode($incoming['business_info']['hours_schedule'], true);
+            if (is_array($decoded)) {
+                $incoming['business_info']['hours_schedule'] = $decoded;
+            } else {
+                unset($incoming['business_info']['hours_schedule']);
+            }
+        }
+
+        // Normalise checkbox booleans — Laravel passes strings "0"/"1"
+        // for the structured-prompt toggle.
+        if (array_key_exists('use_structured_prompt', $incoming)) {
+            $incoming['use_structured_prompt'] = (bool) $incoming['use_structured_prompt'];
+        }
+        if (isset($incoming['tone_guide']) && array_key_exists('emoji_ok', $incoming['tone_guide'])) {
+            $incoming['tone_guide']['emoji_ok'] = (bool) $incoming['tone_guide']['emoji_ok'];
+        }
+
+        // Drop empty FAQ rows (user added a repeater item but never
+        // filled it). Validator marked Q/A as required_with each other,
+        // so only fully-empty rows slip through.
+        if (isset($incoming['faqs']) && is_array($incoming['faqs'])) {
+            $incoming['faqs'] = array_values(array_filter($incoming['faqs'], function ($f) {
+                return is_array($f)
+                    && trim((string) ($f['question'] ?? '')) !== ''
+                    && trim((string) ($f['answer'] ?? '')) !== '';
+            }));
+        }
+
+        // Drop blank dont_rules lines (textarea splits on newline client
+        // side, empty lines shouldn't reach the prompt).
+        if (isset($incoming['dont_rules']) && is_array($incoming['dont_rules'])) {
+            $incoming['dont_rules'] = array_values(array_filter(
+                array_map(fn ($r) => trim((string) $r), $incoming['dont_rules']),
+                fn ($r) => $r !== ''
+            ));
+        }
+
+        // Merge instead of overwrite so keys not touched by this form
+        // (e.g. automations, chat_languages set below, vad_threshold
+        // etc.) aren't wiped.
+        //
+        // For list-like arrays we MUST replace wholesale — array_replace_
+        // recursive merges by key, so shrinking [a,b,c] → [x,y] would
+        // leave a phantom `c` at index 2. Remove these keys from the
+        // base before merging so the incoming list fully replaces them.
+        $listLikeKeys = ['faqs', 'dont_rules'];
+        $baseForMerge = $existing;
+        foreach ($listLikeKeys as $k) {
+            if (array_key_exists($k, $incoming)) {
+                unset($baseForMerge[$k]);
+            }
+        }
+        // tone_guide.languages is list-like too, but it lives one level
+        // deeper. Same fix applied at that level.
+        if (isset($incoming['tone_guide']['languages']) && isset($baseForMerge['tone_guide']['languages'])) {
+            unset($baseForMerge['tone_guide']['languages']);
+        }
+        // business_info.hours_schedule replaced wholesale (it's a list
+        // of day entries we rewrite every save).
+        if (isset($incoming['business_info']['hours_schedule']) && isset($baseForMerge['business_info']['hours_schedule'])) {
+            unset($baseForMerge['business_info']['hours_schedule']);
+        }
+        $merged = array_replace_recursive($baseForMerge, $incoming);
+
+        $merged['chat_languages'] = !empty($validated['chat_languages'])
             ? array_values($validated['chat_languages'])
             : [$validated['language']];
-        $settings['voice_language'] = $validated['voice_language'] ?: $validated['language'];
-        $validated['settings'] = array_merge($settings, $validated['settings'] ?? []);
+        $merged['voice_language'] = $validated['voice_language'] ?: $validated['language'];
+
+        $validated['settings'] = $merged;
         unset($validated['chat_languages'], $validated['voice_language']);
 
         // Convert minutes to seconds for max_call_duration
@@ -296,6 +403,138 @@ class BotController extends Controller
         $bot->delete();
         return redirect()->route('dashboard.bots.index')
             ->with('success', 'Agentul AI a fost șters.');
+    }
+
+    /**
+     * Session-authenticated proxy to BotAiGenerationService.
+     *
+     * The existing /api/v1/bots/{bot}/ai-generate endpoint is Sanctum-
+     * gated, so the dashboard (session auth + CSRF) cannot use it
+     * directly without minting a token per page load. This proxy
+     * accepts the same payload, enforces tenant ownership via
+     * BotPolicy, applies the same per-tenant rate limits the API
+     * route uses, then forwards to the shared service so cost
+     * tracking + prompt caching stay consolidated in one place.
+     */
+    public function aiGenerate(Request $request, $botId, \App\Services\BotAiGenerationService $service)
+    {
+        $bot = $this->resolveBot($botId);
+        $this->authorize('update', $bot);
+
+        $validated = $request->validate([
+            'target'  => ['required', 'string', \Illuminate\Validation\Rule::in([
+                'faq_question', 'faq_answer', 'faq_pair', 'faq_bulk',
+                'rules_suggest', 'tone_suggest', 'extras_suggest',
+                'full_profile', 'rephrase',
+            ])],
+            'hint'    => ['nullable', 'string', 'max:500'],
+            'context' => ['nullable', 'array'],
+            'count'   => ['nullable', 'integer', 'min:1', 'max:20'],
+        ]);
+
+        $tenantId = (int) auth()->user()->tenant_id;
+
+        // Shared rate-limit buckets with the API controller — "60 req/
+        // min all-targets, 10 req/min for full_profile". Dashboard and
+        // API clients drink from the same bucket, which is what the
+        // tenant expects (clicking ✨ 10 times from the UI shouldn't
+        // let you also spam the API 60 more times in the same minute).
+        if ($validated['target'] === 'full_profile') {
+            $fpKey = "bot-ai-generate:full_profile:tenant:{$tenantId}";
+            if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($fpKey, 10)) {
+                return response()->json([
+                    'message' => 'Ai atins limita pentru generarea profilului complet. Încearcă din nou în câteva minute.',
+                    'retry_after' => \Illuminate\Support\Facades\RateLimiter::availableIn($fpKey),
+                ], 429);
+            }
+            \Illuminate\Support\Facades\RateLimiter::hit($fpKey, 60);
+        }
+
+        $globalKey = "bot-ai-generate:tenant:{$tenantId}";
+        if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($globalKey, 60)) {
+            return response()->json([
+                'message' => 'Prea multe cereri. Încearcă din nou în câteva secunde.',
+                'retry_after' => \Illuminate\Support\Facades\RateLimiter::availableIn($globalKey),
+            ], 429);
+        }
+        \Illuminate\Support\Facades\RateLimiter::hit($globalKey, 60);
+
+        try {
+            $result = $service->generate(
+                bot: $bot,
+                target: $validated['target'],
+                hint: $validated['hint'] ?? null,
+                context: $validated['context'] ?? [],
+                count: (int) ($validated['count'] ?? 1),
+                userId: (int) auth()->id(),
+            );
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('BotController@aiGenerate failed', [
+                'bot_id' => $bot->id,
+                'target' => $validated['target'],
+                'error' => $e->getMessage(),
+            ]);
+            return response()->json([
+                'message' => 'Generarea AI a eșuat. Reîncearcă sau completează manual.',
+            ], 502);
+        }
+
+        return response()->json([
+            'generated' => $result['generated'],
+            'cost_ron'  => $result['cost_ron'],
+            'tokens'    => [
+                'in'  => $result['tokens_in'],
+                'out' => $result['tokens_out'],
+            ],
+        ]);
+    }
+
+    /**
+     * Returns the fully-composed system prompt for the "👁 Vezi promptul
+     * final" preview modal. Exposes the per-section breakdown so the UI
+     * can highlight which blocks are active/empty.
+     */
+    public function promptPreview($botId, \App\Services\StructuredPromptBuilder $builder)
+    {
+        $bot = $this->resolveBot($botId);
+        $this->authorize('view', $bot);
+
+        return response()->json([
+            'prompt'   => $builder->build($bot),
+            'sections' => $builder->sections($bot),
+            'flag_on'  => $bot->usesStructuredPrompt(),
+        ]);
+    }
+
+    /**
+     * Tiny cost indicator for the footer pill on the edit page.
+     * Sums rows written by BotAiGenerationService for TODAY only
+     * (purpose=agent_setup_ai) — this is the "helper AI" spend, NOT the
+     * runtime chat/voice spend the bot earns its keep on.
+     */
+    public function aiCostToday($botId)
+    {
+        $bot = $this->resolveBot($botId);
+        $this->authorize('view', $bot);
+
+        $today = \App\Models\AiApiMetric::query()
+            ->where('bot_id', $bot->id)
+            ->where('purpose', \App\Services\BotAiGenerationService::PURPOSE)
+            ->whereDate('created_at', today());
+
+        return response()->json([
+            'count'    => (clone $today)->count(),
+            // cost_cents is actually USD-cents in this table. Convert
+            // via BnrExchangeRate so the UI shows RON consistently
+            // with what the generate endpoint returned.
+            'cost_ron' => round(
+                app(\App\Services\Cost\BnrExchangeRate::class)
+                    ->convert((float) (clone $today)->sum('cost_cents') / 100.0),
+                4
+            ),
+        ]);
     }
 
     public function toggleActive($botId)
