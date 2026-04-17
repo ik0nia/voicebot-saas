@@ -155,6 +155,15 @@
                             </form>
 
                             <div class="flex items-center gap-2">
+                                <a href="{{ route('dashboard.bots.channels.chips.edit', [$bot, $channel]) }}"
+                                   class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                                   title="Editează butoanele rapide afișate în widget">
+                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h6m-6 4h4M3 20l3-3h13a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v14z"/>
+                                    </svg>
+                                    Butoane rapide
+                                </a>
+
                                 {{-- Edit button --}}
                                 <button type="button"
                                         onclick="openEditModal({{ $channel->id }}, '{{ addslashes($channel->name ?? '') }}', '{{ addslashes($channel->external_id ?? '') }}')"
