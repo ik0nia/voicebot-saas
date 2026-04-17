@@ -8,6 +8,7 @@ use App\Models\CallbackRequest;
 use App\Models\Conversation;
 use App\Models\DailyOutcomeRollup;
 use App\Models\Lead;
+use App\Models\PurchaseAttribution;
 use App\Models\Tenant;
 use App\Services\Cost\BnrExchangeRate;
 use Carbon\CarbonInterface;
@@ -167,6 +168,24 @@ class DailyOutcomeAggregator
         foreach ($callAgg as $row) {
             $perBot[$row->bot_id] = array_merge($perBot[$row->bot_id] ?? [], [
                 'voice_calls_count' => (int) $row->voice_calls_count,
+            ]);
+        }
+
+        // Ecommerce — AttributionService already classifies WC orders
+        // back to the conversation/bot that influenced them. We just
+        // aggregate the existing rows; no webhook wiring change here.
+        // Tenants without WooCommerce produce 0 rows → 0 orders, 0
+        // revenue via COALESCE.
+        $orderAgg = PurchaseAttribution::withoutGlobalScopes()
+            ->where('tenant_id', $tenantId)
+            ->whereBetween('created_at', [$start, $end])
+            ->selectRaw('bot_id, COUNT(*) AS orders_influenced, COALESCE(SUM(order_total_cents), 0) AS revenue_booked_cents')
+            ->groupBy('bot_id')
+            ->get();
+        foreach ($orderAgg as $row) {
+            $perBot[$row->bot_id] = array_merge($perBot[$row->bot_id] ?? [], [
+                'orders_influenced'    => (int) $row->orders_influenced,
+                'revenue_booked_cents' => (float) $row->revenue_booked_cents,
             ]);
         }
 
