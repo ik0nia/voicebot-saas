@@ -361,18 +361,32 @@ class IntegrationApiController extends Controller
      */
     public function syncCategories(Request $request): JsonResponse
     {
-        $request->validate([
-            'categories' => 'required|array',
-            'categories.*.wc_category_id' => 'required|integer',
-            'categories.*.parent_id' => 'required|integer',
-            'categories.*.name' => 'required|string|max:255',
-            'categories.*.slug' => 'nullable|string|max:255',
-            'categories.*.description' => 'nullable|string|max:5000',
-            'categories.*.image_url' => 'nullable|string|max:2000',
-            'categories.*.product_count' => 'nullable|integer|min:0',
-            'categories.*.position' => 'nullable|integer|min:0',
-            'site_url' => 'required|url|max:500',
-        ]);
+        try {
+            $request->validate([
+                'categories' => 'required|array',
+                'categories.*.wc_category_id' => 'required|integer',
+                'categories.*.parent_id' => 'required|integer',
+                'categories.*.name' => 'required|string|max:255',
+                'categories.*.slug' => 'nullable|string|max:255',
+                'categories.*.description' => 'nullable|string|max:10000',
+                'categories.*.image_url' => 'nullable|string|max:2000',
+                'categories.*.product_count' => 'nullable|integer|min:0',
+                'categories.*.position' => 'nullable|integer|min:0',
+                'site_url' => 'required|url|max:500',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Log the first rejected field so we can tell plugin-side
+            // bugs apart from server-side constraint drift. The plugin
+            // sends big batches; without this the 422 was invisible.
+            $errors = $e->errors();
+            \Illuminate\Support\Facades\Log::warning('sync-categories 422', [
+                'site_url' => $request->input('site_url'),
+                'category_count' => count($request->input('categories', [])),
+                'first_error_field' => array_key_first($errors),
+                'first_error_message' => $errors[array_key_first($errors)][0] ?? null,
+            ]);
+            throw $e;
+        }
 
         $tenant = $request->user()->tenant;
 

@@ -148,16 +148,33 @@ class Sambla_Product_Sync {
         $categories = [];
         foreach ($terms as $term) {
             $thumbnail_id = get_term_meta($term->term_id, 'thumbnail_id', true);
+            // wp_get_attachment_image_url returns FALSE when the
+            // thumbnail is missing / deleted — Laravel's `nullable|
+            // string` rule treats FALSE as present-and-not-a-string
+            // and 422s the whole batch. Coerce to null.
+            $image_url = null;
+            if ($thumbnail_id) {
+                $resolved = wp_get_attachment_image_url($thumbnail_id, 'medium');
+                $image_url = is_string($resolved) ? $resolved : null;
+            }
+            // Some WC themes ship category descriptions with full HTML
+            // that blows past a short max — strip tags and keep a
+            // generous 5k chars of plain text; the remote end rejects
+            // anything longer.
+            $description = trim(wp_strip_all_tags((string) $term->description));
+            if (mb_strlen($description) > 5000) {
+                $description = mb_substr($description, 0, 5000);
+            }
 
             $categories[] = [
-                'wc_category_id' => $term->term_id,
-                'parent_id' => $term->parent, // 0 = top-level
-                'name' => $term->name,
-                'slug' => $term->slug,
-                'description' => $term->description,
-                'image_url' => $thumbnail_id ? wp_get_attachment_image_url($thumbnail_id, 'medium') : null,
+                'wc_category_id' => (int) $term->term_id,
+                'parent_id' => (int) $term->parent, // 0 = top-level
+                'name' => (string) $term->name,
+                'slug' => $term->slug ? (string) $term->slug : null,
+                'description' => $description !== '' ? $description : null,
+                'image_url' => $image_url,
                 'product_count' => (int) $term->count,
-                'position' => get_term_meta($term->term_id, 'order', true) ?: 0,
+                'position' => (int) (get_term_meta($term->term_id, 'order', true) ?: 0),
             ];
         }
 
