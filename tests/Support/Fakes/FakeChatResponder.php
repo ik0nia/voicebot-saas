@@ -53,6 +53,22 @@ final class FakeChatResponder implements ChatResponderInterface
         return round(($inputTokens * 0.0003 + $outputTokens * 0.0015) / 100, 6);
     }
 
+    public function completeWithFallback(
+        array $messages,
+        array $modelConfig,
+        \App\Models\Bot $bot,
+        string $userMessage,
+        string $extraContext,
+        array $options = []
+    ): array {
+        // The fake doesn't simulate the cascading retries — tests that
+        // care about fallback semantics exercise the concrete
+        // ChatResponder directly. Here we just delegate to the
+        // recorded complete() path so callers still get a reply.
+        $result = $this->complete($messages, $modelConfig, $bot->id, $bot->tenant_id, $options);
+        return $result + ['fallback_level' => 0, 'fallback_reason' => null];
+    }
+
     public function complete(
         array $messages,
         array $modelConfig,

@@ -48,4 +48,33 @@ interface ChatResponderInterface
      * partial spend without reaching past the responder.
      */
     public function computeCost(string $model, int $inputTokens, int $outputTokens): float;
+
+    /**
+     * Blocking completion with built-in cascading fallback:
+     *
+     *   1. Full request ($messages + $options)
+     *   2. On any throw — retry without knowledge context (system
+     *      messages stripped, rebuilt with just bot's base system
+     *      prompt + caller-supplied extra context)
+     *   3. On a second throw — minimal prompt (base system prompt
+     *      only) plus the raw user turn, no tools
+     *
+     * Return shape matches {@see complete()} plus:
+     *   - `fallback_level` (int, 0/1/2) — which rung fired
+     *   - `fallback_reason` (?string) — the original exception msg
+     *     that forced the cascade
+     *
+     * @param array<int, array{role: string, content: string}> $messages
+     * @param array<string, mixed>                             $modelConfig
+     * @param array<string, mixed>                             $options
+     * @return array{content: string, model: string, provider: string, input_tokens: int, output_tokens: int, cost_cents: float, fallback_level: int, fallback_reason: ?string}
+     */
+    public function completeWithFallback(
+        array $messages,
+        array $modelConfig,
+        \App\Models\Bot $bot,
+        string $userMessage,
+        string $extraContext,
+        array $options = []
+    ): array;
 }

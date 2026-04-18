@@ -118,34 +118,9 @@ class ChatbotApiController extends Controller
         // quick_replies are consistent between /message and /message-stream.
         $pageContext = $preResult['page_context'] ?? [];
 
-        // A/B Testing: check for active experiments
-        $abVariant = app(\App\Services\AbTestingService::class)->getVariantForConversation($bot->id, $conversation->id);
-        if ($abVariant) {
-            switch ($abVariant['type']) {
-                case 'prompt':
-                    if (isset($abVariant['config']['system_prompt'])) {
-                        $bot->system_prompt = $abVariant['config']['system_prompt'];
-                    }
-                    break;
-                case 'model':
-                    if (isset($abVariant['config']['model'])) {
-                        $bot->settings = array_merge($bot->settings ?? [], ['model_override' => $abVariant['config']['model']]);
-                    }
-                    break;
-                case 'policy':
-                    // Override conversation policy settings via bot settings
-                    if (!empty($abVariant['config'])) {
-                        $bot->settings = array_merge($bot->settings ?? [], ['policy_override' => $abVariant['config']]);
-                    }
-                    break;
-                case 'rag_config':
-                    // Override RAG settings via extra context or bot settings
-                    if (!empty($abVariant['config'])) {
-                        $bot->settings = array_merge($bot->settings ?? [], ['rag_override' => $abVariant['config']]);
-                    }
-                    break;
-            }
-        }
+        // A/B Testing: apply an active variant's overrides to the bot
+        // (mutates in place). Variant metadata comes back for logging.
+        $abVariant = app(\App\Services\Chat\AbVariantApplier::class)->apply($bot, $conversation);
 
         // ── Daily cost ceiling (Iteration B, feature-flagged) ──
         // Checked AFTER preprocessing so session/conversation are intact
@@ -477,43 +452,19 @@ class ChatbotApiController extends Controller
                 }
             }
 
-            // Call AI — with cascading fallback
+            // Call AI — cascading fallback (level 0/1/2) lives in ChatResponder.
             $chatService = app(\App\Services\Chat\ChatResponderInterface::class);
-            try {
-                $result = $chatService->complete($messages, $modelConfig, $bot->id, $bot->tenant_id, $toolOptions);
-            } catch (\Exception $e) {
-                // Cascading fallback: retry without knowledge context
-                Log::warning('Chatbot: fallback level 1 — retrying without knowledge', [
-                    'bot_id' => $bot->id,
-                    'error' => $e->getMessage(),
-                    'knowledge_chars' => $assembled->knowledgeChars,
-                ]);
-                $logger->set('fallback_level', 1);
-                $logger->set('fallback_reason', $e->getMessage());
-
-                $fallbackMessages = array_filter($messages, fn($m) => ($m['role'] ?? '') !== 'system');
-                $basePrompt = $bot->system_prompt ?? 'Ești un asistent virtual. Răspunde scurt și util.';
-                $basePrompt = PromptGuardrails::apply($basePrompt . $extraContext);
-                array_unshift($fallbackMessages, ['role' => 'system', 'content' => $basePrompt]);
-                try {
-                    $result = $chatService->complete($fallbackMessages, $modelConfig, $bot->id, $bot->tenant_id);
-                } catch (\Exception $e2) {
-                    // Final fallback: short history only
-                    Log::warning('Chatbot: fallback level 2 — minimal prompt', [
-                        'bot_id' => $bot->id,
-                        'error' => $e2->getMessage(),
-                    ]);
-                    $logger->set('fallback_level', 2);
-
-                    $minimalPrompt = PromptGuardrails::apply(
-                        $bot->system_prompt ?? 'Ești un asistent virtual. Răspunde scurt și util.'
-                    );
-                    $shortMessages = [
-                        ['role' => 'system', 'content' => $minimalPrompt],
-                        ['role' => 'user', 'content' => $userMessage],
-                    ];
-                    $result = $chatService->complete($shortMessages, $modelConfig, $bot->id, $bot->tenant_id);
-                }
+            $result = $chatService->completeWithFallback(
+                $messages,
+                $modelConfig,
+                $bot,
+                $userMessage,
+                $extraContext,
+                $toolOptions,
+            );
+            if (($result['fallback_level'] ?? 0) > 0) {
+                $logger->set('fallback_level', $result['fallback_level']);
+                $logger->set('fallback_reason', $result['fallback_reason']);
             }
 
             $logger->set('input_tokens', $result['input_tokens'] ?? 0);
@@ -656,32 +607,9 @@ class ChatbotApiController extends Controller
         $prechatEmail = $preResult['prechat_email'];
         $prechatPhone = $preResult['prechat_phone'];
 
-        // A/B Testing: check for active experiments
-        $abVariant = app(\App\Services\AbTestingService::class)->getVariantForConversation($bot->id, $conversation->id);
-        if ($abVariant) {
-            switch ($abVariant['type']) {
-                case 'prompt':
-                    if (isset($abVariant['config']['system_prompt'])) {
-                        $bot->system_prompt = $abVariant['config']['system_prompt'];
-                    }
-                    break;
-                case 'model':
-                    if (isset($abVariant['config']['model'])) {
-                        $bot->settings = array_merge($bot->settings ?? [], ['model_override' => $abVariant['config']['model']]);
-                    }
-                    break;
-                case 'policy':
-                    if (!empty($abVariant['config'])) {
-                        $bot->settings = array_merge($bot->settings ?? [], ['policy_override' => $abVariant['config']]);
-                    }
-                    break;
-                case 'rag_config':
-                    if (!empty($abVariant['config'])) {
-                        $bot->settings = array_merge($bot->settings ?? [], ['rag_override' => $abVariant['config']]);
-                    }
-                    break;
-            }
-        }
+        // A/B Testing: apply an active variant's overrides to the bot
+        // (mutates in place). Variant metadata comes back for logging.
+        $abVariant = app(\App\Services\Chat\AbVariantApplier::class)->apply($bot, $conversation);
 
         // ── Daily cost ceiling (Iteration B, feature-flagged) ──
         // For streaming we return a short non-200 stream with an error

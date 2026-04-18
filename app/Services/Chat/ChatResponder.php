@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Services\Chat;
 
+use App\Models\Bot;
 use App\Models\ModelPricing;
 use App\Models\PlatformSetting;
 use App\Services\ChatCompletionService;
+use App\Services\PromptGuardrails;
 use App\Services\TokenizerService;
+use Illuminate\Support\Facades\Log;
 use OpenAI\Laravel\Facades\OpenAI;
 
 /**
@@ -56,6 +59,58 @@ final class ChatResponder implements ChatResponderInterface
         array $options = []
     ): array {
         return $this->chatCompletionService->complete($messages, $modelConfig, $botId, $tenantId, $options);
+    }
+
+    public function completeWithFallback(
+        array $messages,
+        array $modelConfig,
+        Bot $bot,
+        string $userMessage,
+        string $extraContext,
+        array $options = []
+    ): array {
+        try {
+            $result = $this->complete($messages, $modelConfig, $bot->id, $bot->tenant_id, $options);
+            return $result + ['fallback_level' => 0, 'fallback_reason' => null];
+        } catch (\Exception $e) {
+            $firstError = $e->getMessage();
+            Log::warning('Chatbot: fallback level 1 — retrying without knowledge', [
+                'bot_id' => $bot->id,
+                'error' => $firstError,
+            ]);
+        }
+
+        // Level 1: strip system messages, rebuild with base + extra context
+        $fallbackMessages = array_values(array_filter(
+            $messages,
+            fn ($m) => ($m['role'] ?? '') !== 'system',
+        ));
+        $basePrompt = PromptGuardrails::apply(
+            ($bot->system_prompt ?? 'Ești un asistent virtual. Răspunde scurt și util.')
+            . $extraContext,
+        );
+        array_unshift($fallbackMessages, ['role' => 'system', 'content' => $basePrompt]);
+
+        try {
+            $result = $this->complete($fallbackMessages, $modelConfig, $bot->id, $bot->tenant_id);
+            return $result + ['fallback_level' => 1, 'fallback_reason' => $firstError];
+        } catch (\Exception $e2) {
+            Log::warning('Chatbot: fallback level 2 — minimal prompt', [
+                'bot_id' => $bot->id,
+                'error' => $e2->getMessage(),
+            ]);
+        }
+
+        // Level 2: minimal prompt, user message only, no tools
+        $minimalPrompt = PromptGuardrails::apply(
+            $bot->system_prompt ?? 'Ești un asistent virtual. Răspunde scurt și util.',
+        );
+        $shortMessages = [
+            ['role' => 'system', 'content' => $minimalPrompt],
+            ['role' => 'user', 'content' => $userMessage],
+        ];
+        $result = $this->complete($shortMessages, $modelConfig, $bot->id, $bot->tenant_id);
+        return $result + ['fallback_level' => 2, 'fallback_reason' => $firstError];
     }
 
     /**

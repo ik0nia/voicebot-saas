@@ -34,3 +34,4 @@ docker-compose.override.yml
 # Enterprise architecture PDF — served behind obscured URL, not for GitHub
 /public/downloads/sambla-enterprise-*.pdf
 .openai-admin-credentials
+.env.bak*
