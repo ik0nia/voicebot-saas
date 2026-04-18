@@ -4,25 +4,28 @@ declare(strict_types=1);
 
 namespace Tests\Support\Fakes;
 
-use App\Services\Chat\ChatResponder;
+use App\Services\Chat\ChatResponderInterface;
 use App\Services\Chat\StreamResult;
-use App\Services\ChatCompletionService;
-use App\Services\TokenizerService;
 
 /**
- * Test double for {@see ChatResponder}. Mirrors {@see FakeChatCompletionService}
- * but intercepts the streaming path too — delivers queued text in
- * per-character chunks via the onDelta callback so the SSE framing
- * logic in the controller can be exercised end-to-end without a real
- * LLM round-trip.
+ * Test double for {@see \App\Services\Chat\ChatResponder}. Mirrors
+ * {@see FakeChatCompletionService} but intercepts the streaming path
+ * too — delivers queued text in per-character chunks via the onDelta
+ * callback so the SSE framing logic in the controller can be exercised
+ * end-to-end without a real LLM round-trip.
  *
  * Tests can:
  *   - queue replies for sync / stream separately
  *   - inspect recorded calls (messages array byte-exact, model
  *     config, options) — the byte-exact snapshot pattern used for
  *     the sync path now extends to the stream path too.
+ *
+ * Implements the interface directly rather than extending the concrete
+ * class, which is `final`. The service provider binds
+ * ChatResponderInterface → ChatResponder, so `$this->app->instance(
+ * ChatResponderInterface::class, $fake)` is all a test needs.
  */
-final class FakeChatResponder extends ChatResponder
+final class FakeChatResponder implements ChatResponderInterface
 {
     /** @var list<array{messages: array, modelConfig: array, botId: ?int, tenantId: ?int, options: array}> */
     private array $completeCalls = [];
@@ -38,10 +41,16 @@ final class FakeChatResponder extends ChatResponder
 
     public function __construct()
     {
-        parent::__construct(
-            new ChatCompletionService(null),
-            new TokenizerService(),
-        );
+        // No parent constructor — this fake is interface-only.
+    }
+
+    public function computeCost(string $model, int $inputTokens, int $outputTokens): float
+    {
+        if ($inputTokens === 0 && $outputTokens === 0) {
+            return 0.0;
+        }
+        // Deterministic fake pricing — matches Sonnet 4.6 for stability.
+        return round(($inputTokens * 0.0003 + $outputTokens * 0.0015) / 100, 6);
     }
 
     public function complete(
@@ -162,6 +171,11 @@ final class FakeChatResponder extends ChatResponder
     public function lastStreamCall(): ?array
     {
         return end($this->streamCalls) ?: null;
+    }
+
+    public function lastCompleteCall(): ?array
+    {
+        return end($this->completeCalls) ?: null;
     }
 
     /**

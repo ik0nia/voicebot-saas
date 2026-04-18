@@ -48,7 +48,7 @@ class ChatbotPromptCharacterizationTest extends ChatbotCharacterizationTestCase
             'greeting' => 'Bună! Cu ce te pot ajuta?',
         ]]);
 
-        $this->chatFake->queueReply('ok');
+        $this->queueReply('ok');
         $this->sendMessage($channel, 'Salut, cât costă livrarea?')->assertOk();
 
         Snapshots::assertMatches($this, $this->captureLlmInputs(), 'basic_no_products');
@@ -79,7 +79,7 @@ class ChatbotPromptCharacterizationTest extends ChatbotCharacterizationTestCase
             )
             ->create();
 
-        $this->chatFake->queueReply('ok');
+        $this->queueReply('ok');
         $this->sendMessage($channel, 'Ce recomanzi?')->assertOk();
 
         Snapshots::assertMatches($this, $this->captureLlmInputs(), 'magazin_online_with_products');
@@ -101,7 +101,7 @@ class ChatbotPromptCharacterizationTest extends ChatbotCharacterizationTestCase
             'greeting' => 'Bună! Ce ocazie ai de marcat?',
         ]]);
 
-        $this->chatFake->queueReply('ok');
+        $this->queueReply('ok');
         $this->sendMessage($channel, 'Caut un buchet pentru mama.')->assertOk();
 
         Snapshots::assertMatches($this, $this->captureLlmInputs(), 'florarie_no_products');
@@ -117,7 +117,13 @@ class ChatbotPromptCharacterizationTest extends ChatbotCharacterizationTestCase
      */
     private function captureLlmInputs(): array
     {
-        $call = $this->chatFake->lastCall();
+        // Sync /message flows through the responder fake after the
+        // ChatResponder extraction. Fall back to the completion-service
+        // fake for any lingering legacy code path (generateAIResponse's
+        // cascading fallback still reaches for ChatCompletionService
+        // directly).
+        $call = $this->responderFake->lastCompleteCall()
+            ?? $this->chatFake->lastCall();
         $this->assertNotNull($call, 'Expected at least one LLM call.');
 
         $modelConfig = $call['modelConfig'] ?? [];

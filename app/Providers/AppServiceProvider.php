@@ -36,6 +36,14 @@ class AppServiceProvider extends ServiceProvider
 
         // TokenizerService — singleton to avoid re-loading encoding on every call
         $this->app->singleton(\App\Services\TokenizerService::class);
+
+        // Bind the ChatResponder contract to the concrete
+        // implementation so tests can swap in a double without the
+        // concrete class needing to drop `final`.
+        $this->app->bind(
+            \App\Services\Chat\ChatResponderInterface::class,
+            \App\Services\Chat\ChatResponder::class,
+        );
     }
 
     /**

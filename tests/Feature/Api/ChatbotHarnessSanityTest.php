@@ -24,7 +24,7 @@ class ChatbotHarnessSanityTest extends ChatbotCharacterizationTestCase
     public function test_fake_intercepts_llm_call_and_controller_returns_200(): void
     {
         $channel = $this->makeWidgetChannel();
-        $this->chatFake->queueReply('Salut! Cu ce te pot ajuta?');
+        $this->queueReply('Salut! Cu ce te pot ajuta?');
 
         $response = $this->sendMessage($channel, 'Bună!');
 
@@ -35,13 +35,13 @@ class ChatbotHarnessSanityTest extends ChatbotCharacterizationTestCase
             'response',
         ]);
 
-        $this->assertCount(1, $this->chatFake->recorded(), 'Expected exactly one LLM round-trip.');
+        $this->assertCount(1, $this->responderFake->recordedComplete(), 'Expected exactly one LLM round-trip.');
     }
 
     public function test_new_session_creates_conversation_with_greeting_user_and_bot_messages(): void
     {
         $channel = $this->makeWidgetChannel();
-        $this->chatFake->queueReply('Răspuns-uri standard.');
+        $this->queueReply('Răspuns-uri standard.');
 
         $this->sendMessage($channel, 'Salut, vreau info.')->assertOk();
 
@@ -67,7 +67,7 @@ class ChatbotHarnessSanityTest extends ChatbotCharacterizationTestCase
     public function test_recorded_llm_messages_contain_system_prompt_and_user_turn(): void
     {
         $channel = $this->makeWidgetChannel();
-        $this->chatFake->queueReply('ok');
+        $this->queueReply('ok');
 
         $this->sendMessage($channel, 'spune-mi un pont')->assertOk();
 

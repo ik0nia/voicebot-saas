@@ -27,7 +27,7 @@ use OpenAI\Laravel\Facades\OpenAI;
  *     in their transport (SSE for web, WebSocket for another channel)
  *     so the responder stays transport-agnostic and unit-testable.
  */
-final class ChatResponder
+final class ChatResponder implements ChatResponderInterface
 {
     private const FALLBACK_PRICING = [
         'gpt-4o-mini'               => ['input' => 0.15, 'output' => 0.60],

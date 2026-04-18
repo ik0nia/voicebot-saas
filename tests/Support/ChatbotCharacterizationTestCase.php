@@ -8,7 +8,7 @@ use App\Models\Bot;
 use App\Models\Channel;
 use App\Models\PlanLimit;
 use App\Models\Tenant;
-use App\Services\Chat\ChatResponder;
+use App\Services\Chat\ChatResponderInterface;
 use App\Services\ChatCompletionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -38,6 +38,7 @@ abstract class ChatbotCharacterizationTestCase extends TestCase
     use RefreshDatabase;
 
     protected FakeChatCompletionService $chatFake;
+    protected FakeChatResponder $responderFake;
 
     protected function setUp(): void
     {
@@ -57,8 +58,17 @@ abstract class ChatbotCharacterizationTestCase extends TestCase
 
         $this->seedFreePlan();
 
+        // Two fakes bound in parallel: the ChatCompletionService fake
+        // catches the legacy sync path (anything that still calls
+        // ChatCompletionService directly — e.g. generateAIResponse's
+        // cascading fallback), and the ChatResponder fake catches the
+        // unified sync+stream path that runs through the refactored
+        // service. Both record calls for snapshot assertions.
         $this->chatFake = new FakeChatCompletionService();
         $this->app->instance(ChatCompletionService::class, $this->chatFake);
+
+        $this->responderFake = new FakeChatResponder();
+        $this->app->instance(ChatResponderInterface::class, $this->responderFake);
     }
 
     /**
@@ -83,6 +93,20 @@ abstract class ChatbotCharacterizationTestCase extends TestCase
     }
 
     /**
+     * Queue a fake LLM reply for the next /message or /message-stream
+     * round-trip. Feeds both the ChatResponder fake (new unified path)
+     * and the ChatCompletionService fake (legacy direct callers like
+     * the cascading fallback in generateAIResponse) so the first
+     * available consumer picks it up regardless of which path runs.
+     */
+    protected function queueReply(string $content, array $tokens = []): void
+    {
+        $this->responderFake->queueCompleteReply($content, $tokens);
+        $this->responderFake->queueStreamReply($content, $tokens);
+        $this->chatFake->queueReply($content, $tokens);
+    }
+
+    /**
      * POST /api/v1/chatbot/{channel}/message with a user utterance.
      * Returns the raw response so the caller can run its own assertions.
      */
@@ -99,16 +123,92 @@ abstract class ChatbotCharacterizationTestCase extends TestCase
     }
 
     /**
+     * POST /api/v1/chatbot/{channel}/message-stream. Consumes the
+     * streamed body as part of the call so the StreamedResponse
+     * closure actually runs — without streamedContent() the closure
+     * is deferred until someone reads the body, which means DB
+     * assertions from the caller would observe only the pre-stream
+     * rows (greeting + user message) and miss the bot reply insert.
+     */
+    protected function sendMessageStream(Channel $channel, string $text, array $extra = []): TestResponse
+    {
+        $payload = array_merge([
+            'message' => $text,
+        ], $extra);
+
+        $response = $this->postJson("/api/v1/chatbot/{$channel->id}/message-stream", $payload, [
+            'Origin' => 'https://example.test',
+            'User-Agent' => 'phpunit',
+            'Accept' => 'text/event-stream',
+        ]);
+
+        // Force the StreamedResponse closure to execute now.
+        $response->streamedContent();
+
+        return $response;
+    }
+
+    /**
+     * Parse a collected SSE body into a flat list of
+     * ['type' => ..., 'data' => [...]] entries. Handles only the
+     * `data: <json>\n\n` framing the widget emits — no `event:` lines.
+     *
+     * @return list<array{type: string, data: array}>
+     */
+    protected function parseSseEvents(string $body): array
+    {
+        $events = [];
+        foreach (preg_split('/\r?\n\r?\n/', trim($body)) as $chunk) {
+            if (!str_starts_with($chunk, 'data:')) {
+                continue;
+            }
+            $json = trim(substr($chunk, 5));
+            $decoded = json_decode($json, true);
+            if (!is_array($decoded)) {
+                continue;
+            }
+            $events[] = [
+                'type' => (string) ($decoded['type'] ?? 'unknown'),
+                'data' => $decoded,
+            ];
+        }
+        return $events;
+    }
+
+    /**
      * Convenience: the LLM messages array recorded from the most recent
      * /message request. Useful for byte-exact prompt snapshots.
+     *
+     * Checks the ChatResponder fake first (the refactored sync +
+     * stream path flows through it), falls back to the
+     * ChatCompletionService fake (for any legacy caller that reaches
+     * the completion service directly).
      *
      * @return array<int, array{role: string, content: string}>
      */
     protected function recordedLlmMessages(): array
     {
-        $last = $this->chatFake->lastCall();
+        $last = $this->responderFake->lastCompleteCall()
+            ?? $this->responderFake->lastStreamCall()
+            ?? $this->chatFake->lastCall();
         if ($last === null) {
-            $this->fail('No ChatCompletionService::complete() call was recorded.');
+            $this->fail('No ChatResponder / ChatCompletionService call was recorded.');
+        }
+        return $last['messages'];
+    }
+
+    /**
+     * Convenience: the LLM messages array recorded from the most
+     * recent stream() call on the ChatResponder fake. Mirrors
+     * {@see recordedLlmMessages()} for the SSE path.
+     *
+     * @return array<int, array{role: string, content: string}>
+     */
+    protected function recordedStreamLlmMessages(): array
+    {
+        $last = $this->responderFake->lastStreamCall();
+        if ($last === null) {
+            $this->fail('No ChatResponder::stream() call was recorded.');
         }
         return $last['messages'];
     }

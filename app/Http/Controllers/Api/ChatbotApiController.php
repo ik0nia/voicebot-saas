@@ -478,7 +478,7 @@ class ChatbotApiController extends Controller
             }
 
             // Call AI — with cascading fallback
-            $chatService = app(\App\Services\Chat\ChatResponder::class);
+            $chatService = app(\App\Services\Chat\ChatResponderInterface::class);
             try {
                 $result = $chatService->complete($messages, $modelConfig, $bot->id, $bot->tenant_id, $toolOptions);
             } catch (\Exception $e) {
@@ -727,7 +727,7 @@ class ChatbotApiController extends Controller
 
                 // 4. Stream LLM response via ChatResponder. Transport-
                 //    agnostic: we inject an SSE-emitting callback.
-                $streamResult = app(\App\Services\Chat\ChatResponder::class)->stream(
+                $streamResult = app(\App\Services\Chat\ChatResponderInterface::class)->stream(
                     $messages,
                     $modelConfig,
                     fn (string $delta) => $this->sendSSE('delta', ['content' => $delta]),
@@ -945,7 +945,7 @@ class ChatbotApiController extends Controller
                         'input_tokens' => $streamInputTokens ?? 0,
                         'output_tokens' => $streamOutputTokens ?? 0,
                         'cost_cents' => isset($streamInputTokens, $streamOutputTokens, $model)
-                            ? app(\App\Services\Chat\ChatResponder::class)->computeCost($model, $streamInputTokens, $streamOutputTokens)
+                            ? app(\App\Services\Chat\ChatResponderInterface::class)->computeCost($model, $streamInputTokens, $streamOutputTokens)
                             : 0,
                         'status' => 'error',
                         'error_type' => class_basename($e),

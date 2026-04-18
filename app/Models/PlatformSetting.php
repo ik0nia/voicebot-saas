@@ -95,17 +95,36 @@ class PlatformSetting extends Model
 
     private static function cachedSettings(): array
     {
-        return Cache::remember('platform_settings', 300, function () {
-            $out = [];
-            foreach (static::query()->get() as $row) {
-                $out[$row->key] = [
-                    'value' => $row->value, // accessor decrypts
-                    'type' => $row->type,
-                    'group' => $row->group,
-                ];
-            }
-            return $out;
-        });
+        // A cache entry with an empty result has bitten us twice:
+        // the first successful warm-up after a deploy (or after any
+        // manual `Cache::flush`) populated platform_settings=[] when
+        // the DB wasn't yet reachable or the transaction was still
+        // settling, and we then served that empty map for the full
+        // 5-min TTL. Downstream ApiKeyServiceProvider saw every
+        // secret as "absent" and silently let env placeholders win
+        // — i.e. the OpenAI client got sk-your-openai-key and every
+        // stream / embedding job 401'd for minutes. Treat a zero-row
+        // query as a transient error and re-query on next call
+        // rather than caching it.
+        $cached = Cache::get('platform_settings');
+        if (is_array($cached) && $cached !== []) {
+            return $cached;
+        }
+
+        $out = [];
+        foreach (static::query()->get() as $row) {
+            $out[$row->key] = [
+                'value' => $row->value, // accessor decrypts
+                'type' => $row->type,
+                'group' => $row->group,
+            ];
+        }
+
+        if ($out !== []) {
+            Cache::put('platform_settings', $out, 300);
+        }
+
+        return $out;
     }
 
     private static function isSensitiveKey(string $key): bool
