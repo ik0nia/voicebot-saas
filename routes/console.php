@@ -5,6 +5,14 @@ use Illuminate\Support\Facades\Schedule;
 // Knowledge processing: dispatch controlled batches every minute
 Schedule::command('knowledge:process --batch=100 --max-batches=5')->everyMinute()->withoutOverlapping();
 
+// Knowledge recovery: sweep transient-failure rows every 15 minutes.
+// Catches rows stuck after container cold boots (empty platform_settings
+// cache → OpenAI placeholder → 401 → status=failed) or after the job
+// retry count exhausts during a wider outage. Safe — only retries errors
+// matching TRANSIENT_ERROR_FRAGMENTS in KnowledgeRetryFailed; permanent
+// errors (quota, content-too-large) stay failed.
+Schedule::command('knowledge:retry-failed')->everyFifteenMinutes()->withoutOverlapping();
+
 Schedule::command('calls:cleanup-stale --minutes=30')->everyThirtyMinutes();
 Schedule::command('conversations:cleanup-stale --minutes=15')->everyFiveMinutes()->withoutOverlapping();
 Schedule::command('voicebot:onboarding-emails')->dailyAt('09:00');
