@@ -83,7 +83,11 @@ class ReleasePlugin extends Command
 
         // Step 1 — bump version in source
         $this->line('<info>[1/5]</info> Bump plugin header + SAMBLA_VERSION constant');
-        $newSource = preg_replace('/^(\s*\*\s*Version:\s*)\d+\.\d+\.\d+(\s*)$/m', '$1' . $version . '$2', $source);
+        // Use ${1} / ${2} explicitly — `$1 . $version . $2` concatenates
+        // to e.g. `$12.2.1$2`, and preg_replace parses `$12` as group 12
+        // (non-existent → empty), wiping the ` * Version: ` prefix and
+        // leaving just `.2.1` on that line. Bit us twice in one release.
+        $newSource = preg_replace('/^(\s*\*\s*Version:\s*)\d+\.\d+\.\d+(\s*)$/m', '${1}' . $version . '${2}', $source);
         $newSource = preg_replace("/SAMBLA_VERSION',\s*'\d+\.\d+\.\d+'/", "SAMBLA_VERSION', '{$version}'", $newSource);
         if ($newSource === $source) {
             $this->error('Version bump regex did not match anything — check plugin header format.');

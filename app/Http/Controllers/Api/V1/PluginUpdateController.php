@@ -53,7 +53,12 @@ class PluginUpdateController extends Controller
 
     private function getChangelog(string $version = ''): string
     {
-        return '<h4>2.2.0 (Aprilie 2026)</h4><ul>'
+        return '<h4>2.2.2 (Aprilie 2026)</h4><ul>'
+            . '<li><strong>Sync de categorii reparat:</strong> pluginul nu mai trimite <code>false</code> în <code>image_url</code> pentru categorii fără thumbnail — valorile absente ajung la server ca <code>null</code>, cum se așteaptă validarea</li>'
+            . '<li>Descrierile de categorie cu HTML complet sunt curățate și tăiate la 5000 caractere înainte de trimitere, ca să nu mai depășească limita serverului</li>'
+            . '<li>Fix release: comanda internă de versionare scria linia <code>Version:</code> stricată (<code>.2.1</code>) din cauza unei ambiguități de backreferință în regex</li>'
+            . '</ul>'
+            . '<h4>2.2.0 (Aprilie 2026)</h4><ul>'
             . '<li><strong>Cart intelligence — livrare gratuită:</strong> widget-ul vede acum pragul de livrare gratuită și îi spune clientului exact cât mai lipsește („mai ai 47,50 lei până la livrare gratuită")</li>'
             . '<li>Detectare automată a pragului de livrare gratuită din <code>WC_Shipping_Zones</code> (zone de livrare cu metoda free_shipping + min_amount)</li>'
             . '<li>Opțional: setează explicit pragul prin <code>sambla_free_shipping_threshold</code> în opțiunile WP dacă vrei să suprascrii auto-detecția</li>'
