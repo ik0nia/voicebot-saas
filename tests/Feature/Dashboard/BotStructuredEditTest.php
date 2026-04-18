@@ -117,8 +117,11 @@ class BotStructuredEditTest extends TestCase
             ->get("/dashboard/agenti/{$this->bot->id}/editare");
 
         $response->assertStatus(200);
-        // Niche display name appears in the header badge.
-        $response->assertSee('Stomatologie', false);
+        // Niche display name appears in the header badge. The badge
+        // pulls from config/niches.php, so assert on that source of
+        // truth rather than a capitalised slug (stomatologie →
+        // "Cabinet stomatologic", not "Stomatologie").
+        $response->assertSee('Cabinet stomatologic', false);
         // Tab nav is present.
         $response->assertSee('Informații business', false);
         $response->assertSee('Reguli stricte', false);
@@ -212,7 +215,7 @@ class BotStructuredEditTest extends TestCase
 
     public function test_update_drops_blank_faq_rows(): void
     {
-        $this->actingAs($this->user)
+        $response = $this->actingAs($this->user)
             ->put("/dashboard/agenti/{$this->bot->id}", [
                 'name' => $this->bot->name,
                 'voice' => 'coral',
@@ -224,7 +227,9 @@ class BotStructuredEditTest extends TestCase
                         ['question' => 'C?', 'answer' => 'D.'],
                     ],
                 ],
-            ])->assertRedirect();
+            ]);
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect();
 
         $this->bot->refresh();
         $this->assertCount(2, $this->bot->settings['faqs']);

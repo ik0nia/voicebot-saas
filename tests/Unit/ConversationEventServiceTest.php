@@ -17,10 +17,23 @@ class ConversationEventServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        // chat_events has a NOT NULL + FK tenant_id; the test relies
-        // on tenant id = 1 existing, so seed it once here rather than
-        // letting every test rediscover the constraint.
-        \App\Models\Tenant::factory()->create(['id' => 1]);
+        // chat_events has FKs on tenant_id, bot_id, channel_id,
+        // conversation_id. Without a matching row the insert
+        // silently fails the FK check and track() returns null
+        // from the generic catch (not the duplicate branch), so
+        // assertions on inserted count come up zero and the
+        // cause isn't obvious from the output.
+        $tenant = \App\Models\Tenant::factory()->create(['id' => 1]);
+        $bot = \App\Models\Bot::factory()->for($tenant)->create(['id' => 1]);
+        $channel = \App\Models\Channel::factory()->for($bot)->create();
+        // The conversation-aware tests pass ids 42 and 99 explicitly.
+        foreach ([42, 99] as $convId) {
+            \App\Models\Conversation::factory()
+                ->for($tenant)
+                ->for($bot)
+                ->for($channel)
+                ->create(['id' => $convId]);
+        }
         $this->service = new ConversationEventService();
     }
 

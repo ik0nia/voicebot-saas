@@ -197,7 +197,12 @@ class BotsNormalizeTest extends TestCase
         // Nuke the tenant to create an orphan bot. Normal FK cascades
         // would wipe the bot too, so we clear the FK with a raw update
         // first — this simulates a historical data quirk, not typical ops.
+        // Postgres enforces FKs even on raw updates; drop to replica
+        // role for this single statement so the test can stage the
+        // invalid state it needs to assert against.
+        DB::statement("SET session_replication_role = 'replica'");
         DB::table('bots')->where('id', $bot->id)->update(['tenant_id' => 999999]);
+        DB::statement("SET session_replication_role = 'origin'");
 
         $this->artisan('bots:normalize', [
             '--all-niche' => 'stomatologie',

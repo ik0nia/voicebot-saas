@@ -34,8 +34,16 @@ class ConversationEventService
             return null;
         }
 
+        // Wrap the insert in its own (possibly nested) transaction.
+        // Postgres aborts the current transaction on any constraint
+        // violation, so a duplicate idempotency key inside a larger
+        // transaction (e.g. a test using RefreshDatabase, or a batched
+        // write path like trackBatch) would poison every subsequent
+        // query. Laravel's DB::transaction() uses SAVEPOINTs when
+        // already inside a transaction — a violation rolls back just
+        // this insert and leaves the outer transaction usable.
         try {
-            return ChatEvent::create([
+            return \Illuminate\Support\Facades\DB::transaction(fn () => ChatEvent::create([
                 'tenant_id'       => $context['tenant_id'] ?? null,
                 'bot_id'          => $context['bot_id'] ?? null,
                 'channel_id'      => $context['channel_id'] ?? null,
@@ -49,7 +57,7 @@ class ConversationEventService
                 'product_id'      => $properties['product_id'] ?? null,
                 'wc_order_id'     => $properties['wc_order_id'] ?? null,
                 'occurred_at'     => $context['occurred_at'] ?? now(),
-            ]);
+            ]));
         } catch (UniqueConstraintViolationException) {
             // Duplicate event — silently skip (idempotency)
             return null;

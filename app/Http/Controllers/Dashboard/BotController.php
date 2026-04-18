@@ -269,8 +269,14 @@ class BotController extends Controller
             'settings.business_info.instagram' => 'nullable|string|max:255',
             'settings.business_info.extras' => 'nullable|string|max:2000',
             'settings.faqs' => 'nullable|array|max:50',
-            'settings.faqs.*.question' => 'required_with:settings.faqs.*.answer|string|max:300',
-            'settings.faqs.*.answer' => 'required_with:settings.faqs.*.question|string|max:2000',
+            // `nullable` lets fully-empty rows through the validator
+            // (Laravel's ConvertEmptyStringsToNull middleware turns ""
+            // into null before validation, which would otherwise trip
+            // the string rule). The filter at line ~318 drops any row
+            // where both question and answer are blank, so empty
+            // repeater entries never reach the saved settings.
+            'settings.faqs.*.question' => 'nullable|required_with:settings.faqs.*.answer|string|max:300',
+            'settings.faqs.*.answer' => 'nullable|required_with:settings.faqs.*.question|string|max:2000',
             'settings.dont_rules' => 'nullable|array|max:30',
             'settings.dont_rules.*' => 'string|max:300',
             'settings.tone_guide' => 'nullable|array',
@@ -361,7 +367,11 @@ class BotController extends Controller
         $merged['chat_languages'] = !empty($validated['chat_languages'])
             ? array_values($validated['chat_languages'])
             : [$validated['language']];
-        $merged['voice_language'] = $validated['voice_language'] ?: $validated['language'];
+        // `voice_language` is nullable — if the form didn't submit it at
+        // all Laravel leaves the key absent from $validated (nullable ≠
+        // sometimes). Coerce the missing case to null so the ?: fallback
+        // to the bot's primary language still fires cleanly.
+        $merged['voice_language'] = ($validated['voice_language'] ?? null) ?: $validated['language'];
 
         $validated['settings'] = $merged;
         unset($validated['chat_languages'], $validated['voice_language']);

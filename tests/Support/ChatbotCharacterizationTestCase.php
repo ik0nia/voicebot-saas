@@ -8,12 +8,14 @@ use App\Models\Bot;
 use App\Models\Channel;
 use App\Models\PlanLimit;
 use App\Models\Tenant;
+use App\Services\Chat\ChatResponder;
 use App\Services\ChatCompletionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Testing\TestResponse;
 use Spatie\Permission\Models\Role;
 use Tests\Support\Fakes\FakeChatCompletionService;
+use Tests\Support\Fakes\FakeChatResponder;
 use Tests\TestCase;
 
 /**
