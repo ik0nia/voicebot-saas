@@ -31,11 +31,9 @@ class OrchestratorWiringTest extends TestCase
         ]);
     }
 
-    public function test_legacy_pipeline_runs_when_flag_off(): void
+    public function test_orchestrator_runs_for_every_message(): void
     {
-        // No v2_orchestrator setting = flag OFF
-        $this->assertEmpty($this->bot->settings['v2_orchestrator'] ?? null);
-
+        // Orchestrator is the only pipeline now — no flag to toggle.
         $response = $this->postJson("/api/v1/chatbot/{$this->channel->id}/message", [
             'message' => 'salut',
         ]);
@@ -43,41 +41,21 @@ class OrchestratorWiringTest extends TestCase
         $response->assertOk();
         $response->assertJsonStructure(['response', 'session_id', 'session_token']);
 
-        // detected_intents should be null (legacy path doesn't set them)
-        $outbound = Message::where('direction', 'outbound')->latest('id')->first();
-        $this->assertNotNull($outbound);
-        $this->assertNull($outbound->detected_intents);
-        $this->assertNull($outbound->pipelines_executed);
-    }
-
-    public function test_orchestrator_runs_when_flag_on(): void
-    {
-        // Enable orchestrator
-        $this->bot->update(['settings' => ['v2_orchestrator' => true]]);
-
-        $response = $this->postJson("/api/v1/chatbot/{$this->channel->id}/message", [
-            'message' => 'salut',
-        ]);
-
-        $response->assertOk();
-        $response->assertJsonStructure(['response', 'session_id', 'session_token']);
-
-        // detected_intents should be populated
         $outbound = Message::where('direction', 'outbound')->latest('id')->first();
         $this->assertNotNull($outbound);
         $this->assertNotNull($outbound->detected_intents);
         $this->assertIsArray($outbound->detected_intents);
-        // Greeting intent should be detected
         $intentNames = array_column($outbound->detected_intents, 'name');
         $this->assertContains('greeting', $intentNames);
     }
 
-    public function test_orchestrator_fallback_on_error(): void
+    public function test_orchestrator_failure_serves_degraded_turn(): void
     {
-        // Enable orchestrator
-        $this->bot->update(['settings' => ['v2_orchestrator' => true]]);
-
-        // Bind a broken orchestrator to trigger fallback
+        // When the orchestrator throws (DB/Redis outage, etc.) the
+        // turn still completes — the user gets a reply assembled from
+        // the system prompt + their message alone, no retrieved
+        // products/knowledge. detected_intents / pipelines_executed
+        // stay null so analytics can tell this path apart.
         $this->app->bind(\App\Services\IntentOrchestratorService::class, function () {
             return new class {
                 public function plan(...$args) { throw new \RuntimeException('Boom'); }
@@ -85,22 +63,19 @@ class OrchestratorWiringTest extends TestCase
         });
 
         $response = $this->postJson("/api/v1/chatbot/{$this->channel->id}/message", [
-            'message' => 'test fallback',
+            'message' => 'test degraded',
         ]);
 
-        // Should still succeed — falls back to legacy pipeline
         $response->assertOk();
         $response->assertJsonStructure(['response']);
 
-        // detected_intents should be null (fell back to legacy)
         $outbound = Message::where('direction', 'outbound')->latest('id')->first();
         $this->assertNull($outbound->detected_intents);
+        $this->assertNull($outbound->pipelines_executed);
     }
 
     public function test_orchestrator_detects_multiple_intents(): void
     {
-        $this->bot->update(['settings' => ['v2_orchestrator' => true]]);
-
         $response = $this->postJson("/api/v1/chatbot/{$this->channel->id}/message", [
             'message' => 'caut adeziv pentru gresie si cat costa livrarea',
         ]);
@@ -120,8 +95,6 @@ class OrchestratorWiringTest extends TestCase
 
     public function test_pipelines_executed_is_stored(): void
     {
-        $this->bot->update(['settings' => ['v2_orchestrator' => true]]);
-
         $response = $this->postJson("/api/v1/chatbot/{$this->channel->id}/message", [
             'message' => 'ce silicon aveti',
         ]);
