@@ -475,8 +475,18 @@ class IntentOrchestratorService
         // otherwise match every ≥2-word message and surface products whose
         // names accidentally share a verb stem with the question. Those
         // go through knowledge_query instead.
+        //
+        // Compound queries ("caut adeziv pentru gresie si cat costa livrarea")
+        // trip BOTH policy and explicit product-search signals. The explicit
+        // product signal (from IntentDetectionService's pattern matcher —
+        // "caut / pret / stoc / ...") wins in that case so the user still
+        // gets cards alongside the policy answer. Pure policy questions
+        // ("pot sa il ridic din magazin") have no explicit product signal
+        // and stay on knowledge-only.
+        $policyOnly = ($detected['is_policy_question'] ?? false)
+            && !($detected['is_product_search'] ?? false);
         if (!($detected['is_greeting'] ?? false) && !($detected['is_thanks'] ?? false) && !($detected['is_new_order_intent'] ?? false)
-            && !($detected['is_policy_question'] ?? false)) {
+            && !$policyOnly) {
             $words = preg_split('/\s+/', $msg);
             // Explicit product intent from IntentDetectionService always triggers product search.
             // Otherwise, require ≥2 words as a heuristic signal.

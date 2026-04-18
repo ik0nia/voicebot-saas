@@ -18,14 +18,15 @@ return [
     'synonyms' => [
         'ro' => [
             'pret' => 'cost tarif pret valoare suma',
-            'livrare' => 'transport expediere curier livrare shipping',
+            'livrare' => 'transport expediere curier livrare shipping ridicare ridic ridica colectare pickup punct magazin depozit',
+            'ridicare' => 'ridic ridica ridicare pickup colectare magazin depozit preluare',
             'garantie' => 'garantie service reparatie piese',
             'plata' => 'platesc achit card numerar plata rate factura transfer',
             'program' => 'orar deschis inchis program ore lucru',
             'contact' => 'telefon email adresa locatie contact sediu',
             'reducere' => 'oferta promotie discount reducere cupon voucher',
             'stoc' => 'disponibil disponibilitate stoc exista aveti',
-            'retur' => 'returnare schimb inapoi ramburs retur',
+            'retur' => 'returnare schimb inapoi ramburs retur renunt restituire',
             'dimensiune' => 'marime dimensiune grosime latime lungime inaltime diametru',
             'culoare' => 'culoare nuanta finisaj model varianta',
             'instalare' => 'montaj montare instalare aplicare fixare',
