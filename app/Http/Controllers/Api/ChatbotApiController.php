@@ -328,6 +328,36 @@ class ChatbotApiController extends Controller
             Log::debug('followup quick_replies skipped (non-stream)', ['err' => $e->getMessage()]);
         }
 
+        // P5.3: chip_shown event for conversion analytics (sync path).
+        // Stream path fires its own; this keeps both in lockstep so
+        // the admin chip-analytics dashboard isn't empty for tenants
+        // whose widgets use the non-streaming endpoint.
+        if (!empty($quickReplies)) {
+            try {
+                $stateInfo = app(\App\Services\Widget\UserStateResolver::class)
+                    ->resolve($conversation, $userMessage ?? '', $pageContext ?? []);
+                app(ConversationEventService::class)->track(
+                    EventTaxonomy::CHIP_SHOWN,
+                    [
+                        'page_type'  => $pageContext['page_type'] ?? null,
+                        'user_state' => $stateInfo['state'] ?? null,
+                        'labels'     => array_slice(array_column($quickReplies, 'label'), 0, 4),
+                        'stream'     => false,
+                    ],
+                    [
+                        'tenant_id'       => $bot->tenant_id,
+                        'bot_id'          => $bot->id,
+                        'channel_id'      => $channel->id,
+                        'conversation_id' => $conversation->id,
+                        'event_source'    => EventTaxonomy::SOURCE_BACKEND,
+                        'idempotency_key' => 'chip_shown:' . ($botMessage->id ?? 'no-msg'),
+                    ],
+                );
+            } catch (\Throwable) {
+                // never fail a successful response over analytics
+            }
+        }
+
         $response = [
             'response' => $botResponse,
             'reply' => $botResponse,
@@ -832,20 +862,23 @@ class ChatbotApiController extends Controller
                         try {
                             $stateInfo = app(\App\Services\Widget\UserStateResolver::class)
                                 ->resolve($conversation, $userMessage ?? '', $pageContext ?? []);
-                            app(\App\Services\EventService::class)->track(EventTaxonomy::CHIP_SHOWN, [
-                                'source'     => EventTaxonomy::SOURCE_BACKEND,
-                                'channel_id' => $channel->id,
-                                'conversation_id' => $conversation->id,
-                                'message_id' => $botMessage->id ?? null,
-                                'properties' => [
+                            app(ConversationEventService::class)->track(
+                                EventTaxonomy::CHIP_SHOWN,
+                                [
                                     'page_type'  => $pageContext['page_type'] ?? null,
                                     'user_state' => $stateInfo['state'] ?? null,
                                     'labels'     => array_slice(array_column($followups, 'label'), 0, 4),
                                     'stream'     => true,
                                 ],
-                            ], [
-                                'idempotency_key' => 'chip_shown:' . ($botMessage->id ?? 'no-msg'),
-                            ]);
+                                [
+                                    'tenant_id'       => $bot->tenant_id,
+                                    'bot_id'          => $bot->id,
+                                    'channel_id'      => $channel->id,
+                                    'conversation_id' => $conversation->id,
+                                    'event_source'    => EventTaxonomy::SOURCE_BACKEND,
+                                    'idempotency_key' => 'chip_shown:' . ($botMessage->id ?? 'no-msg'),
+                                ],
+                            );
                         } catch (\Throwable $eTrack) {
                             // never fail a successful stream over analytics
                         }
