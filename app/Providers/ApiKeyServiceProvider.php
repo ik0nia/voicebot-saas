@@ -21,6 +21,34 @@ class ApiKeyServiceProvider extends ServiceProvider
         } catch (\Throwable $e) {
             // DB unavailable (migrations, fresh install) — silent skip
         }
+
+        // Belt + suspenders: if the DB or cache happened to be cold at
+        // container boot (common during a fresh deploy — the app
+        // container comes up before Redis / Postgres have fully
+        // recovered), the initial boot above caches empty and leaves
+        // config pointing at env placeholders for this worker's whole
+        // lifetime. Re-attempt the override lazily on the first HTTP
+        // request and before every queued job — both hooks are zero
+        // cost once config already holds the real keys (placeholder
+        // probe short-circuits).
+        $this->app->make('events')->listen(
+            \Illuminate\Foundation\Http\Events\RequestHandled::class,
+            fn () => $this->refreshIfStale(),
+        );
+        \Illuminate\Support\Facades\Queue::before(fn () => $this->refreshIfStale());
+    }
+
+    private function refreshIfStale(): void
+    {
+        $probe = (string) config('openai.api_key', '');
+        if ($probe !== '' && !$this->isPlaceholder($probe)) {
+            return;
+        }
+        try {
+            $this->overrideFromSettings();
+        } catch (\Throwable) {
+            // Still cold — try again next request / next job.
+        }
     }
 
     private function overrideFromSettings(): void
