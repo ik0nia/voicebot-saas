@@ -10,6 +10,7 @@ RUN apk add --no-cache \
     supervisor \
     nodejs \
     npm \
+    su-exec \
     $PHPIZE_DEPS \
     && docker-php-ext-install \
     pdo_pgsql \
@@ -66,6 +67,13 @@ RUN if [ -f package.json ]; then \
 RUN chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
+# Entrypoint normalises storage/ ownership on every restart and drops
+# non-fpm commands to www-data so logs they write stay correctly owned.
+# Fixes the recurring "root-owned laravel log silently 500s chat" bug.
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
 EXPOSE 9000
 
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["php-fpm"]
