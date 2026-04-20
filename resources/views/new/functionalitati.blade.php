@@ -27,7 +27,7 @@
             <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
                 @foreach([
                     ['Chat pe site', 'Widget premium, o linie de cod. Recomandă produse, preia lead-uri, trimite link-uri.', '💬'],
-                    ['Telefon', 'Agent vocal pe numere românești dedicate. Voce naturală, barge-in real, transcriere live.', '📞'],
+                    ['Telefon', 'Agent vocal pe numere românești dedicate. Voce naturală, clientul poate întrerupe, transcriere în timp real a fiecărui apel.', '📞'],
                     ['WhatsApp', 'Inbound și outbound. Conectare directă WhatsApp Business.', '💚'],
                     ['Messenger · Instagram', 'Facebook Messenger și Instagram DM — inbound din dashboard.', '✨'],
                 ] as $c)

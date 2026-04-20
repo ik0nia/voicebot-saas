@@ -167,9 +167,9 @@
                 <h3 class="display text-2xl font-semibold mb-3">Telefon</h3>
                 <p class="text-muted leading-relaxed mb-5">Agentul ridică apelul, vorbește natural în română, confirmă programări, escaladează când e nevoie. Voce clonată AI premium (opțional).</p>
                 <ul class="space-y-2 text-sm">
-                    <li class="flex gap-2"><span class="text-coral">✦</span> Numere românești dedicate</li>
-                    <li class="flex gap-2"><span class="text-coral">✦</span> Latență sub 800ms, barge-in natural</li>
-                    <li class="flex gap-2"><span class="text-coral">✦</span> Transcriere live + analiză sentiment</li>
+                    <li class="flex gap-2"><span class="text-coral">✦</span> Numere românești dedicate, voce feminină sau masculină</li>
+                    <li class="flex gap-2"><span class="text-coral">✦</span> Răspunde instant, clientul poate întrerupe în orice moment</li>
+                    <li class="flex gap-2"><span class="text-coral">✦</span> Transcriere live și detecție sentiment pentru fiecare apel</li>
                 </ul>
             </div>
 
@@ -186,9 +186,9 @@
                 <h3 class="display text-2xl font-semibold mb-3">Chat pe site</h3>
                 <p class="leading-relaxed mb-5" style="color:#D7D3CA;">Widget premium. O linie de cod. Răspunde instant, recomandă produse, preia lead-uri, trimite link-uri direct la paginile relevante.</p>
                 <ul class="space-y-2 text-sm">
-                    <li class="flex gap-2"><span class="text-coral">✦</span> Carduri produse, preview link, asistență proactivă</li>
-                    <li class="flex gap-2"><span class="text-coral">✦</span> Dark mode, branding custom, mobile-first</li>
-                    <li class="flex gap-2"><span class="text-coral">✦</span> Sandboxed iframe, zero risc XSS</li>
+                    <li class="flex gap-2"><span class="text-coral">✦</span> Carduri produse cu preț și stoc live</li>
+                    <li class="flex gap-2"><span class="text-coral">✦</span> Culori și logo pe brand-ul tău, ecran întunecat pentru vizitatorii seara</li>
+                    <li class="flex gap-2"><span class="text-coral">✦</span> Izolat de restul paginii — nu poate strica nimic pe site</li>
                 </ul>
             </div>
 
@@ -314,10 +314,10 @@
 
         <div class="grid md:grid-cols-4 gap-4">
             @foreach([
-                ['01','Înțelege intenția','Detectează ce vrea clientul: cumpără, întreabă, reclamă, compară. Adaptează tot răspunsul.','🎯'],
-                ['02','Caută în documentele tale','Răspunsul vine direct din ce ai încărcat tu — PDF-uri, pagini, fișe produse. Nu din ghiciri.','🔎'],
-                ['03','Verifică înainte să răspundă','Confidence scoring · citare sursă obligatorie · detecție halucinație activă.','🛡️'],
-                ['04','Răspunde în context','Empatie la frustrare. Recomandare la interes. Scurt dacă vrea rapid. Mereu în tonul tău.','💬'],
+                ['01','Ascultă ce vrea clientul','Înțelege dacă cumpără, întreabă, reclamă sau compară. Adaptează răspunsul, nu aplică un scenariu fix.','🎯'],
+                ['02','Caută în documentele tale','Răspunde doar din ce ai încărcat tu — fișiere, pagini, cataloage. Fără ghiceli, fără umplutură.','🔎'],
+                ['03','Verifică înainte să spună','Dacă nu e sigur pe răspuns, îți cere clarificare sau transferă la un om. Nu improvizează prețuri sau termene.','🛡️'],
+                ['04','Răspunde în tonul tău','Empatie la frustrare. Recomandare la interes. Scurt dacă vrea rapid. Oficial dacă așa vorbește brandul tău.','💬'],
             ] as $s)
                 <div class="fade-up rounded-3xl p-6 bg-cream border border-line">
                     <div class="flex items-center justify-between mb-5">
@@ -348,8 +348,8 @@
             </div>
             <div class="fade-up rounded-3xl p-8 bg-ink text-cream text-center" style="transition-delay:.1s;">
                 <div class="display text-[7rem] md:text-[8rem] stat-num leading-none font-medium" style="color:#F2E59A;">&lt;2s</div>
-                <div class="mt-2 text-sm" style="color:#D7D3CA;">latență răspuns</div>
-                <div class="mono text-[10px] mt-1" style="color:#A8A29E;">end-to-end, p95</div>
+                <div class="mt-2 text-sm" style="color:#D7D3CA;">timp până la răspuns</div>
+                <div class="mono text-[10px] mt-1" style="color:#A8A29E;">cât îi ia omului să citească</div>
             </div>
             <div class="fade-up rounded-3xl p-8 bg-paper border border-line text-center" style="transition-delay:.2s;">
                 <div class="display text-[7rem] md:text-[8rem] stat-num leading-none font-medium accent-text" data-countup="100">100<span class="text-ink">%</span></div>
