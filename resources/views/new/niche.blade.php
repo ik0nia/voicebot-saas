@@ -204,6 +204,7 @@
 {{-- PROBLEMA --}}
 @if(!empty($niche->problem_text))
 <section id="problema" class="py-24 bg-paper border-y border-line relative grain overflow-hidden">
+    @include('new.partials.niche-decor', ['icons' => $nicheIcons, 'seed' => 'problema'])
     <div class="max-w-6xl mx-auto px-6 relative grid lg:grid-cols-12 gap-12 items-start">
         <div class="lg:col-span-5 fade-up lg:sticky lg:top-28">
             <div class="mono text-[11px] uppercase tracking-[0.2em] accent-text mb-4">◇ problema</div>
@@ -225,6 +226,7 @@
 {{-- SOLUȚIA --}}
 @if(!empty($niche->solution_text))
 <section id="solutia" class="py-24 relative overflow-hidden">
+    @include('new.partials.niche-decor', ['icons' => $nicheIcons, 'seed' => 'solutia'])
     <div class="max-w-6xl mx-auto px-6 relative grid lg:grid-cols-12 gap-12 items-start">
         <div class="lg:col-span-7 fade-up space-y-6">
             <div class="mono text-[11px] uppercase tracking-[0.2em] accent-text mb-4">◇ soluția</div>
@@ -260,8 +262,9 @@
 
 {{-- AVANTAJE / BENEFITS --}}
 @if(count($benefits) > 0)
-<section id="avantaje" class="py-24 bg-paper border-y border-line">
-    <div class="max-w-7xl mx-auto px-6">
+<section id="avantaje" class="py-24 bg-paper border-y border-line relative overflow-hidden">
+    @include('new.partials.niche-decor', ['icons' => $nicheIcons, 'seed' => 'avantaje'])
+    <div class="max-w-7xl mx-auto px-6 relative">
         <div class="max-w-2xl mb-14 fade-up">
             <div class="mono text-[11px] uppercase tracking-[0.2em] text-muted mb-4">◇ avantaje</div>
             <h2 class="display text-5xl md:text-6xl font-medium leading-[1.05] mb-5">
@@ -291,7 +294,8 @@
 
 {{-- ANNOTATED CHAT SHOWCASE — 4 adnotări + săgeți curbe (hidden pe mobile) --}}
 <section class="py-20 bg-cream border-y border-line relative overflow-hidden">
-    <div class="max-w-6xl mx-auto px-6">
+    @include('new.partials.niche-decor', ['icons' => $nicheIcons, 'seed' => 'showcase'])
+    <div class="max-w-6xl mx-auto px-6 relative">
         <div class="text-center mb-12 fade-up">
             <div class="mono text-[11px] uppercase tracking-[0.2em] mb-3" style="color: var(--muted);">◇ cum vorbește cu clienții tăi</div>
             <h2 class="display h-display-m">Iată cum <em class="italic accent-text">sună o conversație reală</em>.</h2>
@@ -390,8 +394,9 @@
 </section>
 
 {{-- BIG STATS --}}
-<section class="py-24">
-    <div class="max-w-7xl mx-auto px-6">
+<section class="py-24 relative overflow-hidden">
+    @include('new.partials.niche-decor', ['icons' => $nicheIcons, 'seed' => 'bigstats'])
+    <div class="max-w-7xl mx-auto px-6 relative">
         <div class="text-center mb-14 fade-up">
             <div class="mono text-[11px] uppercase tracking-[0.2em] text-muted mb-4">◇ impact tipic</div>
             <h2 class="display text-4xl md:text-5xl font-medium leading-tight">Ce schimbă un agent AI<br>pentru <em class="italic accent-text">afacerea ta</em>.</h2>
@@ -553,71 +558,93 @@
 </section>
 @endif
 
-{{-- LEAD FORM — demo personalizat pentru nișă --}}
-<section id="contact" class="py-20 bg-cream border-t border-line relative overflow-hidden">
+{{-- LEAD FORM — demo personalizat pentru nișă.
+     Background = accent solid (culoarea nișei), card formular alb
+     suprapus cu decor iconițe specifice nișei. Impact vizual maxim. --}}
+<section id="contact" class="py-24 relative overflow-hidden" style="background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);">
+    {{-- Decor iconițe nișă, mai vizibile pe fundal accent --}}
+    @if(!empty($nicheIcons))
+        <div class="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+            <svg class="absolute top-8 left-[4%] w-40 h-40 text-white opacity-10 -rotate-12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">{!! $nicheIcons[0] ?? '' !!}</svg>
+            <svg class="absolute top-16 right-[6%] w-52 h-52 text-white opacity-[0.07] rotate-6" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">{!! $nicheIcons[1] ?? $nicheIcons[0] !!}</svg>
+            <svg class="absolute bottom-10 left-[12%] w-28 h-28 text-white opacity-[0.08] rotate-12" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">{!! $nicheIcons[2] ?? $nicheIcons[0] !!}</svg>
+            <svg class="absolute bottom-20 right-[4%] w-32 h-32 text-white opacity-[0.09] -rotate-6" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">{!! $nicheIcons[3] ?? $nicheIcons[0] !!}</svg>
+            <svg class="absolute top-1/2 right-[30%] w-16 h-16 text-white opacity-[0.06] rotate-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">{!! $nicheIcons[0] ?? '' !!}</svg>
+        </div>
+    @endif
+
+    {{-- Subtle grid pattern peste accent pentru textură --}}
+    <div class="absolute inset-0 opacity-[0.08] pointer-events-none" style="background-image: radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px); background-size: 24px 24px;"></div>
+
     <div class="max-w-2xl mx-auto px-6 relative">
-        <div class="text-center mb-10 fade-up">
-            <div class="chip chip-soft mb-5 mono text-[11px] uppercase tracking-wider inline-flex">◇ hai să vorbim</div>
-            <h2 class="display h-display-lg mb-4">Vrei un demo <em class="italic accent-text">personalizat</em>?</h2>
-            <p class="text-lg leading-relaxed" style="color: var(--muted);">Trimite-ne link-ul site-ului sau al paginii de Facebook — îți arătăm agentul rulând pe datele afacerii tale, nu pe un demo generic.</p>
+        <div class="text-center mb-8 fade-up">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-white/15 text-white backdrop-blur-sm border border-white/20 mb-5">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-300"></span>
+                ◇ hai să vorbim
+            </div>
+            <h2 class="display text-4xl md:text-5xl font-medium leading-[1.05] mb-4 text-white">
+                Vrei un demo <em class="italic" style="color:#FEF3C7;">personalizat</em>?
+            </h2>
+            <p class="text-lg leading-relaxed text-white/85">
+                Trimite-ne link-ul site-ului sau al paginii de Facebook — îți arătăm agentul rulând pe datele afacerii tale, nu pe un demo generic.
+            </p>
         </div>
 
         @if(session('niche_lead_success'))
-            <div class="mb-6 rounded-2xl px-5 py-4 text-sm font-semibold" style="background:#D1FAE5; color:#047857;">
+            <div class="mb-5 rounded-2xl px-5 py-4 text-sm font-semibold" style="background:#D1FAE5; color:#047857;">
                 {{ session('niche_lead_success') }}
             </div>
         @endif
 
         @if($errors->any())
-            <div class="mb-6 rounded-2xl px-5 py-4 text-sm" style="background: var(--accent-soft); color: var(--accent-dark);">
+            <div class="mb-5 rounded-2xl px-5 py-4 text-sm bg-white/95 text-ink">
                 @foreach($errors->all() as $e)<div>{{ $e }}</div>@endforeach
             </div>
         @endif
 
-        <form action="{{ route('public.niche.lead', $niche->slug) }}" method="POST" class="rounded-3xl p-7 md:p-8 bg-paper border border-line space-y-5 fade-up">
+        <form action="{{ route('public.niche.lead', $niche->slug) }}" method="POST" class="rounded-3xl p-7 md:p-8 bg-white space-y-5 fade-up" style="box-shadow: 0 30px 60px -15px rgba(0,0,0,0.3);">
             @csrf
             <input type="hidden" name="source_url" value="{{ url()->current() }}">
-            {{-- Honeypot — real users leave it empty --}}
             <input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;opacity:0;pointer-events:none;" aria-hidden="true">
 
             <label class="block">
-                <span class="text-sm font-medium mb-1 block">Nume <span style="color: var(--accent);">*</span></span>
+                <span class="text-sm font-semibold mb-1.5 block">Nume <span style="color: var(--accent);">*</span></span>
                 <input required name="name" type="text" value="{{ old('name') }}" placeholder="Numele tău"
-                       class="w-full rounded-xl bg-white border border-line px-4 py-3 text-sm focus:outline-none focus:ring-2"
+                       class="w-full rounded-xl bg-paper border border-line px-4 py-3 text-sm focus:outline-none focus:ring-2"
                        style="--tw-ring-color: var(--accent);">
             </label>
 
             <label class="block">
-                <span class="text-sm font-medium mb-1 block">Site sau pagina de Facebook <span style="color: var(--muted);" class="font-normal">— ca să personalizăm demo-ul</span></span>
+                <span class="text-sm font-semibold mb-1.5 block">Site sau pagina de Facebook <span style="color: var(--muted);" class="font-normal">— ca să personalizăm demo-ul</span></span>
                 <input name="website_url" type="text" value="{{ old('website_url') }}" placeholder="ex: www.afacereata.ro sau facebook.com/afacereata"
-                       class="w-full rounded-xl bg-white border border-line px-4 py-3 text-sm focus:outline-none focus:ring-2"
+                       class="w-full rounded-xl bg-paper border border-line px-4 py-3 text-sm focus:outline-none focus:ring-2"
                        style="--tw-ring-color: var(--accent);">
             </label>
 
             <div class="grid sm:grid-cols-2 gap-4">
                 <label class="block">
-                    <span class="text-sm font-medium mb-1 block">E-mail <span style="color: var(--accent);">*</span></span>
+                    <span class="text-sm font-semibold mb-1.5 block">E-mail <span style="color: var(--accent);">*</span></span>
                     <input required name="email" type="email" value="{{ old('email') }}" placeholder="nume@afacerea-ta.ro"
-                           class="w-full rounded-xl bg-white border border-line px-4 py-3 text-sm focus:outline-none focus:ring-2"
+                           class="w-full rounded-xl bg-paper border border-line px-4 py-3 text-sm focus:outline-none focus:ring-2"
                            style="--tw-ring-color: var(--accent);">
                 </label>
                 <label class="block">
-                    <span class="text-sm font-medium mb-1 block">Telefon <span style="color: var(--accent);">*</span></span>
+                    <span class="text-sm font-semibold mb-1.5 block">Telefon <span style="color: var(--accent);">*</span></span>
                     <input required name="phone" type="tel" value="{{ old('phone') }}" placeholder="+40 7xx xxx xxx"
-                           class="w-full rounded-xl bg-white border border-line px-4 py-3 text-sm focus:outline-none focus:ring-2"
+                           class="w-full rounded-xl bg-paper border border-line px-4 py-3 text-sm focus:outline-none focus:ring-2"
                            style="--tw-ring-color: var(--accent);">
                 </label>
             </div>
 
             <label class="block">
-                <span class="text-sm font-medium mb-1 block">Mesaj <span style="color: var(--muted);" class="font-normal">(opțional)</span></span>
+                <span class="text-sm font-semibold mb-1.5 block">Mesaj <span style="color: var(--muted);" class="font-normal">(opțional)</span></span>
                 <textarea name="message" rows="4"
                           placeholder="Ce ai vrea să facă agentul? Câți clienți îți sună zilnic?"
-                          class="w-full rounded-xl bg-white border border-line px-4 py-3 text-sm focus:outline-none focus:ring-2"
+                          class="w-full rounded-xl bg-paper border border-line px-4 py-3 text-sm focus:outline-none focus:ring-2"
                           style="--tw-ring-color: var(--accent);">{{ old('message') }}</textarea>
             </label>
 
-            <button type="submit" class="btn btn-primary w-full justify-center">
+            <button type="submit" class="btn-primary w-full justify-center py-4 text-base">
                 Vreau demo personalizat
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
             </button>
@@ -626,6 +653,12 @@
                 Prin trimiterea formularului ești de acord cu <a href="{{ route('new.legal.confidentialitate') }}" class="underline accent-text">politica de confidențialitate</a>.
             </p>
         </form>
+
+        <div class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 mt-6 text-xs text-white/80">
+            <span class="inline-flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-white/50"></span>Răspundem în ziua lucrătoare</span>
+            <span class="inline-flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-white/50"></span>Demo pe datele tale, nu generic</span>
+            <span class="inline-flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-white/50"></span>Zero spam, zero follow-up agresiv</span>
+        </div>
     </div>
 </section>
 
