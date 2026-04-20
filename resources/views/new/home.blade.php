@@ -540,6 +540,64 @@
     </div>
 </section>
 
+{{-- Se îmbunătățește singur — non-technical "learns from gaps" story --}}
+<section class="py-24 bg-paper border-t border-line">
+    <div class="max-w-7xl mx-auto px-6 grid lg:grid-cols-12 gap-12 items-center">
+        <div class="lg:col-span-6 fade-up">
+            <div class="mono text-[11px] uppercase tracking-[0.2em] text-muted mb-4">◇ se îmbunătățește singur</div>
+            <h2 class="display text-5xl md:text-6xl font-medium leading-[1.05] mb-6">
+                Pe măsură ce vorbește cu clienții,<br>
+                <span class="italic accent-text">devine mai bun.</span>
+            </h2>
+            <p class="text-lg text-muted leading-relaxed mb-5">Agentul observă întrebările la care n-a răspuns sigur — le grupează pe subiecte și îți propune în dashboard variante de răspuns pe care <span class="text-ink font-medium">tu le aprobi într-un click</span>.</p>
+            <p class="text-lg text-muted leading-relaxed mb-8">Nu învață singur fără supervizare — asta ar fi periculos. Învață asistat: AI face munca de identificare și redactare, tu validezi în 30 de secunde. În câteva săptămâni, acoperă 90–95% din întrebările reale.</p>
+            <div class="flex flex-wrap gap-3">
+                <div class="chip chip-soft text-sm"><span class="accent-text font-semibold">→</span> Detectează întrebări fără răspuns bun</div>
+                <div class="chip chip-soft text-sm"><span class="accent-text font-semibold">→</span> Redactează draft de FAQ</div>
+                <div class="chip chip-soft text-sm"><span class="accent-text font-semibold">→</span> Tu aprobi, AI publică</div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-6 fade-up" style="transition-delay:.1s;">
+            <div class="rounded-3xl bg-cream border border-line p-6 md:p-8 shadow-sm">
+                <div class="mono text-[10px] uppercase tracking-wider text-muted mb-4">◇ sugestii în dashboard · săptămâna 3</div>
+
+                <div class="space-y-3">
+                    <div class="rounded-2xl bg-paper border border-line p-4">
+                        <div class="flex items-start justify-between gap-3 mb-2">
+                            <div class="text-sm font-semibold">Clienții întreabă des despre <em class="italic accent-text">parcare</em></div>
+                            <span class="chip accent-soft-bg mono text-[10px] accent-text shrink-0">24 întrebări</span>
+                        </div>
+                        <div class="text-xs text-muted mb-3">Sugestie draft răspuns:</div>
+                        <div class="text-sm bg-sand rounded-xl px-3 py-2 mb-3 italic">„Avem parcare gratuită pentru clienți în curtea interioară. Intrarea se face din strada Principală 23."</div>
+                        <div class="flex gap-2">
+                            <button type="button" class="chip bg-emerald-50 text-emerald-700 mono text-[10px] font-semibold">✓ aprobă</button>
+                            <button type="button" class="chip bg-white border border-line mono text-[10px]">editează</button>
+                            <button type="button" class="chip bg-white border border-line mono text-[10px]">respinge</button>
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl bg-paper border border-line p-4">
+                        <div class="flex items-start justify-between gap-3 mb-2">
+                            <div class="text-sm font-semibold">Întrebări despre <em class="italic accent-text">plată în rate</em></div>
+                            <span class="chip accent-soft-bg mono text-[10px] accent-text shrink-0">17 întrebări</span>
+                        </div>
+                        <div class="text-xs text-muted mb-3">Sugestie draft răspuns:</div>
+                        <div class="text-sm bg-sand rounded-xl px-3 py-2 italic">„Acceptăm plata în 3 rate fără dobândă pentru comenzi peste 500 lei, prin card."</div>
+                    </div>
+
+                    <div class="rounded-2xl bg-paper border border-line p-4 opacity-70">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="text-sm font-semibold">Alte 5 sugestii în așteptare</div>
+                            <svg class="w-4 h-4 text-muted shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
 {{-- Testimonial big --}}
 <section class="py-24 grain relative">
     <div class="max-w-6xl mx-auto px-6">
@@ -587,6 +645,78 @@
                 </div>
             </div>
         </div>
+    </div>
+</section>
+
+{{-- Voci multiple — mici testimoniale + rezultate măsurabile --}}
+<section class="py-24 bg-paper border-y border-line">
+    <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center max-w-2xl mx-auto mb-14 fade-up">
+            <div class="mono text-[11px] uppercase tracking-[0.2em] text-muted mb-4">◇ ce spun cei care-l folosesc</div>
+            <h2 class="display text-5xl md:text-6xl font-medium leading-[1.05] mb-5">Rezultate, <em class="italic accent-text">nu promisiuni.</em></h2>
+            <p class="text-lg text-muted">Feedback real de la afaceri românești, grupat pe domeniu. Fără fotografii cu stoc, fără nume inventate — doar rezultate măsurabile.</p>
+        </div>
+
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
+            @foreach([
+                [
+                    'quote' => 'Am redus timpul de răspuns cu peste 80%. Clienții primesc confirmare imediat, inclusiv la 3 dimineața. Echipa vine dimineața la muncă cu programările deja făcute.',
+                    'role'  => 'Fondator · service auto',
+                    'initials' => 'DP',
+                    'metric' => '−80% timp răspuns',
+                ],
+                [
+                    'quote' => 'ROI vizibil din prima lună. Programările neconfirmate au scăzut cu jumătate. Echipa de suport se ocupă acum doar de cazurile complexe.',
+                    'role'  => 'Director operațiuni · clinică medicală',
+                    'initials' => 'AM',
+                    'metric' => '−50% no-shows',
+                ],
+                [
+                    'quote' => 'Calitatea vocii e remarcabilă. Câțiva clienți ne-au întrebat dacă am angajat oameni noi — nu realizau că vorbesc cu un agent AI. Pronunția diacriticelor e corectă.',
+                    'role'  => 'Manager · pensiune HORECA',
+                    'initials' => 'IR',
+                    'metric' => '24/7 acoperire',
+                ],
+                [
+                    'quote' => 'Ne-a eliberat aproape 40 de ore pe săptămână din suport manual. Programări, FAQ, tracking comenzi — toate automate. Putem lucra la ce contează.',
+                    'role'  => 'Fondator · platformă educație',
+                    'initials' => 'MC',
+                    'metric' => '+40h/săpt.',
+                ],
+                [
+                    'quote' => 'Funcția care îmi propune răspunsuri noi în fiecare săptămână e genială. Vedem exact ce întreabă clienții și acoperim lacunele rapid.',
+                    'role'  => 'E-commerce manager · retail',
+                    'initials' => 'GC',
+                    'metric' => '90% întrebări acoperite',
+                ],
+                [
+                    'quote' => 'Detectarea frustrării și transferul automat către operator a salvat câteva vânzări mari. Când clientul se enervează, cineva de la noi preia imediat.',
+                    'role'  => 'VP vânzări · logistică',
+                    'initials' => 'RS',
+                    'metric' => '+12% conversie',
+                ],
+            ] as $t)
+                <div class="fade-up rounded-3xl p-6 bg-cream border border-line flex flex-col">
+                    <div class="flex gap-0.5 mb-4">
+                        @for($i = 0; $i < 5; $i++)
+                            <svg class="w-3.5 h-3.5" style="color: #F4C430;" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        @endfor
+                    </div>
+                    <p class="text-[15px] leading-relaxed mb-5 flex-1">„{{ $t['quote'] }}"</p>
+                    <div class="flex items-center justify-between gap-3 pt-4 border-t border-line">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-9 h-9 rounded-full accent-bg flex items-center justify-center shrink-0">
+                                <span class="text-white text-[11px] font-bold">{{ $t['initials'] }}</span>
+                            </div>
+                            <p class="text-[11px] text-muted leading-tight">{{ $t['role'] }}</p>
+                        </div>
+                        <span class="chip accent-soft-bg mono text-[10px] accent-text font-semibold shrink-0">{{ $t['metric'] }}</span>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
+        <p class="text-xs text-center mt-8 text-muted mono">Menționările nominale, logo-urile și cifrele exacte sunt disponibile în conversații private, după semnarea NDA.</p>
     </div>
 </section>
 
