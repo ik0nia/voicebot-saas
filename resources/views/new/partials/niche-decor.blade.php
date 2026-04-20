@@ -3,43 +3,41 @@
   non-overlapping peste o secțiune. Apelat cu:
     @include('new.partials.niche-decor', ['icons' => $nicheIcons, 'seed' => 'problema'])
 
-  Strategie:
-  - 10 sloturi pre-validate (poziții + mărimi + rotații non-overlapping
-    pentru secțiuni de 500-900px înălțime).
-  - Seed-ul (string-ul secțiunii) e hash-uit și folosit ca offset la
-    alegerea slot-urilor și a iconițelor, deci fiecare secțiune arată
-    diferit dar consistent la refresh.
-  - Hidden pe mobile unde overlap-ul cu conținutul e problematic.
+  Folosim inline `style=""` pentru poziție/mărime — nu depinde de
+  Tailwind JIT (care poate să nu recunoască variante negative sau
+  arbitrare până la rebuild). Garantat să nu cadă pe default 0,0.
 --}}
 @php
-    /* Doar colțuri + middle-axe, FĂRĂ sloturi în zona centrală
-       (0.3-0.7 orizontal × 0.3-0.7 vertical). Fiecare slot are o
-       zonă de siguranță în jur garantată de poziția relativă. */
+    /* 4 iconițe în colțuri, trase parțial în afara secțiunii
+       (negative inset-urile pe 24-32px) ca să nu atingă conținutul. */
     $slots = [
-        // 4 colțuri mari
-        ['t' => 'top-4 left-[3%]',        'size' => 'w-24 h-24',  'rot' => '-rotate-12', 'op' => 'opacity-[0.07]', 'stroke' => '1.2'],
-        ['t' => 'top-6 right-[4%]',       'size' => 'w-32 h-32',  'rot' => 'rotate-6',   'op' => 'opacity-[0.06]', 'stroke' => '1.1'],
-        ['t' => 'bottom-6 left-[4%]',     'size' => 'w-28 h-28',  'rot' => 'rotate-12',  'op' => 'opacity-[0.07]', 'stroke' => '1.2'],
-        ['t' => 'bottom-8 right-[3%]',    'size' => 'w-24 h-24',  'rot' => '-rotate-6',  'op' => 'opacity-[0.065]','stroke' => '1.3'],
-        // 2 accente pe marginile lateral-middle (minim 30% depărtare de colțuri)
-        ['t' => 'top-[45%] left-[2%]',    'size' => 'w-14 h-14',  'rot' => '-rotate-3',  'op' => 'opacity-[0.055]','stroke' => '1.5'],
-        ['t' => 'top-[48%] right-[2%]',   'size' => 'w-16 h-16',  'rot' => 'rotate-3',   'op' => 'opacity-[0.055]','stroke' => '1.4'],
+        ['top' => '-24px',    'left' => '-24px',    'w' => '80px',  'rot' => '-12deg', 'op' => '0.05'],
+        ['top' => '-32px',    'right' => '-24px',   'w' => '96px',  'rot' => '6deg',   'op' => '0.05'],
+        ['bottom' => '-24px', 'left' => '-16px',    'w' => '80px',  'rot' => '12deg',  'op' => '0.05'],
+        ['bottom' => '-32px', 'right' => '-32px',   'w' => '96px',  'rot' => '-6deg',  'op' => '0.05'],
     ];
 
     $offset = abs(crc32($seed ?? 'default'));
     $iconCount = count($icons);
-    $slotCount = count($slots);
 @endphp
 
 @if($iconCount > 0)
-<div class="absolute inset-0 overflow-hidden pointer-events-none hidden md:block" aria-hidden="true">
+<div class="absolute inset-0 overflow-hidden pointer-events-none hidden md:block" aria-hidden="true" style="z-index: 0;">
     @foreach($slots as $i => $slot)
         @php
-            // Alegem o iconiță "pseudo-random" per slot, dar deterministic pe seed.
             $iconIdx = ($offset + $i * 7) % $iconCount;
+            $pos = [];
+            foreach (['top','right','bottom','left'] as $k) {
+                if (isset($slot[$k])) $pos[] = $k . ':' . $slot[$k];
+            }
+            $style = 'position:absolute;'
+                . implode(';', $pos) . ';'
+                . 'width:' . $slot['w'] . ';height:' . $slot['w'] . ';'
+                . 'opacity:' . $slot['op'] . ';'
+                . 'transform:rotate(' . $slot['rot'] . ');'
+                . 'color:var(--accent);';
         @endphp
-        <svg class="absolute {{ $slot['t'] }} {{ $slot['size'] }} {{ $slot['rot'] }} {{ $slot['op'] }} accent-text"
-             fill="none" stroke="currentColor" stroke-width="{{ $slot['stroke'] }}"
+        <svg style="{{ $style }}" fill="none" stroke="currentColor" stroke-width="1.3"
              stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
             {!! $icons[$iconIdx] !!}
         </svg>
