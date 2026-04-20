@@ -1,33 +1,45 @@
-@extends('layouts.app')
+@extends('layouts.new-auth')
 
-@section('title', 'Verifică emailul — Sambla')
+@section('title', 'Verifică e-mail-ul — Sambla')
 
 @section('content')
-<div class="min-h-[80vh] flex items-center justify-center px-4 py-12 pt-24 lg:pt-28">
-    <div class="w-full max-w-md">
-        <div class="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 p-8">
-            <h1 class="text-2xl font-bold text-slate-900">Verifică-ți emailul</h1>
-            <p class="text-slate-500 mt-3 text-sm">
-                Am trimis un link de verificare la <strong>{{ auth()->user()->email }}</strong>.
-                Deschide emailul și dă click pe link pentru a-ți activa contul.
-            </p>
-
-            @if(session('status'))
-                <div class="mt-6 bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl text-sm">
-                    {{ session('status') }}
-                </div>
-            @endif
-
-            <form method="POST" action="{{ route('verification.send') }}" class="mt-6">
-                @csrf
-                <button type="submit" class="w-full rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700">Retrimite email-ul de verificare</button>
-            </form>
-
-            <form method="POST" action="{{ route('logout') }}" class="mt-3">
-                @csrf
-                <button type="submit" class="w-full text-xs text-slate-500 hover:underline">Deconectează-te</button>
-            </form>
+<div class="w-full max-w-md">
+    <div class="text-center mb-6">
+        <div class="inline-flex items-center justify-center w-14 h-14 rounded-full accent-soft-bg mb-4">
+            <svg class="w-7 h-7 accent-text" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/>
+            </svg>
         </div>
+        <h1 class="display text-4xl font-semibold mb-2">Verifică-ți <em class="italic accent-text">e-mail-ul</em></h1>
+        <p class="text-sm leading-relaxed" style="color: var(--muted);">
+            Am trimis un link de activare la <strong class="text-ink">{{ auth()->user()->email }}</strong>.
+            Deschide mail-ul și dă click pe link pentru a-ți activa contul.
+        </p>
     </div>
+
+    <div class="bg-paper rounded-3xl border border-line p-7 md:p-8 space-y-4">
+        @if(session('status'))
+            <div class="rounded-xl px-4 py-3 text-sm" style="background:#D1FAE5; color:#047857;">
+                {{ session('status') }}
+            </div>
+        @endif
+
+        <form method="POST" action="{{ route('verification.send') }}">
+            @csrf
+            <button type="submit" class="btn-primary w-full py-3.5 text-sm">
+                Retrimite e-mail-ul de verificare
+            </button>
+        </form>
+
+        <p class="text-xs text-center" style="color: var(--muted);">
+            Nu vezi mail-ul? Verifică folder-ul de Spam. Dacă tot nu apare, scrie-ne la
+            <a href="mailto:servus@sambla.ro" class="accent-text hover:underline">servus@sambla.ro</a>.
+        </p>
+    </div>
+
+    <form method="POST" action="{{ route('logout') }}" class="mt-4 text-center">
+        @csrf
+        <button type="submit" class="text-xs hover:underline" style="color: var(--muted);">Deconectează-te</button>
+    </form>
 </div>
 @endsection
