@@ -121,6 +121,24 @@ Route::middleware(\App\Http\Middleware\PublicPageCache::class)->group(function (
     })->name('public.niche');
 });
 
+// Parallel "warm redesign" site at /new/* — strictly additive, zero
+// impact on the live marketing site. When the redesign is promoted,
+// these routes can be renamed and the legacy views archived.
+Route::prefix('new')->middleware(\App\Http\Middleware\PublicPageCache::class)->group(function () {
+    $c = \App\Http\Controllers\NewSite\NewSiteController::class;
+    Route::get('/',                     [$c, 'home'])->name('new.home');
+    Route::get('/functionalitati',      [$c, 'functionalitati'])->name('new.functionalitati');
+    Route::get('/preturi',              [$c, 'preturi'])->name('new.preturi');
+    Route::get('/de-ce-sambla',         [$c, 'deCeSambla'])->name('new.deCeSambla');
+    Route::get('/despre',               [$c, 'despre'])->name('new.despre');
+    Route::get('/contact',              [$c, 'contact'])->name('new.contact');
+    Route::get('/blog',                 [$c, 'blog'])->name('new.blog');
+    Route::get('/legal/termeni',            fn () => app($c)->legal('termeni'))->name('new.legal.termeni');
+    Route::get('/legal/confidentialitate',  fn () => app($c)->legal('confidentialitate'))->name('new.legal.confidentialitate');
+    Route::get('/legal/cookie-uri',         fn () => app($c)->legal('cookie-uri'))->name('new.legal.cookies');
+    Route::get('/pentru/{niche:slug}',  [$c, 'niche'])->name('new.niche');
+});
+
 // Dynamic sitemap — includes all public pages + active niche landing pages.
 Route::get('/sitemap.xml', function () {
     $urls = [
