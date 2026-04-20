@@ -1046,7 +1046,7 @@
                 row.style.opacity = '1'; row.style.transform = 'translateY(0)';
                 chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: 'smooth' });
             });
-            t(onDone, 450);
+            t(onDone, 320);
             return;
         }
 
@@ -1065,18 +1065,31 @@
             row.style.opacity = '1'; row.style.transform = 'translateY(0)';
             chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: 'smooth' });
         });
-        t(onDone, 450);
+        t(onDone, 320);
     }
 
     function addMessage(msg, onDone) {
         if (!msg.user) {
             typing.classList.remove('hidden'); typing.classList.add('flex');
             chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: 'smooth' });
-            t(() => { typing.classList.add('hidden'); typing.classList.remove('flex'); addBubble(msg, onDone); }, 700 + Math.random() * 400);
+            t(() => { typing.classList.add('hidden'); typing.classList.remove('flex'); addBubble(msg, onDone); }, 450 + Math.random() * 250);
         } else {
             addBubble(msg, onDone);
         }
     }
+
+    // Pause auto-advance când user-ul e cu mouse-ul peste card sau touch-activ
+    // pe mobile — cititul trebuie să-i aparțină, nu să fie întrerupt.
+    let hovered = false;
+    card.addEventListener('mouseenter', () => { hovered = true; });
+    card.addEventListener('mouseleave', () => { hovered = false; });
+    card.addEventListener('touchstart', () => { hovered = true; }, { passive: true });
+    // pe touch nu avem mouseleave; resetăm dupa 4s de la ultimul tap
+    let touchResetTimer = null;
+    card.addEventListener('touchend', () => {
+        clearTimeout(touchResetTimer);
+        touchResetTimer = setTimeout(() => { hovered = false; }, 4000);
+    }, { passive: true });
 
     function play(index) {
         clearAll();
@@ -1090,20 +1103,30 @@
             label.textContent = sc.label; footer.textContent = sc.footer;
             if (badge) { badge.textContent = sc.badge; badge.style.opacity = '1'; }
             label.style.opacity = '1'; footer.style.opacity = '1';
-        }, 220);
+        }, 180);
         setDot(index);
         inner.innerHTML = '';
         let i = 0;
+        const advanceWhenIdle = () => {
+            if (myGen !== gen) return;
+            if (hovered) {
+                // Așteaptă până user-ul pleacă — poll la 500ms
+                t(advanceWhenIdle, 500);
+                return;
+            }
+            current = (current + 1) % scenarios.length;
+            play(current);
+        };
         const next = () => {
             if (myGen !== gen) return;
-            if (i >= sc.messages.length) { t(() => { if (myGen !== gen) return; current = (current + 1) % scenarios.length; play(current); }, 3200); return; }
+            if (i >= sc.messages.length) { t(advanceWhenIdle, 2400); return; }
             const m = sc.messages[i];
-            const delay = i === 0 ? 500 : (m.user ? 700 : 200);
+            const delay = i === 0 ? 350 : (m.user ? 500 : 150);
             t(() => { if (myGen !== gen) return; addMessage(m, () => { i++; next(); }); }, delay);
         };
         next();
     }
-    t(() => play(current), 400);
+    t(() => play(current), 300);
 
     let startX = 0, startY = 0;
     chatEl.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; startY = e.touches[0].clientY; }, { passive: true });
