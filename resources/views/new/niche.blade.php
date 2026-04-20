@@ -59,35 +59,6 @@
 
 @section('content')
 
-{{-- TICKER --}}
-<div class="bg-sand border-b border-line py-2 overflow-hidden">
-    <div class="ticker flex gap-10 whitespace-nowrap text-xs mono text-muted">
-        @for($i=0; $i<3; $i++)
-            <span>✦ Agent AI pentru {{ strtolower($niche->name) }}</span>
-            <span class="accent-text">●</span>
-            <span>✦ Integrare Google Calendar</span>
-            <span class="accent-text">●</span>
-            <span>✦ Răspunsuri verificate</span>
-            <span class="accent-text">●</span>
-            <span>✦ GDPR nativ</span>
-            <span class="accent-text">●</span>
-            <span>✦ Română + engleză</span>
-            <span class="accent-text">●</span>
-        @endfor
-    </div>
-</div>
-
-{{-- Breadcrumbs --}}
-<nav class="max-w-7xl mx-auto px-6 pt-4 text-xs text-muted mono" aria-label="Breadcrumb">
-    <ol class="flex items-center gap-1.5 flex-wrap">
-        <li><a href="{{ route('new.home') }}" class="hover:text-ink">Sambla</a></li>
-        <li>/</li>
-        <li><a href="{{ route('new.home') }}#industrii" class="hover:text-ink">Industrii</a></li>
-        <li>/</li>
-        <li class="text-ink">{{ $niche->name }}</li>
-    </ol>
-</nav>
-
 {{-- HERO --}}
 <section class="hero-glow relative overflow-hidden">
     {{-- Floating niche-specific background icons (5 SVGs scattered cu opacity 0.07–0.10) --}}
