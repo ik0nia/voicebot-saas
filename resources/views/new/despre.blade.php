@@ -209,6 +209,48 @@
     </div>
 </section>
 
+{{-- CE E REAL AZI — metrici verificabile, nu marketing gol --}}
+<section class="py-20 bg-cream border-y border-line">
+    <div class="max-w-6xl mx-auto px-6">
+        <div class="text-center mb-12 fade-up">
+            <div class="mono text-[11px] uppercase tracking-[0.2em] mb-3" style="color: var(--muted);">◇ ce e real azi</div>
+            <h2 class="display text-4xl md:text-5xl font-medium leading-tight">Onești <em class="italic accent-text">din start</em>.</h2>
+            <p class="text-lg mt-4 max-w-2xl mx-auto" style="color: var(--muted);">Preferăm să spunem ce e, nu ce ar suna bine. Dacă mâine depășim un număr, îl actualizăm aici.</p>
+        </div>
+
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="fade-up rounded-3xl p-6 bg-paper border border-line">
+                <div class="display text-5xl font-medium accent-text mb-2">17</div>
+                <div class="font-semibold text-sm mb-1">verticale cu pagini dedicate</div>
+                <div class="text-xs" style="color: var(--muted);">Fiecare cu prompt-uri și integrări adaptate.</div>
+            </div>
+            <div class="fade-up rounded-3xl p-6 bg-paper border border-line" style="transition-delay:.05s;">
+                <div class="display text-5xl font-medium accent-text mb-2">100<span class="text-2xl">%</span></div>
+                <div class="font-semibold text-sm mb-1">hosting în România</div>
+                <div class="text-xs" style="color: var(--muted);">Servere fizice RO, GDPR nativ, date în UE.</div>
+            </div>
+            <div class="fade-up rounded-3xl p-6 bg-paper border border-line" style="transition-delay:.1s;">
+                <div class="display text-5xl font-medium accent-text mb-2">5</div>
+                <div class="font-semibold text-sm mb-1">canale cu același creier</div>
+                <div class="text-xs" style="color: var(--muted);">Site, telefon, WhatsApp, Messenger, Instagram.</div>
+            </div>
+            <div class="fade-up rounded-3xl p-6 bg-paper border border-line" style="transition-delay:.15s;">
+                <div class="display text-5xl font-medium accent-text mb-2">0</div>
+                <div class="font-semibold text-sm mb-1">incidente de date expuse</div>
+                <div class="text-xs" style="color: var(--muted);">Izolare completă per cont. Niciun client nu vede datele altuia.</div>
+            </div>
+        </div>
+
+        <div class="mt-10 text-center fade-up" style="transition-delay:.2s;">
+            <div class="inline-flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm mono" style="color: var(--muted);">
+                <span class="inline-flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full accent-bg"></span> echipă în Oradea, RO</span>
+                <span class="inline-flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full accent-bg"></span> support &amp; dev în aceeași cameră</span>
+                <span class="inline-flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full accent-bg"></span> release-uri săptămânale</span>
+            </div>
+        </div>
+    </div>
+</section>
+
 {{-- CTA --}}
 <section class="py-24">
     <div class="max-w-4xl mx-auto px-6">

@@ -143,6 +143,7 @@ Route::prefix('new')->middleware(\App\Http\Middleware\PublicPageCache::class)->g
 // Dynamic sitemap — includes all public pages + active niche landing pages.
 Route::get('/sitemap.xml', function () {
     $urls = [
+        // Legacy URLs (canonical în prezent)
         ['loc' => '/',                  'changefreq' => 'weekly',  'priority' => '1.0'],
         ['loc' => '/de-ce-sambla',      'changefreq' => 'weekly',  'priority' => '0.95'],
         ['loc' => '/functionalitati',   'changefreq' => 'weekly',  'priority' => '0.9'],
@@ -153,6 +154,21 @@ Route::get('/sitemap.xml', function () {
         ['loc' => '/termeni',           'changefreq' => 'yearly',  'priority' => '0.3'],
         ['loc' => '/confidentialitate', 'changefreq' => 'yearly',  'priority' => '0.3'],
         ['loc' => '/cookie-uri',        'changefreq' => 'yearly',  'priority' => '0.3'],
+
+        // /new/* URLs — canonical dedicat, fiecare pagină setează
+        // @section('canonical') spre /new/... deci Google nu indexează
+        // dublu. Prioritate egală pentru dual-indexing în tranziție.
+        ['loc' => '/new',                        'changefreq' => 'weekly',  'priority' => '0.95'],
+        ['loc' => '/new/de-ce-sambla',           'changefreq' => 'weekly',  'priority' => '0.9'],
+        ['loc' => '/new/functionalitati',        'changefreq' => 'weekly',  'priority' => '0.9'],
+        ['loc' => '/new/preturi',                'changefreq' => 'weekly',  'priority' => '0.9'],
+        ['loc' => '/new/despre',                 'changefreq' => 'monthly', 'priority' => '0.7'],
+        ['loc' => '/new/contact',                'changefreq' => 'monthly', 'priority' => '0.7'],
+        ['loc' => '/new/industrii',              'changefreq' => 'weekly',  'priority' => '0.8'],
+        ['loc' => '/new/blog',                   'changefreq' => 'weekly',  'priority' => '0.5'],
+        ['loc' => '/new/legal/termeni',          'changefreq' => 'yearly',  'priority' => '0.3'],
+        ['loc' => '/new/legal/confidentialitate','changefreq' => 'yearly',  'priority' => '0.3'],
+        ['loc' => '/new/legal/cookie-uri',       'changefreq' => 'yearly',  'priority' => '0.3'],
     ];
 
     $niches = \App\Models\Niche::where('is_active', true)
@@ -162,6 +178,12 @@ Route::get('/sitemap.xml', function () {
     foreach ($niches as $niche) {
         $urls[] = [
             'loc'        => '/pentru/' . $niche->slug,
+            'lastmod'    => $niche->updated_at->toW3cString(),
+            'changefreq' => 'weekly',
+            'priority'   => '0.8',
+        ];
+        $urls[] = [
+            'loc'        => '/new/pentru/' . $niche->slug,
             'lastmod'    => $niche->updated_at->toW3cString(),
             'changefreq' => 'weekly',
             'priority'   => '0.8',
