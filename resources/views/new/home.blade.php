@@ -113,8 +113,11 @@
                     </div>
                 </div>
 
-                <div class="absolute -left-4 -bottom-4 bg-white rounded-2xl shadow-xl p-4 pr-5 flex items-center gap-3 border border-line max-w-[260px] float" style="animation-delay:.5s;">
-                    <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                {{-- Badge rezumat — plasat deasupra dungii de footer a card-ului de chat,
+                     centrat orizontal, să nu obstrucționeze indicatorul „Răspuns din baza
+                     de cunoștințe" din footer. --}}
+                <div class="absolute left-1/2 -translate-x-1/2 bottom-16 md:bottom-20 bg-white rounded-2xl shadow-xl p-3 pr-5 flex items-center gap-3 border border-line max-w-[260px] float pointer-events-none" style="animation-delay:.5s;">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                     </div>
                     <div>
