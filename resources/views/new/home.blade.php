@@ -32,8 +32,8 @@
         <div class="lg:col-span-6 fade-up">
             <div class="chip chip-outline mb-7">
                 <span class="relative flex h-2 w-2">
-                    <span class="absolute inline-flex h-full w-full rounded-full bg-coral opacity-60 animate-ping"></span>
-                    <span class="relative inline-flex rounded-full h-2 w-2 bg-coral"></span>
+                    <span class="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-60 animate-ping"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                 </span>
                 <span class="mono text-[11px] uppercase tracking-wider">live · răspunde acum</span>
             </div>
@@ -91,12 +91,12 @@
                     </div>
 
                     {{-- Bandă industrie prominentă — accent soft bg, text mare,
-                         pulse dot. Scenariul curent e clar vizibil. --}}
+                         pulse dot verde (live = verde peste tot). --}}
                     <div class="px-5 py-3 border-b border-line accent-soft-bg transition-colors duration-500 flex items-center justify-between gap-3">
                         <div class="flex items-center gap-2.5 min-w-0">
                             <span class="relative flex h-2 w-2 shrink-0">
-                                <span class="absolute inline-flex h-full w-full rounded-full accent-bg opacity-60 animate-ping"></span>
-                                <span class="relative inline-flex rounded-full h-2 w-2 accent-bg"></span>
+                                <span class="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-60 animate-ping"></span>
+                                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                             </span>
                             <span class="mono text-[10px] uppercase tracking-[0.15em] accent-dark">demo live</span>
                             <span class="text-muted">·</span>
