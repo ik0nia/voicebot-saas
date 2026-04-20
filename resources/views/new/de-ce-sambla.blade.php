@@ -68,6 +68,41 @@
     </div>
 </section>
 
+{{-- ROMANIA ADVANTAGE — 5 bullet-uri native RO --}}
+<section class="py-20 bg-cream border-y border-line">
+    <div class="max-w-6xl mx-auto px-6">
+        <div class="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
+            <div class="fade-up">
+                <div class="chip chip-soft mb-5 mono text-[11px] uppercase tracking-wider inline-flex">◇ construit în 🇷🇴</div>
+                <h2 class="display h-display-m mb-4">De ce contează că <em class="italic accent-text">suntem de aici</em>.</h2>
+                <p class="text-lg leading-relaxed" style="color: var(--muted);">Pentru o afacere din România, hosting-ul și echipa locală nu sunt detaliu — sunt avantaj direct. Iată ce schimbă, concret:</p>
+            </div>
+
+            <div class="fade-up" style="transition-delay:.1s;">
+                <ul class="space-y-5">
+                    @foreach([
+                        ['Servere fizice în România', 'Zero transfer de date în afara UE. În caz de audit GDPR, e tot în țară — trasabil, verificabil, controlabil.'],
+                        ['Voce română nativă', 'Intonație, pauze, accente, diacritice (ă â î ș ț) corecte. Nu sună ca un TTS franțuzesc cu română suprapusă.'],
+                        ['Înțelege româna pe bune', 'Pentru agent, „retur", „returnare" și „înapoiere" înseamnă același lucru. Nu e traducere generică — e adaptat la limba reală a clienților tăi.'],
+                        ['Numere de telefon RO native', 'Clienții tăi sună un 0775 sau 0376, nu un număr internațional. Preț normal de apel, fără surprize pe factura lor.'],
+                        ['Suport în română, cu oameni reali', 'Fără tichete în engleză, fără call center indian prin trei niveluri. Scrii un mail, răspunde cineva care înțelege exact ce ai.'],
+                    ] as $adv)
+                        <li class="flex gap-4">
+                            <div class="w-9 h-9 rounded-xl accent-soft-bg flex items-center justify-center shrink-0 mt-0.5">
+                                <svg class="w-4 h-4 accent-text" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg>
+                            </div>
+                            <div>
+                                <p class="font-semibold mb-1">{{ $adv[0] }}</p>
+                                <p class="text-sm leading-relaxed" style="color: var(--muted);">{{ $adv[1] }}</p>
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
 {{-- CATEGORICAL COMPARISON TABLE --}}
 <section class="py-20 bg-paper border-y border-line">
     <div class="max-w-6xl mx-auto px-6">
@@ -140,6 +175,139 @@
         </div>
         <p class="text-xs mt-4 text-center lg:hidden" style="color: var(--muted);">← Glisează lateral pentru tot tabelul →</p>
         <p class="text-xs mt-4 text-center" style="color: var(--muted);">Comparațiile sunt pe categorii, nu pe nume de brand. Verificabile în conturile noastre de demo.</p>
+    </div>
+</section>
+
+{{-- CASE STUDIES — 1 real anonim + 2 ilustrative --}}
+<section class="py-20 bg-paper border-b border-line">
+    <div class="max-w-6xl mx-auto px-6">
+        <div class="text-center max-w-2xl mx-auto mb-12 fade-up">
+            <div class="mono text-[11px] uppercase tracking-[0.2em] mb-3" style="color: var(--muted);">◇ cum arată în producție</div>
+            <h2 class="display h-display-m mb-4">Cazuri <em class="italic accent-text">concrete</em>.</h2>
+            <p class="text-lg" style="color: var(--muted);">Un client real anonimizat și două scenarii ilustrative, ca să vezi concret cum se folosește platforma. Pe măsură ce avem mai multe rezultate publice, le adăugăm aici.</p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6">
+
+            {{-- Client real anonim — cosmetice --}}
+            <div class="fade-up relative rounded-3xl bg-cream border-2 p-6 lg:p-7" style="border-color: var(--accent);">
+                <div class="absolute -top-3 left-6 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-white" style="background: var(--accent);">◇ client real · anonimizat</div>
+                <p class="mono text-[10px] uppercase tracking-wider mt-2 mb-2 accent-text">e-commerce · cosmetice naturale</p>
+                <h3 class="display text-lg font-semibold mb-3 leading-tight">Magazin online cu sute de produse</h3>
+                <p class="text-sm leading-relaxed mb-5" style="color: var(--muted);">Magazin cu catalog mare, întrebări frecvente despre tipuri de ten, alergeni, mod de utilizare. Echipa de suport era copleșită de aceleași 20–30 întrebări reluate zilnic.</p>
+
+                <div class="space-y-3 mb-5 text-sm">
+                    <div>
+                        <p class="mono text-[10px] uppercase tracking-wider mb-0.5" style="color: var(--muted);">◇ provocare</p>
+                        <p>Întrebări repetitive pe ten / ingrediente / alergii consumau ore din timpul echipei, iar răspunsurile veneau cu întârziere seara și în weekend.</p>
+                    </div>
+                    <div>
+                        <p class="mono text-[10px] uppercase tracking-wider mb-0.5" style="color: var(--muted);">◇ soluție</p>
+                        <p>Sambla a sincronizat catalogul WooCommerce și a învățat din descrierile produselor, politica de retur și blogul cu sfaturi de îngrijire. Agentul răspunde cu recomandări de produse din catalog.</p>
+                    </div>
+                    <div>
+                        <p class="mono text-[10px] uppercase tracking-wider mb-0.5" style="color: var(--muted);">◇ integrare</p>
+                        <p>WooCommerce live (sync la fiecare modificare), widget pe site, escaladare la echipa de suport prin email.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 pt-4 border-t border-line">
+                    <div class="text-center">
+                        <p class="display text-2xl font-bold accent-text">24/7</p>
+                        <p class="text-[10px] mono uppercase tracking-wider" style="color: var(--muted);">răspuns instant</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="display text-2xl font-bold accent-text">100%</p>
+                        <p class="text-[10px] mono uppercase tracking-wider" style="color: var(--muted);">catalog acoperit</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="display text-2xl font-bold accent-text">RO</p>
+                        <p class="text-[10px] mono uppercase tracking-wider" style="color: var(--muted);">voce + chat</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Stomatologie ilustrativ --}}
+            <div class="fade-up relative rounded-3xl bg-cream border border-line p-6 lg:p-7" style="transition-delay:.1s;">
+                <div class="absolute -top-3 left-6 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider" style="background: var(--sand); color: var(--inkSoft);">◇ scenariu ilustrativ</div>
+                <p class="mono text-[10px] uppercase tracking-wider mt-2 mb-2" style="color: var(--muted);">cabinet stomatologic · 4 medici</p>
+                <h3 class="display text-lg font-semibold mb-3 leading-tight">Cabinet stomatologic urban</h3>
+                <p class="text-sm leading-relaxed mb-5" style="color: var(--muted);">Cabinet cu 4 medici, ~150 pacienți pe săptămână. Recepția era depășită de telefoanele pentru programări, întrebări despre tarife și instrucțiuni post-procedură.</p>
+
+                <div class="space-y-3 mb-5 text-sm">
+                    <div>
+                        <p class="mono text-[10px] uppercase tracking-wider mb-0.5" style="color: var(--muted);">◇ provocare</p>
+                        <p>Recepția pierdea 2–3 ore pe zi cu telefoane repetitive (program, tarife, ce e acoperit de asigurare, instrucțiuni post-extracție).</p>
+                    </div>
+                    <div>
+                        <p class="mono text-[10px] uppercase tracking-wider mb-0.5" style="color: var(--muted);">◇ soluție</p>
+                        <p>Agent vocal Sambla pe numărul cabinetului, conectat la calendarul Google al medicilor. Răspunde 24/7 cu voce română, face programări, trimite confirmări, escaladează urgențele.</p>
+                    </div>
+                    <div>
+                        <p class="mono text-[10px] uppercase tracking-wider mb-0.5" style="color: var(--muted);">◇ integrare</p>
+                        <p>Număr telefonic dedicat, calendar Google, sync sheet de tarife și instrucțiuni post-procedură.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 pt-4 border-t border-line">
+                    <div class="text-center">
+                        <p class="display text-2xl font-bold">+40%</p>
+                        <p class="text-[10px] mono uppercase tracking-wider" style="color: var(--muted);">programări noapte</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="display text-2xl font-bold">−2h</p>
+                        <p class="text-[10px] mono uppercase tracking-wider" style="color: var(--muted);">recepția zilnic</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="display text-2xl font-bold">0</p>
+                        <p class="text-[10px] mono uppercase tracking-wider" style="color: var(--muted);">apeluri pierdute</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Avocatură ilustrativ --}}
+            <div class="fade-up relative rounded-3xl bg-cream border border-line p-6 lg:p-7" style="transition-delay:.2s;">
+                <div class="absolute -top-3 left-6 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider" style="background: var(--sand); color: var(--inkSoft);">◇ scenariu ilustrativ</div>
+                <p class="mono text-[10px] uppercase tracking-wider mt-2 mb-2" style="color: var(--muted);">birou avocatură · 6 avocați</p>
+                <h3 class="display text-lg font-semibold mb-3 leading-tight">Birou de avocatură mediu</h3>
+                <p class="text-sm leading-relaxed mb-5" style="color: var(--muted);">Birou de 6 avocați cu un singur asistent. Asistentul filtra zilnic ~40 cereri pe email + telefon, multe procedurale (tarife, documente, programări), puține relevante.</p>
+
+                <div class="space-y-3 mb-5 text-sm">
+                    <div>
+                        <p class="mono text-[10px] uppercase tracking-wider mb-0.5" style="color: var(--muted);">◇ provocare</p>
+                        <p>Avocații primeau cereri care nu erau pentru ei (întrebări procedurale generice). Asistentul nu mai avea timp să facă pre-calificare reală a cazurilor.</p>
+                    </div>
+                    <div>
+                        <p class="mono text-[10px] uppercase tracking-wider mb-0.5" style="color: var(--muted);">◇ soluție</p>
+                        <p>Agent Sambla pe site cu instrucțiune strictă: NU dă consultanță juridică. Răspunde procedural (onorarii orientative, documente, programări). Cazurile reale ajung pre-calificate la avocat.</p>
+                    </div>
+                    <div>
+                        <p class="mono text-[10px] uppercase tracking-wider mb-0.5" style="color: var(--muted);">◇ integrare</p>
+                        <p>Widget pe site, calendar de programări shared, lead pipeline integrat în CRM-ul biroului.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 pt-4 border-t border-line">
+                    <div class="text-center">
+                        <p class="display text-2xl font-bold">−70%</p>
+                        <p class="text-[10px] mono uppercase tracking-wider" style="color: var(--muted);">triaj manual</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="display text-2xl font-bold">100%</p>
+                        <p class="text-[10px] mono uppercase tracking-wider" style="color: var(--muted);">pre-calificat</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="display text-2xl font-bold">24/7</p>
+                        <p class="text-[10px] mono uppercase tracking-wider" style="color: var(--muted);">programări</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <p class="text-xs mt-8 text-center max-w-3xl mx-auto" style="color: var(--muted);">
+            Cazul cu margine colorată (cosmetice naturale) este un client real, datele sunt anonimizate. Cazurile cu badge gri sunt scenarii ilustrative — cifrele sunt orientative, nu măsurate. Pe măsură ce avem mai mulți clienți cu rezultate publice, le adăugăm aici.
+        </p>
     </div>
 </section>
 
