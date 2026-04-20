@@ -91,7 +91,9 @@
                         <span id="heroScenarioLabel" class="chip accent-soft-bg mono text-[10px] transition-all duration-500" style="color: var(--accent-dark);">🦷 Cabinet stomatologic</span>
                     </div>
 
-                    <div id="heroChat" class="px-5 py-4 h-[420px] overflow-y-auto relative no-scrollbar">
+                    {{-- Înălțime fixă: conversațiile mai lungi scrollează în interior
+                         (overflow-y-auto), casuța nu se mută. --}}
+                    <div id="heroChat" class="px-5 py-4 h-[500px] overflow-y-auto relative no-scrollbar">
                         <div id="heroChatInner" class="space-y-3"></div>
                         <div id="heroTyping" class="hidden items-center gap-2 mt-3">
                             <div class="bg-sand rounded-2xl rounded-bl-sm px-4 py-2.5">
@@ -916,21 +918,22 @@
             { user:true,  text:'Mai aveți vopsea albă 10L pe stoc?' },
             { user:false, text:'Da! 23 bucăți în stoc · 89 lei · livrare mâine 10-14 🚚' },
             { user:true,  text:'Comanda 2 bucăți.' },
-            { user:false, text:'Adăugat în coș. Total 178 lei + transport gratuit peste 150 lei. Finalizezi?' },
+            { user:false, text:'Adăugat în coș. Total 178 lei + transport gratuit peste 150 lei.' },
+            { user:false, text:'✓ Comandă plasată. Primești AWB pe email mâine dimineață.' },
           ]},
         { niche:'auto', label:'🔧 Service auto', footer:'✓ Istoric VIN verificat automat', badge:'Programare service',
           messages:[
             { user:true,  text:'Cât costă schimbul de ulei la BMW X3?' },
             { user:false, text:'Ce an? Pentru X3 2020+: schimb ulei + filtru — 420 lei, durează ~1h.' },
             { user:true,  text:'2022. Marți dimineața?' },
-            { user:false, text:'Marți 9:00 rezervat ✓ Vă așteptăm. Aveți nevoie să lăsați mașina?' },
+            { user:false, text:'Marți 9:00 rezervat ✓ Vă aștept în service la prima oră. Trimit reminder cu o zi înainte.' },
           ]},
         { niche:'resto', label:'🏨 Pensiune', footer:'✓ Disponibilitate iCal live', badge:'Rezervare trimisă',
           messages:[
             { user:true,  text:'Aveți cameră dublă pentru acest weekend?' },
             { user:false, text:'Da! Camera Alba liberă 22-23 apr · 280 lei/noapte, mic-dejun inclus.' },
             { user:true,  text:'Perfect, rezerv 2 nopți.' },
-            { user:false, text:'✓ 2 nopți × 280 = 560 lei. Vă trimit link de plată pe email?' },
+            { user:false, text:'✓ Rezervare confirmată — 2 nopți × 280 = 560 lei. Link de plată trimis pe email, valabil 24h.' },
           ]},
         { niche:'imob', label:'🏠 Agenție imobiliară', footer:'✓ Listări filtrate după criterii', badge:'Vizionare programată',
           messages:[
@@ -944,21 +947,22 @@
             { user:true,  text:'Cât costă un tratament cu acid hialuronic?' },
             { user:false, text:'De la 450 lei/ml. Primul pachet include consultație gratuită cu dr. Petrescu.' },
             { user:true,  text:'Când am loc?' },
-            { user:false, text:'Joi 17:00 e primul disponibil. Rezerv? Durată consultație ~30 min.' },
+            { user:false, text:'✓ Rezervat pentru joi 17:00 — consultație 30 min cu dr. Petrescu. Primești reamintire pe SMS cu o zi înainte.' },
           ]},
         { niche:'legal', label:'⚖️ Cabinet avocatură', footer:'✓ Programare în calendar partener', badge:'Consultație rezervată',
           messages:[
             { user:true,  text:'Am nevoie de consultanță pentru un litigiu comercial.' },
-            { user:false, text:'Cabinetul acoperă litigii comerciale, inclusiv recuperări creanțe. Doriți o programare?' },
+            { user:false, text:'Cabinetul acoperă litigii comerciale, inclusiv recuperări creanțe. Primul slot liber: miercuri 14:00, 45 min cu av. Popescu.' },
             { user:true,  text:'Da, cât mai repede.' },
-            { user:false, text:'Cel mai apropiat slot: miercuri 14:00 cu av. Popescu. 45 min consultație.' },
+            { user:false, text:'✓ Programat pentru miercuri 14:00. Confirmarea a plecat pe email, cu detalii despre documente utile.' },
           ]},
         { niche:'legal', label:'📊 Contabilitate', footer:'✓ Pachet adaptat tipului de firmă', badge:'Ofertă trimisă',
           messages:[
             { user:true,  text:'Am un SRL nou, aveți pachet de contabilitate lunară?' },
             { user:false, text:'Felicitări! Pachetul SRL micro pornește de la 500 lei/lună — include contabilitate + declarații + consultanță.' },
             { user:true,  text:'Ce documente îmi trebuie la început?' },
-            { user:false, text:'Certificat înregistrare, act constitutiv și buletinele asociaților. Programăm o întâlnire?' },
+            { user:false, text:'Certificat înregistrare, act constitutiv și buletinele asociaților.' },
+            { user:false, text:'✓ Am programat o întâlnire pentru joi la 11:00. Îți trimit oferta detaliată pe email.' },
           ]},
         { niche:'auto', label:'💻 Magazin electronice', footer:'✓ Produse cu preț și reducere live', badge:'Produs recomandat',
           messages:[
@@ -966,7 +970,8 @@
             { user:false, text:'Am 3 opțiuni în buget. Cea mai echilibrată — procesor de ultimă generație, SSD rapid, autonomie mare:' },
             { user:false, product:{ emoji:'💻', name:'Lenovo ThinkPad E15 · 16GB RAM · 512GB SSD', meta:'Stoc 8 buc · livrare mâine', price:'3.749 lei', old:'4.299 lei', discount:'−13%' } },
             { user:true,  text:'Pot vedea recenzii?' },
-            { user:false, text:'Desigur — 4,7★ din 284 recenzii. Îți trimit link cu specificații și comentarii?' },
+            { user:false, text:'4,7★ din 284 recenzii reale.' },
+            { user:false, text:'✓ Ți-am trimis pe email link-ul cu specificațiile complete și 12 poze de la clienți.' },
           ]},
         { niche:'beauty', label:'🧴 Drugstore cosmetice', footer:'✓ Stoc sincronizat WooCommerce', badge:'În coș',
           messages:[
@@ -974,7 +979,7 @@
             { user:false, text:'Pentru ten uscat sensibil, cea mai căutată din catalog e:' },
             { user:false, product:{ emoji:'🧴', name:'CeraVe Moisturising Cream · 340g', meta:'Cu ceramide + acid hialuronic', price:'89 lei', old:'109 lei', discount:'−18%' } },
             { user:true,  text:'Adaugă în coș.' },
-            { user:false, text:'✓ Adăugat. Total: 89 lei · livrare gratuită peste 150 lei. Mai adaugi ceva?' },
+            { user:false, text:'✓ Adăugat. Total: 89 lei · livrare gratuită peste 150 lei. Notificare cu AWB-ul în 2 ore.' },
           ]},
     ];
     for (let i = scenarios.length - 1; i > 0; i--) {
