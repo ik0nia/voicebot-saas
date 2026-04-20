@@ -58,28 +58,29 @@ body {
 .border-line { border-color: #E7E0CE; }
 
 /* ================================================================== */
-/* Buttons                                                             */
+/* Buttons — clasele sunt SELF-CONTAINED (cum erau în CSS-ul inline   */
+/* original), ca template-urile să poată folosi `.btn-primary` singur */
+/* fără să fie obligate să combine cu `.btn`.                         */
 /* ================================================================== */
-.btn {
+.btn,
+.btn-primary, .btn-ghost, .btn-outline {
     display: inline-flex; align-items: center; justify-content: center;
     gap: 8px; padding: 14px 24px; border-radius: 999px;
     font-weight: 600; transition: all .2s ease;
-    text-decoration: none; cursor: pointer;
+    text-decoration: none; cursor: pointer; line-height: 1;
 }
 .btn-primary {
-    background: var(--accent); color: #fff;
+    background: var(--accent); color: #fff; border: 0;
 }
 .btn-primary:hover {
     background: var(--accent-dark); transform: translateY(-1px);
     box-shadow: 0 10px 30px color-mix(in srgb, var(--accent) 30%, transparent);
 }
-.btn-ghost   { background: #1C1917; color: #fff; border-radius: 999px; padding: 14px 24px; font-weight: 600;
-    transition: all .2s ease; display: inline-flex; align-items: center; gap: 8px; }
+.btn-ghost { background: #1C1917; color: #fff; border: 0; }
 .btn-ghost:hover { background: #3A3532; transform: translateY(-1px); }
 .btn-outline {
     border: 1.5px solid #1C1917; color: #1C1917; background: transparent;
-    border-radius: 999px; padding: 13px 23px; font-weight: 600;
-    transition: all .2s ease; display: inline-flex; align-items: center; gap: 8px; text-decoration: none;
+    padding: 12.5px 22.5px; /* compensare 1.5px border ca linia de aliniere să rămână */
 }
 .btn-outline:hover { background: #1C1917; color: #fff; }
 
