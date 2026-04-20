@@ -72,23 +72,36 @@
             <div class="relative">
                 <div class="absolute -inset-8 rounded-[3rem] blur-3xl opacity-30" id="heroGlow" style="background: linear-gradient(135deg, var(--accent) 0%, var(--accent-soft) 100%); transition: background .6s ease;"></div>
                 <div id="heroChatCard" data-niche="" class="relative rounded-[2rem] overflow-hidden bg-paper float" style="border:1px solid #E7E0CE; box-shadow: 0 25px 50px -15px rgba(28,25,23,0.12);">
-                    <div class="px-5 py-4 flex items-center gap-3 border-b border-line accent-soft-bg transition-colors duration-500">
+                    <div class="px-5 py-3 flex items-center gap-3 border-b border-line bg-paper">
                         <div class="relative">
-                            <div class="w-10 h-10 rounded-full accent-bg flex items-center justify-center transition-colors duration-500">
-                                <span class="text-white display text-base font-semibold">S</span>
+                            <div class="w-9 h-9 rounded-full accent-bg flex items-center justify-center transition-colors duration-500">
+                                <span class="text-white display text-sm font-semibold">S</span>
                             </div>
-                            <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-paper">
+                            <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-paper">
                                 <span class="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-60"></span>
                             </span>
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="font-semibold text-sm">Sambla</div>
-                            <div class="text-xs text-muted flex items-center gap-1.5">
+                            <div class="text-[11px] text-muted flex items-center gap-1.5">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                 Online · răspunde instant
                             </div>
                         </div>
-                        <span id="heroScenarioLabel" class="chip accent-soft-bg mono text-[10px] transition-all duration-500" style="color: var(--accent-dark);">🦷 Cabinet stomatologic</span>
+                    </div>
+
+                    {{-- Bandă industrie prominentă — accent soft bg, text mare,
+                         pulse dot. Scenariul curent e clar vizibil. --}}
+                    <div class="px-5 py-3 border-b border-line accent-soft-bg transition-colors duration-500 flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <span class="relative flex h-2 w-2 shrink-0">
+                                <span class="absolute inline-flex h-full w-full rounded-full accent-bg opacity-60 animate-ping"></span>
+                                <span class="relative inline-flex rounded-full h-2 w-2 accent-bg"></span>
+                            </span>
+                            <span class="mono text-[10px] uppercase tracking-[0.15em] accent-dark">demo live</span>
+                            <span class="text-muted">·</span>
+                            <span id="heroScenarioLabel" class="text-sm font-semibold transition-all duration-500 truncate" style="color: var(--accent-dark);">🦷 Cabinet stomatologic</span>
+                        </div>
                     </div>
 
                     {{-- Înălțime fixă: conversațiile mai lungi scrollează în interior
