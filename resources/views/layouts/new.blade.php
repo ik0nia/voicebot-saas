@@ -187,15 +187,39 @@
             </a>
             <div class="hidden lg:flex items-center gap-8 text-sm font-medium text-muted">
                 <a href="{{ route('new.functionalitati') }}" class="hover:text-ink transition">Funcționalități</a>
-                <a href="{{ route('new.home') }}#industrii" class="hover:text-ink transition">Industrii</a>
+                <a href="{{ route('new.industrii') }}" class="hover:text-ink transition">Industrii</a>
                 <a href="{{ route('new.deCeSambla') }}" class="hover:text-ink transition">De ce Sambla</a>
                 <a href="{{ route('new.preturi') }}" class="hover:text-ink transition">Prețuri</a>
                 <a href="{{ route('new.despre') }}" class="hover:text-ink transition">Despre</a>
+                <a href="{{ route('new.blog') }}" class="hover:text-ink transition">Blog</a>
                 <a href="{{ route('new.contact') }}" class="hover:text-ink transition">Contact</a>
             </div>
-            <div class="flex items-center gap-2 text-sm">
+            <div class="hidden lg:flex items-center gap-2 text-sm">
                 <a href="{{ url('/login') }}" class="hidden sm:inline px-4 py-2 text-muted hover:text-ink transition">Autentificare</a>
                 <a href="{{ url('/register') }}" class="btn-primary">
+                    Începe gratuit
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                </a>
+            </div>
+            {{-- Mobile hamburger --}}
+            <button type="button" id="sbNavToggle" class="lg:hidden inline-flex items-center justify-center w-11 h-11 rounded-full border border-line bg-white hover:bg-sand transition" aria-label="Meniu" aria-expanded="false" aria-controls="sbMobileNav">
+                <svg id="sbNavIconOpen"  class="w-5 h-5 text-ink" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                <svg id="sbNavIconClose" class="w-5 h-5 text-ink hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        {{-- Mobile slide-down menu --}}
+        <div id="sbMobileNav" class="lg:hidden hidden border-t border-line bg-cream">
+            <div class="max-w-7xl mx-auto px-6 py-5 flex flex-col gap-1">
+                <a href="{{ route('new.functionalitati') }}" class="block px-4 py-3 rounded-xl text-base font-medium text-ink hover:bg-sand transition">Funcționalități</a>
+                <a href="{{ route('new.industrii') }}" class="block px-4 py-3 rounded-xl text-base font-medium text-ink hover:bg-sand transition">Industrii</a>
+                <a href="{{ route('new.deCeSambla') }}"      class="block px-4 py-3 rounded-xl text-base font-medium text-ink hover:bg-sand transition">De ce Sambla</a>
+                <a href="{{ route('new.preturi') }}"         class="block px-4 py-3 rounded-xl text-base font-medium text-ink hover:bg-sand transition">Prețuri</a>
+                <a href="{{ route('new.despre') }}"          class="block px-4 py-3 rounded-xl text-base font-medium text-ink hover:bg-sand transition">Despre</a>
+                <a href="{{ route('new.contact') }}"         class="block px-4 py-3 rounded-xl text-base font-medium text-ink hover:bg-sand transition">Contact</a>
+                <div class="h-px bg-line my-3"></div>
+                <a href="{{ url('/login') }}" class="block px-4 py-3 rounded-xl text-base font-medium text-muted hover:text-ink hover:bg-sand transition">Autentificare</a>
+                <a href="{{ url('/register') }}" class="btn-primary justify-center mt-2" style="width:100%;">
                     Începe gratuit
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                 </a>
@@ -230,7 +254,7 @@
                         @foreach(($footerNiches ?? collect()) as $n)
                             <li><a href="{{ route('new.niche', $n->slug) }}" class="hover:text-ink">{{ $n->name }}</a></li>
                         @endforeach
-                        <li><a href="{{ route('new.home') }}#industrii" class="hover:text-ink font-medium accent-text">Vezi toate →</a></li>
+                        <li><a href="{{ route('new.industrii') }}" class="hover:text-ink font-medium accent-text">Vezi toate →</a></li>
                     </ul>
                 </div>
                 <div>
@@ -257,9 +281,36 @@
 
     @include('partials.analytics.consent-widget')
 
-    {{-- Fade-up on scroll --}}
+    {{-- Mobile menu toggle + fade-up observer --}}
     <script>
     (function(){
+        /* Mobile hamburger menu */
+        var btn  = document.getElementById('sbNavToggle');
+        var menu = document.getElementById('sbMobileNav');
+        var iOpen  = document.getElementById('sbNavIconOpen');
+        var iClose = document.getElementById('sbNavIconClose');
+        if (btn && menu) {
+            btn.addEventListener('click', function(){
+                var open = menu.classList.toggle('hidden') === false;
+                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+                if (iOpen && iClose) {
+                    iOpen.classList.toggle('hidden',  open);
+                    iClose.classList.toggle('hidden', !open);
+                }
+                document.body.style.overflow = open ? 'hidden' : '';
+            });
+            /* Close on any link click */
+            menu.querySelectorAll('a').forEach(function(a){
+                a.addEventListener('click', function(){
+                    menu.classList.add('hidden');
+                    btn.setAttribute('aria-expanded', 'false');
+                    if (iOpen && iClose) { iOpen.classList.remove('hidden'); iClose.classList.add('hidden'); }
+                    document.body.style.overflow = '';
+                });
+            });
+        }
+
+        /* Fade-up on scroll */
         if (!('IntersectionObserver' in window)) {
             document.querySelectorAll('.fade-up').forEach(function(el){ el.classList.add('in'); });
             return;

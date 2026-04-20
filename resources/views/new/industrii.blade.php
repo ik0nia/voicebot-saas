@@ -1,0 +1,106 @@
+@extends('layouts.new')
+
+@section('title', 'Industrii — Agenți AI pentru fiecare vertical | Sambla')
+@section('meta_description', 'Agenți AI conversaționali antrenați pentru industria ta — stomatologie, estetică, service auto, imobiliare, HORECA, avocatură, contabilitate, e-commerce și mai multe. Fiecare vertical cu prompt-uri, integrări și ton adaptat.')
+@section('canonical', url('/new/industrii'))
+
+@section('content')
+
+{{-- HERO --}}
+<section class="hero-glow relative overflow-hidden">
+    <div class="max-w-4xl mx-auto px-6 pt-16 pb-14 text-center">
+        <div class="chip chip-outline mono text-[11px] uppercase tracking-wider inline-flex mb-7">◇ industrii</div>
+        <h1 class="display text-5xl md:text-6xl lg:text-7xl font-medium leading-[1.02] tracking-tight mb-6">
+            Un agent AI pentru<br><em class="italic accent-text">fiecare vertical</em>.
+        </h1>
+        <p class="text-xl md:text-2xl leading-relaxed text-muted max-w-3xl mx-auto">
+            Nu livrăm un chatbot generic pe care îl forțezi să se potrivească. Pentru fiecare industrie avem prompt-uri, personalități, integrări și un ton de comunicare antrenat pe specificul afacerilor românești din acea zonă.
+        </p>
+    </div>
+</section>
+
+{{-- NICHES GRID --}}
+@php
+    $nicheEmojiMap = [
+        'cabinete-stomatologice' => '🦷', 'stomatologic' => '🦷',
+        'medical' => '🏥',
+        'salon-beauty' => '💆', 'saloane-beauty' => '💆',
+        'service-auto' => '🔧',
+        'ecommerce' => '🛒',
+        'imobiliare' => '🏠',
+        'avocatura' => '⚖️',
+        'contabilitate' => '📚',
+        'restaurant' => '🍽️',
+        'pensiune' => '🏨',
+        'optica' => '👓',
+        'turism' => '✈️',
+        'notariat' => '📜',
+        'psihologie' => '🧠',
+        'curatenie' => '🧹',
+        'veterinar' => '🐶',
+        'scoli-limbi' => '🎓',
+    ];
+@endphp
+
+<section class="py-20">
+    <div class="max-w-7xl mx-auto px-6">
+        <div class="mb-10 fade-up">
+            <div class="mono text-[11px] uppercase tracking-[0.2em] text-muted mb-2">◇ {{ $niches->count() }} verticale active</div>
+            <p class="text-muted text-sm">Fiecare card → pagină dedicată cu demo real, beneficii concrete și FAQ specific.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            @forelse($niches as $n)
+                <a href="{{ route('new.niche', $n->slug) }}" data-niche="{{ $n->color_theme }}" class="niche-card group block rounded-3xl overflow-hidden bg-paper border border-line fade-up">
+                    <div class="accent-soft-bg p-6 flex items-start justify-between">
+                        <div>
+                            <div class="text-4xl mb-3">{{ $nicheEmojiMap[$n->slug] ?? '✦' }}</div>
+                            <div class="mono text-[10px] uppercase tracking-[0.15em] accent-text">{{ $n->vertical_label ?: 'Agent AI' }}</div>
+                        </div>
+                        <span class="w-10 h-10 rounded-full accent-bg flex items-center justify-center shrink-0 group-hover:scale-110 transition">
+                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                        </span>
+                    </div>
+                    <div class="p-6">
+                        <h2 class="display text-xl font-semibold mb-3 leading-snug">{{ $n->name }}</h2>
+                        @if(!empty($n->hero_subtitle))
+                            <p class="text-sm text-muted leading-relaxed mb-4 line-clamp-3">{{ Str::limit(strip_tags($n->hero_subtitle), 180) }}</p>
+                        @endif
+                        <div class="pt-4 border-t border-line flex items-center justify-between text-xs">
+                            <span class="mono uppercase tracking-wider accent-text font-medium">Vezi pagina →</span>
+                            @if(!empty($n->benefits) && is_array($n->benefits))
+                                <span class="text-muted">{{ count($n->benefits) }} avantaje</span>
+                            @endif
+                        </div>
+                    </div>
+                </a>
+            @empty
+                <div class="col-span-full text-center py-12 text-muted">
+                    Industriile se încarcă. Revino într-un minut.
+                </div>
+            @endforelse
+        </div>
+    </div>
+</section>
+
+{{-- NU GĂSEȘTI INDUSTRIA TA? --}}
+<section class="py-20 bg-paper border-y border-line">
+    <div class="max-w-4xl mx-auto px-6 text-center">
+        <div class="mono text-[11px] uppercase tracking-[0.2em] text-muted mb-4">◇ nu-ți găsești industria?</div>
+        <h2 class="display text-4xl md:text-5xl font-medium leading-[1.05] mb-5">
+            Platforma e <em class="italic accent-text">flexibilă</em>.
+        </h2>
+        <p class="text-lg text-muted max-w-2xl mx-auto mb-8 leading-relaxed">
+            Fiecare listare de aici e rezultatul muncii cu clienți reali din acea industrie. Dacă a ta nu e încă aici, înseamnă doar că încă n-am lucrat împreună. Agentul se antrenează pe documentele tale — deci funcționează pentru orice afacere care vorbește cu clienți.
+        </p>
+        <div class="flex flex-wrap justify-center gap-3">
+            <a href="{{ url('/register') }}" class="btn-primary">
+                Încearcă 7 zile gratuit
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </a>
+            <a href="{{ route('new.contact') }}" class="btn-outline">Vorbește cu noi întâi</a>
+        </div>
+    </div>
+</section>
+
+@endsection

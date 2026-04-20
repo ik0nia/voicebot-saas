@@ -24,24 +24,6 @@
 
 @section('content')
 
-{{-- Ticker (scrubbed, no vendor names) --}}
-<div class="bg-sand border-b border-line py-2 overflow-hidden">
-    <div class="ticker flex gap-10 whitespace-nowrap text-xs mono text-muted">
-        @for($i=0; $i<3; $i++)
-            <span>✦ Sistem vocal AI · voce naturală română</span>
-            <span class="text-coral">●</span>
-            <span>✦ Construit și hostat în România</span>
-            <span class="text-coral">●</span>
-            <span>✦ Integrare WooCommerce nativă</span>
-            <span class="text-coral">●</span>
-            <span>✦ Răspunsuri verificate, fără halucinații</span>
-            <span class="text-coral">●</span>
-            <span>✦ GDPR by default</span>
-            <span class="text-coral">●</span>
-        @endfor
-    </div>
-</div>
-
 {{-- HERO --}}
 <section class="hero-glow relative overflow-hidden">
     <div class="max-w-7xl mx-auto px-6 pt-20 pb-24 grid lg:grid-cols-12 gap-12 items-start relative">
@@ -155,60 +137,6 @@
             <div class="display font-semibold tracking-wide text-xl">🍽️ HORECA</div>
             <div class="font-light text-xl">⚖️ Avocatură</div>
             <div class="display text-xl">🛒 E-commerce</div>
-        </div>
-    </div>
-</section>
-
-{{-- Niche colors showcase --}}
-<section id="industrii-colors" class="py-24">
-    <div class="max-w-7xl mx-auto px-6">
-        <div class="max-w-2xl mb-14 fade-up">
-            <div class="mono text-[11px] uppercase tracking-[0.2em] text-muted mb-4">◇ identitate adaptivă</div>
-            <h2 class="display text-5xl md:text-6xl font-medium leading-[1.05] mb-5">
-                Nu toate afacerile sunt la fel.<br>
-                <span class="italic accent-text">Nici Sambla nu e.</span>
-            </h2>
-            <p class="text-lg text-muted leading-relaxed">Agenții tăi AI se îmbracă în paleta industriei tale — de la widget, la pagina de landing dedicată, până la inbox. Fiecare vertical arată ca <em>el însuși</em>, nu ca un template.</p>
-        </div>
-
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            @foreach([
-                ['medical','Stomatologie · Medical','🦷','Programări, recall, întrebări frecvente despre tratamente.'],
-                ['beauty','Estetică · Saloane','💆','Rezervări instant, consultații inițiale, upsell servicii.'],
-                ['auto','Service auto · ITP','🔧','Oferte piese, programări, istoric mașină cu VIN.'],
-                ['resto','Restaurante · Cafenele','🍽️','Rezervări mese, meniu, evenimente speciale, delivery.'],
-                ['imob','Imobiliare','🏠','Vizionări, filtrare listări, cereri calificate cu scoring.'],
-                ['legal','Cabinete avocatură','⚖️','Intake cazuri, programări, FAQ juridic — fără promisiuni.'],
-            ] as $n)
-                <div class="niche-card rounded-3xl p-6 bg-paper border border-line fade-up" data-niche="{{ $n[0] }}">
-                    <div class="flex items-start justify-between mb-5">
-                        <div class="w-12 h-12 rounded-2xl accent-soft-bg flex items-center justify-center text-2xl">{{ $n[2] }}</div>
-                        <div class="chip chip-filled text-[10px]" style="padding: 4px 10px;">culoare adaptivă</div>
-                    </div>
-                    <h3 class="display text-xl font-semibold mb-2">{{ $n[1] }}</h3>
-                    <p class="text-sm text-muted leading-relaxed mb-5">{{ $n[3] }}</p>
-
-                    <div class="rounded-2xl bg-cream p-3 space-y-2">
-                        <div class="flex">
-                            <div class="max-w-[82%] px-3 py-1.5 rounded-xl rounded-bl-sm text-xs bg-white border border-line">
-                                Bună, cât costă?
-                            </div>
-                        </div>
-                        <div class="flex justify-end">
-                            <div class="max-w-[82%] px-3 py-1.5 rounded-xl rounded-br-sm text-xs accent-bg text-white">
-                                Tarifele încep de la <strong>180 lei</strong> →
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            @endforeach
-        </div>
-
-        <div class="mt-10 text-center">
-            <a href="#industrii" class="inline-flex items-center gap-2 text-sm font-medium text-muted hover:text-ink transition">
-                Vezi toate verticalele disponibile
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-            </a>
         </div>
     </div>
 </section>
@@ -437,13 +365,13 @@
     </div>
 </section>
 
-{{-- Industries grid (dynamic din DB) --}}
+{{-- Industries grid (dinamic din DB, color-adaptive per niche) --}}
 <section id="industrii" class="py-24 bg-paper">
     <div class="max-w-7xl mx-auto px-6">
         <div class="max-w-2xl mb-14 fade-up">
             <div class="mono text-[11px] uppercase tracking-[0.2em] text-muted mb-4">◇ industrii</div>
             <h2 class="display text-5xl md:text-6xl font-medium leading-[1.05] mb-5">Creat pentru <em class="italic">afacerea ta</em>.</h2>
-            <p class="text-lg text-muted">{{ $niches->count() ?: 17 }} verticale cu prompt-uri, personalități și integrări adaptate — de la intake juridic la sync WooCommerce.</p>
+            <p class="text-lg text-muted">{{ $niches->count() ?: 17 }} verticale cu prompt-uri, personalități și integrări adaptate pentru piața românească.</p>
         </div>
 
         @php
@@ -466,39 +394,48 @@
                 'veterinar' => '🐶',
                 'scoli-limbi' => '🎓',
             ];
-            $nicheThemeMap = [
-                'medical' => 'medical', 'stomatologic' => 'medical', 'cabinete-stomatologice' => 'medical',
-                'salon-beauty' => 'beauty', 'saloane-beauty' => 'beauty', 'optica' => 'beauty',
-                'service-auto' => 'auto', 'ecommerce' => 'auto',
-                'restaurant' => 'resto', 'pensiune' => 'resto', 'turism' => 'resto',
-                'imobiliare' => 'imob', 'curatenie' => 'imob', 'veterinar' => 'imob',
-                'avocatura' => 'legal', 'notariat' => 'legal', 'contabilitate' => 'legal',
-                'psihologie' => 'legal', 'scoli-limbi' => 'legal',
-            ];
         @endphp
 
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             @forelse($niches as $n)
-                <a href="{{ route('new.niche', $n->slug) }}" data-niche="{{ $nicheThemeMap[$n->slug] ?? '' }}" class="niche-card block rounded-2xl p-5 bg-cream border border-line">
-                    <div class="flex items-center justify-between mb-4">
+                <a href="{{ route('new.niche', $n->slug) }}" data-niche="{{ $n->color_theme }}" class="niche-card group block rounded-2xl overflow-hidden bg-cream border border-line">
+                    <div class="accent-soft-bg p-5 flex items-center justify-between">
                         <span class="text-3xl">{{ $nicheEmojiMap[$n->slug] ?? '✦' }}</span>
-                        <span class="w-2 h-2 rounded-full accent-bg"></span>
+                        <span class="w-8 h-8 rounded-full accent-bg flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                        </span>
                     </div>
-                    <div class="font-semibold text-sm mb-1">{{ $n->name }}</div>
-                    <div class="mono text-[10px] text-muted uppercase tracking-wider">Vezi detalii →</div>
+                    <div class="p-5">
+                        <div class="mono text-[10px] uppercase tracking-[0.15em] accent-text mb-2">{{ $n->vertical_label ?: 'Agent AI' }}</div>
+                        <div class="display text-lg font-semibold mb-1 leading-snug">{{ $n->name }}</div>
+                        @if(!empty($n->hero_subtitle))
+                            <p class="text-xs text-muted leading-relaxed line-clamp-2">{{ Str::limit($n->hero_subtitle, 90) }}</p>
+                        @endif
+                    </div>
                 </a>
             @empty
-                @foreach([['🦷','Stomatologie','medical'],['💆','Estetică','beauty'],['🔧','Service auto','auto'],['🏠','Imobiliare','imob'],['⚖️','Avocatură','legal'],['🍽️','Restaurante','resto'],['🛒','E-commerce','auto'],['🏨','Pensiuni','resto']] as $ind)
-                    <a href="#" data-niche="{{ $ind[2] }}" class="niche-card block rounded-2xl p-5 bg-cream border border-line">
-                        <div class="flex items-center justify-between mb-4">
+                @foreach([['🦷','Stomatologie','emerald'],['💆','Estetică','rose'],['🔧','Service auto','orange'],['🏠','Imobiliare','amber'],['⚖️','Avocatură','purple'],['🍽️','Restaurante','emerald'],['🛒','E-commerce','blue'],['🏨','Pensiuni','teal']] as $ind)
+                    <a href="#" data-niche="{{ $ind[2] }}" class="niche-card group block rounded-2xl overflow-hidden bg-cream border border-line">
+                        <div class="accent-soft-bg p-5 flex items-center justify-between">
                             <span class="text-3xl">{{ $ind[0] }}</span>
-                            <span class="w-2 h-2 rounded-full accent-bg"></span>
+                            <span class="w-8 h-8 rounded-full accent-bg flex items-center justify-center">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                            </span>
                         </div>
-                        <div class="font-semibold text-sm mb-1">{{ $ind[1] }}</div>
-                        <div class="mono text-[10px] text-muted uppercase tracking-wider">Vezi detalii →</div>
+                        <div class="p-5">
+                            <div class="mono text-[10px] uppercase tracking-[0.15em] accent-text mb-2">Agent AI</div>
+                            <div class="display text-lg font-semibold">{{ $ind[1] }}</div>
+                        </div>
                     </a>
                 @endforeach
             @endforelse
+        </div>
+
+        <div class="mt-10 text-center">
+            <a href="{{ route('new.industrii') }}" class="inline-flex items-center gap-2 text-sm font-medium text-ink hover:accent-text transition">
+                Vezi toate industriile disponibile
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+            </a>
         </div>
     </div>
 </section>

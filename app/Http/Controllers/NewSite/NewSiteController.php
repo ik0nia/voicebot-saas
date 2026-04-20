@@ -100,6 +100,15 @@ class NewSiteController extends Controller
         ]);
     }
 
+    public function industrii(): View
+    {
+        return view('new.industrii', [
+            'niches'       => $this->activeNiches(),
+            'footerNiches' => $this->footerNiches(),
+            'nicheTheme'   => '',
+        ]);
+    }
+
     public function legal(string $slug): View
     {
         $map = [

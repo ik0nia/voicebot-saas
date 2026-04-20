@@ -133,6 +133,7 @@ Route::prefix('new')->middleware(\App\Http\Middleware\PublicPageCache::class)->g
     Route::get('/despre',               [$c, 'despre'])->name('new.despre');
     Route::get('/contact',              [$c, 'contact'])->name('new.contact');
     Route::get('/blog',                 [$c, 'blog'])->name('new.blog');
+    Route::get('/industrii',            [$c, 'industrii'])->name('new.industrii');
     Route::get('/legal/termeni',            fn () => app($c)->legal('termeni'))->name('new.legal.termeni');
     Route::get('/legal/confidentialitate',  fn () => app($c)->legal('confidentialitate'))->name('new.legal.confidentialitate');
     Route::get('/legal/cookie-uri',         fn () => app($c)->legal('cookie-uri'))->name('new.legal.cookies');
