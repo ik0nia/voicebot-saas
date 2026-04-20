@@ -282,14 +282,19 @@
             </button>
         </div>
 
-        {{-- Mobile menu — fixed overlay full-screen sub bara de sus, cu propriul scroll.
-             Era anterior inline sub nav (sticky) și nu scrolla pe telefon. --}}
-        <div id="sbMobileNav" class="lg:hidden hidden fixed inset-x-0 top-20 bottom-0 bg-cream border-t border-line overflow-y-auto overscroll-contain z-[60]" style="-webkit-overflow-scrolling: touch;">
-            @php
-                $activeMob = 'block px-4 py-3 rounded-xl text-base font-semibold text-ink accent-soft-bg border-l-4 border-[var(--accent)] transition';
-                $idleMob   = 'block px-4 py-3 rounded-xl text-base font-medium text-ink hover:bg-sand transition';
-            @endphp
-            <div class="max-w-7xl mx-auto px-6 py-5 pb-24 flex flex-col gap-1">
+    </nav>
+
+    {{-- Mobile menu — fixed overlay ca SIBLING al <nav>, nu copil.
+         Pe iOS, fixed inside sticky/transformed parent e buggy, de
+         aceea îl plasăm aici, afară din <nav>. JS-ul îi face add/
+         remove explicit pe clasa hidden, nu toggle, ca starea să
+         rămână deterministă chiar dacă se apasă butonul rapid. --}}
+    <div id="sbMobileNav" class="lg:hidden hidden fixed inset-x-0 top-20 bottom-0 bg-cream border-t border-line overflow-y-auto overscroll-contain z-[60]" style="-webkit-overflow-scrolling: touch;">
+        @php
+            $activeMob = 'block px-4 py-3 rounded-xl text-base font-semibold text-ink accent-soft-bg border-l-4 border-[var(--accent)] transition';
+            $idleMob   = 'block px-4 py-3 rounded-xl text-base font-medium text-ink hover:bg-sand transition';
+        @endphp
+        <div class="max-w-7xl mx-auto px-6 py-5 pb-24 flex flex-col gap-1">
                 <a href="{{ route('new.despre') }}"          class="{{ $navActive('new.despre') ? $activeMob : $idleMob }}">Despre</a>
                 <a href="{{ route('new.functionalitati') }}" class="{{ $navActive('new.functionalitati') ? $activeMob : $idleMob }}">Funcționalități</a>
 
@@ -338,9 +343,8 @@
                     Începe gratuit
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                 </a>
-            </div>
         </div>
-    </nav>
+    </div>
 
     <main class="flex-1">
         @yield('content')
@@ -399,29 +403,38 @@
     {{-- Mobile menu toggle + fade-up observer --}}
     <script>
     (function(){
-        /* Mobile hamburger menu */
+        /* Mobile hamburger menu — stare explicită, add/remove în loc de toggle */
         var btn  = document.getElementById('sbNavToggle');
         var menu = document.getElementById('sbMobileNav');
         var iOpen  = document.getElementById('sbNavIconOpen');
         var iClose = document.getElementById('sbNavIconClose');
         if (btn && menu) {
-            btn.addEventListener('click', function(){
-                var open = menu.classList.toggle('hidden') === false;
-                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-                if (iOpen && iClose) {
-                    iOpen.classList.toggle('hidden',  open);
-                    iClose.classList.toggle('hidden', !open);
-                }
-                document.body.style.overflow = open ? 'hidden' : '';
-            });
-            /* Close on any link click */
-            menu.querySelectorAll('a').forEach(function(a){
-                a.addEventListener('click', function(){
+            var isOpen = false;
+            function setOpen(open) {
+                isOpen = !!open;
+                if (isOpen) {
+                    menu.classList.remove('hidden');
+                } else {
                     menu.classList.add('hidden');
-                    btn.setAttribute('aria-expanded', 'false');
-                    if (iOpen && iClose) { iOpen.classList.remove('hidden'); iClose.classList.add('hidden'); }
-                    document.body.style.overflow = '';
-                });
+                }
+                btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                if (iOpen)  iOpen.classList[isOpen  ? 'add' : 'remove']('hidden');
+                if (iClose) iClose.classList[isOpen ? 'remove' : 'add']('hidden');
+                document.body.style.overflow = isOpen ? 'hidden' : '';
+            }
+            btn.addEventListener('click', function(e){
+                e.preventDefault();
+                e.stopPropagation();
+                setOpen(!isOpen);
+            });
+            /* Close on any link click (dar nu pe summary / interior details) */
+            menu.addEventListener('click', function(e){
+                var a = e.target.closest('a');
+                if (a && menu.contains(a)) setOpen(false);
+            });
+            /* Close pe Escape */
+            document.addEventListener('keydown', function(e){
+                if (e.key === 'Escape' && isOpen) setOpen(false);
             });
         }
 
