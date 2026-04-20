@@ -91,8 +91,10 @@
                         <span id="heroScenarioLabel" class="chip accent-soft-bg mono text-[10px] transition-all duration-500" style="color: var(--accent-dark);">🦷 Cabinet stomatologic</span>
                     </div>
 
-                    <div id="heroChat" class="px-5 py-4 h-[420px] overflow-y-auto relative no-scrollbar">
-                        <div id="heroChatInner" class="space-y-3"></div>
+                    {{-- h mărit 420 → 480 și pb-20 pe inner ca badge-ul floatant
+                         din colțul dreapta-jos să nu acopere ultimul mesaj. --}}
+                    <div id="heroChat" class="px-5 py-4 h-[480px] overflow-y-auto relative no-scrollbar">
+                        <div id="heroChatInner" class="space-y-3 pb-20"></div>
                         <div id="heroTyping" class="hidden items-center gap-2 mt-3">
                             <div class="bg-sand rounded-2xl rounded-bl-sm px-4 py-2.5">
                                 <div class="dots flex gap-1.5 h-4 items-center">
