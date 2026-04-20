@@ -365,6 +365,104 @@
     </div>
 </section>
 
+{{-- DEMO LIVE — real bot, sugestii în stânga, chat în dreapta --}}
+<section id="demo" class="py-24">
+    <div class="max-w-6xl mx-auto px-6">
+        <div class="max-w-2xl mb-14 fade-up">
+            <div class="mono text-[11px] uppercase tracking-[0.2em] text-muted mb-4">◇ demo live</div>
+            <h2 class="display text-5xl md:text-6xl font-medium leading-[1.05] mb-5">
+                Vorbește cu <em class="italic accent-text">Sambla AI</em>.
+            </h2>
+            <p class="text-lg text-muted leading-relaxed">Agent real, conectat live la platformă. Întreabă orice despre Sambla sau alege o sugestie de mai jos.</p>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+            {{-- Left: sugestii --}}
+            <div class="space-y-3 fade-up">
+                <button type="button" onclick="askDemo('Ce funcționalități are Sambla?')" class="w-full text-left group flex items-center gap-4 px-5 py-4 rounded-2xl bg-paper border border-line hover:border-ink hover:shadow-md transition-all duration-300">
+                    <span class="text-2xl shrink-0">💡</span>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-ink">Ce funcționalități are?</p>
+                        <p class="text-xs text-muted mt-0.5">Descoperă tot ce poate face platforma</p>
+                    </div>
+                    <svg class="w-4 h-4 text-muted shrink-0 group-hover:accent-text group-hover:translate-x-1 transition-all duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+                </button>
+
+                <button type="button" onclick="askDemo('Cât costă platforma?')" class="w-full text-left group flex items-center gap-4 px-5 py-4 rounded-2xl bg-paper border border-line hover:border-ink hover:shadow-md transition-all duration-300">
+                    <span class="text-2xl shrink-0">💰</span>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-ink">Cât costă?</p>
+                        <p class="text-xs text-muted mt-0.5">Planuri și prețuri transparente</p>
+                    </div>
+                    <svg class="w-4 h-4 text-muted shrink-0 group-hover:accent-text group-hover:translate-x-1 transition-all duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+                </button>
+
+                <button type="button" onclick="askDemo('Cum se integrează cu magazinul meu?')" class="w-full text-left group flex items-center gap-4 px-5 py-4 rounded-2xl bg-paper border border-line hover:border-ink hover:shadow-md transition-all duration-300">
+                    <span class="text-2xl shrink-0">🔗</span>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-ink">Cum se integrează?</p>
+                        <p class="text-xs text-muted mt-0.5">WooCommerce, WordPress, Google Calendar</p>
+                    </div>
+                    <svg class="w-4 h-4 text-muted shrink-0 group-hover:accent-text group-hover:translate-x-1 transition-all duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+                </button>
+
+                <button type="button" onclick="askDemo('Funcționează și pe telefon?')" class="w-full text-left group flex items-center gap-4 px-5 py-4 rounded-2xl bg-paper border border-line hover:border-ink hover:shadow-md transition-all duration-300">
+                    <span class="text-2xl shrink-0">📞</span>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-ink">Merge și pe telefon?</p>
+                        <p class="text-xs text-muted mt-0.5">Voce AI naturală în limba română</p>
+                    </div>
+                    <svg class="w-4 h-4 text-muted shrink-0 group-hover:accent-text group-hover:translate-x-1 transition-all duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+                </button>
+            </div>
+
+            {{-- Right: live chat widget --}}
+            <div class="fade-up" style="transition-delay:.1s;">
+                <div class="relative">
+                    <div class="absolute -inset-4 accent-soft-bg rounded-[28px] blur-2xl opacity-60"></div>
+                    <div class="relative rounded-[20px] overflow-hidden bg-white" style="box-shadow: 0 20px 60px rgba(0,0,0,0.1), 0 4px 20px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04);">
+                        <div class="accent-bg px-6 py-4 relative" style="background: linear-gradient(135deg, var(--accent), var(--accent-dark));">
+                            <div class="relative flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full ring-2 ring-white/20 flex items-center justify-center bg-white/15 shrink-0">
+                                    <span class="display text-white text-base font-semibold">S</span>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-white font-bold text-[15px]">Sambla AI</p>
+                                    <p class="text-white/70 text-xs flex items-center gap-1.5">
+                                        <span class="relative flex h-2 w-2">
+                                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60"></span>
+                                            <span class="relative inline-flex rounded-full h-2 w-2 bg-green-400"></span>
+                                        </span>
+                                        Online — răspunde live
+                                    </p>
+                                </div>
+                                <span class="ml-auto text-[10px] font-bold text-white/80 bg-white/15 px-3 py-1 rounded-full">DEMO LIVE</span>
+                            </div>
+                        </div>
+
+                        <div id="sbDemoMessages" class="h-[380px] overflow-y-auto px-5 py-5 bg-white space-y-3.5">
+                            <div class="flex gap-2.5">
+                                <div class="bg-sand rounded-2xl rounded-tl-md px-5 py-3 max-w-[85%]">
+                                    <p class="text-sm text-ink leading-relaxed">Bună! 👋 Sunt Sambla AI. Întreabă-mă orice despre platformă sau alege o sugestie din stânga.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-line px-5 py-4 bg-paper">
+                            <form id="sbDemoForm" class="flex gap-2">
+                                <input type="text" id="sbDemoInput" placeholder="Scrie un mesaj..." class="flex-1 rounded-full border border-line bg-white px-5 py-3 text-sm text-ink placeholder:text-muted focus:outline-none focus:ring-2 focus:border-transparent transition-all" style="--tw-ring-color: var(--accent);" autocomplete="off"/>
+                                <button type="submit" aria-label="Trimite mesaj" class="w-11 h-11 flex items-center justify-center accent-bg text-white rounded-full hover:opacity-90 transition-all shadow-md active:scale-95">
+                                    <svg class="w-[18px] h-[18px] -rotate-45" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
 {{-- Industries grid (dinamic din DB, color-adaptive per niche) --}}
 <section id="industrii" class="py-24 bg-paper">
     <div class="max-w-7xl mx-auto px-6">
@@ -402,13 +500,7 @@
             @forelse($niches as $n)
                 <a href="{{ route('new.niche', $n->slug) }}" data-niche="{{ $n->color_theme }}" class="niche-card group block rounded-2xl overflow-hidden bg-cream border border-line">
                     <div class="accent-soft-bg p-5 flex items-center justify-between">
-                        <div class="w-12 h-12 rounded-xl bg-white flex items-center justify-center accent-text shrink-0">
-                            @if(!empty($n->icon_svg))
-                                <span class="w-6 h-6 inline-flex items-center justify-center [&>svg]:w-full [&>svg]:h-full">{!! $n->icon_svg !!}</span>
-                            @else
-                                <span class="text-2xl">{{ $nicheEmojiMap[$n->slug] ?? '✦' }}</span>
-                            @endif
-                        </div>
+                        <span class="text-4xl">{{ $nicheEmojiMap[$n->slug] ?? '✦' }}</span>
                         <span class="w-8 h-8 rounded-full accent-bg flex items-center justify-center shrink-0 group-hover:scale-110 transition">
                             <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                         </span>
@@ -425,7 +517,7 @@
                 @foreach([['🦷','Stomatologie','emerald'],['💆','Estetică','rose'],['🔧','Service auto','orange'],['🏠','Imobiliare','amber'],['⚖️','Avocatură','purple'],['🍽️','Restaurante','emerald'],['🛒','E-commerce','blue'],['🏨','Pensiuni','teal']] as $ind)
                     <a href="#" data-niche="{{ $ind[2] }}" class="niche-card group block rounded-2xl overflow-hidden bg-cream border border-line">
                         <div class="accent-soft-bg p-5 flex items-center justify-between">
-                            <div class="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-2xl">{{ $ind[0] }}</div>
+                            <span class="text-4xl">{{ $ind[0] }}</span>
                             <span class="w-8 h-8 rounded-full accent-bg flex items-center justify-center">
                                 <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                             </span>
@@ -784,6 +876,66 @@
             play(current);
         }
     }, { passive: true });
+})();
+
+/* Demo Live — real bot call on channel 2 (same as live site) */
+(function () {
+    var msgs = document.getElementById('sbDemoMessages');
+    var form = document.getElementById('sbDemoForm');
+    var inp  = document.getElementById('sbDemoInput');
+    if (!msgs || !form || !inp) return;
+    var channelId = 2;
+
+    window.askDemo = function (q) { inp.value = q; form.dispatchEvent(new Event('submit', { cancelable: true })); };
+
+    function escapeHtml(t) { var d = document.createElement('div'); d.appendChild(document.createTextNode(t)); return d.innerHTML; }
+
+    function appendBubble(text, isUser) {
+        var row = document.createElement('div');
+        row.className = isUser ? 'flex gap-2.5 justify-end' : 'flex gap-2.5';
+        row.style.opacity = '0'; row.style.transform = 'translateY(6px)';
+        row.style.transition = 'opacity .3s ease, transform .3s ease';
+        if (isUser) {
+            row.innerHTML = '<div class="rounded-2xl rounded-tr-md px-5 py-3 max-w-[85%] shadow-sm accent-bg"><p class="text-sm text-white leading-relaxed">' + escapeHtml(text) + '</p></div>';
+        } else {
+            row.innerHTML = '<div class="bg-sand rounded-2xl rounded-tl-md px-5 py-3 max-w-[85%]"><p class="text-sm text-ink leading-relaxed">' + text + '</p></div>';
+        }
+        msgs.appendChild(row);
+        requestAnimationFrame(function(){ row.style.opacity = '1'; row.style.transform = 'translateY(0)'; });
+        msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    function showTyping() {
+        var t = document.createElement('div');
+        t.id = 'sbDemoTyping'; t.className = 'flex gap-2.5';
+        t.innerHTML = '<div class="bg-sand rounded-2xl rounded-tl-md px-5 py-3"><div class="flex gap-1.5 h-5 items-center"><span class="w-2 h-2 rounded-full animate-bounce" style="background:#A8A29E;animation-delay:0ms"></span><span class="w-2 h-2 rounded-full animate-bounce" style="background:#A8A29E;animation-delay:150ms"></span><span class="w-2 h-2 rounded-full animate-bounce" style="background:#A8A29E;animation-delay:300ms"></span></div></div>';
+        msgs.appendChild(t); msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    function callBot(text, cb) {
+        fetch('/api/v1/chatbot/' + channelId + '/message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ message: text })
+        }).then(function(r){ return r.json(); })
+          .then(function(d){ cb(d.reply || d.response || d.message || 'Mulțumesc pentru mesaj!'); })
+          .catch(function(){ cb('Momentan sunt ocupat. Încearcă din nou peste câteva secunde.'); });
+    }
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var text = (inp.value || '').trim();
+        if (!text) return;
+        appendBubble(text, true);
+        inp.value = '';
+        inp.focus();
+        showTyping();
+        callBot(text, function (reply) {
+            var t = document.getElementById('sbDemoTyping');
+            if (t) t.remove();
+            appendBubble(reply, false);
+        });
+    });
 })();
 
 /* Stat countup */

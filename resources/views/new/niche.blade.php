@@ -317,6 +317,86 @@
     </div>
 </section>
 
+{{-- DEMO 3 SCENARII — chat bubbles laterale, ca pe site-ul actual --}}
+@php
+    /* Generate 3 demo scenarios from the niche's demo_messages + niche context */
+    $demoScenarios = [];
+    if (count($demo) >= 2) {
+        /* First scenario: programare / main intent from real demo_messages */
+        $demoScenarios[] = [
+            'title'    => 'Cea mai frecventă cerere',
+            'subtitle' => 'Răspuns din baza de cunoștințe',
+            'icon'     => '📅',
+            'msgs'     => array_slice($demo, 0, 4),
+        ];
+    }
+    /* Always show two extra generic scenarios tailored to the niche */
+    $demoScenarios[] = [
+        'title'    => 'Întrebare de preț',
+        'subtitle' => 'Din lista ta de servicii',
+        'icon'     => '💰',
+        'msgs'     => [
+            ['role'=>'user','text'=>'Cât costă?'],
+            ['role'=>'bot','text'=>'Tariful depinde de ce vă interesează. Pot să vă trimit lista completă cu prețuri, sau preferați să vă recomand ceva în funcție de nevoie?'],
+            ['role'=>'user','text'=>'Dați-mi lista.'],
+            ['role'=>'bot','text'=>'✓ V-am trimis pe WhatsApp. Aveți vreo întrebare specifică la care să vă ajut chiar acum?'],
+        ],
+    ];
+    $demoScenarios[] = [
+        'title'    => 'Situație sensibilă',
+        'subtitle' => 'Detectează + escaladează',
+        'icon'     => '🚨',
+        'msgs'     => [
+            ['role'=>'user','text'=>'Am o problemă urgentă și trebuie să vorbesc cu cineva acum.'],
+            ['role'=>'bot','text'=>'Înțeleg, vă ajut imediat. Puteți să îmi spuneți scurt despre ce e vorba, ca să anunț colegul potrivit?'],
+            ['role'=>'user','text'=>'(descrie situația)'],
+            ['role'=>'bot','text'=>'✓ Colegul de gardă e notificat. Vă sună în maximum 10 minute pe numărul de pe care vorbim.'],
+        ],
+    ];
+    $demoScenarios = array_slice($demoScenarios, 0, 3);
+@endphp
+
+@if(count($demoScenarios) > 0)
+<section id="demo" class="py-24 bg-paper border-y border-line">
+    <div class="max-w-6xl mx-auto px-6">
+        <div class="max-w-2xl mb-14 fade-up">
+            <div class="mono text-[11px] uppercase tracking-[0.2em] text-muted mb-4">◇ conversații reale</div>
+            <h2 class="display text-5xl md:text-6xl font-medium leading-[1.05] mb-5">Așa vorbește cu <em class="italic accent-text">clienții tăi</em>.</h2>
+            <p class="text-lg text-muted">Trei scenarii tipice pentru {{ strtolower($niche->name) }} — exact tipul de răspunsuri pe care le dă agentul AI.</p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-5">
+            @foreach($demoScenarios as $scenario)
+                <div class="niche-card rounded-3xl overflow-hidden bg-cream border border-line fade-up">
+                    <div class="p-6 pb-4 border-b border-line accent-soft-bg">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl">{{ $scenario['icon'] }}</span>
+                            <div class="flex-1">
+                                <div class="font-semibold text-sm">{{ $scenario['title'] }}</div>
+                                <div class="text-xs text-muted">{{ $scenario['subtitle'] }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-5 space-y-2.5 min-h-[260px]">
+                        @foreach($scenario['msgs'] as $m)
+                            @if(($m['role'] ?? '') === 'bot')
+                                <div class="flex justify-end">
+                                    <div class="max-w-[85%] px-3.5 py-2 rounded-2xl rounded-br-sm text-[13px] leading-relaxed text-white accent-bg">{{ $m['text'] ?? '' }}</div>
+                                </div>
+                            @else
+                                <div class="flex">
+                                    <div class="max-w-[85%] px-3.5 py-2 rounded-2xl rounded-bl-sm text-[13px] leading-relaxed bg-sand text-ink">{{ $m['text'] ?? '' }}</div>
+                                </div>
+                            @endif
+                        @endforeach
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+</section>
+@endif
+
 {{-- FAQ --}}
 @if(count($faq) > 0)
 <section id="faq" class="py-24 bg-paper border-y border-line">
