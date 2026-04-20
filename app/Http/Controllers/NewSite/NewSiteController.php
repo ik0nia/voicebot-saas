@@ -53,8 +53,11 @@ class NewSiteController extends Controller
         $webchatPlans = collect();
         $voicePlans   = collect();
         try {
-            $webchatPlans = Plan::active()->webchat()->orderBy('sort_order')->get();
-            $voicePlans   = Plan::active()->voice()->orderBy('sort_order')->get();
+            // ->public() filtrează cheile: tenant_id NULL + is_public=true,
+            // ca planurile custom per-tenant (definite din admin pentru un
+            // client anume) să nu se scurgă pe pagina publică.
+            $webchatPlans = Plan::active()->public()->webchat()->orderBy('sort_order')->get();
+            $voicePlans   = Plan::active()->public()->voice()->orderBy('sort_order')->get();
         } catch (\Throwable $e) {
             // Fall through with empty collections so the page still
             // renders if the plans table is unavailable during a deploy.

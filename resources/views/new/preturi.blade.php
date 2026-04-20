@@ -4,6 +4,42 @@
 @section('meta_description', 'Planuri lunare și anuale pentru agenți AI — chat pe site, telefon, multi-canal. Prețuri transparente în lei românești, fără surprize. 7 zile gratuit.')
 @section('canonical', url('/new/preturi'))
 
+@php
+    /* Formatare RON în stil românesc: 1.299,50 lei (nu 1,299.50) */
+    $fmtRo = fn ($val, int $dec = 0) => number_format((float) $val, $dec, ',', '.');
+
+    /* Un plan e „Enterprise / Custom" dacă:
+       - are price_monthly = 0, SAU
+       - slug / name conține „enterprise" sau „custom"
+       Evităm afișarea bizară „0 lei/lună" pentru planuri ce trebuie
+       discutate individual. */
+    $isCustomPlan = function ($plan) {
+        $priceM = (float) ($plan->price_monthly ?? 0);
+        if ($priceM <= 0) return true;
+        $text = strtolower(($plan->slug ?? '') . ' ' . ($plan->name ?? ''));
+        return str_contains($text, 'enterprise') || str_contains($text, 'custom');
+    };
+
+    /* Calcul % economie real vs monthly × 12. Dacă toate planurile au
+       aceeași reducere o afișăm; dacă diferă sau nu există, ascundem
+       eticheta. Astfel nu mai mințim cu un „−20%" hardcoded. */
+    $annualSavingsPercent = null;
+    if ($webchatPlans->count()) {
+        $percents = [];
+        foreach ($webchatPlans as $p) {
+            $m = (float) ($p->price_monthly ?? 0);
+            $y = (float) ($p->price_yearly ?? 0);
+            if ($m > 0 && $y > 0 && $y < $m * 12) {
+                $percents[] = (int) round((1 - $y / ($m * 12)) * 100);
+            }
+        }
+        if (!empty($percents)) {
+            // luăm cea mai mică reducere din planuri — nu promitem mai mult
+            $annualSavingsPercent = min($percents);
+        }
+    }
+@endphp
+
 @section('content')
 
 {{-- HERO --}}
@@ -46,9 +82,11 @@
                 <span class="pointer-events-none inline-block h-6 w-6 translate-x-0 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
             </button>
             <span id="label-annual" class="text-sm font-medium" style="color: var(--muted);">Anual</span>
-            <span class="ml-1 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold" style="background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent);">
-                Economisești 20%
-            </span>
+            @if($annualSavingsPercent)
+                <span class="ml-1 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold" style="background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent);">
+                    Economisești {{ $annualSavingsPercent }}%
+                </span>
+            @endif
         </div>
 
         {{-- Plans grid --}}
@@ -56,40 +94,45 @@
             @forelse($webchatPlans as $plan)
                 @php
                     $isHighlighted = $plan->is_popular ?? false;
-                    $features = $plan->features ?? [];
-                    $overage = $plan->overage ?? [];
-                    $cpm = $overage['cost_per_message'] ?? null;
-                    $cpb = $overage['cost_per_extra_bot'] ?? null;
-                    $priceM = (int) ($plan->price_monthly ?? 0);
-                    $priceY = (int) ($plan->price_yearly ?? 0);
-                    $isEnterprise = $priceM === 0 && str_contains(strtolower($plan->slug ?? $plan->name ?? ''), 'enterprise');
+                    $features = is_array($plan->features) ? $plan->features : [];
+                    $overage = is_array($plan->overage) ? $plan->overage : [];
+                    $cpm = isset($overage['cost_per_message']) ? (float) $overage['cost_per_message'] : null;
+                    $cpb = isset($overage['cost_per_extra_bot']) ? (float) $overage['cost_per_extra_bot'] : null;
+                    $priceM = (float) ($plan->price_monthly ?? 0);
+                    $priceY = (float) ($plan->price_yearly ?? 0);
+                    $priceAnnualMonthly = $priceY > 0 ? round($priceY / 12, 2) : $priceM;
+                    $isEnterprise = $isCustomPlan($plan);
                 @endphp
-                <div class="fade-up rounded-3xl p-7 relative {{ $isHighlighted ? 'bg-ink' : 'bg-paper border border-line' }}" @if($isHighlighted) style="box-shadow: 0 20px 50px rgba(0,0,0,0.15);" @endif>
+                <div class="fade-up rounded-3xl p-7 relative bg-paper {{ $isHighlighted ? '' : 'border border-line' }}"
+                     @if($isHighlighted)
+                        style="border: 2px solid var(--accent); box-shadow: 0 20px 50px -10px color-mix(in srgb, var(--accent) 25%, transparent);"
+                     @endif>
                     @if($isHighlighted)
-                        <div class="absolute -top-3 left-1/2 -translate-x-1/2 chip text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full" style="background: var(--sun); color: var(--ink);">Recomandat</div>
+                        <div class="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full text-white whitespace-nowrap" style="background: var(--accent); box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 35%, transparent);">★ Recomandat</div>
                     @endif
 
-                    <div class="mono text-xs uppercase tracking-wider mb-3" style="color: {{ $isHighlighted ? 'var(--sun)' : 'var(--muted)' }};">{{ $plan->name }}</div>
+                    <div class="mono text-xs uppercase tracking-wider mb-3" style="color: {{ $isHighlighted ? 'var(--accent)' : 'var(--muted)' }};">{{ $plan->name }}</div>
 
                     @if($plan->description)
-                        <p class="text-sm mb-5" style="color: {{ $isHighlighted ? '#D7D3CA' : 'var(--muted)' }};">{{ $plan->description }}</p>
+                        <p class="text-sm mb-5" style="color: var(--muted);">{{ $plan->description }}</p>
                     @endif
 
-                    <div class="mb-5 pb-5 border-b" style="border-color: {{ $isHighlighted ? 'rgba(255,255,255,.1)' : 'var(--line)' }};">
+                    <div class="mb-5 pb-5 border-b border-line">
                         @if($isEnterprise)
                             <div class="flex items-baseline">
-                                <span class="display text-4xl font-medium" style="color: {{ $isHighlighted ? 'var(--cream)' : 'var(--ink)' }};">Personalizat</span>
+                                <span class="display text-4xl font-medium text-ink">La cerere</span>
                             </div>
                         @else
                             <div class="flex items-baseline gap-1">
-                                <span class="display text-5xl font-medium pricing-amount"
-                                      data-monthly="{{ $priceM }}"
-                                      data-annual="{{ $priceY > 0 ? round($priceY / 12) : $priceM }}"
-                                      style="color: {{ $isHighlighted ? 'var(--cream)' : 'var(--ink)' }};">{{ $priceM }}</span>
-                                <span class="text-base font-semibold" style="color: {{ $isHighlighted ? '#D7D3CA' : 'var(--muted)' }};">lei</span>
-                                <span class="text-sm" style="color: {{ $isHighlighted ? '#A8A29E' : 'var(--muted)' }};">/lună +TVA</span>
+                                <span class="display text-5xl font-medium pricing-amount text-ink"
+                                      data-monthly="{{ $fmtRo($priceM, fmod($priceM, 1) > 0 ? 2 : 0) }}"
+                                      data-annual="{{ $fmtRo($priceAnnualMonthly, fmod($priceAnnualMonthly, 1) > 0 ? 2 : 0) }}">{{ $fmtRo($priceM, fmod($priceM, 1) > 0 ? 2 : 0) }}</span>
+                                <span class="text-base font-semibold" style="color: var(--muted);">lei</span>
+                                <span class="text-sm" style="color: var(--muted);">/lună +TVA</span>
                             </div>
-                            <p class="text-xs mt-1 pricing-note hidden" style="color: {{ $isHighlighted ? '#A8A29E' : 'var(--muted)' }};">facturat anual · {{ $priceY > 0 ? number_format($priceY, 0) : '—' }} lei/an</p>
+                            @if($priceY > 0)
+                                <p class="text-xs mt-1 pricing-note hidden" style="color: var(--muted);">facturat anual · {{ $fmtRo($priceY, fmod($priceY, 1) > 0 ? 2 : 0) }} lei/an</p>
+                            @endif
                         @endif
                     </div>
 
@@ -97,20 +140,20 @@
                         <ul class="space-y-2.5 text-sm mb-6">
                             @foreach($features as $feat)
                                 <li class="flex gap-2 items-start">
-                                    <span class="shrink-0 mt-0.5" style="color: {{ $isHighlighted ? 'var(--sun)' : 'var(--accent)' }};">✓</span>
-                                    <span style="color: {{ $isHighlighted ? '#D7D3CA' : 'inherit' }};">{{ is_array($feat) ? ($feat['text'] ?? '') : $feat }}</span>
+                                    <span class="shrink-0 mt-0.5 accent-text">✓</span>
+                                    <span>{{ is_array($feat) ? ($feat['text'] ?? '') : $feat }}</span>
                                 </li>
                             @endforeach
                         </ul>
                     @endif
 
-                    @if($cpm || $cpb)
-                        <div class="text-xs mb-6 pt-4 border-t space-y-1" style="border-color: {{ $isHighlighted ? 'rgba(255,255,255,.1)' : 'var(--line)' }}; color: {{ $isHighlighted ? '#A8A29E' : 'var(--muted)' }};">
-                            @if($cpm)
-                                <p>Mesaj suplimentar: <span class="font-semibold" style="color: {{ $isHighlighted ? 'var(--cream)' : 'var(--ink)' }};">{{ number_format($cpm, 2) }} lei</span></p>
+                    @if(($cpm && $cpm > 0) || ($cpb && $cpb > 0))
+                        <div class="text-xs mb-6 pt-4 border-t border-line space-y-1" style="color: var(--muted);">
+                            @if($cpm && $cpm > 0)
+                                <p>Mesaj suplimentar: <span class="font-semibold text-ink">{{ $fmtRo($cpm, 2) }} lei</span></p>
                             @endif
-                            @if($cpb)
-                                <p>Agent suplimentar: <span class="font-semibold" style="color: {{ $isHighlighted ? 'var(--cream)' : 'var(--ink)' }};">{{ number_format($cpb, 0) }} lei/lună</span></p>
+                            @if($cpb && $cpb > 0)
+                                <p>Agent suplimentar: <span class="font-semibold text-ink">{{ $fmtRo($cpb, fmod($cpb, 1) > 0 ? 2 : 0) }} lei/lună</span></p>
                             @endif
                         </div>
                     @endif
@@ -122,8 +165,8 @@
                            data-analytics-plan="{{ $plan->slug ?? strtolower($plan->name) }}"
                            data-analytics-plan-name="{{ $plan->name }}"
                            data-analytics-price="{{ $priceM }}"
-                           class="btn w-full justify-center {{ $isHighlighted ? '' : 'btn-outline' }}"
-                           @if($isHighlighted) style="background: var(--sun); color: var(--ink); width:100%;" @else style="width:100%;" @endif>
+                           class="btn w-full justify-center {{ $isHighlighted ? 'btn-primary' : 'btn-outline' }}"
+                           style="width:100%;">
                             Alege {{ $plan->name }}
                         </a>
                     @endif
@@ -148,14 +191,15 @@
             <div class="grid md:grid-cols-3 gap-5 max-w-6xl mx-auto">
                 @foreach($voicePlans as $plan)
                     @php
-                        $features = $plan->features ?? [];
-                        $overage = $plan->overage ?? [];
-                        $cpm = $overage['cost_per_minute'] ?? null;
-                        $limits = $plan->limits ?? [];
+                        $features = is_array($plan->features) ? $plan->features : [];
+                        $overage = is_array($plan->overage) ? $plan->overage : [];
+                        $cpm = isset($overage['cost_per_minute']) ? (float) $overage['cost_per_minute'] : null;
+                        $limits = is_array($plan->limits) ? $plan->limits : [];
                         $minutes = $limits['minutes'] ?? $limits['voice_minutes'] ?? null;
-                        $priceM = (int) ($plan->price_monthly ?? 0);
-                        $priceY = (int) ($plan->price_yearly ?? 0);
-                        $isEnterprise = $priceM === 0 && str_contains(strtolower($plan->slug ?? $plan->name ?? ''), 'enterprise');
+                        $priceM = (float) ($plan->price_monthly ?? 0);
+                        $priceY = (float) ($plan->price_yearly ?? 0);
+                        $priceAnnualMonthly = $priceY > 0 ? round($priceY / 12, 2) : $priceM;
+                        $isEnterprise = $isCustomPlan($plan);
                     @endphp
                     <div class="fade-up rounded-3xl p-7 bg-cream border border-line">
                         <div class="mono text-xs uppercase tracking-wider mb-3" style="color: var(--muted);">{{ $plan->name }}</div>
@@ -164,21 +208,23 @@
                         @endif
                         <div class="mb-5 pb-5 border-b border-line">
                             @if($isEnterprise)
-                                <div class="display text-4xl font-medium">Personalizat</div>
+                                <div class="display text-4xl font-medium">La cerere</div>
                             @else
                                 <div class="flex items-baseline gap-1">
                                     <span class="display text-5xl font-medium pricing-amount"
-                                          data-monthly="{{ $priceM }}"
-                                          data-annual="{{ $priceY > 0 ? round($priceY / 12) : $priceM }}">{{ $priceM }}</span>
+                                          data-monthly="{{ $fmtRo($priceM, fmod($priceM, 1) > 0 ? 2 : 0) }}"
+                                          data-annual="{{ $fmtRo($priceAnnualMonthly, fmod($priceAnnualMonthly, 1) > 0 ? 2 : 0) }}">{{ $fmtRo($priceM, fmod($priceM, 1) > 0 ? 2 : 0) }}</span>
                                     <span class="text-base font-semibold" style="color: var(--muted);">lei</span>
                                     <span class="text-sm" style="color: var(--muted);">/lună +TVA</span>
                                 </div>
-                                <p class="text-xs mt-1 pricing-note hidden" style="color: var(--muted);">facturat anual · {{ $priceY > 0 ? number_format($priceY, 0) : '—' }} lei/an</p>
+                                @if($priceY > 0)
+                                    <p class="text-xs mt-1 pricing-note hidden" style="color: var(--muted);">facturat anual · {{ $fmtRo($priceY, fmod($priceY, 1) > 0 ? 2 : 0) }} lei/an</p>
+                                @endif
                             @endif
                         </div>
-                        @if($minutes)
+                        @if(is_numeric($minutes))
                             <p class="text-sm font-semibold accent-text mb-4">
-                                {{ $minutes == -1 ? 'Minute nelimitate' : number_format($minutes) . ' minute incluse' }}
+                                {{ (int) $minutes === -1 ? 'Minute nelimitate' : $fmtRo($minutes, 0) . ' minute incluse' }}
                             </p>
                         @endif
                         @if(!empty($features) && is_array($features))
@@ -193,7 +239,7 @@
                         @endif
                         @if($cpm)
                             <p class="text-xs mb-6 pt-4 border-t border-line" style="color: var(--muted);">
-                                Minut suplimentar: <span class="font-semibold text-ink">{{ number_format($cpm, 2) }} lei</span>
+                                Minut suplimentar: <span class="font-semibold text-ink">{{ $fmtRo($cpm, 2) }} lei</span>
                             </p>
                         @endif
                         @if($isEnterprise)
@@ -228,11 +274,11 @@
                 @if($webchatPlans->count())
                     <div class="space-y-2 text-sm">
                         @foreach($webchatPlans as $plan)
-                            @php $cpm = $plan->overage['cost_per_message'] ?? null; @endphp
+                            @php $cpm = is_array($plan->overage ?? null) ? ($plan->overage['cost_per_message'] ?? null) : null; @endphp
                             @if($cpm)
                                 <div class="flex items-center justify-between py-2 border-b border-line last:border-0">
                                     <span style="color: var(--muted);">{{ $plan->name }}</span>
-                                    <span class="font-semibold text-ink">{{ number_format($cpm, 2) }} lei</span>
+                                    <span class="font-semibold text-ink">{{ $fmtRo($cpm, 2) }} lei</span>
                                 </div>
                             @endif
                         @endforeach
@@ -252,11 +298,11 @@
                 @if($webchatPlans->count())
                     <div class="space-y-2 text-sm">
                         @foreach($webchatPlans as $plan)
-                            @php $cpb = $plan->overage['cost_per_extra_bot'] ?? null; @endphp
+                            @php $cpb = is_array($plan->overage ?? null) ? ($plan->overage['cost_per_extra_bot'] ?? null) : null; @endphp
                             @if($cpb)
                                 <div class="flex items-center justify-between py-2 border-b border-line last:border-0">
                                     <span style="color: var(--muted);">{{ $plan->name }}</span>
-                                    <span class="font-semibold text-ink">{{ number_format($cpb, 0) }} lei/lună</span>
+                                    <span class="font-semibold text-ink">{{ $fmtRo($cpb, fmod($cpb, 1) > 0 ? 2 : 0) }} lei/lună</span>
                                 </div>
                             @endif
                         @endforeach
@@ -276,11 +322,11 @@
                 @if($voicePlans->count())
                     <div class="space-y-2 text-sm">
                         @foreach($voicePlans as $plan)
-                            @php $cpm = $plan->overage['cost_per_minute'] ?? null; @endphp
+                            @php $cpm = is_array($plan->overage ?? null) ? ($plan->overage['cost_per_minute'] ?? null) : null; @endphp
                             @if($cpm)
                                 <div class="flex items-center justify-between py-2 border-b border-line last:border-0">
                                     <span style="color: var(--muted);">{{ $plan->name }}</span>
-                                    <span class="font-semibold text-ink">{{ number_format($cpm, 2) }} lei/min</span>
+                                    <span class="font-semibold text-ink">{{ $fmtRo($cpm, 2) }} lei/min</span>
                                 </div>
                             @endif
                         @endforeach
