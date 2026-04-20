@@ -9,8 +9,8 @@
     $heroEyebrow  = $niche->hero_eyebrow  ?: ('AGENT AI PENTRU ' . strtoupper($niche->name));
     $ctaPrimary   = $niche->cta_primary_text ?: 'Încearcă 7 zile gratuit';
     $ctaPrimaryHref = $niche->cta_primary_href ?: url('/register');
-    $ctaSecondary = $niche->cta_secondary_text ?: 'Vorbește cu echipa';
-    $ctaSecondaryHref = $niche->cta_secondary_href ?: route('new.contact');
+    $ctaSecondary = $niche->cta_secondary_text ?: 'Cere demo personalizat';
+    $ctaSecondaryHref = $niche->cta_secondary_href ?: '#contact';
     $nicheLabel   = $niche->vertical_label ?: $niche->name;
 @endphp
 
@@ -447,6 +447,82 @@
     </div>
 </section>
 @endif
+
+{{-- LEAD FORM — demo personalizat pentru nișă --}}
+<section id="contact" class="py-20 bg-cream border-t border-line relative overflow-hidden">
+    <div class="max-w-2xl mx-auto px-6 relative">
+        <div class="text-center mb-10 fade-up">
+            <div class="chip chip-soft mb-5 mono text-[11px] uppercase tracking-wider inline-flex">◇ hai să vorbim</div>
+            <h2 class="display h-display-lg mb-4">Vrei un demo <em class="italic accent-text">personalizat</em>?</h2>
+            <p class="text-lg leading-relaxed" style="color: var(--muted);">Trimite-ne link-ul site-ului sau al paginii de Facebook — îți arătăm agentul rulând pe datele afacerii tale, nu pe un demo generic.</p>
+        </div>
+
+        @if(session('niche_lead_success'))
+            <div class="mb-6 rounded-2xl px-5 py-4 text-sm font-semibold" style="background:#D1FAE5; color:#047857;">
+                {{ session('niche_lead_success') }}
+            </div>
+        @endif
+
+        @if($errors->any())
+            <div class="mb-6 rounded-2xl px-5 py-4 text-sm" style="background: var(--accent-soft); color: var(--accent-dark);">
+                @foreach($errors->all() as $e)<div>{{ $e }}</div>@endforeach
+            </div>
+        @endif
+
+        <form action="{{ route('public.niche.lead', $niche->slug) }}" method="POST" class="rounded-3xl p-7 md:p-8 bg-paper border border-line space-y-5 fade-up">
+            @csrf
+            <input type="hidden" name="source_url" value="{{ url()->current() }}">
+            {{-- Honeypot — real users leave it empty --}}
+            <input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;opacity:0;pointer-events:none;" aria-hidden="true">
+
+            <label class="block">
+                <span class="text-sm font-medium mb-1 block">Nume <span style="color: var(--accent);">*</span></span>
+                <input required name="name" type="text" value="{{ old('name') }}" placeholder="Numele tău"
+                       class="w-full rounded-xl bg-white border border-line px-4 py-3 text-sm focus:outline-none focus:ring-2"
+                       style="--tw-ring-color: var(--accent);">
+            </label>
+
+            <label class="block">
+                <span class="text-sm font-medium mb-1 block">Site sau pagina de Facebook <span style="color: var(--muted);" class="font-normal">— ca să personalizăm demo-ul</span></span>
+                <input name="website_url" type="text" value="{{ old('website_url') }}" placeholder="ex: www.afacereata.ro sau facebook.com/afacereata"
+                       class="w-full rounded-xl bg-white border border-line px-4 py-3 text-sm focus:outline-none focus:ring-2"
+                       style="--tw-ring-color: var(--accent);">
+            </label>
+
+            <div class="grid sm:grid-cols-2 gap-4">
+                <label class="block">
+                    <span class="text-sm font-medium mb-1 block">E-mail <span style="color: var(--accent);">*</span></span>
+                    <input required name="email" type="email" value="{{ old('email') }}" placeholder="nume@afacerea-ta.ro"
+                           class="w-full rounded-xl bg-white border border-line px-4 py-3 text-sm focus:outline-none focus:ring-2"
+                           style="--tw-ring-color: var(--accent);">
+                </label>
+                <label class="block">
+                    <span class="text-sm font-medium mb-1 block">Telefon <span style="color: var(--accent);">*</span></span>
+                    <input required name="phone" type="tel" value="{{ old('phone') }}" placeholder="+40 7xx xxx xxx"
+                           class="w-full rounded-xl bg-white border border-line px-4 py-3 text-sm focus:outline-none focus:ring-2"
+                           style="--tw-ring-color: var(--accent);">
+                </label>
+            </div>
+
+            <label class="block">
+                <span class="text-sm font-medium mb-1 block">Mesaj <span style="color: var(--muted);" class="font-normal">(opțional)</span></span>
+                <textarea name="message" rows="4"
+                          placeholder="Ce ai vrea să facă agentul? Câți clienți îți sună zilnic?"
+                          class="w-full rounded-xl bg-white border border-line px-4 py-3 text-sm focus:outline-none focus:ring-2"
+                          style="--tw-ring-color: var(--accent);">{{ old('message') }}</textarea>
+            </label>
+
+            <button type="submit" class="btn btn-primary w-full justify-center">
+                Vreau demo personalizat
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </button>
+
+            <p class="text-xs text-center pt-1" style="color: var(--muted);">
+                Prin trimiterea formularului ești de acord cu <a href="{{ route('new.legal.confidentialitate') }}" class="underline accent-text">politica de confidențialitate</a>.
+            </p>
+        </form>
+    </div>
+</section>
 
 {{-- CTA FINAL --}}
 <section class="py-24">
