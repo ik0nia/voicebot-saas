@@ -23,6 +23,7 @@ class NewSiteController extends Controller
         return view('new.home', [
             'niches'       => $this->activeNiches(),
             'footerNiches' => $this->footerNiches(),
+            'webchatPlans' => $this->publicWebchatPlans(),
             'nicheTheme'   => '',
         ]);
     }
@@ -125,6 +126,21 @@ class NewSiteController extends Controller
             'footerNiches' => $this->footerNiches(),
             'nicheTheme'   => '',
         ]);
+    }
+
+    /**
+     * Public webchat plans for the homepage grid — same filter used on
+     * /new/preturi (active + public + no tenant_id), top 3 by sort_order.
+     * Falls back to an empty collection so the view can render static
+     * cards if the plans table is unreachable.
+     */
+    private function publicWebchatPlans()
+    {
+        try {
+            return Plan::active()->public()->webchat()->orderBy('sort_order')->take(3)->get();
+        } catch (\Throwable $e) {
+            return collect();
+        }
     }
 
     private function activeNiches()

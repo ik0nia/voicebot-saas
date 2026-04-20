@@ -810,7 +810,18 @@
     </div>
 </section>
 
-{{-- Pricing --}}
+{{-- Pricing — live din tabela plans (public + active + webchat), 3 primele
+     după sort_order. Fallback la carduri statice dacă tabela e goală sau
+     indisponibilă, ca pagina să rămână utilă oricând. --}}
+@php
+    $fmtRo = fn ($val, int $dec = 0) => number_format((float) $val, $dec, ',', '.');
+    $isCustomPlan = function ($plan) {
+        $priceM = (float) ($plan->price_monthly ?? 0);
+        if ($priceM <= 0) return true;
+        $text = strtolower(($plan->slug ?? '') . ' ' . ($plan->name ?? ''));
+        return str_contains($text, 'enterprise') || str_contains($text, 'custom');
+    };
+@endphp
 <section id="preturi" class="py-24">
     <div class="max-w-6xl mx-auto px-6">
         <div class="max-w-xl mx-auto text-center mb-14 fade-up">
@@ -820,57 +831,105 @@
         </div>
 
         <div class="grid md:grid-cols-3 gap-4">
-            <div class="fade-up rounded-3xl p-8 bg-paper border border-line">
-                <div class="mono text-xs uppercase tracking-wider text-muted mb-3">Starter</div>
-                <div class="flex items-baseline gap-1 mb-3">
-                    <span class="display text-6xl font-medium">29</span>
-                    <span class="text-muted">lei / lună</span>
-                </div>
-                <p class="text-sm text-muted mb-6 pb-6 border-b border-line">Agent AI simplu pe un site.</p>
-                <ul class="space-y-2.5 text-sm mb-8">
-                    <li class="flex gap-2 items-start"><span class="accent-text">✓</span>1 agent AI · 500 conversații/lună</li>
-                    <li class="flex gap-2 items-start"><span class="accent-text">✓</span>Widget chat + 1 site</li>
-                    <li class="flex gap-2 items-start"><span class="accent-text">✓</span>Bază cunoștințe nelimitată</li>
-                    <li class="flex gap-2 items-start text-muted"><span>—</span>WhatsApp / FB / IG</li>
-                    <li class="flex gap-2 items-start text-muted"><span>—</span>Agent vocal</li>
-                </ul>
-                <a href="{{ url('/register') }}" class="btn-outline w-full justify-center" style="width:100%;">Începe gratuit</a>
-            </div>
+            @forelse($webchatPlans as $plan)
+                @php
+                    $isPopular    = (bool) ($plan->is_popular ?? false);
+                    $priceM       = (float) ($plan->price_monthly ?? 0);
+                    $isEnterprise = $isCustomPlan($plan);
+                    $features     = is_array($plan->features) ? $plan->features : [];
+                @endphp
 
-            <div class="fade-up rounded-3xl p-8 bg-ink text-cream relative" style="transition-delay:.1s;">
-                <div class="absolute -top-3 left-1/2 -translate-x-1/2 chip accent-bg text-[10px] font-semibold">Recomandat</div>
-                <div class="mono text-xs uppercase tracking-wider mb-3" style="color:#F2E59A;">Professional</div>
-                <div class="flex items-baseline gap-1 mb-3">
-                    <span class="display text-6xl font-medium">79</span>
-                    <span style="color:#A8A29E;">lei / lună</span>
+                @if($isPopular)
+                    <div class="fade-up rounded-3xl p-8 bg-ink text-cream relative" style="transition-delay:.1s;">
+                        <div class="absolute -top-3 left-1/2 -translate-x-1/2 chip accent-bg text-[10px] font-semibold">Recomandat</div>
+                        <div class="mono text-xs uppercase tracking-wider mb-3" style="color:#F2E59A;">{{ $plan->name }}</div>
+                        <div class="flex items-baseline gap-1 mb-3">
+                            @if($isEnterprise)
+                                <span class="display text-5xl font-medium">La cerere</span>
+                            @else
+                                <span class="display text-6xl font-medium">{{ $fmtRo($priceM, fmod($priceM, 1) > 0 ? 2 : 0) }}</span>
+                                <span style="color:#A8A29E;">lei / lună</span>
+                            @endif
+                        </div>
+                        @if($plan->description)
+                            <p class="text-sm mb-6 pb-6 border-b" style="color:#D7D3CA; border-color: rgba(255,255,255,.1);">{{ $plan->description }}</p>
+                        @endif
+                        @if(!empty($features))
+                            <ul class="space-y-2.5 text-sm mb-8">
+                                @foreach($features as $feat)
+                                    <li class="flex gap-2 items-start"><span style="color:#F2E59A;">✓</span>{{ is_array($feat) ? ($feat['text'] ?? '') : $feat }}</li>
+                                @endforeach
+                            </ul>
+                        @endif
+                        @if($isEnterprise)
+                            <a href="{{ route('new.contact') }}" class="btn-primary w-full justify-center" style="background:#F2E59A; color:#1C1917; width:100%;">Contactează-ne</a>
+                        @else
+                            <a href="{{ url('/register') }}" class="btn-primary w-full justify-center" style="background:#F2E59A; color:#1C1917; width:100%;">Alege {{ $plan->name }} →</a>
+                        @endif
+                    </div>
+                @else
+                    <div class="fade-up rounded-3xl p-8 bg-paper border border-line" style="transition-delay:.{{ $loop->index }}s;">
+                        <div class="mono text-xs uppercase tracking-wider text-muted mb-3">{{ $plan->name }}</div>
+                        <div class="flex items-baseline gap-1 mb-3">
+                            @if($isEnterprise)
+                                <span class="display text-5xl font-medium">La cerere</span>
+                            @else
+                                <span class="display text-6xl font-medium">{{ $fmtRo($priceM, fmod($priceM, 1) > 0 ? 2 : 0) }}</span>
+                                <span class="text-muted">lei / lună</span>
+                            @endif
+                        </div>
+                        @if($plan->description)
+                            <p class="text-sm text-muted mb-6 pb-6 border-b border-line">{{ $plan->description }}</p>
+                        @endif
+                        @if(!empty($features))
+                            <ul class="space-y-2.5 text-sm mb-8">
+                                @foreach($features as $feat)
+                                    <li class="flex gap-2 items-start"><span class="accent-text">✓</span>{{ is_array($feat) ? ($feat['text'] ?? '') : $feat }}</li>
+                                @endforeach
+                            </ul>
+                        @endif
+                        @if($isEnterprise)
+                            <a href="{{ route('new.contact') }}" class="btn-outline w-full justify-center" style="width:100%;">Contactează-ne</a>
+                        @else
+                            <a href="{{ url('/register') }}" class="btn-outline w-full justify-center" style="width:100%;">Alege {{ $plan->name }}</a>
+                        @endif
+                    </div>
+                @endif
+            @empty
+                {{-- Fallback static când tabela plans e goală sau off. --}}
+                <div class="fade-up rounded-3xl p-8 bg-paper border border-line">
+                    <div class="mono text-xs uppercase tracking-wider text-muted mb-3">Starter</div>
+                    <div class="flex items-baseline gap-1 mb-3">
+                        <span class="display text-6xl font-medium">29</span>
+                        <span class="text-muted">lei / lună</span>
+                    </div>
+                    <p class="text-sm text-muted mb-6 pb-6 border-b border-line">Agent AI simplu pe un site.</p>
+                    <a href="{{ url('/register') }}" class="btn-outline w-full justify-center" style="width:100%;">Începe gratuit</a>
                 </div>
-                <p class="text-sm mb-6 pb-6 border-b" style="color:#D7D3CA; border-color: rgba(255,255,255,.1);">Multi-canal + CRM lead pipeline.</p>
-                <ul class="space-y-2.5 text-sm mb-8">
-                    <li class="flex gap-2 items-start"><span style="color:#F2E59A;">✓</span>3 agenți AI · 2.500 conversații/lună</li>
-                    <li class="flex gap-2 items-start"><span style="color:#F2E59A;">✓</span>WooCommerce + WhatsApp</li>
-                    <li class="flex gap-2 items-start"><span style="color:#F2E59A;">✓</span>Lead scoring + CRM pipeline</li>
-                    <li class="flex gap-2 items-start"><span style="color:#F2E59A;">✓</span>Analiză avansată</li>
-                    <li class="flex gap-2 items-start" style="color:#A8A29E;"><span>—</span>Voce AI (addon +49 lei)</li>
-                </ul>
-                <a href="{{ url('/register') }}" class="btn-primary w-full justify-center" style="background:#F2E59A; color:#1C1917; width:100%;">Alege Professional →</a>
-            </div>
+                <div class="fade-up rounded-3xl p-8 bg-ink text-cream relative" style="transition-delay:.1s;">
+                    <div class="absolute -top-3 left-1/2 -translate-x-1/2 chip accent-bg text-[10px] font-semibold">Recomandat</div>
+                    <div class="mono text-xs uppercase tracking-wider mb-3" style="color:#F2E59A;">Professional</div>
+                    <div class="flex items-baseline gap-1 mb-3">
+                        <span class="display text-6xl font-medium">79</span>
+                        <span style="color:#A8A29E;">lei / lună</span>
+                    </div>
+                    <p class="text-sm mb-6 pb-6 border-b" style="color:#D7D3CA; border-color: rgba(255,255,255,.1);">Multi-canal + CRM lead pipeline.</p>
+                    <a href="{{ url('/register') }}" class="btn-primary w-full justify-center" style="background:#F2E59A; color:#1C1917; width:100%;">Alege Professional →</a>
+                </div>
+                <div class="fade-up rounded-3xl p-8 bg-paper border border-line" style="transition-delay:.2s;">
+                    <div class="mono text-xs uppercase tracking-wider text-muted mb-3">Business</div>
+                    <div class="flex items-baseline gap-1 mb-3">
+                        <span class="display text-6xl font-medium">199</span>
+                        <span class="text-muted">lei / lună</span>
+                    </div>
+                    <p class="text-sm text-muted mb-6 pb-6 border-b border-line">Volum mare + toate canalele + voce.</p>
+                    <a href="{{ url('/register') }}" class="btn-outline w-full justify-center" style="width:100%;">Alege Business</a>
+                </div>
+            @endforelse
+        </div>
 
-            <div class="fade-up rounded-3xl p-8 bg-paper border border-line" style="transition-delay:.2s;">
-                <div class="mono text-xs uppercase tracking-wider text-muted mb-3">Business</div>
-                <div class="flex items-baseline gap-1 mb-3">
-                    <span class="display text-6xl font-medium">199</span>
-                    <span class="text-muted">lei / lună</span>
-                </div>
-                <p class="text-sm text-muted mb-6 pb-6 border-b border-line">Volum mare + toate canalele + voce.</p>
-                <ul class="space-y-2.5 text-sm mb-8">
-                    <li class="flex gap-2 items-start"><span class="accent-text">✓</span>10 agenți · 10.000 conversații/lună</li>
-                    <li class="flex gap-2 items-start"><span class="accent-text">✓</span>Toate canalele (FB · IG · WA)</li>
-                    <li class="flex gap-2 items-start"><span class="accent-text">✓</span>Voce AI disponibilă</li>
-                    <li class="flex gap-2 items-start"><span class="accent-text">✓</span>Suport prioritar</li>
-                    <li class="flex gap-2 items-start"><span class="accent-text">✓</span>API + webhooks</li>
-                </ul>
-                <a href="{{ url('/register') }}" class="btn-outline w-full justify-center" style="width:100%;">Alege Business</a>
-            </div>
+        <div class="text-center mt-8">
+            <a href="{{ route('new.preturi') }}" class="text-sm text-muted hover:text-ink underline underline-offset-4 decoration-line">Vezi toate planurile și detaliile →</a>
         </div>
     </div>
 </section>
