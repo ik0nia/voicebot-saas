@@ -173,6 +173,42 @@
     @include('partials.analytics.flash-events')
     @include('partials.analytics.enterprise-tracking')
 
+    {{-- Organization + WebSite schema globale, o dată per request.
+         Per-page @yield('jsonld') adaugă tipuri specifice (FAQPage,
+         Product, BreadcrumbList, etc.). --}}
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://sambla.ro/#organization",
+          "name": "Sambla",
+          "alternateName": "Sambla.ro",
+          "url": "https://sambla.ro",
+          "logo": "{{ asset('images/logo-light.svg') }}",
+          "email": "servus@sambla.ro",
+          "telephone": "+40775222333",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "Bd. Dacia nr. 31",
+            "addressLocality": "Oradea",
+            "addressCountry": "RO"
+          },
+          "description": "Platformă românească de agenți AI conversaționali pe chat, telefon și canale sociale. Hosting în RO, GDPR nativ."
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://sambla.ro/#website",
+          "url": "https://sambla.ro",
+          "name": "Sambla",
+          "inLanguage": "ro-RO",
+          "publisher": { "@id": "https://sambla.ro/#organization" }
+        }
+      ]
+    }
+    </script>
+
     @yield('jsonld')
     @stack('styles')
 </head>

@@ -4,6 +4,39 @@
 @section('meta_description', 'Agenți AI conversaționali antrenați pentru industria ta — stomatologie, estetică, service auto, imobiliare, HORECA, avocatură, contabilitate, e-commerce și mai multe. Fiecare vertical cu prompt-uri, integrări și ton adaptat.')
 @section('canonical', url('/new/industrii'))
 
+@section('jsonld')
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "Industrii deservite de Sambla",
+  "description": "17 verticale cu pagini dedicate: stomatologie, medical, beauty, auto, e-commerce, imobiliare, HoReCa, avocatură și altele.",
+  "url": "{{ url('/new/industrii') }}",
+  "inLanguage": "ro-RO",
+  "isPartOf": { "@id": "https://sambla.ro/#website" },
+  "hasPart": [
+    @foreach($niches as $n)
+    {
+      "@type": "WebPage",
+      "name": @json($n->name),
+      "url": "{{ url('/new/pentru/' . $n->slug) }}"
+    }{{ !$loop->last ? ',' : '' }}
+    @endforeach
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Acasă", "item": "{{ url('/new') }}" },
+    { "@type": "ListItem", "position": 2, "name": "Industrii", "item": "{{ url('/new/industrii') }}" }
+  ]
+}
+</script>
+@endsection
+
 @section('content')
 
 {{-- HERO --}}

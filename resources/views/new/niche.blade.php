@@ -38,7 +38,7 @@
             "@type":"BreadcrumbList",
             "itemListElement":[
                 {"@type":"ListItem","position":1,"name":"Acasă","item":{!! json_encode(url('/new'), JSON_UNESCAPED_UNICODE) !!}},
-                {"@type":"ListItem","position":2,"name":"Industrii","item":{!! json_encode(url('/new') . '#industrii', JSON_UNESCAPED_UNICODE) !!}},
+                {"@type":"ListItem","position":2,"name":"Industrii","item":{!! json_encode(url('/new/industrii'), JSON_UNESCAPED_UNICODE) !!}},
                 {"@type":"ListItem","position":3,"name":{!! json_encode($niche->name, JSON_UNESCAPED_UNICODE) !!},"item":{!! json_encode(url('/new/pentru/' . $niche->slug), JSON_UNESCAPED_UNICODE) !!}}
             ]
         }

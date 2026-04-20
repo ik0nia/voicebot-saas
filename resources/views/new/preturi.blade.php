@@ -1,8 +1,44 @@
 @extends('layouts.new')
 
 @section('title', 'Prețuri Sambla — planuri pentru agenți AI, în lei')
-@section('meta_description', 'Planuri lunare și anuale pentru agenți AI — chat pe site, telefon, multi-canal. Prețuri transparente în lei românești, fără surprize. 7 zile gratuit.')
+@section('meta_description', 'Planuri pentru agenți AI — chat pe site, telefon, multi-canal. Prețuri transparente în lei românești, fără surprize. 7 zile gratuit.')
 @section('canonical', url('/new/preturi'))
+
+@section('jsonld')
+@php
+    $allPlans = $webchatPlans->concat($voicePlans)->filter(fn ($p) => (float)($p->price_monthly ?? 0) > 0);
+@endphp
+@if($allPlans->count())
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": "Sambla — agenți AI pentru afaceri",
+  "description": "Platformă de agenți AI cu planuri lunare în lei — chat, vocal și multi-canal.",
+  "brand": { "@id": "https://sambla.ro/#organization" },
+  "offers": [
+    @foreach($allPlans as $plan)
+    {
+      "@type": "Offer",
+      "name": @json($plan->name),
+      "price": @json(number_format((float) $plan->price_monthly, 2, '.', '')),
+      "priceCurrency": "RON",
+      "availability": "https://schema.org/InStock",
+      "url": "https://sambla.ro/new/preturi",
+      "priceSpecification": {
+        "@type": "UnitPriceSpecification",
+        "price": @json(number_format((float) $plan->price_monthly, 2, '.', '')),
+        "priceCurrency": "RON",
+        "billingIncrement": 1,
+        "unitText": "MONTH"
+      }
+    }{{ !$loop->last ? ',' : '' }}
+    @endforeach
+  ]
+}
+</script>
+@endif
+@endsection
 
 @php
     /* Formatare RON în stil românesc: 1.299,50 lei (nu 1,299.50) */

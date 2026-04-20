@@ -4,6 +4,47 @@
 @section('meta_description', 'De ce aleg afacerile Sambla: nativ românesc, onest când nu știe, construit în România, GDPR by default, fără promisiuni goale. Compară pe bune.')
 @section('canonical', url('/new/de-ce-sambla'))
 
+@php
+    /* Singura sursă de adevăr pentru FAQ-ul de la baza paginii.
+       Folosit și pentru render-ul DOM și pentru JSON-LD FAQPage. */
+    $deCeFaq = [
+        ['În ce diferă Sambla de un chatbot obișnuit cu butoane?',
+         'Chatbot-urile cu butoane funcționează pe scenarii fixe. Dacă clientul formulează altfel decât ai prevăzut, se blochează. Sambla înțelege limbaj natural — clientul scrie sau spune cum îi vine, agentul înțelege intenția și răspunde din documentele tale reale.'],
+        ['Sambla e doar „GPT cu prompt"?',
+         'Nu. Folosim modele AI moderne ca motor de limbaj — nu pretindem că am construit de la zero un model de miliarde de parametri. Dar restul platformei este al nostru: baza de cunoștințe pe afacere, controalele anti-invenție, conexiunea cu telefonul, canalele multiple, dashboard-ul, izolarea între conturi. Dacă mâine schimbăm motorul, agentul tău funcționează la fel.'],
+        ['Cum garantați că AI-ul nu inventează?',
+         'Onest: niciun model AI nu garantează 100% că nu greșește. Ce garantăm este că agentul răspunde doar din documentele pe care le-ai încărcat tu, citează sursa, iar când nu are informația, spune onest „nu știu" și te transferă. În producție, modul de eșec este „îți cere clarificare", nu „inventează cu încredere".'],
+        ['Are Sambla vreo legătură cu Sambla Group (IFN, credite)?',
+         'Nu, niciuna. Sambla este o platformă de software AI pentru afaceri românești. Nu oferim credite, leasing, asigurări sau orice alt serviciu financiar. Numele vine dintr-o expresie ardelenească — „a sâmbla", a pronunța, a da glas. Povestea completă este pe pagina Despre.'],
+        ['De ce contează că e hostat în România?',
+         'Datele tale (și ale clienților tăi) nu părăsesc UE. GDPR nativ, izolare pe tenant (niciun cont nu poate accesa datele altui cont, nici din greșeală), backup-uri criptate, audit trail pe fiecare acces. Dacă ai o investigație GDPR, totul este trasabil pe infrastructură din România.'],
+        ['Câte canale suportă Sambla cu același creier?',
+         'Chat pe site, telefon, WhatsApp, Facebook Messenger, Instagram DM. Clientul poate începe pe site, continua pe WhatsApp, suna după două ore — agentul ține minte contextul. Este „multi-canal cu același creier", nu cinci agenți separați.'],
+        ['Agentul învață singur sau e nevoie de cineva să-l antreneze?',
+         'Învață asistat. Detectează singur întrebările la care nu răspunde bine și generează o propunere de răspuns, dar un om din echipa ta o aprobă înainte să intre în baza de cunoștințe. Nu este auto-modificare autonomă — asta ar fi periculos. Tu rămâi în control, AI-ul face munca grea.'],
+        ['Pot să-l probez înainte să iau decizia?',
+         'Da. 7 zile gratuit, fără card, fără să te sunăm. Urci documentele tale, îl testezi pe site și pe telefon, vezi cum răspunde cu datele tale reale. Dacă nu e ce îți trebuie, nu se întâmplă nimic.'],
+    ];
+@endphp
+
+@section('jsonld')
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    @foreach($deCeFaq as $f)
+    {
+      "@type": "Question",
+      "name": @json($f[0]),
+      "acceptedAnswer": { "@type": "Answer", "text": @json($f[1]) }
+    }{{ !$loop->last ? ',' : '' }}
+    @endforeach
+  ]
+}
+</script>
+@endsection
+
 @section('content')
 
 <section class="hero-glow">
@@ -363,24 +404,7 @@
             <h2 class="display h-display-m">Răspundem la ce <em class="italic accent-text">chiar ne întreabă</em> lumea.</h2>
         </div>
         <div class="space-y-3 fade-up">
-            @foreach([
-                ['În ce diferă Sambla de un chatbot obișnuit cu butoane?',
-                 'Chatbot-urile cu butoane funcționează pe scenarii fixe. Dacă clientul formulează altfel decât ai prevăzut, se blochează. Sambla înțelege limbaj natural — clientul scrie sau spune cum îi vine, agentul înțelege intenția și răspunde din documentele tale reale.'],
-                ['Sambla e doar „GPT cu prompt"?',
-                 'Nu. Folosim modele AI moderne ca motor de limbaj — nu pretindem că am construit de la zero un model de miliarde de parametri. Dar restul platformei este al nostru: baza de cunoștințe pe afacere, controalele anti-invenție, conexiunea cu telefonul, canalele multiple, dashboard-ul, izolarea între conturi. Dacă mâine schimbăm motorul, agentul tău funcționează la fel.'],
-                ['Cum garantați că AI-ul nu inventează?',
-                 'Onest: niciun model AI nu garantează 100% că nu greșește. Ce garantăm este că agentul răspunde doar din documentele pe care le-ai încărcat tu, citează sursa, iar când nu are informația, spune onest „nu știu" și te transferă. În producție, modul de eșec este „îți cere clarificare", nu „inventează cu încredere".'],
-                ['Are Sambla vreo legătură cu Sambla Group (IFN, credite)?',
-                 'Nu, niciuna. Sambla este o platformă de software AI pentru afaceri românești. Nu oferim credite, leasing, asigurări sau orice alt serviciu financiar. Numele vine dintr-o expresie ardelenească — „a sâmbla", a pronunța, a da glas. Povestea completă este pe pagina Despre.'],
-                ['De ce contează că e hostat în România?',
-                 'Datele tale (și ale clienților tăi) nu părăsesc UE. GDPR nativ, izolare pe tenant (niciun cont nu poate accesa datele altui cont, nici din greșeală), backup-uri criptate, audit trail pe fiecare acces. Dacă ai o investigație GDPR, totul este trasabil pe infrastructură din România.'],
-                ['Câte canale suportă Sambla cu același creier?',
-                 'Chat pe site, telefon, WhatsApp, Facebook Messenger, Instagram DM. Clientul poate începe pe site, continua pe WhatsApp, suna după două ore — agentul ține minte contextul. Este „multi-canal cu același creier", nu cinci agenți separați.'],
-                ['Agentul învață singur sau e nevoie de cineva să-l antreneze?',
-                 'Învață asistat. Detectează singur întrebările la care nu răspunde bine și generează o propunere de răspuns, dar un om din echipa ta o aprobă înainte să intre în baza de cunoștințe. Nu este auto-modificare autonomă — asta ar fi periculos. Tu rămâi în control, AI-ul face munca grea.'],
-                ['Pot să-l probez înainte să iau decizia?',
-                 'Da. 7 zile gratuit, fără card, fără să te sunăm. Urci documentele tale, îl testezi pe site și pe telefon, vezi cum răspunde cu datele tale reale. Dacă nu e ce îți trebuie, nu se întâmplă nimic.'],
-            ] as $f)
+            @foreach($deCeFaq as $f)
                 <details class="rounded-2xl bg-cream border border-line px-5 py-4 group">
                     <summary class="flex items-center justify-between cursor-pointer list-none">
                         <span class="font-semibold pr-6">{{ $f[0] }}</span>

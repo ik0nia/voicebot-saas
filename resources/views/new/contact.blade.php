@@ -4,6 +4,55 @@
 @section('meta_description', 'Scrie-ne despre afacerea ta și ce ai vrea să automatizezi. Răspundem în ziua lucrătoare. Pentru urgențe, sună direct.')
 @section('canonical', url('/new/contact'))
 
+@php
+    /* FAQPage JSON-LD derived din FAQ-ul de mai jos. Lista e oglindită
+       aici ca să trimitem structured data curat la Google fără a
+       parsa DOM-ul. Dacă actualizezi întrebări în FAQ, updatează și
+       aici sau mută ambele într-un partial. */
+    $contactFaqForSchema = [
+        ['Ce este Sambla?', 'Sambla e o platformă românească de agenți AI pentru afaceri. Oferim agent pe chat pentru site și agent vocal pentru apeluri telefonice — ambii conectați la datele afacerii tale și disponibili 24/7, în limba română.'],
+        ['Ce poate face agentul AI pe chat?', 'Răspunde la întrebări bazat pe documentele tale, caută produse și le afișează cu poze și prețuri, verifică statusul comenzilor cu tracking automat, captează lead-uri, detectează intenții și frustrare, și escaladează la operator uman când e nevoie.'],
+        ['Ce poate face agentul vocal?', 'Primește și inițiază apeluri cu voce naturală în română. Răspunde din baza de cunoștințe, caută produse, verifică comenzi, colectează date de contact și transferă la operator. Fiecare apel e transcris automat și analizat pentru sentiment.'],
+        ['Cât durează să fie live?', 'Agentul pe chat poate fi live în 10 minute — o singură linie de cod. Configurarea bazei de cunoștințe durează de obicei câteva ore. Agentul vocal cu număr telefonic dedicat necesită 1–2 zile.'],
+        ['Cum îl învăț despre afacerea mea?', 'Încarci documente (PDF, DOCX, CSV, TXT), adaugi URL-uri pe care le scanăm automat, conectezi magazinul WordPress/WooCommerce pentru sincronizare produse, sau scrii direct informațiile ca text.'],
+        ['Funcționează cu magazinul meu WooCommerce?', 'Da, avem conector WooCommerce nativ. Se sincronizează automat cu catalogul și cu comenzile. Agentul afișează produse cu poze și preț, permite adăugarea în coș și verifică statusul comenzilor.'],
+        ['Este platforma conformă GDPR?', 'Da. Colectăm date personale doar cu consimțământ explicit, hosting-ul e în România, datele fiecărui client sunt izolate complet și poți șterge contul și toate datele asociate oricând.'],
+        ['Oferiți suport în română?', 'Da, 100%. Echipa e românească. Suportul, documentația și comunicarea sunt în română. Luni–Joi, 10:00–16:00.'],
+        ['Câte limbi suportă agentul?', '10+ limbi, cu optimizare specială pentru română. Detectează automat limba clientului și răspunde în aceeași limbă.'],
+    ];
+@endphp
+
+@section('jsonld')
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    @foreach($contactFaqForSchema as $f)
+    {
+      "@type": "Question",
+      "name": @json($f[0]),
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": @json($f[1])
+      }
+    }{{ !$loop->last ? ',' : '' }}
+    @endforeach
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ContactPage",
+  "url": "{{ url('/new/contact') }}",
+  "name": "Contact Sambla",
+  "inLanguage": "ro-RO",
+  "about": { "@id": "https://sambla.ro/#organization" }
+}
+</script>
+@endsection
+
 @section('content')
 
 <section class="hero-glow">
