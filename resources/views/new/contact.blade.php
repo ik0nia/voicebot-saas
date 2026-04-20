@@ -31,26 +31,55 @@
                     </div>
                 @endif
 
+                {{-- Honeypot for bots — real users leave it empty --}}
+                <input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;opacity:0;pointer-events:none;" aria-hidden="true">
+                <input type="hidden" name="source" value="contact_form">
+
                 <div class="grid md:grid-cols-2 gap-4">
                     <label class="block">
                         <span class="text-sm font-medium mb-1 block">Nume</span>
-                        <input required name="name" type="text" placeholder="Numele tău"
+                        <input required name="name" type="text" value="{{ old('name') }}" placeholder="Numele tău"
                                class="w-full rounded-xl bg-white border border-line px-4 py-3 text-sm focus:outline-none focus:ring-2"
                                style="--tw-ring-color: var(--accent);">
                     </label>
                     <label class="block">
                         <span class="text-sm font-medium mb-1 block">E-mail</span>
-                        <input required name="email" type="email" placeholder="nume@afacerea-ta.ro"
+                        <input required name="email" type="email" value="{{ old('email') }}" placeholder="nume@afacerea-ta.ro"
+                               class="w-full rounded-xl bg-white border border-line px-4 py-3 text-sm focus:outline-none focus:ring-2"
+                               style="--tw-ring-color: var(--accent);">
+                    </label>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-4">
+                    <label class="block">
+                        <span class="text-sm font-medium mb-1 block">Companie <span style="color: var(--muted);" class="font-normal">(opțional)</span></span>
+                        <input name="company" type="text" value="{{ old('company') }}" placeholder="Numele afacerii tale"
+                               class="w-full rounded-xl bg-white border border-line px-4 py-3 text-sm focus:outline-none focus:ring-2"
+                               style="--tw-ring-color: var(--accent);">
+                    </label>
+                    <label class="block">
+                        <span class="text-sm font-medium mb-1 block">Telefon <span style="color: var(--muted);" class="font-normal">(opțional)</span></span>
+                        <input name="phone" type="tel" value="{{ old('phone') }}" placeholder="+40 7xx xxx xxx"
                                class="w-full rounded-xl bg-white border border-line px-4 py-3 text-sm focus:outline-none focus:ring-2"
                                style="--tw-ring-color: var(--accent);">
                     </label>
                 </div>
 
                 <label class="block">
-                    <span class="text-sm font-medium mb-1 block">Telefon (opțional)</span>
-                    <input name="phone" type="tel" placeholder="+40 7xx xxx xxx"
-                           class="w-full rounded-xl bg-white border border-line px-4 py-3 text-sm focus:outline-none focus:ring-2"
-                           style="--tw-ring-color: var(--accent);">
+                    <span class="text-sm font-medium mb-1 block">Despre ce vrei să vorbim?</span>
+                    <select name="subject"
+                            class="w-full rounded-xl bg-white border border-line px-4 py-3 text-sm focus:outline-none focus:ring-2 appearance-none"
+                            style="--tw-ring-color: var(--accent); background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 24 24%22 stroke=%22%23A8A29E%22><path stroke-linecap=%22round%22 stroke-width=%222%22 d=%22M19 9l-7 7-7-7%22/></svg>'); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1rem;">
+                        <option value="">Alege un subiect…</option>
+                        <option value="demo"          {{ old('subject') === 'demo' ? 'selected' : '' }}>Vreau să văd un demo live</option>
+                        <option value="pricing"       {{ old('subject') === 'pricing' ? 'selected' : '' }}>Întrebări despre prețuri / plan</option>
+                        <option value="integration"   {{ old('subject') === 'integration' ? 'selected' : '' }}>Integrare cu magazinul / CRM-ul meu</option>
+                        <option value="voice"         {{ old('subject') === 'voice' ? 'selected' : '' }}>Agent vocal pe telefon</option>
+                        <option value="ong"           {{ old('subject') === 'ong' ? 'selected' : '' }}>Reducere ONG / școală</option>
+                        <option value="partnership"   {{ old('subject') === 'partnership' ? 'selected' : '' }}>Parteneriat / revânzător</option>
+                        <option value="support"       {{ old('subject') === 'support' ? 'selected' : '' }}>Suport tehnic (sunt client)</option>
+                        <option value="other"         {{ old('subject') === 'other' ? 'selected' : '' }}>Altceva</option>
+                    </select>
                 </label>
 
                 <label class="block">
@@ -58,12 +87,12 @@
                     <textarea required name="message" rows="5"
                               placeholder="Povestește-ne scurt despre afacere și ce ai vrea să facă agentul AI…"
                               class="w-full rounded-xl bg-white border border-line px-4 py-3 text-sm focus:outline-none focus:ring-2"
-                              style="--tw-ring-color: var(--accent);"></textarea>
+                              style="--tw-ring-color: var(--accent);">{{ old('message') }}</textarea>
                 </label>
 
                 <label class="flex items-start gap-2 text-xs" style="color: var(--muted);">
-                    <input required type="checkbox" name="gdpr_consent" value="1" class="mt-0.5">
-                    <span>Sunt de acord ca datele mele să fie procesate conform <a href="{{ route('new.legal.confidentialitate') }}" class="underline hover:text-ink">politicii de confidențialitate</a>.</span>
+                    <input required type="checkbox" name="gdpr_consent" value="1" class="mt-0.5" {{ old('gdpr_consent') ? 'checked' : '' }}>
+                    <span>Sunt de acord ca datele mele să fie procesate conform <a href="{{ route('new.legal.confidentialitate') }}" class="underline hover:text-ink">politicii de confidențialitate</a>. Nu le partajăm și nu trimitem newsletter fără acordul tău explicit.</span>
                 </label>
 
                 <button type="submit" class="btn btn-primary">

@@ -185,12 +185,12 @@
             <a href="{{ route('new.home') }}" class="flex items-center gap-2 shrink-0">
                 <img src="{{ asset('images/logo-light.svg') }}" alt="Sambla — Agenți AI" class="h-10 md:h-11 w-auto">
             </a>
-            <div class="hidden lg:flex items-center gap-8 text-sm font-medium text-muted">
+            <div class="hidden lg:flex items-center gap-7 text-sm font-medium text-muted">
+                <a href="{{ route('new.despre') }}" class="hover:text-ink transition">Despre</a>
                 <a href="{{ route('new.functionalitati') }}" class="hover:text-ink transition">Funcționalități</a>
                 <a href="{{ route('new.industrii') }}" class="hover:text-ink transition">Industrii</a>
                 <a href="{{ route('new.deCeSambla') }}" class="hover:text-ink transition">De ce Sambla</a>
                 <a href="{{ route('new.preturi') }}" class="hover:text-ink transition">Prețuri</a>
-                <a href="{{ route('new.despre') }}" class="hover:text-ink transition">Despre</a>
                 <a href="{{ route('new.blog') }}" class="hover:text-ink transition">Blog</a>
                 <a href="{{ route('new.contact') }}" class="hover:text-ink transition">Contact</a>
             </div>
@@ -211,11 +211,12 @@
         {{-- Mobile slide-down menu --}}
         <div id="sbMobileNav" class="lg:hidden hidden border-t border-line bg-cream">
             <div class="max-w-7xl mx-auto px-6 py-5 flex flex-col gap-1">
+                <a href="{{ route('new.despre') }}"          class="block px-4 py-3 rounded-xl text-base font-medium text-ink hover:bg-sand transition">Despre</a>
                 <a href="{{ route('new.functionalitati') }}" class="block px-4 py-3 rounded-xl text-base font-medium text-ink hover:bg-sand transition">Funcționalități</a>
-                <a href="{{ route('new.industrii') }}" class="block px-4 py-3 rounded-xl text-base font-medium text-ink hover:bg-sand transition">Industrii</a>
+                <a href="{{ route('new.industrii') }}"       class="block px-4 py-3 rounded-xl text-base font-medium text-ink hover:bg-sand transition">Industrii</a>
                 <a href="{{ route('new.deCeSambla') }}"      class="block px-4 py-3 rounded-xl text-base font-medium text-ink hover:bg-sand transition">De ce Sambla</a>
                 <a href="{{ route('new.preturi') }}"         class="block px-4 py-3 rounded-xl text-base font-medium text-ink hover:bg-sand transition">Prețuri</a>
-                <a href="{{ route('new.despre') }}"          class="block px-4 py-3 rounded-xl text-base font-medium text-ink hover:bg-sand transition">Despre</a>
+                <a href="{{ route('new.blog') }}"            class="block px-4 py-3 rounded-xl text-base font-medium text-ink hover:bg-sand transition">Blog</a>
                 <a href="{{ route('new.contact') }}"         class="block px-4 py-3 rounded-xl text-base font-medium text-ink hover:bg-sand transition">Contact</a>
                 <div class="h-px bg-line my-3"></div>
                 <a href="{{ url('/login') }}" class="block px-4 py-3 rounded-xl text-base font-medium text-muted hover:text-ink hover:bg-sand transition">Autentificare</a>
