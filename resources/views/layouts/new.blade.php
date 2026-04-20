@@ -200,7 +200,51 @@
             <div class="hidden lg:flex items-center gap-7 text-sm font-medium">
                 <a href="{{ route('new.despre') }}"          class="{{ $navActive('new.despre') ? $activeDesk : $idleDesk }}">Despre</a>
                 <a href="{{ route('new.functionalitati') }}" class="{{ $navActive('new.functionalitati') ? $activeDesk : $idleDesk }}">Funcționalități</a>
-                <a href="{{ route('new.industrii') }}"       class="{{ $navActive('new.industrii', 'new.niche') ? $activeDesk : $idleDesk }}">Industrii</a>
+
+                {{-- Mega menu Industrii — hover/focus-within deschide panoul cu nișe pe categorii --}}
+                <div class="relative group" data-sb-mega>
+                    <a href="{{ route('new.industrii') }}"
+                       class="inline-flex items-center gap-1 {{ $navActive('new.industrii', 'new.niche') ? $activeDesk : $idleDesk }}"
+                       aria-haspopup="true"
+                       aria-expanded="false">
+                        Industrii
+                        <svg class="w-3 h-3 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M19 9l-7 7-7-7"/></svg>
+                    </a>
+
+                    @if(!empty($megaMenuNiches))
+                        <div class="absolute left-1/2 -translate-x-1/2 top-full pt-4 invisible opacity-0 translate-y-1 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 focus-within:visible focus-within:opacity-100 focus-within:translate-y-0 transition-all duration-200 z-50" role="menu">
+                            <div class="w-[820px] rounded-2xl bg-paper border border-line overflow-hidden" style="box-shadow: 0 30px 60px -20px rgba(28,25,23,0.22);">
+                                <div class="grid grid-cols-3 gap-0">
+                                    @foreach($megaMenuNiches as $catKey => $cat)
+                                        <div class="p-5 {{ !$loop->last ? 'border-r border-line/70' : '' }}">
+                                            <div class="flex items-center gap-2 mb-3">
+                                                <span class="text-lg">{{ $cat['icon'] }}</span>
+                                                <span class="mono text-[10px] uppercase tracking-wider" style="color: var(--muted);">{{ $cat['label'] }}</span>
+                                            </div>
+                                            <ul class="space-y-1">
+                                                @foreach($cat['items'] as $n)
+                                                    <li>
+                                                        <a href="{{ route('new.niche', $n->slug) }}"
+                                                           data-niche="{{ $n->color_theme }}"
+                                                           class="block px-3 py-2 rounded-lg text-sm text-ink hover:bg-sand transition"
+                                                           role="menuitem">
+                                                            {{ $n->vertical_label ?: $n->name }}
+                                                        </a>
+                                                    </li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                    @endforeach
+                                </div>
+                                <div class="px-5 py-3 bg-cream border-t border-line flex items-center justify-between">
+                                    <span class="text-xs" style="color: var(--muted);">Nu găsești domeniul tău?</span>
+                                    <a href="{{ route('new.contact') }}" class="text-xs font-semibold accent-text hover:underline">Vorbește cu noi →</a>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+
                 <a href="{{ route('new.deCeSambla') }}"      class="{{ $navActive('new.deCeSambla') ? $activeDesk : $idleDesk }}">De ce Sambla</a>
                 <a href="{{ route('new.preturi') }}"         class="{{ $navActive('new.preturi') ? $activeDesk : $idleDesk }}">Prețuri</a>
                 <a href="{{ route('new.blog') }}"            class="{{ $navActive('new.blog') ? $activeDesk : $idleDesk }}">Blog</a>
@@ -229,7 +273,34 @@
             <div class="max-w-7xl mx-auto px-6 py-5 flex flex-col gap-1">
                 <a href="{{ route('new.despre') }}"          class="{{ $navActive('new.despre') ? $activeMob : $idleMob }}">Despre</a>
                 <a href="{{ route('new.functionalitati') }}" class="{{ $navActive('new.functionalitati') ? $activeMob : $idleMob }}">Funcționalități</a>
-                <a href="{{ route('new.industrii') }}"       class="{{ $navActive('new.industrii', 'new.niche') ? $activeMob : $idleMob }}">Industrii</a>
+
+                {{-- Mobile Industrii — accordion cu categoriile --}}
+                @if(!empty($megaMenuNiches))
+                    <details class="group/ind rounded-xl overflow-hidden {{ $navActive('new.industrii', 'new.niche') ? 'accent-soft-bg border-l-4 border-[var(--accent)]' : '' }}">
+                        <summary class="flex items-center justify-between px-4 py-3 cursor-pointer text-base font-medium text-ink hover:bg-sand transition list-none">
+                            <span class="{{ $navActive('new.industrii', 'new.niche') ? 'font-semibold' : '' }}">Industrii</span>
+                            <svg class="w-4 h-4 transition-transform group-open/ind:rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M19 9l-7 7-7-7"/></svg>
+                        </summary>
+                        <div class="px-2 pb-3 space-y-3">
+                            <a href="{{ route('new.industrii') }}" class="block px-4 py-2 text-sm font-semibold accent-text hover:bg-sand rounded-lg">Vezi toate industriile →</a>
+                            @foreach($megaMenuNiches as $cat)
+                                <div>
+                                    <div class="flex items-center gap-2 px-4 pt-2 pb-1.5">
+                                        <span class="text-sm">{{ $cat['icon'] }}</span>
+                                        <span class="mono text-[10px] uppercase tracking-wider" style="color: var(--muted);">{{ $cat['label'] }}</span>
+                                    </div>
+                                    <ul class="space-y-0.5">
+                                        @foreach($cat['items'] as $n)
+                                            <li><a href="{{ route('new.niche', $n->slug) }}" data-niche="{{ $n->color_theme }}" class="block px-4 py-2 text-sm text-ink hover:bg-sand rounded-lg">{{ $n->vertical_label ?: $n->name }}</a></li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endforeach
+                        </div>
+                    </details>
+                @else
+                    <a href="{{ route('new.industrii') }}" class="{{ $navActive('new.industrii', 'new.niche') ? $activeMob : $idleMob }}">Industrii</a>
+                @endif
                 <a href="{{ route('new.deCeSambla') }}"      class="{{ $navActive('new.deCeSambla') ? $activeMob : $idleMob }}">De ce Sambla</a>
                 <a href="{{ route('new.preturi') }}"         class="{{ $navActive('new.preturi') ? $activeMob : $idleMob }}">Prețuri</a>
                 <a href="{{ route('new.blog') }}"            class="{{ $navActive('new.blog') ? $activeMob : $idleMob }}">Blog</a>

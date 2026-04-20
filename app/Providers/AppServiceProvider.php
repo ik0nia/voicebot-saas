@@ -74,6 +74,66 @@ class AppServiceProvider extends ServiceProvider
             $view->with('niches', \App\Models\Niche::where('is_active', true)->orderBy('sort_order')->get());
         });
 
+        /*
+         * Mega menu for /new/* layout — groups active niches by vertical
+         * category (slug → category). Cached for 5 min to avoid hitting
+         * the DB on every page load. Each category is rendered as a
+         * column in the „Industrii" dropdown.
+         */
+        View::composer('layouts.new', function ($view) {
+            $categories = [
+                'sanatate' => [
+                    'label' => 'Sănătate & Beauty',
+                    'icon'  => '🩺',
+                    'slugs' => ['medical', 'stomatologic', 'optica', 'veterinar', 'psihologie', 'salon-beauty'],
+                ],
+                'profesional' => [
+                    'label' => 'Servicii profesionale',
+                    'icon'  => '⚖️',
+                    'slugs' => ['avocatura', 'contabilitate', 'notariat'],
+                ],
+                'comert' => [
+                    'label' => 'Comerț & Auto',
+                    'icon'  => '🛒',
+                    'slugs' => ['ecommerce', 'service-auto'],
+                ],
+                'horeca' => [
+                    'label' => 'HoReCa & Turism',
+                    'icon'  => '🍽️',
+                    'slugs' => ['restaurant', 'pensiune', 'turism'],
+                ],
+                'altele' => [
+                    'label' => 'Imobiliare · Educație · Servicii',
+                    'icon'  => '🏠',
+                    'slugs' => ['imobiliare', 'scoli-limbi', 'curatenie'],
+                ],
+            ];
+
+            $grouped = cache()->remember('new.megamenu.niches', 300, function () use ($categories) {
+                try {
+                    $all = \App\Models\Niche::where('is_active', true)
+                        ->get(['slug', 'name', 'vertical_label', 'color_theme'])
+                        ->keyBy('slug');
+                } catch (\Throwable $e) {
+                    return [];
+                }
+
+                $out = [];
+                foreach ($categories as $key => $cat) {
+                    $items = [];
+                    foreach ($cat['slugs'] as $slug) {
+                        if (isset($all[$slug])) $items[] = $all[$slug];
+                    }
+                    if (!empty($items)) {
+                        $out[$key] = ['label' => $cat['label'], 'icon' => $cat['icon'], 'items' => $items];
+                    }
+                }
+                return $out;
+            });
+
+            $view->with('megaMenuNiches', $grouped);
+        });
+
         // ============================================================
         // DATABASE PROTECTION — 3 LAYERS (BULLETPROOF)
         // ============================================================
