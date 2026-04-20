@@ -20,74 +20,49 @@
         return str_contains($text, 'enterprise') || str_contains($text, 'custom');
     };
 
-    /* Calcul % economie real vs monthly × 12. Dacă toate planurile au
-       aceeași reducere o afișăm; dacă diferă sau nu există, ascundem
-       eticheta. Astfel nu mai mințim cu un „−20%" hardcoded. */
-    $annualSavingsPercent = null;
-    if ($webchatPlans->count()) {
-        $percents = [];
-        foreach ($webchatPlans as $p) {
-            $m = (float) ($p->price_monthly ?? 0);
-            $y = (float) ($p->price_yearly ?? 0);
-            if ($m > 0 && $y > 0 && $y < $m * 12) {
-                $percents[] = (int) round((1 - $y / ($m * 12)) * 100);
-            }
-        }
-        if (!empty($percents)) {
-            // luăm cea mai mică reducere din planuri — nu promitem mai mult
-            $annualSavingsPercent = min($percents);
-        }
-    }
 @endphp
 
 @section('content')
 
-{{-- HERO --}}
+{{-- HERO compact + trust chips interactive --}}
 <section class="hero-glow">
-    <div class="max-w-5xl mx-auto px-6 pt-16 pb-10 text-center">
+    <div class="max-w-5xl mx-auto px-6 pt-16 pb-8 text-center">
         <div class="chip chip-soft mb-6 mono text-[11px] uppercase tracking-wider inline-flex">◇ prețuri</div>
-        <h1 class="display h-display-xl mb-5">Prețuri <em class="italic accent-text">clare.</em> În lei. Fără surprize.</h1>
-        <p class="text-xl max-w-2xl mx-auto" style="color: var(--muted);">7 zile gratuit, fără card. Anulezi oricând. 30% reducere pentru ONG-uri și școli.</p>
+        <h1 class="display h-display-xl mb-4">Prețuri <em class="italic accent-text">clare.</em><br class="hidden sm:block"> În lei. Fără surprize.</h1>
+        <p class="text-lg max-w-xl mx-auto mb-8" style="color: var(--muted);">7 zile gratuit, fără card. Anulezi oricând.</p>
 
-        {{-- Trust line --}}
-        <div class="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm mono" style="color: var(--muted);">
-            <span class="inline-flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full accent-bg"></span> fără setup fee</span>
-            <span class="inline-flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full accent-bg"></span> fără contract pe termen lung</span>
-            <span class="inline-flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full accent-bg"></span> factură cu TVA</span>
+        {{-- 4 trust chips — highlights vizuale între titlu și carduri --}}
+        <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+            <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-paper border border-line text-sm font-medium hover:border-[var(--accent)] hover:-translate-y-0.5 transition-all">
+                <svg class="w-4 h-4 accent-text" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                Fără setup fee
+            </span>
+            <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-paper border border-line text-sm font-medium hover:border-[var(--accent)] hover:-translate-y-0.5 transition-all">
+                <svg class="w-4 h-4 accent-text" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                Fără contract
+            </span>
+            <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-paper border border-line text-sm font-medium hover:border-[var(--accent)] hover:-translate-y-0.5 transition-all">
+                <svg class="w-4 h-4 accent-text" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                Factură cu TVA
+            </span>
+            <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold text-white" style="background: var(--accent);">
+                🎓 −30% ONG &amp; școli
+            </span>
         </div>
     </div>
 </section>
 
-{{-- WEBCHAT PLANS --}}
-<section class="py-16">
+{{-- WEBCHAT PLANS — direct la carduri, un singur rând de context --}}
+<section class="pt-10 pb-16">
     <div class="max-w-7xl mx-auto px-6">
-        <div class="text-center mb-10">
-            <div class="mono text-[11px] uppercase tracking-[0.2em] mb-3" style="color: var(--muted);">— Agent AI pe site & multi-canal —</div>
-            <h2 class="display h-display-m mb-4">Planuri pentru <em class="italic accent-text">chat, mesagerie & CRM</em></h2>
-            <p class="text-lg max-w-xl mx-auto" style="color: var(--muted);">Alege după volumul de conversații lunare. Treci pe planul superior oricând, fără costuri de schimbare.</p>
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center gap-3 mono text-[11px] uppercase tracking-[0.2em]" style="color: var(--muted);">
+                <span class="w-8 h-px" style="background: var(--line);"></span>
+                <span>Agent AI · chat, mesagerie &amp; CRM</span>
+                <span class="w-8 h-px" style="background: var(--line);"></span>
+            </div>
         </div>
 
-        {{-- Billing toggle --}}
-        <div class="flex items-center justify-center gap-4 mb-12">
-            <span id="label-monthly" class="text-sm font-semibold text-ink">Lunar</span>
-            <button
-                id="billing-toggle"
-                type="button"
-                class="relative inline-flex h-7 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2"
-                style="background: var(--line); --tw-ring-color: var(--accent);"
-                role="switch"
-                aria-checked="false"
-                data-billing="monthly"
-            >
-                <span class="pointer-events-none inline-block h-6 w-6 translate-x-0 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
-            </button>
-            <span id="label-annual" class="text-sm font-medium" style="color: var(--muted);">Anual</span>
-            @if($annualSavingsPercent)
-                <span class="ml-1 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold" style="background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent);">
-                    Economisești {{ $annualSavingsPercent }}%
-                </span>
-            @endif
-        </div>
 
         {{-- Plans grid --}}
         <div class="grid md:grid-cols-3 gap-5 max-w-6xl mx-auto">
@@ -99,8 +74,6 @@
                     $cpm = isset($overage['cost_per_message']) ? (float) $overage['cost_per_message'] : null;
                     $cpb = isset($overage['cost_per_extra_bot']) ? (float) $overage['cost_per_extra_bot'] : null;
                     $priceM = (float) ($plan->price_monthly ?? 0);
-                    $priceY = (float) ($plan->price_yearly ?? 0);
-                    $priceAnnualMonthly = $priceY > 0 ? round($priceY / 12, 2) : $priceM;
                     $isEnterprise = $isCustomPlan($plan);
                 @endphp
                 <div class="fade-up rounded-3xl p-7 relative bg-paper {{ $isHighlighted ? '' : 'border border-line' }}"
@@ -124,15 +97,10 @@
                             </div>
                         @else
                             <div class="flex items-baseline gap-1">
-                                <span class="display text-5xl font-medium pricing-amount text-ink"
-                                      data-monthly="{{ $fmtRo($priceM, fmod($priceM, 1) > 0 ? 2 : 0) }}"
-                                      data-annual="{{ $fmtRo($priceAnnualMonthly, fmod($priceAnnualMonthly, 1) > 0 ? 2 : 0) }}">{{ $fmtRo($priceM, fmod($priceM, 1) > 0 ? 2 : 0) }}</span>
+                                <span class="display text-5xl font-medium text-ink">{{ $fmtRo($priceM, fmod($priceM, 1) > 0 ? 2 : 0) }}</span>
                                 <span class="text-base font-semibold" style="color: var(--muted);">lei</span>
                                 <span class="text-sm" style="color: var(--muted);">/lună +TVA</span>
                             </div>
-                            @if($priceY > 0)
-                                <p class="text-xs mt-1 pricing-note hidden" style="color: var(--muted);">facturat anual · {{ $fmtRo($priceY, fmod($priceY, 1) > 0 ? 2 : 0) }} lei/an</p>
-                            @endif
                         @endif
                     </div>
 
@@ -197,8 +165,6 @@
                         $limits = is_array($plan->limits) ? $plan->limits : [];
                         $minutes = $limits['minutes'] ?? $limits['voice_minutes'] ?? null;
                         $priceM = (float) ($plan->price_monthly ?? 0);
-                        $priceY = (float) ($plan->price_yearly ?? 0);
-                        $priceAnnualMonthly = $priceY > 0 ? round($priceY / 12, 2) : $priceM;
                         $isEnterprise = $isCustomPlan($plan);
                     @endphp
                     <div class="fade-up rounded-3xl p-7 bg-cream border border-line">
@@ -211,15 +177,10 @@
                                 <div class="display text-4xl font-medium">La cerere</div>
                             @else
                                 <div class="flex items-baseline gap-1">
-                                    <span class="display text-5xl font-medium pricing-amount"
-                                          data-monthly="{{ $fmtRo($priceM, fmod($priceM, 1) > 0 ? 2 : 0) }}"
-                                          data-annual="{{ $fmtRo($priceAnnualMonthly, fmod($priceAnnualMonthly, 1) > 0 ? 2 : 0) }}">{{ $fmtRo($priceM, fmod($priceM, 1) > 0 ? 2 : 0) }}</span>
+                                    <span class="display text-5xl font-medium">{{ $fmtRo($priceM, fmod($priceM, 1) > 0 ? 2 : 0) }}</span>
                                     <span class="text-base font-semibold" style="color: var(--muted);">lei</span>
                                     <span class="text-sm" style="color: var(--muted);">/lună +TVA</span>
                                 </div>
-                                @if($priceY > 0)
-                                    <p class="text-xs mt-1 pricing-note hidden" style="color: var(--muted);">facturat anual · {{ $fmtRo($priceY, fmod($priceY, 1) > 0 ? 2 : 0) }} lei/an</p>
-                                @endif
                             @endif
                         </div>
                         @if(is_numeric($minutes))
@@ -425,51 +386,6 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    /* Billing toggle — swaps displayed price + toggles "facturat anual" note */
-    var toggle = document.getElementById('billing-toggle');
-    if (!toggle) return;
-    var amounts = document.querySelectorAll('.pricing-amount');
-    var notes   = document.querySelectorAll('.pricing-note');
-    var lblM    = document.getElementById('label-monthly');
-    var lblA    = document.getElementById('label-annual');
-    var knob    = toggle.querySelector('span');
-    var isAnnual = false;
-
-    toggle.addEventListener('click', function () {
-        isAnnual = !isAnnual;
-        if (isAnnual) {
-            toggle.style.background = 'var(--accent)';
-            knob.classList.remove('translate-x-0');
-            knob.classList.add('translate-x-7');
-            toggle.setAttribute('aria-checked', 'true');
-            toggle.setAttribute('data-billing', 'annual');
-            lblM.classList.remove('font-semibold','text-ink');
-            lblM.classList.add('font-medium');
-            lblM.style.color = 'var(--muted)';
-            lblA.classList.remove('font-medium');
-            lblA.classList.add('font-semibold','text-ink');
-            lblA.style.color = 'var(--ink)';
-        } else {
-            toggle.style.background = 'var(--line)';
-            knob.classList.remove('translate-x-7');
-            knob.classList.add('translate-x-0');
-            toggle.setAttribute('aria-checked', 'false');
-            toggle.setAttribute('data-billing', 'monthly');
-            lblM.classList.add('font-semibold','text-ink');
-            lblM.classList.remove('font-medium');
-            lblM.style.color = 'var(--ink)';
-            lblA.classList.add('font-medium');
-            lblA.classList.remove('font-semibold','text-ink');
-            lblA.style.color = 'var(--muted)';
-        }
-        amounts.forEach(function (el) {
-            el.textContent = isAnnual ? el.getAttribute('data-annual') : el.getAttribute('data-monthly');
-        });
-        notes.forEach(function (el) {
-            if (isAnnual) el.classList.remove('hidden'); else el.classList.add('hidden');
-        });
-    });
-
     /* GA4 — view_item_list + select_item on plan CTA click */
     window.dataLayer = window.dataLayer || [];
     document.querySelectorAll('[data-analytics-plan]').forEach(function (el) {
@@ -477,8 +393,7 @@ document.addEventListener('DOMContentLoaded', function () {
             var planId   = el.getAttribute('data-analytics-plan');
             var planName = el.getAttribute('data-analytics-plan-name') || planId;
             var price    = parseFloat(el.getAttribute('data-analytics-price') || '0');
-            var interval = (toggle && toggle.getAttribute('data-billing')) || 'monthly';
-            var item = { item_id: planId, item_name: planName, price: price, item_category: interval, quantity: 1 };
+            var item = { item_id: planId, item_name: planName, price: price, item_category: 'monthly', quantity: 1 };
             window.dataLayer.push({ event: 'select_item', item_list_name: 'pachete', items: [item] });
             window.dataLayer.push({ event: 'begin_checkout', currency: 'RON', value: price, items: [item] });
         });
