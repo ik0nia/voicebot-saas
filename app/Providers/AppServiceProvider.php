@@ -85,31 +85,31 @@ class AppServiceProvider extends ServiceProvider
                 'sanatate' => [
                     'label' => 'Sănătate & Beauty',
                     'icon'  => '🩺',
-                    'slugs' => ['medical', 'stomatologic', 'optica', 'veterinar', 'psihologie', 'salon-beauty'],
+                    'slugs' => ['cabinete-medicale', 'cabinete-stomatologice', 'optica-medicala', 'clinici-veterinare', 'psihologie-psihoterapie', 'salon-beauty'],
                 ],
                 'profesional' => [
                     'label' => 'Servicii profesionale',
                     'icon'  => '⚖️',
-                    'slugs' => ['avocatura', 'contabilitate', 'notariat'],
+                    'slugs' => ['birouri-avocatura', 'firme-contabilitate', 'birouri-notariale'],
                 ],
                 'comert' => [
                     'label' => 'Comerț & Auto',
                     'icon'  => '🛒',
-                    'slugs' => ['ecommerce', 'service-auto'],
+                    'slugs' => ['magazine-online', 'service-auto'],
                 ],
                 'horeca' => [
                     'label' => 'HoReCa & Turism',
                     'icon'  => '🍽️',
-                    'slugs' => ['restaurant', 'pensiune', 'turism'],
+                    'slugs' => ['restaurante-delivery', 'pensiuni-hoteluri-mici', 'agentii-turism'],
                 ],
                 'altele' => [
                     'label' => 'Imobiliare · Educație · Servicii',
                     'icon'  => '🏠',
-                    'slugs' => ['imobiliare', 'scoli-limbi', 'curatenie'],
+                    'slugs' => ['agentii-imobiliare', 'scoli-limbi-straine', 'firme-curatenie'],
                 ],
             ];
 
-            $grouped = cache()->remember('new.megamenu.niches', 300, function () use ($categories) {
+            $grouped = cache()->remember('new.megamenu.niches.v2', 300, function () use ($categories) {
                 try {
                     $all = \App\Models\Niche::where('is_active', true)
                         ->get(['slug', 'name', 'vertical_label', 'color_theme'])
@@ -119,13 +119,28 @@ class AppServiceProvider extends ServiceProvider
                 }
 
                 $out = [];
+                $placed = [];
                 foreach ($categories as $key => $cat) {
                     $items = [];
                     foreach ($cat['slugs'] as $slug) {
-                        if (isset($all[$slug])) $items[] = $all[$slug];
+                        if (isset($all[$slug])) {
+                            $items[] = $all[$slug];
+                            $placed[$slug] = true;
+                        }
                     }
                     if (!empty($items)) {
                         $out[$key] = ['label' => $cat['label'], 'icon' => $cat['icon'], 'items' => $items];
+                    }
+                }
+
+                // Orphan bucket — orice nișă activă care nu e în categoriile de mai sus
+                // ajunge aici, ca mega menu-ul să reflecte baza de date, nu o listă hardcoded.
+                $orphans = $all->reject(fn ($n) => isset($placed[$n->slug]))->values();
+                if ($orphans->isNotEmpty()) {
+                    if (isset($out['altele'])) {
+                        foreach ($orphans as $n) $out['altele']['items'][] = $n;
+                    } else {
+                        $out['altele'] = ['label' => 'Altele', 'icon' => '✦', 'items' => $orphans->all()];
                     }
                 }
                 return $out;
