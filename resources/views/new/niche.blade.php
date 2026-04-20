@@ -125,61 +125,37 @@
             </div>
         </div>
 
-        {{-- Dynamic demo chat from $niche->demo_messages --}}
+        {{-- Rotating hero chat — 3-4 scenarii specifice pe nișă din
+             config/niche-hero-scenarios.php. Fallback la demo_messages
+             ca un singur scenariu dacă nu avem config pentru slug. --}}
+        @php
+            $heroScenarios = config('niche-hero-scenarios.' . $niche->slug, []);
+            if (empty($heroScenarios) && !empty($demo)) {
+                $fallbackMessages = [];
+                foreach ($demo as $msg) {
+                    $fallbackMessages[] = [
+                        'user' => ($msg['role'] ?? '') !== 'bot',
+                        'text' => $msg['text'] ?? '',
+                    ];
+                }
+                $heroScenarios = [[
+                    'niche'    => $niche->color_theme ?: 'red',
+                    'label'    => '✨ ' . $nicheLabel,
+                    'footer'   => '✓ Răspunsuri din documentele afacerii tale',
+                    'badge'    => 'Cerere procesată',
+                    'messages' => $fallbackMessages,
+                ]];
+            }
+        @endphp
         <div class="lg:col-span-6 fade-up" style="transition-delay: .15s">
-            <div class="relative">
-                <div class="absolute -inset-8 rounded-[3rem] blur-3xl opacity-30" style="background: linear-gradient(135deg, var(--accent) 0%, var(--accent-soft) 100%);"></div>
-                <div class="relative rounded-[2rem] overflow-hidden bg-paper float" style="border:1px solid #E7E0CE; box-shadow: 0 25px 50px -15px rgba(28,25,23,0.12);">
-                    <div class="px-5 py-4 flex items-center gap-3 border-b border-line accent-soft-bg">
-                        <div class="relative">
-                            <div class="w-10 h-10 rounded-full accent-bg flex items-center justify-center">
-                                <span class="text-white display text-base font-semibold">S</span>
-                            </div>
-                            <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-paper">
-                                <span class="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-60"></span>
-                            </span>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="font-semibold text-sm">Agentul AI · {{ $nicheLabel }}</div>
-                            <div class="text-xs text-muted flex items-center gap-1.5">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                Online · răspunde în sub 2 secunde
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="px-5 py-4 space-y-3" style="min-height: 380px; max-height: 480px; overflow:hidden;">
-                        @forelse($demo as $msg)
-                            @if(($msg['role'] ?? '') === 'bot')
-                                <div class="flex justify-end">
-                                    <div class="max-w-[85%] px-4 py-2.5 rounded-2xl rounded-br-sm text-[14.5px] leading-relaxed accent-bg text-white">{{ $msg['text'] ?? '' }}</div>
-                                </div>
-                            @else
-                                <div class="flex">
-                                    <div class="max-w-[85%] px-4 py-2.5 rounded-2xl rounded-bl-sm text-[14.5px] leading-relaxed bg-sand text-ink">{{ $msg['text'] ?? '' }}</div>
-                                </div>
-                            @endif
-                        @empty
-                            <div class="flex"><div class="max-w-[85%] px-4 py-2.5 rounded-2xl rounded-bl-sm text-[14.5px] bg-sand text-ink">Bună ziua! Cu ce vă putem ajuta?</div></div>
-                        @endforelse
-                    </div>
-
-                    <div class="px-4 py-3 border-t border-line bg-paper flex items-center gap-2">
-                        <svg class="w-4 h-4 accent-text shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"/></svg>
-                        <span class="text-xs text-muted font-medium truncate">✓ Răspunsuri din documentele afacerii tale · GDPR nativ</span>
-                    </div>
-                </div>
-
-                <div class="absolute -left-4 -bottom-4 bg-white rounded-2xl shadow-xl p-4 pr-5 flex items-center gap-3 border border-line max-w-[280px] float" style="animation-delay:.5s;">
-                    <div class="w-10 h-10 rounded-xl accent-soft-bg accent-text flex items-center justify-center">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                    </div>
-                    <div>
-                        <div class="text-sm font-semibold leading-tight">Acțiune completată</div>
-                        <div class="text-xs text-muted">automat · fără operator</div>
-                    </div>
-                </div>
-            </div>
+            @if(!empty($heroScenarios))
+                @include('new.partials.hero-chat', [
+                    'scenarios'  => $heroScenarios,
+                    'shuffle'    => false,
+                    'heading'    => 'Agent AI · ' . $nicheLabel,
+                    'subheading' => 'Online · răspunde în sub 2 secunde',
+                ])
+            @endif
         </div>
     </div>
 

@@ -67,78 +67,90 @@
             </div>
         </div>
 
-        {{-- Rotating hero chat card --}}
+        {{-- Rotating hero chat card — partial reutilizabil. Home foloseste
+             toate scenariile (10), amestecate random; niche pages folosesc
+             doar 3-4 scenarii din config/niche-hero-scenarios.php. --}}
+        @php
+            $homeScenarios = [
+                ['niche'=>'medical', 'label'=>'🦷 Cabinet stomatologic', 'footer'=>'✓ Programare din baza de cunoștințe', 'badge'=>'Programare confirmată',
+                 'messages'=>[
+                    ['user'=>true,  'text'=>'Bună ziua. Aveți loc liber pentru detartraj săptămâna viitoare?'],
+                    ['user'=>false, 'text'=>'Da, am găsit 3 disponibilități. Marți 22, 10:00 · Dr. Ionescu — 180 lei. Vă convine?'],
+                    ['user'=>true,  'text'=>'Da, pe Maria Popescu.'],
+                    ['user'=>false, 'text'=>'✓ Rezervat. Vă trimit SMS cu detaliile și o reamintire cu 24h înainte.'],
+                 ]],
+                ['niche'=>'auto', 'label'=>'🛒 Magazin online', 'footer'=>'✓ Stoc real sincronizat WooCommerce', 'badge'=>'Comandă preluată',
+                 'messages'=>[
+                    ['user'=>true,  'text'=>'Mai aveți vopsea albă 10L pe stoc?'],
+                    ['user'=>false, 'text'=>'Da! 23 bucăți în stoc · 89 lei · livrare mâine 10-14 🚚'],
+                    ['user'=>true,  'text'=>'Comanda 2 bucăți.'],
+                    ['user'=>false, 'text'=>'Adăugat în coș. Total 178 lei + transport gratuit peste 150 lei.'],
+                    ['user'=>false, 'text'=>'✓ Comandă plasată. Primești AWB pe email mâine dimineață.'],
+                 ]],
+                ['niche'=>'auto', 'label'=>'🔧 Service auto', 'footer'=>'✓ Istoric VIN verificat automat', 'badge'=>'Programare service',
+                 'messages'=>[
+                    ['user'=>true,  'text'=>'Cât costă schimbul de ulei la BMW X3?'],
+                    ['user'=>false, 'text'=>'Ce an? Pentru X3 2020+: schimb ulei + filtru — 420 lei, durează ~1h.'],
+                    ['user'=>true,  'text'=>'2022. Marți dimineața?'],
+                    ['user'=>false, 'text'=>'Marți 9:00 rezervat ✓ Vă aștept în service la prima oră. Trimit reminder cu o zi înainte.'],
+                 ]],
+                ['niche'=>'resto', 'label'=>'🏨 Pensiune', 'footer'=>'✓ Disponibilitate iCal live', 'badge'=>'Rezervare trimisă',
+                 'messages'=>[
+                    ['user'=>true,  'text'=>'Aveți cameră dublă pentru acest weekend?'],
+                    ['user'=>false, 'text'=>'Da! Camera Alba liberă 22-23 apr · 280 lei/noapte, mic-dejun inclus.'],
+                    ['user'=>true,  'text'=>'Perfect, rezerv 2 nopți.'],
+                    ['user'=>false, 'text'=>'✓ Rezervare confirmată — 2 nopți × 280 = 560 lei. Link de plată trimis pe email, valabil 24h.'],
+                 ]],
+                ['niche'=>'imob', 'label'=>'🏠 Agenție imobiliară', 'footer'=>'✓ Listări filtrate după criterii', 'badge'=>'Vizionare programată',
+                 'messages'=>[
+                    ['user'=>true,  'text'=>'Caut apartament 2 camere în Cluj, până în 95.000 €.'],
+                    ['user'=>false, 'text'=>'Am 4 proprietăți în buget. Cea mai potrivită: 58 mp, Mărăști, etaj 3 — 89.000 €.'],
+                    ['user'=>true,  'text'=>'Aș vrea să o văd sâmbătă.'],
+                    ['user'=>false, 'text'=>'Sâmbătă 11:00 cu agentul Andrei ✓ Vă trimit adresa exactă pe WhatsApp.'],
+                 ]],
+                ['niche'=>'beauty', 'label'=>'💆 Clinică estetică', 'footer'=>'✓ Preț din lista de servicii', 'badge'=>'Consultație rezervată',
+                 'messages'=>[
+                    ['user'=>true,  'text'=>'Cât costă un tratament cu acid hialuronic?'],
+                    ['user'=>false, 'text'=>'De la 450 lei/ml. Primul pachet include consultație gratuită cu dr. Petrescu.'],
+                    ['user'=>true,  'text'=>'Când am loc?'],
+                    ['user'=>false, 'text'=>'✓ Rezervat pentru joi 17:00 — consultație 30 min cu dr. Petrescu. Primești reamintire pe SMS cu o zi înainte.'],
+                 ]],
+                ['niche'=>'legal', 'label'=>'⚖️ Cabinet avocatură', 'footer'=>'✓ Programare în calendar partener', 'badge'=>'Consultație rezervată',
+                 'messages'=>[
+                    ['user'=>true,  'text'=>'Am nevoie de consultanță pentru un litigiu comercial.'],
+                    ['user'=>false, 'text'=>'Cabinetul acoperă litigii comerciale, inclusiv recuperări creanțe. Primul slot liber: miercuri 14:00, 45 min cu av. Popescu.'],
+                    ['user'=>true,  'text'=>'Da, cât mai repede.'],
+                    ['user'=>false, 'text'=>'✓ Programat pentru miercuri 14:00. Confirmarea a plecat pe email, cu detalii despre documente utile.'],
+                 ]],
+                ['niche'=>'legal', 'label'=>'📊 Contabilitate', 'footer'=>'✓ Pachet adaptat tipului de firmă', 'badge'=>'Ofertă trimisă',
+                 'messages'=>[
+                    ['user'=>true,  'text'=>'Am un SRL nou, aveți pachet de contabilitate lunară?'],
+                    ['user'=>false, 'text'=>'Felicitări! Pachetul SRL micro pornește de la 500 lei/lună — include contabilitate + declarații + consultanță.'],
+                    ['user'=>true,  'text'=>'Ce documente îmi trebuie la început?'],
+                    ['user'=>false, 'text'=>'Certificat înregistrare, act constitutiv și buletinele asociaților.'],
+                    ['user'=>false, 'text'=>'✓ Am programat o întâlnire pentru joi la 11:00. Îți trimit oferta detaliată pe email.'],
+                 ]],
+                ['niche'=>'auto', 'label'=>'💻 Magazin electronice', 'footer'=>'✓ Produse cu preț și reducere live', 'badge'=>'Produs recomandat',
+                 'messages'=>[
+                    ['user'=>true,  'text'=>'Caut un laptop bun până în 4000 lei pentru lucru de acasă.'],
+                    ['user'=>false, 'text'=>'Am 3 opțiuni în buget. Cea mai echilibrată — procesor de ultimă generație, SSD rapid, autonomie mare:'],
+                    ['user'=>false, 'product'=>['emoji'=>'💻', 'name'=>'Lenovo ThinkPad E15 · 16GB RAM · 512GB SSD', 'meta'=>'Stoc 8 buc · livrare mâine', 'price'=>'3.749 lei', 'old'=>'4.299 lei', 'discount'=>'−13%']],
+                    ['user'=>true,  'text'=>'Pot vedea recenzii?'],
+                    ['user'=>false, 'text'=>'4,7★ din 284 recenzii reale.'],
+                    ['user'=>false, 'text'=>'✓ Ți-am trimis pe email link-ul cu specificațiile complete și 12 poze de la clienți.'],
+                 ]],
+                ['niche'=>'beauty', 'label'=>'🧴 Drugstore cosmetice', 'footer'=>'✓ Stoc sincronizat WooCommerce', 'badge'=>'În coș',
+                 'messages'=>[
+                    ['user'=>true,  'text'=>'Am ten uscat sensibil. Ce cremă recomanzi pentru iarnă?'],
+                    ['user'=>false, 'text'=>'Pentru ten uscat sensibil, cea mai căutată din catalog e:'],
+                    ['user'=>false, 'product'=>['emoji'=>'🧴', 'name'=>'CeraVe Moisturising Cream · 340g', 'meta'=>'Cu ceramide + acid hialuronic', 'price'=>'89 lei', 'old'=>'109 lei', 'discount'=>'−18%']],
+                    ['user'=>true,  'text'=>'Adaugă în coș.'],
+                    ['user'=>false, 'text'=>'✓ Adăugat. Total: 89 lei · livrare gratuită peste 150 lei. Notificare cu AWB-ul în 2 ore.'],
+                 ]],
+            ];
+        @endphp
         <div class="lg:col-span-6 fade-up" style="transition-delay: .15s">
-            <div class="relative">
-                <div class="absolute -inset-8 rounded-[3rem] blur-3xl opacity-30" id="heroGlow" style="background: linear-gradient(135deg, var(--accent) 0%, var(--accent-soft) 100%); transition: background .6s ease;"></div>
-                <div id="heroChatCard" data-niche="" class="relative rounded-[2rem] overflow-hidden bg-paper float" style="border:1px solid #E7E0CE; box-shadow: 0 25px 50px -15px rgba(28,25,23,0.12);">
-                    <div class="px-5 py-3 flex items-center gap-3 border-b border-line bg-paper">
-                        <div class="relative">
-                            <div class="w-9 h-9 rounded-full accent-bg flex items-center justify-center transition-colors duration-500">
-                                <span class="text-white display text-sm font-semibold">S</span>
-                            </div>
-                            <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-paper">
-                                <span class="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-60"></span>
-                            </span>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="font-semibold text-sm">Sambla</div>
-                            <div class="text-[11px] text-muted flex items-center gap-1.5">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                Online · răspunde instant
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- Bandă industrie prominentă — accent soft bg, text mare,
-                         pulse dot verde (live = verde peste tot). --}}
-                    <div class="px-5 py-3 border-b border-line accent-soft-bg transition-colors duration-500 flex items-center justify-between gap-3">
-                        <div class="flex items-center gap-2.5 min-w-0">
-                            <span class="relative flex h-2 w-2 shrink-0">
-                                <span class="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-60 animate-ping"></span>
-                                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                            </span>
-                            <span class="mono text-[10px] uppercase tracking-[0.15em] accent-dark">demo live</span>
-                            <span class="text-muted">·</span>
-                            <span id="heroScenarioLabel" class="text-sm font-semibold transition-all duration-500 truncate" style="color: var(--accent-dark);">🦷 Cabinet stomatologic</span>
-                        </div>
-                    </div>
-
-                    {{-- Înălțime fixă: conversațiile mai lungi scrollează în interior
-                         (overflow-y-auto), casuța nu se mută. --}}
-                    <div id="heroChat" class="px-5 py-4 h-[500px] overflow-y-auto relative no-scrollbar">
-                        <div id="heroChatInner" class="space-y-3"></div>
-                        <div id="heroTyping" class="hidden items-center gap-2 mt-3">
-                            <div class="bg-sand rounded-2xl rounded-bl-sm px-4 py-2.5">
-                                <div class="dots flex gap-1.5 h-4 items-center">
-                                    <span class="w-1.5 h-1.5 rounded-full" style="background:#A8A29E;"></span>
-                                    <span class="w-1.5 h-1.5 rounded-full" style="background:#A8A29E;"></span>
-                                    <span class="w-1.5 h-1.5 rounded-full" style="background:#A8A29E;"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- Strip de rezultat — între conversație și footer-ul cu dots.
-                         Se actualizează la fiecare scenariu (heroBadgeTitle). --}}
-                    <div class="px-4 py-2 border-t border-line bg-cream flex items-center justify-center gap-2">
-                        <span class="w-4 h-4 rounded-full flex items-center justify-center shrink-0" style="background:#D1FAE5;">
-                            <svg class="w-2.5 h-2.5 text-emerald-700" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg>
-                        </span>
-                        <span id="heroBadgeTitle" class="text-xs font-semibold transition-all duration-300">Programare confirmată</span>
-                        <span class="text-[10px] mono" style="color: var(--muted);">· automat, fără operator</span>
-                    </div>
-
-                    <div class="px-4 py-3 border-t border-line bg-paper flex items-center justify-between gap-3">
-                        <div class="flex items-center gap-2 min-w-0">
-                            <svg class="w-4 h-4 accent-text shrink-0 transition-colors duration-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"/></svg>
-                            <span id="heroFooterText" class="text-xs text-muted font-medium transition-opacity duration-300 truncate">Răspuns din baza de cunoștințe</span>
-                        </div>
-                        <div id="heroDotsContainer" class="flex gap-1.5 shrink-0"></div>
-                    </div>
-                </div>
-
-            </div>
+            @include('new.partials.hero-chat', ['scenarios' => $homeScenarios, 'shuffle' => true])
         </div>
     </div>
 </section>
@@ -916,250 +928,8 @@
 
 @push('scripts')
 <script>
-/* Hero rotating scenarios — port V5 warm */
-(function() {
-    const scenarios = [
-        { niche:'medical', label:'🦷 Cabinet stomatologic', footer:'✓ Programare din baza de cunoștințe', badge:'Programare confirmată',
-          messages:[
-            { user:true,  text:'Bună ziua. Aveți loc liber pentru detartraj săptămâna viitoare?' },
-            { user:false, text:'Da, am găsit 3 disponibilități. Marți 22, 10:00 · Dr. Ionescu — 180 lei. Vă convine?' },
-            { user:true,  text:'Da, pe Maria Popescu.' },
-            { user:false, text:'✓ Rezervat. Vă trimit SMS cu detaliile și o reamintire cu 24h înainte.' },
-          ]},
-        { niche:'auto', label:'🛒 Magazin online', footer:'✓ Stoc real sincronizat WooCommerce', badge:'Comandă preluată',
-          messages:[
-            { user:true,  text:'Mai aveți vopsea albă 10L pe stoc?' },
-            { user:false, text:'Da! 23 bucăți în stoc · 89 lei · livrare mâine 10-14 🚚' },
-            { user:true,  text:'Comanda 2 bucăți.' },
-            { user:false, text:'Adăugat în coș. Total 178 lei + transport gratuit peste 150 lei.' },
-            { user:false, text:'✓ Comandă plasată. Primești AWB pe email mâine dimineață.' },
-          ]},
-        { niche:'auto', label:'🔧 Service auto', footer:'✓ Istoric VIN verificat automat', badge:'Programare service',
-          messages:[
-            { user:true,  text:'Cât costă schimbul de ulei la BMW X3?' },
-            { user:false, text:'Ce an? Pentru X3 2020+: schimb ulei + filtru — 420 lei, durează ~1h.' },
-            { user:true,  text:'2022. Marți dimineața?' },
-            { user:false, text:'Marți 9:00 rezervat ✓ Vă aștept în service la prima oră. Trimit reminder cu o zi înainte.' },
-          ]},
-        { niche:'resto', label:'🏨 Pensiune', footer:'✓ Disponibilitate iCal live', badge:'Rezervare trimisă',
-          messages:[
-            { user:true,  text:'Aveți cameră dublă pentru acest weekend?' },
-            { user:false, text:'Da! Camera Alba liberă 22-23 apr · 280 lei/noapte, mic-dejun inclus.' },
-            { user:true,  text:'Perfect, rezerv 2 nopți.' },
-            { user:false, text:'✓ Rezervare confirmată — 2 nopți × 280 = 560 lei. Link de plată trimis pe email, valabil 24h.' },
-          ]},
-        { niche:'imob', label:'🏠 Agenție imobiliară', footer:'✓ Listări filtrate după criterii', badge:'Vizionare programată',
-          messages:[
-            { user:true,  text:'Caut apartament 2 camere în Cluj, până în 95.000 €.' },
-            { user:false, text:'Am 4 proprietăți în buget. Cea mai potrivită: 58 mp, Mărăști, etaj 3 — 89.000 €.' },
-            { user:true,  text:'Aș vrea să o văd sâmbătă.' },
-            { user:false, text:'Sâmbătă 11:00 cu agentul Andrei ✓ Vă trimit adresa exactă pe WhatsApp.' },
-          ]},
-        { niche:'beauty', label:'💆 Clinică estetică', footer:'✓ Preț din lista de servicii', badge:'Consultație rezervată',
-          messages:[
-            { user:true,  text:'Cât costă un tratament cu acid hialuronic?' },
-            { user:false, text:'De la 450 lei/ml. Primul pachet include consultație gratuită cu dr. Petrescu.' },
-            { user:true,  text:'Când am loc?' },
-            { user:false, text:'✓ Rezervat pentru joi 17:00 — consultație 30 min cu dr. Petrescu. Primești reamintire pe SMS cu o zi înainte.' },
-          ]},
-        { niche:'legal', label:'⚖️ Cabinet avocatură', footer:'✓ Programare în calendar partener', badge:'Consultație rezervată',
-          messages:[
-            { user:true,  text:'Am nevoie de consultanță pentru un litigiu comercial.' },
-            { user:false, text:'Cabinetul acoperă litigii comerciale, inclusiv recuperări creanțe. Primul slot liber: miercuri 14:00, 45 min cu av. Popescu.' },
-            { user:true,  text:'Da, cât mai repede.' },
-            { user:false, text:'✓ Programat pentru miercuri 14:00. Confirmarea a plecat pe email, cu detalii despre documente utile.' },
-          ]},
-        { niche:'legal', label:'📊 Contabilitate', footer:'✓ Pachet adaptat tipului de firmă', badge:'Ofertă trimisă',
-          messages:[
-            { user:true,  text:'Am un SRL nou, aveți pachet de contabilitate lunară?' },
-            { user:false, text:'Felicitări! Pachetul SRL micro pornește de la 500 lei/lună — include contabilitate + declarații + consultanță.' },
-            { user:true,  text:'Ce documente îmi trebuie la început?' },
-            { user:false, text:'Certificat înregistrare, act constitutiv și buletinele asociaților.' },
-            { user:false, text:'✓ Am programat o întâlnire pentru joi la 11:00. Îți trimit oferta detaliată pe email.' },
-          ]},
-        { niche:'auto', label:'💻 Magazin electronice', footer:'✓ Produse cu preț și reducere live', badge:'Produs recomandat',
-          messages:[
-            { user:true,  text:'Caut un laptop bun până în 4000 lei pentru lucru de acasă.' },
-            { user:false, text:'Am 3 opțiuni în buget. Cea mai echilibrată — procesor de ultimă generație, SSD rapid, autonomie mare:' },
-            { user:false, product:{ emoji:'💻', name:'Lenovo ThinkPad E15 · 16GB RAM · 512GB SSD', meta:'Stoc 8 buc · livrare mâine', price:'3.749 lei', old:'4.299 lei', discount:'−13%' } },
-            { user:true,  text:'Pot vedea recenzii?' },
-            { user:false, text:'4,7★ din 284 recenzii reale.' },
-            { user:false, text:'✓ Ți-am trimis pe email link-ul cu specificațiile complete și 12 poze de la clienți.' },
-          ]},
-        { niche:'beauty', label:'🧴 Drugstore cosmetice', footer:'✓ Stoc sincronizat WooCommerce', badge:'În coș',
-          messages:[
-            { user:true,  text:'Am ten uscat sensibil. Ce cremă recomanzi pentru iarnă?' },
-            { user:false, text:'Pentru ten uscat sensibil, cea mai căutată din catalog e:' },
-            { user:false, product:{ emoji:'🧴', name:'CeraVe Moisturising Cream · 340g', meta:'Cu ceramide + acid hialuronic', price:'89 lei', old:'109 lei', discount:'−18%' } },
-            { user:true,  text:'Adaugă în coș.' },
-            { user:false, text:'✓ Adăugat. Total: 89 lei · livrare gratuită peste 150 lei. Notificare cu AWB-ul în 2 ore.' },
-          ]},
-    ];
-    for (let i = scenarios.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [scenarios[i], scenarios[j]] = [scenarios[j], scenarios[i]];
-    }
-
-    const card    = document.getElementById('heroChatCard');
-    const chatEl  = document.getElementById('heroChat');
-    const inner   = document.getElementById('heroChatInner');
-    const typing  = document.getElementById('heroTyping');
-    const label   = document.getElementById('heroScenarioLabel');
-    const footer  = document.getElementById('heroFooterText');
-    const dots    = document.getElementById('heroDotsContainer');
-    const badge   = document.getElementById('heroBadgeTitle');
-    if (!card || !chatEl) return;
-
-    let current = 0, timers = [], gen = 0;
-    const t = (fn, d) => { const id = setTimeout(fn, d); timers.push(id); return id; };
-    const clearAll = () => { timers.forEach(clearTimeout); timers = []; gen++; typing.classList.add('hidden'); typing.classList.remove('flex'); };
-
-    scenarios.forEach((_, i) => {
-        const s = document.createElement('button');
-        s.className = 'rounded-full transition-all duration-300';
-        s.style.background = '#D7D3CA';
-        s.style.width = '6px'; s.style.height = '6px';
-        s.setAttribute('aria-label', 'Scenariu ' + (i+1));
-        s.addEventListener('click', () => { current = i; play(current); });
-        dots.appendChild(s);
-    });
-
-    function setDot(i) {
-        for (let k = 0; k < dots.children.length; k++) {
-            const d = dots.children[k];
-            const on = k === i;
-            d.style.background = on ? 'var(--accent)' : '#D7D3CA';
-            d.style.width = on ? '18px' : '6px';
-        }
-    }
-
-    function addBubble(msg, onDone) {
-        const row = document.createElement('div');
-        row.className = msg.user ? 'flex justify-end' : 'flex';
-        row.style.opacity = '0'; row.style.transform = 'translateY(6px)';
-        row.style.transition = 'opacity .35s ease, transform .35s ease';
-
-        if (msg.product) {
-            // Inline product card (magazin online / cosmetice) — emoji art + nume + preț + reducere
-            const card = document.createElement('div');
-            card.className = 'max-w-[85%] rounded-2xl rounded-bl-sm overflow-hidden border border-line';
-            card.style.background = '#FFF';
-            const p = msg.product;
-            card.innerHTML =
-                '<div class="flex gap-3 p-3">' +
-                  '<div class="w-16 h-16 rounded-xl flex items-center justify-center text-3xl shrink-0" style="background:#F5F1E8;">' + (p.emoji || '🛍️') + '</div>' +
-                  '<div class="flex-1 min-w-0">' +
-                    '<div class="text-[13px] font-semibold leading-tight mb-0.5 truncate">' + p.name + '</div>' +
-                    '<div class="text-[11px] text-muted mb-1 truncate">' + (p.meta || '') + '</div>' +
-                    '<div class="flex items-baseline gap-2">' +
-                      '<span class="text-sm font-bold accent-text">' + p.price + '</span>' +
-                      (p.old ? '<span class="text-[11px] line-through text-muted">' + p.old + '</span>' : '') +
-                      (p.discount ? '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded" style="background:#D1FAE5; color:#047857;">' + p.discount + '</span>' : '') +
-                    '</div>' +
-                  '</div>' +
-                '</div>';
-            row.appendChild(card);
-            inner.appendChild(row);
-            requestAnimationFrame(() => {
-                row.style.opacity = '1'; row.style.transform = 'translateY(0)';
-                chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: 'smooth' });
-            });
-            t(onDone, 320);
-            return;
-        }
-
-        const bubble = document.createElement('div');
-        if (msg.user) {
-            bubble.className = 'max-w-[85%] px-4 py-2.5 rounded-2xl rounded-br-sm text-[14.5px] leading-relaxed text-white';
-            bubble.style.background = 'var(--accent)';
-        } else {
-            bubble.className = 'max-w-[85%] px-4 py-2.5 rounded-2xl rounded-bl-sm text-[14.5px] leading-relaxed text-ink';
-            bubble.style.background = '#EFE5D0';
-        }
-        bubble.textContent = msg.text;
-        row.appendChild(bubble);
-        inner.appendChild(row);
-        requestAnimationFrame(() => {
-            row.style.opacity = '1'; row.style.transform = 'translateY(0)';
-            chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: 'smooth' });
-        });
-        t(onDone, 320);
-    }
-
-    function addMessage(msg, onDone) {
-        if (!msg.user) {
-            typing.classList.remove('hidden'); typing.classList.add('flex');
-            chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: 'smooth' });
-            t(() => { typing.classList.add('hidden'); typing.classList.remove('flex'); addBubble(msg, onDone); }, 750 + Math.random() * 400);
-        } else {
-            addBubble(msg, onDone);
-        }
-    }
-
-    // Pause auto-advance când user-ul e cu mouse-ul peste card sau touch-activ
-    // pe mobile — cititul trebuie să-i aparțină, nu să fie întrerupt.
-    let hovered = false;
-    card.addEventListener('mouseenter', () => { hovered = true; });
-    card.addEventListener('mouseleave', () => { hovered = false; });
-    card.addEventListener('touchstart', () => { hovered = true; }, { passive: true });
-    // pe touch nu avem mouseleave; resetăm dupa 4s de la ultimul tap
-    let touchResetTimer = null;
-    card.addEventListener('touchend', () => {
-        clearTimeout(touchResetTimer);
-        touchResetTimer = setTimeout(() => { hovered = false; }, 4000);
-    }, { passive: true });
-
-    function play(index) {
-        clearAll();
-        const myGen = ++gen;
-        const sc = scenarios[index];
-        card.setAttribute('data-niche', sc.niche);
-        label.style.opacity = '0'; footer.style.opacity = '0';
-        if (badge) badge.style.opacity = '0';
-        t(() => {
-            if (myGen !== gen) return;
-            label.textContent = sc.label; footer.textContent = sc.footer;
-            if (badge) { badge.textContent = sc.badge; badge.style.opacity = '1'; }
-            label.style.opacity = '1'; footer.style.opacity = '1';
-        }, 180);
-        setDot(index);
-        inner.innerHTML = '';
-        let i = 0;
-        const advanceWhenIdle = () => {
-            if (myGen !== gen) return;
-            if (hovered) {
-                // Așteaptă până user-ul pleacă — poll la 500ms
-                t(advanceWhenIdle, 500);
-                return;
-            }
-            current = (current + 1) % scenarios.length;
-            play(current);
-        };
-        const next = () => {
-            if (myGen !== gen) return;
-            if (i >= sc.messages.length) { t(advanceWhenIdle, 3500); return; }
-            const m = sc.messages[i];
-            // Pauze de lectură: user-ul care urmează are nevoie de timp să citească
-            // mesajul botului anterior (900ms), botul simulează o mică ezitare
-            // înainte să înceapă să „tasteze" (300ms), primul mesaj porneste mai rapid.
-            const delay = i === 0 ? 400 : (m.user ? 900 : 300);
-            t(() => { if (myGen !== gen) return; addMessage(m, () => { i++; next(); }); }, delay);
-        };
-        next();
-    }
-    t(() => play(current), 400);
-
-    let startX = 0, startY = 0;
-    chatEl.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; startY = e.touches[0].clientY; }, { passive: true });
-    chatEl.addEventListener('touchend', (e) => {
-        const dx = e.changedTouches[0].clientX - startX;
-        const dy = e.changedTouches[0].clientY - startY;
-        if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
-            current = (current + (dx < 0 ? 1 : -1) + scenarios.length) % scenarios.length;
-            play(current);
-        }
-    }, { passive: true });
-})();
+/* Hero rotating scenarios — migrat la new/partials/hero-chat.blade.php. */
+    /* hero JS migrat — rulează din partials/hero-chat */
 
 /* Demo Live — real bot call on channel 2 (same as live site) */
 (function () {
