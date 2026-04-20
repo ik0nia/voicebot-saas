@@ -38,7 +38,7 @@
 
             <h1 class="display text-5xl md:text-6xl lg:text-7xl font-medium leading-[1.02] tracking-tight mb-7">
                 Angajatul tău AI care<br>
-                <span class="italic font-normal accent-text">nu iese din tură.</span>
+                <span id="heroRotator" class="italic font-normal accent-text inline-block transition-opacity duration-500 ease-out" style="opacity:1; min-height: 1.1em;">nu iese din tură.</span>
             </h1>
 
             <p class="text-xl leading-relaxed text-muted mb-9 max-w-xl">
@@ -1088,6 +1088,41 @@
         });
     }, { threshold: 0.5 });
     document.querySelectorAll('[data-countup]').forEach(el => obs.observe(el));
+})();
+
+/* ------------------------------------------------------------------ */
+/* Hero rotating headline — 10 phrases cycled with fade transition    */
+/* ------------------------------------------------------------------ */
+(function () {
+    const el = document.getElementById('heroRotator');
+    if (!el) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const phrases = [
+        'nu iese din tură.',
+        'știe totul despre afacerea ta.',
+        'răspunde clienților 24/7.',
+        'vorbește natural în română.',
+        'nu uită niciodată un detaliu.',
+        'vinde în locul tău, non-stop.',
+        'învață singur din conversații.',
+        'îți crește vânzările în somn.',
+        'știe fiecare produs și preț.',
+        'preia apeluri ca un profesionist.',
+        'transformă vizitatori în clienți.',
+    ];
+    let idx = 0;
+
+    function rotate() {
+        el.style.opacity = '0';
+        setTimeout(() => {
+            idx = (idx + 1) % phrases.length;
+            el.textContent = phrases[idx];
+            el.style.opacity = '1';
+        }, 500);
+    }
+
+    setInterval(rotate, 3200);
 })();
 </script>
 @endpush
