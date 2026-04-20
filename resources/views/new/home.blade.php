@@ -375,24 +375,26 @@
         </div>
 
         @php
+            /* Emoji fallback map — actual DB slugs, used only when the
+               niche row has no icon_svg. */
             $nicheEmojiMap = [
-                'cabinete-stomatologice' => '🦷', 'stomatologic' => '🦷',
-                'medical' => '🏥',
-                'salon-beauty' => '💆', 'saloane-beauty' => '💆',
-                'service-auto' => '🔧',
-                'ecommerce' => '🛒',
-                'imobiliare' => '🏠',
-                'avocatura' => '⚖️',
-                'contabilitate' => '📚',
-                'restaurant' => '🍽️',
-                'pensiune' => '🏨',
-                'optica' => '👓',
-                'turism' => '✈️',
-                'notariat' => '📜',
-                'psihologie' => '🧠',
-                'curatenie' => '🧹',
-                'veterinar' => '🐶',
-                'scoli-limbi' => '🎓',
+                'cabinete-stomatologice'     => '🦷',
+                'cabinete-medicale'          => '🏥',
+                'salon-beauty'               => '💆',
+                'service-auto'               => '🔧',
+                'magazine-online'            => '🛒',
+                'agentii-imobiliare'         => '🏠',
+                'birouri-avocatura'          => '⚖️',
+                'firme-contabilitate'        => '📚',
+                'restaurante-delivery'       => '🍽️',
+                'pensiuni-hoteluri-mici'     => '🏨',
+                'optica-medicala'            => '👓',
+                'agentii-turism'             => '✈️',
+                'birouri-notariale'          => '📜',
+                'psihologie-psihoterapie'    => '🧠',
+                'firme-curatenie'            => '🧹',
+                'clinici-veterinare'         => '🐾',
+                'scoli-limbi-straine'        => '🎓',
             ];
         @endphp
 
@@ -400,8 +402,14 @@
             @forelse($niches as $n)
                 <a href="{{ route('new.niche', $n->slug) }}" data-niche="{{ $n->color_theme }}" class="niche-card group block rounded-2xl overflow-hidden bg-cream border border-line">
                     <div class="accent-soft-bg p-5 flex items-center justify-between">
-                        <span class="text-3xl">{{ $nicheEmojiMap[$n->slug] ?? '✦' }}</span>
-                        <span class="w-8 h-8 rounded-full accent-bg flex items-center justify-center shrink-0">
+                        <div class="w-12 h-12 rounded-xl bg-white flex items-center justify-center accent-text shrink-0">
+                            @if(!empty($n->icon_svg))
+                                <span class="w-6 h-6 inline-flex items-center justify-center [&>svg]:w-full [&>svg]:h-full">{!! $n->icon_svg !!}</span>
+                            @else
+                                <span class="text-2xl">{{ $nicheEmojiMap[$n->slug] ?? '✦' }}</span>
+                            @endif
+                        </div>
+                        <span class="w-8 h-8 rounded-full accent-bg flex items-center justify-center shrink-0 group-hover:scale-110 transition">
                             <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                         </span>
                     </div>
@@ -417,7 +425,7 @@
                 @foreach([['🦷','Stomatologie','emerald'],['💆','Estetică','rose'],['🔧','Service auto','orange'],['🏠','Imobiliare','amber'],['⚖️','Avocatură','purple'],['🍽️','Restaurante','emerald'],['🛒','E-commerce','blue'],['🏨','Pensiuni','teal']] as $ind)
                     <a href="#" data-niche="{{ $ind[2] }}" class="niche-card group block rounded-2xl overflow-hidden bg-cream border border-line">
                         <div class="accent-soft-bg p-5 flex items-center justify-between">
-                            <span class="text-3xl">{{ $ind[0] }}</span>
+                            <div class="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-2xl">{{ $ind[0] }}</div>
                             <span class="w-8 h-8 rounded-full accent-bg flex items-center justify-center">
                                 <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                             </span>

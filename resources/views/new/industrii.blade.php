@@ -22,23 +22,23 @@
 {{-- NICHES GRID --}}
 @php
     $nicheEmojiMap = [
-        'cabinete-stomatologice' => '🦷', 'stomatologic' => '🦷',
-        'medical' => '🏥',
-        'salon-beauty' => '💆', 'saloane-beauty' => '💆',
-        'service-auto' => '🔧',
-        'ecommerce' => '🛒',
-        'imobiliare' => '🏠',
-        'avocatura' => '⚖️',
-        'contabilitate' => '📚',
-        'restaurant' => '🍽️',
-        'pensiune' => '🏨',
-        'optica' => '👓',
-        'turism' => '✈️',
-        'notariat' => '📜',
-        'psihologie' => '🧠',
-        'curatenie' => '🧹',
-        'veterinar' => '🐶',
-        'scoli-limbi' => '🎓',
+        'cabinete-stomatologice'     => '🦷',
+        'cabinete-medicale'          => '🏥',
+        'salon-beauty'               => '💆',
+        'service-auto'               => '🔧',
+        'magazine-online'            => '🛒',
+        'agentii-imobiliare'         => '🏠',
+        'birouri-avocatura'          => '⚖️',
+        'firme-contabilitate'        => '📚',
+        'restaurante-delivery'       => '🍽️',
+        'pensiuni-hoteluri-mici'     => '🏨',
+        'optica-medicala'            => '👓',
+        'agentii-turism'             => '✈️',
+        'birouri-notariale'          => '📜',
+        'psihologie-psihoterapie'    => '🧠',
+        'firme-curatenie'            => '🧹',
+        'clinici-veterinare'         => '🐾',
+        'scoli-limbi-straine'        => '🎓',
     ];
 @endphp
 
@@ -54,7 +54,13 @@
                 <a href="{{ route('new.niche', $n->slug) }}" data-niche="{{ $n->color_theme }}" class="niche-card group block rounded-3xl overflow-hidden bg-paper border border-line fade-up">
                     <div class="accent-soft-bg p-6 flex items-start justify-between">
                         <div>
-                            <div class="text-4xl mb-3">{{ $nicheEmojiMap[$n->slug] ?? '✦' }}</div>
+                            <div class="w-14 h-14 rounded-2xl bg-white accent-text flex items-center justify-center mb-3">
+                                @if(!empty($n->icon_svg))
+                                    <span class="w-7 h-7 inline-flex items-center justify-center [&>svg]:w-full [&>svg]:h-full">{!! $n->icon_svg !!}</span>
+                                @else
+                                    <span class="text-3xl">{{ $nicheEmojiMap[$n->slug] ?? '✦' }}</span>
+                                @endif
+                            </div>
                             <div class="mono text-[10px] uppercase tracking-[0.15em] accent-text">{{ $n->vertical_label ?: 'Agent AI' }}</div>
                         </div>
                         <span class="w-10 h-10 rounded-full accent-bg flex items-center justify-center shrink-0 group-hover:scale-110 transition">
