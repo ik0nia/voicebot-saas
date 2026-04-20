@@ -84,32 +84,27 @@ class AppServiceProvider extends ServiceProvider
             $categories = [
                 'sanatate' => [
                     'label' => 'Sănătate & Beauty',
-                    'icon'  => '🩺',
                     'slugs' => ['cabinete-medicale', 'cabinete-stomatologice', 'optica-medicala', 'clinici-veterinare', 'psihologie-psihoterapie', 'salon-beauty'],
                 ],
                 'profesional' => [
                     'label' => 'Servicii profesionale',
-                    'icon'  => '⚖️',
                     'slugs' => ['birouri-avocatura', 'firme-contabilitate', 'birouri-notariale'],
                 ],
                 'comert' => [
                     'label' => 'Comerț & Auto',
-                    'icon'  => '🛒',
                     'slugs' => ['magazine-online', 'service-auto'],
                 ],
                 'horeca' => [
                     'label' => 'HoReCa & Turism',
-                    'icon'  => '🍽️',
                     'slugs' => ['restaurante-delivery', 'pensiuni-hoteluri-mici', 'agentii-turism'],
                 ],
                 'altele' => [
                     'label' => 'Imobiliare · Educație · Servicii',
-                    'icon'  => '🏠',
                     'slugs' => ['agentii-imobiliare', 'scoli-limbi-straine', 'firme-curatenie'],
                 ],
             ];
 
-            $grouped = cache()->remember('new.megamenu.niches.v2', 300, function () use ($categories) {
+            $grouped = cache()->remember('new.megamenu.niches.v3', 300, function () use ($categories) {
                 try {
                     $all = \App\Models\Niche::where('is_active', true)
                         ->get(['slug', 'name', 'vertical_label', 'color_theme'])
@@ -118,18 +113,32 @@ class AppServiceProvider extends ServiceProvider
                     return [];
                 }
 
+                // Attach first icon SVG path from niche-icons config to each row.
+                // Renderer uses it as the small icon next to the niche name.
+                $icons = config('niche-icons', []);
+                $decorate = function ($niche) use ($icons) {
+                    $slug = $niche->slug;
+                    $iconSvg = isset($icons[$slug][0]) ? $icons[$slug][0] : null;
+                    return [
+                        'slug'   => $slug,
+                        'name'   => $niche->vertical_label ?: $niche->name,
+                        'theme'  => $niche->color_theme ?: 'red',
+                        'icon'   => $iconSvg,
+                    ];
+                };
+
                 $out = [];
                 $placed = [];
                 foreach ($categories as $key => $cat) {
                     $items = [];
                     foreach ($cat['slugs'] as $slug) {
                         if (isset($all[$slug])) {
-                            $items[] = $all[$slug];
+                            $items[] = $decorate($all[$slug]);
                             $placed[$slug] = true;
                         }
                     }
                     if (!empty($items)) {
-                        $out[$key] = ['label' => $cat['label'], 'icon' => $cat['icon'], 'items' => $items];
+                        $out[$key] = ['label' => $cat['label'], 'items' => $items];
                     }
                 }
 
@@ -137,10 +146,11 @@ class AppServiceProvider extends ServiceProvider
                 // ajunge aici, ca mega menu-ul să reflecte baza de date, nu o listă hardcoded.
                 $orphans = $all->reject(fn ($n) => isset($placed[$n->slug]))->values();
                 if ($orphans->isNotEmpty()) {
+                    $decorated = $orphans->map($decorate)->all();
                     if (isset($out['altele'])) {
-                        foreach ($orphans as $n) $out['altele']['items'][] = $n;
+                        foreach ($decorated as $it) $out['altele']['items'][] = $it;
                     } else {
-                        $out['altele'] = ['label' => 'Altele', 'icon' => '✦', 'items' => $orphans->all()];
+                        $out['altele'] = ['label' => 'Altele', 'items' => $decorated];
                     }
                 }
                 return $out;

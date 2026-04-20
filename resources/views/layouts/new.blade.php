@@ -213,22 +213,38 @@
 
                     @if(!empty($megaMenuNiches))
                         <div class="absolute left-1/2 -translate-x-1/2 top-full pt-4 invisible opacity-0 translate-y-1 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 focus-within:visible focus-within:opacity-100 focus-within:translate-y-0 transition-all duration-200 z-50" role="menu">
-                            <div class="w-[820px] rounded-2xl bg-paper border border-line overflow-hidden" style="box-shadow: 0 30px 60px -20px rgba(28,25,23,0.22);">
-                                <div class="grid grid-cols-3 gap-0">
+                            <div class="w-[880px] rounded-3xl bg-paper border border-line overflow-hidden" style="box-shadow: 0 30px 60px -20px rgba(28,25,23,0.22);">
+
+                                {{-- Header: titlu + tagline pe un rând vizibil --}}
+                                <div class="px-6 py-4 bg-cream border-b border-line flex items-end justify-between">
+                                    <div>
+                                        <div class="mono text-[10px] uppercase tracking-[0.2em]" style="color: var(--muted);">◇ industrii</div>
+                                        <div class="display text-lg font-semibold leading-tight">17 verticale deservite</div>
+                                    </div>
+                                    <a href="{{ route('new.industrii') }}" class="text-xs font-semibold accent-text hover:underline shrink-0">Vezi toate →</a>
+                                </div>
+
+                                {{-- Conținut: 5 categorii curg natural pe 3 coloane CSS,
+                                     break-inside-avoid ține fiecare categorie întreagă. --}}
+                                <div class="p-6" style="column-count: 3; column-gap: 1.75rem;">
                                     @foreach($megaMenuNiches as $catKey => $cat)
-                                        <div class="p-5 {{ !$loop->last ? 'border-r border-line/70' : '' }}">
-                                            <div class="flex items-center gap-2 mb-3">
-                                                <span class="text-lg">{{ $cat['icon'] }}</span>
-                                                <span class="mono text-[10px] uppercase tracking-wider" style="color: var(--muted);">{{ $cat['label'] }}</span>
-                                            </div>
-                                            <ul class="space-y-1">
+                                        <div class="break-inside-avoid mb-5">
+                                            <div class="mono text-[10px] uppercase tracking-[0.15em] pb-2 mb-2 border-b border-line/70" style="color: var(--muted);">{{ $cat['label'] }}</div>
+                                            <ul class="space-y-0.5">
                                                 @foreach($cat['items'] as $n)
                                                     <li>
-                                                        <a href="{{ route('new.niche', $n->slug) }}"
-                                                           data-niche="{{ $n->color_theme }}"
-                                                           class="block px-3 py-2 rounded-lg text-sm text-ink hover:bg-sand transition"
+                                                        <a href="{{ route('new.niche', $n['slug']) }}"
+                                                           data-niche="{{ $n['theme'] }}"
+                                                           class="group/ni flex items-center gap-2.5 px-2 py-1.5 -mx-2 rounded-lg text-sm text-ink hover:bg-sand transition"
                                                            role="menuitem">
-                                                            {{ $n->vertical_label ?: $n->name }}
+                                                            <span class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 accent-soft-bg group-hover/ni:accent-bg transition">
+                                                                @if($n['icon'])
+                                                                    <svg class="w-3.5 h-3.5 accent-text group-hover/ni:text-white transition" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">{!! $n['icon'] !!}</svg>
+                                                                @else
+                                                                    <span class="w-1.5 h-1.5 rounded-full accent-bg"></span>
+                                                                @endif
+                                                            </span>
+                                                            <span class="leading-tight">{{ $n['name'] }}</span>
                                                         </a>
                                                     </li>
                                                 @endforeach
@@ -236,7 +252,9 @@
                                         </div>
                                     @endforeach
                                 </div>
-                                <div class="px-5 py-3 bg-cream border-t border-line flex items-center justify-between">
+
+                                {{-- Footer subtil --}}
+                                <div class="px-6 py-3.5 bg-cream border-t border-line flex items-center justify-between">
                                     <span class="text-xs" style="color: var(--muted);">Nu găsești domeniul tău?</span>
                                     <a href="{{ route('new.contact') }}" class="text-xs font-semibold accent-text hover:underline">Vorbește cu noi →</a>
                                 </div>
@@ -264,34 +282,43 @@
             </button>
         </div>
 
-        {{-- Mobile slide-down menu --}}
-        <div id="sbMobileNav" class="lg:hidden hidden border-t border-line bg-cream">
+        {{-- Mobile menu — fixed overlay full-screen sub bara de sus, cu propriul scroll.
+             Era anterior inline sub nav (sticky) și nu scrolla pe telefon. --}}
+        <div id="sbMobileNav" class="lg:hidden hidden fixed inset-x-0 top-20 bottom-0 bg-cream border-t border-line overflow-y-auto overscroll-contain z-[60]" style="-webkit-overflow-scrolling: touch;">
             @php
                 $activeMob = 'block px-4 py-3 rounded-xl text-base font-semibold text-ink accent-soft-bg border-l-4 border-[var(--accent)] transition';
                 $idleMob   = 'block px-4 py-3 rounded-xl text-base font-medium text-ink hover:bg-sand transition';
             @endphp
-            <div class="max-w-7xl mx-auto px-6 py-5 flex flex-col gap-1">
+            <div class="max-w-7xl mx-auto px-6 py-5 pb-24 flex flex-col gap-1">
                 <a href="{{ route('new.despre') }}"          class="{{ $navActive('new.despre') ? $activeMob : $idleMob }}">Despre</a>
                 <a href="{{ route('new.functionalitati') }}" class="{{ $navActive('new.functionalitati') ? $activeMob : $idleMob }}">Funcționalități</a>
 
-                {{-- Mobile Industrii — accordion cu categoriile --}}
+                {{-- Mobile Industrii — accordion cu categoriile, icon per link --}}
                 @if(!empty($megaMenuNiches))
                     <details class="group/ind rounded-xl overflow-hidden {{ $navActive('new.industrii', 'new.niche') ? 'accent-soft-bg border-l-4 border-[var(--accent)]' : '' }}">
                         <summary class="flex items-center justify-between px-4 py-3 cursor-pointer text-base font-medium text-ink hover:bg-sand transition list-none">
                             <span class="{{ $navActive('new.industrii', 'new.niche') ? 'font-semibold' : '' }}">Industrii</span>
                             <svg class="w-4 h-4 transition-transform group-open/ind:rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M19 9l-7 7-7-7"/></svg>
                         </summary>
-                        <div class="px-2 pb-3 space-y-3">
+                        <div class="px-2 pb-3 pt-1 space-y-4">
                             <a href="{{ route('new.industrii') }}" class="block px-4 py-2 text-sm font-semibold accent-text hover:bg-sand rounded-lg">Vezi toate industriile →</a>
                             @foreach($megaMenuNiches as $cat)
                                 <div>
-                                    <div class="flex items-center gap-2 px-4 pt-2 pb-1.5">
-                                        <span class="text-sm">{{ $cat['icon'] }}</span>
-                                        <span class="mono text-[10px] uppercase tracking-wider" style="color: var(--muted);">{{ $cat['label'] }}</span>
-                                    </div>
+                                    <div class="mono text-[10px] uppercase tracking-[0.15em] px-4 pb-1.5" style="color: var(--muted);">{{ $cat['label'] }}</div>
                                     <ul class="space-y-0.5">
                                         @foreach($cat['items'] as $n)
-                                            <li><a href="{{ route('new.niche', $n->slug) }}" data-niche="{{ $n->color_theme }}" class="block px-4 py-2 text-sm text-ink hover:bg-sand rounded-lg">{{ $n->vertical_label ?: $n->name }}</a></li>
+                                            <li>
+                                                <a href="{{ route('new.niche', $n['slug']) }}" data-niche="{{ $n['theme'] }}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-ink hover:bg-sand rounded-lg">
+                                                    <span class="w-7 h-7 rounded-lg accent-soft-bg flex items-center justify-center shrink-0">
+                                                        @if($n['icon'])
+                                                            <svg class="w-3.5 h-3.5 accent-text" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">{!! $n['icon'] !!}</svg>
+                                                        @else
+                                                            <span class="w-1.5 h-1.5 rounded-full accent-bg"></span>
+                                                        @endif
+                                                    </span>
+                                                    <span>{{ $n['name'] }}</span>
+                                                </a>
+                                            </li>
                                         @endforeach
                                     </ul>
                                 </div>
