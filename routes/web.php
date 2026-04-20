@@ -140,6 +140,20 @@ Route::prefix('new')->middleware(\App\Http\Middleware\PublicPageCache::class)->g
     Route::get('/pentru/{niche:slug}',  [$c, 'niche'])->name('new.niche');
 });
 
+// Design previews — variante statice de redesign (noindex în view-uri).
+Route::prefix('preview')->group(function () {
+    Route::view('/',                    'preview.index')->name('preview.index');
+    Route::view('/home/warm',           'preview.home-warm');
+    Route::view('/home/stripe',         'preview.home-stripe');
+    Route::view('/home/claude',         'preview.home-claude');
+    Route::view('/home/bold',           'preview.home-bold');
+    Route::view('/home/redesign',       'preview.home-redesign');
+    Route::view('/dashboard/linear',    'preview.dashboard-linear');
+    Route::view('/dashboard/notion',    'preview.dashboard-notion');
+    Route::view('/dashboard/stripe',    'preview.dashboard-stripe');
+    Route::view('/niche/stomatologie',  'preview.niche-stomatologie');
+});
+
 /*
  * OG image generator — SVG 1200×630 warm cu titlu + subtitle + accent.
  * LinkedIn / Twitter / Slack / Discord acceptă SVG; Facebook/Instagram
