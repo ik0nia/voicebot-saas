@@ -104,6 +104,16 @@
                         </div>
                     </div>
 
+                    {{-- Strip de rezultat — între conversație și footer-ul cu dots.
+                         Se actualizează la fiecare scenariu (heroBadgeTitle). --}}
+                    <div class="px-4 py-2 border-t border-line bg-cream flex items-center justify-center gap-2">
+                        <span class="w-4 h-4 rounded-full flex items-center justify-center shrink-0" style="background:#D1FAE5;">
+                            <svg class="w-2.5 h-2.5 text-emerald-700" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg>
+                        </span>
+                        <span id="heroBadgeTitle" class="text-xs font-semibold transition-all duration-300">Programare confirmată</span>
+                        <span class="text-[10px] mono" style="color: var(--muted);">· automat, fără operator</span>
+                    </div>
+
                     <div class="px-4 py-3 border-t border-line bg-paper flex items-center justify-between gap-3">
                         <div class="flex items-center gap-2 min-w-0">
                             <svg class="w-4 h-4 accent-text shrink-0 transition-colors duration-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"/></svg>
