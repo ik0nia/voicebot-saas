@@ -145,21 +145,13 @@ class NewSiteController extends Controller
     }
 
     /**
-     * Map niches.color_theme onto the short keys used by the
-     * layout's data-niche CSS variable blocks.
+     * Use the niche's own color_theme as the data-niche value. The
+     * /new layout has CSS-variable blocks for every Tailwind palette
+     * stored in niches.color_theme (red, emerald, blue, amber, rose,
+     * purple, indigo, teal, cyan, orange) so the swap is 1:1.
      */
     private function resolveThemeKey(?string $dbTheme): string
     {
-        return match ($dbTheme) {
-            'emerald', 'green'  => 'resto',
-            'blue', 'sky'       => 'medical',
-            'pink', 'rose'      => 'beauty',
-            'orange', 'amber'   => 'auto',
-            'yellow'            => 'imob',
-            'purple', 'violet'  => 'legal',
-            'indigo'            => 'education',
-            'cyan', 'teal'      => 'travel',
-            default             => '',
-        };
+        return $dbTheme ?: '';
     }
 }
