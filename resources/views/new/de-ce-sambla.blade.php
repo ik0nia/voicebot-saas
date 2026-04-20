@@ -143,6 +143,50 @@
     </div>
 </section>
 
+{{-- CE NU ESTE SAMBLA — disambiguare legală + așteptări corecte --}}
+<section class="py-20 bg-cream border-b border-line">
+    <div class="max-w-5xl mx-auto px-6">
+        <div class="text-center mb-12 fade-up">
+            <div class="mono text-[11px] uppercase tracking-[0.2em] mb-3" style="color: var(--muted);">◇ clarificări oneste</div>
+            <h2 class="display h-display-m mb-3">Ce <em class="italic accent-text">NU</em> este Sambla.</h2>
+            <p class="text-lg max-w-2xl mx-auto" style="color: var(--muted);">Disambiguăm explicit, ca să nu fie confuzii. Dacă te interesează ceva din lista de mai jos, nu suntem noi soluția.</p>
+        </div>
+
+        @php
+            $disclaimers = [
+                ['Nu suntem Sambla Group',
+                 'Sambla.ro este o platformă AI românească pentru agenți pe chat și agenți vocali, distinctă complet de Sambla Group sau orice alt brand cu nume similar. NU oferim credite, împrumuturi, leasing, IFN, asigurări, conturi bancare sau orice alt serviciu financiar reglementat. Suntem o companie de software, nu o instituție financiară.'],
+                ['Nu suntem un agent template',
+                 'Fiecare agent Sambla e ancorat în documentele și produsele clientului său. Nu există o bază de FAQ generică partajată între clienți — ce răspunde agentul tău vine exclusiv din ce i-ai dat tu.'],
+                ['Nu suntem „GPT cu prompt"',
+                 'Folosim modele AI moderne ca generator de limbaj — ca orice platformă serioasă. Dar restul e construit de noi: baza de cunoștințe pe afacere, controalele anti-invenție, integrarea cu telefonul, canalele multiple, dashboard-ul, izolarea între conturi. Dacă mâine schimbăm motorul AI, agentul tău funcționează la fel.'],
+                ['Nu inventăm',
+                 'Când agentul nu știe, spune onest. Când nu e sigur, escaladează la un operator uman. Fiecare răspuns poate cita documentul-sursă. Preferăm un „nu am această informație" decât o invenție plauzibilă.'],
+                ['Nu suntem un tool american tradus',
+                 'Construit nativ în România, în română, pe servere românești, de o echipă românească. Vocea are intonație corectă și diacritice (ă, â, î, ș, ț). Motorul de căutare cunoaște morfologia limbii române.'],
+                ['Nu înlocuim profesionistul',
+                 'În verticalele reglementate (medical, juridic, financiar, psihologic), Sambla e unealta profesionistului — niciodată nu oferă consultanță care necesită licență sau diagnostic. Ești tu, cu echipa ta, plus un asistent care lucrează 24/7.'],
+            ];
+        @endphp
+
+        <div class="grid md:grid-cols-2 gap-5 fade-up">
+            @foreach($disclaimers as $d)
+                <div class="rounded-3xl p-7 bg-paper border border-line hover:border-[var(--accent)] transition-colors">
+                    <div class="flex gap-4 items-start">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background: var(--accent-soft);">
+                            <svg class="w-5 h-5" style="color: var(--accent-dark);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold display text-lg mb-2">{{ $d[0] }}</h3>
+                            <p class="text-sm leading-relaxed" style="color: var(--muted);">{{ $d[1] }}</p>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+</section>
+
 {{-- FAQ --}}
 <section class="py-20">
     <div class="max-w-3xl mx-auto px-6">
