@@ -1090,7 +1090,7 @@
         if (!msg.user) {
             typing.classList.remove('hidden'); typing.classList.add('flex');
             chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: 'smooth' });
-            t(() => { typing.classList.add('hidden'); typing.classList.remove('flex'); addBubble(msg, onDone); }, 450 + Math.random() * 250);
+            t(() => { typing.classList.add('hidden'); typing.classList.remove('flex'); addBubble(msg, onDone); }, 750 + Math.random() * 400);
         } else {
             addBubble(msg, onDone);
         }
@@ -1137,14 +1137,17 @@
         };
         const next = () => {
             if (myGen !== gen) return;
-            if (i >= sc.messages.length) { t(advanceWhenIdle, 2400); return; }
+            if (i >= sc.messages.length) { t(advanceWhenIdle, 3500); return; }
             const m = sc.messages[i];
-            const delay = i === 0 ? 350 : (m.user ? 500 : 150);
+            // Pauze de lectură: user-ul care urmează are nevoie de timp să citească
+            // mesajul botului anterior (900ms), botul simulează o mică ezitare
+            // înainte să înceapă să „tasteze" (300ms), primul mesaj porneste mai rapid.
+            const delay = i === 0 ? 400 : (m.user ? 900 : 300);
             t(() => { if (myGen !== gen) return; addMessage(m, () => { i++; next(); }); }, delay);
         };
         next();
     }
-    t(() => play(current), 300);
+    t(() => play(current), 400);
 
     let startX = 0, startY = 0;
     chatEl.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; startY = e.touches[0].clientY; }, { passive: true });
