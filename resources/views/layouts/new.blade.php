@@ -185,14 +185,26 @@
             <a href="{{ route('new.home') }}" class="flex items-center gap-2 shrink-0">
                 <img src="{{ asset('images/logo-light.svg') }}" alt="Sambla — Agenți AI" class="h-10 md:h-11 w-auto">
             </a>
-            <div class="hidden lg:flex items-center gap-7 text-sm font-medium text-muted">
-                <a href="{{ route('new.despre') }}" class="hover:text-ink transition">Despre</a>
-                <a href="{{ route('new.functionalitati') }}" class="hover:text-ink transition">Funcționalități</a>
-                <a href="{{ route('new.industrii') }}" class="hover:text-ink transition">Industrii</a>
-                <a href="{{ route('new.deCeSambla') }}" class="hover:text-ink transition">De ce Sambla</a>
-                <a href="{{ route('new.preturi') }}" class="hover:text-ink transition">Prețuri</a>
-                <a href="{{ route('new.blog') }}" class="hover:text-ink transition">Blog</a>
-                <a href="{{ route('new.contact') }}" class="hover:text-ink transition">Contact</a>
+            @php
+                /* Active helper for desktop links. A link is active if the current
+                   route name matches, or — for „Industrii" — if we're on a niche page. */
+                $navActive = function (string ...$routes): bool {
+                    foreach ($routes as $r) {
+                        if (request()->routeIs($r)) return true;
+                    }
+                    return false;
+                };
+                $activeDesk = 'text-ink font-semibold relative after:absolute after:left-0 after:-bottom-1 after:h-0.5 after:w-full after:rounded-full after:bg-[var(--accent)]';
+                $idleDesk   = 'text-muted hover:text-ink transition';
+            @endphp
+            <div class="hidden lg:flex items-center gap-7 text-sm font-medium">
+                <a href="{{ route('new.despre') }}"          class="{{ $navActive('new.despre') ? $activeDesk : $idleDesk }}">Despre</a>
+                <a href="{{ route('new.functionalitati') }}" class="{{ $navActive('new.functionalitati') ? $activeDesk : $idleDesk }}">Funcționalități</a>
+                <a href="{{ route('new.industrii') }}"       class="{{ $navActive('new.industrii', 'new.niche') ? $activeDesk : $idleDesk }}">Industrii</a>
+                <a href="{{ route('new.deCeSambla') }}"      class="{{ $navActive('new.deCeSambla') ? $activeDesk : $idleDesk }}">De ce Sambla</a>
+                <a href="{{ route('new.preturi') }}"         class="{{ $navActive('new.preturi') ? $activeDesk : $idleDesk }}">Prețuri</a>
+                <a href="{{ route('new.blog') }}"            class="{{ $navActive('new.blog') ? $activeDesk : $idleDesk }}">Blog</a>
+                <a href="{{ route('new.contact') }}"         class="{{ $navActive('new.contact') ? $activeDesk : $idleDesk }}">Contact</a>
             </div>
             <div class="hidden lg:flex items-center gap-2 text-sm">
                 <a href="{{ url('/login') }}" class="hidden sm:inline px-4 py-2 text-muted hover:text-ink transition">Autentificare</a>
@@ -210,14 +222,18 @@
 
         {{-- Mobile slide-down menu --}}
         <div id="sbMobileNav" class="lg:hidden hidden border-t border-line bg-cream">
+            @php
+                $activeMob = 'block px-4 py-3 rounded-xl text-base font-semibold text-ink accent-soft-bg border-l-4 border-[var(--accent)] transition';
+                $idleMob   = 'block px-4 py-3 rounded-xl text-base font-medium text-ink hover:bg-sand transition';
+            @endphp
             <div class="max-w-7xl mx-auto px-6 py-5 flex flex-col gap-1">
-                <a href="{{ route('new.despre') }}"          class="block px-4 py-3 rounded-xl text-base font-medium text-ink hover:bg-sand transition">Despre</a>
-                <a href="{{ route('new.functionalitati') }}" class="block px-4 py-3 rounded-xl text-base font-medium text-ink hover:bg-sand transition">Funcționalități</a>
-                <a href="{{ route('new.industrii') }}"       class="block px-4 py-3 rounded-xl text-base font-medium text-ink hover:bg-sand transition">Industrii</a>
-                <a href="{{ route('new.deCeSambla') }}"      class="block px-4 py-3 rounded-xl text-base font-medium text-ink hover:bg-sand transition">De ce Sambla</a>
-                <a href="{{ route('new.preturi') }}"         class="block px-4 py-3 rounded-xl text-base font-medium text-ink hover:bg-sand transition">Prețuri</a>
-                <a href="{{ route('new.blog') }}"            class="block px-4 py-3 rounded-xl text-base font-medium text-ink hover:bg-sand transition">Blog</a>
-                <a href="{{ route('new.contact') }}"         class="block px-4 py-3 rounded-xl text-base font-medium text-ink hover:bg-sand transition">Contact</a>
+                <a href="{{ route('new.despre') }}"          class="{{ $navActive('new.despre') ? $activeMob : $idleMob }}">Despre</a>
+                <a href="{{ route('new.functionalitati') }}" class="{{ $navActive('new.functionalitati') ? $activeMob : $idleMob }}">Funcționalități</a>
+                <a href="{{ route('new.industrii') }}"       class="{{ $navActive('new.industrii', 'new.niche') ? $activeMob : $idleMob }}">Industrii</a>
+                <a href="{{ route('new.deCeSambla') }}"      class="{{ $navActive('new.deCeSambla') ? $activeMob : $idleMob }}">De ce Sambla</a>
+                <a href="{{ route('new.preturi') }}"         class="{{ $navActive('new.preturi') ? $activeMob : $idleMob }}">Prețuri</a>
+                <a href="{{ route('new.blog') }}"            class="{{ $navActive('new.blog') ? $activeMob : $idleMob }}">Blog</a>
+                <a href="{{ route('new.contact') }}"         class="{{ $navActive('new.contact') ? $activeMob : $idleMob }}">Contact</a>
                 <div class="h-px bg-line my-3"></div>
                 <a href="{{ url('/login') }}" class="block px-4 py-3 rounded-xl text-base font-medium text-muted hover:text-ink hover:bg-sand transition">Autentificare</a>
                 <a href="{{ url('/register') }}" class="btn-primary justify-center mt-2" style="width:100%;">
