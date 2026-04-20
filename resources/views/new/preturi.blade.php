@@ -386,9 +386,28 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    /* GA4 — view_item_list + select_item on plan CTA click */
     window.dataLayer = window.dataLayer || [];
-    document.querySelectorAll('[data-analytics-plan]').forEach(function (el) {
+
+    /* GA4 — view_item_list pe pageload cu planurile reale din DB,
+       nu hardcoded. Colectăm toți CTA-urile plan și extragem id/name/
+       price. Dacă consent nu e dat, dataLayer e coadă, nu no-op. */
+    var planEls = document.querySelectorAll('[data-analytics-plan]');
+    if (planEls.length) {
+        var items = [];
+        planEls.forEach(function (el) {
+            items.push({
+                item_id:       el.getAttribute('data-analytics-plan'),
+                item_name:     el.getAttribute('data-analytics-plan-name') || el.getAttribute('data-analytics-plan'),
+                price:         parseFloat(el.getAttribute('data-analytics-price') || '0'),
+                item_category: 'monthly',
+                quantity:      1,
+            });
+        });
+        window.dataLayer.push({ event: 'view_item_list', item_list_name: 'pachete', items: items });
+    }
+
+    /* Select_item + begin_checkout la click pe CTA plan */
+    planEls.forEach(function (el) {
         el.addEventListener('click', function () {
             var planId   = el.getAttribute('data-analytics-plan');
             var planName = el.getAttribute('data-analytics-plan-name') || planId;
