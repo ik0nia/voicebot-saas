@@ -430,26 +430,26 @@
             <h2 class="display text-4xl md:text-5xl font-medium leading-tight">Construit pentru calitate,<br><span class="italic accent-text">nu pentru demo-uri.</span></h2>
         </div>
 
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div class="fade-up rounded-3xl p-8 bg-paper border border-line text-center">
-                <div class="display text-[7rem] md:text-[8rem] stat-num leading-none font-medium accent-text" data-countup="94">94<span class="text-ink">%</span></div>
-                <div class="mt-2 text-sm text-muted">rată rezolvare</div>
-                <div class="mono text-[10px] text-muted mt-1">fără operator uman</div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            <div class="fade-up rounded-3xl p-5 md:p-8 bg-paper border border-line text-center">
+                <div class="display text-5xl md:text-7xl stat-num leading-[1] font-medium accent-text" data-countup="94">94<span class="text-ink">%</span></div>
+                <div class="mt-3 text-sm font-semibold text-ink">rată rezolvare</div>
+                <div class="mono text-[11px] text-muted mt-1">fără operator uman</div>
             </div>
-            <div class="fade-up rounded-3xl p-8 bg-ink text-cream text-center" style="transition-delay:.1s;">
-                <div class="display text-[7rem] md:text-[8rem] stat-num leading-none font-medium" style="color:#F2E59A;">&lt;2s</div>
-                <div class="mt-2 text-sm" style="color:#D7D3CA;">timp până la răspuns</div>
-                <div class="mono text-[10px] mt-1" style="color:#A8A29E;">cât îi ia omului să citească</div>
+            <div class="fade-up rounded-3xl p-5 md:p-8 bg-ink text-cream text-center" style="transition-delay:.1s;">
+                <div class="display text-5xl md:text-7xl stat-num leading-[1] font-medium" style="color:#F2E59A;">&lt;2s</div>
+                <div class="mt-3 text-sm font-semibold" style="color:#F5F1E8;">timp până la răspuns</div>
+                <div class="mono text-[11px] mt-1" style="color:#A8A29E;">cât îi ia omului să citească</div>
             </div>
-            <div class="fade-up rounded-3xl p-8 bg-paper border border-line text-center" style="transition-delay:.2s;">
-                <div class="display text-[7rem] md:text-[8rem] stat-num leading-none font-medium accent-text" data-countup="100">100<span class="text-ink">%</span></div>
-                <div class="mt-2 text-sm text-muted">răspunsuri cu sursă</div>
-                <div class="mono text-[10px] text-muted mt-1">citabile, verificabile</div>
+            <div class="fade-up rounded-3xl p-5 md:p-8 bg-paper border border-line text-center" style="transition-delay:.2s;">
+                <div class="display text-5xl md:text-7xl stat-num leading-[1] font-medium accent-text" data-countup="100">100<span class="text-ink">%</span></div>
+                <div class="mt-3 text-sm font-semibold text-ink">răspunsuri cu sursă</div>
+                <div class="mono text-[11px] text-muted mt-1">citabile, verificabile</div>
             </div>
-            <div class="fade-up rounded-3xl p-8 text-center" style="transition-delay:.3s; background: linear-gradient(135deg, #FCE7E3 0%, #FDBA8C 100%);">
-                <div class="display text-[7rem] md:text-[8rem] leading-none font-medium">🇷🇴</div>
-                <div class="mt-2 text-sm font-medium">construit în RO</div>
-                <div class="mono text-[10px] text-muted mt-1">GDPR nativ, UE-only</div>
+            <div class="fade-up rounded-3xl p-5 md:p-8 text-center" style="transition-delay:.3s; background: linear-gradient(135deg, #FCE7E3 0%, #FDBA8C 100%);">
+                <div class="display text-5xl md:text-7xl leading-[1] font-medium">🇷🇴</div>
+                <div class="mt-3 text-sm font-semibold text-ink">construit în RO</div>
+                <div class="mono text-[11px] text-muted mt-1">GDPR nativ, UE-only</div>
             </div>
         </div>
     </div>

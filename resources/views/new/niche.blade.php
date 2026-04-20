@@ -127,7 +127,11 @@
 
         {{-- Rotating hero chat — 3-4 scenarii specifice pe nișă din
              config/niche-hero-scenarios.php. Fallback la demo_messages
-             ca un singur scenariu dacă nu avem config pentru slug. --}}
+             ca un singur scenariu dacă nu avem config pentru slug.
+             Forțăm culoarea scenariilor să fie $niche->color_theme
+             (a DB-ului), nu cea din config — altfel chat-ul ar vira
+             pe altă culoare decât restul paginii (butoane, form,
+             badge-uri), și se pierde coerența vizuală. --}}
         @php
             $heroScenarios = config('niche-hero-scenarios.' . $niche->slug, []);
             if (empty($heroScenarios) && !empty($demo)) {
@@ -146,6 +150,11 @@
                     'messages' => $fallbackMessages,
                 ]];
             }
+            $pageTheme = $niche->color_theme ?: 'red';
+            $heroScenarios = array_map(function ($sc) use ($pageTheme) {
+                $sc['niche'] = $pageTheme;
+                return $sc;
+            }, $heroScenarios);
         @endphp
         <div class="lg:col-span-6 fade-up" style="transition-delay: .15s">
             @if(!empty($heroScenarios))
@@ -378,26 +387,26 @@
             <h2 class="display text-4xl md:text-5xl font-medium leading-tight">Ce schimbă un agent AI<br>pentru <em class="italic accent-text">afacerea ta</em>.</h2>
         </div>
 
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div class="fade-up rounded-3xl p-8 bg-paper border border-line text-center">
-                <div class="display text-[6rem] md:text-[7rem] stat-num leading-none font-medium accent-text">94<span class="text-ink">%</span></div>
-                <div class="mt-2 text-sm font-semibold">rată preluare</div>
-                <div class="mono text-[10px] text-muted mt-1">vs 58% recepție umană</div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            <div class="fade-up rounded-3xl p-5 md:p-8 bg-paper border border-line text-center">
+                <div class="display text-5xl md:text-7xl stat-num leading-[1] font-medium accent-text">94<span class="text-ink">%</span></div>
+                <div class="mt-3 text-sm font-semibold text-ink">rată preluare</div>
+                <div class="mono text-[11px] text-muted mt-1">vs 58% recepție umană</div>
             </div>
-            <div class="fade-up rounded-3xl p-8 bg-ink text-cream text-center" style="transition-delay:.1s;">
-                <div class="display text-[6rem] md:text-[7rem] stat-num leading-none font-medium" style="color:#F2E59A;">−50<span class="text-ink">%</span></div>
-                <div class="mt-2 text-sm font-semibold">reducere no-show</div>
-                <div class="mono text-[10px] mt-1" style="color:#A8A29E;">cu reminder automat</div>
+            <div class="fade-up rounded-3xl p-5 md:p-8 bg-ink text-cream text-center" style="transition-delay:.1s;">
+                <div class="display text-5xl md:text-7xl stat-num leading-[1] font-medium" style="color:#F2E59A;">−50<span class="text-ink">%</span></div>
+                <div class="mt-3 text-sm font-semibold" style="color:#F5F1E8;">reducere no-show</div>
+                <div class="mono text-[11px] mt-1" style="color:#A8A29E;">cu reminder automat</div>
             </div>
-            <div class="fade-up rounded-3xl p-8 bg-paper border border-line text-center" style="transition-delay:.2s;">
-                <div class="display text-[6rem] md:text-[7rem] stat-num leading-none font-medium accent-text">3h</div>
-                <div class="mt-2 text-sm font-semibold">eliberate / zi</div>
-                <div class="mono text-[10px] text-muted mt-1">echipă eliberată de rutină</div>
+            <div class="fade-up rounded-3xl p-5 md:p-8 bg-paper border border-line text-center" style="transition-delay:.2s;">
+                <div class="display text-5xl md:text-7xl stat-num leading-[1] font-medium accent-text">3h</div>
+                <div class="mt-3 text-sm font-semibold text-ink">eliberate / zi</div>
+                <div class="mono text-[11px] text-muted mt-1">echipă eliberată de rutină</div>
             </div>
-            <div class="fade-up rounded-3xl p-8 text-center" style="transition-delay:.3s; background: linear-gradient(135deg, var(--accent-soft) 0%, #FEC796 100%);">
-                <div class="display text-[6rem] md:text-[7rem] leading-none font-medium">24/7</div>
-                <div class="mt-2 text-sm font-semibold">disponibilitate</div>
-                <div class="mono text-[10px] text-muted mt-1">zi & noapte, weekend</div>
+            <div class="fade-up rounded-3xl p-5 md:p-8 text-center" style="transition-delay:.3s; background: linear-gradient(135deg, var(--accent-soft) 0%, #FEC796 100%);">
+                <div class="display text-5xl md:text-7xl leading-[1] font-medium">24/7</div>
+                <div class="mt-3 text-sm font-semibold text-ink">disponibilitate</div>
+                <div class="mono text-[11px] text-muted mt-1">zi & noapte, weekend</div>
             </div>
         </div>
     </div>
