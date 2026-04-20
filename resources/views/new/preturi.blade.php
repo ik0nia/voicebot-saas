@@ -19,16 +19,17 @@
   "brand": { "@id": "https://sambla.ro/#organization" },
   "offers": [
     @foreach($allPlans as $plan)
+    @php $priceStr = number_format((float) $plan->price_monthly, 2, '.', ''); @endphp
     {
       "@type": "Offer",
       "name": @json($plan->name),
-      "price": @json(number_format((float) $plan->price_monthly, 2, '.', '')),
+      "price": @json($priceStr),
       "priceCurrency": "RON",
       "availability": "https://schema.org/InStock",
       "url": "https://sambla.ro/new/preturi",
       "priceSpecification": {
         "@type": "UnitPriceSpecification",
-        "price": @json(number_format((float) $plan->price_monthly, 2, '.', '')),
+        "price": @json($priceStr),
         "priceCurrency": "RON",
         "billingIncrement": 1,
         "unitText": "MONTH"
