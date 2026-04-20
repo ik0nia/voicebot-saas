@@ -141,6 +141,66 @@
     </div>
 </section>
 
+{{-- 3 mari diferențiatori — tl;dr de ce Sambla e diferit --}}
+<section class="py-24">
+    <div class="max-w-7xl mx-auto px-6">
+        <div class="max-w-2xl mb-14 fade-up">
+            <div class="mono text-[11px] uppercase tracking-[0.2em] text-muted mb-4">◇ de ce sambla e diferit</div>
+            <h2 class="display text-5xl md:text-6xl font-medium leading-[1.05] mb-5">Trei lucruri pe care <em class="italic accent-text">doar noi</em> le facem.</h2>
+            <p class="text-lg text-muted leading-relaxed">Tot ce e important despre Sambla, în trei fraze. Restul paginii le probează concret.</p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-5">
+
+            {{-- Card 1: Învață din datele tale --}}
+            <div class="fade-up rounded-3xl p-8 relative overflow-hidden" style="background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);">
+                <div class="absolute -top-6 -right-6 text-7xl opacity-20">📚</div>
+                <div class="relative">
+                    <div class="mono text-[10px] uppercase tracking-wider mb-3" style="color: #991B1B;">◇ diferențiator 01</div>
+                    <h3 class="display text-2xl font-semibold mb-3 leading-tight">Învață din <em class="italic">datele tale</em></h3>
+                    <p class="leading-relaxed mb-4" style="color: #7F1D1D;">Nu e un agent generic cu „prompt bun". Urci documentele, produsele și politicile tale — agentul răspunde <strong>doar</strong> din ele. Fiecare răspuns poate cita sursa.</p>
+                    <div class="flex flex-wrap gap-2 text-[11px]">
+                        <span class="px-2.5 py-1 rounded-full bg-white/60 font-medium">PDF + DOCX</span>
+                        <span class="px-2.5 py-1 rounded-full bg-white/60 font-medium">sync site</span>
+                        <span class="px-2.5 py-1 rounded-full bg-white/60 font-medium">catalog live</span>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Card 2: Se auto-îmbunătățește --}}
+            <div class="fade-up rounded-3xl p-8 relative overflow-hidden" style="background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%); transition-delay: .1s;">
+                <div class="absolute -top-6 -right-6 text-7xl opacity-20">🔄</div>
+                <div class="relative">
+                    <div class="mono text-[10px] uppercase tracking-wider mb-3" style="color: #92400E;">◇ diferențiator 02</div>
+                    <h3 class="display text-2xl font-semibold mb-3 leading-tight">Se <em class="italic">auto-îmbunătățește</em></h3>
+                    <p class="leading-relaxed mb-4" style="color: #78350F;">Detectează singur întrebările la care nu a răspuns bine și generează un draft de răspuns. Tu îl aprobi în 30 de secunde. În câteva săptămâni, acoperă 90%+ din întrebările reale.</p>
+                    <div class="flex flex-wrap gap-2 text-[11px]">
+                        <span class="px-2.5 py-1 rounded-full bg-white/60 font-medium">knowledge gaps</span>
+                        <span class="px-2.5 py-1 rounded-full bg-white/60 font-medium">draft AI</span>
+                        <span class="px-2.5 py-1 rounded-full bg-white/60 font-medium">tu aprobi</span>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Card 3: Voce + Chat, același creier --}}
+            <div class="fade-up rounded-3xl p-8 relative overflow-hidden" style="background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%); transition-delay: .2s;">
+                <div class="absolute -top-6 -right-6 text-7xl opacity-20">🧠</div>
+                <div class="relative">
+                    <div class="mono text-[10px] uppercase tracking-wider mb-3" style="color: #1E40AF;">◇ diferențiator 03</div>
+                    <h3 class="display text-2xl font-semibold mb-3 leading-tight">Voce + Chat, <em class="italic">același creier</em></h3>
+                    <p class="leading-relaxed mb-4" style="color: #1E3A8A;">Clientul scrie pe site, continuă pe WhatsApp, sună după două ore. Agentul ține minte contextul — nu începi de la zero pe fiecare canal. Un dashboard, un istoric per client.</p>
+                    <div class="flex flex-wrap gap-2 text-[11px]">
+                        <span class="px-2.5 py-1 rounded-full bg-white/60 font-medium">5 canale</span>
+                        <span class="px-2.5 py-1 rounded-full bg-white/60 font-medium">context păstrat</span>
+                        <span class="px-2.5 py-1 rounded-full bg-white/60 font-medium">istoric unificat</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
 {{-- 3 channels --}}
 <section id="colegi" class="py-24 bg-paper">
     <div class="max-w-7xl mx-auto px-6">
@@ -897,6 +957,22 @@
             { user:true,  text:'Ce documente îmi trebuie la început?' },
             { user:false, text:'Certificat înregistrare, act constitutiv și buletinele asociaților. Programăm o întâlnire?' },
           ]},
+        { niche:'auto', label:'💻 Magazin electronice', footer:'✓ Produse cu preț și reducere live', badge:'Produs recomandat',
+          messages:[
+            { user:true,  text:'Caut un laptop bun până în 4000 lei pentru lucru de acasă.' },
+            { user:false, text:'Am 3 opțiuni în buget. Cea mai echilibrată — procesor de ultimă generație, SSD rapid, autonomie mare:' },
+            { user:false, product:{ emoji:'💻', name:'Lenovo ThinkPad E15 · 16GB RAM · 512GB SSD', meta:'Stoc 8 buc · livrare mâine', price:'3.749 lei', old:'4.299 lei', discount:'−13%' } },
+            { user:true,  text:'Pot vedea recenzii?' },
+            { user:false, text:'Desigur — 4,7★ din 284 recenzii. Îți trimit link cu specificații și comentarii?' },
+          ]},
+        { niche:'beauty', label:'🧴 Drugstore cosmetice', footer:'✓ Stoc sincronizat WooCommerce', badge:'În coș',
+          messages:[
+            { user:true,  text:'Am ten uscat sensibil. Ce cremă recomanzi pentru iarnă?' },
+            { user:false, text:'Pentru ten uscat sensibil, cea mai căutată din catalog e:' },
+            { user:false, product:{ emoji:'🧴', name:'CeraVe Moisturising Cream · 340g', meta:'Cu ceramide + acid hialuronic', price:'89 lei', old:'109 lei', discount:'−18%' } },
+            { user:true,  text:'Adaugă în coș.' },
+            { user:false, text:'✓ Adăugat. Total: 89 lei · livrare gratuită peste 150 lei. Mai adaugi ceva?' },
+          ]},
     ];
     for (let i = scenarios.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -941,6 +1017,36 @@
         row.className = msg.user ? 'flex justify-end' : 'flex';
         row.style.opacity = '0'; row.style.transform = 'translateY(6px)';
         row.style.transition = 'opacity .35s ease, transform .35s ease';
+
+        if (msg.product) {
+            // Inline product card (magazin online / cosmetice) — emoji art + nume + preț + reducere
+            const card = document.createElement('div');
+            card.className = 'max-w-[85%] rounded-2xl rounded-bl-sm overflow-hidden border border-line';
+            card.style.background = '#FFF';
+            const p = msg.product;
+            card.innerHTML =
+                '<div class="flex gap-3 p-3">' +
+                  '<div class="w-16 h-16 rounded-xl flex items-center justify-center text-3xl shrink-0" style="background:#F5F1E8;">' + (p.emoji || '🛍️') + '</div>' +
+                  '<div class="flex-1 min-w-0">' +
+                    '<div class="text-[13px] font-semibold leading-tight mb-0.5 truncate">' + p.name + '</div>' +
+                    '<div class="text-[11px] text-muted mb-1 truncate">' + (p.meta || '') + '</div>' +
+                    '<div class="flex items-baseline gap-2">' +
+                      '<span class="text-sm font-bold accent-text">' + p.price + '</span>' +
+                      (p.old ? '<span class="text-[11px] line-through text-muted">' + p.old + '</span>' : '') +
+                      (p.discount ? '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded" style="background:#D1FAE5; color:#047857;">' + p.discount + '</span>' : '') +
+                    '</div>' +
+                  '</div>' +
+                '</div>';
+            row.appendChild(card);
+            inner.appendChild(row);
+            requestAnimationFrame(() => {
+                row.style.opacity = '1'; row.style.transform = 'translateY(0)';
+                chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: 'smooth' });
+            });
+            t(onDone, 450);
+            return;
+        }
+
         const bubble = document.createElement('div');
         if (msg.user) {
             bubble.className = 'max-w-[85%] px-4 py-2.5 rounded-2xl rounded-br-sm text-[14.5px] leading-relaxed text-white';
