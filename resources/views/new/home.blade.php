@@ -91,10 +91,8 @@
                         <span id="heroScenarioLabel" class="chip accent-soft-bg mono text-[10px] transition-all duration-500" style="color: var(--accent-dark);">🦷 Cabinet stomatologic</span>
                     </div>
 
-                    {{-- h mărit 420 → 480 și pb-20 pe inner ca badge-ul floatant
-                         din colțul dreapta-jos să nu acopere ultimul mesaj. --}}
-                    <div id="heroChat" class="px-5 py-4 h-[480px] overflow-y-auto relative no-scrollbar">
-                        <div id="heroChatInner" class="space-y-3 pb-20"></div>
+                    <div id="heroChat" class="px-5 py-4 h-[420px] overflow-y-auto relative no-scrollbar">
+                        <div id="heroChatInner" class="space-y-3"></div>
                         <div id="heroTyping" class="hidden items-center gap-2 mt-3">
                             <div class="bg-sand rounded-2xl rounded-bl-sm px-4 py-2.5">
                                 <div class="dots flex gap-1.5 h-4 items-center">
@@ -115,10 +113,10 @@
                     </div>
                 </div>
 
-                {{-- Badge rezumat — plasat deasupra dungii de footer a card-ului de chat,
-                     centrat orizontal, să nu obstrucționeze indicatorul „Răspuns din baza
-                     de cunoștințe" din footer. --}}
-                <div class="absolute left-1/2 -translate-x-1/2 bottom-16 md:bottom-20 bg-white rounded-2xl shadow-xl p-3 pr-5 flex items-center gap-3 border border-line max-w-[260px] float pointer-events-none" style="animation-delay:.5s;">
+                {{-- Badge rezumat — stă peste marginea inferioară a cardului
+                     (jumătate înăuntru, jumătate afară), nu peste zona de mesaje.
+                     Conversația îşi păstrează înălțimea fixă fără padding artificial. --}}
+                <div class="absolute left-1/2 -translate-x-1/2 -bottom-6 bg-white rounded-2xl shadow-xl p-3 pr-5 flex items-center gap-3 border border-line max-w-[260px] float pointer-events-none z-10" style="animation-delay:.5s;">
                     <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                     </div>
