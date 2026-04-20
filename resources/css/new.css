@@ -169,3 +169,21 @@ body {
 /* No scrollbar pe chat demo (home/niche) */
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* ================================================================== */
+/* Mega menu — hover pe icon-ul nișei. Accentul se schimbă per link   */
+/* prin data-niche (reactivat pe link, nu pe parent), deci iconița   */
+/* idle folosește accent-soft, iar la hover devine accent solid.     */
+/* ================================================================== */
+.mega-niche-icon {
+    background: var(--accent-soft);
+}
+.mega-niche-svg {
+    color: var(--accent-dark);
+}
+.mega-niche-link:hover .mega-niche-icon {
+    background: var(--accent);
+}
+.mega-niche-link:hover .mega-niche-svg {
+    color: #fff;
+}

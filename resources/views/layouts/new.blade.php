@@ -156,13 +156,13 @@
                                                     <li>
                                                         <a href="{{ route('new.niche', $n['slug']) }}"
                                                            data-niche="{{ $n['theme'] }}"
-                                                           class="group/ni flex items-center gap-2.5 px-2 py-1.5 -mx-2 rounded-lg text-sm text-ink hover:bg-sand transition"
+                                                           class="mega-niche-link flex items-center gap-2.5 px-2 py-1.5 -mx-2 rounded-lg text-sm text-ink hover:bg-sand transition"
                                                            role="menuitem">
-                                                            <span class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 accent-soft-bg group-hover/ni:accent-bg transition">
+                                                            <span class="mega-niche-icon w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors">
                                                                 @if($n['icon'])
-                                                                    <svg class="w-3.5 h-3.5 accent-text group-hover/ni:text-white transition" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">{!! $n['icon'] !!}</svg>
+                                                                    <svg class="mega-niche-svg w-3.5 h-3.5 transition-colors" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">{!! $n['icon'] !!}</svg>
                                                                 @else
-                                                                    <span class="w-1.5 h-1.5 rounded-full accent-bg"></span>
+                                                                    <span class="w-1.5 h-1.5 rounded-full" style="background: var(--accent);"></span>
                                                                 @endif
                                                             </span>
                                                             <span class="leading-tight">{{ $n['name'] }}</span>
