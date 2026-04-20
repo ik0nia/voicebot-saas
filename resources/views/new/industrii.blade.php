@@ -3,6 +3,7 @@
 @section('title', 'Industrii — Agenți AI pentru fiecare vertical | Sambla')
 @section('meta_description', 'Agenți AI conversaționali antrenați pentru industria ta — stomatologie, estetică, service auto, imobiliare, HORECA, avocatură, contabilitate, e-commerce și mai multe. Fiecare vertical cu prompt-uri, integrări și ton adaptat.')
 @section('canonical', url('/new/industrii'))
+@section('og_image', route('new.og', ['title' => 'Un agent AI pentru fiecare vertical', 'sub' => '17 industrii cu prompt-uri și integrări adaptate.', 'eyebrow' => 'sambla.ro · industrii']))
 
 @section('jsonld')
 <script type="application/ld+json">

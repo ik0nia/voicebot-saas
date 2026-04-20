@@ -6,6 +6,8 @@
 @section('og_description', 'Răspund 24/7, în limba română, din documentele afacerii tale. Fac programări, recomandă produse, preiau lead-uri.')
 @section('canonical', url('/new'))
 
+@section('og_image', route('new.og', ['title' => 'Angajatul tău AI care nu iese din tură', 'sub' => 'Răspunde pe chat, telefon și WhatsApp. 24/7, în română.', 'eyebrow' => 'sambla.ro']))
+
 @section('jsonld')
 <script type="application/ld+json">
 {

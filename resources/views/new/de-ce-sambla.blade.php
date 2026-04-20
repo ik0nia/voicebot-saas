@@ -3,6 +3,7 @@
 @section('title', 'De ce Sambla — diferența față de alte soluții AI')
 @section('meta_description', 'De ce aleg afacerile Sambla: nativ românesc, onest când nu știe, construit în România, GDPR by default, fără promisiuni goale. Compară pe bune.')
 @section('canonical', url('/new/de-ce-sambla'))
+@section('og_image', route('new.og', ['title' => 'De ce Sambla — diferența se aude', 'sub' => 'Nativ românesc. Onest când nu știe. Construit în RO.', 'eyebrow' => 'sambla.ro · de ce']))
 
 @php
     /* Singura sursă de adevăr pentru FAQ-ul de la baza paginii.

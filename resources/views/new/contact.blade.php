@@ -3,6 +3,7 @@
 @section('title', 'Contact Sambla — vorbește cu noi despre agenți AI')
 @section('meta_description', 'Scrie-ne despre afacerea ta și ce ai vrea să automatizezi. Răspundem în ziua lucrătoare. Pentru urgențe, sună direct.')
 @section('canonical', url('/new/contact'))
+@section('og_image', route('new.og', ['title' => 'Hai să vorbim pe bune', 'sub' => 'Scrie-ne despre afacerea ta și ce vrei să automatizezi.', 'eyebrow' => 'sambla.ro · contact']))
 
 @php
     /* FAQPage JSON-LD derived din FAQ-ul de mai jos. Lista e oglindită

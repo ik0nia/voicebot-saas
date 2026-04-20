@@ -140,6 +140,51 @@ Route::prefix('new')->middleware(\App\Http\Middleware\PublicPageCache::class)->g
     Route::get('/pentru/{niche:slug}',  [$c, 'niche'])->name('new.niche');
 });
 
+/*
+ * OG image generator — SVG 1200×630 warm cu titlu + subtitle + accent.
+ * LinkedIn / Twitter / Slack / Discord acceptă SVG; Facebook/Instagram
+ * sunt mai pretențioase dar citesc și SVG dacă e servit cu Content-Type
+ * corect. Pentru Twitter summary_large_image, adaugă `format=png` mai
+ * târziu când avem un binding imagick disponibil.
+ */
+Route::get('/new/og.svg', function (\Illuminate\Http\Request $request) {
+    $title    = mb_substr((string) $request->query('title', 'Agenți AI pentru afaceri românești'), 0, 80);
+    $subtitle = mb_substr((string) $request->query('sub', 'Sambla — chat, voce, 24/7, în limba română'), 0, 120);
+    $accent   = preg_match('/^#[0-9A-Fa-f]{6}$/', (string) $request->query('accent', '#DC2626'))
+        ? $request->query('accent')
+        : '#DC2626';
+    $eyebrow  = mb_substr((string) $request->query('eyebrow', 'sambla.ro'), 0, 40);
+
+    // Break long title pe 2 rânduri aproximativ la 30 caractere.
+    $titleLines = [];
+    if (mb_strlen($title) > 32) {
+        $words = preg_split('/\s+/', $title);
+        $line1 = '';
+        foreach ($words as $i => $w) {
+            if (mb_strlen($line1 . ' ' . $w) > 32) {
+                $titleLines = [trim($line1), trim(implode(' ', array_slice($words, $i)))];
+                break;
+            }
+            $line1 .= ' ' . $w;
+        }
+        if (empty($titleLines)) $titleLines = [$title];
+    } else {
+        $titleLines = [$title];
+    }
+
+    $svg = view('new.og-image', [
+        'title'      => $titleLines,
+        'subtitle'   => $subtitle,
+        'eyebrow'    => $eyebrow,
+        'accent'     => $accent,
+    ])->render();
+
+    return response($svg, 200, [
+        'Content-Type'  => 'image/svg+xml; charset=utf-8',
+        'Cache-Control' => 'public, max-age=86400',
+    ]);
+})->name('new.og');
+
 // Dynamic sitemap — includes all public pages + active niche landing pages.
 Route::get('/sitemap.xml', function () {
     $urls = [

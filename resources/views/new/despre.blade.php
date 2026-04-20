@@ -3,6 +3,7 @@
 @section('title', 'Despre Sambla — platformă AI românească pentru agent AI și voce')
 @section('meta_description', 'Sambla este o platformă AI românească construită de o echipă din România pentru afaceri mici și mijlocii. Numele vine din graiul ardelenesc — „a sâmbla" = a semăna, a suna a poveste.')
 @section('canonical', url('/new/despre'))
+@section('og_image', route('new.og', ['title' => 'Despre Sambla', 'sub' => 'Platformă AI construită în România, pentru afaceri din România.', 'eyebrow' => 'sambla.ro · despre']))
 
 @section('jsonld')
 <script type="application/ld+json">

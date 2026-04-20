@@ -20,6 +20,22 @@
 @section('og_title', 'Agent AI pentru ' . $niche->name)
 @section('og_description', $niche->meta_description ?: $heroSubtitle)
 @section('canonical', url('/new/pentru/' . $niche->slug))
+@php
+    $nicheAccentMap = [
+        'red'=>'#DC2626','emerald'=>'#10B981','blue'=>'#3B82F6','amber'=>'#F59E0B',
+        'rose'=>'#F43F5E','purple'=>'#A855F7','indigo'=>'#6366F1','teal'=>'#14B8A6',
+        'cyan'=>'#06B6D4','orange'=>'#F97316','medical'=>'#3B82F6','beauty'=>'#F43F5E',
+        'auto'=>'#F97316','resto'=>'#10B981','imob'=>'#F59E0B','legal'=>'#A855F7',
+        'education'=>'#4F46E5','travel'=>'#06B6D4',
+    ];
+    $nicheAccent = $nicheAccentMap[$niche->color_theme ?? 'red'] ?? '#DC2626';
+@endphp
+@section('og_image', route('new.og', [
+    'title' => 'Agent AI pentru ' . strtolower($niche->name),
+    'sub' => Str::limit(strip_tags($niche->hero_subtitle ?: 'Răspunde clienților 24/7, în limba română.'), 110),
+    'eyebrow' => 'sambla.ro · ' . $niche->slug,
+    'accent' => $nicheAccent,
+]))
 
 @section('jsonld')
 <script type="application/ld+json">

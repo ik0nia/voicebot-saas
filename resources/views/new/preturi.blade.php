@@ -3,6 +3,7 @@
 @section('title', 'Prețuri Sambla — planuri pentru agenți AI, în lei')
 @section('meta_description', 'Planuri pentru agenți AI — chat pe site, telefon, multi-canal. Prețuri transparente în lei românești, fără surprize. 7 zile gratuit.')
 @section('canonical', url('/new/preturi'))
+@section('og_image', route('new.og', ['title' => 'Prețuri clare. În lei. Fără surprize.', 'sub' => '7 zile gratuit, fără card. Factură cu TVA.', 'eyebrow' => 'sambla.ro · preturi']))
 
 @section('jsonld')
 @php

@@ -17,7 +17,14 @@
     <meta property="og:title" content="@yield('og_title', 'Sambla — Agenți AI pentru afacerea ta')">
     <meta property="og:description" content="@yield('og_description', 'Răspund clienților 24/7, în limba română, din documentele afacerii tale.')">
     <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:image" content="@yield('og_image', asset('images/logo-light.svg'))">
+    @php $ogImage = trim($__env->yieldContent('og_image', asset('images/logo-light.svg'))); @endphp
+    <meta property="og:image" content="{{ $ogImage }}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    @if(str_ends_with($ogImage, '.svg') || str_contains($ogImage, 'og.svg'))
+        <meta property="og:image:type" content="image/svg+xml">
+    @endif
+    <meta name="twitter:image" content="{{ $ogImage }}">
     <meta name="twitter:card" content="summary_large_image">
 
     {{-- Fonturi — preconnect + preload faces folosite --}}
