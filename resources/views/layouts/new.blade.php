@@ -32,147 +32,25 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-    {{-- Tailwind CDN — aceeași configurație ca în preview-urile aprobate,
-         ca toate utility-urile warm (bg-cream, bg-paper, text-ink, etc.)
-         să se rezolve identic cu V5. --}}
-    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
-    <script>
-    tailwind.config = {
-        theme: {
-            extend: {
-                fontFamily: {
-                    sans:    ['Inter','system-ui','sans-serif'],
-                    display: ['Instrument Sans','Inter','sans-serif'],
-                    mono:    ['JetBrains Mono','ui-monospace','monospace']
-                },
-                colors: {
-                    cream:     '#F5F1E8',
-                    paper:     '#FAF7EF',
-                    sand:      '#EFE5D0',
-                    sandy:     '#E5DCC4',
-                    ink:       '#1C1917',
-                    inkSoft:   '#3A3532',
-                    muted:     '#78716C',
-                    line:      '#E7E0CE',
-                    coral:     '#DC2626',
-                    coralh:    '#991B1B',
-                    coralsoft: '#FEE2E2',
-                    peach:     '#FDBA8C',
-                    sun:       '#F2E59A',
-                    lilac:     '#C7B8E8',
-                    sky:       '#A7C7F0'
-                }
-            }
-        }
-    }
-    </script>
+    {{-- Tailwind build real (a înlocuit cdn.tailwindcss.com/3.4.1 care
+         avea ~320KB JS blocking + warning console în prod).
+         Conține TAILWIND JIT PURGED + toate stilurile custom warm
+         (fade-up, hero-glow, chip, btn, niche-card, accent-* vars). --}}
+    @vite('resources/css/new.css')
 
     <style>
-        /* -------- Per-niche CSS custom properties (swappable runtime) -------- */
-        :root { --accent: #DC2626; --accent-soft: #FEE2E2; --accent-dark: #991B1B; }
-        [data-niche="medical"]   { --accent: #3B82F6; --accent-soft: #DBEAFE; --accent-dark: #2563EB; }
-        [data-niche="beauty"]    { --accent: #F43F5E; --accent-soft: #FFE4E6; --accent-dark: #E11D48; }
-        [data-niche="auto"]      { --accent: #F97316; --accent-soft: #FFEDD5; --accent-dark: #EA580C; }
-        [data-niche="resto"]     { --accent: #10B981; --accent-soft: #D1FAE5; --accent-dark: #059669; }
-        [data-niche="imob"]      { --accent: #F59E0B; --accent-soft: #FEF3C7; --accent-dark: #D97706; }
-        [data-niche="legal"]     { --accent: #A855F7; --accent-soft: #F3E8FF; --accent-dark: #9333EA; }
-        [data-niche="education"] { --accent: #4F46E5; --accent-soft: #E0E7FF; --accent-dark: #4338CA; }
-        [data-niche="travel"]    { --accent: #06B6D4; --accent-soft: #CFFAFE; --accent-dark: #0891B2; }
-        [data-niche="red"]       { --accent: #DC2626; --accent-soft: #FEE2E2; --accent-dark: #991B1B; }
-        [data-niche="emerald"]   { --accent: #10B981; --accent-soft: #D1FAE5; --accent-dark: #059669; }
-        [data-niche="blue"]      { --accent: #3B82F6; --accent-soft: #DBEAFE; --accent-dark: #2563EB; }
-        [data-niche="amber"]     { --accent: #F59E0B; --accent-soft: #FEF3C7; --accent-dark: #D97706; }
-        [data-niche="rose"]      { --accent: #F43F5E; --accent-soft: #FFE4E6; --accent-dark: #E11D48; }
-        [data-niche="purple"]    { --accent: #A855F7; --accent-soft: #F3E8FF; --accent-dark: #9333EA; }
-        [data-niche="indigo"]    { --accent: #6366F1; --accent-soft: #E0E7FF; --accent-dark: #4F46E5; }
-        [data-niche="teal"]      { --accent: #14B8A6; --accent-soft: #CCFBF1; --accent-dark: #0D9488; }
-        [data-niche="cyan"]      { --accent: #06B6D4; --accent-soft: #CFFAFE; --accent-dark: #0891B2; }
-        [data-niche="orange"]    { --accent: #F97316; --accent-soft: #FFEDD5; --accent-dark: #EA580C; }
-
-        html { scroll-behavior: smooth; }
-        body { font-family: 'Inter', system-ui, sans-serif; background: #F5F1E8; color: #1C1917; -webkit-font-smoothing: antialiased; font-feature-settings: "cv11","ss01"; }
-        .display { font-family: 'Instrument Sans', 'Inter', sans-serif; letter-spacing: -0.02em; }
-        .mono    { font-family: 'JetBrains Mono', ui-monospace, monospace; }
-
-        /* Buttons */
-        .btn-primary { background: var(--accent); color: #fff; border-radius: 999px; padding: 14px 24px; font-weight: 600;
-            transition: all .2s ease; display: inline-flex; align-items: center; gap: 8px; }
-        .btn-primary:hover { background: var(--accent-dark); transform: translateY(-1px);
-            box-shadow: 0 10px 30px color-mix(in srgb, var(--accent) 30%, transparent); }
-        .btn-ghost   { background: #1C1917; color: #fff; border-radius: 999px; padding: 14px 24px; font-weight: 600;
-            transition: all .2s ease; display: inline-flex; align-items: center; gap: 8px; }
-        .btn-ghost:hover { background: #3A3532; transform: translateY(-1px); }
-        .btn-outline { border: 1.5px solid #1C1917; color: #1C1917; background: transparent; border-radius: 999px;
-            padding: 13px 23px; font-weight: 600; transition: all .2s ease; display: inline-flex; align-items: center; gap: 8px; }
-        .btn-outline:hover { background: #1C1917; color: #fff; }
-
-        /* Chips */
-        .chip { border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
-        .chip-outline { background: #fff; border: 1px solid #E7E0CE; color: #78716C; }
-        .chip-filled  { background: var(--accent); color: #fff; }
-
-        /* Animations */
-        .fade-up { opacity: 0; transform: translateY(16px); transition: opacity .7s ease, transform .7s ease; }
-        .fade-up.in { opacity: 1; transform: translateY(0); }
-        @media (prefers-reduced-motion: reduce) {
-            .fade-up { opacity: 1; transform: none; transition: none; }
-            .float, .ticker { animation: none !important; }
-        }
-        .float { animation: sbFloatY 6s ease-in-out infinite; }
-        @keyframes sbFloatY { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-8px) } }
-
-        .ticker { animation: sbTickerScroll 50s linear infinite; }
-        @keyframes sbTickerScroll { 0% { transform: translateX(0) } 100% { transform: translateX(-50%) } }
-
-        .dots span { animation: sbDot 1.4s infinite; }
-        .dots span:nth-child(2) { animation-delay: .2s }
-        .dots span:nth-child(3) { animation-delay: .4s }
-        @keyframes sbDot { 0%,60%,100% { opacity: .3 } 30% { opacity: 1 } }
-
-        /* Grain texture */
-        .grain { position: relative; }
-        .grain::after { content:''; position:absolute; inset:0; pointer-events:none; opacity:.4;
-            background-image: radial-gradient(rgba(28,25,23,0.05) 1px, transparent 1px); background-size: 3px 3px; }
-
-        /* Hero glow */
-        .hero-glow {
-            background:
-              radial-gradient(ellipse 45% 35% at 20% 15%, color-mix(in srgb, var(--accent) 18%, transparent) 0%, transparent 60%),
-              radial-gradient(ellipse 40% 30% at 85% 20%, rgba(247,213,147,0.35) 0%, transparent 60%),
-              radial-gradient(ellipse 50% 40% at 70% 90%, rgba(199,184,232,0.25) 0%, transparent 60%);
-            transition: background .8s ease;
-        }
-
-        /* Niche card */
-        .niche-card { transition: transform .25s ease, box-shadow .25s ease; }
-        .niche-card:hover { transform: translateY(-4px);
-            box-shadow: 0 20px 40px -10px color-mix(in srgb, var(--accent) 22%, transparent); }
-
-        /* Accent helpers (CSS vars cascade) */
-        .accent-text    { color: var(--accent); }
-        .accent-bg      { background: var(--accent); }
-        .accent-soft-bg { background: var(--accent-soft); }
-        .accent-dark-bg { background: var(--accent-dark); }
-
+        /* Stiluri mici rămase care depind de values dinamice din blade
+           sau sunt exclusiv pe această pagină. Restul a migrat în
+           resources/css/new.css. */
         .stat-num { font-feature-settings: "tnum"; }
-
-        /* FAQ caret */
         details > summary::-webkit-details-marker { display: none; }
         details[open] summary .chev { transform: rotate(180deg); }
-
-        /* Forms */
         .form-input { width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid #E7E0CE; background: #FAF7EF; font-size: 14px; transition: all .2s ease; }
         .form-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent); }
         .form-label { font-size: 12px; font-weight: 600; color: #1C1917; margin-bottom: 6px; display: block; }
-
-        /* Niche tabs (niche switcher on landing pages) */
         .niche-tab { transition: all .2s ease; border: 1px solid transparent; }
         .niche-tab:hover { background: #fff; border-color: #E7E0CE; }
         .niche-tab.active { background: #fff; border-color: transparent; box-shadow: 0 0 0 2px currentColor; }
-
-        /* Scrollbar hide */
-        .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 
     {{-- Analytics: Consent Mode v2 defaults + GTM — identic cu site-ul live. --}}
