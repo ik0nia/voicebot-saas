@@ -1,9 +1,10 @@
 @extends('layouts.new')
 
 @php
-    $benefits = is_array($niche->benefits) ? $niche->benefits : [];
-    $faq      = is_array($niche->faq) ? $niche->faq : [];
-    $demo     = is_array($niche->demo_messages) ? $niche->demo_messages : [];
+    $benefits   = is_array($niche->benefits) ? $niche->benefits : [];
+    $faq        = is_array($niche->faq) ? $niche->faq : [];
+    $demo       = is_array($niche->demo_messages) ? $niche->demo_messages : [];
+    $nicheIcons = config('niche-icons.' . $niche->slug, []);
     $heroTitle    = $niche->hero_title    ?: ('Agent AI pentru ' . $niche->name);
     $heroSubtitle = $niche->hero_subtitle ?: ('Un agent AI antrenat pentru ' . $niche->name . ' — răspunde 24/7, în limba română, din documentele tale.');
     $heroEyebrow  = $niche->hero_eyebrow  ?: ('AGENT AI PENTRU ' . strtoupper($niche->name));
@@ -89,6 +90,23 @@
 
 {{-- HERO --}}
 <section class="hero-glow relative overflow-hidden">
+    {{-- Floating niche-specific background icons (5 SVGs scattered cu opacity 0.07–0.10) --}}
+    @if(!empty($nicheIcons))
+        <div class="absolute inset-0 overflow-hidden pointer-events-none hidden md:block" aria-hidden="true">
+            @foreach([
+                ['t' => 'top-8 left-[4%]',       's' => 'w-24 h-24', 'r' => '-rotate-12', 'o' => 'opacity-[0.10]'],
+                ['t' => 'top-32 right-[6%]',     's' => 'w-32 h-32', 'r' => 'rotate-6',   'o' => 'opacity-[0.08]'],
+                ['t' => 'bottom-24 left-[10%]',  's' => 'w-20 h-20', 'r' => 'rotate-12',  'o' => 'opacity-[0.09]'],
+                ['t' => 'bottom-10 right-[18%]', 's' => 'w-16 h-16', 'r' => '-rotate-6',  'o' => 'opacity-[0.10]'],
+                ['t' => 'top-1/2 left-[46%]',   's' => 'w-10 h-10', 'r' => 'rotate-3',    'o' => 'opacity-[0.07]'],
+            ] as $i => $pos)
+                <svg class="absolute {{ $pos['t'] }} {{ $pos['s'] }} {{ $pos['r'] }} {{ $pos['o'] }} accent-text" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    {!! $nicheIcons[$i % count($nicheIcons)] !!}
+                </svg>
+            @endforeach
+        </div>
+    @endif
+
     <div class="max-w-7xl mx-auto px-6 pt-10 pb-20 lg:pt-14 lg:pb-24 grid lg:grid-cols-12 gap-12 items-start relative">
         <div class="lg:col-span-6 fade-up">
             <div class="chip accent-soft-bg mono text-[10px] mb-7" style="color:var(--accent-dark);">
@@ -283,6 +301,106 @@
     </div>
 </section>
 @endif
+
+{{-- ANNOTATED CHAT SHOWCASE — 4 adnotări + săgeți curbe (hidden pe mobile) --}}
+<section class="py-20 bg-cream border-y border-line relative overflow-hidden">
+    <div class="max-w-6xl mx-auto px-6">
+        <div class="text-center mb-12 fade-up">
+            <div class="mono text-[11px] uppercase tracking-[0.2em] mb-3" style="color: var(--muted);">◇ cum vorbește cu clienții tăi</div>
+            <h2 class="display h-display-m">Iată cum <em class="italic accent-text">sună o conversație reală</em>.</h2>
+        </div>
+
+        <div class="grid lg:grid-cols-12 gap-8 items-center">
+
+            {{-- Adnotări stânga (hidden pe mobile) --}}
+            <div class="hidden lg:block lg:col-span-3 space-y-12">
+                @foreach([
+                    ['icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>', 'title' => 'Răspuns instant', 'desc' => 'Sub 2 secunde, oricând'],
+                    ['icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/>', 'title' => 'Disponibil 24/7', 'desc' => 'Inclusiv noaptea și weekend'],
+                ] as $note)
+                    <div class="text-right">
+                        <div class="inline-flex items-center justify-end gap-3">
+                            <div>
+                                <div class="font-semibold text-sm">{{ $note['title'] }}</div>
+                                <div class="text-xs" style="color: var(--muted);">{{ $note['desc'] }}</div>
+                            </div>
+                            <div class="w-10 h-10 rounded-xl accent-bg text-white flex items-center justify-center shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">{!! $note['icon'] !!}</svg>
+                            </div>
+                        </div>
+                        <svg class="ml-auto mt-2 w-24 h-6 accent-text" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 100 20">
+                            <path d="M0 10 Q 30 0, 60 10 T 95 10" stroke-linecap="round" stroke-dasharray="3 4"/>
+                            <path d="M88 5 L 95 10 L 88 15" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        </svg>
+                    </div>
+                @endforeach
+            </div>
+
+            {{-- Chat în mijloc --}}
+            <div class="lg:col-span-6">
+                <div class="relative">
+                    <div class="absolute -inset-6 rounded-[2.5rem] blur-2xl opacity-50" style="background: linear-gradient(135deg, var(--accent) 0%, var(--accent-soft) 100%);"></div>
+                    <div class="relative rounded-[2rem] overflow-hidden bg-paper border border-line" style="box-shadow: 0 25px 50px -15px rgba(28,25,23,0.12);">
+                        <div class="flex items-center gap-3 px-5 py-3.5 border-b border-line bg-cream">
+                            <div class="w-9 h-9 rounded-full accent-bg flex items-center justify-center">
+                                <span class="text-white display text-sm font-semibold">S</span>
+                            </div>
+                            <div class="flex-1">
+                                <div class="text-sm font-semibold">Agent AI · {{ $nicheLabel }}</div>
+                                <div class="text-[11px] flex items-center gap-1.5" style="color: #047857;">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    Online acum
+                                </div>
+                            </div>
+                        </div>
+                        <div class="px-4 py-5 space-y-3 bg-paper" style="min-height: 320px;">
+                            @forelse(array_slice($demo, 0, 4) as $msg)
+                                @if(($msg['role'] ?? '') === 'bot')
+                                    <div class="flex justify-end"><div class="max-w-[80%] px-4 py-2.5 rounded-2xl rounded-br-sm text-[14px] leading-relaxed accent-bg text-white">{{ $msg['text'] ?? '' }}</div></div>
+                                @else
+                                    <div class="flex"><div class="max-w-[80%] px-4 py-2.5 rounded-2xl rounded-bl-sm text-[14px] leading-relaxed bg-sand text-ink">{{ $msg['text'] ?? '' }}</div></div>
+                                @endif
+                            @empty
+                                <div class="flex"><div class="max-w-[80%] px-4 py-2.5 rounded-2xl rounded-bl-sm text-[14px] bg-sand text-ink">Bună ziua! Cu ce vă putem ajuta?</div></div>
+                                <div class="flex justify-end"><div class="max-w-[80%] px-4 py-2.5 rounded-2xl rounded-br-sm text-[14px] accent-bg text-white">Vă pot oferi informații despre serviciile și programările noastre. Ce vă interesează?</div></div>
+                            @endforelse
+                        </div>
+                        <div class="px-4 py-3 border-t border-line flex items-center gap-2 bg-cream">
+                            <div class="flex-1 bg-white rounded-full px-4 py-2 text-xs text-muted border border-line">Scrie un mesaj…</div>
+                            <button class="w-8 h-8 rounded-full accent-bg text-white flex items-center justify-center" aria-label="Trimite">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Adnotări dreapta (hidden pe mobile) --}}
+            <div class="hidden lg:block lg:col-span-3 space-y-12">
+                @foreach([
+                    ['icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z"/>', 'title' => 'Antrenat pe datele tale', 'desc' => 'Tarife, produse, programe'],
+                    ['icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/>', 'title' => 'Escaladează la operator', 'desc' => 'Când e nevoie de un om'],
+                ] as $note)
+                    <div class="text-left">
+                        <svg class="mr-auto mb-2 w-24 h-6 accent-text" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 100 20">
+                            <path d="M5 10 Q 30 20, 60 10 T 100 10" stroke-linecap="round" stroke-dasharray="3 4"/>
+                            <path d="M12 5 L 5 10 L 12 15" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        </svg>
+                        <div class="inline-flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl accent-bg text-white flex items-center justify-center shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">{!! $note['icon'] !!}</svg>
+                            </div>
+                            <div>
+                                <div class="font-semibold text-sm">{{ $note['title'] }}</div>
+                                <div class="text-xs" style="color: var(--muted);">{{ $note['desc'] }}</div>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+</section>
 
 {{-- BIG STATS --}}
 <section class="py-24">
