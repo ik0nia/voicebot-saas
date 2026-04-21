@@ -174,6 +174,10 @@
         return /^#([0-9A-Fa-f]{3}){1,2}$/.test(color) ? color : '#991b1b';
     }
 
+    function validateColorOrNull(color) {
+        return /^#([0-9A-Fa-f]{3}){1,2}$/.test(color) ? color : null;
+    }
+
     // =========================================================================
     // 2. XSS hardening - Built-in sanitizer, validate URLs
     // =========================================================================
@@ -213,6 +217,8 @@
     var config = {
         channelId: scriptTag.getAttribute('data-channel-id') || '',
         color: validateColor(scriptTag.getAttribute('data-color')),
+        accentSoft: validateColorOrNull(scriptTag.getAttribute('data-accent-soft')),
+        bubbleRadius: scriptTag.getAttribute('data-bubble-radius') || '16px',
         position: scriptTag.getAttribute('data-position') || 'bottom-right',
         greeting: scriptTag.getAttribute('data-greeting') || 'Bun\u0103! Cu ce te pot ajuta?',
         botName: scriptTag.getAttribute('data-bot-name') || 'Sambla Bot',
@@ -355,6 +361,13 @@
             if (data.bot_name) config.botName = data.bot_name;
             if (data.greeting) config.greeting = data.greeting;
             if (data.color) config.color = data.color;
+            if (data.accent_soft) {
+                var validated = validateColorOrNull(data.accent_soft);
+                if (validated) config.accentSoft = validated;
+            }
+            if (data.bubble_radius && /^[0-9]+(px|em|rem|%)$/.test(data.bubble_radius)) {
+                config.bubbleRadius = data.bubble_radius;
+            }
             // W3: cache contexts for quick-reply chip rendering.
             // Shape: { by_page_type: { general|product|... : { opening, quick_replies: [{label,text}] } }, default_page_type: 'general' }
             if (data && data.contexts && typeof data.contexts === 'object') {
@@ -423,6 +436,12 @@
 
         var lightBg = lighten(config.color, 0.92);
         var lightBorder = lighten(config.color, 0.8);
+        var accentSoft = config.accentSoft || lighten(config.color, 0.18);
+        var gradient = 'linear-gradient(135deg, ' + config.color + ', ' + accentSoft + ')';
+        var accentRgb = hexToRgb(config.color);
+        function accentRgba(alpha) {
+            return 'rgba(' + accentRgb.r + ',' + accentRgb.g + ',' + accentRgb.b + ',' + alpha + ')';
+        }
 
         var styles = document.createElement('style');
         styles.textContent = '\
@@ -431,13 +450,13 @@
             .sambla-bubble {\
                 position: fixed; bottom: 100px; right: ' + posRight + '; left: ' + posLeft + ';\
                 width: 60px; height: 60px; border-radius: 50%;\
-                background: linear-gradient(135deg, #991b1b, #dc2626); color: #fff;\
+                background: ' + gradient + '; color: #fff;\
                 display: flex; align-items: center; justify-content: center;\
-                cursor: pointer; box-shadow: 0 4px 20px rgba(153,27,27,0.3), 0 2px 8px rgba(0,0,0,0.1);\
+                cursor: pointer; box-shadow: 0 4px 20px ' + accentRgba(0.3) + ', 0 2px 8px rgba(0,0,0,0.1);\
                 z-index: 2147483646; transition: transform 0.2s, box-shadow 0.2s;\
                 border: none; outline: none;\
             }\
-            .sambla-bubble:hover { transform: scale(1.06); box-shadow: 0 6px 28px rgba(153,27,27,0.35), 0 3px 10px rgba(0,0,0,0.12); }\
+            .sambla-bubble:hover { transform: scale(1.06); box-shadow: 0 6px 28px ' + accentRgba(0.35) + ', 0 3px 10px rgba(0,0,0,0.12); }\
             .sambla-bubble:focus-visible { outline: 3px solid ' + config.color + '; outline-offset: 3px; }\
             .sambla-bubble svg { width: 28px; height: 28px; fill: #fff; }\
             .sambla-bubble .close-icon { display: none; }\
@@ -462,7 +481,7 @@
             .sambla-window.open { display: flex; }\
             \
             .sambla-header {\
-                background: linear-gradient(135deg, #991b1b, #dc2626); color: #fff;\
+                background: ' + gradient + '; color: #fff;\
                 padding: 18px 20px; display: flex; align-items: center; gap: 14px;\
                 flex-shrink: 0; position: relative; overflow: hidden;\
             }\
@@ -490,7 +509,7 @@
             .sambla-header-close:hover, .sambla-header-close:active { background: rgba(255,255,255,0.3); }\
             .sambla-powered {\
                 font-size: 10px; text-align: center; padding: 2px 0;\
-                color: rgba(255,255,255,0.7); background: #7f1d1d;\
+                color: rgba(255,255,255,0.7); background: ' + config.color + ';\
                 border-bottom: 1px solid rgba(255,255,255,0.05);\
             }\
             .sambla-powered a { color: rgba(255,255,255,0.9); text-decoration: none; font-weight: 600; }\
@@ -502,7 +521,7 @@
             .sambla-messages::-webkit-scrollbar { width: 4px; }\
             .sambla-messages::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }\
             \
-            .sambla-msg { padding: 12px 16px; border-radius: 18px; font-size: 14px; line-height: 1.6; word-wrap: break-word; }\
+            .sambla-msg { padding: 12px 16px; border-radius: ' + config.bubbleRadius + '; font-size: 14px; line-height: 1.6; word-wrap: break-word; }\
             .sambla-msg.bot {\
                 background: #f1f5f9;\
                 border: none; border-bottom-left-radius: 6px;\
@@ -516,9 +535,9 @@
             .sambla-msg.bot ul, .sambla-msg.bot ol { margin: 4px 0 4px 18px; padding: 0; }\
             .sambla-msg.bot li { margin-bottom: 2px; }\
             .sambla-msg.user {\
-                background: linear-gradient(135deg, #991b1b, #dc2626);\
+                background: ' + gradient + ';\
                 color: #fff; border-bottom-right-radius: 6px;\
-                box-shadow: 0 1px 4px rgba(153,27,27,0.15);\
+                box-shadow: 0 1px 4px ' + accentRgba(0.15) + ';\
             }\
             .sambla-msg-wrap { display: flex; flex-direction: column; max-width: 85%; }\
             .sambla-msg-wrap.bot { align-self: flex-start; align-items: flex-start; }\
@@ -562,14 +581,14 @@
                 transition: border-color 0.15s;\
             }\
             .sambla-input::placeholder { color: #94a3b8; }\
-            .sambla-input:focus { border-color: #dc2626; background: #fff; box-shadow: 0 0 0 3px rgba(153,27,27,0.06); }\
+            .sambla-input:focus { border-color: ' + config.color + '; background: #fff; box-shadow: 0 0 0 3px ' + accentRgba(0.06) + '; }\
             .sambla-send {\
                 width: 42px; height: 42px; border-radius: 50%;\
-                background: linear-gradient(135deg, #991b1b, #dc2626); color: #fff;\
+                background: ' + gradient + '; color: #fff;\
                 border: none; cursor: pointer; display: flex;\
                 align-items: center; justify-content: center;\
                 flex-shrink: 0; transition: all 0.2s;\
-                box-shadow: 0 2px 8px rgba(153,27,27,0.2);\
+                box-shadow: 0 2px 8px ' + accentRgba(0.2) + ';\
             }\
             .sambla-send:hover { opacity: 0.9; }\
             .sambla-send:disabled { opacity: 0.5; cursor: not-allowed; }\
@@ -661,7 +680,7 @@
                 .sambla-msg.bot code { background: #334155; color: #e2e8f0; }\
                 .sambla-input-area { background: #1e293b; border-color: #334155; }\
                 .sambla-input { background: #0f172a; border-color: #334155; color: #e2e8f0; }\
-                .sambla-input:focus { background: #1e293b; color: #f1f5f9; border-color: #dc2626; box-shadow: 0 0 0 3px rgba(220,38,38,0.15); }\
+                .sambla-input:focus { background: #1e293b; color: #f1f5f9; border-color: ' + config.color + '; box-shadow: 0 0 0 3px ' + accentRgba(0.15) + '; }\
                 .sambla-input::placeholder { color: #64748b; }\
                 .sambla-typing { background: #1e293b; border-color: #334155; }\
                 .sambla-session-divider::before, .sambla-session-divider::after { background: #334155; }\

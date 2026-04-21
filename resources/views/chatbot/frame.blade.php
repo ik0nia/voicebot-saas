@@ -8,9 +8,9 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; height: 100vh; display: flex; flex-direction: column; background: #f8fafc; }
         #messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-        .msg { max-width: 85%; padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.5; word-wrap: break-word; }
+        .msg { max-width: 85%; padding: 10px 14px; border-radius: {{ $bubble_radius }}; font-size: 14px; line-height: 1.5; word-wrap: break-word; }
         .msg-bot { align-self: flex-start; background: #fff; border: 1px solid #e2e8f0; border-bottom-left-radius: 4px; color: #334155; }
-        .msg-user { align-self: flex-end; background: {{ $color }}; color: #fff; border-bottom-right-radius: 4px; }
+        .msg-user { align-self: flex-end; background: linear-gradient(135deg, {{ $color }}, {{ $accent_soft }}); color: #fff; border-bottom-right-radius: 4px; }
         .msg-typing { align-self: flex-start; background: #fff; border: 1px solid #e2e8f0; border-bottom-left-radius: 4px; padding: 12px 18px; }
         .typing-dots { display: flex; gap: 4px; align-items: center; }
         .typing-dots span { width: 6px; height: 6px; background: #94a3b8; border-radius: 50%; animation: bounce 1.4s infinite; }
@@ -20,7 +20,7 @@
         #input-area { padding: 12px; background: #fff; border-top: 1px solid #e2e8f0; display: flex; gap: 8px; }
         #input-area input { flex: 1; border: 1px solid #e2e8f0; border-radius: 20px; padding: 10px 16px; font-size: 16px; outline: none; }
         #input-area input:focus { border-color: {{ $color }}; box-shadow: 0 0 0 2px {{ $color }}22; }
-        #input-area button { width: 40px; height: 40px; border-radius: 50%; border: none; background: {{ $color }}; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        #input-area button { width: 40px; height: 40px; border-radius: 50%; border: none; background: linear-gradient(135deg, {{ $color }}, {{ $accent_soft }}); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         #input-area button:hover { opacity: 0.9; }
         #input-area button:disabled { opacity: 0.5; cursor: not-allowed; }
         .product-cards { display:flex;gap:8px;overflow-x:auto;padding:8px 0;margin-top:8px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch; }
@@ -33,7 +33,7 @@
         .product-card-price { font-size:13px;font-weight:700;color:#1e293b; }
         .product-card-price .sale { color:#dc2626; }
         .product-card-price .original { font-size:10px;color:#94a3b8;text-decoration:line-through;font-weight:400; }
-        .product-card-btn { margin-top:6px;width:100%;padding:7px;border:none;border-radius:8px;background:{{ $color }};color:#fff;font-size:11px;font-weight:600;cursor:pointer; }
+        .product-card-btn { margin-top:6px;width:100%;padding:7px;border:none;border-radius:8px;background:linear-gradient(135deg, {{ $color }}, {{ $accent_soft }});color:#fff;font-size:11px;font-weight:600;cursor:pointer; }
         .product-card-btn:hover { opacity:0.9; }
     </style>
 </head>

@@ -78,10 +78,15 @@ class ChatbotApiController extends Controller
             ]);
         }
 
+        $theme = app(\App\Services\WidgetThemeResolver::class)->resolve($channelConfig);
+
         return response()->json([
             'bot_name' => $bot?->name ?? 'Sambla Bot',
             'greeting' => $channelConfig['greeting'] ?? 'Bună! Cu ce te pot ajuta?',
-            'color' => $channelConfig['color'] ?? '#991b1b',
+            'color' => $theme['accent'],
+            'accent_soft' => $theme['accent_soft'],
+            'bubble_radius' => $theme['bubble_radius'],
+            'theme_preset' => $theme['preset'],
             'language' => $bot?->language ?? 'ro',
             // Additive: older widgets ignore this key.
             'contexts' => $contexts,

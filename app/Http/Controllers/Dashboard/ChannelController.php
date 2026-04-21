@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Bot;
 use App\Models\Channel;
 use App\Services\Widget\WidgetContextResolver;
+use App\Services\WidgetThemeResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -197,6 +198,78 @@ class ChannelController extends Controller
         return redirect()
             ->route('dashboard.bots.channels.chips.edit', [$bot, $channel])
             ->with('success', 'Butoanele rapide au fost salvate.');
+    }
+
+    /**
+     * Show the web chatbot appearance editor — theme preset gallery,
+     * greeting, position, plus the copy-ready embed snippet.
+     */
+    public function chatbotSetup(Bot $bot, Channel $channel, WidgetThemeResolver $themes)
+    {
+        $this->ensureChannelBelongsToBot($bot, $channel);
+
+        if ($channel->type !== Channel::TYPE_WEB_CHATBOT) {
+            abort(404);
+        }
+
+        return view('dashboard.bots.channels.chatbot-setup', [
+            'bot' => $bot,
+            'channel' => $channel,
+            'themePresets' => $themes->catalog(),
+            'activeTheme' => $themes->resolve($channel->config ?? []),
+        ]);
+    }
+
+    /**
+     * Persist web chatbot appearance changes from the setup editor.
+     * Writes into channels.config JSON (theme_preset, color override,
+     * greeting, position) without touching unrelated keys like
+     * widget_contexts or icon_url.
+     */
+    public function saveChatbotSetup(Request $request, Bot $bot, Channel $channel)
+    {
+        $this->ensureChannelBelongsToBot($bot, $channel);
+
+        if ($channel->type !== Channel::TYPE_WEB_CHATBOT) {
+            abort(404);
+        }
+
+        $presetKeys = array_keys(config('widget-themes.presets', []));
+
+        $validated = $request->validate([
+            'theme_preset' => 'nullable|string|in:' . implode(',', array_merge($presetKeys, ['custom'])),
+            'color' => 'nullable|regex:/^#[0-9a-fA-F]{6}$/',
+            'greeting' => 'nullable|string|max:500',
+            'position' => 'nullable|in:bottom-right,bottom-left',
+        ]);
+
+        $config = $channel->config ?? [];
+
+        if (array_key_exists('theme_preset', $validated)) {
+            if ($validated['theme_preset'] === 'custom' || $validated['theme_preset'] === null) {
+                unset($config['theme_preset']);
+            } else {
+                $config['theme_preset'] = $validated['theme_preset'];
+            }
+        }
+
+        if (!empty($validated['color'])) {
+            $config['color'] = $validated['color'];
+        }
+
+        if (array_key_exists('greeting', $validated) && $validated['greeting'] !== null) {
+            $config['greeting'] = $validated['greeting'];
+        }
+
+        if (array_key_exists('position', $validated) && $validated['position'] !== null) {
+            $config['position'] = $validated['position'];
+        }
+
+        $channel->update(['config' => $config]);
+
+        return redirect()
+            ->route('dashboard.bots.channels.chatbot-setup', [$bot, $channel])
+            ->with('success', 'Widget-ul a fost actualizat.');
     }
 
     /**

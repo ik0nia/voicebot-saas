@@ -520,10 +520,12 @@ Route::middleware('auth')->prefix('dashboard/setari')->group(function () {
 Route::middleware('auth')->prefix('dashboard/agenti/{bot}/canale')->group(function () {
     Route::get('/', [ChannelController::class, 'index'])->name('dashboard.bots.channels.index');
     Route::get('/{channel}/chips', [ChannelController::class, 'editChips'])->name('dashboard.bots.channels.chips.edit');
+    Route::get('/{channel}/setup', [ChannelController::class, 'chatbotSetup'])->name('dashboard.bots.channels.chatbot-setup');
     Route::middleware('tenant.role:tenant_admin,tenant_manager')->group(function () {
         Route::post('/', [ChannelController::class, 'store'])->name('dashboard.bots.channels.store');
         Route::put('/{channel}', [ChannelController::class, 'update'])->name('dashboard.bots.channels.update');
         Route::put('/{channel}/chips', [ChannelController::class, 'updateChips'])->name('dashboard.bots.channels.chips.update');
+        Route::put('/{channel}/setup', [ChannelController::class, 'saveChatbotSetup'])->name('dashboard.bots.channels.chatbot-setup.save');
         Route::delete('/{channel}', [ChannelController::class, 'destroy'])->name('dashboard.bots.channels.destroy');
         Route::patch('/{channel}/toggle', [ChannelController::class, 'toggleActive'])->name('dashboard.bots.channels.toggle');
     });

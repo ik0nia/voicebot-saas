@@ -26,6 +26,8 @@
 
         var config = data.config || {};
         var color = config.color || '#991b1b';
+        var accentSoft = config.accent_soft || color;
+        var gradient = 'linear-gradient(135deg, ' + color + ', ' + accentSoft + ')';
         var botName = config.bot_name || 'Sambla Bot';
         var greeting = config.greeting || 'Bună! Cu ce te pot ajuta?';
 
@@ -33,12 +35,12 @@
         var style = document.createElement('style');
         style.textContent = '' +
             '#sambla-agent AI-widget { position: fixed; bottom: 32px; right: 20px; z-index: 999999; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }' +
-            '#sambla-agent AI-toggle { width: 60px; height: 60px; border-radius: 50%; border: none; cursor: pointer; box-shadow: 0 4px 24px rgba(0,0,0,0.15), 0 1px 4px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: center; transition: transform 0.2s ease, box-shadow 0.2s ease; background: linear-gradient(135deg, #991b1b, #dc2626); }' +
+            '#sambla-agent AI-toggle { width: 60px; height: 60px; border-radius: 50%; border: none; cursor: pointer; box-shadow: 0 4px 24px rgba(0,0,0,0.15), 0 1px 4px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: center; transition: transform 0.2s ease, box-shadow 0.2s ease; background: ' + gradient + '; }' +
             '#sambla-agent AI-toggle:hover { transform: scale(1.06); box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.1); }' +
             '#sambla-agent AI-toggle svg { width: 28px; height: 28px; fill: white; }' +
             '#sambla-agent AI-frame-container { display: none; position: absolute; bottom: 72px; right: 0; width: 400px; height: 540px; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.12), 0 4px 20px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04); background: #fff; }' +
             '#sambla-agent AI-frame-container.open { display: block; }' +
-            '#sambla-agent AI-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; color: #fff; background: linear-gradient(135deg, #991b1b, #dc2626); }' +
+            '#sambla-agent AI-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; color: #fff; background: ' + gradient + '; }' +
             '#sambla-agent AI-header span { font-size: 16px; font-weight: 700; }' +
             '#sambla-agent AI-close { background: none; border: none; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 18px; line-height: 1; padding: 4px; border-radius: 6px; }' +
             '#sambla-agent AI-close:hover { color: #fff; background: rgba(255,255,255,0.1); }' +
@@ -57,7 +59,7 @@
         // Header
         var header = document.createElement('div');
         header.id = 'sambla-agent AI-header';
-        header.style.background = 'linear-gradient(135deg, #991b1b, #dc2626)';
+        header.style.background = gradient;
 
         var nameSpan = document.createElement('span');
         nameSpan.textContent = botName;
@@ -86,7 +88,7 @@
         // Buton toggle
         var toggleBtn = document.createElement('button');
         toggleBtn.id = 'sambla-agent AI-toggle';
-        toggleBtn.style.backgroundColor = color;
+        toggleBtn.style.background = gradient;
         toggleBtn.setAttribute('aria-label', 'Deschide agent AI');
         toggleBtn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>';
         widget.appendChild(toggleBtn);

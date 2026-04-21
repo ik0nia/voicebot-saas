@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Channel;
 use App\Models\Site;
+use App\Services\WidgetThemeResolver;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -12,6 +13,10 @@ use Illuminate\Support\Facades\RateLimiter;
 
 class ChatbotEmbedController extends Controller
 {
+    public function __construct(private readonly WidgetThemeResolver $themeResolver)
+    {
+    }
+
     /**
      * Servește embed.js — un loader minimal care:
      * 1. Citește data-channel-id din script tag
@@ -71,16 +76,9 @@ class ChatbotEmbedController extends Controller
 
         // Dacă nu avem origin (same-origin request, Postman, etc.) — permit
         if (!$originDomain) {
-            $settings = $channel->config ?? [];
             return response()->json([
                 'allowed' => true,
-                'config' => [
-                    'bot_name' => $bot->name ?? 'Sambla Bot',
-                    'greeting' => $settings['greeting'] ?? 'Bună! Cu ce te pot ajuta?',
-                    'color' => $settings['color'] ?? '#991b1b',
-                    'language' => $bot->language ?? 'ro',
-                    'channel_id' => $channel->id,
-                ],
+                'config' => $this->buildEmbedConfig($channel, $bot),
             ]);
         }
 
@@ -127,22 +125,34 @@ class ChatbotEmbedController extends Controller
             ->header('Access-Control-Allow-Headers', 'Accept, Content-Type');
         }
 
-        // Returnează config-ul chatbot-ului
-        $settings = $channel->config ?? [];
-
         return response()->json([
             'allowed' => true,
-            'config' => [
-                'bot_name' => $bot->name ?? 'Sambla Bot',
-                'greeting' => $settings['greeting'] ?? 'Bună! Cu ce te pot ajuta?',
-                'color' => $settings['color'] ?? '#991b1b',
-                'language' => $bot->language ?? 'ro',
-                'channel_id' => $channel->id,
-            ],
+            'config' => $this->buildEmbedConfig($channel, $bot),
         ])
         ->header('Access-Control-Allow-Origin', $origin)
         ->header('Access-Control-Allow-Methods', 'GET, OPTIONS')
         ->header('Access-Control-Allow-Headers', 'Accept, Content-Type');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildEmbedConfig(Channel $channel, \App\Models\Bot $bot): array
+    {
+        $settings = $channel->config ?? [];
+        $theme = $this->themeResolver->resolve($settings);
+
+        return [
+            'bot_name' => $bot->name ?? 'Sambla Bot',
+            'greeting' => $settings['greeting'] ?? 'Bună! Cu ce te pot ajuta?',
+            'color' => $theme['accent'],
+            'accent_soft' => $theme['accent_soft'],
+            'bubble_radius' => $theme['bubble_radius'],
+            'theme_preset' => $theme['preset'],
+            'position' => $settings['position'] ?? 'bottom-right',
+            'language' => $bot->language ?? 'ro',
+            'channel_id' => $channel->id,
+        ];
     }
 
     /**
@@ -165,11 +175,14 @@ class ChatbotEmbedController extends Controller
             abort(404);
         }
         $config = $channel->config ?? [];
+        $theme = $this->themeResolver->resolve($config);
 
         return view('chatbot.frame', [
             'bot' => $bot,
             'channel' => $channel,
-            'color' => $config['color'] ?? '#991b1b',
+            'color' => $theme['accent'],
+            'accent_soft' => $theme['accent_soft'],
+            'bubble_radius' => $theme['bubble_radius'],
             'greeting' => $config['greeting'] ?? $bot->greeting_message ?? 'Bună! Cu ce te pot ajuta?',
         ]);
     }

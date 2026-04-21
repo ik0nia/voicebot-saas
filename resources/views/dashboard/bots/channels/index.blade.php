@@ -155,6 +155,16 @@
                             </form>
 
                             <div class="flex items-center gap-2">
+                                @if($channel->type === 'web_chatbot')
+                                    <a href="{{ route('dashboard.bots.channels.chatbot-setup', [$bot, $channel]) }}"
+                                       class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                                       title="Temă widget, mesaj de întâmpinare, cod de integrare">
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+                                        </svg>
+                                        Setup widget
+                                    </a>
+                                @endif
                                 <a href="{{ route('dashboard.bots.channels.chips.edit', [$bot, $channel]) }}"
                                    class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
                                    title="Editează butoanele rapide afișate în widget">
