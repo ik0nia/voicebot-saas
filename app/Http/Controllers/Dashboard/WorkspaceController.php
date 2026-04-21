@@ -126,7 +126,11 @@ class WorkspaceController extends Controller
     private function buildHeadline(\App\Models\Bot $bot): string
     {
         $today = $this->loadOutcomes($bot);
-        $engine = $bot->engine_type;
+        // Use the resolver, not the raw column — niche config can map
+        // to an engine when engine_type is NULL, and the view already
+        // trusts that fallback. Mismatch here produces the "fără nișă"
+        // banner under an archetype badge that clearly shows a niche.
+        $engine = $bot->engine()->type();
 
         if ($engine === 'booking' || $engine === 'hybrid') {
             $count = $today['bookings_requested'] ?? 0;

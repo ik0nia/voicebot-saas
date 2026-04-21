@@ -26,11 +26,15 @@
                 @else
                     <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">Inactiv</span>
                 @endif
-                @if($bot->niche_slug)
-                    <span class="inline-flex items-center rounded-full bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700">{{ $nichConfig['display_name'] ?? $bot->niche_slug }}</span>
+                @php
+                    $nicheLabel = $bot->niche_slug ? ($nichConfig['display_name'] ?? $bot->niche_slug) : null;
+                    $archetypeLabel = $archetype !== 'none' ? $engine->displayName() : null;
+                @endphp
+                @if($nicheLabel)
+                    <span class="inline-flex items-center rounded-full bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700">{{ $nicheLabel }}</span>
                 @endif
-                @if($archetype !== 'none')
-                    <span class="inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">{{ $engine->displayName() }}</span>
+                @if($archetypeLabel && $archetypeLabel !== $nicheLabel)
+                    <span class="inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">{{ $archetypeLabel }}</span>
                 @endif
             </div>
             <p class="text-sm text-slate-500">Vedere unificată — editările rămân pe paginile existente.</p>
