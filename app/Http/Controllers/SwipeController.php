@@ -48,7 +48,12 @@ class SwipeController extends Controller
 
         return response()->json([
             'posts' => $posts,
-            'total' => SocialPost::where('status', 'draft')->count(),
+            // total = number of drafts WITH image ready, matches what the queue shows.
+            'total' => SocialPost::where('status', 'draft')
+                ->whereNotNull('image_url')
+                ->where('image_url', '!=', '')
+                ->count(),
+            'total_all_drafts' => SocialPost::where('status', 'draft')->count(),
         ]);
     }
 

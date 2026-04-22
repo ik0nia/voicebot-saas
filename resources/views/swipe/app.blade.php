@@ -465,7 +465,8 @@ async function commitSwipe(card, action) {
 }
 
 function updateCounter() {
-  counter.textContent = `${queue.length} de aprobat`;
+  const remaining = queue.length;
+  counter.textContent = `${remaining} de aprobat`;
 }
 
 async function refreshQueue(append = false) {
@@ -485,10 +486,24 @@ async function refreshQueue(append = false) {
     // Reverse so top card is last (rendered on top via z-index order).
   }
 
-  counter.textContent = `${data.total} de aprobat`;
+  const pending = Math.max(0, (data.total || 0) - skipped.size);
+  const waitingImage = Math.max(0, (data.total_all_drafts || 0) - (data.total || 0));
+  counter.textContent = waitingImage > 0
+    ? `${pending} de aprobat · ${waitingImage} fără imagine`
+    : `${pending} de aprobat`;
+
   if (!queue.length) {
     emptyEl.style.display = 'flex';
     actions.style.display = 'none';
+    const emptyH = emptyEl.querySelector('h2');
+    const emptyP = emptyEl.querySelector('p');
+    if (waitingImage > 0) {
+      emptyH.textContent = 'Se generează imagini';
+      emptyP.innerHTML = `${waitingImage} ${waitingImage === 1 ? 'draft așteaptă' : 'drafts așteaptă'} imaginea (~100s fiecare). Reîncarcă peste câteva minute.`;
+    } else {
+      emptyH.textContent = 'Totul aprobat';
+      emptyP.innerHTML = `Nu e nimic de review acum. Cron-ul <code>social:ensure-drafts --target=10</code> completează coada la fiecare 15 min.`;
+    }
   } else {
     emptyEl.style.display = 'none';
     actions.style.display = 'flex';
