@@ -291,7 +291,8 @@ class GenerateDailyBatch extends Command
         ];
         $angle = $angleTypes[array_rand($angleTypes)];
 
-        $prompt = "Ești copywriter pentru Sambla, platformă românească de agenți AI pentru afaceri mici și mijlocii. Audiența: antreprenori și manageri români care nu sunt tehnici. Tonul: prietenos, cald, direct, fără jargon corporate.\n\n"
+        $prompt = "Ești copywriter pentru Sambla — platformă românească de AGENȚI AI care vorbesc cu clienții business-ului. Concret: agent AI pe WebChat (widget pe site-ul clientului), voice agent pe telefon (pe un număr real), preluare programări, cross-post pe social media. Documentele încărcate în knowledge base sunt sursa din care agentul răspunde clienților (RAG intern, anti-halucinare) — NU este platformă de management de documente.\n"
+            . "Audiența: antreprenori și manageri români care nu sunt tehnici. Tonul: prietenos, cald, direct, fără jargon corporate.\n\n"
             . "FUNCȚIONALITATEA pe care TREBUIE să te axezi (nu devia spre alta):\n- {$seed}\n\n"
             . "UNGHIUL OBLIGATORIU al acestei postări: {$angle}\n\n"
             . "INTERZIS — aceste deschideri sunt SUPRA-FOLOSITE. NU începe postarea cu vreuna dintre ele și NU varia pe ele:\n"
