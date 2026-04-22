@@ -22,18 +22,18 @@ class GenerateSocialDraft implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 2;
-    public int $timeout = 180;
+    public int $timeout = 300;
     public int $backoff = 60;
 
     /**
-     * Use Redis explicitly so generation load lands on the worker tier
-     * regardless of the default QUEUE_CONNECTION in env. Falls back to
-     * default if redis isn't configured.
+     * Route to the long-timeout `knowledge` supervisor: gpt-image-2 at
+     * quality=high needs ~100s per image and the default chat-workers run with
+     * --timeout=60, which would kill every job mid-API-call.
      */
     public function __construct()
     {
         $this->onConnection(config('queue.connections.redis') ? 'redis' : null);
-        $this->onQueue('default');
+        $this->onQueue('knowledge');
     }
 
     public function handle(): void
