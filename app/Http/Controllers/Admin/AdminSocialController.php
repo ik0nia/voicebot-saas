@@ -691,6 +691,56 @@ class AdminSocialController extends Controller
         }
 
         $action = (string) $request->input('action', '');
+
+        // Inline actions — run Eloquent directly, not through Artisan.
+        $inline = [
+            'stats' => function () {
+                $counts = \App\Models\SocialPost::selectRaw('status, count(*) as c')
+                    ->groupBy('status')->pluck('c', 'status');
+                $orphanGroups = \App\Models\SocialPostGroup::doesntHave('posts')->count();
+                return ['counts_by_status' => $counts, 'orphan_groups' => $orphanGroups];
+            },
+            'wipe-scheduled-half' => function () {
+                $total = \App\Models\SocialPost::where('status', 'scheduled')->count();
+                $toDelete = intdiv($total, 2);
+                if ($toDelete === 0) {
+                    return ['total_before' => $total, 'deleted' => 0, 'note' => 'nothing to halve'];
+                }
+                $ids = \App\Models\SocialPost::where('status', 'scheduled')
+                    ->orderBy('scheduled_at')->orderBy('id')
+                    ->limit($toDelete)->pluck('id')->all();
+                $deleted = \App\Models\SocialPost::whereIn('id', $ids)->delete();
+                $orphans = \App\Models\SocialPostGroup::doesntHave('posts')->delete();
+                return compact('total', 'deleted', 'orphans') + ['remaining' => $total - $deleted];
+            },
+            'wipe-scheduled-all' => function () {
+                $total = \App\Models\SocialPost::where('status', 'scheduled')->count();
+                $deleted = \App\Models\SocialPost::where('status', 'scheduled')->delete();
+                $orphans = \App\Models\SocialPostGroup::doesntHave('posts')->delete();
+                return compact('total', 'deleted', 'orphans');
+            },
+            'wipe-everything' => function () {
+                // Nuclear: deletes ALL posts and groups. Use when starting from scratch.
+                $total = \App\Models\SocialPost::count();
+                $deleted = \App\Models\SocialPost::query()->delete();
+                $orphans = \App\Models\SocialPostGroup::doesntHave('posts')->delete();
+                return compact('total', 'deleted', 'orphans');
+            },
+        ];
+
+        if (isset($inline[$action])) {
+            try {
+                return response()->json([
+                    'ok' => true,
+                    'action' => $action,
+                    'result' => $inline[$action](),
+                ]);
+            } catch (\Throwable $e) {
+                \Log::error('admin maintenance inline failed', ['action' => $action, 'error' => $e->getMessage()]);
+                return response()->json(['ok' => false, 'error' => $e->getMessage()], 500);
+            }
+        }
+
         $whitelist = [
             'curate-dry'        => ['social:curate-drafts',    ['--dry-run' => true]],
             'curate-soft'       => ['social:curate-drafts',    ['--force' => true]],
@@ -708,7 +758,7 @@ class AdminSocialController extends Controller
         if (!isset($whitelist[$action])) {
             return response()->json([
                 'error' => 'Unknown action.',
-                'available' => array_keys($whitelist),
+                'available' => array_merge(array_keys($inline), array_keys($whitelist)),
             ], 422);
         }
 
