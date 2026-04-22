@@ -179,6 +179,14 @@
     border-color: var(--coral);
     transform: rotate(-8deg);
   }
+  .badge-skip {
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #3B82F6;
+    border-color: #3B82F6;
+    font-size: 0.95rem;
+  }
 
   /* Bottom action bar */
   .actions {
@@ -208,6 +216,8 @@
   .btn.reject:hover { background: #FEE2E2; }
   .btn.edit { color: var(--ink); }
   .btn.edit:hover { background: var(--sand); }
+  .btn.skip { color: #3B82F6; }
+  .btn.skip:hover { background: #DBEAFE; }
   .btn.approve { color: var(--emerald); }
   .btn.approve:hover { background: #D1FAE5; }
 
@@ -270,6 +280,7 @@
 <div class="actions" id="actions" style="display:none">
   <button class="btn reject" id="btn-reject" aria-label="Respinge">✗</button>
   <button class="btn edit" id="btn-edit" aria-label="Editează">✎</button>
+  <button class="btn skip" id="btn-skip" aria-label="Treci mai departe">↷</button>
   <button class="btn approve" id="btn-approve" aria-label="Aprobă">✓</button>
 </div>
 
@@ -313,6 +324,7 @@ function buildCard(post) {
   card.innerHTML = `
     <div class="swipe-badge badge-reject">Respins</div>
     <div class="swipe-badge badge-approve">Aprobat</div>
+    <div class="swipe-badge badge-skip">Amânat</div>
     <div class="card-image">${imgHtml}</div>
     <div class="card-body">
       <div class="card-meta">
@@ -338,6 +350,7 @@ function attachSwipe(card) {
   let startX = 0, startY = 0, dx = 0, dy = 0, dragging = false;
   const badgeApprove = card.querySelector('.badge-approve');
   const badgeReject = card.querySelector('.badge-reject');
+  const badgeSkip = card.querySelector('.badge-skip');
 
   const onDown = (e) => {
     if (card !== stage.firstElementChild) return;
@@ -352,22 +365,34 @@ function attachSwipe(card) {
     dx = p.clientX - startX;
     dy = p.clientY - startY;
     const rot = dx * 0.06;
-    card.style.transform = `translate(${dx}px, ${dy * 0.3}px) rotate(${rot}deg)`;
-    const op = Math.min(Math.abs(dx) / 120, 1);
-    if (dx > 0) { badgeApprove.style.opacity = op; badgeReject.style.opacity = 0; }
-    else if (dx < 0) { badgeReject.style.opacity = op; badgeApprove.style.opacity = 0; }
+    card.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot}deg)`;
+    [badgeApprove, badgeReject, badgeSkip].forEach(b => b.style.opacity = 0);
+    const absDx = Math.abs(dx);
+    if (dy < -40 && absDx < 80) {
+      // Swipe up = skip
+      const op = Math.min(Math.abs(dy) / 120, 1);
+      badgeSkip.style.opacity = op;
+    } else if (dx > 0) {
+      badgeApprove.style.opacity = Math.min(absDx / 120, 1);
+    } else if (dx < 0) {
+      badgeReject.style.opacity = Math.min(absDx / 120, 1);
+    }
   };
   const onUp = () => {
     if (!dragging) return;
     dragging = false;
     card.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
     const threshold = 110;
-    if (dx > threshold) { commitSwipe(card, 'approve'); }
-    else if (dx < -threshold) { commitSwipe(card, 'reject'); }
-    else {
+    const absDx = Math.abs(dx);
+    if (dy < -threshold && absDx < 80) {
+      commitSkip(card);
+    } else if (dx > threshold) {
+      commitSwipe(card, 'approve');
+    } else if (dx < -threshold) {
+      commitSwipe(card, 'reject');
+    } else {
       card.style.transform = '';
-      badgeApprove.style.opacity = 0;
-      badgeReject.style.opacity = 0;
+      [badgeApprove, badgeReject, badgeSkip].forEach(b => b.style.opacity = 0);
     }
   };
 
@@ -377,6 +402,35 @@ function attachSwipe(card) {
   card.addEventListener('mousedown', onDown);
   window.addEventListener('mousemove', onMove);
   window.addEventListener('mouseup', onUp);
+}
+
+// Client-side skip: hide the card from this session, remember in localStorage
+// so a reload keeps the queue clean. No DB write — the post stays in draft.
+const SKIPPED_KEY = 'sambla.swipe.skipped';
+function loadSkipped() {
+  try { return new Set(JSON.parse(localStorage.getItem(SKIPPED_KEY) || '[]')); }
+  catch { return new Set(); }
+}
+function saveSkipped(set) {
+  try { localStorage.setItem(SKIPPED_KEY, JSON.stringify([...set])); } catch {}
+}
+const skipped = loadSkipped();
+
+function commitSkip(card) {
+  const id = card.dataset.id;
+  skipped.add(String(id));
+  saveSkipped(skipped);
+  card.style.transform = `translate(0, -${window.innerHeight}px) rotate(0deg)`;
+  card.style.opacity = 0;
+  try { if (navigator.vibrate) navigator.vibrate(10); } catch {}
+  showToast('Amânat · revine la reîncărcare manuală');
+  setTimeout(() => {
+    card.remove();
+    queue = queue.filter(p => String(p.id) !== String(id));
+    updateCounter();
+    if (stage.children.length < 2) refreshQueue(true);
+    if (!stage.children.length) emptyEl.style.display = 'flex', actions.style.display = 'none';
+  }, 320);
 }
 
 async function commitSwipe(card, action) {
@@ -418,14 +472,15 @@ async function refreshQueue(append = false) {
   const res = await fetch('/swipe/queue', { headers: { 'Accept': 'application/json' } });
   const data = await res.json();
   const existing = new Set(queue.map(p => p.id));
-  const fresh = data.posts.filter(p => !existing.has(p.id));
+  // Filter out skipped + already-stacked
+  const fresh = data.posts.filter(p => !existing.has(p.id) && !skipped.has(String(p.id)));
 
   if (append) {
     queue.push(...fresh);
     for (const p of fresh) stage.appendChild(buildCard(p));
   } else {
     stage.innerHTML = '';
-    queue = data.posts;
+    queue = data.posts.filter(p => !skipped.has(String(p.id)));
     for (const p of queue.slice(0, 3).reverse()) stage.appendChild(buildCard(p));
     // Reverse so top card is last (rendered on top via z-index order).
   }
@@ -453,6 +508,9 @@ document.getElementById('btn-edit').addEventListener('click', () => {
   const id = c.dataset.id;
   const post = queue.find(p => String(p.id) === String(id));
   if (post && post.edit_url) window.location.href = post.edit_url;
+});
+document.getElementById('btn-skip').addEventListener('click', () => {
+  const c = topCard(); if (c) commitSkip(c);
 });
 
 refreshQueue();
