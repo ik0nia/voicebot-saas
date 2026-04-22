@@ -898,6 +898,15 @@ class AdminSocialController extends Controller
                 ];
             },
 
+            'horizon-terminate' => function () {
+                \Illuminate\Support\Facades\Artisan::call('horizon:terminate');
+                return [
+                    'terminated' => true,
+                    'note' => 'Workers finish current job then respawn; refreshes env/config in memory.',
+                    'output' => \Illuminate\Support\Facades\Artisan::output(),
+                ];
+            },
+
             'clear-caches' => function () {
                 $out = [];
                 \Illuminate\Support\Facades\Artisan::call('config:clear');
