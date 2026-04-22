@@ -74,15 +74,34 @@ class SwipeController extends Controller
 
     public function approve(SocialPost $post)
     {
+        // Approve = queue at the END of the existing schedule, NOT publish now.
+        // Reviewer approved the idea, so we drop it at the next free day after
+        // the last scheduled group. FB at 10:00+rand, IG +5 min, Story +2h.
         $targets = collect([$post])->concat($this->siblings($post));
+
+        $lastScheduled = SocialPost::where('status', 'scheduled')->max('scheduled_at');
+        $nextDay = $lastScheduled
+            ? \Carbon\Carbon::parse($lastScheduled)->addDay()->setTime(10, 0, 0)
+            : now()->addDay()->setTime(10, 0, 0);
+        $heroSlot = $nextDay->copy()->addMinutes(mt_rand(0, 540)); // 10:00-19:00 random
+
         foreach ($targets as $t) {
+            $slot = $heroSlot->copy();
+            if ($t->post_type === 'story') {
+                $slot = $heroSlot->copy()->addHours(2);
+            } elseif ($t->platform === 'instagram') {
+                $slot = $heroSlot->copy()->addMinutes(5);
+            }
             $t->update([
                 'status' => 'scheduled',
-                'scheduled_at' => $t->scheduled_at ?: now()->addMinutes(5),
+                'scheduled_at' => $slot,
             ]);
-            dispatch(new \App\Jobs\AutoPublishSocialPost($t->id));
         }
-        return response()->json(['ok' => true, 'scheduled' => $targets->count()]);
+        return response()->json([
+            'ok' => true,
+            'scheduled' => $targets->count(),
+            'publish_at' => $heroSlot->toDateTimeString(),
+        ]);
     }
 
     public function reject(SocialPost $post)
