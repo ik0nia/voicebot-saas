@@ -34,6 +34,7 @@ $copy = array_merge($p['default_copy'] ?? [], [
     'niche_scene' => $resolve('niche_scene'),
     'niche_label' => $resolve('niche_labels'),
     'sambla_mark' => $config['sambla_mark'] ?? '',
+    'niche_accent' => $resolve('niche_accents', '#DC2626'),
 ]);
 
 $rendered = $p['template'];
@@ -42,8 +43,8 @@ foreach ($copy as $k => $v) {
 }
 // Second pass for placeholders nested in default_copy values (e.g. footer_tag contains {niche_label}).
 $rendered = str_replace(
-    ['{niche_label}', '{niche_graphics}', '{niche_scene}', '{sambla_mark}'],
-    [$copy['niche_label'], $copy['niche_graphics'], $copy['niche_scene'], $copy['sambla_mark']],
+    ['{niche_label}', '{niche_graphics}', '{niche_scene}', '{sambla_mark}', '{niche_accent}'],
+    [$copy['niche_label'], $copy['niche_graphics'], $copy['niche_scene'], $copy['sambla_mark'], $copy['niche_accent']],
     $rendered
 );
 

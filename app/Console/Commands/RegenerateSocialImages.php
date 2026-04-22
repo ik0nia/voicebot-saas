@@ -15,6 +15,7 @@ class RegenerateSocialImages extends Command
         {--limit=0 : Max posts to process (0 = all)}
         {--only-openai : Only regenerate images from OpenAI (filename starts with openai_)}
         {--pattern= : Force a specific pattern slug}
+        {--backup : Snapshot the current image_url into SocialPostVariant (inactive) before overwriting, so bad regens can be reverted}
         {--dry-run : Show what would be regenerated without doing it}
         {--sleep=5 : Seconds between API calls to avoid rate limits}';
 
@@ -30,6 +31,7 @@ class RegenerateSocialImages extends Command
         $dryRun = $this->option('dry-run');
         $sleep = (int) $this->option('sleep');
         $forcePattern = $this->option('pattern');
+        $backup = (bool) $this->option('backup');
 
         $query = SocialPost::whereIn('status', $statuses)
             ->whereIn('post_type', ['post', 'story'])
@@ -107,6 +109,15 @@ class RegenerateSocialImages extends Command
                 ]);
 
                 if ($result && !empty($result['url'])) {
+                    if ($backup && $post->image_url) {
+                        \App\Models\SocialPostVariant::create([
+                            'social_post_id' => $post->id,
+                            'kind' => 'image',
+                            'image_url' => $post->image_url,
+                            'image_prompt' => $post->image_prompt,
+                            'is_active' => false,
+                        ]);
+                    }
                     $post->update([
                         'image_url' => $result['url'],
                         'image_prompt' => 'pattern:' . $pattern . '|niche:' . $resolved['niche'] . '|msg:' . mb_substr((string) $resolved['key_message'], 0, 180),

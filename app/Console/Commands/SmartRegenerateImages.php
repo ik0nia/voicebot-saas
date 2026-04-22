@@ -19,6 +19,7 @@ class SmartRegenerateImages extends Command
                             {--sleep=5 : Seconds between images}
                             {--batch=20 : Max images per run}
                             {--pattern= : Force a specific pattern slug}
+                            {--backup : Snapshot the current image_url into SocialPostVariant before overwriting}
                             {--notify=codrut@ikonia.ro : Email after each batch}';
 
     protected $description = 'Regenerate missing / legacy images via gpt-image-2 pattern pipeline (quota-aware).';
@@ -32,6 +33,7 @@ class SmartRegenerateImages extends Command
         $batch = (int) $this->option('batch');
         $email = $this->option('notify');
         $forcePattern = $this->option('pattern');
+        $backup = (bool) $this->option('backup');
 
         $query = SocialPost::whereIn('status', ['draft', 'scheduled'])
             ->whereIn('post_type', ['post', 'story'])
@@ -103,6 +105,15 @@ class SmartRegenerateImages extends Command
                 ]);
 
                 if ($result && !empty($result['url'])) {
+                    if ($backup && $post->image_url) {
+                        \App\Models\SocialPostVariant::create([
+                            'social_post_id' => $post->id,
+                            'kind' => 'image',
+                            'image_url' => $post->image_url,
+                            'image_prompt' => $post->image_prompt,
+                            'is_active' => false,
+                        ]);
+                    }
                     $post->update([
                         'image_url' => $result['url'],
                         'image_prompt' => 'pattern:' . $pattern . '|niche:' . $resolved['niche'] . '|msg:' . mb_substr((string) $resolved['key_message'], 0, 180),

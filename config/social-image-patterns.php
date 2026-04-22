@@ -272,6 +272,316 @@ FOOTER: at the bottom of the safe zone, small JetBrains Mono uppercase wide-trac
 TEMPLATE_END,
         ],
 
+        'vertical_timeline_flow' => [
+            'aspect_ratio' => '4:5',
+            'category' => 'illustration',
+            'weight' => 1.0,
+            'description' => '3-step vertical flow with coral connectors. NOT a grid — each block is offset left/right for visual rhythm.',
+            'required_copy' => ['headline', 'step_1_title', 'step_1_desc', 'step_2_title', 'step_2_desc', 'step_3_title', 'step_3_desc'],
+            'default_copy' => [
+                'headline' => 'Cum preia agentul AI un apel?',
+                'step_1_title' => 'Clientul sună',
+                'step_1_desc' => 'Telefonul e preluat la primul apel, fără așteptare.',
+                'step_2_title' => 'Agentul răspunde în română',
+                'step_2_desc' => 'Ascultă, înțelege și oferă răspunsul potrivit în secunde.',
+                'step_3_title' => 'Primești rezumatul',
+                'step_3_desc' => 'Vezi pe telefon ce s-a discutat și ce trebuie să faci.',
+            ],
+            'template' => <<<'TEMPLATE_END'
+LAYOUT: vertical timeline flow on a Cream #F5F1E8 background. NOT a grid — three stacked blocks connected by thin coral dotted vertical lines with small coral arrow tips. Each block is intentionally offset horizontally (block 1 slightly left, block 2 center-right, block 3 slightly left again) to create visual rhythm and avoid feeling like a table.
+
+TOP HEADLINE (centered, in top ~12% of safe zone): Instrument Sans medium weight 500, Ink #1C1917, 1 line, tight letter-spacing: '{headline}'.
+
+BLOCK 1 (left-aligned, below headline, ~25% of safe-zone height):
+ - Round coral badge #DC2626 on the left with a white "01" in Instrument Sans 500.
+ - Paper #FAF7EF rounded card (24px radius) to the right of the badge, with a subtle shadow. Inside: small Ink title '{step_1_title}' in Inter 600, and below it Muted #78716C description '{step_1_desc}' in Inter 400. A small Coral stroke icon of a phone at the top-right corner of the card.
+
+CONNECTOR 1: vertical dotted Ink line from the bottom of block 1 to the top of block 2, ~15% of canvas height. A small coral ▼ arrow mid-line.
+
+BLOCK 2 (right-aligned, offset opposite side):
+ - Round coral "02" badge on the RIGHT, card on the LEFT with Ink '{step_2_title}' and Muted '{step_2_desc}'. A small Coral stroke icon of a speech bubble in the card corner.
+
+CONNECTOR 2: dotted line with coral arrow.
+
+BLOCK 3 (left-aligned again):
+ - Round coral "03" badge, Paper card with '{step_3_title}' and '{step_3_desc}'. A small Coral stroke icon of a bell / check.
+ - Floating softly at the right of block 3, at ~5% canvas width: {sambla_mark}.
+
+BACKGROUND: subtle niche-graphic silhouettes at 6% opacity scattered far in the background ({niche_graphics}).
+
+STYLE: modern product onboarding storyboard — Linear × Notion × Superhuman. Kinetic, confident, human.
+TEMPLATE_END,
+        ],
+
+        'phone_mockup_focus' => [
+            'aspect_ratio' => '4:5',
+            'category' => 'illustration',
+            'weight' => 0.9,
+            'description' => 'Single phone as product hero, screen shows real bilateral chat. NO overlay grid. Floating props + small mascot.',
+            'required_copy' => ['headline', 'chat_client', 'chat_agent', 'footer_tag'],
+            'default_copy' => [
+                'headline' => 'Clienții scriu. Agentul răspunde.',
+                'chat_client' => 'Bună, aveți loc sâmbătă dimineața?',
+                'chat_agent' => 'Da, vă pot propune 10:00 sau 11:30. Care vă convine?',
+                'footer_tag' => '✦ răspuns în sub 3 secunde',
+            ],
+            'template' => <<<'TEMPLATE_END'
+LAYOUT: product-photography-style rendering of ONE single modern smartphone, centered in the safe zone, tilted about 10 degrees to the right, occupying roughly 55% of the canvas height. NO grid, NO overlay cards — just the phone and ambient elements.
+
+BACKGROUND: warm Cream #F5F1E8 with a soft radial peach #F2E59A glow in the upper-right at 12% opacity. Subtle Sand #EFE5D0 gradient at the bottom suggesting a surface. A faint soft shadow directly beneath the phone (suggests it floats).
+
+PHONE SCREEN (crisp, legible): a clean messaging-app UI in the Sambla palette —
+ - TOP: a minimal nav bar with "Sambla" in small Inter 600 and a coral ping-pulse dot next to a "Online" label.
+ - CHAT AREA (bilateral, strict): RIGHT bubble (client, Coral #DC2626, white text, 18px radius): '{chat_client}'. Then LEFT bubble (agent, Sand #EFE5D0, Ink text, 18px radius): '{chat_agent}'. Comfortable 12px vertical spacing.
+ - BOTTOM: an input field with the placeholder "Scrie un mesaj…" in Muted.
+
+FLOATING NICHE PROPS: 3-4 small coral-outlined stroke icons of {niche_graphics}, scattered around the phone at ~12% opacity, suggesting context without crowding.
+
+TOP OF SAFE ZONE (above the phone): one centered Instrument Sans medium-weight headline in Ink, max 2 lines: '{headline}'.
+
+BOTTOM OF SAFE ZONE (below the phone): small JetBrains Mono uppercase wide-tracked line in Muted: '{footer_tag}'.
+
+MASCOT: a small {sambla_mark} floating at the top-right corner of the phone, just outside the device edge, at ~7% canvas width — like a friendly presence, not an overlay.
+
+STYLE: Apple product photography × Aesop skincare minimalism × modern SaaS marketing. Clean, airy, premium.
+TEMPLATE_END,
+        ],
+
+        'poster_typography_hero' => [
+            'aspect_ratio' => '4:5',
+            'category' => 'illustration',
+            'weight' => 0.9,
+            'description' => 'Magazine-cover typography. Headline dominates, one word in coral. No cards, no chat, no grid.',
+            'required_copy' => ['kicker', 'headline', 'accent_word', 'support'],
+            'default_copy' => [
+                'kicker' => 'AGENȚI AI PENTRU AFACERI MICI',
+                'headline' => 'Agentul tău nu uită nimic. Niciodată.',
+                'accent_word' => 'Niciodată',
+                'support' => 'Preia apeluri, programări și mesaje 24/7, în română.',
+            ],
+            'template' => <<<'TEMPLATE_END'
+LAYOUT: magazine-cover / editorial poster energy on Cream #F5F1E8 with a very subtle film-grain texture. TYPOGRAPHY IS THE HERO — NO cards, NO chat bubbles, NO illustration scenes, NO photography, NO icon grids.
+
+TOP STRIP (~8% of safe zone): a thin Coral #DC2626 horizontal rule, and immediately below it a small JetBrains Mono UPPERCASE wide-tracked kicker line in Muted #78716C: '{kicker}'.
+
+HERO HEADLINE (middle 70% of safe zone): MASSIVE Romanian typography in Instrument Sans medium weight 500 (NEVER bold), Ink #1C1917, tight letter-spacing -0.02em, 3 to 4 tight lines, fills the middle of the canvas: '{headline}'.
+
+ACCENT: inside the headline, find the word exactly equal to '{accent_word}' and render it in Coral #DC2626 instead of Ink. Right after that accent word, add a small coral underline stroke or a small coral dot — exactly one subtle emphasis, nothing more.
+
+BOTTOM STRIP (~15% of safe zone): another thin Coral horizontal rule, and a short Inter 400 supporting line centered in Ink: '{support}'. To the right of the support line, at about 5% canvas width, a small {sambla_mark} tilted playfully.
+
+STYLE: Pentagram poster × Apple keynote slide × It's Nice That editorial cover. Confident, quiet, premium. Nothing else on the canvas besides what is described above.
+TEMPLATE_END,
+        ],
+
+        'data_infographic_chart' => [
+            'aspect_ratio' => '4:5',
+            'category' => 'illustration',
+            'weight' => 1.0,
+            'description' => 'Stat-driven poster with a stylized chart (bar / line / donut) as the HERO, annotated with data-point callouts.',
+            'required_copy' => ['headline', 'metric_primary', 'metric_primary_caption', 'annot_1', 'annot_2', 'footer_tag'],
+            'default_copy' => [
+                'headline' => 'O lună cu agentul AI.',
+                'metric_primary' => '+38%',
+                'metric_primary_caption' => 'programări confirmate vs. luna trecută',
+                'annot_1' => 'weekendul nu mai e mort',
+                'annot_2' => 'zero apeluri pierdute',
+                'footer_tag' => '✦ date din ultimele 30 zile',
+            ],
+            'template' => <<<'TEMPLATE_END'
+LAYOUT: data-viz poster on Cream #F5F1E8 background. NO cards, NO chat, NO character. The HERO is a stylized vector chart filling about 60% of the safe zone.
+
+TOP HEADLINE (~10% of safe zone, centered): Instrument Sans medium 500, Ink #1C1917, max 2 lines: '{headline}'.
+
+HERO CHART (middle 55% of safe zone, centered): a stylized VECTOR bar-chart with 5-7 bars rising from left (smaller) to right (taller), each bar a solid {niche_accent} rectangle with a 4px radius top. The TALLEST bar on the right is thicker and has a small Ink label above it showing the metric '{metric_primary}' in Instrument Sans 500, while the shorter bars sit on a subtle Sand baseline. A soft {niche_accent} glow underneath the tallest bar. Below the chart: a thin horizontal Line in Muted, and centered Inter 400 caption '{metric_primary_caption}'.
+
+ANNOTATIONS (two small Paper pill cards, 24px radius, floating just outside the chart, connected by thin dotted Ink lines to the two rightmost bars):
+ - Top-right of the chart: pill with a small coral checkmark icon + '{annot_1}'.
+ - Bottom-right of the chart: pill with a small coral ✦ + '{annot_2}'.
+
+BACKGROUND MOTIFS: subtle silhouettes of {niche_graphics} at 5% opacity scattered FAR from the chart so they do not compete with the data.
+
+FOOTER (bottom of safe zone): small JetBrains Mono uppercase wide-tracked in Muted: '{footer_tag}'.
+Tiny {sambla_mark} anchored at the bottom-right of the safe zone, ~5% canvas width, tilted slightly.
+
+STYLE: The Economist × Bloomberg × Pitch deck — confident, data-forward, premium.
+TEMPLATE_END,
+        ],
+
+        'calendar_week_view' => [
+            'aspect_ratio' => '4:5',
+            'category' => 'illustration',
+            'weight' => 0.9,
+            'description' => 'A stylized week-calendar mockup as the hero — filled appointments + a few coral highlights showing automated bookings.',
+            'required_copy' => ['headline', 'support', 'footer_tag'],
+            'default_copy' => [
+                'headline' => 'O săptămână bine umplută.',
+                'support' => 'Agentul AI preia programările în timp ce tu te ocupi de clienții din față.',
+                'footer_tag' => '✦ AGENȚI AI PENTRU {niche_label}',
+            ],
+            'template' => <<<'TEMPLATE_END'
+LAYOUT: Cream #F5F1E8 background. NO grid of cards, NO chat, NO character — the HERO is a flat-vector stylized week-calendar view.
+
+TOP HEADLINE (~10% of safe zone, centered): Instrument Sans medium 500, Ink, 2 lines max: '{headline}'.
+
+HERO CALENDAR (middle 60% of safe zone, centered): a stylized week-view calendar mockup. 7 thin vertical columns, each labeled at the top with the first letter of a Romanian weekday (L, Ma, Mi, J, V, S, D) in JetBrains Mono Muted. Each column has 3-6 thin horizontal "time slot" blocks filled in. Most blocks are Sand #EFE5D0 with a tiny Ink label (a short time like "10:30", "14:00"). About 5-7 of the blocks are {niche_accent} with a small white ✓ icon — these represent automated bookings in the niche accent color. The current day column has a subtle {niche_accent} underline. A small "SĂPT. CURENTĂ" label in JetBrains Mono Muted at the top-left of the calendar.
+
+Floating softly above the calendar, a small {sambla_mark} at ~6% canvas width, subtle coral glow (brand), like it's "helping fill" the calendar. One thin dotted coral line from the mark to a {niche_accent} block, suggesting it booked that slot.
+
+SUPPORT LINE (below calendar): centered Inter 400 in Muted #78716C, 1 line: '{support}'.
+
+NICHE PROPS: 2-3 very small coral stroke icons of {niche_graphics} float at the edges of the safe zone at low opacity.
+
+FOOTER: small JetBrains Mono uppercase wide-tracked at the very bottom: '{footer_tag}'.
+
+STYLE: Notion × Linear × Cron — clean, modern, product-marketing. Not photographic.
+TEMPLATE_END,
+        ],
+
+        'isometric_workspace_scene' => [
+            'aspect_ratio' => '4:5',
+            'category' => 'illustration',
+            'weight' => 0.9,
+            'description' => 'Isometric 3D-feel illustration of a workspace — distinct from the flat-vector family. Slack/Shopify/Stripe marketing vibe.',
+            'required_copy' => ['headline', 'support', 'footer_tag'],
+            'default_copy' => [
+                'headline' => 'Orice business are acum un coleg care nu doarme.',
+                'support' => 'Preia apeluri, răspunde în chat, confirmă programări — în română, non-stop.',
+                'footer_tag' => '✦ AGENȚI AI PENTRU {niche_label}',
+            ],
+            'template' => <<<'TEMPLATE_END'
+STYLE: isometric vector illustration (NOT flat-on 2D, NOT photography) with gentle gradients and soft shadows, tuned to the Sambla warm palette — Cream, Paper, Coral, Ink, Sand. In the spirit of Slack / Shopify / Stripe landing-page illustrations: depth via isometric projection, friendly geometric shapes, small characters as silhouettes only.
+
+SCENE (fills the central safe zone): an isometric view of a small Romanian business workspace ({niche_scene}). Furniture shown at ~30-degree isometric angle. Key elements: a desk with a laptop (screen toward viewer showing a minimal chat UI with one visible Coral bubble), a chair, a small plant, a wall with shelves, and {niche_graphics} scattered around the scene in their natural locations. Subtle long shadows.
+
+Floating above the desk at a playful tilt: {sambla_mark} — connected to the laptop by a thin coral dotted line suggesting "AI assistant".
+
+Top of safe zone: headline '{headline}' in Instrument Sans medium 500 Ink, 2 lines max, centered.
+
+Below the scene: Inter 400 Muted support line, 1 line, centered: '{support}'.
+
+Bottom of safe zone: JetBrains Mono uppercase wide-tracked footer: '{footer_tag}'.
+
+NO cards grid, NO chat bubbles overlaid, NO annotation pills. The scene speaks for itself.
+TEMPLATE_END,
+        ],
+
+        'checklist_hero' => [
+            'aspect_ratio' => '4:5',
+            'category' => 'illustration',
+            'weight' => 1.0,
+            'description' => 'A large vertical checklist as the HERO design, items crossed off in coral. No character, no chat.',
+            'required_copy' => ['headline', 'item_1', 'item_2', 'item_3', 'item_4', 'item_5', 'footer_tag'],
+            'default_copy' => [
+                'headline' => 'Ce face agentul în locul tău.',
+                'item_1' => 'Preia apelul la primul ton',
+                'item_2' => 'Răspunde în română, natural',
+                'item_3' => 'Confirmă programarea în calendar',
+                'item_4' => 'Trimite clientului SMS de confirmare',
+                'item_5' => 'Îți lasă ție doar ce e important',
+                'footer_tag' => '✦ tot ce nu mai trebuie să faci',
+            ],
+            'template' => <<<'TEMPLATE_END'
+LAYOUT: Cream #F5F1E8 background with a very faint film-grain texture. The HERO is a single large checklist — flat vector, NO cards grid, NO chat, NO characters, NO photography.
+
+TOP HEADLINE (~12% of safe zone, centered): Instrument Sans medium 500 Ink, 2 lines: '{headline}'.
+
+CHECKLIST (middle 70% of safe zone, centered column, max width ~72% of canvas): 5 rows stacked with 24px vertical spacing. Each row has:
+ - LEFT: a rounded-square checkbox (16px radius) filled with {niche_accent} with a white ✓ inside (all 5 rows look "checked / done").
+ - RIGHT: the item text in Instrument Sans 500 Ink #1C1917, about 2rem size, with a thin {niche_accent} strikethrough line running across the whole text.
+
+The 5 items (in order):
+ 1. '{item_1}'
+ 2. '{item_2}'
+ 3. '{item_3}'
+ 4. '{item_4}'
+ 5. '{item_5}'
+
+Subtle peach #F2E59A radial glow behind the checklist at 8% opacity to add warmth.
+
+NICHE: scatter 3-4 tiny coral stroke icons of {niche_graphics} at 10% opacity in the margins of the canvas (not behind the list).
+
+Bottom of safe zone: small JetBrains Mono uppercase Muted wide-tracked footer '{footer_tag}', and a small {sambla_mark} at the bottom-right at ~5% canvas width, tilted.
+
+STYLE: Superhuman × Linear × Notion task lists — clean, confident, satisfying.
+TEMPLATE_END,
+        ],
+
+        'triptych_phone_carousel' => [
+            'aspect_ratio' => '4:5',
+            'category' => 'illustration',
+            'weight' => 0.8,
+            'description' => 'Three phones arranged in a horizontal triptych, each showing a different moment in the client → agent → confirmation flow.',
+            'required_copy' => ['headline', 'screen_1_label', 'screen_2_label', 'screen_3_label', 'screen_1_bubble', 'screen_2_bubble', 'screen_3_bubble', 'footer_tag'],
+            'default_copy' => [
+                'headline' => 'Un apel devine o programare în 3 pași.',
+                'screen_1_label' => 'Apel primit',
+                'screen_2_label' => 'Agent răspunde',
+                'screen_3_label' => 'Confirmare trimisă',
+                'screen_1_bubble' => 'Bună ziua, aveți liber mâine?',
+                'screen_2_bubble' => 'Da, pot propune 10:30 sau 14:00.',
+                'screen_3_bubble' => 'Programare confirmată · mâine 14:00 ✓',
+                'footer_tag' => '✦ AGENȚI AI PENTRU {niche_label}',
+            ],
+            'template' => <<<'TEMPLATE_END'
+LAYOUT: Cream #F5F1E8 background with a soft peach radial glow in the upper half at 10% opacity. NO cards grid, NO character — the hero is a horizontal TRIPTYCH of three phones.
+
+TOP HEADLINE (~12% of safe zone, centered): Instrument Sans medium 500 Ink, 1-2 lines: '{headline}'.
+
+TRIPTYCH (middle 65% of safe zone): three identical smartphones arranged horizontally with 16px gaps. Each phone occupies about 28% of the canvas width. The center phone is slightly forward (no tilt), the left phone tilts 6° left, the right phone tilts 6° right. Each phone casts a soft shadow under it.
+
+Each phone screen shows a different moment of the same conversation, numbered "01" → "02" → "03":
+ - SCREEN 1: a small "01 · '{screen_1_label}'" label at the top in JetBrains Mono Muted. Below, a single incoming call mockup OR a single chat bubble (RIGHT, Coral #DC2626, white text): '{screen_1_bubble}'.
+ - SCREEN 2: "02 · '{screen_2_label}'" label. A single agent bubble (LEFT, Sand #EFE5D0, Ink text): '{screen_2_bubble}'.
+ - SCREEN 3: "03 · '{screen_3_label}'" label. A full-width Coral confirmation card with a white checkmark and text '{screen_3_bubble}'.
+
+Between the phones: thin dotted Coral connector lines with small coral arrows (screen 1 → screen 2 → screen 3) indicating flow.
+
+A small {sambla_mark} floats at the top-right of the triptych at ~5% canvas width.
+
+NICHE PROPS: a couple of tiny coral stroke icons of {niche_graphics} at 10% opacity in the far margins.
+
+BOTTOM: small JetBrains Mono uppercase Muted footer: '{footer_tag}'.
+
+STYLE: Apple keynote product triptych × Stripe marketing. Confident, clean, premium.
+TEMPLATE_END,
+        ],
+
+        'comic_three_panel' => [
+            'aspect_ratio' => '4:5',
+            'category' => 'illustration',
+            'weight' => 0.8,
+            'description' => 'A 3-panel comic-strip style storyboard, each panel a different moment with a short line of dialog.',
+            'required_copy' => ['headline', 'panel_1_scene', 'panel_1_line', 'panel_2_scene', 'panel_2_line', 'panel_3_scene', 'panel_3_line', 'footer_tag'],
+            'default_copy' => [
+                'headline' => 'Dimineața ta, fără stres.',
+                'panel_1_scene' => 'antreprenorul intră grăbit pe ușă, cafea în mână',
+                'panel_1_line' => 'Sigur am pierdut 5 apeluri.',
+                'panel_2_scene' => 'deschide telefonul, vede un raport coral',
+                'panel_2_line' => 'Toate 5 apeluri: preluate. 3 programări: setate.',
+                'panel_3_scene' => 'zâmbește relaxat, așezat la birou',
+                'panel_3_line' => 'Atunci... ce fac acum dimineața?',
+                'footer_tag' => '✦ AGENȚI AI PENTRU {niche_label}',
+            ],
+            'template' => <<<'TEMPLATE_END'
+LAYOUT: Cream #F5F1E8 background. NO grid of cards, NO chat bubbles overlays, NO hero typography — the HERO is a 3-PANEL COMIC STRIP stacked vertically inside the safe zone.
+
+TOP HEADLINE (~10% of safe zone): Instrument Sans medium 500 Ink, 1 line centered: '{headline}'.
+
+COMIC PANELS (middle 75% of safe zone, stacked vertically with 8px thin Ink dividing lines between them): three equal-height panels rendered as friendly flat-vector illustrations with a comic-strip aesthetic (thin Ink outlines, warm flat fills, subtle shading). Each panel has a small JetBrains Mono "01" / "02" / "03" label in the top-left corner.
+
+PANEL 1 (top): illustration of {panel_1_scene}, set in {niche_scene}. At the bottom of the panel, a small Paper speech balloon with Ink text '{panel_1_line}'.
+
+PANEL 2 (middle): illustration of {panel_2_scene}. Speech balloon or thought cloud with '{panel_2_line}'. A small {sambla_mark} visible on the phone / screen in this panel.
+
+PANEL 3 (bottom): illustration of {panel_3_scene}. Speech balloon with '{panel_3_line}'. Warm sunlight suggests a "happy resolution" vibe.
+
+BOTTOM: a thin Coral horizontal rule, then small JetBrains Mono uppercase wide-tracked Muted footer: '{footer_tag}'.
+
+STYLE: editorial comic-strip illustration × modern SaaS marketing (think Oatly / Mailchimp / Figma with a warm cream palette). Character faces kept simple and friendly, outlines thin and clean.
+TEMPLATE_END,
+        ],
+
         'mascot_hero_announcement' => [
             'aspect_ratio' => '4:5',
             'category' => 'illustration',
@@ -397,6 +707,31 @@ TEMPLATE_END,
     ],
 
     // Short Romanian label for the niche, used in footer tags like "Agenți AI pentru {niche_label}".
+    // Niche accent color (echoes the per-niche theme from resources/css/new.css + tailwind.config.js).
+    // Used in templates for SECONDARY niche-specific highlights — the brand Coral #DC2626 still runs
+    // the hero elements (mascot, CTA, brand lines) so Sambla stays recognizable across the feed.
+    'niche_accents' => [
+        'default' => '#DC2626',     // coral, brand default
+        'veterinar' => '#3B82F6',   // medical blue
+        'stomatolog' => '#3B82F6',  // medical blue
+        'medic' => '#3B82F6',
+        'psiholog' => '#3B82F6',
+        'optica' => '#3B82F6',
+        'salon' => '#F43F5E',       // beauty rose
+        'auto' => '#F97316',        // auto orange
+        'restaurant' => '#10B981',  // resto emerald
+        'cofetar' => '#10B981',
+        'pensiune' => '#10B981',
+        'imobiliare' => '#F59E0B',  // imobiliare amber
+        'avocat' => '#A855F7',      // legal purple
+        'notar' => '#A855F7',
+        'scoala_limbi' => '#4F46E5',// education indigo
+        'turism' => '#06B6D4',      // travel cyan
+        'contabil' => '#DC2626',    // keep coral (finance is brand-neutral)
+        'consultant' => '#DC2626',
+        'curatenie' => '#10B981',   // emerald freshness
+    ],
+
     'niche_labels' => [
         'default' => 'afacerea ta',
         'veterinar' => 'cabinete veterinare',

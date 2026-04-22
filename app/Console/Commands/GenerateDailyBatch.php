@@ -12,7 +12,7 @@ use Illuminate\Support\Carbon;
 class GenerateDailyBatch extends Command
 {
     protected $signature = 'social:generate-batch
-                            {count=10 : Number of posts to generate}
+                            {count=1 : Number of posts to generate (default 1/day cadence)}
                             {--date= : Date YYYY-MM-DD (default today)}
                             {--from=09:00 : Earliest posting time HH:MM (only enforced for future dates)}
                             {--until=20:00 : Schedule posts until this time (HH:MM)}
@@ -21,7 +21,7 @@ class GenerateDailyBatch extends Command
                             {--drafts : Create posts as drafts with no scheduled_at (for review queue)}
                             {--dry-run : Preview without creating}';
 
-    protected $description = 'Generate a batch of scheduled social media posts with CTA-focused images';
+    protected $description = 'Generate a batch of scheduled social media posts with CTA-focused images (default: 1 post / day).';
 
     /**
      * Seed list grouped by CATEGORY. Every batch picks a random category first

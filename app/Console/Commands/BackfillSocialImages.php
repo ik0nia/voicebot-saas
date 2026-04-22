@@ -17,6 +17,7 @@ class BackfillSocialImages extends Command
         {--worker=0 : Worker index (0..of-1). Filters posts by id % of = worker.}
         {--of=1 : Total number of parallel workers. With --worker, partitions IDs.}
         {--pattern= : Force a specific pattern slug (skips weighted random)}
+        {--backup : Snapshot the current image_url into SocialPostVariant before overwriting (relevant if backfilling a post that already had an image)}
         {--dry-run : Show what would happen without calling the image API}';
 
     protected $description = 'Generate missing images for social posts that have image_url = NULL, using the gpt-image-2 pattern pipeline.';
@@ -30,6 +31,7 @@ class BackfillSocialImages extends Command
         $limit = (int) $this->option('limit');
         $dryRun = (bool) $this->option('dry-run');
         $forcePattern = $this->option('pattern');
+        $backup = (bool) $this->option('backup');
 
         $worker = (int) $this->option('worker');
         $of = max(1, (int) $this->option('of'));
@@ -104,6 +106,15 @@ class BackfillSocialImages extends Command
                 continue;
             }
 
+            if ($backup && $post->image_url) {
+                \App\Models\SocialPostVariant::create([
+                    'social_post_id' => $post->id,
+                    'kind' => 'image',
+                    'image_url' => $post->image_url,
+                    'image_prompt' => $post->image_prompt,
+                    'is_active' => false,
+                ]);
+            }
             $post->image_url = $image['url'];
             $post->image_prompt = 'pattern:' . $pattern . '|niche:' . $niche . '|msg:' . mb_substr((string) $keyMessage, 0, 180);
             $post->save();

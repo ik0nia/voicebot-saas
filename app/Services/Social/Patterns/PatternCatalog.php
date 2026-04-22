@@ -82,6 +82,7 @@ final class PatternCatalog
         $copy['niche_graphics'] = $this->resolveMap($niche, 'niche_graphic_elements');
         $copy['niche_scene'] = $this->resolveMap($niche, 'niche_scene');
         $copy['niche_label'] = $this->resolveMap($niche, 'niche_labels');
+        $copy['niche_accent'] = $this->resolveMap($niche, 'niche_accents') ?: '#DC2626';
         $copy['sambla_mark'] = (string) config('social-image-patterns.sambla_mark', '');
 
         $rendered = $pattern['template'];
@@ -91,8 +92,8 @@ final class PatternCatalog
         // Second pass: catch placeholders that reference niche_label inside default_copy values
         // (e.g. footer_tag = "... {niche_label}").
         $rendered = str_replace(
-            ['{niche_label}', '{niche_graphics}', '{niche_scene}', '{sambla_mark}'],
-            [$copy['niche_label'], $copy['niche_graphics'], $copy['niche_scene'], $copy['sambla_mark']],
+            ['{niche_label}', '{niche_graphics}', '{niche_scene}', '{sambla_mark}', '{niche_accent}'],
+            [$copy['niche_label'], $copy['niche_graphics'], $copy['niche_scene'], $copy['sambla_mark'], $copy['niche_accent']],
             $rendered
         );
 
