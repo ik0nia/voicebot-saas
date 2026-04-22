@@ -69,7 +69,7 @@
     position: fixed;
     top: calc(env(safe-area-inset-top) + 72px);
     left: 0; right: 0;
-    bottom: calc(env(safe-area-inset-bottom) + 110px);
+    bottom: calc(env(safe-area-inset-bottom) + 96px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -199,7 +199,7 @@
   /* Bottom action bar */
   .actions {
     position: fixed;
-    bottom: calc(env(safe-area-inset-bottom) + 16px);
+    bottom: calc(env(safe-area-inset-bottom) + 4px);
     left: 0; right: 0;
     display: flex;
     justify-content: center;
@@ -254,7 +254,7 @@
 
   .toast {
     position: fixed;
-    bottom: calc(env(safe-area-inset-bottom) + 110px);
+    bottom: calc(env(safe-area-inset-bottom) + 92px);
     left: 50%; transform: translateX(-50%) translateY(30px);
     background: var(--ink); color: #fff;
     padding: 10px 18px; border-radius: 999px;
