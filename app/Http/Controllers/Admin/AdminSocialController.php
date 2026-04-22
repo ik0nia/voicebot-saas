@@ -898,6 +898,24 @@ class AdminSocialController extends Controller
                 ];
             },
 
+            'debug-openai-key' => function () {
+                $platformKey = (string) \App\Models\PlatformSetting::get('openai_api_key', '');
+                $envKey = (string) env('OPENAI_API_KEY', '');
+                $configKey = (string) config('services.openai.api_key', '');
+                return [
+                    'platform_setting' => $platformKey ? ('len='.strlen($platformKey).' prefix='.substr($platformKey, 0, 12)) : 'EMPTY',
+                    'env_key' => $envKey ? ('len='.strlen($envKey).' prefix='.substr($envKey, 0, 12)) : 'EMPTY',
+                    'config_key' => $configKey ? ('len='.strlen($configKey).' prefix='.substr($configKey, 0, 12)) : 'EMPTY',
+                    'which_wins' => $platformKey ? 'platform_setting' : ($configKey ? 'config/env' : 'none'),
+                ];
+            },
+
+            'fix-openai-key-from-env' => function () {
+                // Nuke any stale platform_setting override so the fresh env var wins.
+                \App\Models\PlatformSetting::where('key', 'openai_api_key')->delete();
+                return ['deleted' => true, 'note' => 'GptImage2Generator now falls through to env OPENAI_API_KEY.'];
+            },
+
             'fill-missing-images' => function () {
                 $drafts_no_image = \App\Models\SocialPost::where('status', 'draft')
                     ->where(function ($q) { $q->whereNull('image_url')->orWhere('image_url', ''); })
