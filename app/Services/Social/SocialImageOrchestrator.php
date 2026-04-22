@@ -70,14 +70,27 @@ final class SocialImageOrchestrator
         }
 
         $aspect = $this->catalog->aspectRatio($patternSlug);
-        $referenceImage = $options['reference_image_path'] ?? null;
+
+        // Always pass the Sambla logo icon as reference when available — gpt-image-2
+        // renders it pixel-perfect via /v1/images/edits instead of drawing a cartoon stand-in.
+        $referenceImage = $options['reference_image_path'] ?? $this->defaultLogoPath();
+        if ($referenceImage && !file_exists($referenceImage)) {
+            $referenceImage = null;
+        }
 
         $result = $this->generator->generate($prompt, $aspect, $referenceImage);
         if ($result) {
             $result['pattern'] = $patternSlug;
             $result['niche'] = $niche;
             $result['prompt_length'] = mb_strlen($prompt);
+            $result['logo_referenced'] = $referenceImage !== null;
         }
         return $result;
+    }
+
+    private function defaultLogoPath(): ?string
+    {
+        $path = public_path('images/logo-icon.png');
+        return file_exists($path) ? $path : null;
     }
 }

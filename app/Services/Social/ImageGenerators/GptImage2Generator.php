@@ -115,8 +115,13 @@ final class GptImage2Generator
     {
         return match ($aspectRatio) {
             '1:1' => '1024x1024',
-            '16:9', '4:3', '3:2' => '1536x1024',
-            default => '1024x1536',
+            '4:5' => '1024x1280',   // Instagram feed portrait — exact 4:5, no grid crop
+            '9:16' => '1024x1792',  // Instagram Stories / Reels — closest supported portrait
+            '2:3' => '1024x1536',   // legacy / landing hero portrait
+            '4:3' => '1280x1024',
+            '3:2' => '1536x1024',
+            '16:9' => '1792x1024',
+            default => '1024x1280',
         };
     }
 }

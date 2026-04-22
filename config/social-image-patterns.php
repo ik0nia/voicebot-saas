@@ -40,10 +40,19 @@ TEXT_RULE_END,
 DO NOT: include any OpenAI/ChatGPT/Gemini/vendor reference, any competitor logo, generic stock-photo cliché, watermark, any language other than Romanian, emoji dumps, low-resolution UI screenshots, or navy-blue ink tones.
 DO_NOT_RULE_END,
 
+    // Canonical description of the Sambla brand icon, reused across patterns as {sambla_mark}.
+    // The actual mark lives at public/images/logo-icon.svg and may be passed as a reference
+    // image to /v1/images/edits for pixel-accurate integration.
+    'sambla_mark' => <<<'SAMBLA_MARK_END'
+the Sambla brand mark rendered exactly as follows — a rounded-corner squircle (25% corner radius) filled with a smooth red gradient from #991b1b at the top-left to #dc2626 at the bottom-right. Centered horizontally on the squircle, a solid WHITE horizontal pill-shaped visor (rounded-rectangle, about 55% of the squircle width). Inside the white visor, two small solid circles in dark red #991b1b acting as eyes, positioned slightly off-center with a subtle rightward shift. ABSOLUTELY NO antenna, NO mouth, NO smile curve, NO hands, NO feet, NO limbs of any kind, NO extra appendages, NO cheeks, NO speech bubble coming from it. The mark is a clean minimal device-like symbol — it may be tilted playfully, surrounded by a faint coral glow, or have tiny animated sparkles around it to suggest life, but it must NEVER be anthropomorphized into a cartoon character
+SAMBLA_MARK_END,
+
     'patterns' => [
 
         'bento_editorial_portrait' => [
             'aspect_ratio' => '4:5',
+            'category' => 'photo',
+            'weight' => 0.25,
             'description' => 'Bento grid: editorial portrait hero + pull quote + headline metric + mini bilateral chat.',
             'required_copy' => ['pull_quote', 'attribution', 'metric_number', 'metric_caption', 'chat_client', 'chat_agent', 'footer_tag'],
             'default_copy' => [
@@ -70,6 +79,8 @@ TEMPLATE_END,
 
         'person_annotated_call' => [
             'aspect_ratio' => '4:5',
+            'category' => 'photo',
+            'weight' => 0.2,
             'description' => 'Editorial photo of someone on a call + floating Sambla-brand annotation cards linked by dotted lines.',
             'required_copy' => ['annot_speed', 'annot_action', 'annot_rating'],
             'default_copy' => [
@@ -91,6 +102,8 @@ TEMPLATE_END,
 
         'split_before_after' => [
             'aspect_ratio' => '4:5',
+            'category' => 'photo',
+            'weight' => 0.2,
             'description' => 'Vertical split-screen narrative: left panel problem, right panel solution.',
             'required_copy' => ['left_label', 'right_label', 'left_pain_a', 'left_pain_b', 'right_win_a', 'right_win_b', 'right_chat_bubble'],
             'default_copy' => [
@@ -115,6 +128,8 @@ TEMPLATE_END,
 
         'flat_illustration_icons' => [
             'aspect_ratio' => '4:5',
+            'category' => 'illustration',
+            'weight' => 1.0,
             'description' => 'Friendly flat-vector illustration with a character + the Sambla coral agent mascot + four annotated feature cards.',
             'required_copy' => ['card_a', 'card_b', 'card_c', 'card_d'],
             'default_copy' => [
@@ -126,7 +141,7 @@ TEMPLATE_END,
             'template' => <<<'TEMPLATE_END'
 STYLE: modern flat vector illustration in the spirit of Figma Config / Webflow / Notion illustration library, tuned to the Sambla warm palette — NOT a cool-blue SaaS illustration. Soft Cream #F5F1E8 background with a faint radial peach #F2E59A glow in the upper-left quadrant at 10% opacity. No photography.
 
-SCENE: {subject_hint} (illustrated, slightly stylized, warm features, relaxed posture) at a desk with a laptop, smiling while holding a phone near the ear. On the desk: a small plant in a terracotta pot, a cream coffee mug, an open notebook. The AI agent is represented as a small friendly Coral squircle character #DC2626 with gentle dot eyes and a tiny antenna tipped with a green ping dot — floating warmly next to the subject like a helpful companion. The character must echo the Sambla site's small animated agent glyph.
+SCENE: {subject_hint} (illustrated, slightly stylized, warm features, relaxed posture) at a desk with a laptop, smiling while holding a phone near the ear. On the desk: a small plant in a terracotta pot, a cream coffee mug, an open notebook. Floating warmly next to the subject, like a helpful companion: {sambla_mark}.
 
 ANNOTATIONS (four floating rounded cards, 24px radius, Paper #FAF7EF background, Ink text, Coral icons, subtle shadow, connected to the scene by thin dotted Ink lines) —
  • Top-left card: small clock icon + '{card_a}'.
@@ -141,6 +156,8 @@ TEMPLATE_END,
 
         'testimonial_pullquote' => [
             'aspect_ratio' => '4:5',
+            'category' => 'photo',
+            'weight' => 0.2,
             'description' => 'Editorial portrait photograph + oversized pull-quote with coral quotation marks + monospace attribution.',
             'required_copy' => ['pull_quote', 'attribution'],
             'default_copy' => [
@@ -155,6 +172,132 @@ TOP — PORTRAIT: warm close-up editorial portrait of {subject_hint}, standing a
 BOTTOM — PULL QUOTE on Cream #F5F1E8: large Romanian quote set in Instrument Sans medium weight 500 (never bold), Ink #1C1917, two lines centered: '{pull_quote}' The opening and closing quotation marks are oversized and set in Coral Red #DC2626. Below the quote: a thin Line #E7E0CE hairline, then a small JetBrains Mono attribution in uppercase wide-tracking, Muted #78716C: '{attribution}'.
 
 STYLE: New York Times Magazine portrait feature × It's Nice That editorial typography, on the Sambla warm palette. Human, premium, confident.
+TEMPLATE_END,
+            'category' => 'photo',
+            'weight' => 0.25,
+        ],
+
+        'bento_illustrated_stats' => [
+            'aspect_ratio' => '4:5',
+            'category' => 'illustration',
+            'weight' => 1.0,
+            'description' => 'Bento grid but with a flat-illustrated niche scene as the hero tile (no photography), plus quote + metric + chat tiles.',
+            'required_copy' => ['pull_quote', 'attribution', 'metric_number', 'metric_caption', 'chat_client', 'chat_agent', 'footer_tag'],
+            'default_copy' => [
+                'pull_quote' => '"Preia apelurile chiar și sâmbăta, când nu avem cum să răspundem."',
+                'attribution' => 'DR. ANDREI M. · MEDIC VETERINAR',
+                'metric_number' => '+38%',
+                'metric_caption' => 'programări confirmate · ultimele 30 zile',
+                'chat_client' => 'Pot programa o vizită pentru cățelul meu?',
+                'chat_agent' => 'Sigur, joi la 11:00 e liber.',
+                'footer_tag' => '✦ răspunde 24/7',
+            ],
+            'template' => <<<'TEMPLATE_END'
+LAYOUT: clean bento-grid composition on Cream #F5F1E8 background, inside the safe zone. 4 rectangular tiles with 16px gaps and 48px corner radius, each casting the brand-standard soft shadow.
+
+TILE A (spans full safe-zone width, top half): warm flat-vector illustration of {subject_hint} in their niche workspace. The illustration must NOT be photographic — use a friendly flat style (Figma Config / Notion / Webflow illustration library quality) tuned to the Sambla warm palette (Cream, Paper, Coral, gentle Ink strokes, warm amber glow in the background). Scatter {niche_graphics} naturally around the character (on the desk, on the walls, in hands) as niche-defining props. In one corner of the tile, floating at a subtle tilt: {sambla_mark}. Motion sparkles and tiny dotted trails suggest a kinetic, animated feel.
+
+TILE B (bottom-left, square): solid Coral Red #DC2626 card with a large Romanian pull-quote in Instrument Sans medium weight 500, white text: '{pull_quote}' The opening and closing quotation marks are oversized, lighter coral tint. Below: thin white hairline and small JetBrains Mono attribution in uppercase wide-tracking: '{attribution}'.
+
+TILE C (bottom-middle, square): solid Ink #1C1917 card with a single massive number in Instrument Sans medium weight 500, warm white: '{metric_number}'. Below: short Inter caption in Muted #78716C: '{metric_caption}'. Top-left corner of this tile: a small emerald green #10B981 ping-pulse dot.
+
+TILE D (bottom-right, square): Paper #FAF7EF card with a mini chat-UI excerpt, two bubbles in strict bilateral order — RIGHT (client, Coral bubble #DC2626, white text): '{chat_client}' then LEFT (agent, Sand bubble #EFE5D0, Ink text): '{chat_agent}'. Bubble radius 18px. Below the chat, a small JetBrains Mono label: '{footer_tag}'.
+TEMPLATE_END,
+        ],
+
+        'icon_grid_features' => [
+            'aspect_ratio' => '4:5',
+            'category' => 'illustration',
+            'weight' => 1.0,
+            'description' => 'Four feature cards in a 2x2 grid with stroke-style illustrated icons. No characters, no photography. Niche graphics appear as accent motifs in the background.',
+            'required_copy' => ['headline', 'feat_1_title', 'feat_1_desc', 'feat_2_title', 'feat_2_desc', 'feat_3_title', 'feat_3_desc', 'feat_4_title', 'feat_4_desc', 'footer_tag'],
+            'default_copy' => [
+                'headline' => 'Un agent AI care nu obosește.',
+                'feat_1_title' => 'Răspunde în 2 secunde',
+                'feat_1_desc' => 'Fără timpi morți, fără apeluri pierdute.',
+                'feat_2_title' => 'Vorbește fluent limba română',
+                'feat_2_desc' => 'Accent natural, diacritice corecte.',
+                'feat_3_title' => 'Programări automate',
+                'feat_3_desc' => 'Sincronizate direct în calendarul tău.',
+                'feat_4_title' => 'Funcționează 24/7',
+                'feat_4_desc' => 'Weekend, sărbători, nopți — e acolo.',
+                'footer_tag' => '✦ Agenți AI pentru {niche_label}',
+            ],
+            'template' => <<<'TEMPLATE_END'
+LAYOUT: infographic-style composition on Cream #F5F1E8 background with a faint radial peach #F2E59A glow in the upper center at 8% opacity. NO characters, NO photography. At the top: a medium-weight Romanian headline in Instrument Sans 500, Ink #1C1917, centered, 2 lines max: '{headline}'. Below the headline: a 2x2 grid of 4 feature cards, 24px radius, Paper #FAF7EF background, subtle soft shadow, 16px gaps.
+
+Each card contains (stacked vertically, 24px inner padding):
+ - A stroke-style illustrated icon at the top, 2px weight, Ink #1C1917 with a single Coral #DC2626 accent stroke. Icons follow a consistent flat line-art style (Feather / Lucide).
+ - A small bold Inter 600 title in Ink: '{feat_X_title}'.
+ - A one-line Inter 400 description in Muted #78716C: '{feat_X_desc}'.
+
+CARDS (clockwise from top-left):
+ • Card 1 — clock icon — '{feat_1_title}' / '{feat_1_desc}'
+ • Card 2 — speech-bubble icon — '{feat_2_title}' / '{feat_2_desc}'
+ • Card 3 — chart icon — '{feat_3_title}' / '{feat_3_desc}'
+ • Card 4 — calendar icon — '{feat_4_title}' / '{feat_4_desc}'
+
+BACKGROUND MOTIFS (behind and between cards, VERY low opacity 6-10%, Ink strokes): scatter {niche_graphics} as subtle decorative silhouettes so the viewer senses the niche at a glance.
+
+FOOTER: at the very bottom of the safe zone, a small JetBrains Mono uppercase wide-tracked line in Muted: '{footer_tag}'.
+
+STYLE: Linear × Notion × Apple design-system aesthetic. Confident, clean, premium, modern infographic.
+TEMPLATE_END,
+        ],
+
+        'niche_vignette_scene' => [
+            'aspect_ratio' => '4:5',
+            'category' => 'illustration',
+            'weight' => 1.0,
+            'description' => 'A full flat-illustrated niche scene (workspace of the business) with the coral agent mascot integrated as a helper and 1-2 annotation pills with key message.',
+            'required_copy' => ['headline', 'annot_a', 'annot_b', 'footer_tag'],
+            'default_copy' => [
+                'headline' => 'Agentul tău AI, integrat direct în business.',
+                'annot_a' => 'preia apelurile',
+                'annot_b' => 'programări automate',
+                'footer_tag' => '✦ Agenți AI pentru {niche_label}',
+            ],
+            'template' => <<<'TEMPLATE_END'
+STYLE: full-bleed warm flat-vector illustration (no photography), in the spirit of Figma Config × Notion × Webflow, tuned to the Sambla palette. Friendly, kinetic, slightly playful but premium. Subtle film-grain texture.
+
+SCENE (fills the central safe zone): a full illustrated interior of a {niche_scene} — everything rendered as warm flat vector with gentle gradients. The space is alive with {niche_graphics} placed naturally where they belong (on counters, walls, shelves, tables). Warm Cream #F5F1E8 walls, Sand #EFE5D0 floor, small peach-glow light from a window, a potted plant in terracotta.
+
+In the middle of the scene, floating at a subtle playful tilt: {sambla_mark}. Thin dotted coral lines connect the mark to 2-3 elements in the scene (the phone, the calendar, the counter), suggesting it 'helps' the business.
+
+TOP HEADLINE: inside the safe zone, just below the ceiling of the illustration, a medium-weight Instrument Sans 500 headline in Ink, max 2 lines, centered: '{headline}'.
+
+ANNOTATION PILLS (flat, floating inside the scene, 24px radius, Paper background, Ink text): two coral-accented pills, each with a small stroke icon (phone / calendar / check) and one short Romanian label — '{annot_a}' and '{annot_b}'.
+
+FOOTER: at the bottom of the safe zone, small JetBrains Mono uppercase wide-tracked Muted text: '{footer_tag}'.
+TEMPLATE_END,
+        ],
+
+        'mascot_hero_announcement' => [
+            'aspect_ratio' => '4:5',
+            'category' => 'illustration',
+            'weight' => 1.0,
+            'description' => 'The coral agent mascot as the hero character + a big Romanian headline + niche-prop confetti scattered around. For announcements, feature launches, CTAs.',
+            'required_copy' => ['headline', 'subheadline', 'cta_label', 'footer_tag'],
+            'default_copy' => [
+                'headline' => 'Un agent AI care răspunde în locul tău.',
+                'subheadline' => 'Apeluri, programări, întrebări — preluate în română, 24/7.',
+                'cta_label' => 'Află mai mult →',
+                'footer_tag' => '✦ Agenți AI pentru {niche_label}',
+            ],
+            'template' => <<<'TEMPLATE_END'
+STYLE: warm flat-vector illustration on a Cream #F5F1E8 background with a soft radial peach #F2E59A glow in the upper half at 10% opacity. No photography, no human characters.
+
+HERO (centered in the upper half of the safe zone, ~35% canvas width): an oversized rendering of {sambla_mark}. Small coral sparkles and dotted motion trails surround it, suggesting kinetic life — but the mark itself remains exactly as described, no limbs added.
+
+NICHE CONFETTI: scattered around the mascot (NOT overlapping it), at ~15% opacity and 20-30px size each, a gentle confetti of {niche_graphics} — 4-6 small stroke-style icons that instantly telegraph the niche ({niche_scene}).
+
+HEADLINE (middle of safe zone, below the hero): Instrument Sans 500 medium weight, Ink #1C1917, 2 lines centered, tight kerning: '{headline}'. Max 8 words total.
+
+SUBHEADLINE (directly below headline): Inter 400, Muted #78716C, 1 line centered: '{subheadline}'.
+
+CTA PILL (below the subheadline, centered): coral pill #DC2626 with white Inter 500 label + a right-facing arrow: '{cta_label}'. 48px radius, generous horizontal padding.
+
+FOOTER TAG (very bottom of safe zone): small JetBrains Mono uppercase wide-tracked in Muted: '{footer_tag}'.
 TEMPLATE_END,
         ],
 
@@ -188,5 +331,51 @@ TEMPLATE_END,
         'auto' => 'a male auto-service owner (40s) in his workshop',
         'cofetar' => 'a female bakery owner (late 30s) in her apron',
         'consultant' => 'a female consultant (30s)',
+    ],
+
+    // Small stroke-style props/icons that telegraph the niche at a glance.
+    // Rendered as confetti / background motifs / desk objects depending on the pattern.
+    'niche_graphic_elements' => [
+        'default' => 'a coffee mug, an open notebook, a smartphone, a potted plant, a sparkle',
+        'veterinar' => 'paw prints, a stethoscope, a dog bowl, a small leash, a friendly cat silhouette, a heart',
+        'stomatolog' => 'a stylized tooth, a toothbrush, mint leaves, a smile arc, a tiny mirror, a sparkle',
+        'contabil' => 'a calculator, a small bar-chart, a calendar page, a pen, a folder, a tiny checkmark',
+        'avocat' => 'a balanced scale, a quill pen, a leather-bound book, a small gavel, a document with a seal',
+        'salon' => 'open scissors, a comb, a hair-dryer silhouette, a small potted fern, a hand mirror, a sparkle',
+        'restaurant' => 'a fork and knife, a steaming plate, a wine glass, a croissant, a small herb sprig, a flame',
+        'imobiliare' => 'a house silhouette, a key, a measuring tape, a doorway, a small pin-drop marker, a plant',
+        'auto' => 'a wrench, a gear, a car silhouette, a tire, an oil drop, a small spanner',
+        'cofetar' => 'a croissant, a coffee cup with steam, a rolling pin, a loaf of bread, a sprinkle of flour, a heart',
+        'consultant' => 'a briefcase, a line-chart going up, a laptop, a notebook, a coffee, a lightbulb',
+    ],
+
+    // A one-line description of the niche workplace used by scene-oriented patterns.
+    'niche_scene' => [
+        'default' => 'a warm modern small-business workspace with a desk and natural daylight',
+        'veterinar' => 'a small, warm veterinary clinic with an exam table, a shelf of supplies, a dog-friendly mat, a small waiting-bench through a doorway',
+        'stomatolog' => 'a bright minimal dental clinic with a modern chair, a large lamp, warm wooden accents and a plant',
+        'contabil' => 'a calm accounting office with a wooden desk, a laptop, neatly stacked folders, a large window with warm light',
+        'avocat' => 'a warm law office with a bookshelf, a leather chair, a large wooden desk, a green banker lamp',
+        'salon' => 'a warm modern salon interior with a styling chair, a large mirror, brass accents, a potted eucalyptus plant',
+        'restaurant' => 'a cozy bistro kitchen with an open-flame stove, hanging pots, a wooden prep counter and herbs on the wall',
+        'imobiliare' => 'a staged modern apartment living room with floor-to-ceiling windows, warm daylight, minimal decor',
+        'auto' => 'a clean neighborhood auto workshop with a tool-wall, a lift, a car silhouette in the background',
+        'cofetar' => 'a small warm neighborhood bakery with a display case of pastries, a chalkboard menu, a basket of bread, a potted basil',
+        'consultant' => 'a minimal co-working desk by a window with a laptop, a notebook, a coffee, a city view softly blurred',
+    ],
+
+    // Short Romanian label for the niche, used in footer tags like "Agenți AI pentru {niche_label}".
+    'niche_labels' => [
+        'default' => 'afacerea ta',
+        'veterinar' => 'cabinete veterinare',
+        'stomatolog' => 'cabinete stomatologice',
+        'contabil' => 'firme de contabilitate',
+        'avocat' => 'cabinete de avocatură',
+        'salon' => 'saloane de înfrumusețare',
+        'restaurant' => 'restaurante și bistrouri',
+        'imobiliare' => 'agenții imobiliare',
+        'auto' => 'ateliere auto',
+        'cofetar' => 'cofetării și brutării',
+        'consultant' => 'consultanți independenți',
     ],
 ];

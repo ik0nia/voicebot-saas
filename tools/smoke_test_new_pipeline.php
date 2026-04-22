@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 $pattern = $argv[1] ?? 'bento_editorial_portrait';
 $niche = $argv[2] ?? 'veterinar';
+$useLogo = in_array('--logo', array_slice($argv, 3), true);
 
 $root = dirname(__DIR__);
 chdir($root);
@@ -23,19 +24,28 @@ if (!isset($config['patterns'][$pattern])) {
 }
 
 $p = $config['patterns'][$pattern];
-$subjectHint = $config['niche_subjects'][$niche] ?? $config['niche_subjects']['default'];
-$subjectHintBefore = $config['niche_subjects_before'][$niche] ?? $config['niche_subjects_before']['default'];
+$resolve = fn(string $map, string $fallback = '') => $config[$map][$niche] ?? $config[$map]['default'] ?? $fallback;
 
 $copy = array_merge($p['default_copy'] ?? [], [
-    'subject_hint' => $subjectHint,
-    'subject_hint_before' => $subjectHintBefore,
-    'subject_hint_after' => $subjectHintBefore,
+    'subject_hint' => $resolve('niche_subjects'),
+    'subject_hint_before' => $resolve('niche_subjects_before'),
+    'subject_hint_after' => $resolve('niche_subjects_before'),
+    'niche_graphics' => $resolve('niche_graphic_elements'),
+    'niche_scene' => $resolve('niche_scene'),
+    'niche_label' => $resolve('niche_labels'),
+    'sambla_mark' => $config['sambla_mark'] ?? '',
 ]);
 
 $rendered = $p['template'];
 foreach ($copy as $k => $v) {
     $rendered = str_replace('{' . $k . '}', (string) $v, $rendered);
 }
+// Second pass for placeholders nested in default_copy values (e.g. footer_tag contains {niche_label}).
+$rendered = str_replace(
+    ['{niche_label}', '{niche_graphics}', '{niche_scene}', '{sambla_mark}'],
+    [$copy['niche_label'], $copy['niche_graphics'], $copy['niche_scene'], $copy['sambla_mark']],
+    $rendered
+);
 
 $finalPrompt = implode("\n\n", [
     $config['brand_preamble'],
@@ -60,8 +70,13 @@ $key = trim(preg_replace('/^OPENAI_API_KEY=/', '', $envLine), "\"' \n\r");
 
 $size = match ($p['aspect_ratio']) {
     '1:1' => '1024x1024',
-    '16:9', '4:3', '3:2' => '1536x1024',
-    default => '1024x1536',
+    '4:5' => '1024x1280',
+    '9:16' => '1024x1792',
+    '2:3' => '1024x1536',
+    '4:3' => '1280x1024',
+    '3:2' => '1536x1024',
+    '16:9' => '1792x1024',
+    default => '1024x1280',
 };
 
 $payload = json_encode([
@@ -72,20 +87,43 @@ $payload = json_encode([
     'n' => 1,
 ], JSON_UNESCAPED_UNICODE);
 
-echo "Calling gpt-image-2 (size={$size})...\n";
+$logoPath = $root . '/public/images/logo-icon.png';
+$endpoint = $useLogo && file_exists($logoPath)
+    ? 'https://api.openai.com/v1/images/edits'
+    : 'https://api.openai.com/v1/images/generations';
+
+echo "Calling gpt-image-2 (size={$size}, endpoint=" . basename($endpoint) . ($useLogo ? " +logo-ref" : "") . ")...\n";
 $start = microtime(true);
 
-$ch = curl_init('https://api.openai.com/v1/images/generations');
-curl_setopt_array($ch, [
-    CURLOPT_POST => true,
-    CURLOPT_POSTFIELDS => $payload,
-    CURLOPT_HTTPHEADER => [
-        "Authorization: Bearer {$key}",
-        'Content-Type: application/json',
-    ],
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_TIMEOUT => 300,
-]);
+$ch = curl_init($endpoint);
+if ($useLogo && file_exists($logoPath)) {
+    // multipart for /v1/images/edits
+    curl_setopt_array($ch, [
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => [
+            'model' => 'gpt-image-2',
+            'prompt' => $finalPrompt,
+            'size' => $size,
+            'quality' => 'high',
+            'n' => 1,
+            'image' => new CURLFile($logoPath, 'image/png', 'logo-icon.png'),
+        ],
+        CURLOPT_HTTPHEADER => ["Authorization: Bearer {$key}"],
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 300,
+    ]);
+} else {
+    curl_setopt_array($ch, [
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => $payload,
+        CURLOPT_HTTPHEADER => [
+            "Authorization: Bearer {$key}",
+            'Content-Type: application/json',
+        ],
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 300,
+    ]);
+}
 $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
@@ -110,7 +148,8 @@ if (!$b64) {
 
 $outDir = $root . '/public/test-gpt-image-2';
 if (!is_dir($outDir)) mkdir($outDir, 0755, true);
-$outFile = $outDir . "/pipeline_{$pattern}_{$niche}.png";
+$suffix = $useLogo ? '_logoref' : '';
+$outFile = $outDir . "/pipeline_{$pattern}_{$niche}{$suffix}.png";
 file_put_contents($outFile, base64_decode($b64));
 
 $bytes = filesize($outFile);
