@@ -692,6 +692,18 @@ class AdminSocialController extends Controller
 
         $action = (string) $request->input('action', '');
 
+        $badTextHits = function (\App\Models\SocialPost $p): ?string {
+            $content = trim((string) $p->content);
+            if (mb_strlen($content) < 100) return 'short';
+            $lower = mb_strtolower($content);
+            foreach (['chatbot', 'voicebot', 'imaginați-vă', 'imaginati-va'] as $t) {
+                if (str_contains($lower, $t)) return "term:{$t}";
+            }
+            if (preg_match('/(^|\W)bot(\W|$)/u', $lower)) return 'term:bot';
+            if (empty($p->image_url)) return 'no-image';
+            return null;
+        };
+
         // Inline actions — run Eloquent directly, not through Artisan.
         $inline = [
             'stats' => function () {
@@ -699,6 +711,118 @@ class AdminSocialController extends Controller
                     ->groupBy('status')->pluck('c', 'status');
                 $orphanGroups = \App\Models\SocialPostGroup::doesntHave('posts')->count();
                 return ['counts_by_status' => $counts, 'orphan_groups' => $orphanGroups];
+            },
+
+            'scheduled-audit' => function () use ($badTextHits) {
+                $posts = \App\Models\SocialPost::where('status', 'scheduled')->get();
+                $good = [];
+                $bad = [];
+                foreach ($posts as $p) {
+                    $reason = $badTextHits($p);
+                    $reason === null ? $good[] = $p->id : $bad[$reason] = ($bad[$reason] ?? 0) + 1;
+                }
+                return [
+                    'total' => $posts->count(),
+                    'good_text' => count($good),
+                    'bad_text' => array_sum($bad),
+                    'bad_reasons' => $bad,
+                ];
+            },
+
+            'scheduled-wipe-bad' => function () use ($badTextHits) {
+                $posts = \App\Models\SocialPost::where('status', 'scheduled')->get();
+                $idsToDelete = [];
+                $groupIds = [];
+                foreach ($posts as $p) {
+                    if ($badTextHits($p) !== null) {
+                        $idsToDelete[] = $p->id;
+                        if ($p->group_id) $groupIds[] = $p->group_id;
+                    }
+                }
+                $deleted = \App\Models\SocialPost::whereIn('id', $idsToDelete)->delete();
+                $orphans = \App\Models\SocialPostGroup::whereIn('id', array_unique($groupIds))
+                    ->doesntHave('posts')->delete();
+                return ['deleted' => $deleted, 'orphan_groups' => $orphans];
+            },
+
+            'regen-scheduled-async' => function () {
+                $count = \App\Models\SocialPost::where('status', 'scheduled')->whereNotNull('image_url')->count();
+                \App\Jobs\RegenerateScheduledImagesBulkJob::dispatch();
+                return [
+                    'dispatched' => true,
+                    'queued_posts' => $count,
+                    'estimated_hours' => round($count * 103 / 3600, 1),
+                    'note' => 'Running on Horizon queue; monitor progress via stats action.',
+                ];
+            },
+
+            'reorganize-scheduled' => function () {
+                // Redistribute scheduled posts 1 group per day starting tomorrow 10:00.
+                // FB feed at 10:00, IG sibling 10:05, Story (if any) at 18:00 of the same day.
+                // Groups are ordered by their existing scheduled_at (oldest first) so the
+                // "first-in, first-out" intent of the original calendar is preserved.
+                $groupIds = \App\Models\SocialPost::where('status', 'scheduled')
+                    ->whereNotNull('group_id')
+                    ->distinct()
+                    ->pluck('group_id')
+                    ->values();
+
+                // Keep a stable order: oldest existing scheduled_at first.
+                $groupOrder = \App\Models\SocialPost::whereIn('group_id', $groupIds)
+                    ->where('status', 'scheduled')
+                    ->selectRaw('group_id, min(scheduled_at) as earliest')
+                    ->groupBy('group_id')
+                    ->orderBy('earliest')
+                    ->pluck('group_id')
+                    ->values();
+
+                $dayOffset = 1;
+                $touched = 0;
+                foreach ($groupOrder as $gid) {
+                    $day = now()->addDays($dayOffset)->setTime(10, 0, 0);
+                    $posts = \App\Models\SocialPost::where('group_id', $gid)
+                        ->where('status', 'scheduled')
+                        ->orderBy('id')
+                        ->get();
+                    foreach ($posts as $p) {
+                        if ($p->post_type === 'story') {
+                            $time = $day->copy()->setTime(18, 0, 0);
+                        } else {
+                            $time = $day->copy();
+                            if ($p->platform === 'instagram') {
+                                $time = $time->addMinutes(5);
+                            }
+                        }
+                        $p->update(['scheduled_at' => $time]);
+                        $touched++;
+                    }
+                    $dayOffset++;
+                }
+
+                // Handle solo scheduled posts (no group_id) separately at the end.
+                $solo = \App\Models\SocialPost::where('status', 'scheduled')
+                    ->whereNull('group_id')
+                    ->orderBy('scheduled_at')->orderBy('id')->get();
+                foreach ($solo as $p) {
+                    $day = now()->addDays($dayOffset)->setTime(10, 0, 0);
+                    $p->update(['scheduled_at' => $day]);
+                    $dayOffset++;
+                    $touched++;
+                }
+
+                return [
+                    'groups' => $groupOrder->count(),
+                    'solo_posts' => $solo->count(),
+                    'posts_updated' => $touched,
+                    'span_days' => $dayOffset - 1,
+                    'first_slot' => now()->addDay()->setTime(10, 0, 0)->toDateTimeString(),
+                    'last_slot' => now()->addDays($dayOffset - 1)->setTime(10, 0, 0)->toDateTimeString(),
+                ];
+            },
+
+            'wipe-failed' => function () {
+                $deleted = \App\Models\SocialPost::where('status', 'failed')->delete();
+                return ['deleted' => $deleted];
             },
             'wipe-scheduled-half' => function () {
                 $total = \App\Models\SocialPost::where('status', 'scheduled')->count();
