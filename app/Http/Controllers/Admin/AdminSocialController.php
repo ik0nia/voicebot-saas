@@ -886,6 +886,30 @@ class AdminSocialController extends Controller
                 ];
             },
 
+            'scheduled-regenerated-sample' => function () {
+                $sample = \App\Models\SocialPost::where('status', 'scheduled')
+                    ->where('image_prompt', 'like', 'pattern:%')
+                    ->orderByDesc('updated_at')
+                    ->limit(5)
+                    ->get(['id', 'platform', 'post_type', 'scheduled_at', 'image_url', 'image_prompt', 'group_id', 'updated_at']);
+                $variants = \App\Models\SocialPostVariant::whereIn('social_post_id', $sample->pluck('id'))
+                    ->where('kind', 'image')
+                    ->where('is_active', false)
+                    ->get(['social_post_id', 'image_url as backup_url', 'created_at'])
+                    ->groupBy('social_post_id');
+                return $sample->map(fn ($p) => [
+                    'id' => $p->id,
+                    'platform' => $p->platform,
+                    'post_type' => $p->post_type,
+                    'group_id' => $p->group_id,
+                    'scheduled_at' => (string) $p->scheduled_at,
+                    'new_image' => $p->image_url,
+                    'prompt_tag' => $p->image_prompt,
+                    'updated_at' => (string) $p->updated_at,
+                    'backups' => ($variants->get($p->id) ?? collect())->map(fn ($v) => $v->backup_url)->values(),
+                ]);
+            },
+
             'scheduled-peek' => function () {
                 $first = \App\Models\SocialPost::where('status', 'scheduled')
                     ->orderBy('scheduled_at')->limit(10)->get(['id', 'platform', 'post_type', 'scheduled_at']);
