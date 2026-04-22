@@ -22,7 +22,10 @@ class SwipeController extends Controller
 
     public function queue()
     {
+        // Skip drafts whose image hasn't landed yet — nothing useful to review.
         $posts = SocialPost::where('status', 'draft')
+            ->whereNotNull('image_url')
+            ->where('image_url', '!=', '')
             ->orderBy('created_at')
             ->limit(15)
             ->get()

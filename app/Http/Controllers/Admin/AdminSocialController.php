@@ -684,11 +684,18 @@ class AdminSocialController extends Controller
      */
     public function review(Request $request)
     {
+        // Only show drafts that already have an image — no point reviewing
+        // cards that haven't finished generating.
         $posts = SocialPost::where('status', 'draft')
+            ->whereNotNull('image_url')
+            ->where('image_url', '!=', '')
             ->orderBy('created_at')
             ->limit(10)
             ->get();
-        $total = SocialPost::where('status', 'draft')->count();
+        $total = SocialPost::where('status', 'draft')
+            ->whereNotNull('image_url')
+            ->where('image_url', '!=', '')
+            ->count();
         return view('admin.social.review', compact('posts', 'total'));
     }
 
