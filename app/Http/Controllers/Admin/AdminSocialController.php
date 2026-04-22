@@ -126,7 +126,7 @@ class AdminSocialController extends Controller
 
         $scheduledGroups = $countAsGroups(SocialPost::query()->where('status', 'scheduled'));
         $draftGroups = $countAsGroups(SocialPost::query()->where('status', 'draft'));
-        $draftBufferTarget = 30;
+        $draftBufferTarget = 10;
 
         $monthStart = now()->startOfMonth();
         $monthEnd = now()->endOfMonth();
@@ -828,6 +828,22 @@ class AdminSocialController extends Controller
                 $deleted = \App\Models\SocialPost::where('status', 'failed')->delete();
                 return ['deleted' => $deleted];
             },
+
+            'ensure-drafts-now' => function () use ($request) {
+                $target = (int) ($request->input('target', 10));
+                $perTick = (int) ($request->input('per_tick', 10));
+                \Illuminate\Support\Facades\Artisan::call('social:ensure-drafts', [
+                    '--target' => $target,
+                    '--per-tick' => $perTick,
+                    '--spacing' => 2,
+                ]);
+                $output = \Illuminate\Support\Facades\Artisan::output();
+                return [
+                    'target' => $target,
+                    'per_tick' => $perTick,
+                    'output' => mb_substr($output, -1500),
+                ];
+            },
             'wipe-scheduled-half' => function () {
                 $total = \App\Models\SocialPost::where('status', 'scheduled')->count();
                 $toDelete = intdiv($total, 2);
@@ -931,9 +947,9 @@ class AdminSocialController extends Controller
     {
         try {
             Artisan::call('social:ensure-drafts', [
-                '--target' => 30,
-                '--per-tick' => 5,
-                '--spacing' => 20,
+                '--target' => 10,
+                '--per-tick' => 2,
+                '--spacing' => 15,
             ]);
         } catch (\Throwable $e) {
             \Log::warning('refillDraftBuffer failed', ['error' => $e->getMessage()]);
