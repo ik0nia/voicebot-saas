@@ -793,9 +793,9 @@ class AdminSocialController extends Controller
 
                 $dayOffset = 1;
                 foreach ($posts as $p) {
-                    // Random window 09:30 → 12:30 so the feed doesn't look cron-stamped.
-                    $offset = mt_rand(0, 180);
-                    $slot = now()->addDays($dayOffset)->setTime(9, 30, 0)->addMinutes($offset);
+                    // Random window 10:00 → 21:00 so the feed looks human-driven across the day.
+                    $offset = mt_rand(0, 660); // 11 hours = 660 minutes
+                    $slot = now()->addDays($dayOffset)->setTime(10, 0, 0)->addMinutes($offset);
                     $p->update(['scheduled_at' => $slot]);
                     $dayOffset++;
                 }
