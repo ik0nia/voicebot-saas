@@ -730,6 +730,7 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
     // Social Media Management
     Route::prefix('social')->name('admin.social.')->group(function () {
         Route::get('/', [AdminSocialController::class, 'index'])->name('index');
+        Route::get('/review', [AdminSocialController::class, 'review'])->name('review');
         Route::post('/generate', [AdminSocialController::class, 'generate'])->name('generate');
         Route::get('/post/{post}', [AdminSocialController::class, 'show'])->name('show');
         Route::get('/post/{post}/edit', [AdminSocialController::class, 'edit'])->name('edit');

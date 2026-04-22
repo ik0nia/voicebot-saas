@@ -677,6 +677,21 @@ class AdminSocialController extends Controller
      * Protected by the same `super_admin` middleware as the rest of this
      * controller's routes (see routes/web.php).
      */
+    /**
+     * Stripped-down review queue. Shows the 10 oldest drafts (platform-agnostic,
+     * grouped naturally by group_id in the UI) so the reviewer can approve /
+     * edit / regen / reject without noise from scheduled/published posts.
+     */
+    public function review(Request $request)
+    {
+        $posts = SocialPost::where('status', 'draft')
+            ->orderBy('created_at')
+            ->limit(10)
+            ->get();
+        $total = SocialPost::where('status', 'draft')->count();
+        return view('admin.social.review', compact('posts', 'total'));
+    }
+
     public function maintenance(Request $request)
     {
         // Dual auth path:

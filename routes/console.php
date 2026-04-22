@@ -67,19 +67,13 @@ Schedule::call(function () {
 Schedule::command('social:cleanup-stuck --minutes=10')->everyFifteenMinutes();
 Schedule::command('social:purge-deleted --days=7')->dailyAt('03:30');
 
-// Keep the draft review queue topped up at 5 GROUPS (one idea = FB+IG+Story).
-// PAUSED 2026-04-14: backlog de 306 grupuri, texte vechi cu "bot"/"Imaginați-vă".
-// Reactivează după curățare backlog.
-// Schedule::command('social:ensure-drafts --target=5 --per-tick=2 --spacing=30')
-//     ->everyFiveMinutes()
-//     ->withoutOverlapping();
-
-// 2026-04-22 — new cadence: 1 premium post per day via the gpt-image-2 pattern
-// pipeline (brand-aligned visuals + GPT-5.4 RO copy). The draft goes into the
-// review queue at 09:00 local time so reviewers can approve it in the morning
-// and let AutoPublishSocialPost schedule the publish.
-Schedule::command('social:generate-batch 1 --drafts')
-    ->dailyAt('09:00')
+// 2026-04-22 — reactivated after the gpt-image-2 pipeline migration + backlog
+// cleanup. Target: keep a rolling buffer of 10 draft groups ready for review
+// via /admin/social/review. Generates ~2 new groups per tick (15 min spacing)
+// so the buffer stays populated as the reviewer approves/rejects.
+Schedule::command('social:ensure-drafts --target=10 --per-tick=2 --spacing=15')
+    ->everyFifteenMinutes()
+    ->between('08:00', '22:00')
     ->withoutOverlapping()
     ->onOneServer();
 
