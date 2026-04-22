@@ -25,6 +25,7 @@ class RegenerateScheduledImagesBulkJob implements ShouldQueue
 
     public function __construct(
         public ?int $limit = null,
+        public ?string $notifyEmail = 'codrut@ikonia.ro',
     ) {}
 
     public function handle(): void
@@ -38,11 +39,62 @@ class RegenerateScheduledImagesBulkJob implements ShouldQueue
             $args['--limit'] = $this->limit;
         }
 
+        $start = microtime(true);
         Log::info('RegenerateScheduledImagesBulkJob: starting', $args);
+
         Artisan::call('social:regenerate-images', $args);
         $output = Artisan::output();
+        $elapsedMin = round((microtime(true) - $start) / 60, 1);
+
         Log::info('RegenerateScheduledImagesBulkJob: finished', [
+            'elapsed_min' => $elapsedMin,
             'output_tail' => mb_substr($output, -2000),
         ]);
+
+        if ($this->notifyEmail) {
+            $this->sendReport($this->notifyEmail, $elapsedMin, $output);
+        }
+    }
+
+    private function sendReport(string $to, float $elapsedMin, string $output): void
+    {
+        try {
+            $host = (string) \App\Models\PlatformSetting::get('mail_host', 'mail.sambla.ro');
+            $port = (int) \App\Models\PlatformSetting::get('mail_port', 587);
+            $user = (string) \App\Models\PlatformSetting::get('mail_username', 'noreply@sambla.ro');
+            $pass = (string) \App\Models\PlatformSetting::get('mail_password', '');
+            $from = (string) \App\Models\PlatformSetting::get('mail_from_address', 'noreply@sambla.ro');
+            if ($pass === '') {
+                Log::warning('RegenerateScheduledImagesBulkJob: mail password missing; skipping email.');
+                return;
+            }
+
+            $label = $this->limit ? "limit={$this->limit}" : 'ALL scheduled';
+            $subject = "[Sambla] Regen imagini — {$label} · {$elapsedMin} min";
+
+            $tail = mb_substr($output, -6000);
+            $html = "<h2>Regenerare imagini scheduled — gata</h2>"
+                . "<p><strong>Durata:</strong> {$elapsedMin} min · <strong>Scope:</strong> {$label}</p>"
+                . "<p>Vezi /admin/social pentru review. Backup-urile originale sunt în <code>SocialPostVariant</code> (inactive).</p>"
+                . "<hr>"
+                . "<pre style='font-family:ui-monospace,monospace;font-size:12px;line-height:1.4;white-space:pre-wrap;background:#faf7ef;padding:12px;border-radius:8px;max-height:640px;overflow:auto'>"
+                . htmlspecialchars($tail)
+                . "</pre>";
+
+            $msg = new \Symfony\Component\Mime\Email();
+            $msg->from($from)->to($to)
+                ->replyTo('servus@sambla.ro')
+                ->subject($subject)
+                ->html($html);
+
+            $transport = new \Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport($host, $port, true);
+            $transport->setUsername($user);
+            $transport->setPassword($pass);
+
+            (new \Symfony\Component\Mailer\Mailer($transport))->send($msg);
+            Log::info('RegenerateScheduledImagesBulkJob: email sent', ['to' => $to]);
+        } catch (\Throwable $e) {
+            Log::error('RegenerateScheduledImagesBulkJob: email failed', ['error' => $e->getMessage()]);
+        }
     }
 }

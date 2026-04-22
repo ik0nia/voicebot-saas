@@ -745,15 +745,40 @@ class AdminSocialController extends Controller
                 return ['deleted' => $deleted, 'orphan_groups' => $orphans];
             },
 
-            'regen-scheduled-async' => function () {
+            'regen-scheduled-async' => function () use ($request) {
+                $limit = (int) $request->input('limit', 0);
+                $email = (string) $request->input('email', 'codrut@ikonia.ro');
                 $count = \App\Models\SocialPost::where('status', 'scheduled')->whereNotNull('image_url')->count();
-                \App\Jobs\RegenerateScheduledImagesBulkJob::dispatch();
+                $batch = $limit > 0 ? min($limit, $count) : $count;
+                \App\Jobs\RegenerateScheduledImagesBulkJob::dispatch(
+                    $limit > 0 ? $limit : null,
+                    $email ?: null
+                );
                 return [
                     'dispatched' => true,
-                    'queued_posts' => $count,
-                    'estimated_hours' => round($count * 103 / 3600, 1),
-                    'note' => 'Running on Horizon queue; monitor progress via stats action.',
+                    'queued_posts' => $batch,
+                    'scope' => $limit > 0 ? "first {$limit}" : 'all scheduled',
+                    'estimated_minutes' => round($batch * 103 / 60, 1),
+                    'notify_email' => $email ?: null,
+                    'note' => 'Running on Horizon queue; email report sent on completion.',
                 ];
+            },
+
+            'kill-regen-jobs' => function () {
+                // Clear any pending/delayed regeneration jobs from the default Horizon queue.
+                $cleared = 0;
+                try {
+                    $pending = \Illuminate\Support\Facades\Redis::lrange('queues:default', 0, -1);
+                    foreach ($pending as $payload) {
+                        if (str_contains((string) $payload, 'RegenerateScheduledImagesBulkJob')) {
+                            \Illuminate\Support\Facades\Redis::lrem('queues:default', 1, $payload);
+                            $cleared++;
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    return ['error' => $e->getMessage()];
+                }
+                return ['cleared_pending' => $cleared, 'note' => 'Running jobs NOT killed; they finish the current post then exit cleanly if queue is empty.'];
             },
 
             'reorganize-scheduled' => function () {
@@ -768,7 +793,9 @@ class AdminSocialController extends Controller
 
                 $dayOffset = 1;
                 foreach ($posts as $p) {
-                    $slot = now()->addDays($dayOffset)->setTime(10, 0, 0);
+                    // Random window 09:30 → 12:30 so the feed doesn't look cron-stamped.
+                    $offset = mt_rand(0, 180);
+                    $slot = now()->addDays($dayOffset)->setTime(9, 30, 0)->addMinutes($offset);
                     $p->update(['scheduled_at' => $slot]);
                     $dayOffset++;
                 }
