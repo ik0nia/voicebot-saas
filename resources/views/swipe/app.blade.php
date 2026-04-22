@@ -363,6 +363,7 @@ function escapeHtml(s) {
 
 function attachSwipe(card) {
   let startX = 0, startY = 0, dx = 0, dy = 0, dragging = false;
+  let startedInBody = false, directionLocked = null; // null | 'h' | 'v'
   const badgeApprove = card.querySelector('.badge-approve');
   const badgeReject = card.querySelector('.badge-reject');
   const badgeSkip = card.querySelector('.badge-skip');
@@ -372,24 +373,40 @@ function attachSwipe(card) {
     dragging = true;
     const p = e.touches ? e.touches[0] : e;
     startX = p.clientX; startY = p.clientY; dx = 0; dy = 0;
+    startedInBody = !!(e.target && e.target.closest && e.target.closest('.card-body'));
+    directionLocked = null;
     card.style.transition = 'none';
   };
   const onMove = (e) => {
     if (!dragging) return;
     const p = e.touches ? e.touches[0] : e;
-    dx = p.clientX - startX;
-    dy = p.clientY - startY;
+    const ndx = p.clientX - startX;
+    const ndy = p.clientY - startY;
+
+    // First meaningful move: lock direction so we don't hijack vertical text scroll.
+    if (!directionLocked) {
+      const absNdx = Math.abs(ndx), absNdy = Math.abs(ndy);
+      if (absNdx < 8 && absNdy < 8) return; // ignore jitter
+      directionLocked = absNdy > absNdx ? 'v' : 'h';
+      if (directionLocked === 'v' && startedInBody) {
+        // The user is scrolling the text area — let the browser handle it natively.
+        dragging = false;
+        card.style.transform = '';
+        [badgeApprove, badgeReject, badgeSkip].forEach(b => b.style.opacity = 0);
+        return;
+      }
+    }
+
+    dx = ndx; dy = ndy;
     const rot = dx * 0.06;
     card.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot}deg)`;
     [badgeApprove, badgeReject, badgeSkip].forEach(b => b.style.opacity = 0);
     const absDx = Math.abs(dx);
-    if (dy < -40 && absDx < 80) {
-      // Swipe up = skip
-      const op = Math.min(Math.abs(dy) / 120, 1);
-      badgeSkip.style.opacity = op;
-    } else if (dx > 0) {
+    if (directionLocked === 'v' && dy < -40) {
+      badgeSkip.style.opacity = Math.min(Math.abs(dy) / 120, 1);
+    } else if (directionLocked === 'h' && dx > 0) {
       badgeApprove.style.opacity = Math.min(absDx / 120, 1);
-    } else if (dx < 0) {
+    } else if (directionLocked === 'h' && dx < 0) {
       badgeReject.style.opacity = Math.min(absDx / 120, 1);
     }
   };
@@ -399,11 +416,11 @@ function attachSwipe(card) {
     card.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
     const threshold = 110;
     const absDx = Math.abs(dx);
-    if (dy < -threshold && absDx < 80) {
+    if (directionLocked === 'v' && dy < -threshold) {
       commitSkip(card);
-    } else if (dx > threshold) {
+    } else if (directionLocked === 'h' && dx > threshold) {
       commitSwipe(card, 'approve');
-    } else if (dx < -threshold) {
+    } else if (directionLocked === 'h' && dx < -threshold) {
       commitSwipe(card, 'reject');
     } else {
       card.style.transform = '';
