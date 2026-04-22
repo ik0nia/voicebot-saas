@@ -26,7 +26,11 @@ class RegenerateScheduledImagesBulkJob implements ShouldQueue
     public function __construct(
         public ?int $limit = null,
         public ?string $notifyEmail = 'codrut@ikonia.ro',
-    ) {}
+    ) {
+        // Route to the long-timeout `knowledge` supervisor — the default
+        // chat-workers timeout (60s) kills gpt-image-2 calls mid-flight.
+        $this->onQueue('knowledge');
+    }
 
     public function handle(): void
     {

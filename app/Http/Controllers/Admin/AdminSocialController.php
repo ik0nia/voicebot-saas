@@ -898,6 +898,20 @@ class AdminSocialController extends Controller
                 ];
             },
 
+            'fill-missing-images' => function () {
+                $drafts_no_image = \App\Models\SocialPost::where('status', 'draft')
+                    ->where(function ($q) { $q->whereNull('image_url')->orWhere('image_url', ''); })
+                    ->count();
+                \App\Jobs\BackfillDraftImagesJob::dispatch();
+                return [
+                    'dispatched' => true,
+                    'drafts_without_image' => $drafts_no_image,
+                    'estimated_minutes' => round($drafts_no_image * 103 / 60, 1),
+                    'queue' => 'knowledge',
+                    'note' => 'Routed to long-timeout worker (600s per job). Backfill runs backfill-images command.',
+                ];
+            },
+
             'ensure-drafts-now' => function () use ($request) {
                 $target = (int) ($request->input('target', 10));
                 $perTick = (int) ($request->input('per_tick', 10));
