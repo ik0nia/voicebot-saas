@@ -898,11 +898,14 @@ class AdminSocialController extends Controller
                 ];
             },
 
-            'horizon-terminate' => function () {
-                \Illuminate\Support\Facades\Artisan::call('horizon:terminate');
+            'restart-workers' => function () {
+                // queue:restart signals all long-running workers to finish their
+                // current job and exit cleanly. Horizon's supervisor then spawns
+                // fresh worker processes with the current env/config.
+                \Illuminate\Support\Facades\Artisan::call('queue:restart');
                 return [
-                    'terminated' => true,
-                    'note' => 'Workers finish current job then respawn; refreshes env/config in memory.',
+                    'restarted' => true,
+                    'note' => 'Workers exit after current job; supervisor respawns with fresh env.',
                     'output' => \Illuminate\Support\Facades\Artisan::output(),
                 ];
             },
