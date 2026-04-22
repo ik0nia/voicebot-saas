@@ -867,6 +867,52 @@ class AdminSocialController extends Controller
                 return ['deleted' => $deleted];
             },
 
+            'restore-failed-to-schedule' => function () {
+                // Move every failed post back into the scheduled queue at the END.
+                // Preserves groups: all failed posts in the same group land on the
+                // same day (FB at hero slot, IG +5m, Story +2h).
+                $failed = \App\Models\SocialPost::where('status', 'failed')
+                    ->orderBy('group_id')
+                    ->orderBy('id')
+                    ->get();
+                if ($failed->isEmpty()) return ['restored' => 0, 'note' => 'no failed posts'];
+
+                $lastScheduled = \App\Models\SocialPost::where('status', 'scheduled')->max('scheduled_at');
+                $baseDay = $lastScheduled
+                    ? \Carbon\Carbon::parse($lastScheduled)->addDay()->setTime(10, 0, 0)
+                    : now()->addDay()->setTime(10, 0, 0);
+
+                $byGroup = $failed->groupBy(fn ($p) => $p->group_id ?? 'solo_' . $p->id);
+                $dayOffset = 0;
+                $restored = 0;
+
+                foreach ($byGroup as $groupPosts) {
+                    $heroSlot = $baseDay->copy()->addDays($dayOffset)->addMinutes(mt_rand(0, 540));
+                    foreach ($groupPosts as $p) {
+                        $slot = $heroSlot->copy();
+                        if ($p->post_type === 'story') {
+                            $slot = $heroSlot->copy()->addHours(2);
+                        } elseif ($p->platform === 'instagram') {
+                            $slot = $heroSlot->copy()->addMinutes(5);
+                        }
+                        $p->update([
+                            'status' => 'scheduled',
+                            'scheduled_at' => $slot,
+                            'error_message' => null,
+                        ]);
+                        $restored++;
+                    }
+                    $dayOffset++;
+                }
+
+                return [
+                    'restored' => $restored,
+                    'groups' => $byGroup->count(),
+                    'first_slot' => $baseDay->toDateTimeString(),
+                    'last_slot' => $baseDay->copy()->addDays($dayOffset - 1)->toDateTimeString(),
+                ];
+            },
+
             'drafts-peek' => function () {
                 $drafts = \App\Models\SocialPost::where('status', 'draft')
                     ->orderBy('created_at')
