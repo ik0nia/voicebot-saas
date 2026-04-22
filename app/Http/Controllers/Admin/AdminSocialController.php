@@ -757,66 +757,28 @@ class AdminSocialController extends Controller
             },
 
             'reorganize-scheduled' => function () {
-                // Redistribute scheduled posts 1 group per day starting tomorrow 10:00.
-                // FB feed at 10:00, IG sibling 10:05, Story (if any) at 18:00 of the same day.
-                // Groups are ordered by their existing scheduled_at (oldest first) so the
-                // "first-in, first-out" intent of the original calendar is preserved.
-                $groupIds = \App\Models\SocialPost::where('status', 'scheduled')
-                    ->whereNotNull('group_id')
-                    ->distinct()
-                    ->pluck('group_id')
-                    ->values();
-
-                // Keep a stable order: oldest existing scheduled_at first.
-                $groupOrder = \App\Models\SocialPost::whereIn('group_id', $groupIds)
-                    ->where('status', 'scheduled')
-                    ->selectRaw('group_id, min(scheduled_at) as earliest')
-                    ->groupBy('group_id')
-                    ->orderBy('earliest')
-                    ->pluck('group_id')
-                    ->values();
+                // STRICT: exactly one SocialPost row per day, starting tomorrow at 10:00.
+                // Ordered by their existing scheduled_at (oldest first) so the original
+                // chronology is preserved; FB, IG siblings and Story children each consume
+                // their own day.
+                $posts = \App\Models\SocialPost::where('status', 'scheduled')
+                    ->orderBy('scheduled_at')
+                    ->orderBy('id')
+                    ->get();
 
                 $dayOffset = 1;
-                $touched = 0;
-                foreach ($groupOrder as $gid) {
-                    $day = now()->addDays($dayOffset)->setTime(10, 0, 0);
-                    $posts = \App\Models\SocialPost::where('group_id', $gid)
-                        ->where('status', 'scheduled')
-                        ->orderBy('id')
-                        ->get();
-                    foreach ($posts as $p) {
-                        if ($p->post_type === 'story') {
-                            $time = $day->copy()->setTime(18, 0, 0);
-                        } else {
-                            $time = $day->copy();
-                            if ($p->platform === 'instagram') {
-                                $time = $time->addMinutes(5);
-                            }
-                        }
-                        $p->update(['scheduled_at' => $time]);
-                        $touched++;
-                    }
+                foreach ($posts as $p) {
+                    $slot = now()->addDays($dayOffset)->setTime(10, 0, 0);
+                    $p->update(['scheduled_at' => $slot]);
                     $dayOffset++;
-                }
-
-                // Handle solo scheduled posts (no group_id) separately at the end.
-                $solo = \App\Models\SocialPost::where('status', 'scheduled')
-                    ->whereNull('group_id')
-                    ->orderBy('scheduled_at')->orderBy('id')->get();
-                foreach ($solo as $p) {
-                    $day = now()->addDays($dayOffset)->setTime(10, 0, 0);
-                    $p->update(['scheduled_at' => $day]);
-                    $dayOffset++;
-                    $touched++;
                 }
 
                 return [
-                    'groups' => $groupOrder->count(),
-                    'solo_posts' => $solo->count(),
-                    'posts_updated' => $touched,
+                    'posts_updated' => $posts->count(),
                     'span_days' => $dayOffset - 1,
                     'first_slot' => now()->addDay()->setTime(10, 0, 0)->toDateTimeString(),
                     'last_slot' => now()->addDays($dayOffset - 1)->setTime(10, 0, 0)->toDateTimeString(),
+                    'cadence' => 'strict one post per day (no siblings share day)',
                 ];
             },
 
