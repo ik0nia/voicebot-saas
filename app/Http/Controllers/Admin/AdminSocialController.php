@@ -947,6 +947,66 @@ class AdminSocialController extends Controller
                 return $out;
             },
 
+            'force-one-scheduled' => function () {
+                // Synchronously regen the image of the next scheduled post via the
+                // real orchestrator (pattern catalog + gpt-image-2). Uses the production
+                // path so the result matches what the async bulk job will produce.
+                $post = \App\Models\SocialPost::where('status', 'scheduled')
+                    ->whereNotNull('image_url')
+                    ->where(function ($q) { $q->whereNull('image_prompt')->orWhere('image_prompt', 'not like', 'pattern:%'); })
+                    ->orderBy('id')
+                    ->first();
+                if (!$post) return ['error' => 'no scheduled post needs regen'];
+
+                /** @var \App\Services\Social\Patterns\PatternCatalog $catalog */
+                $catalog = app(\App\Services\Social\Patterns\PatternCatalog::class);
+                /** @var \App\Services\Social\NicheResolver $resolver */
+                $resolver = app(\App\Services\Social\NicheResolver::class);
+                /** @var \App\Services\Social\SocialImageOrchestrator $orch */
+                $orch = app(\App\Services\Social\SocialImageOrchestrator::class);
+
+                $resolved = $resolver->resolve($post->metadata ?? []);
+                $pattern = $catalog->pickWeighted() ?: 'flat_illustration_icons';
+
+                // Backup first.
+                if ($post->image_url) {
+                    \App\Models\SocialPostVariant::create([
+                        'social_post_id' => $post->id,
+                        'kind' => 'image',
+                        'image_url' => $post->image_url,
+                        'image_prompt' => $post->image_prompt,
+                        'is_active' => false,
+                    ]);
+                }
+
+                $start = microtime(true);
+                $result = $orch->generate($pattern, $resolved['niche'], [
+                    'key_message' => $resolved['key_message'],
+                    'aspect_override' => $post->post_type === 'story' ? '9:16' : '4:5',
+                ]);
+                $elapsed = round(microtime(true) - $start, 1);
+
+                if (!$result || empty($result['url'])) {
+                    return ['error' => 'orchestrator returned null', 'post_id' => $post->id];
+                }
+
+                $post->update([
+                    'image_url' => $result['url'],
+                    'image_prompt' => 'pattern:' . $pattern . '|niche:' . $resolved['niche'] . '|msg:' . mb_substr((string) $resolved['key_message'], 0, 120),
+                ]);
+
+                return [
+                    'post_id' => $post->id,
+                    'platform' => $post->platform,
+                    'post_type' => $post->post_type,
+                    'scheduled_at' => (string) $post->scheduled_at,
+                    'pattern' => $pattern,
+                    'niche' => $resolved['niche'],
+                    'new_url' => $result['url'],
+                    'elapsed_seconds' => $elapsed,
+                ];
+            },
+
             'force-one-image' => function () {
                 // Inline, synchronous image generation for the FIRST draft with no image.
                 // Bypasses queue + Artisan entirely. Uses quality=low + 1024x1024 (~12s)
