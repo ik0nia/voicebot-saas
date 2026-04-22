@@ -670,6 +670,80 @@ class AdminSocialController extends Controller
     }
 
     /**
+     * Maintenance endpoint — runs one of a whitelisted set of artisan commands
+     * on the live app container. Used by the admin-only maintenance panel to
+     * curate / regenerate / cleanup drafts without SSH access to the server.
+     *
+     * Protected by the same `super_admin` middleware as the rest of this
+     * controller's routes (see routes/web.php).
+     */
+    public function maintenance(Request $request)
+    {
+        // Dual auth path:
+        //  - super_admin session (admin UI) OR
+        //  - Authorization: Bearer MAINTENANCE_TOKEN (env var set via Coolify for remote cleanup).
+        $bearer = $request->bearerToken();
+        $expected = (string) env('MAINTENANCE_TOKEN', '');
+        $sessionAuthed = $request->user() && method_exists($request->user(), 'hasRole') && $request->user()->hasRole('super_admin');
+        $tokenAuthed = $expected !== '' && $bearer !== null && hash_equals($expected, (string) $bearer);
+        if (!$sessionAuthed && !$tokenAuthed) {
+            return response()->json(['error' => 'Unauthenticated.'], 401);
+        }
+
+        $action = (string) $request->input('action', '');
+        $whitelist = [
+            'curate-dry'        => ['social:curate-drafts',    ['--dry-run' => true]],
+            'curate-soft'       => ['social:curate-drafts',    ['--force' => true]],
+            'curate-hard'       => ['social:curate-drafts',    ['--force' => true, '--hard' => true]],
+            'cleanup-dry'       => ['social:cleanup-drafts',   ['--dry-run' => true, '--days' => 7]],
+            'cleanup-7d'        => ['social:cleanup-drafts',   ['--force' => true, '--days' => 7]],
+            'cleanup-3d'        => ['social:cleanup-drafts',   ['--force' => true, '--days' => 3]],
+            'regen-scheduled'   => ['social:regenerate-images', ['--status' => ['scheduled'], '--backup' => true, '--sleep' => 3]],
+            'regen-drafts-all'  => ['social:regenerate-images', ['--status' => ['draft'], '--backup' => true, '--sleep' => 3]],
+            'regen-drafts-10'   => ['social:regenerate-images', ['--status' => ['draft'], '--backup' => true, '--sleep' => 3, '--limit' => 10]],
+            'backfill-missing'  => ['social:backfill-images',   ['--backup' => true]],
+            'generate-one'      => ['social:generate-batch',    [1, '--drafts' => true]],
+        ];
+
+        if (!isset($whitelist[$action])) {
+            return response()->json([
+                'error' => 'Unknown action.',
+                'available' => array_keys($whitelist),
+            ], 422);
+        }
+
+        [$cmd, $args] = $whitelist[$action];
+
+        $startedAt = microtime(true);
+        try {
+            Artisan::call($cmd, $args);
+            $output = Artisan::output();
+            $elapsed = round(microtime(true) - $startedAt, 1);
+
+            return response()->json([
+                'ok' => true,
+                'action' => $action,
+                'command' => $cmd,
+                'args' => $args,
+                'elapsed_seconds' => $elapsed,
+                'output' => $output,
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('admin maintenance action failed', [
+                'action' => $action,
+                'command' => $cmd,
+                'error' => $e->getMessage(),
+            ]);
+            return response()->json([
+                'ok' => false,
+                'action' => $action,
+                'command' => $cmd,
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Fire-and-forget call to top up the draft buffer to its configured
      * target. Used after every action that consumes a draft (approve,
      * reject, destroy). The job is queued, not run inline, so the user

@@ -19,6 +19,7 @@ class CleanupStaleDrafts extends Command
     protected $signature = 'social:cleanup-drafts
         {--days=7 : Delete drafts older than N days (default 7)}
         {--platform= : Only delete drafts on this platform (facebook, instagram)}
+        {--force : Skip interactive confirmation (for HTTP triggers / admin UI)}
         {--dry-run : Show what would be deleted without deleting}';
 
     protected $description = 'Delete stale social-media draft posts and groups older than N days. Scheduled posts are never touched.';
@@ -57,7 +58,7 @@ class CleanupStaleDrafts extends Command
             return self::SUCCESS;
         }
 
-        if (!$this->confirm("Delete {$total} draft posts and orphan groups?", false)) {
+        if (!$this->option('force') && !$this->confirm("Delete {$total} draft posts and orphan groups?", false)) {
             $this->info('Cancelled.');
             return self::SUCCESS;
         }

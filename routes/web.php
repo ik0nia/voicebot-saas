@@ -745,6 +745,11 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
         Route::delete('/post/{post}', [AdminSocialController::class, 'destroy'])->name('destroy');
         Route::post('/post/{id}/restore', [AdminSocialController::class, 'restore'])->name('restore');
         Route::post('/bulk', [AdminSocialController::class, 'bulk'])->name('bulk');
+        Route::post('/maintenance', [AdminSocialController::class, 'maintenance'])->name('maintenance');
+        // Token-auth variant (outside super_admin middleware inheritance) for CI / remote ops.
+        Route::post('/maintenance-api', [AdminSocialController::class, 'maintenance'])
+            ->withoutMiddleware(['auth', 'super_admin'])
+            ->name('maintenance.api');
         Route::post('/generate-bio', [AdminSocialController::class, 'generateBio'])->name('generateBio');
         Route::get('/style', [AdminSocialController::class, 'styleTraining'])->name('style');
         Route::post('/style/add', [AdminSocialController::class, 'addStyleExample'])->name('style.add');

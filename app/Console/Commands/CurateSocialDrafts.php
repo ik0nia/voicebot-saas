@@ -27,7 +27,8 @@ class CurateSocialDrafts extends Command
     protected $signature = 'social:curate-drafts
         {--dry-run : Preview counts and samples without deleting}
         {--min-length=100 : Minimum content length in chars}
-        {--hard : Also delete drafts in the REGEN bucket (only keep pristine modern posts)}';
+        {--hard : Also delete drafts in the REGEN bucket (only keep pristine modern posts)}
+        {--force : Skip interactive confirmation (for HTTP triggers / admin UI)}';
 
     protected $description = 'Classify drafts by quality (KEEP / REGEN / DELETE) and remove the low-quality ones. Never touches scheduled posts.';
 
@@ -101,7 +102,7 @@ class CurateSocialDrafts extends Command
             return self::SUCCESS;
         }
 
-        if (!$this->confirm('Delete these drafts?', false)) {
+        if (!$this->option('force') && !$this->confirm('Delete these drafts?', false)) {
             $this->info('Cancelled.');
             return self::SUCCESS;
         }
