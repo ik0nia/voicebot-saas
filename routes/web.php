@@ -21,6 +21,7 @@ use App\Http\Controllers\Dashboard\TeamController;
 use App\Http\Controllers\Admin\AdminReportController;
 use App\Http\Controllers\Admin\AdminSettingsController;
 use App\Http\Controllers\Admin\AdminSocialController;
+use App\Http\Controllers\SwipeController;
 use App\Http\Controllers\Webhook\FacebookWebhookController;
 use App\Http\Controllers\Webhook\InstagramWebhookController;
 use App\Http\Controllers\Webhook\TelnyxWebhookController;
@@ -629,6 +630,15 @@ Route::middleware('auth')->prefix('dashboard/agenti/{bot}')->group(function () {
 Route::get('/dashboard/admin', [DashboardController::class, 'admin'])
     ->middleware(['auth', 'super_admin'])
     ->name('dashboard.admin');
+
+// Tinder-style PWA for social review (separate from /admin so it can be
+// installed as its own home-screen icon via swipe-manifest.json).
+Route::middleware(['auth', 'super_admin'])->prefix('swipe')->name('swipe.')->group(function () {
+    Route::get('/', [SwipeController::class, 'home'])->name('home');
+    Route::get('/queue', [SwipeController::class, 'queue'])->name('queue');
+    Route::post('/{post}/approve', [SwipeController::class, 'approve'])->name('approve');
+    Route::post('/{post}/reject', [SwipeController::class, 'reject'])->name('reject');
+});
 
 // Admin Panel (super_admin only)
 Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
