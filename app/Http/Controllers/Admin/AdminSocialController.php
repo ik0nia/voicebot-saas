@@ -767,6 +767,20 @@ class AdminSocialController extends Controller
                 return ['deleted' => $deleted, 'orphan_groups' => $orphans];
             },
 
+            'regen-scheduled-captions-async' => function () use ($request) {
+                $limit = (int) $request->input('limit', 0);
+                $groups = \App\Models\SocialPost::where('status', 'scheduled')
+                    ->whereNotNull('group_id')->distinct()->count('group_id');
+                \App\Jobs\RegenerateScheduledCaptionsJob::dispatch($limit > 0 ? $limit : null);
+                return [
+                    'dispatched' => true,
+                    'queued_groups' => $limit > 0 ? min($limit, $groups) : $groups,
+                    'estimated_minutes' => round(($limit > 0 ? min($limit, $groups) : $groups) * 7 / 60, 1),
+                    'queue' => 'knowledge',
+                    'note' => 'Regenerates FB + IG caption text with corrected brand framing (WebChat + Voice agents, not document management).',
+                ];
+            },
+
             'regen-scheduled-async' => function () use ($request) {
                 $limit = (int) $request->input('limit', 0);
                 $email = (string) $request->input('email', 'codrut@ikonia.ro');
