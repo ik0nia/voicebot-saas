@@ -67,9 +67,9 @@
 
   .stage {
     position: fixed;
-    top: calc(env(safe-area-inset-top) + 72px);
+    top: calc(env(safe-area-inset-top) + 96px);
     left: 0; right: 0;
-    bottom: calc(env(safe-area-inset-bottom) + 96px);
+    bottom: calc(env(safe-area-inset-bottom) + 82px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -199,7 +199,7 @@
   /* Bottom action bar */
   .actions {
     position: fixed;
-    bottom: calc(env(safe-area-inset-bottom) + 4px);
+    bottom: env(safe-area-inset-bottom);
     left: 0; right: 0;
     display: flex;
     justify-content: center;
