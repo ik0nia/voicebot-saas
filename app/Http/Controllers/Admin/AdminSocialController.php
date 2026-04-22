@@ -860,6 +860,25 @@ class AdminSocialController extends Controller
                 return ['deleted' => $deleted];
             },
 
+            'drafts-peek' => function () {
+                $drafts = \App\Models\SocialPost::where('status', 'draft')
+                    ->orderBy('created_at')
+                    ->limit(10)
+                    ->get(['id', 'platform', 'post_type', 'image_url', 'image_prompt', 'created_at', 'group_id']);
+                return [
+                    'drafts' => $drafts->map(fn($p) => [
+                        'id' => $p->id,
+                        'platform' => $p->platform,
+                        'post_type' => $p->post_type,
+                        'image_url' => $p->image_url,
+                        'has_image' => !empty($p->image_url),
+                        'prompt_prefix' => mb_substr((string) $p->image_prompt, 0, 60),
+                        'created' => (string) $p->created_at,
+                        'group' => $p->group_id,
+                    ]),
+                ];
+            },
+
             'scheduled-peek' => function () {
                 $first = \App\Models\SocialPost::where('status', 'scheduled')
                     ->orderBy('scheduled_at')->limit(10)->get(['id', 'platform', 'post_type', 'scheduled_at']);
