@@ -829,6 +829,18 @@ class AdminSocialController extends Controller
                 return ['deleted' => $deleted];
             },
 
+            'scheduled-peek' => function () {
+                $first = \App\Models\SocialPost::where('status', 'scheduled')
+                    ->orderBy('scheduled_at')->limit(10)->get(['id', 'platform', 'post_type', 'scheduled_at']);
+                $last = \App\Models\SocialPost::where('status', 'scheduled')
+                    ->orderByDesc('scheduled_at')->limit(3)->get(['id', 'platform', 'post_type', 'scheduled_at']);
+                return [
+                    'first_10' => $first->map(fn($p) => ['id' => $p->id, 'platform' => $p->platform, 'post_type' => $p->post_type, 'at' => (string) $p->scheduled_at]),
+                    'last_3' => $last->map(fn($p) => ['id' => $p->id, 'platform' => $p->platform, 'post_type' => $p->post_type, 'at' => (string) $p->scheduled_at]),
+                    'now' => now()->toDateTimeString(),
+                ];
+            },
+
             'ensure-drafts-now' => function () use ($request) {
                 $target = (int) ($request->input('target', 10));
                 $perTick = (int) ($request->input('per_tick', 10));
