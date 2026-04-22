@@ -74,6 +74,15 @@ Schedule::command('social:purge-deleted --days=7')->dailyAt('03:30');
 //     ->everyFiveMinutes()
 //     ->withoutOverlapping();
 
+// 2026-04-22 — new cadence: 1 premium post per day via the gpt-image-2 pattern
+// pipeline (brand-aligned visuals + GPT-5.4 RO copy). The draft goes into the
+// review queue at 09:00 local time so reviewers can approve it in the morning
+// and let AutoPublishSocialPost schedule the publish.
+Schedule::command('social:generate-batch 1 --drafts')
+    ->dailyAt('09:00')
+    ->withoutOverlapping()
+    ->onOneServer();
+
 // Hourly image regen with Gemini 3 Pro.
 // PAUSED 2026-04-14: consumă ~€13/zi pe Google API regenerând drafts care probabil
 // vor fi respinse (limbaj vechi) și generează logo-uri halucinate.
