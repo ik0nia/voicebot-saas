@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use App\Models\SocialAccount;
-use App\Services\Social\GeminiContentService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -170,19 +169,20 @@ class SetupFacebookPage extends Command
     private function updateCoverPhoto(SocialAccount $account, bool $dryRun): void
     {
         $this->components->task('Generating cover photo (light background)', function () use ($account, $dryRun) {
-            $gemini = app(GeminiContentService::class);
+            $orchestrator = app(\App\Services\Social\SocialImageOrchestrator::class);
 
-            $coverImage = $gemini->generateImage(
-                prompt: "Facebook cover banner for tech company called Sambla. "
-                    . "CRITICAL: The background MUST be WHITE or very light gray (#f5f5f5). DO NOT use dark backgrounds, DO NOT use red backgrounds. "
-                    . "Use WHITE/LIGHT background only. "
-                    . "Small red (#dc2626) accent elements only: thin lines, small dots, subtle icons. "
-                    . "Include floating minimal icons: a chat bubble, a phone handset, a sound wave — all in light gray or subtle red outlines. "
-                    . "Center text: 'Sambla' in bold dark (#1a1a1a) letters, below it 'Angajatul tău AI' in smaller gray text. "
-                    . "Style: Apple-like minimalism, premium, airy, lots of white space. NO busy graphics. NO dark areas.",
-                aspectRatio: '16:9', // Facebook cover
-                style: null,
-            );
+            // Facebook cover is a wide landscape announcement; we piggyback on the
+            // mascot_hero_announcement pattern with an aspect override + tailored copy.
+            $coverImage = $orchestrator->generate('mascot_hero_announcement', 'default', [
+                'aspect_override' => '16:9',
+                'key_message' => 'Agenți AI pentru business-uri mici — preluăm apeluri, programări și chat în română.',
+                'copy_overrides' => [
+                    'headline' => 'Angajatul tău AI.',
+                    'subheadline' => 'Răspunde 24/7, în română, pentru afacerea ta.',
+                    'cta_label' => 'sambla.ro →',
+                    'footer_tag' => '✦ SAMBLA · AGENȚI AI PENTRU AFACERI MICI',
+                ],
+            ]);
 
             if (!$coverImage) {
                 $this->error('  Failed to generate cover image');

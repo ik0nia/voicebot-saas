@@ -404,6 +404,9 @@ class GenerateDailyBatch extends Command
         $this->newLine();
 
         $gemini = app(GeminiContentService::class);
+        $orchestrator = app(\App\Services\Social\SocialImageOrchestrator::class);
+        $catalog = app(\App\Services\Social\Patterns\PatternCatalog::class);
+        $resolver = app(\App\Services\Social\NicheResolver::class);
 
         $created = 0;
         for ($i = 0; $i < $count; $i++) {
@@ -416,13 +419,13 @@ class GenerateDailyBatch extends Command
             $scheduledAt = $startTime->copy()->addMinutes($interval * ($i + 1));
             $this->components->task(
                 "Post " . ($i + 1) . "/{$count} @ {$scheduledAt->format('H:i')} — {$topicData['visual_text']}",
-                function () use ($i, $topicData, $scheduledAt, $gemini, $fbAccount, $igAccount, $platformOption, $dryRun, $draftsOnly, &$created) {
+                function () use ($i, $topicData, $scheduledAt, $gemini, $orchestrator, $catalog, $resolver, $fbAccount, $igAccount, $platformOption, $dryRun, $draftsOnly, &$created) {
                     // Generate text content
                     $textResult = $this->generateText($gemini, $topicData);
                     if (!$textResult) return false;
 
                     // Generate CTA-focused image with minimal text
-                    $image = $this->generateCtaImage($gemini, $topicData);
+                    $image = $this->generateCtaImage($orchestrator, $catalog, $resolver, $topicData);
 
                     if ($dryRun) {
                         $this->line("    Text: " . mb_substr($textResult['content'], 0, 80) . "...");
@@ -439,7 +442,7 @@ class GenerateDailyBatch extends Command
                     $includeStory = ($i % 3 === 0);
                     $storyImage = null;
                     if ($includeStory) {
-                        $storyImage = $this->generateStoryImage($gemini, $topicData);
+                        $storyImage = $this->generateStoryImage($orchestrator, $catalog, $resolver, $topicData);
                     }
 
                     // Create the group that binds all children together.
@@ -632,121 +635,47 @@ class GenerateDailyBatch extends Command
         }
     }
 
-    /**
-     * Modern SaaS visual styles — loaded from config so both the batch
-     * command and the service share the same presets.
-     */
-    private function getVisualStyles(): array
-    {
-        return config('social-image-styles');
+    private function generateCtaImage(
+        \App\Services\Social\SocialImageOrchestrator $orchestrator,
+        \App\Services\Social\Patterns\PatternCatalog $catalog,
+        \App\Services\Social\NicheResolver $resolver,
+        array $topicData
+    ): ?array {
+        $pattern = $catalog->pickWeighted();
+        if (!$pattern) return null;
+
+        $resolved = $resolver->resolve([
+            'topic' => $topicData['topic'] ?? '',
+            'category' => $topicData['category'] ?? null,
+            'seed' => $topicData['seed'] ?? '',
+            'cta' => $topicData['cta'] ?? null,
+        ]);
+
+        return $orchestrator->generate($pattern, $resolved['niche'], [
+            'key_message' => $resolved['key_message'] ?? ($topicData['image_concept'] ?? null),
+            'aspect_override' => '4:5',
+        ]);
     }
 
-    private function generateCtaImage(GeminiContentService $gemini, array $topicData): ?array
-    {
-        $imageRejections = \App\Models\SocialRejection::query()
-            ->whereIn('reason_category', ['image', 'visual', 'design'])
-            ->latest()->limit(10)->pluck('feedback')->filter()->unique()->take(5)->implode(' | ');
-        $avoidLine = $imageRejections ? "CRITICAL — AVOID what user rejected before: {$imageRejections}. " : '';
+    private function generateStoryImage(
+        \App\Services\Social\SocialImageOrchestrator $orchestrator,
+        \App\Services\Social\Patterns\PatternCatalog $catalog,
+        \App\Services\Social\NicheResolver $resolver,
+        array $topicData
+    ): ?array {
+        $pattern = $catalog->pickWeighted();
+        if (!$pattern) return null;
 
-        $styles = $this->getVisualStyles();
-        $styleKey = array_rand($styles);
-        $preset = $styles[$styleKey];
+        $resolved = $resolver->resolve([
+            'topic' => $topicData['topic'] ?? '',
+            'category' => $topicData['category'] ?? null,
+            'seed' => $topicData['seed'] ?? '',
+            'cta' => $topicData['cta'] ?? null,
+        ]);
 
-        $topicAnchor = isset($topicData['topic']) ? "SUBIECTUL POSTĂRII (imaginea TREBUIE să fie vizual relevantă): {$topicData['topic']} " : '';
-
-        $isVerticale = ($topicData['category'] ?? null) === 'verticale';
-
-        if ($isVerticale) {
-            // Extract the niche name from the seed (first word before ":")
-            $niche = 'business';
-            if (!empty($topicData['seed']) && preg_match('/^([A-ZĂÂÎȘȚ\s\/]+):/u', $topicData['seed'], $m)) {
-                $niche = mb_strtolower(trim($m[1]));
-            }
-
-            $nicheVisuals = [
-                'contabilitate' => 'calculatoare, grafice financiare, dosare colorate, cifre floating, pixeli de spreadsheet',
-                'cabinet avocatură' => 'balanța justiției stilizată, cărți de drept, documente sigilate, elemente juridice',
-                'cabinet medical / stomatologic' => 'stetoscop stilizat, instrumente medicale moderne, ecrane de monitorizare, elemente de sănătate',
-                'service auto' => 'chei mecanice stilizate, piese auto, dashboard digital, elemente de atelier modern',
-                'salon beauty / frizerie' => 'foarfece stilizate, pensule de machiaj, palete de culori, elemente glamour',
-                'agenție imobiliară' => 'chei de casă, planuri de apartament, clădiri stilizate, pin-uri de locație',
-                'restaurant / delivery' => 'farfurii elegante, ingrediente colorate, cutii de livrare, elemente culinare',
-                'cabinet psihologie / psihoterapie' => 'forme abstracte calmante, plante, spații serene, elemente de wellbeing',
-                'școală de limbi / cursuri' => 'cărți colorate, steaguri de țări, litere floating, elemente educaționale',
-                'agenție de turism' => 'valize colorate, bilete de avion, globuri, repere turistice stilizate',
-                'birou notarial' => 'sigilii, ștampile, documente oficiale stilizate, elemente de autentificare',
-                'firmă de curățenie / servicii la domiciliu' => 'spray-uri colorate, bule de săpun, case strălucitoare, elemente fresh',
-                'clinică veterinară' => 'lăbuțe colorate, stetoscop veterinar, animale stilizate (pisici, câini), elemente de îngrijire',
-                'pensiune / hotel mic' => 'chei de cameră, peisaje montane/rurale, pat confortabil, elemente de ospitalitate',
-                'optică medicală' => 'ochelari stilizați, lentile, teste de vedere, elemente optice colorate',
-            ];
-
-            $nicheElements = $nicheVisuals[$niche] ?? 'elemente specifice domeniului, obiecte profesionale stilizate';
-
-            $prompt = $avoidLine
-                . "Creează o imagine 3:4 VIBRANTĂ și COLORATĂ pentru social media Sambla — platformă românească de agenți AI. "
-                . "NIȘĂ: {$niche} — imaginea TREBUIE să conțină elemente vizuale din acest domeniu: {$nicheElements}. "
-                . "STIL: Ilustrație modernă, colorată, dinamică — culori vii și saturate (nu palide/corporate). Gândește: poster de festival tech meets infographic Dribbble. Fundalul poate fi gradient bold sau scenă colorată. Elementele din nișă sunt stilizate, isometrice sau flat-design, nu realiste. "
-                . $topicAnchor
-                . "CONCEPT: {$topicData['image_concept']}. Îmbină elementele din nișa ({$niche}) cu elemente tech/AI (chat bubbles, unde sonore, dashboard-uri) pentru a arăta cum Sambla ajută acest domeniu. "
-                . "HEADLINE: dacă pui text, să fie despre cum Sambla ajută domeniul {$niche}. "
-                . "ENERGIE: Vibrant, optimist, profesional dar accesibil. Culorile trebuie să POP pe feed. "
-                . "COMPOZIȚIE: Dinamică, cu mai multe elemente vizuale distribuite armonios. Punct focal central clar. "
-                . "SAFE ZONES: minim 10% margine liberă pe toate laturile — Instagram cropuiește marginile. Centrează textul și elementele cheie. "
-                . "ASPECT: 3:4 portrait.";
-        } else {
-            $prompt = $avoidLine
-                . "Creează o imagine 3:4 pentru social media Sambla — platformă românească de agenți AI. "
-                . "STIL VIZUAL ({$preset['name']}): {$preset['prompt']} "
-                . $topicAnchor
-                . "CONCEPT: {$topicData['image_concept']}. Transformă în vizual modern, tech, premium — ca hero image de pe site-ul unui startup top. "
-                . "HEADLINE: dacă pui text, să fie relevant cu subiectul postării — ceva ce un antreprenor înțelege instant. "
-                . "DISPOZIȚIE: Smart, prietenos, profesional. Imaginea trebuie să facă un antreprenor să gândească 'vreau să folosesc acest tool'. "
-                . "COMPOZIȚIE: Curată, bold, designată. Punct focal puternic. Gradienți sau iluminare moale. Oprește scroll-ul pe Instagram/Facebook. "
-                . "SAFE ZONES: minim 10% margine liberă pe toate laturile — Instagram cropuiește marginile. Centrează textul și elementele cheie. "
-                . "ASPECT: 3:4 portrait.";
-        }
-
-        return $gemini->generateImage($prompt, '4:5');
-    }
-
-    private function storyPrompt(array $topicData): string
-    {
-        $styles = $this->getVisualStyles();
-        $styleKey = array_rand($styles);
-        $preset = $styles[$styleKey];
-
-        $topicAnchor = isset($topicData['topic']) ? "SUBIECTUL POSTĂRII: {$topicData['topic']} " : '';
-
-        $isVerticale = ($topicData['category'] ?? null) === 'verticale';
-
-        if ($isVerticale) {
-            $niche = 'business';
-            if (!empty($topicData['seed']) && preg_match('/^([A-ZĂÂÎȘȚ\s\/]+):/u', $topicData['seed'], $m)) {
-                $niche = mb_strtolower(trim($m[1]));
-            }
-
-            return "Creează o imagine 9:16 verticală VIBRANTĂ pentru Instagram Story Sambla — platformă românească de agenți AI. "
-                . "NIȘĂ: {$niche} — include elemente vizuale specifice acestui domeniu, stilizate și colorate. "
-                . $topicAnchor
-                . "CONCEPT: {$topicData['image_concept']}. Îmbină elemente din nișa ({$niche}) cu elemente tech/AI. "
-                . "STIL: Ilustrație colorată, dinamică, culori vii saturate. Poster de festival tech meets Dribbble. Elementele din nișă stilizate isometric sau flat-design. "
-                . "HEADLINE: dacă pui text, în treimea din mijloc (safe zone Instagram). "
-                . "Compoziție verticală full-bleed, element central bold, culori care POP. "
-                . "ASPECT: 9:16 portrait.";
-        }
-
-        return "Creează o imagine 9:16 verticală pentru Instagram Story Sambla — platformă românească de agenți AI. "
-            . "STIL VIZUAL ({$preset['name']}): {$preset['prompt']} "
-            . $topicAnchor
-            . "CONCEPT: {$topicData['image_concept']}. Vizual modern, premium, tech. "
-            . "HEADLINE: dacă pui text, în treimea din mijloc (safe zone Instagram sus/jos). "
-            . "Compoziție verticală full-bleed, element central bold, spațiu generos sus/jos. "
-            . "ASPECT: 9:16 portrait.";
-    }
-
-    private function generateStoryImage(GeminiContentService $gemini, array $topicData): ?array
-    {
-        return $gemini->generateImage($this->storyPrompt($topicData), '9:16');
+        return $orchestrator->generate($pattern, $resolved['niche'], [
+            'key_message' => $resolved['key_message'] ?? ($topicData['image_concept'] ?? null),
+            'aspect_override' => '9:16',
+        ]);
     }
 }

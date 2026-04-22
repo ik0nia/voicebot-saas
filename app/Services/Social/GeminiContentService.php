@@ -6,29 +6,21 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 
+/**
+ * Social text-generation service. Name is legacy; the text path has used OpenAI
+ * GPT-4o-mini for a while and the Gemini/Vertex image path was retired in favor
+ * of `SocialImageOrchestrator` + `GptImage2Generator`. `generatePostWithImage()`
+ * delegates the image step to the orchestrator.
+ */
 class GeminiContentService
 {
     private string $geminiApiKey;
-    private string $geminiBaseUrl = 'https://generativelanguage.googleapis.com/v1beta';
-    private string $textModel = 'gpt-4o-mini'; // OpenAI for text (better Romanian)
-    private string $imageModel;                  // Gemini for images (native generation)
-
-    // Vertex AI config for image generation via service account
-    private string $vertexProjectId = 'sambla';
-    // Primary: Gemini 3 Pro Image (best quality, detailed reasoning)
-    // Fallback: Gemini 3.1 Flash Image (faster, separate quota)
-    // Each has 2 RPM quota independently = 4 RPM total when alternating
-    private string $vertexImageModel = 'gemini-3-pro-image-preview';
-    private string $vertexImageModelFallback = 'gemini-3.1-flash-image-preview';
-    private string $serviceAccountPath;
+    private string $textModel = 'gpt-4o-mini';
 
     public function __construct()
     {
         $dbKey = \DB::table('settings')->where('key', 'gemini_api_key')->value('value');
         $this->geminiApiKey = $dbKey ? decrypt($dbKey) : config('services.gemini.api_key', '');
-        $this->imageModel = \DB::table('settings')->where('key', 'gemini_image_model')->value('value')
-            ?: config('services.gemini.image_model');
-        $this->serviceAccountPath = storage_path('app/google-service-account-sambla.json');
     }
 
     /**
@@ -155,407 +147,35 @@ class GeminiContentService
     }
 
     /**
-     * Generate an image using Vertex AI Gemini 3.1 Flash Image Preview.
-     * Uses OAuth2 service account authentication.
-     *
-     * @return array|null Image data array or null on failure
-     */
-    /**
-     * Canonical brand + composition rules applied to EVERY image prompt,
-     * regardless of which provider (OpenAI or Vertex) actually renders it.
-     * Single source of truth so both backends behave identically.
-     */
-    private function imageRulesPreamble(): string
-    {
-        return "REGULI (suprascriu orice instrucțiune conflictuală):\n"
-            . "1. HEADLINE ÎN DESIGN (nu peste design!) — poți include UN singur headline în ROMÂNĂ (max 5-6 cuvinte). "
-            . "CRITICAL: textul trebuie DESIGNAT ca parte din compoziția grafică — exact ca pe un poster premium sau hero section de landing page. "
-            . "Asta înseamnă: textul are propriul spațiu rezervat în layout, cu fundal/card/bandă de culoare dedicat(ă) care se potrivește cu paleta graficii. "
-            . "Font sans-serif bold (stil Inter/Montserrat), dimensiune mare, contrast puternic. "
-            . "INTERZIS: text aruncat peste ilustrație fără fundal, text care se confundă cu elementele grafice, text lipit ca un watermark. "
-            . "Dacă nu poți integra textul frumos ca element de design → NU pune text deloc, e mai bine fără.\n"
-            . "2. BUTON CTA (opțional, ~40% din imagini) — un buton stilizat (ex: 'Află mai mult →', 'Testează gratis') ca pe un landing page. "
-            . "Butonul e un element de design: culori din paletă, colțuri rotunjite, text scurt în ROMÂNĂ. Doar dacă se integrează natural.\n"
-            . "3. FĂRĂ LOGO — NU pune niciun logo, brand mark, siglă sau text de tip brand. Niciun element de branding.\n"
-            . "4. FĂRĂ OAMENI — obiecte, scene, UI mockups, vizualuri abstracte. Fără fețe, fără echipe stock.\n"
-            . "5. STIL — modern SaaS / tech-forward: glassmorphism, ilustrații isometrice, obiecte 3D gradient, dashboard-uri dark/light, scene vectoriale, mockup-uri. Gândește Stripe, Linear, Vercel, Notion.\n"
-            . "6. CALITATE — scroll-stopping, calitate Dribbble/Behance. Culori bold, compoziție curată, premium.\n"
-            . "7. INTERZIS — clip-art, stock photos, handshakes, costume, gradient rainbow, infografice, litere ilizibile/distorsionate, text peste ilustrație fără fundal dedicat.\n\n"
-            . "BRIEF:\n";
-    }
-
-    /**
-     * Generate image with full preamble rules (for short/simple prompts).
-     */
-    public function generateImage(string $prompt, string $aspectRatio = '1:1', ?string $style = null): ?array
-    {
-        $wrapped = $this->imageRulesPreamble() . $prompt;
-        return $this->generateImageRaw($wrapped, $aspectRatio, $style);
-    }
-
-    /**
-     * Generate image WITHOUT preamble — for detailed prompts that already
-     * include all rules (like RegenerateSocialImages scene-based prompts).
-     */
-    public function generateImageDirect(string $prompt, string $aspectRatio = '1:1', ?string $style = null): ?array
-    {
-        return $this->generateImageRaw($prompt, $aspectRatio, $style);
-    }
-
-    private function generateImageRaw(string $wrapped, string $aspectRatio = '1:1', ?string $style = null): ?array
-    {
-
-        // Try Pro first (best quality), then Flash fallback (separate quota).
-        // Each model has 2 RPM independently.
-        $vertexResult = $this->generateImageVertex($wrapped, $aspectRatio, $style);
-        if ($vertexResult) {
-            return $vertexResult;
-        }
-
-        // Pro failed (likely quota) — try Flash which has independent quota
-        Log::info('Gemini Pro failed, trying Flash fallback', ['aspect' => $aspectRatio]);
-        $savedModel = $this->vertexImageModel;
-        $this->vertexImageModel = $this->vertexImageModelFallback;
-        $vertexResult = $this->generateImageVertex($wrapped, $aspectRatio, $style);
-        $this->vertexImageModel = $savedModel;
-        if ($vertexResult) {
-            return $vertexResult;
-        }
-
-        // Both models at quota — wait and retry Pro once
-        Log::info('Both models failed, retrying Pro in 35s', ['aspect' => $aspectRatio]);
-        sleep(35);
-        $vertexResult = $this->generateImageVertex($wrapped, $aspectRatio, $style);
-        if ($vertexResult) {
-            return $vertexResult;
-        }
-
-        Log::warning('All Vertex models failed, skipping image', ['aspect' => $aspectRatio]);
-        return null;
-    }
-
-    private function generateImageVertex(string $prompt, string $aspectRatio = '1:1', ?string $style = null): ?array
-    {
-        try {
-            $accessToken = $this->getVertexAccessToken();
-            if (!$accessToken) {
-                Log::error('GeminiContentService: Failed to obtain Vertex AI access token');
-                return null;
-            }
-
-            $url = "https://aiplatform.googleapis.com/v1/projects/{$this->vertexProjectId}/locations/global/publishers/google/models/{$this->vertexImageModel}:generateContent";
-
-            // Pick style preset — random if not specified
-            $styles = config('social-image-styles');
-            if (!$style || !isset($styles[$style])) {
-                $style = array_rand($styles);
-            }
-            $preset = $styles[$style];
-
-            $parts = [];
-            $stylePrompt = $preset['prompt'];
-
-            // Logo is composited post-processing (AI models distort logos).
-            // DO NOT send logo as reference image to Gemini.
-
-            $safeZoneRule = in_array($aspectRatio, ['4:5', '3:4'])
-                ? "SAFE ZONES (CRITIC pentru Instagram): Lasă minim 10% margine liberă pe toate laturile. NU plasa text sau elemente importante în primii/ultimii 10% din imagine (sus, jos, stânga, dreapta) — Instagram cropuiește aceste zone în feed. Centrează orice text în zona sigură interioară. "
-                : "SAFE ZONES: Lasă margini generoase sus și jos pentru overlay-urile de UI. ";
-
-            $parts[] = ['text' => "Generează o imagine premium pentru social media cu aspect ratio EXACT {$aspectRatio} (critic — imaginea TREBUIE să fie {$aspectRatio}, portrait dacă e 4:5, vertical 9:16 pentru stories). "
-                . "FĂRĂ LOGO: NU pune niciun logo, niciun brand mark, niciun text de tip 'Sambla' pe imagine. Niciun element de branding în colțuri sau oriunde altundeva. Imaginea trebuie curată, fără mărci. "
-                . $safeZoneRule
-                . "STIL VIZUAL ({$preset['name']}): {$stylePrompt} "
-                . "REGULĂ TEXT: Dacă prompt-ul conține un HEADLINE, integrează-l ORGANIC în designul imaginii — textul trebuie să fie PARTE din compoziție, nu lipit peste. Folosește font sans-serif curat (stil Inter/Helvetica), dimensiune mare, contrast puternic cu fundalul. Textul trebuie să arate ca un element de design, ca pe un landing page premium. Textele TREBUIE să fie în limba ROMÂNĂ. "
-                . "CONȚINUT: {$prompt}"];
-
-            $startTime = microtime(true);
-
-            $response = Http::timeout(300)
-                ->withHeaders(['Authorization' => "Bearer {$accessToken}"])
-                ->post($url, [
-                    'contents' => [
-                        [
-                            'role' => 'user',
-                            'parts' => $parts,
-                        ]
-                    ],
-                    'generationConfig' => [
-                        'responseModalities' => ['TEXT', 'IMAGE'],
-                    ],
-                ]);
-
-            $responseTimeMs = (int) ((microtime(true) - $startTime) * 1000);
-
-            if (!$response->ok()) {
-                Log::error('Vertex AI Image API error', [
-                    'status' => $response->status(),
-                    'body' => mb_substr($response->body(), 0, 500),
-                ]);
-                $this->trackImageMetric('error', 0, 0, 0, $responseTimeMs);
-                return null;
-            }
-
-            $data = $response->json();
-            $parts = $data['candidates'][0]['content']['parts'] ?? [];
-
-            $imageData = null;
-            $mimeType = null;
-            $altText = '';
-
-            foreach ($parts as $part) {
-                if (isset($part['inlineData'])) {
-                    $imageData = $part['inlineData']['data'] ?? null;
-                    $mimeType = $part['inlineData']['mimeType'] ?? 'image/png';
-                }
-                if (isset($part['text'])) {
-                    $altText = $part['text'];
-                }
-            }
-
-            if (!$imageData) {
-                Log::warning('Vertex AI Image: no image in response', ['parts_count' => count($parts)]);
-                $this->trackImageMetric('error', 0, 0, 0, $responseTimeMs);
-                return null;
-            }
-
-            // Save to public storage
-            $extension = $mimeType === 'image/jpeg' ? 'jpg' : 'png';
-            $filename = 'social/' . date('Y/m') . '/' . uniqid('img_') . '.' . $extension;
-            $storagePath = public_path($filename);
-
-            $dir = dirname($storagePath);
-            if (!is_dir($dir)) {
-                mkdir($dir, 0755, true);
-            }
-
-            file_put_contents($storagePath, base64_decode($imageData));
-
-            $publicUrl = rtrim(config('app.cdn_url') ?: config('app.url'), '/') . '/' . $filename;
-            $inputTokens = $data['usageMetadata']['promptTokenCount'] ?? 0;
-            $outputTokens = $data['usageMetadata']['candidatesTokenCount'] ?? 0;
-
-            $this->trackImageMetric('success', $inputTokens, $outputTokens, ($inputTokens + $outputTokens) * 0.01 / 1000, $responseTimeMs);
-
-            return [
-                'url' => $publicUrl,
-                'path' => $filename,
-                'mime_type' => $mimeType,
-                'alt_text' => $altText,
-            ];
-        } catch (\Throwable $e) {
-            Log::error('Vertex AI Image exception', ['error' => $e->getMessage()]);
-            $this->trackImageMetric('error', 0, 0, 0, 0);
-            return null;
-        }
-    }
-
-    /**
-     * Fallback image generation via OpenAI gpt-image-1 when Vertex AI is unavailable.
-     * gpt-image-1 sizes: 1024x1024 (1:1), 1024x1536 (portrait), 1536x1024 (landscape).
-     */
-    private function generateImageOpenAi(string $prompt, string $aspectRatio = '1:1'): ?array
-    {
-        try {
-            $apiKey = \App\Models\PlatformSetting::get('openai_api_key', config('services.openai.api_key', ''));
-            if (!$apiKey) {
-                Log::error('OpenAI fallback: no API key configured');
-                return null;
-            }
-
-            $size = match ($aspectRatio) {
-                '9:16', '4:5', '3:4', '2:3' => '1024x1536',
-                '16:9', '4:3', '3:2' => '1536x1024',
-                default              => '1024x1024',
-            };
-
-            // OpenAI gpt-image-1 cannot receive reference images, so any
-            // "Sambla" mark it draws is fabricated. Strip any logo/brand
-            // instructions that callers may have baked into the prompt
-            // (BackfillSocialImages, GenerateDailyBatch both ask Vertex to
-            // stamp the real logo — that contradicts OpenAI's reality).
-            // Then hammer the no-logo rule as FIRST and LAST instruction.
-            $prompt = preg_replace(
-                '/(?:BRAND LOGO|BRAND|Sambla logo)[^.]*\.\s*/iu',
-                '',
-                $prompt
-            ) ?? $prompt;
-            $openaiGuard = "ABSOLUTE RULE — READ FIRST: this image must contain ZERO brand marks. Do NOT draw, render, type, or imply the word 'Sambla' anywhere on the image. Do NOT invent any wordmark, logo, badge, brand stamp, watermark, or 'AI brand' element. Do NOT put any company-looking text in any corner. Leave all corners completely empty of brand marks (no shapes, no text, no decoration). If you are tempted to draw a logo or brand text, STOP and replace it with empty whitespace. ";
-            $openaiGuardEnd = "\n\nFINAL REMINDER: ZERO brand text on this image. ZERO 'Sambla' marks. ZERO invented logos. No logo placeholders in any corner.";
-            $prompt = $openaiGuard . $prompt . $openaiGuardEnd;
-
-            $startTime = microtime(true);
-
-            $response = Http::timeout(180)
-                ->withHeaders(['Authorization' => "Bearer {$apiKey}"])
-                ->post('https://api.openai.com/v1/images/generations', [
-                    'model' => 'gpt-image-1',
-                    'prompt' => mb_substr($prompt, 0, 3900),
-                    'size' => $size,
-                    'n' => 1,
-                ]);
-
-            $responseTimeMs = (int) ((microtime(true) - $startTime) * 1000);
-
-            if (!$response->ok()) {
-                Log::error('OpenAI image API error', [
-                    'status' => $response->status(),
-                    'body' => mb_substr($response->body(), 0, 500),
-                ]);
-                $this->trackImageMetric('error', 0, 0, 0, $responseTimeMs);
-                return null;
-            }
-
-            $data = $response->json();
-            $b64 = $data['data'][0]['b64_json'] ?? null;
-            $remoteUrl = $data['data'][0]['url'] ?? null;
-
-            if (!$b64 && $remoteUrl) {
-                $bin = Http::timeout(60)->get($remoteUrl);
-                if ($bin->ok()) {
-                    $b64 = base64_encode($bin->body());
-                }
-            }
-
-            if (!$b64) {
-                Log::warning('OpenAI image: no image bytes in response');
-                $this->trackImageMetric('error', 0, 0, 0, $responseTimeMs);
-                return null;
-            }
-
-            $filename = 'social/' . date('Y/m') . '/' . uniqid('openai_') . '.png';
-            $storagePath = public_path($filename);
-            $dir = dirname($storagePath);
-            if (!is_dir($dir)) {
-                mkdir($dir, 0755, true);
-            }
-            file_put_contents($storagePath, base64_decode($b64));
-
-            $publicUrl = rtrim(config('app.cdn_url') ?: config('app.url'), '/') . '/' . $filename;
-
-            $usage = $data['usage'] ?? [];
-            $inputTokens = $usage['input_tokens'] ?? 0;
-            $outputTokens = $usage['output_tokens'] ?? 0;
-            $this->trackImageMetric('success', $inputTokens, $outputTokens, ($inputTokens + $outputTokens) * 0.01 / 1000, $responseTimeMs);
-
-            return [
-                'url' => $publicUrl,
-                'path' => $filename,
-                'mime_type' => 'image/png',
-                'alt_text' => '',
-                'provider' => 'openai',
-            ];
-        } catch (\Throwable $e) {
-            Log::error('OpenAI image exception', ['error' => $e->getMessage()]);
-            $this->trackImageMetric('error', 0, 0, 0, 0);
-            return null;
-        }
-    }
-
-    /**
-     * Get OAuth2 access token for Vertex AI using service account JWT.
-     * Tokens are cached for 55 minutes (they expire after 60).
-     */
-    private function getVertexAccessToken(): ?string
-    {
-        return Cache::remember('vertex_ai_access_token', 3300, function () {
-            if (!file_exists($this->serviceAccountPath)) {
-                Log::error('Google service account file not found', ['path' => $this->serviceAccountPath]);
-                return null;
-            }
-
-            $sa = json_decode(file_get_contents($this->serviceAccountPath), true);
-            $now = time();
-
-            // Build JWT
-            $header = $this->base64UrlEncode(json_encode(['alg' => 'RS256', 'typ' => 'JWT']));
-            $claims = $this->base64UrlEncode(json_encode([
-                'iss' => $sa['client_email'],
-                'scope' => 'https://www.googleapis.com/auth/cloud-platform',
-                'aud' => $sa['token_uri'],
-                'iat' => $now,
-                'exp' => $now + 3600,
-            ]));
-
-            $signingInput = "{$header}.{$claims}";
-            $privateKey = openssl_pkey_get_private($sa['private_key']);
-            if (!$privateKey) {
-                Log::error('Failed to parse service account private key');
-                return null;
-            }
-
-            openssl_sign($signingInput, $signature, $privateKey, OPENSSL_ALGO_SHA256);
-            $jwt = "{$signingInput}." . $this->base64UrlEncode($signature);
-
-            // Exchange JWT for access token
-            $response = Http::asForm()->post($sa['token_uri'], [
-                'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-                'assertion' => $jwt,
-            ]);
-
-            if (!$response->ok()) {
-                Log::error('Google OAuth2 token exchange failed', [
-                    'status' => $response->status(),
-                    'body' => mb_substr($response->body(), 0, 500),
-                ]);
-                return null;
-            }
-
-            return $response->json('access_token');
-        });
-    }
-
-    /**
-     * Base64 URL-safe encoding (no padding).
-     */
-    private function base64UrlEncode(string $data): string
-    {
-        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
-    }
-
-    /**
-     * Track image generation metrics.
-     */
-    private function trackImageMetric(string $status, int $inputTokens, int $outputTokens, float $costCents, int $responseTimeMs): void
-    {
-        try {
-            \App\Models\AiApiMetric::create([
-                'provider' => 'google',
-                'model' => $this->vertexImageModel,
-                'input_tokens' => $inputTokens,
-                'output_tokens' => $outputTokens,
-                'cost_cents' => $costCents,
-                'response_time_ms' => $responseTimeMs,
-                'status' => $status,
-                'error_type' => null,
-                'purpose' => 'social_image_generation',
-            ]);
-        } catch (\Throwable $e) {}
-    }
-
-    /**
-     * Generate a complete post with text + image
+     * Generate a complete post with text + image via the gpt-image-2 pattern pipeline.
      */
     public function generatePostWithImage(string $platform, string $topic, array $styleGuidelines = [], string $language = 'ro'): array
     {
-        // Step 1: Generate text content
         $post = $this->generatePost($platform, $topic, $styleGuidelines, $language);
 
         if (isset($post['error'])) {
             return $post;
         }
 
-        // Step 2: Generate image using the image_prompt from step 1
-        $imagePrompt = $post['image_prompt'] ?? "Professional social media visual about: {$topic}";
-
-        // Platform-specific aspect ratios
         $aspectRatio = match($platform) {
             'facebook', 'instagram' => '4:5',
             'blog' => '16:9',
             default => '1:1',
         };
 
-        $image = $this->generateImage($imagePrompt, $aspectRatio);
+        /** @var \App\Services\Social\Patterns\PatternCatalog $catalog */
+        $catalog = app(\App\Services\Social\Patterns\PatternCatalog::class);
+        /** @var \App\Services\Social\NicheResolver $resolver */
+        $resolver = app(\App\Services\Social\NicheResolver::class);
+        /** @var \App\Services\Social\SocialImageOrchestrator $orchestrator */
+        $orchestrator = app(\App\Services\Social\SocialImageOrchestrator::class);
+
+        $resolved = $resolver->resolve(['topic' => $topic]);
+        $pattern = $catalog->pickWeighted() ?: 'flat_illustration_icons';
+        $image = $orchestrator->generate($pattern, $resolved['niche'], [
+            'key_message' => $resolved['key_message'] ?? $topic,
+            'aspect_override' => $aspectRatio,
+        ]);
 
         if ($image) {
             $post['image_url'] = $image['url'];

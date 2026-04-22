@@ -67,10 +67,18 @@ class MetaPostingService
         ]);
 
         try {
-            $gemini = app(GeminiContentService::class);
+            $orchestrator = app(\App\Services\Social\SocialImageOrchestrator::class);
+            $catalog = app(\App\Services\Social\Patterns\PatternCatalog::class);
+            $resolver = app(\App\Services\Social\NicheResolver::class);
+
             $aspect = $post->post_type === 'story' ? '9:16' : '4:5';
-            $prompt = $post->image_prompt ?? ($post->metadata['topic'] ?? 'Sambla AI');
-            $image = $gemini->generateImage($prompt, $aspect);
+            $resolved = $resolver->resolve($post->metadata ?? []);
+            $pattern = $catalog->pickWeighted() ?: 'flat_illustration_icons';
+
+            $image = $orchestrator->generate($pattern, $resolved['niche'], [
+                'key_message' => $resolved['key_message'],
+                'aspect_override' => $aspect,
+            ]);
             if ($image && !empty($image['url'])) {
                 $post->update(['image_url' => $image['url']]);
                 return true;

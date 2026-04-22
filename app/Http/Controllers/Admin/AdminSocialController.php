@@ -402,11 +402,27 @@ class AdminSocialController extends Controller
         }
 
         $promptOverride = trim((string) $request->input('prompt', ''));
-        $prompt = $promptOverride !== '' ? $promptOverride : ($post->image_prompt ?? ($post->metadata['topic'] ?? 'Sambla AI assistant'));
-
-        $gemini = app(GeminiContentService::class);
+        $patternOverride = trim((string) $request->input('pattern', ''));
         $aspect = $post->post_type === 'story' ? '9:16' : '4:5';
-        $image = $gemini->generateImage($prompt, $aspect);
+
+        $catalog = app(\App\Services\Social\Patterns\PatternCatalog::class);
+        $resolver = app(\App\Services\Social\NicheResolver::class);
+        $orchestrator = app(\App\Services\Social\SocialImageOrchestrator::class);
+
+        $pattern = $patternOverride !== '' && $catalog->exists($patternOverride)
+            ? $patternOverride
+            : ($catalog->pickWeighted() ?: 'flat_illustration_icons');
+
+        $resolved = $resolver->resolve($post->metadata ?? []);
+        $keyMessage = $promptOverride !== ''
+            ? $promptOverride
+            : ($resolved['key_message'] ?? $post->image_prompt ?? ($post->metadata['topic'] ?? null));
+
+        $image = $orchestrator->generate($pattern, $resolved['niche'], [
+            'key_message' => $keyMessage,
+            'aspect_override' => $aspect,
+        ]);
+        $prompt = 'pattern:' . $pattern . '|niche:' . $resolved['niche'] . '|msg:' . mb_substr((string) $keyMessage, 0, 180);
 
         if (!$image || empty($image['url'])) {
             return response()->json(['error' => 'Generarea imaginii a eșuat.'], 500);

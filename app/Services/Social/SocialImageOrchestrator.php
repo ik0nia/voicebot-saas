@@ -69,7 +69,8 @@ final class SocialImageOrchestrator
             return null;
         }
 
-        $aspect = $this->catalog->aspectRatio($patternSlug);
+        // Aspect override lets callers (stories, landscape covers) reuse a 4:5 pattern at a different size.
+        $aspect = $options['aspect_override'] ?? $this->catalog->aspectRatio($patternSlug);
 
         // Always pass the Sambla logo icon as reference when available — gpt-image-2
         // renders it pixel-perfect via /v1/images/edits instead of drawing a cartoon stand-in.
