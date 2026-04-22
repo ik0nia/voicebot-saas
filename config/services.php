@@ -81,6 +81,14 @@ return [
         'image_model' => env('GEMINI_IMAGE_MODEL', 'gemini-3.1-flash'),
     ],
 
+    'image_generation' => [
+        // Primary backend for social-media images. Either 'gpt-image-2' (OpenAI) or 'vertex' (legacy Gemini 3 on Vertex AI).
+        'provider' => env('IMAGE_GENERATION_PROVIDER', 'gpt-image-2'),
+        'gpt_image_2_model' => env('GPT_IMAGE_2_MODEL', 'gpt-image-2'),
+        // Model used by RomanianPromptComposer to polish RO copy before it hits the image model.
+        'composer_model' => env('RO_COMPOSER_MODEL', 'gpt-5.4'),
+    ],
+
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),

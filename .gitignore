@@ -35,3 +35,5 @@ docker-compose.override.yml
 /public/downloads/sambla-enterprise-*.pdf
 .openai-admin-credentials
 .env.bak*
+# Social-image prompt-iteration artifacts — generated during dev, not for git
+/public/test-gpt-image-2/
