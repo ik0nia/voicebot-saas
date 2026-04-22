@@ -22,38 +22,53 @@ class SwipeController extends Controller
 
     public function queue()
     {
-        // Skip drafts whose image hasn't landed yet — nothing useful to review.
-        $posts = SocialPost::where('status', 'draft')
+        // One CARD per group (one idea cross-posted to FB + IG + Story). Picks the
+        // FB post as the representative — approve/reject cascade to siblings anyway.
+        // Skip groups whose representative doesn't have an image yet.
+        $drafts = SocialPost::where('status', 'draft')
             ->whereNotNull('image_url')
             ->where('image_url', '!=', '')
             ->orderBy('created_at')
-            ->limit(15)
-            ->get()
-            ->map(function (SocialPost $p) {
-                return [
-                    'id' => $p->id,
-                    'platform' => $p->platform,
-                    'post_type' => $p->post_type,
-                    'content' => $p->content,
-                    'image_url' => $p->image_url,
-                    'hashtags' => (array) ($p->hashtags ?? []),
-                    'created_at' => optional($p->created_at)->toIso8601String(),
-                    'group_id' => $p->group_id,
-                    'siblings_count' => $p->group_id
-                        ? SocialPost::where('group_id', $p->group_id)->where('id', '!=', $p->id)->count()
-                        : 0,
-                    'edit_url' => route('admin.social.edit', $p),
-                ];
-            });
+            ->get();
+
+        $byGroup = $drafts->groupBy(fn (SocialPost $p) => $p->group_id ?? 'solo_' . $p->id);
+
+        $cards = $byGroup->take(15)->map(function ($posts) {
+            $rep = $posts->firstWhere(fn (SocialPost $p) => $p->platform === 'facebook' && $p->post_type === 'post')
+                ?? $posts->first();
+            $platforms = $posts
+                ->map(fn (SocialPost $p) => $p->platform . '/' . $p->post_type)
+                ->unique()
+                ->values();
+            return [
+                'id' => $rep->id,
+                'platforms' => $platforms,
+                'group_size' => $posts->count(),
+                'content' => $rep->content,
+                'image_url' => $rep->image_url,
+                'hashtags' => (array) ($rep->hashtags ?? []),
+                'created_at' => optional($rep->created_at)->toIso8601String(),
+                'group_id' => $rep->group_id,
+                'post_ids' => $posts->pluck('id')->values(),
+                'edit_url' => route('admin.social.edit', $rep),
+            ];
+        })->values();
+
+        // Total = draft GROUPS with image (matches what the queue surfaces).
+        $totalGroupsReady = SocialPost::where('status', 'draft')
+            ->whereNotNull('image_url')
+            ->where('image_url', '!=', '')
+            ->distinct('group_id')
+            ->count('group_id');
+
+        $totalDraftGroups = SocialPost::where('status', 'draft')
+            ->distinct('group_id')
+            ->count('group_id');
 
         return response()->json([
-            'posts' => $posts,
-            // total = number of drafts WITH image ready, matches what the queue shows.
-            'total' => SocialPost::where('status', 'draft')
-                ->whereNotNull('image_url')
-                ->where('image_url', '!=', '')
-                ->count(),
-            'total_all_drafts' => SocialPost::where('status', 'draft')->count(),
+            'posts' => $cards,
+            'total' => $totalGroupsReady,
+            'total_all_drafts' => $totalDraftGroups,
         ]);
     }
 

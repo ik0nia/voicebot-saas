@@ -309,10 +309,6 @@ function buildCard(post) {
   card.className = 'card';
   card.dataset.id = post.id;
 
-  const siblings = post.siblings_count > 0
-    ? `<div class="siblings-note">Grup cu ${post.siblings_count} altă/alte postare — aprobarea/respingerea se aplică la toate</div>`
-    : '';
-
   const hashtags = (post.hashtags || []).length
     ? `<div class="card-hashtags">${post.hashtags.map(h => '#' + String(h).replace(/^#/, '')).join(' ')}</div>`
     : '';
@@ -320,6 +316,17 @@ function buildCard(post) {
   const imgHtml = post.image_url
     ? `<img src="${post.image_url}" alt="post ${post.id}">`
     : `<div class="nope">Fără imagine încă</div>`;
+
+  // Render all platforms in the group (FB post + IG post + Story etc.)
+  const platforms = (post.platforms || []).map(p => {
+    const [pl, kind] = String(p).split('/');
+    const label = kind === 'post' ? pl : `${pl} ${kind}`;
+    return `<span class="platform-pill platform-${pl}">${label}</span>`;
+  }).join(' ');
+
+  const groupNote = post.group_size > 1
+    ? `<div class="siblings-note">1 idee · ${post.group_size} postări (aceeași aprobare / respingere pentru toate)</div>`
+    : '';
 
   card.innerHTML = `
     <div class="swipe-badge badge-reject">Respins</div>
@@ -329,13 +336,13 @@ function buildCard(post) {
     <div class="card-body">
       <div class="card-meta">
         <div>
-          <span class="platform-pill platform-${post.platform}">${post.platform}</span>
-          &middot; ${post.post_type} &middot; #${post.id}
+          ${platforms}
+          &middot; #${post.group_id || post.id}
         </div>
       </div>
       <div class="card-text">${escapeHtml(post.content || '')}</div>
       ${hashtags}
-      ${siblings}
+      ${groupNote}
     </div>
   `;
   attachSwipe(card);
