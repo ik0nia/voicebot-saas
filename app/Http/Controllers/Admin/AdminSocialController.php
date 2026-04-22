@@ -898,6 +898,19 @@ class AdminSocialController extends Controller
                 ];
             },
 
+            'clear-caches' => function () {
+                $out = [];
+                \Illuminate\Support\Facades\Artisan::call('config:clear');
+                $out['config'] = \Illuminate\Support\Facades\Artisan::output();
+                \Illuminate\Support\Facades\Artisan::call('cache:clear');
+                $out['cache'] = \Illuminate\Support\Facades\Artisan::output();
+                \Illuminate\Support\Facades\Artisan::call('view:clear');
+                $out['view'] = \Illuminate\Support\Facades\Artisan::output();
+                \Illuminate\Support\Facades\Artisan::call('route:clear');
+                $out['route'] = \Illuminate\Support\Facades\Artisan::output();
+                return $out;
+            },
+
             'debug-openai-key' => function () {
                 $platformKey = (string) \App\Models\PlatformSetting::get('openai_api_key', '');
                 $envKey = (string) env('OPENAI_API_KEY', '');
