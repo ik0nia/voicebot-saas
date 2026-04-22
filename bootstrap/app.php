@@ -85,6 +85,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // controller verifies the Stripe signature instead.
         $middleware->validateCsrfTokens(except: [
             'stripe/*',
+            // Bearer-token authed remote maintenance endpoint (no session = no CSRF token).
+            'admin/social/maintenance-api',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
