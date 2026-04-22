@@ -94,15 +94,21 @@
 
   .card-image {
     width: 100%;
-    aspect-ratio: 4/5;
     background: var(--sand);
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
     flex-shrink: 0;
+    max-height: 70vh;
   }
-  .card-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card-image img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 70vh;
+    object-fit: contain;
+  }
   .card-image .nope { color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; padding: 40px; text-align: center; }
 
   .card-body {
