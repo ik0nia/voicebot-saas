@@ -923,6 +923,58 @@ class AdminSocialController extends Controller
                 return $out;
             },
 
+            'force-one-image' => function () {
+                // Inline, synchronous image generation for the FIRST draft with no image.
+                // Bypasses queue + Artisan entirely. Uses quality=low + 1024x1024 (~12s)
+                // to fit inside the 60s nginx timeout.
+                $post = \App\Models\SocialPost::where('status', 'draft')
+                    ->where(function ($q) { $q->whereNull('image_url')->orWhere('image_url', ''); })
+                    ->orderBy('id')
+                    ->first();
+                if (!$post) return ['error' => 'no draft without image'];
+
+                $key = \App\Models\PlatformSetting::get('openai_api_key', config('services.openai.api_key', ''));
+
+                $prompt = "A friendly modern illustration for a small-business AI assistant. Warm cream background, coral red accents, clean flat vector style. No logos, no text, just a simple scene. Topic: " . mb_substr((string) $post->content, 0, 150);
+
+                $start = microtime(true);
+                $resp = \Illuminate\Support\Facades\Http::timeout(90)
+                    ->withHeaders(['Authorization' => "Bearer {$key}"])
+                    ->post('https://api.openai.com/v1/images/generations', [
+                        'model' => 'gpt-image-2',
+                        'prompt' => $prompt,
+                        'size' => '1024x1024',
+                        'quality' => 'low',
+                        'n' => 1,
+                    ]);
+                $elapsed = round(microtime(true) - $start, 1);
+
+                if (!$resp->ok()) {
+                    return ['error' => 'api call failed', 'status' => $resp->status(), 'body' => mb_substr((string) $resp->body(), 0, 500)];
+                }
+
+                $b64 = $resp->json('data.0.b64_json');
+                if (!$b64) return ['error' => 'no b64 in response', 'body_keys' => array_keys($resp->json() ?? [])];
+
+                $filename = 'social/' . date('Y/m') . '/force_' . uniqid() . '.png';
+                $full = public_path($filename);
+                $dir = dirname($full);
+                if (!is_dir($dir)) mkdir($dir, 0755, true);
+                $bytes = file_put_contents($full, base64_decode($b64));
+                if ($bytes === false) return ['error' => 'file write failed', 'path' => $full];
+
+                $url = rtrim(config('app.cdn_url') ?: config('app.url'), '/') . '/' . $filename;
+                $post->update(['image_url' => $url, 'image_prompt' => 'force-inline']);
+
+                return [
+                    'post_id' => $post->id,
+                    'elapsed_seconds' => $elapsed,
+                    'bytes' => $bytes,
+                    'url' => $url,
+                    'filesystem_path' => $full,
+                ];
+            },
+
             'test-gpt-image-2' => function () {
                 $key = \App\Models\PlatformSetting::get('openai_api_key', config('services.openai.api_key', ''));
                 if (!$key) return ['error' => 'no key'];
