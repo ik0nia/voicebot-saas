@@ -33,17 +33,17 @@
     user-select: none;
     -webkit-user-select: none;
   }
-  .safe { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+  .safe { }
   header {
     position: fixed;
-    top: env(safe-area-inset-top);
+    top: 0;
     left: 0; right: 0;
-    padding: 14px 20px 10px;
+    padding: calc(env(safe-area-inset-top) + 14px) 20px 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     z-index: 5;
-    background: linear-gradient(to bottom, var(--cream) 70%, transparent);
+    background: linear-gradient(to bottom, var(--cream) 80%, transparent);
   }
   .brand {
     display: flex; align-items: center; gap: 8px;
@@ -67,11 +67,13 @@
 
   .stage {
     position: fixed;
-    inset: 0;
+    top: calc(env(safe-area-inset-top) + 72px);
+    left: 0; right: 0;
+    bottom: calc(env(safe-area-inset-bottom) + 110px);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 60px 16px 150px;
+    padding: 0 16px;
   }
 
   .card {
