@@ -295,6 +295,9 @@
 <div class="toast" id="toast"></div>
 
 <script>
+// Clean up any leftover "skipped" set from the previous version of this PWA
+// so deferred posts come back to the queue instead of staying hidden.
+try { localStorage.removeItem('sambla.swipe.skipped'); } catch {}
 const csrf = document.querySelector('meta[name="csrf-token"]').content;
 const stage = document.getElementById('stage');
 const emptyEl = document.getElementById('empty');
