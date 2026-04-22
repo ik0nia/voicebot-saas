@@ -797,30 +797,61 @@ class AdminSocialController extends Controller
             },
 
             'reorganize-scheduled' => function () {
-                // STRICT: exactly one SocialPost row per day, starting tomorrow at 10:00.
-                // Ordered by their existing scheduled_at (oldest first) so the original
-                // chronology is preserved; FB, IG siblings and Story children each consume
-                // their own day.
-                $posts = \App\Models\SocialPost::where('status', 'scheduled')
-                    ->orderBy('scheduled_at')
-                    ->orderBy('id')
-                    ->get();
+                // 1 GROUP per day. FB + IG sibling cross-post the SAME content on the SAME day
+                // (FB at the hero slot, IG +5 min). Story child goes in the afternoon/evening.
+                // Group order preserved from existing min(scheduled_at). The calendar then
+                // shows one entry per day, which is what the reviewer expects.
+                $groupOrder = \App\Models\SocialPost::where('status', 'scheduled')
+                    ->whereNotNull('group_id')
+                    ->selectRaw('group_id, min(id) as first_id')
+                    ->groupBy('group_id')
+                    ->orderBy('first_id')
+                    ->pluck('group_id')
+                    ->values();
 
                 $dayOffset = 1;
-                foreach ($posts as $p) {
-                    // Random window 10:00 → 21:00 so the feed looks human-driven across the day.
-                    $offset = mt_rand(0, 660); // 11 hours = 660 minutes
-                    $slot = now()->addDays($dayOffset)->setTime(10, 0, 0)->addMinutes($offset);
-                    $p->update(['scheduled_at' => $slot]);
+                $touched = 0;
+                foreach ($groupOrder as $gid) {
+                    // Hero slot = a random minute within 10:00–19:00 (so Story can still go 2h after before 21:00).
+                    $heroOffset = mt_rand(0, 540); // 0..9h → 10:00..19:00
+                    $heroSlot = now()->addDays($dayOffset)->setTime(10, 0, 0)->addMinutes($heroOffset);
+                    $posts = \App\Models\SocialPost::where('group_id', $gid)
+                        ->where('status', 'scheduled')
+                        ->orderBy('id')
+                        ->get();
+                    foreach ($posts as $p) {
+                        if ($p->post_type === 'story') {
+                            $time = $heroSlot->copy()->addHours(2); // Story 2h after hero
+                        } elseif ($p->platform === 'instagram') {
+                            $time = $heroSlot->copy()->addMinutes(5);
+                        } else {
+                            $time = $heroSlot->copy();
+                        }
+                        $p->update(['scheduled_at' => $time]);
+                        $touched++;
+                    }
                     $dayOffset++;
                 }
 
+                // Any solo scheduled post without a group goes at the end.
+                $solo = \App\Models\SocialPost::where('status', 'scheduled')
+                    ->whereNull('group_id')
+                    ->orderBy('id')->get();
+                foreach ($solo as $p) {
+                    $slot = now()->addDays($dayOffset)->setTime(10, 0, 0)->addMinutes(mt_rand(0, 540));
+                    $p->update(['scheduled_at' => $slot]);
+                    $dayOffset++;
+                    $touched++;
+                }
+
                 return [
-                    'posts_updated' => $posts->count(),
+                    'groups' => $groupOrder->count(),
+                    'solo_posts' => $solo->count(),
+                    'posts_updated' => $touched,
                     'span_days' => $dayOffset - 1,
                     'first_slot' => now()->addDay()->setTime(10, 0, 0)->toDateTimeString(),
                     'last_slot' => now()->addDays($dayOffset - 1)->setTime(10, 0, 0)->toDateTimeString(),
-                    'cadence' => 'strict one post per day (no siblings share day)',
+                    'cadence' => '1 group/day — FB at hero slot (10:00–19:00 random), IG +5min, Story +2h',
                 ];
             },
 
