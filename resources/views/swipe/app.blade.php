@@ -69,7 +69,7 @@
     position: fixed;
     top: calc(env(safe-area-inset-top) + 96px);
     left: 0; right: 0;
-    bottom: calc(env(safe-area-inset-bottom) + 82px);
+    bottom: 86px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -199,7 +199,7 @@
   /* Bottom action bar */
   .actions {
     position: fixed;
-    bottom: env(safe-area-inset-bottom);
+    bottom: 6px;
     left: 0; right: 0;
     display: flex;
     justify-content: center;
