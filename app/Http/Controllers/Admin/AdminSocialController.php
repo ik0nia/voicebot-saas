@@ -920,6 +920,30 @@ class AdminSocialController extends Controller
                 return $out;
             },
 
+            'test-gpt-image-2' => function () {
+                $key = \App\Models\PlatformSetting::get('openai_api_key', config('services.openai.api_key', ''));
+                if (!$key) return ['error' => 'no key'];
+                $start = microtime(true);
+                $resp = \Illuminate\Support\Facades\Http::timeout(180)
+                    ->withHeaders(['Authorization' => "Bearer {$key}"])
+                    ->post('https://api.openai.com/v1/images/generations', [
+                        'model' => 'gpt-image-2',
+                        'prompt' => 'a simple red square on white background',
+                        'size' => '1024x1024',
+                        'quality' => 'low',
+                        'n' => 1,
+                    ]);
+                $elapsed = round(microtime(true) - $start, 1);
+                return [
+                    'http_status' => $resp->status(),
+                    'elapsed_seconds' => $elapsed,
+                    'ok' => $resp->ok(),
+                    'body_head' => mb_substr((string) $resp->body(), 0, 600),
+                    'key_used_prefix' => substr($key, 0, 15),
+                    'key_len' => strlen($key),
+                ];
+            },
+
             'debug-openai-key' => function () {
                 $platformKey = (string) \App\Models\PlatformSetting::get('openai_api_key', '');
                 $envKey = (string) env('OPENAI_API_KEY', '');
