@@ -66,9 +66,15 @@ final class GptImage2Generator
             $storagePath = public_path($filename);
             $dir = dirname($storagePath);
             if (!is_dir($dir)) {
-                mkdir($dir, 0755, true);
+                // Use 0777 explicitly — the mount is shared with a host user
+                // whose uid doesn't match the container user, so anything
+                // narrower means the next month's subdirectory becomes write-
+                // locked.
+                mkdir($dir, 0777, true);
+                @chmod($dir, 0777);
             }
             file_put_contents($storagePath, base64_decode($b64));
+            @chmod($storagePath, 0666);
             $publicUrl = rtrim(config('app.cdn_url') ?: config('app.url'), '/') . '/' . $filename;
 
             return [
