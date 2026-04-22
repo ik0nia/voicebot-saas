@@ -436,33 +436,40 @@ function attachSwipe(card) {
   window.addEventListener('mouseup', onUp);
 }
 
-// Client-side skip: hide the card from this session, remember in localStorage
-// so a reload keeps the queue clean. No DB write — the post stays in draft.
-const SKIPPED_KEY = 'sambla.swipe.skipped';
-function loadSkipped() {
-  try { return new Set(JSON.parse(localStorage.getItem(SKIPPED_KEY) || '[]')); }
-  catch { return new Set(); }
-}
-function saveSkipped(set) {
-  try { localStorage.setItem(SKIPPED_KEY, JSON.stringify([...set])); } catch {}
-}
-const skipped = loadSkipped();
-
+// Skip = move the card to the end of the LOCAL queue. No DB write, no
+// localStorage — the post stays in draft and will reappear naturally once
+// the reviewer cycles through the rest of the queue.
 function commitSkip(card) {
   const id = card.dataset.id;
-  skipped.add(String(id));
-  saveSkipped(skipped);
   card.style.transform = `translate(0, -${window.innerHeight}px) rotate(0deg)`;
   card.style.opacity = 0;
   try { if (navigator.vibrate) navigator.vibrate(10); } catch {}
-  showToast('Amânat · revine la reîncărcare manuală');
+  showToast('Amânat · revine la final');
+
   setTimeout(() => {
     card.remove();
-    queue = queue.filter(p => String(p.id) !== String(id));
+    // Reorder: move this post to the end of the queue array.
+    const idx = queue.findIndex(p => String(p.id) === String(id));
+    if (idx !== -1) {
+      const [postponed] = queue.splice(idx, 1);
+      queue.push(postponed);
+    }
+    rebuildStack();
     updateCounter();
-    if (stage.children.length < 2) refreshQueue(true);
-    if (!stage.children.length) emptyEl.style.display = 'flex', actions.style.display = 'none';
   }, 320);
+}
+
+// Build the visible 3-card stack from the current `queue` order.
+function rebuildStack() {
+  stage.innerHTML = '';
+  for (const p of queue.slice(0, 3).reverse()) stage.appendChild(buildCard(p));
+  if (!queue.length) {
+    emptyEl.style.display = 'flex';
+    actions.style.display = 'none';
+  } else {
+    emptyEl.style.display = 'none';
+    actions.style.display = 'flex';
+  }
 }
 
 async function commitSwipe(card, action) {
@@ -505,20 +512,19 @@ async function refreshQueue(append = false) {
   const res = await fetch('/swipe/queue', { headers: { 'Accept': 'application/json' } });
   const data = await res.json();
   const existing = new Set(queue.map(p => p.id));
-  // Filter out skipped + already-stacked
-  const fresh = data.posts.filter(p => !existing.has(p.id) && !skipped.has(String(p.id)));
+  const fresh = data.posts.filter(p => !existing.has(p.id));
 
   if (append) {
     queue.push(...fresh);
     for (const p of fresh) stage.appendChild(buildCard(p));
   } else {
     stage.innerHTML = '';
-    queue = data.posts.filter(p => !skipped.has(String(p.id)));
+    queue = data.posts;
     for (const p of queue.slice(0, 3).reverse()) stage.appendChild(buildCard(p));
     // Reverse so top card is last (rendered on top via z-index order).
   }
 
-  const pending = Math.max(0, (data.total || 0) - skipped.size);
+  const pending = Math.max(0, (data.total || 0));
   const waitingImage = Math.max(0, (data.total_all_drafts || 0) - (data.total || 0));
   counter.textContent = waitingImage > 0
     ? `${pending} de aprobat · ${waitingImage} fără imagine`
