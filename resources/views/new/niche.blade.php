@@ -723,9 +723,14 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
             </button>
 
-            <p class="text-xs text-center pt-1" style="color: var(--muted);">
-                Prin trimiterea formularului ești de acord cu <a href="{{ route('new.legal.confidentialitate') }}" class="underline accent-text">politica de confidențialitate</a>.
-            </p>
+            <label class="flex items-start gap-2 text-xs leading-relaxed pt-1" style="color: var(--muted);">
+                <input required type="checkbox" name="gdpr_consent" value="1" class="mt-0.5 shrink-0" {{ old('gdpr_consent') ? 'checked' : '' }}>
+                <span>
+                    Sunt de acord ca datele mele să fie procesate conform
+                    <a href="{{ route('new.legal.confidentialitate') }}" class="underline accent-text">politicii de confidențialitate</a>.
+                    Folosim datele doar pentru a-ți răspunde despre demo — fără spam, fără partajare.
+                </span>
+            </label>
         </form>
 
         <div class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 mt-6 text-xs text-white/80">

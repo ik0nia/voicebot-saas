@@ -24,12 +24,16 @@ class NicheLandingController extends Controller
         }
 
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:120'],
-            'website_url' => ['nullable', 'string', 'max:500'],
-            'email' => ['required', 'email', 'max:180'],
-            'phone' => ['required', 'string', 'max:40'],
-            'message' => ['nullable', 'string', 'max:2000'],
-            'source_url' => ['nullable', 'string', 'max:500'],
+            'name'         => ['required', 'string', 'max:120'],
+            'website_url'  => ['nullable', 'string', 'max:500'],
+            'email'        => ['required', 'email', 'max:180'],
+            'phone'        => ['required', 'string', 'max:40'],
+            'message'      => ['nullable', 'string', 'max:2000'],
+            'source_url'   => ['nullable', 'string', 'max:500'],
+            // Server-side GDPR enforcement — checkbox required client-side,
+            // but a bot or no-JS client could POST without it. The DPA-RO
+            // expects an audit trail of explicit consent per submission.
+            'gdpr_consent' => ['required', 'accepted'],
         ]);
 
         $lead = NicheLead::create([
