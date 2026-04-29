@@ -110,14 +110,8 @@
     {{-- NAV --}}
     <nav class="bg-cream/80 backdrop-blur sticky top-0 z-40 border-b border-line/60">
         <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-            <a href="{{ route('new.home') }}" class="flex items-end shrink-0" aria-label="Sambla — beta">
+            <a href="{{ route('new.home') }}" class="flex items-center gap-2 shrink-0">
                 <img src="{{ asset('images/logo-light.svg') }}" alt="Sambla — Agenți AI" class="h-10 md:h-11 w-auto">
-                {{-- Beta badge — vizibil pe toate paginile cât platforma e în teste.
-                     Lipit de wordmark cu margin-left negativ + aliniat la baseline. --}}
-                <span class="mono text-[9px] md:text-[10px] uppercase tracking-[0.15em] font-semibold px-1.5 py-0.5 rounded border accent-text ml-1"
-                      style="border-color: color-mix(in srgb, var(--accent) 35%, transparent); background: color-mix(in srgb, var(--accent) 8%, transparent); line-height: 1; margin-bottom: 4px;">
-                    beta
-                </span>
             </a>
             @php
                 /* Active helper for desktop links. A link is active if the current
@@ -289,13 +283,7 @@
         <div class="max-w-7xl mx-auto px-6">
             <div class="grid md:grid-cols-5 gap-8 pb-10 border-b border-line">
                 <div class="md:col-span-2">
-                    <div class="flex items-end mb-4">
-                        <img src="{{ asset('images/logo-light.svg') }}" alt="Sambla" class="h-10 w-auto">
-                        <span class="mono text-[10px] uppercase tracking-[0.15em] font-semibold px-1.5 py-0.5 rounded border accent-text ml-1"
-                              style="border-color: color-mix(in srgb, var(--accent) 35%, transparent); background: color-mix(in srgb, var(--accent) 8%, transparent); line-height: 1; margin-bottom: 4px;">
-                            beta
-                        </span>
-                    </div>
+                    <img src="{{ asset('images/logo-light.svg') }}" alt="Sambla" class="h-10 w-auto mb-4">
                     <p class="text-sm text-muted leading-relaxed max-w-sm">Angajatul tău AI care știe totul despre afacerea ta. Voce naturală, chat inteligent, auto-îmbunătățire continuă.</p>
                 </div>
                 <div>
