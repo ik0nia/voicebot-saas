@@ -27,12 +27,16 @@ class ContactController extends Controller
         }
 
         $data = $request->validate([
-            'name'    => ['required', 'string', 'max:180'],
-            'email'   => ['required', 'email', 'max:180'],
-            'phone'   => ['nullable', 'string', 'max:40'],
-            'company' => ['nullable', 'string', 'max:180'],
-            'subject' => ['nullable', 'string', 'max:240'],
-            'message' => ['required', 'string', 'max:4000'],
+            'name'         => ['required', 'string', 'max:180'],
+            'email'        => ['required', 'email', 'max:180'],
+            'phone'        => ['nullable', 'string', 'max:40'],
+            'company'      => ['nullable', 'string', 'max:180'],
+            'subject'      => ['nullable', 'string', 'max:240'],
+            'message'      => ['required', 'string', 'max:4000'],
+            // Server-side GDPR enforcement — the checkbox is `required`
+            // in the view, but a bot or JS-disabled client could POST
+            // without it. accepted = "1", "true", "on", "yes".
+            'gdpr_consent' => ['required', 'accepted'],
         ]);
 
         // Marketing attribution snapshot — read from session so the

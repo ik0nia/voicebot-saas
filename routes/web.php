@@ -213,8 +213,10 @@ Route::get('/sitemap.xml', function () {
     return response($xml, 200, ['Content-Type' => 'application/xml; charset=utf-8']);
 });
 
-// Niche lead capture (POST — outside PublicPageCache so CSRF + flash work normally)
+// Niche lead capture (POST — outside PublicPageCache so CSRF + flash work normally).
+// Throttled to stop a bot from flooding niche leads (and the support inbox).
 Route::post('/pentru/{niche:slug}/lead', [\App\Http\Controllers\NicheLandingController::class, 'storeLead'])
+    ->middleware('throttle:5,1')
     ->name('public.niche.lead');
 
 // Chatbot embed routes are in routes/api.php under /chatbot prefix (no auth/session middleware)
