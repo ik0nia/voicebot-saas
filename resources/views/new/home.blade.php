@@ -16,10 +16,10 @@
     "name":"Sambla",
     "applicationCategory":"BusinessApplication",
     "operatingSystem":"Web (Cloud SaaS)",
-    "offers":{"@type":"AggregateOffer","priceCurrency":"RON","lowPrice":"0","url":"https://sambla.ro/new/preturi"},
+    "offers":{"@type":"AggregateOffer","priceCurrency":"RON","lowPrice":"0","url":"https://sambla.ro/preturi"},
     "description":"Agenți AI conversaționali — pe site, pe telefon, pe WhatsApp — antrenați pe documentele afacerii tale.",
     "inLanguage":"ro-RO",
-    "url":"https://sambla.ro/new"
+    "url":"https://sambla.ro/"
 }
 </script>
 @endsection

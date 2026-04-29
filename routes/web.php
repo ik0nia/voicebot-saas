@@ -69,63 +69,12 @@ Route::middleware('auth')->group(function () {
         ->middleware('throttle:6,1')->name('verification.send');
 });
 
-// Landing pages
-// Public landing pages — wrapped in PublicPageCache so anonymous
-// visitors get a 5-minute browser cache instead of Laravel's default
-// no-cache. Authenticated users skip the cache automatically.
+// Public landing pages — post-cutover canonical site (formerly /new/*).
+// Wrapped in PublicPageCache so anonymous visitors get a 5-minute browser
+// cache instead of Laravel's default no-cache. Authenticated users skip
+// the cache automatically. Legacy view files (resources/views/home,
+// landing/niche, etc.) remain on disk as a rollback parachute.
 Route::middleware(\App\Http\Middleware\PublicPageCache::class)->group(function () {
-    Route::get('/', function () {
-        return view('home');
-    });
-
-    Route::get('/functionalitati', function () {
-        return view('functionalitati');
-    });
-
-    Route::get('/preturi', function () {
-        try {
-            $webchatPlans = \App\Models\Plan::active()->webchat()->orderBy('sort_order')->get();
-            $voicePlans = \App\Models\Plan::active()->voice()->orderBy('sort_order')->get();
-        } catch (\Exception $e) {
-            $webchatPlans = collect();
-            $voicePlans = collect();
-        }
-        return view('preturi', compact('webchatPlans', 'voicePlans'));
-    });
-
-    Route::get('/despre', function () {
-        return view('despre');
-    });
-
-    Route::get('/blog', function () {
-        return view('blog');
-    });
-
-    Route::get('/contact', function () {
-        return view('contact');
-    });
-
-    Route::view('/de-ce-sambla', 'de-ce-sambla')->name('public.deCeSambla');
-
-    // Legal pages (GDPR compliance)
-    Route::view('/termeni', 'legal.termeni')->name('legal.termeni');
-    Route::view('/confidentialitate', 'legal.confidentialitate')->name('legal.confidentialitate');
-    Route::view('/cookie-uri', 'legal.cookie-uri')->name('legal.cookie-uri');
-
-    // Niche landing pages (public, cached)
-    Route::get('/pentru/{niche:slug}', function (\App\Models\Niche $niche) {
-        abort_unless($niche->is_active, 404);
-        return view('landing.niche', [
-            'niche' => $niche,
-            'theme' => \App\Support\NicheTheme::get($niche->color_theme),
-        ]);
-    })->name('public.niche');
-});
-
-// Parallel "warm redesign" site at /new/* — strictly additive, zero
-// impact on the live marketing site. When the redesign is promoted,
-// these routes can be renamed and the legacy views archived.
-Route::prefix('new')->middleware(\App\Http\Middleware\PublicPageCache::class)->group(function () {
     $c = \App\Http\Controllers\NewSite\NewSiteController::class;
     Route::get('/',                     [$c, 'home'])->name('new.home');
     Route::get('/functionalitati',      [$c, 'functionalitati'])->name('new.functionalitati');
@@ -135,11 +84,27 @@ Route::prefix('new')->middleware(\App\Http\Middleware\PublicPageCache::class)->g
     Route::get('/contact',              [$c, 'contact'])->name('new.contact');
     Route::get('/blog',                 [$c, 'blog'])->name('new.blog');
     Route::get('/industrii',            [$c, 'industrii'])->name('new.industrii');
-    Route::get('/legal/termeni',            fn () => app($c)->legal('termeni'))->name('new.legal.termeni');
-    Route::get('/legal/confidentialitate',  fn () => app($c)->legal('confidentialitate'))->name('new.legal.confidentialitate');
-    Route::get('/legal/cookie-uri',         fn () => app($c)->legal('cookie-uri'))->name('new.legal.cookies');
+    Route::get('/termeni',              fn () => app($c)->legal('termeni'))->name('new.legal.termeni');
+    Route::get('/confidentialitate',    fn () => app($c)->legal('confidentialitate'))->name('new.legal.confidentialitate');
+    Route::get('/cookie-uri',           fn () => app($c)->legal('cookie-uri'))->name('new.legal.cookies');
     Route::get('/pentru/{niche:slug}',  [$c, 'niche'])->name('new.niche');
 });
+
+// /new/* legacy URLs → 301 redirects to canonical root URLs.
+// Kept indefinitely so any inbound link / Google cache transfers
+// PageRank to the canonical equivalent. Cheap, no controller churn.
+Route::redirect('/new',                         '/',                  301);
+Route::redirect('/new/functionalitati',         '/functionalitati',   301);
+Route::redirect('/new/preturi',                 '/preturi',           301);
+Route::redirect('/new/de-ce-sambla',            '/de-ce-sambla',      301);
+Route::redirect('/new/despre',                  '/despre',            301);
+Route::redirect('/new/contact',                 '/contact',           301);
+Route::redirect('/new/blog',                    '/blog',              301);
+Route::redirect('/new/industrii',               '/industrii',         301);
+Route::redirect('/new/legal/termeni',           '/termeni',           301);
+Route::redirect('/new/legal/confidentialitate', '/confidentialitate', 301);
+Route::redirect('/new/legal/cookie-uri',        '/cookie-uri',        301);
+Route::get('/new/pentru/{slug}', fn (string $slug) => redirect('/pentru/' . $slug, 301));
 
 // Design previews — variante statice de redesign (noindex în view-uri).
 Route::prefix('preview')->group(function () {
@@ -203,32 +168,17 @@ Route::get('/new/og.svg', function (\Illuminate\Http\Request $request) {
 // Dynamic sitemap — includes all public pages + active niche landing pages.
 Route::get('/sitemap.xml', function () {
     $urls = [
-        // Legacy URLs (canonical în prezent)
         ['loc' => '/',                  'changefreq' => 'weekly',  'priority' => '1.0'],
         ['loc' => '/de-ce-sambla',      'changefreq' => 'weekly',  'priority' => '0.95'],
         ['loc' => '/functionalitati',   'changefreq' => 'weekly',  'priority' => '0.9'],
         ['loc' => '/preturi',           'changefreq' => 'weekly',  'priority' => '0.9'],
+        ['loc' => '/industrii',         'changefreq' => 'weekly',  'priority' => '0.8'],
         ['loc' => '/despre',            'changefreq' => 'monthly', 'priority' => '0.7'],
         ['loc' => '/contact',           'changefreq' => 'monthly', 'priority' => '0.7'],
         ['loc' => '/blog',              'changefreq' => 'weekly',  'priority' => '0.6'],
         ['loc' => '/termeni',           'changefreq' => 'yearly',  'priority' => '0.3'],
         ['loc' => '/confidentialitate', 'changefreq' => 'yearly',  'priority' => '0.3'],
         ['loc' => '/cookie-uri',        'changefreq' => 'yearly',  'priority' => '0.3'],
-
-        // /new/* URLs — canonical dedicat, fiecare pagină setează
-        // @section('canonical') spre /new/... deci Google nu indexează
-        // dublu. Prioritate egală pentru dual-indexing în tranziție.
-        ['loc' => '/new',                        'changefreq' => 'weekly',  'priority' => '0.95'],
-        ['loc' => '/new/de-ce-sambla',           'changefreq' => 'weekly',  'priority' => '0.9'],
-        ['loc' => '/new/functionalitati',        'changefreq' => 'weekly',  'priority' => '0.9'],
-        ['loc' => '/new/preturi',                'changefreq' => 'weekly',  'priority' => '0.9'],
-        ['loc' => '/new/despre',                 'changefreq' => 'monthly', 'priority' => '0.7'],
-        ['loc' => '/new/contact',                'changefreq' => 'monthly', 'priority' => '0.7'],
-        ['loc' => '/new/industrii',              'changefreq' => 'weekly',  'priority' => '0.8'],
-        ['loc' => '/new/blog',                   'changefreq' => 'weekly',  'priority' => '0.5'],
-        ['loc' => '/new/legal/termeni',          'changefreq' => 'yearly',  'priority' => '0.3'],
-        ['loc' => '/new/legal/confidentialitate','changefreq' => 'yearly',  'priority' => '0.3'],
-        ['loc' => '/new/legal/cookie-uri',       'changefreq' => 'yearly',  'priority' => '0.3'],
     ];
 
     $niches = \App\Models\Niche::where('is_active', true)
@@ -238,12 +188,6 @@ Route::get('/sitemap.xml', function () {
     foreach ($niches as $niche) {
         $urls[] = [
             'loc'        => '/pentru/' . $niche->slug,
-            'lastmod'    => $niche->updated_at->toW3cString(),
-            'changefreq' => 'weekly',
-            'priority'   => '0.8',
-        ];
-        $urls[] = [
-            'loc'        => '/new/pentru/' . $niche->slug,
             'lastmod'    => $niche->updated_at->toW3cString(),
             'changefreq' => 'weekly',
             'priority'   => '0.8',

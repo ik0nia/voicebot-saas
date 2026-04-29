@@ -2,7 +2,7 @@
 
 @section('title', 'Politica de confidențialitate — Sambla')
 @section('meta_description', 'Cum colectăm, procesăm și protejăm datele tale personale și pe cele ale clienților tăi. Conformitate GDPR.')
-@section('canonical', url('/new/legal/confidentialitate'))
+@section('canonical', url('/confidentialitate'))
 
 @section('content')
 

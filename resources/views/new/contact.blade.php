@@ -2,7 +2,7 @@
 
 @section('title', 'Contact Sambla — vorbește cu noi despre agenți AI')
 @section('meta_description', 'Scrie-ne despre afacerea ta și ce ai vrea să automatizezi. Răspundem în ziua lucrătoare. Pentru urgențe, sună direct.')
-@section('canonical', url('/new/contact'))
+@section('canonical', url('/contact'))
 @section('og_image', route('new.og', ['title' => 'Hai să vorbim pe bune', 'sub' => 'Scrie-ne despre afacerea ta și ce vrei să automatizezi.', 'eyebrow' => 'sambla.ro · contact']))
 
 @php
@@ -46,7 +46,7 @@
 {
   "@context": "https://schema.org",
   "@type": "ContactPage",
-  "url": "{{ url('/new/contact') }}",
+  "url": "{{ url('/contact') }}",
   "name": "Contact Sambla",
   "inLanguage": "ro-RO",
   "about": { "@id": "https://sambla.ro/#organization" }

@@ -83,7 +83,7 @@
                         </td>
                         <td class="px-3 py-3 text-right">
                             <div class="inline-flex items-center gap-1">
-                                <a href="{{ route('public.niche', $n->slug) }}" target="_blank"
+                                <a href="{{ route('new.niche', $n->slug) }}" target="_blank"
                                    class="px-2 py-1 text-xs rounded border border-slate-200 text-slate-600 hover:bg-slate-50">Vezi</a>
                                 <a href="{{ route('admin.niches.edit', $n) }}"
                                    class="px-2 py-1 text-xs rounded border border-slate-200 text-slate-700 hover:bg-slate-50">Editează</a>

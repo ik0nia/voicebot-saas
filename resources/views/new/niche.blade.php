@@ -21,7 +21,7 @@
 @section('meta_description', $niche->meta_description ?: ('Agent AI conversațional pentru ' . $niche->name . '. Răspunde 24/7 în limba română, programări automate, integrări native, GDPR nativ.'))
 @section('og_title', 'Agent AI pentru ' . $niche->name)
 @section('og_description', $niche->meta_description ?: $heroSubtitle)
-@section('canonical', url('/new/pentru/' . $niche->slug))
+@section('canonical', url('/pentru/' . $niche->slug))
 @php
     $nicheAccentMap = [
         'red'=>'#DC2626','emerald'=>'#10B981','blue'=>'#3B82F6','amber'=>'#F59E0B',
@@ -50,14 +50,14 @@
             "provider":{"@id":"https://sambla.ro/#organization"},
             "areaServed":{"@type":"Country","name":"Romania"},
             "description":{!! json_encode($heroSubtitle, JSON_UNESCAPED_UNICODE) !!},
-            "url":{!! json_encode(url('/new/pentru/' . $niche->slug), JSON_UNESCAPED_UNICODE) !!}
+            "url":{!! json_encode(url('/pentru/' . $niche->slug), JSON_UNESCAPED_UNICODE) !!}
         },
         {
             "@type":"BreadcrumbList",
             "itemListElement":[
-                {"@type":"ListItem","position":1,"name":"Acasă","item":{!! json_encode(url('/new'), JSON_UNESCAPED_UNICODE) !!}},
-                {"@type":"ListItem","position":2,"name":"Industrii","item":{!! json_encode(url('/new/industrii'), JSON_UNESCAPED_UNICODE) !!}},
-                {"@type":"ListItem","position":3,"name":{!! json_encode($niche->name, JSON_UNESCAPED_UNICODE) !!},"item":{!! json_encode(url('/new/pentru/' . $niche->slug), JSON_UNESCAPED_UNICODE) !!}}
+                {"@type":"ListItem","position":1,"name":"Acasă","item":{!! json_encode(url('/'), JSON_UNESCAPED_UNICODE) !!}},
+                {"@type":"ListItem","position":2,"name":"Industrii","item":{!! json_encode(url('/industrii'), JSON_UNESCAPED_UNICODE) !!}},
+                {"@type":"ListItem","position":3,"name":{!! json_encode($niche->name, JSON_UNESCAPED_UNICODE) !!},"item":{!! json_encode(url('/pentru/' . $niche->slug), JSON_UNESCAPED_UNICODE) !!}}
             ]
         }
         @if(count($faq) > 0)

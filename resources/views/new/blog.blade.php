@@ -2,7 +2,7 @@
 
 @section('title', 'Blog Sambla — ghiduri pentru agenți AI în afaceri românești')
 @section('meta_description', 'Articole și ghiduri pentru afaceri care vor să folosească agenți AI practic, nu la modă. Încă nu avem — te anunțăm când primul apare.')
-@section('canonical', url('/new/blog'))
+@section('canonical', url('/blog'))
 @section('og_image', route('new.og', ['title' => 'Blog Sambla', 'sub' => 'Ghiduri practice pentru agenți AI în afaceri românești.', 'eyebrow' => 'sambla.ro · blog']))
 
 @section('content')

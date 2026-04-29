@@ -2,7 +2,7 @@
 
 @section('title', 'Termeni și condiții — Sambla')
 @section('meta_description', 'Termenii și condițiile de utilizare a platformei Sambla pentru agenți AI conversaționali.')
-@section('canonical', url('/new/legal/termeni'))
+@section('canonical', url('/termeni'))
 
 @section('content')
 

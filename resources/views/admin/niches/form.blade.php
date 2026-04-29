@@ -26,7 +26,7 @@
         </div>
         <div class="flex items-center gap-2">
             @if($isEdit)
-                <a href="{{ route('public.niche', $niche->slug) }}" target="_blank"
+                <a href="{{ route('new.niche', $niche->slug) }}" target="_blank"
                    class="px-3 py-2 text-sm rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50">Preview</a>
             @endif
             <a href="{{ route('admin.niches.index') }}"

@@ -2,7 +2,7 @@
 
 @section('title', 'Ce face Sambla — funcționalități complete pentru agenți AI')
 @section('meta_description', 'Agent AI pe site și agent AI vocal — răspunsuri din documentele tale, programări automate în calendar, lead capture, recomandări produse, GDPR nativ. Vezi lista completă.')
-@section('canonical', url('/new/functionalitati'))
+@section('canonical', url('/functionalitati'))
 @section('og_image', route('new.og', ['title' => 'Tot ce face agentul tău AI', 'sub' => 'Chat, voce, calendar, WooCommerce. 24/7 în română.', 'eyebrow' => 'sambla.ro · funcționalități']))
 
 @section('content')

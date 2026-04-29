@@ -2,7 +2,7 @@
 
 @section('title', 'Politica de cookie-uri — Sambla')
 @section('meta_description', 'Ce cookie-uri folosim pe sambla.ro, de ce și cum le poți controla.')
-@section('canonical', url('/new/legal/cookie-uri'))
+@section('canonical', url('/cookie-uri'))
 
 @section('content')
 

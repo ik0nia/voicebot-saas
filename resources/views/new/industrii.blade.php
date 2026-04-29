@@ -2,7 +2,7 @@
 
 @section('title', 'Industrii — Agenți AI pentru fiecare vertical | Sambla')
 @section('meta_description', 'Agenți AI conversaționali antrenați pentru industria ta — stomatologie, estetică, service auto, imobiliare, HORECA, avocatură, contabilitate, e-commerce și mai multe. Fiecare vertical cu prompt-uri, integrări și ton adaptat.')
-@section('canonical', url('/new/industrii'))
+@section('canonical', url('/industrii'))
 @section('og_image', route('new.og', ['title' => 'Un agent AI pentru fiecare vertical', 'sub' => '17 industrii cu prompt-uri și integrări adaptate.', 'eyebrow' => 'sambla.ro · industrii']))
 
 @section('jsonld')
@@ -12,7 +12,7 @@
   "@type": "CollectionPage",
   "name": "Industrii deservite de Sambla",
   "description": "17 verticale cu pagini dedicate: stomatologie, medical, beauty, auto, e-commerce, imobiliare, HoReCa, avocatură și altele.",
-  "url": "{{ url('/new/industrii') }}",
+  "url": "{{ url('/industrii') }}",
   "inLanguage": "ro-RO",
   "isPartOf": { "@id": "https://sambla.ro/#website" },
   "hasPart": [
@@ -20,7 +20,7 @@
     {
       "@type": "WebPage",
       "name": @json($n->name),
-      "url": "{{ url('/new/pentru/' . $n->slug) }}"
+      "url": "{{ url('/pentru/' . $n->slug) }}"
     }{{ !$loop->last ? ',' : '' }}
     @endforeach
   ]
@@ -31,8 +31,8 @@
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
   "itemListElement": [
-    { "@type": "ListItem", "position": 1, "name": "Acasă", "item": "{{ url('/new') }}" },
-    { "@type": "ListItem", "position": 2, "name": "Industrii", "item": "{{ url('/new/industrii') }}" }
+    { "@type": "ListItem", "position": 1, "name": "Acasă", "item": "{{ url('/') }}" },
+    { "@type": "ListItem", "position": 2, "name": "Industrii", "item": "{{ url('/industrii') }}" }
   ]
 }
 </script>

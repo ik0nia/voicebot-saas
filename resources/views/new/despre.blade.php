@@ -2,12 +2,12 @@
 
 @section('title', 'Despre Sambla — platformă AI românească pentru agent AI și voce')
 @section('meta_description', 'Sambla este o platformă AI românească construită de o echipă din România pentru afaceri mici și mijlocii. Numele vine din graiul ardelenesc — „a sâmbla" = a semăna, a suna a poveste.')
-@section('canonical', url('/new/despre'))
+@section('canonical', url('/despre'))
 @section('og_image', route('new.og', ['title' => 'Despre Sambla', 'sub' => 'Platformă AI construită în România, pentru afaceri din România.', 'eyebrow' => 'sambla.ro · despre']))
 
 @section('jsonld')
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"AboutPage","@id":"https://sambla.ro/new/despre#webpage","url":"https://sambla.ro/new/despre","name":"Despre Sambla","description":"Sambla este o platformă AI românească construită de o echipă din România pentru afaceri mici și mijlocii. Numele Sambla vine din graiul ardelenesc.","isPartOf":{"@id":"https://sambla.ro/#website"},"mainEntity":{"@id":"https://sambla.ro/#organization"},"inLanguage":"ro-RO"}
+{"@context":"https://schema.org","@type":"AboutPage","@id":"https://sambla.ro/despre#webpage","url":"https://sambla.ro/despre","name":"Despre Sambla","description":"Sambla este o platformă AI românească construită de o echipă din România pentru afaceri mici și mijlocii. Numele Sambla vine din graiul ardelenesc.","isPartOf":{"@id":"https://sambla.ro/#website"},"mainEntity":{"@id":"https://sambla.ro/#organization"},"inLanguage":"ro-RO"}
 </script>
 @endsection
 
