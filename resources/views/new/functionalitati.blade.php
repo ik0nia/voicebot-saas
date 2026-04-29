@@ -318,6 +318,63 @@
     </div>
 </section>
 
+{{-- API & DEZVOLTATORI --}}
+<section class="py-20 bg-paper border-y border-line">
+    <div class="max-w-5xl mx-auto px-6">
+        <div class="max-w-2xl mb-12 fade-up">
+            <div class="mono text-[11px] uppercase tracking-[0.2em] mb-3" style="color: var(--muted);">◇ pentru dezvoltatori</div>
+            <h2 class="display h-display-l">Conectează-l <em class="italic accent-text">la sistemul tău</em>.</h2>
+            <p class="text-lg mt-4" style="color: var(--muted);">Ai un CRM, ERP sau aplicație internă? Inițiezi apeluri din cod, primești evenimente prin webhook, sincronizezi conversațiile în timp real. API REST documentat complet, autentificare cu cheie API, fără proceduri exotice.</p>
+        </div>
+
+        <div class="rounded-3xl overflow-hidden border border-line shadow-2xl fade-up">
+            <div class="px-4 py-3 flex items-center gap-3" style="background: #1C1917;">
+                <div class="flex gap-2">
+                    <div class="w-3 h-3 rounded-full" style="background: rgba(220,38,38,.7);"></div>
+                    <div class="w-3 h-3 rounded-full" style="background: rgba(245,158,11,.7);"></div>
+                    <div class="w-3 h-3 rounded-full" style="background: rgba(16,185,129,.7);"></div>
+                </div>
+                <span class="mono text-xs ml-2" style="color: #78716C;">api-example.js</span>
+            </div>
+            <div class="p-6 overflow-x-auto" style="background: #0C0A09;">
+<pre class="mono text-sm leading-relaxed" style="color: #E7E5E4;"><span style="color: #78716C;">// Inițiezi un apel programat prin agentul AI</span>
+<span style="color: #F87171;">const</span> response = <span style="color: #F87171;">await</span> <span style="color: #60A5FA;">fetch</span>(<span style="color: #34D399;">'https://api.sambla.ro/v1/calls'</span>, {
+  method: <span style="color: #34D399;">'POST'</span>,
+  headers: {
+    <span style="color: #34D399;">'Authorization'</span>: <span style="color: #34D399;">'Bearer YOUR_API_KEY'</span>,
+    <span style="color: #34D399;">'Content-Type'</span>: <span style="color: #34D399;">'application/json'</span>
+  },
+  body: <span style="color: #60A5FA;">JSON</span>.stringify({
+    to: <span style="color: #34D399;">'+40721234567'</span>,
+    agent_id: <span style="color: #34D399;">'agent_receptie'</span>,
+    scenario: <span style="color: #34D399;">'programare_consultatie'</span>,
+    language: <span style="color: #34D399;">'ro'</span>,
+    webhook_url: <span style="color: #34D399;">'https://app.example.com/webhook'</span>
+  })
+});
+
+<span style="color: #F87171;">const</span> call = <span style="color: #F87171;">await</span> response.<span style="color: #60A5FA;">json</span>();
+<span style="color: #60A5FA;">console</span>.<span style="color: #60A5FA;">log</span>(<span style="color: #34D399;">`Apel inițiat: ${call.id}`</span>);</pre>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap gap-3 mt-8 justify-center">
+            @foreach([
+                ['REST API', 'Endpoints REST documentate'],
+                ['WebSocket', 'Streaming în timp real'],
+                ['Webhook-uri', 'Evenimente push către tine'],
+                ['Cheie API', 'Bearer token, scoped per integrare'],
+            ] as $b)
+                <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold bg-cream border border-line">
+                    <span class="w-1.5 h-1.5 rounded-full" style="background: var(--accent);"></span>
+                    <span>{{ $b[0] }}</span>
+                    <span style="color: var(--muted);">· {{ $b[1] }}</span>
+                </span>
+            @endforeach
+        </div>
+    </div>
+</section>
+
 {{-- CTA --}}
 <section class="py-20">
     <div class="max-w-4xl mx-auto px-6 text-center">
