@@ -152,12 +152,31 @@ Route::get('/new/og.svg', function (\Illuminate\Http\Request $request) {
         $titleLines = [$title];
     }
 
-    $svg = view('new.og-image', [
-        'title'      => $titleLines,
-        'subtitle'   => $subtitle,
-        'eyebrow'    => $eyebrow,
-        'accent'     => $accent,
-    ])->render();
+    try {
+        $svg = view('new.og-image', [
+            'title'      => $titleLines,
+            'subtitle'   => $subtitle,
+            'eyebrow'    => $eyebrow,
+            'accent'     => $accent,
+        ])->render();
+    } catch (\Throwable $e) {
+        // Defensive: never 500 on this endpoint — if the view chokes,
+        // serve a minimal valid SVG so social-share crawlers still get
+        // a usable OG image. Log the error for diagnosis.
+        \Illuminate\Support\Facades\Log::warning('og.svg render failed', [
+            'err' => $e->getMessage(),
+            'file' => $e->getFile() . ':' . $e->getLine(),
+        ]);
+        $safeTitle = htmlspecialchars(implode(' ', $titleLines), ENT_XML1);
+        $safeSub   = htmlspecialchars($subtitle, ENT_XML1);
+        $svg = '<?xml version="1.0" encoding="UTF-8"?>' .
+            '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">' .
+            '<rect width="1200" height="630" fill="#F5F1E8"/>' .
+            '<text x="80" y="320" font-family="serif" font-size="64" font-weight="600" fill="#1C1917">' . $safeTitle . '</text>' .
+            '<text x="80" y="380" font-family="sans-serif" font-size="24" fill="#3A3532">' . $safeSub . '</text>' .
+            '<text x="80" y="560" font-family="sans-serif" font-size="20" fill="#78716C">sambla.ro</text>' .
+            '</svg>';
+    }
 
     return response($svg, 200, [
         'Content-Type'  => 'image/svg+xml; charset=utf-8',
