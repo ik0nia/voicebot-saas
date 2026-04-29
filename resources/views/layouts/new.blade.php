@@ -8,7 +8,8 @@
     <link rel="canonical" href="@yield('canonical', url()->current())">
 
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
-    <link rel="apple-touch-icon" href="{{ asset('images/logo-icon.svg') }}">
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}" sizes="any">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
     <meta name="theme-color" content="#DC2626">
 
     <meta property="og:type" content="website">
