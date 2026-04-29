@@ -41,12 +41,42 @@ async function fetchSessionConfig(callId, config) {
     }
 }
 
+async function postInternal(path, body) {
+    const base = process.env.LARAVEL_EVENTS_URL.replace(/\/events$/, '');
+    try {
+        const res = await fetch(`${base}${path}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(body),
+            signal: AbortSignal.timeout(8000),
+        });
+        if (!res.ok) {
+            logger.warn({ status: res.status, path }, 'Laravel internal POST non-2xx');
+            return null;
+        }
+        return await res.json();
+    } catch (err) {
+        logger.warn({ err: err.message, path }, 'Laravel internal POST failed');
+        return null;
+    }
+}
+
 export function connectOpenai(botCtx, twilioSink, config, callMeta = {}) {
     const url = `${OPENAI_REALTIME_URL}?model=${encodeURIComponent(config.openaiRealtimeModel)}`;
     const sink = getLaravelSink(config);
     const callStartedAt = Date.now();
     const callId = callMeta.callId ? parseInt(callMeta.callId, 10) : null;
     let assistantChunk = '';
+
+    // Transfer state: when a transfer tool call is accepted, we remember
+    // the attempt so that on the NEXT response.done (the one where the
+    // agent finishes speaking "one moment please") we tell Laravel to
+    // swap the caller into the hold conference. Doing it pre-response.done
+    // cuts the agent's confirmation audio off mid-word.
+    let pendingTransferAttemptId = null;
 
     const ws = new WebSocket(url, {
         headers: {
@@ -217,6 +247,57 @@ export function connectOpenai(botCtx, twilioSink, config, callMeta = {}) {
             case 'input_audio_buffer.speech_stopped':
                 break;
 
+            case 'response.function_call_arguments.done': {
+                // OpenAI Realtime function-call completed. Forward to Laravel
+                // so tenant-scoped business logic (e.g. warm-transfer Twilio
+                // orchestration) stays in PHP. The bridge just shuttles
+                // the JSON + relays a confirmation back into the session.
+                const toolName = event.name;
+                const callItemId = event.call_id; // OpenAI's tool-call item id, distinct from our callId
+                let args = {};
+                try { args = event.arguments ? JSON.parse(event.arguments) : {}; } catch (_) { /* noop */ }
+
+                logger.info({ toolName, callId, callItemId, args }, 'tool-call arrived');
+
+                // Fire-and-await — we need the `speak` text before asking the
+                // model to continue. Laravel responds in < 1s normally.
+                postInternal('/tool-call', {
+                    call_id: callId,
+                    tool_name: toolName,
+                    arguments: args,
+                }).then((resp) => {
+                    const speak = (resp && resp.speak) || 'Îmi pare rău, nu pot procesa cererea acum.';
+                    if (resp && resp.success && resp.attempt_id && toolName === 'request_human_transfer') {
+                        pendingTransferAttemptId = resp.attempt_id;
+                    }
+                    try {
+                        // Feed the tool result back into the conversation
+                        // so the model speaks the confirmation line. The
+                        // response.create that follows triggers TTS.
+                        ws.send(JSON.stringify({
+                            type: 'conversation.item.create',
+                            item: {
+                                type: 'function_call_output',
+                                call_id: callItemId,
+                                output: JSON.stringify({ message: speak }),
+                            },
+                        }));
+                        ws.send(JSON.stringify({
+                            type: 'response.create',
+                            response: {
+                                modalities: ['text', 'audio'],
+                                instructions: `Spune exact: "${speak.replace(/"/g, '\\"')}". Nu adăuga altceva.`,
+                            },
+                        }));
+                    } catch (err) {
+                        logger.warn({ err: err.message }, 'tool-call response injection failed');
+                    }
+                }).catch((err) => {
+                    logger.error({ err: err.message, toolName }, 'tool-call dispatch failed');
+                });
+                break;
+            }
+
             case 'response.done':
                 responseActive = false;
                 flushAssistantTurn();
@@ -233,6 +314,16 @@ export function connectOpenai(botCtx, twilioSink, config, callMeta = {}) {
                             usage: event.response.usage,
                         });
                     }
+                }
+
+                // Warm-transfer bridge trigger: the preceding response was
+                // the agent speaking the "one moment please" confirmation.
+                // Now it's safe to swap the caller's TwiML to the hold
+                // conference — the agent's audio has flushed to Twilio.
+                if (pendingTransferAttemptId) {
+                    const attemptId = pendingTransferAttemptId;
+                    pendingTransferAttemptId = null;
+                    postInternal('/transfer-bridge', { attempt_id: attemptId }).catch(() => {});
                 }
                 break;
 

@@ -23,6 +23,12 @@ Route::middleware('internal.service')->prefix('internal')->group(function () {
     Route::post('/media-stream/session-config', [
         \App\Http\Controllers\Internal\MediaStreamEventController::class, 'sessionConfig'
     ])->name('internal.mediaStream.sessionConfig');
+    Route::post('/media-stream/tool-call', [
+        \App\Http\Controllers\Internal\MediaStreamEventController::class, 'toolCall'
+    ])->name('internal.mediaStream.toolCall');
+    Route::post('/media-stream/transfer-bridge', [
+        \App\Http\Controllers\Internal\MediaStreamEventController::class, 'transferBridge'
+    ])->name('internal.mediaStream.transferBridge');
 });
 
 // Platform logo upload endpoints. Super-admin only, rate-limited, and the

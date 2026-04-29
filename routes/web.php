@@ -818,4 +818,13 @@ Route::prefix('webhook/twilio')
     ->group(function () {
         Route::post('/voice', [TwilioWebhookController::class, 'handleVoice'])->name('webhook.twilio.voice');
         Route::post('/status', [TwilioWebhookController::class, 'handleStatus'])->name('webhook.twilio.status');
+
+        // Warm-transfer flow. {callSid} is the INBOUND caller leg (not
+        // the operator leg) so the conference name stays stable across
+        // whisper, join, and status callbacks even though each hits
+        // Twilio on different SIDs.
+        Route::post('/transfer/whisper/{callSid}', [\App\Http\Controllers\Webhook\TwilioTransferController::class, 'whisper'])->name('webhook.twilio.transfer.whisper');
+        Route::post('/transfer/join/{callSid}',    [\App\Http\Controllers\Webhook\TwilioTransferController::class, 'join'])->name('webhook.twilio.transfer.join');
+        Route::post('/transfer/no-answer/{callSid}',[\App\Http\Controllers\Webhook\TwilioTransferController::class, 'noAnswer'])->name('webhook.twilio.transfer.noAnswer');
+        Route::post('/transfer/status/{callSid}',  [\App\Http\Controllers\Webhook\TwilioTransferController::class, 'status'])->name('webhook.twilio.transfer.status');
     });

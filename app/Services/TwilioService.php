@@ -373,6 +373,65 @@ class TwilioService implements TelephonyProvider
         return 'completed';
     }
 
+    /**
+     * Replace the active TwiML for a live call. Twilio interrupts whatever
+     * the call is currently doing (media stream, <Say>, etc.) and runs the
+     * supplied TwiML. Used by the warm-transfer flow to move the caller
+     * from the AI-agent media stream into a hold / conference.
+     */
+    public function updateCallTwiml(string $callSid, string $twiml): bool
+    {
+        try {
+            $this->masterClient()->calls($callSid)->update(['twiml' => $twiml]);
+            return true;
+        } catch (RestException $e) {
+            Log::error('TwilioService: updateCallTwiml failed', [
+                'call_sid' => $callSid,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Place an outbound call. Used by the warm-transfer flow to dial the
+     * operator on a separate leg while the caller is placed into a
+     * conference. Returns the call SID or null on failure.
+     *
+     * @param  array{url?: string, status_callback?: string, status_callback_events?: array<string>, timeout?: int, machine_detection?: string}  $options
+     */
+    public function createOutboundCall(string $to, string $from, array $options = []): ?string
+    {
+        if (!preg_match('/^\+[1-9]\d{7,14}$/', $to)) {
+            throw new \InvalidArgumentException("Invalid E.164 phone number: {$to}");
+        }
+        if (!preg_match('/^\+[1-9]\d{7,14}$/', $from)) {
+            throw new \InvalidArgumentException("Invalid E.164 caller number: {$from}");
+        }
+
+        $params = ['method' => 'POST'];
+        if (!empty($options['url']))                     $params['url'] = $options['url'];
+        if (!empty($options['status_callback']))         $params['statusCallback'] = $options['status_callback'];
+        if (!empty($options['status_callback_events'])) {
+            $params['statusCallbackEvent'] = $options['status_callback_events'];
+            $params['statusCallbackMethod'] = 'POST';
+        }
+        if (!empty($options['timeout']))                 $params['timeout'] = (int) $options['timeout'];
+        if (!empty($options['machine_detection']))       $params['machineDetection'] = $options['machine_detection'];
+
+        try {
+            $call = $this->masterClient()->calls->create($to, $from, $params);
+            return $call->sid;
+        } catch (RestException $e) {
+            Log::error('TwilioService: createOutboundCall failed', [
+                'to' => $to,
+                'from' => $from,
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
+    }
+
     public function generateMediaStreamTexml(string $botId, string $callId): string
     {
         // The media-stream bridge lives on its own subdomain so the cert

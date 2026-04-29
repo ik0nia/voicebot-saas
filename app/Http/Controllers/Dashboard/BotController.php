@@ -285,6 +285,12 @@ class BotController extends Controller
             'settings.tone_guide.emoji_ok' => 'nullable|boolean',
             'settings.tone_guide.languages' => 'nullable|array',
             'settings.tone_guide.languages.*' => 'string|in:ro,en,hu,de,fr',
+            // Warm-transfer config — stored under settings.transfer_config.
+            // Top-level form fields (transfer_*) are easier to bind in Alpine
+            // than nested settings.transfer_config.* paths.
+            'transfer_enabled' => 'nullable|boolean',
+            'transfer_operator_number' => 'nullable|string|max:32',
+            'transfer_max_ring_seconds' => 'nullable|integer|min:10|max:60',
         ]);
 
         // Persist chat_languages + voice_language into bot.settings
@@ -373,8 +379,32 @@ class BotController extends Controller
         // to the bot's primary language still fires cleanly.
         $merged['voice_language'] = ($validated['voice_language'] ?? null) ?: $validated['language'];
 
+        // Transfer config folds into settings.transfer_config. Reject
+        // enabled=true without a usable operator number — silently
+        // saving a half-config would let the model promise a transfer
+        // it cannot execute and the tool-call endpoint would refuse.
+        $transferEnabled = (bool) ($validated['transfer_enabled'] ?? false);
+        $operatorRaw = trim((string) ($validated['transfer_operator_number'] ?? ''));
+        $operatorDigits = preg_replace('/\D/', '', $operatorRaw);
+        if ($transferEnabled && strlen($operatorDigits) < 9) {
+            return back()
+                ->withErrors(['transfer_operator_number' => 'Introdu un număr valid pentru operator (minim 9 cifre) sau dezactivează transferul.'])
+                ->withInput();
+        }
+        $merged['transfer_config'] = [
+            'enabled'          => $transferEnabled,
+            'operator_number'  => $operatorRaw,
+            'max_ring_seconds' => (int) ($validated['transfer_max_ring_seconds'] ?? 25),
+        ];
+
         $validated['settings'] = $merged;
-        unset($validated['chat_languages'], $validated['voice_language']);
+        unset(
+            $validated['chat_languages'],
+            $validated['voice_language'],
+            $validated['transfer_enabled'],
+            $validated['transfer_operator_number'],
+            $validated['transfer_max_ring_seconds'],
+        );
 
         // Convert minutes to seconds for max_call_duration
         if (isset($validated['max_call_duration_minutes'])) {

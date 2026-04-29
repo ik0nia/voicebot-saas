@@ -92,6 +92,75 @@ class MediaStreamEventController extends Controller
         ]);
     }
 
+    /**
+     * Handle a function-tool invocation from the OpenAI Realtime session.
+     * The Node bridge forwards `response.function_call_arguments.done`
+     * events here so the business logic stays in PHP (tenant scoping,
+     * Twilio credentials, DB writes) rather than duplicated in Node.
+     *
+     * Currently the only supported tool is `request_human_transfer`.
+     * Unknown tool names return 400 rather than silently succeeding —
+     * silent success would let a buggy prompt claim capabilities it
+     * doesn't have.
+     */
+    public function toolCall(Request $request)
+    {
+        $validated = $request->validate([
+            'call_id'        => 'required|integer',
+            'tool_name'      => 'required|string|max:64',
+            'arguments'      => 'nullable|array',
+        ]);
+
+        $call = \App\Models\Call::withoutGlobalScopes()->find($validated['call_id']);
+        if (!$call || !$call->bot) {
+            return response()->json(['error' => 'call not found'], 404);
+        }
+
+        if ($validated['tool_name'] !== 'request_human_transfer') {
+            return response()->json(['error' => 'unknown_tool'], 400);
+        }
+
+        $reason = (string) ($validated['arguments']['reason'] ?? '');
+        $result = app(\App\Services\Transfer\TransferService::class)
+            ->initiate($call, $call->bot, $reason !== '' ? $reason : null);
+
+        if (!$result) {
+            return response()->json([
+                'success' => false,
+                'speak'   => 'Îmi pare rău, nu pot iniția transferul în acest moment. Vă pot ajuta eu cu altceva?',
+            ]);
+        }
+
+        return response()->json([
+            'success'    => true,
+            'speak'      => $result['speak'],
+            'attempt_id' => $result['attempt_id'],
+        ]);
+    }
+
+    /**
+     * After the AI agent has finished speaking the "one moment please"
+     * confirmation, the Node bridge calls this endpoint to swap the
+     * caller's TwiML into a conference. Doing the swap here (rather
+     * than immediately on tool-call) avoids cutting the caller off
+     * mid-sentence — Twilio interrupts whatever audio is playing the
+     * instant we `Calls(sid).update()`.
+     */
+    public function transferBridge(Request $request)
+    {
+        $validated = $request->validate([
+            'attempt_id' => 'required|integer',
+        ]);
+
+        $attempt = \App\Models\TransferAttempt::withoutGlobalScopes()->find($validated['attempt_id']);
+        if (!$attempt) {
+            return response()->json(['error' => 'attempt not found'], 404);
+        }
+
+        $ok = app(\App\Services\Transfer\TransferService::class)->bridgeCaller($attempt);
+        return response()->json(['success' => $ok]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([

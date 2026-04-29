@@ -128,7 +128,52 @@ class RealtimeSession
             'transcribe_prompt' => 'Conversație în limba '
                 . ($langLabelMap[$voiceLang] ?? 'română')
                 . ' despre produse și servicii.',
+            'tools' => $this->buildTools(),
         ]);
+    }
+
+    /**
+     * Collect the OpenAI Realtime function tools this bot exposes. Tools
+     * are gated by per-bot config so the feature surface stays small —
+     * e.g., `request_human_transfer` is only offered when the bot has an
+     * operator number configured, otherwise the model might promise a
+     * transfer it cannot deliver.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function buildTools(): array
+    {
+        $tools = [];
+        $settings = $this->bot->settings ?? [];
+        $transfer = $settings['transfer_config'] ?? null;
+
+        if (is_array($transfer)
+            && ($transfer['enabled'] ?? false)
+            && !empty($transfer['operator_number'])
+        ) {
+            $tools[] = [
+                'type' => 'function',
+                'name' => 'request_human_transfer',
+                'description' => "Transferă apelul către un operator uman. Apelează ACEASTĂ funcție când:\n"
+                    . "- clientul cere EXPLICIT să vorbească cu o persoană / operator / angajat / cineva de la compania;\n"
+                    . "- clientul e frustrat că nu primește răspuns adecvat;\n"
+                    . "- întrebarea depășește în mod clar competența ta (reclamații complexe, situații urgente, negocieri de preț personalizate).\n"
+                    . "NU apela funcția pentru întrebări uzuale la care poți răspunde din contextul cunoștințelor. "
+                    . "Înainte de a apela funcția, spune-i clientului o propoziție scurtă de tip „Vă fac legătura cu un coleg, un moment, vă rog\".",
+                'parameters' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'reason' => [
+                            'type' => 'string',
+                            'description' => 'Motivul transferului în 1 propoziție (ex. „clientul cere oferta personalizată pentru 200mp gresie").',
+                        ],
+                    ],
+                    'required' => ['reason'],
+                ],
+            ];
+        }
+
+        return $tools;
     }
 
     /**
