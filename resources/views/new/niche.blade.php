@@ -13,6 +13,8 @@
     $ctaSecondary = $niche->cta_secondary_text ?: 'Cere demo personalizat';
     $ctaSecondaryHref = $niche->cta_secondary_href ?: '#contact';
     $nicheLabel   = $niche->vertical_label ?: $niche->name;
+    $liveDemo     = \App\Support\NicheDemoResolver::forNiche($niche->slug);
+    $wowDemoSeed  = config('niches.' . $niche->slug . '.wow_demo');
 @endphp
 
 @section('title', ($niche->meta_title ?: ('Agent AI pentru ' . $niche->name . ' — Sambla')))
@@ -185,6 +187,93 @@
         </div>
     </div>
 </section>
+
+{{-- LIVE DEMO IFRAME (feature-flagged via NicheDemoResolver) --}}
+@if(!empty($liveDemo))
+<section id="niche-live-demo" class="py-24 bg-cream border-y border-line relative grain overflow-hidden">
+    @include('new.partials.niche-decor', ['icons' => $nicheIcons, 'seed' => 'live-demo'])
+    <div class="max-w-3xl mx-auto px-6 relative">
+        <div class="text-center mb-12 fade-up">
+            <div class="mono text-[11px] uppercase tracking-[0.2em] accent-text mb-4 inline-flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full animate-pulse" style="background: var(--accent);"></span>
+                ◇ LIVE · vorbește cu agentul
+            </div>
+            <h2 class="display text-4xl md:text-5xl font-medium leading-[1.05] mb-5">
+                Încearcă agentul AI<br>
+                <em class="italic accent-text">pentru {{ strtolower($nicheLabel) }}</em>.
+            </h2>
+            <p class="text-lg text-muted leading-relaxed max-w-xl mx-auto">
+                Scrie o întrebare reală — primești răspuns imediat, în limba română, de la agentul configurat pentru această nișă.
+            </p>
+            @if(!empty($wowDemoSeed))
+                <p class="mt-5 text-sm text-muted">
+                    Nu știi ce să întrebi? Încearcă:
+                    <button type="button" data-niche-demo-seed="{{ $wowDemoSeed }}" class="underline font-semibold accent-text hover:opacity-80">„{{ $wowDemoSeed }}"</button>
+                </p>
+            @endif
+        </div>
+
+        <div class="max-w-2xl mx-auto fade-up"
+             data-niche-demo-root
+             data-niche-slug="{{ $niche->slug }}"
+             data-channel-id="{{ (int) $liveDemo['channel_id'] }}"
+             data-landing-path="/{{ request()->path() }}">
+            <div class="relative">
+                <div class="absolute -inset-6 rounded-[2.5rem] blur-3xl opacity-50" style="background: linear-gradient(135deg, var(--accent) 0%, var(--accent-soft) 100%);"></div>
+                <div class="relative rounded-3xl overflow-hidden shadow-2xl border border-line bg-paper">
+                    <div class="flex items-center gap-3 px-5 py-3 text-white" style="background: linear-gradient(135deg, var(--accent), var(--accent-dark));">
+                        <div class="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                            </svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="font-semibold text-sm truncate">{{ $liveDemo['bot_name'] }}</div>
+                            <div class="flex items-center gap-1.5 text-[11px] text-white/85">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
+                                Online · răspunde live
+                            </div>
+                        </div>
+                    </div>
+                    {{-- Error boundary: if iframe doesn't fire `load` within 5s, show retry UI --}}
+                    <div id="niche-live-demo-fallback" class="hidden p-8 text-center">
+                        <div class="mx-auto w-14 h-14 rounded-full mb-4 flex items-center justify-center" style="background: var(--accent-soft);">
+                            <svg class="w-7 h-7 accent-text" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <h3 class="display text-xl font-medium mb-2">Demo-ul nu a putut fi încărcat</h3>
+                        <p class="text-sm text-muted mb-5">Se poate întâmpla dacă rețeaua ta blochează widget-uri externe.</p>
+                        <div class="flex gap-3 justify-center flex-wrap">
+                            <button type="button" id="niche-live-demo-retry" class="btn-primary">Încearcă din nou</button>
+                            <a href="#contact" class="btn-outline">Contactează-ne</a>
+                        </div>
+                    </div>
+                    <iframe
+                        id="niche-live-demo-frame"
+                        src="{{ url('/api/v1/chatbot/' . $liveDemo['channel_id'] . '/frame') }}"
+                        class="w-full border-0 block bg-paper niche-demo-iframe"
+                        title="Demo live {{ $niche->name }}"
+                        loading="lazy"
+                        allow="microphone"
+                        sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>
+                </div>
+            </div>
+            <p class="text-center text-xs text-muted mt-5">
+                Conversațiile din acest demo nu sunt asociate unui cont real și nu sunt păstrate permanent.
+            </p>
+            <noscript>
+                <p class="text-center text-xs text-muted mt-3">
+                    Ai JavaScript dezactivat — derulează mai jos pentru o conversație demo preînregistrată.
+                </p>
+            </noscript>
+        </div>
+        <style>
+            .niche-demo-iframe { height: clamp(400px, 60vh, 540px); max-height: 540px; }
+        </style>
+    </div>
+</section>
+@endif
 
 {{-- PROBLEMA --}}
 @if(!empty($niche->problem_text))
@@ -673,3 +762,118 @@
 </section>
 
 @endsection
+
+@push('scripts')
+{{-- Live-demo seed: clipboard-copy + smooth-scroll to iframe. --}}
+<script>
+(() => {
+    const seedBtn = document.querySelector('[data-niche-demo-seed]');
+    const frame = document.getElementById('niche-live-demo-frame');
+    if (!seedBtn || !frame) return;
+    seedBtn.addEventListener('click', async () => {
+        const text = seedBtn.getAttribute('data-niche-demo-seed') || '';
+        try { await navigator.clipboard.writeText(text); } catch (_) {}
+        const original = seedBtn.textContent;
+        seedBtn.textContent = 'Copiat ✓ — lipește în chat';
+        setTimeout(() => { seedBtn.textContent = original; }, 2200);
+        frame.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+})();
+</script>
+
+{{-- Niche-demo funnel: emit demo_viewed / demo_message_sent / demo_qualified
+     events to /api/public/demo/event, and show a fallback UI if the iframe
+     never loads. Framework-free so it runs before Alpine bootstraps. --}}
+<script>
+(() => {
+    const root = document.querySelector('[data-niche-demo-root]');
+    if (!root) return;
+    const frame = document.getElementById('niche-live-demo-frame');
+    const fallback = document.getElementById('niche-live-demo-fallback');
+    const retryBtn = document.getElementById('niche-live-demo-retry');
+    const niche = root.getAttribute('data-niche-slug') || '';
+    const channelId = parseInt(root.getAttribute('data-channel-id') || '0', 10);
+    const landingPath = root.getAttribute('data-landing-path') || location.pathname;
+
+    const COOKIE = 'sambla_demo_session';
+    const readCookie = (k) => {
+        const m = document.cookie.match(new RegExp('(?:^|; )' + k + '=([^;]*)'));
+        return m ? decodeURIComponent(m[1]) : null;
+    };
+    const setCookie = (k, v, days) => {
+        const d = new Date(); d.setTime(d.getTime() + days*86400000);
+        document.cookie = k + '=' + encodeURIComponent(v) + ';expires=' + d.toUTCString() + ';path=/;SameSite=Lax';
+    };
+    let sessionId = readCookie(COOKIE);
+    if (!sessionId) {
+        sessionId = 'ds_' + (crypto.randomUUID ? crypto.randomUUID() : (Date.now().toString(36) + Math.random().toString(36).slice(2)));
+        setCookie(COOKIE, sessionId, 180);
+    }
+
+    const sentKey = 'sambla_demo_viewed:' + niche;
+    let viewed = sessionStorage.getItem(sentKey) === '1';
+
+    const postEvent = (eventName, extraProps = {}) => {
+        try {
+            fetch('/api/public/demo/event', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                credentials: 'same-origin',
+                keepalive: true,
+                body: JSON.stringify({
+                    event_name: eventName,
+                    niche_slug: niche,
+                    session_id: sessionId,
+                    landing_path: landingPath,
+                    properties: Object.assign({ channel_id: channelId }, extraProps),
+                }),
+            }).catch(() => {});
+        } catch (_) { /* never let analytics break the page */ }
+    };
+
+    let loaded = false;
+    const failTimer = setTimeout(() => {
+        if (loaded || !frame || !fallback) return;
+        frame.classList.add('hidden');
+        fallback.classList.remove('hidden');
+    }, 5000);
+
+    if (frame) {
+        frame.addEventListener('load', () => {
+            loaded = true;
+            clearTimeout(failTimer);
+            if (!viewed) {
+                postEvent('demo_viewed');
+                sessionStorage.setItem(sentKey, '1');
+                viewed = true;
+            }
+        });
+    }
+
+    if (retryBtn && frame && fallback) {
+        retryBtn.addEventListener('click', () => {
+            fallback.classList.add('hidden');
+            frame.classList.remove('hidden');
+            const src = frame.getAttribute('src');
+            frame.setAttribute('src', 'about:blank');
+            setTimeout(() => frame.setAttribute('src', src), 50);
+        });
+    }
+
+    let userMsgs = 0;
+    const qualifiedKey = 'sambla_demo_qualified:' + niche;
+    window.addEventListener('message', (e) => {
+        if (!e || !e.data || typeof e.data !== 'object') return;
+        if (e.data.type !== 'sambla.message') return;
+        postEvent('demo_message_sent', { role: e.data.role || 'user' });
+        if (e.data.role === 'user') {
+            userMsgs++;
+            if (userMsgs >= 3 && !sessionStorage.getItem(qualifiedKey)) {
+                postEvent('demo_qualified', { messages: userMsgs });
+                sessionStorage.setItem(qualifiedKey, '1');
+            }
+        }
+    });
+})();
+</script>
+@endpush
