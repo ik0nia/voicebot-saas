@@ -34,10 +34,16 @@ class Channel extends Model
         'name',
         'external_id',
         'config',
+        'credentials',
         'webhook_secret',
         'is_active',
         'status',
         'last_activity_at',
+    ];
+
+    protected $hidden = [
+        'credentials',
+        'webhook_secret',
     ];
 
     protected static function booted(): void
@@ -58,9 +64,30 @@ class Channel extends Model
     {
         return [
             'config' => 'array',
+            'credentials' => 'encrypted:array',
             'is_active' => 'boolean',
             'last_activity_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Read a per-channel credential by dotted key (e.g. 'access_token').
+     */
+    public function getCredential(string $key, mixed $default = null): mixed
+    {
+        return data_get($this->credentials ?? [], $key, $default);
+    }
+
+    /**
+     * Stage a credential value. Caller must save() to persist.
+     */
+    public function setCredential(string $key, mixed $value): self
+    {
+        $creds = $this->credentials ?? [];
+        data_set($creds, $key, $value);
+        $this->credentials = $creds;
+
+        return $this;
     }
 
     // Relationships

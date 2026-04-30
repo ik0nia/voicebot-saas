@@ -16,6 +16,7 @@ class ChannelMessageService
         protected ChatModelRouter $chatModelRouter,
         protected ProductSearchService $productSearchService,
         protected OrderLookupService $orderLookupService,
+        protected ChannelMessagingService $channelMessagingService,
     ) {}
     /**
      * Process an incoming message from any channel (WhatsApp, Facebook, Instagram, etc.)
@@ -82,12 +83,33 @@ class ChannelMessageService
         // Generate AI response
         $response = $this->generateAiResponse($bot, $conversation, $messageText);
 
-        // Save outbound message
+        // Dispatch the AI reply back to the user via the channel's provider
+        // (WhatsApp Cloud, FB Messenger, IG DM). Store delivery metadata on
+        // the outbound Message row so failures are visible in the dashboard.
+        $deliveryMetadata = ['delivery_attempted_at' => now()->toIso8601String()];
+        if (in_array($channel->type, [Channel::TYPE_WHATSAPP, Channel::TYPE_FACEBOOK_MESSENGER, Channel::TYPE_INSTAGRAM_DM], true)) {
+            $send = $this->channelMessagingService->sendOnChannel($channel, $contactId, $response);
+            $deliveryMetadata['delivery_success'] = $send['success'];
+            $deliveryMetadata['provider_message_id'] = $send['message_id'];
+            if (!$send['success']) {
+                $deliveryMetadata['delivery_error'] = mb_substr((string) ($send['error'] ?? ''), 0, 500);
+                Log::warning('ChannelMessage: outbound delivery failed', [
+                    'channel_id' => $channel->id,
+                    'conversation_id' => $conversation->id,
+                    'error' => $deliveryMetadata['delivery_error'],
+                ]);
+            }
+        } else {
+            $deliveryMetadata['delivery_skipped'] = 'channel_type_not_dispatchable';
+        }
+
         $outboundMessage = Message::create([
             'conversation_id' => $conversation->id,
             'direction' => 'outbound',
             'content' => $response,
             'content_type' => 'text',
+            'external_message_id' => $deliveryMetadata['provider_message_id'] ?? null,
+            'metadata' => $deliveryMetadata,
             'sent_at' => now(),
         ]);
 
