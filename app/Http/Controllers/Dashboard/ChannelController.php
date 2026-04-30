@@ -81,6 +81,109 @@ class ChannelController extends Controller
             ->with('success', 'Canalul a fost șters.');
     }
 
+    /**
+     * Render the manual-paste wizard for connecting a WhatsApp Cloud API
+     * channel. Used as the fallback to embedded signup until we hold a
+     * Meta Tech Provider relationship; also useful for tenants who already
+     * have credentials issued by another BSP.
+     */
+    public function connectWhatsApp(Bot $bot)
+    {
+        $tenant = auth()->user()->tenant;
+        $allowedChannels = $tenant->settings['allowed_channels'] ?? ['voice'];
+
+        if (!in_array(Channel::TYPE_WHATSAPP, $allowedChannels, true)) {
+            return redirect()
+                ->route('dashboard.bots.channels.index', $bot)
+                ->withErrors(['type' => 'Planul tău nu include canalul WhatsApp.']);
+        }
+
+        $webhookUrl = url('/webhook/whatsapp');
+
+        return view('dashboard.bots.channels.connect-whatsapp', [
+            'bot' => $bot,
+            'webhookUrl' => $webhookUrl,
+        ]);
+    }
+
+    /**
+     * Store the credentials pasted in the wizard. We generate the
+     * webhook_secret server-side (also used as Meta's verify_token at
+     * subscription time) so the tenant can't accidentally pick a weak
+     * value or reuse one from another channel.
+     */
+    public function storeWhatsApp(Request $request, Bot $bot)
+    {
+        $tenant = auth()->user()->tenant;
+        $allowedChannels = $tenant->settings['allowed_channels'] ?? ['voice'];
+        if (!in_array(Channel::TYPE_WHATSAPP, $allowedChannels, true)) {
+            return back()->withErrors(['type' => 'Planul tău nu include canalul WhatsApp.']);
+        }
+
+        $validated = $request->validate([
+            'name' => 'nullable|string|max:255',
+            'waba_id' => 'required|string|max:64|regex:/^[0-9]+$/',
+            'phone_number_id' => 'required|string|max:64|regex:/^[0-9]+$/',
+            'access_token' => 'required|string|min:32|max:2048',
+            'app_secret' => 'nullable|string|min:16|max:128',
+        ], [
+            'waba_id.regex' => 'WABA ID trebuie să fie numeric.',
+            'phone_number_id.regex' => 'Phone Number ID trebuie să fie numeric.',
+            'access_token.min' => 'Token-ul pare prea scurt. Folosește un System User Access Token din Meta Business Manager.',
+        ]);
+
+        $duplicate = Channel::query()
+            ->where('type', Channel::TYPE_WHATSAPP)
+            ->where('external_id', $validated['phone_number_id'])
+            ->exists();
+
+        if ($duplicate) {
+            return back()
+                ->withInput()
+                ->withErrors(['phone_number_id' => 'Acest Phone Number ID este deja conectat la un alt canal.']);
+        }
+
+        $channel = $bot->channels()->create([
+            'type' => Channel::TYPE_WHATSAPP,
+            'name' => $validated['name'] ?: 'WhatsApp',
+            'external_id' => $validated['phone_number_id'],
+            'webhook_secret' => Str::random(48),
+            'is_active' => true,
+            'status' => 'pending',
+        ]);
+
+        $channel->setCredential('waba_id', $validated['waba_id']);
+        $channel->setCredential('phone_number_id', $validated['phone_number_id']);
+        $channel->setCredential('access_token', $validated['access_token']);
+        if (!empty($validated['app_secret'])) {
+            $channel->setCredential('app_secret', $validated['app_secret']);
+        }
+        $channel->save();
+
+        return redirect()
+            ->route('dashboard.bots.channels.whatsapp.connected', ['bot' => $bot, 'channel' => $channel])
+            ->with('success', 'Canal WhatsApp creat. Configurează webhook-ul în Meta Business Manager urmând pașii de mai jos.');
+    }
+
+    /**
+     * Show the post-connect instructions: webhook URL, verify token, and a
+     * test-message hint. Reachable only by the bot's owner tenant.
+     */
+    public function whatsAppConnected(Bot $bot, Channel $channel)
+    {
+        $this->ensureChannelBelongsToBot($bot, $channel);
+
+        if ($channel->type !== Channel::TYPE_WHATSAPP) {
+            abort(404);
+        }
+
+        return view('dashboard.bots.channels.whatsapp-connected', [
+            'bot' => $bot,
+            'channel' => $channel,
+            'webhookUrl' => url('/webhook/whatsapp'),
+        ]);
+    }
+
     public function toggleActive(Bot $bot, Channel $channel)
     {
         $this->ensureChannelBelongsToBot($bot, $channel);

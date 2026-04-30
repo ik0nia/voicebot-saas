@@ -494,6 +494,15 @@ Route::middleware('auth')->prefix('dashboard/agenti/{bot}/canale')->group(functi
         Route::put('/{channel}/setup', [ChannelController::class, 'saveChatbotSetup'])->name('dashboard.bots.channels.chatbot-setup.save');
         Route::delete('/{channel}', [ChannelController::class, 'destroy'])->name('dashboard.bots.channels.destroy');
         Route::patch('/{channel}/toggle', [ChannelController::class, 'toggleActive'])->name('dashboard.bots.channels.toggle');
+
+        // Manual-paste WhatsApp Cloud API onboarding wizard (fallback to
+        // embedded signup until Meta Tech Provider status lands).
+        Route::get('/whatsapp/connect', [ChannelController::class, 'connectWhatsApp'])
+            ->name('dashboard.bots.channels.whatsapp.connect');
+        Route::post('/whatsapp/connect', [ChannelController::class, 'storeWhatsApp'])
+            ->name('dashboard.bots.channels.whatsapp.store');
+        Route::get('/whatsapp/{channel}/connected', [ChannelController::class, 'whatsAppConnected'])
+            ->name('dashboard.bots.channels.whatsapp.connected');
     });
 });
 
