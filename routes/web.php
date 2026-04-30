@@ -500,6 +500,7 @@ Route::middleware('auth')->prefix('dashboard/agenti/{bot}/canale')->group(functi
         Route::get('/whatsapp/connect', [ChannelController::class, 'connectWhatsApp'])
             ->name('dashboard.bots.channels.whatsapp.connect');
         Route::post('/whatsapp/connect', [ChannelController::class, 'storeWhatsApp'])
+            ->middleware('throttle:10,1')
             ->name('dashboard.bots.channels.whatsapp.store');
         Route::get('/whatsapp/{channel}/connected', [ChannelController::class, 'whatsAppConnected'])
             ->name('dashboard.bots.channels.whatsapp.connected');

@@ -27,8 +27,11 @@ class Channel extends Model
         self::TYPE_WEB_CHATBOT,
     ];
 
+    // tenant_id intentionally omitted from $fillable — must be derived
+    // from auth() (BelongsToTenant trait) or from $bot->tenant_id (booted()
+    // hook below). Allowing mass-assignment would let any caller bypass
+    // scoping and stamp an arbitrary tenant.
     protected $fillable = [
-        'tenant_id',
         'bot_id',
         'type',
         'name',
@@ -48,11 +51,18 @@ class Channel extends Model
 
     protected static function booted(): void
     {
-        // Derive tenant_id from bot when not explicitly set and BelongsToTenant
-        // didn't pick it up from auth (webhooks, jobs, factories).
+        // Always reconcile tenant_id with the bot's tenant. The trait
+        // BelongsToTenant stamps from auth()->user()->tenant_id first; if
+        // a super-admin or service account creates a channel attached to a
+        // bot in a different tenant, the bot is the source of truth — not
+        // the actor's session — so we override.
         static::creating(function (Channel $channel) {
-            if (!$channel->tenant_id && $channel->bot_id) {
-                $bot = Bot::find($channel->bot_id);
+            if ($channel->bot_id) {
+                // Bot is itself BelongsToTenant scoped, so look it up
+                // unscoped to avoid silently returning null when the actor
+                // can't see the bot's tenant.
+                $bot = Bot::withoutGlobalScope(\App\Models\Scopes\TenantScope::class)
+                    ->find($channel->bot_id);
                 if ($bot) {
                     $channel->tenant_id = $bot->tenant_id;
                 }
@@ -72,10 +82,17 @@ class Channel extends Model
 
     /**
      * Read a per-channel credential by dotted key (e.g. 'access_token').
+     * Empty strings are treated as missing so the env fallback can fire
+     * (a tenant who clears a token to rotate it shouldn't get
+     * "not configured" — they should fall through).
      */
     public function getCredential(string $key, mixed $default = null): mixed
     {
-        return data_get($this->credentials ?? [], $key, $default);
+        $value = data_get($this->credentials ?? [], $key);
+        if ($value === null || $value === '') {
+            return $default;
+        }
+        return $value;
     }
 
     /**

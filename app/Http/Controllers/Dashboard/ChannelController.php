@@ -124,15 +124,25 @@ class ChannelController extends Controller
             'name' => 'nullable|string|max:255',
             'waba_id' => 'required|string|max:64|regex:/^[0-9]+$/',
             'phone_number_id' => 'required|string|max:64|regex:/^[0-9]+$/',
-            'access_token' => 'required|string|min:32|max:2048',
-            'app_secret' => 'nullable|string|min:16|max:128',
+            // Meta system-user tokens are EAA-prefixed and 200+ chars in 2026.
+            // Anything shorter is almost certainly the wrong copy/paste.
+            'access_token' => ['required', 'string', 'min:100', 'max:2048', 'regex:/^[A-Za-z0-9_\-]+$/'],
+            // App secret is 32-char lowercase hex.
+            'app_secret' => ['nullable', 'string', 'regex:/^[a-f0-9]{32}$/i'],
         ], [
             'waba_id.regex' => 'WABA ID trebuie să fie numeric.',
             'phone_number_id.regex' => 'Phone Number ID trebuie să fie numeric.',
-            'access_token.min' => 'Token-ul pare prea scurt. Folosește un System User Access Token din Meta Business Manager.',
+            'access_token.min' => 'Token-ul pare prea scurt. Folosește un System User Access Token din Meta Business Manager (de obicei 200+ caractere).',
+            'access_token.regex' => 'Token-ul conține caractere invalide (fără spații sau ghilimele copiate accidental).',
+            'app_secret.regex' => 'App Secret trebuie să fie 32 caractere hex lowercase.',
         ]);
 
+        // Cross-tenant guard: a Meta phone_number_id is globally unique on
+        // Meta's side, so nobody else should ever claim one we already
+        // store. The standard query is tenant-scoped (BelongsToTenant) — we
+        // must bypass that scope to detect collisions across all tenants.
         $duplicate = Channel::query()
+            ->withoutGlobalScope(\App\Models\Scopes\TenantScope::class)
             ->where('type', Channel::TYPE_WHATSAPP)
             ->where('external_id', $validated['phone_number_id'])
             ->exists();
@@ -140,7 +150,7 @@ class ChannelController extends Controller
         if ($duplicate) {
             return back()
                 ->withInput()
-                ->withErrors(['phone_number_id' => 'Acest Phone Number ID este deja conectat la un alt canal.']);
+                ->withErrors(['phone_number_id' => 'Acest Phone Number ID este deja conectat. Verifică dacă l-ai introdus corect sau contactează-ne dacă crezi că e o eroare.']);
         }
 
         $channel = $bot->channels()->create([

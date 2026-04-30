@@ -57,13 +57,15 @@ class WhatsAppManualConnectWizardTest extends TestCase
     {
         [$tenant, $user, $bot] = $this->tenantUser();
 
+        $longToken = 'EAA' . str_repeat('A', 197);
+
         $this->actingAs($user)
             ->post(route('dashboard.bots.channels.whatsapp.store', $bot), [
                 'name' => 'WA Salon',
                 'waba_id' => '1234567890',
                 'phone_number_id' => '9876543210',
-                'access_token' => str_repeat('a', 200),
-                'app_secret' => 'secret-1234567890abcdef',
+                'access_token' => $longToken,
+                'app_secret' => 'a1b2c3d4e5f60718293a4b5c6d7e8f90',
             ])
             ->assertRedirectContains('connected');
 
@@ -74,14 +76,45 @@ class WhatsAppManualConnectWizardTest extends TestCase
         $this->assertSame($bot->id, $channel->bot_id);
         $this->assertSame('1234567890', $channel->getCredential('waba_id'));
         $this->assertSame('9876543210', $channel->getCredential('phone_number_id'));
-        $this->assertSame(str_repeat('a', 200), $channel->getCredential('access_token'));
-        $this->assertSame('secret-1234567890abcdef', $channel->getCredential('app_secret'));
+        $this->assertSame($longToken, $channel->getCredential('access_token'));
+        $this->assertSame('a1b2c3d4e5f60718293a4b5c6d7e8f90', $channel->getCredential('app_secret'));
         $this->assertNotEmpty($channel->webhook_secret);
         $this->assertGreaterThanOrEqual(40, strlen($channel->webhook_secret));
 
         // Plaintext token must not appear in raw column
         $raw = \DB::table('channels')->where('id', $channel->id)->value('credentials');
-        $this->assertStringNotContainsString(str_repeat('a', 200), $raw);
+        $this->assertStringNotContainsString($longToken, $raw);
+    }
+
+    public function test_store_rejects_cross_tenant_phone_number_id_collision(): void
+    {
+        // Tenant A claims a phone_number_id first.
+        [$tenantA, $userA, $botA] = $this->tenantUser();
+        Channel::create([
+            'bot_id' => $botA->id,
+            'type' => Channel::TYPE_WHATSAPP,
+            'name' => 'A WA',
+            'external_id' => '7777777777',
+            'webhook_secret' => 'sec-a',
+            'is_active' => true,
+        ]);
+
+        // Tenant B tries the same number — must be blocked even though
+        // the BelongsToTenant scope would hide tenant A's row.
+        [$tenantB, $userB, $botB] = $this->tenantUser();
+
+        $this->actingAs($userB)
+            ->post(route('dashboard.bots.channels.whatsapp.store', $botB), [
+                'waba_id' => '111',
+                'phone_number_id' => '7777777777',
+                'access_token' => 'EAA' . str_repeat('B', 197),
+            ])
+            ->assertSessionHasErrors('phone_number_id');
+
+        $this->assertSame(0, Channel::withoutGlobalScope(\App\Models\Scopes\TenantScope::class)
+            ->where('tenant_id', $tenantB->id)
+            ->where('external_id', '7777777777')
+            ->count());
     }
 
     public function test_store_rejects_duplicate_phone_number_id(): void
@@ -101,9 +134,35 @@ class WhatsAppManualConnectWizardTest extends TestCase
             ->post(route('dashboard.bots.channels.whatsapp.store', $bot), [
                 'waba_id' => '111',
                 'phone_number_id' => '5555555555',
-                'access_token' => str_repeat('b', 64),
+                'access_token' => 'EAA' . str_repeat('C', 197),
             ])
             ->assertSessionHasErrors('phone_number_id');
+    }
+
+    public function test_store_rejects_too_short_access_token(): void
+    {
+        [$tenant, $user, $bot] = $this->tenantUser();
+
+        $this->actingAs($user)
+            ->post(route('dashboard.bots.channels.whatsapp.store', $bot), [
+                'waba_id' => '111',
+                'phone_number_id' => '8888888888',
+                'access_token' => 'EAA' . str_repeat('A', 30), // <100 total
+            ])
+            ->assertSessionHasErrors('access_token');
+    }
+
+    public function test_store_rejects_token_with_whitespace_or_quotes(): void
+    {
+        [$tenant, $user, $bot] = $this->tenantUser();
+
+        $this->actingAs($user)
+            ->post(route('dashboard.bots.channels.whatsapp.store', $bot), [
+                'waba_id' => '111',
+                'phone_number_id' => '8888888888',
+                'access_token' => 'EAA' . str_repeat('A', 100) . ' "trailing"',
+            ])
+            ->assertSessionHasErrors('access_token');
     }
 
     public function test_store_validates_required_fields(): void
@@ -123,7 +182,7 @@ class WhatsAppManualConnectWizardTest extends TestCase
             ->post(route('dashboard.bots.channels.whatsapp.store', $bot), [
                 'waba_id' => 'abc-not-numeric',
                 'phone_number_id' => '9876543210',
-                'access_token' => str_repeat('a', 64),
+                'access_token' => 'EAA' . str_repeat('A', 197),
             ])
             ->assertSessionHasErrors('waba_id');
     }

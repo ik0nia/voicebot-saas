@@ -163,18 +163,31 @@ class ChannelMessagingService
                 return ['success' => true, 'message_id' => $messageId, 'error' => null];
             }
 
+            // Sanitize: never echo Meta's raw body into our logs or callers.
+            // Meta sometimes embeds the failing access token in error
+            // responses for OAuth-class errors. Extract only structured
+            // error.code + error.message and scrub anything matching the
+            // EAA token prefix as defense in depth.
+            $code = $response->json('error.code');
+            $msg = $response->json('error.message') ?? 'Meta API error';
+            $sanitized = is_string($msg)
+                ? preg_replace('/EAA[A-Za-z0-9_\-]{20,}/', 'EAA[REDACTED]', $msg)
+                : 'Meta API error';
+            $errorString = $code ? "[{$code}] {$sanitized}" : $sanitized;
+
             Log::warning('ChannelMessagingService: Meta API error', [
                 'url' => $url,
                 'status' => $response->status(),
-                'body_excerpt' => mb_substr($response->body(), 0, 500),
+                'meta_error_code' => $code,
+                'meta_error_message' => mb_substr($sanitized, 0, 200),
             ]);
-            return ['success' => false, 'message_id' => null, 'error' => $response->body()];
+            return ['success' => false, 'message_id' => null, 'error' => $errorString];
         } catch (\Throwable $e) {
             Log::error('ChannelMessagingService: request failed', [
                 'url' => $url,
-                'error' => $e->getMessage(),
+                'exception' => $e::class,
             ]);
-            return ['success' => false, 'message_id' => null, 'error' => $e->getMessage()];
+            return ['success' => false, 'message_id' => null, 'error' => $e::class];
         }
     }
 }
