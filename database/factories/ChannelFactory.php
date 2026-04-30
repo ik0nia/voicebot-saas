@@ -31,6 +31,21 @@ class ChannelFactory extends Factory
         ];
     }
 
+    public function configure(): static
+    {
+        // Channel.booted() derives tenant_id from bot, but the factory may be
+        // used with `make()` (no save) where booted() doesn't run. Mirror the
+        // derivation here so $channel->tenant_id is always populated.
+        return $this->afterMaking(function (Channel $channel): void {
+            if (!$channel->tenant_id && $channel->bot_id) {
+                $bot = Bot::find($channel->bot_id);
+                if ($bot) {
+                    $channel->tenant_id = $bot->tenant_id;
+                }
+            }
+        });
+    }
+
     public function widget(): static
     {
         return $this->state(fn () => [

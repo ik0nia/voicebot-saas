@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Channel extends Model
 {
-    use HasFactory;
+    use BelongsToTenant, HasFactory;
 
     const TYPE_VOICE = 'voice';
     const TYPE_WHATSAPP = 'whatsapp';
@@ -27,6 +28,7 @@ class Channel extends Model
     ];
 
     protected $fillable = [
+        'tenant_id',
         'bot_id',
         'type',
         'name',
@@ -37,6 +39,20 @@ class Channel extends Model
         'status',
         'last_activity_at',
     ];
+
+    protected static function booted(): void
+    {
+        // Derive tenant_id from bot when not explicitly set and BelongsToTenant
+        // didn't pick it up from auth (webhooks, jobs, factories).
+        static::creating(function (Channel $channel) {
+            if (!$channel->tenant_id && $channel->bot_id) {
+                $bot = Bot::find($channel->bot_id);
+                if ($bot) {
+                    $channel->tenant_id = $bot->tenant_id;
+                }
+            }
+        });
+    }
 
     protected function casts(): array
     {
