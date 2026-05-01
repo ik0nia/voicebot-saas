@@ -30,6 +30,11 @@ class Contact extends Model
         return $this->hasMany(Conversation::class);
     }
 
+    public function contactInboxes(): HasMany
+    {
+        return $this->hasMany(ContactInbox::class);
+    }
+
     /**
      * Find or create a contact by channel identifier.
      */
