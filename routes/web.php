@@ -504,6 +504,29 @@ Route::middleware('auth')->prefix('dashboard/agenti/{bot}/canale')->group(functi
             ->name('dashboard.bots.channels.whatsapp.store');
         Route::get('/whatsapp/{channel}/connected', [ChannelController::class, 'whatsAppConnected'])
             ->name('dashboard.bots.channels.whatsapp.connected');
+
+        // Manual-paste Facebook Messenger onboarding wizard. Same pattern
+        // as WhatsApp; OAuth Login-for-Business will layer on top once
+        // Meta App Review approves pages_messaging + pages_show_list.
+        Route::get('/facebook/connect', [ChannelController::class, 'connectFacebook'])
+            ->name('dashboard.bots.channels.facebook.connect');
+        Route::post('/facebook/connect', [ChannelController::class, 'storeFacebook'])
+            ->middleware('throttle:10,1')
+            ->name('dashboard.bots.channels.facebook.store');
+        Route::get('/facebook/{channel}/connected', [ChannelController::class, 'facebookConnected'])
+            ->name('dashboard.bots.channels.facebook.connected');
+
+        // Manual-paste Instagram DM onboarding wizard. IG Business
+        // accounts ride on a Facebook Page — the page_access_token here is
+        // the same one used by the FB Messenger channel if both are linked
+        // to the same page.
+        Route::get('/instagram/connect', [ChannelController::class, 'connectInstagram'])
+            ->name('dashboard.bots.channels.instagram.connect');
+        Route::post('/instagram/connect', [ChannelController::class, 'storeInstagram'])
+            ->middleware('throttle:10,1')
+            ->name('dashboard.bots.channels.instagram.store');
+        Route::get('/instagram/{channel}/connected', [ChannelController::class, 'instagramConnected'])
+            ->name('dashboard.bots.channels.instagram.connected');
     });
 });
 
