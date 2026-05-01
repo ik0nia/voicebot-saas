@@ -26,6 +26,7 @@ class Conversation extends Model
         'cost_cents',
         'metadata',
         'contact_id',
+        'contact_inbox_id',
         'last_activity_at',
         'started_at',
         'ended_at',
@@ -67,6 +68,11 @@ class Conversation extends Model
     public function contact(): BelongsTo
     {
         return $this->belongsTo(Contact::class);
+    }
+
+    public function contactInbox(): BelongsTo
+    {
+        return $this->belongsTo(ContactInbox::class);
     }
 
     public function messages(): HasMany
