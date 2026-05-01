@@ -4,6 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @auth
+        {{-- Both used by resources/js/echo-setup.js to subscribe to the
+             tenant.{id} private channel and decide whose-notification-is-this. --}}
+        <meta name="tenant-id" content="{{ auth()->user()->tenant_id }}">
+        <meta name="user-id" content="{{ auth()->id() }}">
+    @endauth
     <title>@yield('title', 'Dashboard') — Sambla</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
@@ -54,6 +60,17 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6m-6 4h6" />
                     </svg>
                     Agenți AI
+                </a>
+
+                {{-- Inbox unificat — toate canalele într-un singur loc cu HITL inline --}}
+                <a href="{{ route('dashboard.inbox') }}"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                          {{ request()->is('dashboard/inbox*') ? 'bg-red-50 text-red-800 border-l-[3px] border-red-700 pl-[9px] font-semibold' : 'text-slate-600 hover:bg-red-50 hover:text-red-800' }}">
+                    <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                    Inbox
+                    <span class="ml-auto inline-flex items-center px-1.5 py-0 rounded-full bg-emerald-50 text-emerald-700 text-[9px] font-semibold uppercase">Nou</span>
                 </a>
 
                 {{-- Workspace — resolves to the tenant's first active
