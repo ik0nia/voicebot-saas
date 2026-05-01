@@ -27,6 +27,10 @@ class Conversation extends Model
         'metadata',
         'contact_id',
         'contact_inbox_id',
+        'assignee_user_id',
+        'assignee_bot_id',
+        'assigned_at',
+        'assigned_by_user_id',
         'last_activity_at',
         'started_at',
         'ended_at',
@@ -73,6 +77,26 @@ class Conversation extends Model
     public function contactInbox(): BelongsTo
     {
         return $this->belongsTo(ContactInbox::class);
+    }
+
+    public function assigneeUser(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\User::class, 'assignee_user_id');
+    }
+
+    public function assigneeBot(): BelongsTo
+    {
+        return $this->belongsTo(Bot::class, 'assignee_bot_id');
+    }
+
+    public function isHumanAssigned(): bool
+    {
+        return $this->assignee_user_id !== null;
+    }
+
+    public function isBotAssigned(): bool
+    {
+        return $this->assignee_bot_id !== null;
     }
 
     public function messages(): HasMany

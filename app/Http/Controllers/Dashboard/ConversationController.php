@@ -6,10 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Bot;
 use App\Models\Channel;
 use App\Models\Conversation;
+use App\Services\Channels\AgentAssignmentService;
 use Illuminate\Http\Request;
 
 class ConversationController extends Controller
 {
+    public function __construct(private ?AgentAssignmentService $assignments = null) {}
+
     public function index(Request $request, string $channelType)
     {
         $validTypes = [
@@ -80,5 +83,52 @@ class ConversationController extends Controller
 
         return redirect()->route('dashboard.conversations.index', ['channelType' => $channelType])
             ->with('success', 'Conversația a fost ștearsă.');
+    }
+
+    /**
+     * Take over the conversation from the bot — switches assignment to the
+     * authenticated user. Subsequent inbound messages will NOT be answered
+     * by the bot until handBack() runs.
+     */
+    public function takeOver(Conversation $conversation)
+    {
+        $user = auth()->user();
+        if (!$user || !$user->hasAnyRole(['tenant_admin', 'tenant_manager'])) {
+            abort(403, 'Doar tenant_admin / tenant_manager pot prelua conversații.');
+        }
+
+        try {
+            $this->assignments()->takeOver($conversation, $user);
+        } catch (\DomainException $e) {
+            return back()->withErrors(['assignment' => $e->getMessage()]);
+        }
+
+        return back()->with('success', 'Ai preluat conversația. Botul nu mai răspunde până apeși „Înapoi la bot".');
+    }
+
+    /**
+     * Hand the conversation back to the channel's bot. Restores the default
+     * bot from the channel, NOT necessarily the original assignee_bot_id —
+     * the channel may have been re-bound to a different bot since.
+     */
+    public function handBack(Conversation $conversation)
+    {
+        $user = auth()->user();
+        if (!$user || !$user->hasAnyRole(['tenant_admin', 'tenant_manager'])) {
+            abort(403);
+        }
+
+        try {
+            $this->assignments()->handBack($conversation, $user);
+        } catch (\DomainException $e) {
+            return back()->withErrors(['assignment' => $e->getMessage()]);
+        }
+
+        return back()->with('success', 'Conversația e din nou la bot.');
+    }
+
+    private function assignments(): AgentAssignmentService
+    {
+        return $this->assignments ??= app(AgentAssignmentService::class);
     }
 }

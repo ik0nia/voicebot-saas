@@ -408,6 +408,12 @@ Route::middleware('auth')->prefix('dashboard/apeluri')->group(function () {
 // Conversations routes (dashboard) — text-based channels
 Route::middleware('auth')->prefix('dashboard/transcrieri')->group(function () {
     Route::get('/conversatie/{conversation}', [ConversationController::class, 'show'])->name('dashboard.conversations.show');
+    Route::post('/conversatie/{conversation}/take-over', [ConversationController::class, 'takeOver'])
+        ->middleware('tenant.role:tenant_admin,tenant_manager')
+        ->name('dashboard.conversations.take-over');
+    Route::post('/conversatie/{conversation}/hand-back', [ConversationController::class, 'handBack'])
+        ->middleware('tenant.role:tenant_admin,tenant_manager')
+        ->name('dashboard.conversations.hand-back');
     Route::delete('/conversatie/{conversation}', [ConversationController::class, 'destroy'])
         ->middleware('tenant.role:tenant_admin,tenant_manager')
         ->name('dashboard.conversations.destroy');
