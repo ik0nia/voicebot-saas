@@ -122,4 +122,15 @@ return [
         'verify_token' => env('INSTAGRAM_VERIFY_TOKEN'),
     ],
 
+    // Letta (formerly MemGPT) sidecar — opt-in. When LETTA_URL is set,
+    // LettaBridgeService routes inbound messages through the sidecar
+    // for cross-channel memory continuity. When unset, the orchestrator
+    // skips Letta and uses direct LLM (no behavior change).
+    // The sidecar is deployed as a separate container (see
+    // docker-compose entry for `letta` — commented by default).
+    'letta' => [
+        'url' => env('LETTA_URL'),         // e.g. http://letta:8283
+        'token' => env('LETTA_TOKEN'),     // bearer token configured on the sidecar
+    ],
+
 ];

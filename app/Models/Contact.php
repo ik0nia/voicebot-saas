@@ -19,6 +19,7 @@ class Contact extends Model
         'facebook_psid',
         'instagram_id',
         'metadata',
+        'letta_agent_id',
     ];
 
     protected $casts = [
