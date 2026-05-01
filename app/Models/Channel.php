@@ -124,6 +124,11 @@ class Channel extends Model
         return $this->hasMany(Conversation::class);
     }
 
+    public function contactInboxes(): HasMany
+    {
+        return $this->hasMany(ContactInbox::class);
+    }
+
     // Helpers
 
     public function isVoice(): bool
