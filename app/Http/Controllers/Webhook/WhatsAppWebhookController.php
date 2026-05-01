@@ -6,13 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Jobs\ProcessChannelMessage;
 use App\Models\Channel;
 use App\Services\ChannelMessageService;
+use App\Services\Channels\MessageStatusProcessor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class WhatsAppWebhookController extends Controller
 {
-    public function __construct(private ChannelMessageService $messageService) {}
+    public function __construct(
+        private ChannelMessageService $messageService,
+        private MessageStatusProcessor $statusProcessor,
+    ) {}
 
     /**
      * GET endpoint for Meta webhook verification.
@@ -76,8 +80,20 @@ class WhatsAppWebhookController extends Controller
                     $phoneNumberId = $value['metadata']['phone_number_id'] ?? null;
                     $messages = $value['messages'] ?? [];
                     $contacts = $value['contacts'] ?? [];
+                    $statuses = $value['statuses'] ?? [];
 
-                    if (!$phoneNumberId || empty($messages)) {
+                    if (!$phoneNumberId) {
+                        continue;
+                    }
+
+                    // Status events (delivered/read/failed for OUR outbound
+                    // messages) come down the same webhook. Process them
+                    // even if `messages` is empty.
+                    if (!empty($statuses)) {
+                        $this->statusProcessor->processWhatsAppStatuses($statuses);
+                    }
+
+                    if (empty($messages)) {
                         continue;
                     }
 
