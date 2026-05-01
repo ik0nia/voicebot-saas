@@ -62,7 +62,7 @@
                 'dot' => 'bg-red-500',
             ],
             'whatsapp' => [
-                'label' => 'WhatsApp (in curând)',
+                'label' => 'WhatsApp',
                 'description' => 'Răspunsuri instant pe WhatsApp Business, 24/7',
                 'bg' => 'bg-green-50',
                 'icon_bg' => 'bg-green-100',
@@ -71,7 +71,7 @@
                 'dot' => 'bg-green-500',
             ],
             'facebook_messenger' => [
-                'label' => 'Facebook Messenger (in curând)',
+                'label' => 'Facebook Messenger',
                 'description' => 'Conectează pagina Facebook și răspunde automat',
                 'bg' => 'bg-blue-50',
                 'icon_bg' => 'bg-blue-100',
@@ -80,7 +80,7 @@
                 'dot' => 'bg-blue-500',
             ],
             'instagram_dm' => [
-                'label' => 'Instagram DM (in curând)',
+                'label' => 'Instagram DM',
                 'description' => 'Gestionează mesajele private Instagram cu AI',
                 'bg' => 'bg-pink-50',
                 'icon_bg' => 'bg-pink-100',
@@ -242,14 +242,33 @@
                             Upgrade necessar
                         </a>
                     @else
-                        <button type="button"
-                                onclick="openAddModal('{{ $type }}', '{{ $meta['label'] }}')"
-                                class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-red-800 px-4 py-2 text-sm font-medium text-white hover:bg-red-900 transition-colors">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                            </svg>
-                            Conectează
-                        </button>
+                        @php
+                            $wizardRoute = match($type) {
+                                'whatsapp' => route('dashboard.bots.channels.whatsapp.connect', $bot),
+                                'facebook_messenger' => route('dashboard.bots.channels.facebook.connect', $bot),
+                                'instagram_dm' => route('dashboard.bots.channels.instagram.connect', $bot),
+                                default => null,
+                            };
+                        @endphp
+
+                        @if($wizardRoute)
+                            <a href="{{ $wizardRoute }}"
+                               class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-red-800 px-4 py-2 text-sm font-medium text-white hover:bg-red-900 transition-colors">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                                </svg>
+                                Conectează
+                            </a>
+                        @else
+                            <button type="button"
+                                    onclick="openAddModal('{{ $type }}', '{{ $meta['label'] }}')"
+                                    class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-red-800 px-4 py-2 text-sm font-medium text-white hover:bg-red-900 transition-colors">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                                </svg>
+                                Conectează
+                            </button>
+                        @endif
                     @endif
                 </div>
             @endforeach

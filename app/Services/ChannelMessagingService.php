@@ -1,78 +1,83 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
+use App\Models\Channel;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Outbound dispatcher for Meta-family channels (WhatsApp Cloud API,
+ * Facebook Messenger, Instagram Direct).
+ *
+ * Reads credentials from the Channel model first, falls back to
+ * config()/env() for legacy single-tenant deployments. The fallback is
+ * intentionally kept until tenant onboarding has populated channel rows
+ * for all live tenants — remove once telemetry shows zero env reads.
+ */
 class ChannelMessagingService
 {
+    private const META_GRAPH = 'https://graph.facebook.com/v18.0';
+
     /**
-     * Send a message to a channel contact.
+     * Send a text/media message on a specific channel.
      *
      * @return array{success: bool, message_id: ?string, error: ?string}
      */
-    public function send(string $channel, string $recipientId, string $message, array $options = []): array
+    public function sendOnChannel(Channel $channel, string $recipientId, string $message, array $options = []): array
     {
-        return match ($channel) {
-            'whatsapp' => $this->sendWhatsApp($recipientId, $message, $options),
-            'facebook' => $this->sendFacebook($recipientId, $message, $options),
-            'instagram' => $this->sendInstagram($recipientId, $message, $options),
-            default => ['success' => false, 'message_id' => null, 'error' => "Unknown channel: {$channel}"],
+        return match ($channel->type) {
+            Channel::TYPE_WHATSAPP => $this->sendWhatsApp($channel, $recipientId, $message, $options),
+            Channel::TYPE_FACEBOOK_MESSENGER => $this->sendFacebook($channel, $recipientId, $message, $options),
+            Channel::TYPE_INSTAGRAM_DM => $this->sendInstagram($channel, $recipientId, $message, $options),
+            default => ['success' => false, 'message_id' => null, 'error' => "Unsupported channel type: {$channel->type}"],
         };
     }
 
     /**
-     * Send a WhatsApp template message.
+     * Send a WhatsApp template message via a specific channel.
      */
-    public function sendTemplate(string $recipientId, string $templateName, array $templateParams = [], string $language = 'ro'): array
-    {
-        $token = config('services.whatsapp.token', env('WHATSAPP_TOKEN'));
-        $phoneNumberId = config('services.whatsapp.phone_number_id', env('WHATSAPP_PHONE_NUMBER_ID'));
+    public function sendTemplateOnChannel(
+        Channel $channel,
+        string $recipientId,
+        string $templateName,
+        array $templateParams = [],
+        string $language = 'ro'
+    ): array {
+        if ($channel->type !== Channel::TYPE_WHATSAPP) {
+            return ['success' => false, 'message_id' => null, 'error' => 'Templates only supported on WhatsApp'];
+        }
 
-        if (empty($token) || empty($phoneNumberId)) {
-            return ['success' => false, 'message_id' => null, 'error' => 'WhatsApp not configured'];
+        [$token, $phoneNumberId] = $this->whatsappCredentials($channel);
+        if (!$token || !$phoneNumberId) {
+            return ['success' => false, 'message_id' => null, 'error' => 'WhatsApp not configured for this channel'];
         }
 
         $components = [];
         if (!empty($templateParams)) {
-            $parameters = array_map(fn($v) => ['type' => 'text', 'text' => $v], array_values($templateParams));
+            $parameters = array_map(fn ($v) => ['type' => 'text', 'text' => (string) $v], array_values($templateParams));
             $components[] = ['type' => 'body', 'parameters' => $parameters];
         }
 
-        try {
-            $response = Http::timeout(10)
-                ->withToken($token)
-                ->post("https://graph.facebook.com/v18.0/{$phoneNumberId}/messages", [
-                    'messaging_product' => 'whatsapp',
-                    'to' => $recipientId,
-                    'type' => 'template',
-                    'template' => [
-                        'name' => $templateName,
-                        'language' => ['code' => $language],
-                        'components' => $components,
-                    ],
-                ]);
-
-            if ($response->successful()) {
-                $messageId = $response->json('messages.0.id');
-                return ['success' => true, 'message_id' => $messageId, 'error' => null];
-            }
-
-            return ['success' => false, 'message_id' => null, 'error' => $response->body()];
-        } catch (\Exception $e) {
-            Log::error('ChannelMessagingService: WhatsApp template failed', ['error' => $e->getMessage()]);
-            return ['success' => false, 'message_id' => null, 'error' => $e->getMessage()];
-        }
+        return $this->callMetaApi(self::META_GRAPH . "/{$phoneNumberId}/messages", $token, [
+            'messaging_product' => 'whatsapp',
+            'to' => $recipientId,
+            'type' => 'template',
+            'template' => [
+                'name' => $templateName,
+                'language' => ['code' => $language],
+                'components' => $components,
+            ],
+        ]);
     }
 
-    private function sendWhatsApp(string $recipientId, string $message, array $options): array
+    private function sendWhatsApp(Channel $channel, string $recipientId, string $message, array $options): array
     {
-        $token = config('services.whatsapp.token', env('WHATSAPP_TOKEN'));
-        $phoneNumberId = config('services.whatsapp.phone_number_id', env('WHATSAPP_PHONE_NUMBER_ID'));
-
-        if (empty($token) || empty($phoneNumberId)) {
-            return ['success' => false, 'message_id' => null, 'error' => 'WhatsApp not configured'];
+        [$token, $phoneNumberId] = $this->whatsappCredentials($channel);
+        if (!$token || !$phoneNumberId) {
+            return ['success' => false, 'message_id' => null, 'error' => 'WhatsApp not configured for this channel'];
         }
 
         $payload = [
@@ -82,37 +87,29 @@ class ChannelMessagingService
             'text' => ['body' => $message],
         ];
 
-        // Support media messages
         if (!empty($options['media_type']) && !empty($options['media_url'])) {
-            $payload['type'] = $options['media_type']; // image, document, audio
-            $payload[$options['media_type']] = ['link' => $options['media_url']];
+            $type = $options['media_type'];
+            $payload['type'] = $type;
+            $payload[$type] = ['link' => $options['media_url']];
             if (!empty($message)) {
-                $payload[$options['media_type']]['caption'] = $message;
+                $payload[$type]['caption'] = $message;
             }
             unset($payload['text']);
         }
 
-        return $this->callMetaApi("https://graph.facebook.com/v18.0/{$phoneNumberId}/messages", $token, $payload);
+        return $this->callMetaApi(self::META_GRAPH . "/{$phoneNumberId}/messages", $token, $payload);
     }
 
-    private function sendFacebook(string $recipientId, string $message, array $options): array
+    private function sendFacebook(Channel $channel, string $recipientId, string $message, array $options): array
     {
-        // Align with config/services.php — the key there is
-        // 'page_access_token' fed from FACEBOOK_PAGE_ACCESS_TOKEN. The old
-        // read of 'page_token' / FACEBOOK_PAGE_TOKEN was a different key
-        // neither config nor .env actually set, so outbound Facebook
-        // messages silently returned "not configured".
-        $token = config('services.facebook.page_access_token');
+        $token = $channel->getCredential('page_access_token')
+            ?? config('services.facebook.page_access_token');
 
         if (empty($token)) {
-            return ['success' => false, 'message_id' => null, 'error' => 'Facebook not configured'];
+            return ['success' => false, 'message_id' => null, 'error' => 'Facebook not configured for this channel'];
         }
 
-        $payload = [
-            'recipient' => ['id' => $recipientId],
-            'message' => ['text' => $message],
-        ];
-
+        $payload = ['recipient' => ['id' => $recipientId], 'message' => ['text' => $message]];
         if (!empty($options['media_url'])) {
             $payload['message'] = [
                 'attachment' => [
@@ -122,24 +119,36 @@ class ChannelMessagingService
             ];
         }
 
-        return $this->callMetaApi('https://graph.facebook.com/v18.0/me/messages', $token, $payload);
+        return $this->callMetaApi(self::META_GRAPH . '/me/messages', $token, $payload);
     }
 
-    private function sendInstagram(string $recipientId, string $message, array $options): array
+    private function sendInstagram(Channel $channel, string $recipientId, string $message, array $options): array
     {
-        // Same alignment as sendFacebook() — config has 'page_access_token'.
-        $token = config('services.instagram.page_access_token');
+        $token = $channel->getCredential('page_access_token')
+            ?? config('services.instagram.page_access_token');
 
         if (empty($token)) {
-            return ['success' => false, 'message_id' => null, 'error' => 'Instagram not configured'];
+            return ['success' => false, 'message_id' => null, 'error' => 'Instagram not configured for this channel'];
         }
 
-        $payload = [
+        return $this->callMetaApi(self::META_GRAPH . '/me/messages', $token, [
             'recipient' => ['id' => $recipientId],
             'message' => ['text' => $message],
-        ];
+        ]);
+    }
 
-        return $this->callMetaApi('https://graph.facebook.com/v18.0/me/messages', $token, $payload);
+    /**
+     * @return array{0: ?string, 1: ?string} [token, phoneNumberId]
+     */
+    private function whatsappCredentials(Channel $channel): array
+    {
+        $token = $channel->getCredential('access_token')
+            ?? config('services.whatsapp.token', env('WHATSAPP_TOKEN'));
+        $phoneNumberId = $channel->getCredential('phone_number_id')
+            ?? $channel->external_id
+            ?? config('services.whatsapp.phone_number_id', env('WHATSAPP_PHONE_NUMBER_ID'));
+
+        return [$token ?: null, $phoneNumberId ?: null];
     }
 
     private function callMetaApi(string $url, string $token, array $payload): array
@@ -154,13 +163,31 @@ class ChannelMessagingService
                 return ['success' => true, 'message_id' => $messageId, 'error' => null];
             }
 
-            Log::warning('ChannelMessagingService: API error', [
-                'url' => $url, 'status' => $response->status(), 'body' => $response->body(),
+            // Sanitize: never echo Meta's raw body into our logs or callers.
+            // Meta sometimes embeds the failing access token in error
+            // responses for OAuth-class errors. Extract only structured
+            // error.code + error.message and scrub anything matching the
+            // EAA token prefix as defense in depth.
+            $code = $response->json('error.code');
+            $msg = $response->json('error.message') ?? 'Meta API error';
+            $sanitized = is_string($msg)
+                ? preg_replace('/EAA[A-Za-z0-9_\-]{20,}/', 'EAA[REDACTED]', $msg)
+                : 'Meta API error';
+            $errorString = $code ? "[{$code}] {$sanitized}" : $sanitized;
+
+            Log::warning('ChannelMessagingService: Meta API error', [
+                'url' => $url,
+                'status' => $response->status(),
+                'meta_error_code' => $code,
+                'meta_error_message' => mb_substr($sanitized, 0, 200),
             ]);
-            return ['success' => false, 'message_id' => null, 'error' => $response->body()];
-        } catch (\Exception $e) {
-            Log::error('ChannelMessagingService: request failed', ['error' => $e->getMessage()]);
-            return ['success' => false, 'message_id' => null, 'error' => $e->getMessage()];
+            return ['success' => false, 'message_id' => null, 'error' => $errorString];
+        } catch (\Throwable $e) {
+            Log::error('ChannelMessagingService: request failed', [
+                'url' => $url,
+                'exception' => $e::class,
+            ]);
+            return ['success' => false, 'message_id' => null, 'error' => $e::class];
         }
     }
 }

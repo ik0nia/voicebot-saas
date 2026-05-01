@@ -81,6 +81,339 @@ class ChannelController extends Controller
             ->with('success', 'Canalul a fost șters.');
     }
 
+    /**
+     * Render the manual-paste wizard for connecting a WhatsApp Cloud API
+     * channel. Used as the fallback to embedded signup until we hold a
+     * Meta Tech Provider relationship; also useful for tenants who already
+     * have credentials issued by another BSP.
+     */
+    public function connectWhatsApp(Bot $bot)
+    {
+        $tenant = auth()->user()->tenant;
+        $allowedChannels = $tenant->settings['allowed_channels'] ?? ['voice'];
+
+        if (!in_array(Channel::TYPE_WHATSAPP, $allowedChannels, true)) {
+            return redirect()
+                ->route('dashboard.bots.channels.index', $bot)
+                ->withErrors(['type' => 'Planul tău nu include canalul WhatsApp.']);
+        }
+
+        $webhookUrl = url('/webhook/whatsapp');
+
+        return view('dashboard.bots.channels.connect-whatsapp', [
+            'bot' => $bot,
+            'webhookUrl' => $webhookUrl,
+        ]);
+    }
+
+    /**
+     * Store the credentials pasted in the wizard. We generate the
+     * webhook_secret server-side (also used as Meta's verify_token at
+     * subscription time) so the tenant can't accidentally pick a weak
+     * value or reuse one from another channel.
+     */
+    public function storeWhatsApp(Request $request, Bot $bot)
+    {
+        $tenant = auth()->user()->tenant;
+        $allowedChannels = $tenant->settings['allowed_channels'] ?? ['voice'];
+        if (!in_array(Channel::TYPE_WHATSAPP, $allowedChannels, true)) {
+            return back()->withErrors(['type' => 'Planul tău nu include canalul WhatsApp.']);
+        }
+
+        $validated = $request->validate([
+            'name' => 'nullable|string|max:255',
+            'waba_id' => 'required|string|max:64|regex:/^[0-9]+$/',
+            'phone_number_id' => 'required|string|max:64|regex:/^[0-9]+$/',
+            // Meta system-user tokens are EAA-prefixed and 200+ chars in 2026.
+            // Anything shorter is almost certainly the wrong copy/paste.
+            'access_token' => ['required', 'string', 'min:100', 'max:2048', 'regex:/^[A-Za-z0-9_\-]+$/'],
+            // App secret is 32-char lowercase hex.
+            'app_secret' => ['nullable', 'string', 'regex:/^[a-f0-9]{32}$/i'],
+        ], [
+            'waba_id.regex' => 'WABA ID trebuie să fie numeric.',
+            'phone_number_id.regex' => 'Phone Number ID trebuie să fie numeric.',
+            'access_token.min' => 'Token-ul pare prea scurt. Folosește un System User Access Token din Meta Business Manager (de obicei 200+ caractere).',
+            'access_token.regex' => 'Token-ul conține caractere invalide (fără spații sau ghilimele copiate accidental).',
+            'app_secret.regex' => 'App Secret trebuie să fie 32 caractere hex lowercase.',
+        ]);
+
+        // Cross-tenant guard: a Meta phone_number_id is globally unique on
+        // Meta's side, so nobody else should ever claim one we already
+        // store. The standard query is tenant-scoped (BelongsToTenant) — we
+        // must bypass that scope to detect collisions across all tenants.
+        $duplicate = Channel::query()
+            ->withoutGlobalScope(\App\Models\Scopes\TenantScope::class)
+            ->where('type', Channel::TYPE_WHATSAPP)
+            ->where('external_id', $validated['phone_number_id'])
+            ->exists();
+
+        if ($duplicate) {
+            return back()
+                ->withInput()
+                ->withErrors(['phone_number_id' => 'Acest Phone Number ID este deja conectat. Verifică dacă l-ai introdus corect sau contactează-ne dacă crezi că e o eroare.']);
+        }
+
+        $channel = $bot->channels()->create([
+            'type' => Channel::TYPE_WHATSAPP,
+            'name' => $validated['name'] ?: 'WhatsApp',
+            'external_id' => $validated['phone_number_id'],
+            'webhook_secret' => Str::random(48),
+            'is_active' => true,
+            'status' => 'pending',
+        ]);
+
+        $channel->setCredential('waba_id', $validated['waba_id']);
+        $channel->setCredential('phone_number_id', $validated['phone_number_id']);
+        $channel->setCredential('access_token', $validated['access_token']);
+        if (!empty($validated['app_secret'])) {
+            $channel->setCredential('app_secret', $validated['app_secret']);
+        }
+        $channel->save();
+
+        return redirect()
+            ->route('dashboard.bots.channels.whatsapp.connected', ['bot' => $bot, 'channel' => $channel])
+            ->with('success', 'Canal WhatsApp creat. Configurează webhook-ul în Meta Business Manager urmând pașii de mai jos.');
+    }
+
+    /**
+     * Show the post-connect instructions: webhook URL, verify token, and a
+     * test-message hint. Reachable only by the bot's owner tenant.
+     */
+    public function whatsAppConnected(Bot $bot, Channel $channel)
+    {
+        $this->ensureChannelBelongsToBot($bot, $channel);
+
+        if ($channel->type !== Channel::TYPE_WHATSAPP) {
+            abort(404);
+        }
+
+        return view('dashboard.bots.channels.whatsapp-connected', [
+            'bot' => $bot,
+            'channel' => $channel,
+            'webhookUrl' => url('/webhook/whatsapp'),
+        ]);
+    }
+
+    /**
+     * Render the manual-paste wizard for connecting a Facebook Page Messenger
+     * channel. Mirrors connectWhatsApp(); we'll layer the embedded
+     * Login-for-Business OAuth flow on top once App Review approves
+     * pages_messaging + pages_show_list.
+     */
+    public function connectFacebook(Bot $bot)
+    {
+        $tenant = auth()->user()->tenant;
+        $allowedChannels = $tenant->settings['allowed_channels'] ?? ['voice'];
+
+        if (!in_array(Channel::TYPE_FACEBOOK_MESSENGER, $allowedChannels, true)) {
+            return redirect()
+                ->route('dashboard.bots.channels.index', $bot)
+                ->withErrors(['type' => 'Planul tău nu include canalul Facebook Messenger.']);
+        }
+
+        return view('dashboard.bots.channels.connect-facebook', [
+            'bot' => $bot,
+            'webhookUrl' => url('/webhook/facebook'),
+        ]);
+    }
+
+    /**
+     * Persist Facebook Messenger credentials. The Page ID is what Meta
+     * sets as the recipient.id on inbound webhooks, so it doubles as our
+     * channel.external_id (used for routing in FacebookWebhookController).
+     */
+    public function storeFacebook(Request $request, Bot $bot)
+    {
+        $tenant = auth()->user()->tenant;
+        $allowedChannels = $tenant->settings['allowed_channels'] ?? ['voice'];
+        if (!in_array(Channel::TYPE_FACEBOOK_MESSENGER, $allowedChannels, true)) {
+            return back()->withErrors(['type' => 'Planul tău nu include canalul Facebook Messenger.']);
+        }
+
+        $validated = $request->validate([
+            'name' => 'nullable|string|max:255',
+            // Facebook Page IDs are numeric strings (15+ digits in 2026).
+            'page_id' => 'required|string|max:64|regex:/^[0-9]+$/',
+            // Page Access Token (System User-issued for production use, or
+            // page-scoped for early-access — both are EAA-prefixed).
+            'page_access_token' => ['required', 'string', 'min:100', 'max:2048', 'regex:/^[A-Za-z0-9_\-]+$/'],
+            'app_secret' => ['nullable', 'string', 'regex:/^[a-f0-9]{32}$/i'],
+        ], [
+            'page_id.regex' => 'Page ID trebuie să fie numeric.',
+            'page_access_token.min' => 'Token-ul pare prea scurt. Folosește un Page Access Token din Meta Business Manager (de obicei 200+ caractere).',
+            'page_access_token.regex' => 'Token-ul conține caractere invalide (fără spații sau ghilimele copiate accidental).',
+            'app_secret.regex' => 'App Secret trebuie să fie 32 caractere hex lowercase.',
+        ]);
+
+        // Cross-tenant guard — same logic as WhatsApp. A Facebook Page ID
+        // is globally unique, so a duplicate across tenants means either a
+        // typo or an attempted hijack.
+        $duplicate = Channel::query()
+            ->withoutGlobalScope(\App\Models\Scopes\TenantScope::class)
+            ->where('type', Channel::TYPE_FACEBOOK_MESSENGER)
+            ->where('external_id', $validated['page_id'])
+            ->exists();
+
+        if ($duplicate) {
+            return back()
+                ->withInput()
+                ->withErrors(['page_id' => 'Această pagină Facebook este deja conectată. Verifică Page ID sau contactează-ne dacă crezi că e o eroare.']);
+        }
+
+        $channel = $bot->channels()->create([
+            'type' => Channel::TYPE_FACEBOOK_MESSENGER,
+            'name' => $validated['name'] ?: 'Facebook Messenger',
+            'external_id' => $validated['page_id'],
+            'webhook_secret' => Str::random(48),
+            'is_active' => true,
+            'status' => 'pending',
+        ]);
+
+        $channel->setCredential('page_id', $validated['page_id']);
+        $channel->setCredential('page_access_token', $validated['page_access_token']);
+        if (!empty($validated['app_secret'])) {
+            $channel->setCredential('app_secret', $validated['app_secret']);
+        }
+        $channel->save();
+
+        return redirect()
+            ->route('dashboard.bots.channels.facebook.connected', ['bot' => $bot, 'channel' => $channel])
+            ->with('success', 'Canal Facebook Messenger creat. Configurează webhook-ul în Meta Developer Console urmând pașii de mai jos.');
+    }
+
+    /**
+     * Show the post-connect instructions for Facebook Messenger.
+     */
+    public function facebookConnected(Bot $bot, Channel $channel)
+    {
+        $this->ensureChannelBelongsToBot($bot, $channel);
+
+        if ($channel->type !== Channel::TYPE_FACEBOOK_MESSENGER) {
+            abort(404);
+        }
+
+        return view('dashboard.bots.channels.facebook-connected', [
+            'bot' => $bot,
+            'channel' => $channel,
+            'webhookUrl' => url('/webhook/facebook'),
+        ]);
+    }
+
+    /**
+     * Render the manual-paste wizard for Instagram DM. Instagram Business
+     * accounts are linked to a Facebook Page; the Page Access Token is
+     * what we use to call the IG Graph API endpoints. The IG Business
+     * Account ID (different from the Page ID) is the recipient.id Meta
+     * sends on inbound webhooks.
+     */
+    public function connectInstagram(Bot $bot)
+    {
+        $tenant = auth()->user()->tenant;
+        $allowedChannels = $tenant->settings['allowed_channels'] ?? ['voice'];
+
+        if (!in_array(Channel::TYPE_INSTAGRAM_DM, $allowedChannels, true)) {
+            return redirect()
+                ->route('dashboard.bots.channels.index', $bot)
+                ->withErrors(['type' => 'Planul tău nu include canalul Instagram DM.']);
+        }
+
+        return view('dashboard.bots.channels.connect-instagram', [
+            'bot' => $bot,
+            'webhookUrl' => url('/webhook/instagram'),
+        ]);
+    }
+
+    /**
+     * Persist Instagram DM credentials. external_id = IG Business Account
+     * ID (NOT the page_id). page_access_token is the linked Facebook Page's
+     * token — same one used for FB Messenger if the page is shared.
+     */
+    public function storeInstagram(Request $request, Bot $bot)
+    {
+        $tenant = auth()->user()->tenant;
+        $allowedChannels = $tenant->settings['allowed_channels'] ?? ['voice'];
+        if (!in_array(Channel::TYPE_INSTAGRAM_DM, $allowedChannels, true)) {
+            return back()->withErrors(['type' => 'Planul tău nu include canalul Instagram DM.']);
+        }
+
+        $validated = $request->validate([
+            'name' => 'nullable|string|max:255',
+            // IG Business Account IDs are 17-digit numeric strings.
+            'instagram_id' => 'required|string|max:64|regex:/^[0-9]+$/',
+            // Linked Facebook Page ID (same as the FB Messenger page_id
+            // if both channels share the page).
+            'page_id' => 'required|string|max:64|regex:/^[0-9]+$/',
+            'page_access_token' => ['required', 'string', 'min:100', 'max:2048', 'regex:/^[A-Za-z0-9_\-]+$/'],
+            'instagram_username' => ['nullable', 'string', 'max:32', 'regex:/^[A-Za-z0-9_.]+$/'],
+            'app_secret' => ['nullable', 'string', 'regex:/^[a-f0-9]{32}$/i'],
+        ], [
+            'instagram_id.regex' => 'Instagram Business Account ID trebuie să fie numeric.',
+            'page_id.regex' => 'Page ID trebuie să fie numeric.',
+            'page_access_token.min' => 'Token-ul pare prea scurt. Folosește un Page Access Token din Meta Business Manager (de obicei 200+ caractere).',
+            'page_access_token.regex' => 'Token-ul conține caractere invalide (fără spații sau ghilimele copiate accidental).',
+            'instagram_username.regex' => 'Username-ul Instagram conține caractere invalide.',
+            'app_secret.regex' => 'App Secret trebuie să fie 32 caractere hex lowercase.',
+        ]);
+
+        $duplicate = Channel::query()
+            ->withoutGlobalScope(\App\Models\Scopes\TenantScope::class)
+            ->where('type', Channel::TYPE_INSTAGRAM_DM)
+            ->where('external_id', $validated['instagram_id'])
+            ->exists();
+
+        if ($duplicate) {
+            return back()
+                ->withInput()
+                ->withErrors(['instagram_id' => 'Acest cont Instagram este deja conectat. Verifică Instagram Business Account ID sau contactează-ne dacă crezi că e o eroare.']);
+        }
+
+        $defaultName = $validated['instagram_username']
+            ? '@' . $validated['instagram_username']
+            : 'Instagram DM';
+
+        $channel = $bot->channels()->create([
+            'type' => Channel::TYPE_INSTAGRAM_DM,
+            'name' => $validated['name'] ?: $defaultName,
+            'external_id' => $validated['instagram_id'],
+            'webhook_secret' => Str::random(48),
+            'is_active' => true,
+            'status' => 'pending',
+        ]);
+
+        $channel->setCredential('instagram_id', $validated['instagram_id']);
+        $channel->setCredential('page_id', $validated['page_id']);
+        $channel->setCredential('page_access_token', $validated['page_access_token']);
+        if (!empty($validated['instagram_username'])) {
+            $channel->setCredential('instagram_username', $validated['instagram_username']);
+        }
+        if (!empty($validated['app_secret'])) {
+            $channel->setCredential('app_secret', $validated['app_secret']);
+        }
+        $channel->save();
+
+        return redirect()
+            ->route('dashboard.bots.channels.instagram.connected', ['bot' => $bot, 'channel' => $channel])
+            ->with('success', 'Canal Instagram DM creat. Configurează webhook-ul în Meta Developer Console urmând pașii de mai jos.');
+    }
+
+    /**
+     * Show the post-connect instructions for Instagram DM.
+     */
+    public function instagramConnected(Bot $bot, Channel $channel)
+    {
+        $this->ensureChannelBelongsToBot($bot, $channel);
+
+        if ($channel->type !== Channel::TYPE_INSTAGRAM_DM) {
+            abort(404);
+        }
+
+        return view('dashboard.bots.channels.instagram-connected', [
+            'bot' => $bot,
+            'channel' => $channel,
+            'webhookUrl' => url('/webhook/instagram'),
+        ]);
+    }
+
     public function toggleActive(Bot $bot, Channel $channel)
     {
         $this->ensureChannelBelongsToBot($bot, $channel);
