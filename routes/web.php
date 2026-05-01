@@ -555,6 +555,13 @@ Route::middleware('auth')->prefix('dashboard/agenti/{bot}/canale')->group(functi
     });
 });
 
+// Unified inbox across all channels (Etapa 6). The per-channel
+// /dashboard/conversatii/{type} views still exist; this is the
+// collapsed all-in-one for operators triaging across channels.
+Route::middleware('auth')
+    ->get('/dashboard/inbox', [\App\Http\Controllers\Dashboard\InboxController::class, 'index'])
+    ->name('dashboard.inbox');
+
 // MCP server management (per-tenant). Lets tenants register their own
 // Model Context Protocol endpoints; the orchestrator surfaces those tools
 // to the LLM at conversation time.

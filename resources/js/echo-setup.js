@@ -39,6 +39,18 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Usage:', data);
         updateUsageBar(data.percentage);
     });
+
+    // HITL: assignee changed for a conversation. Update the badge in any
+    // visible inbox card and play a soft notification if the current user
+    // just got assigned the conversation.
+    channel.listen('.conversation.assignment-changed', (data) => {
+        updateAssigneeBadge(data.conversation_id, data.assignee_type, data.assignee_id);
+
+        const meId = parseInt(document.querySelector('meta[name="user-id"]')?.content || '0');
+        if (data.assignee_type === 'user' && data.assignee_id === meId && data.actor_user_id !== meId) {
+            showNotification('O conversație ți-a fost atribuită.', 'info');
+        }
+    });
 });
 
 // Helper functions
@@ -120,6 +132,17 @@ function updateBotStatus(botId, isActive) {
             ? 'w-2.5 h-2.5 rounded-full bg-emerald-500'
             : 'w-2.5 h-2.5 rounded-full bg-slate-300';
     }
+}
+
+function updateAssigneeBadge(conversationId, assigneeType, assigneeId) {
+    document.querySelectorAll(`[data-conversation-id="${conversationId}"] [data-assignee-badge]`).forEach((el) => {
+        el.textContent = assigneeType === 'user' ? 'Operator' : 'Bot';
+        el.dataset.assigneeType = assigneeType;
+        el.classList.toggle('bg-amber-50', assigneeType === 'user');
+        el.classList.toggle('text-amber-700', assigneeType === 'user');
+        el.classList.toggle('bg-emerald-50', assigneeType === 'bot');
+        el.classList.toggle('text-emerald-700', assigneeType === 'bot');
+    });
 }
 
 function updateUsageBar(percentage) {
