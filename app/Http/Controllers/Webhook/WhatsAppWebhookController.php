@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Jobs\ProcessChannelMessage;
 use App\Models\Channel;
 use App\Services\ChannelMessageService;
+use App\Services\Channels\Meta\WhatsAppTemplateService;
 use App\Services\Channels\MessageStatusProcessor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -16,6 +17,7 @@ class WhatsAppWebhookController extends Controller
     public function __construct(
         private ChannelMessageService $messageService,
         private MessageStatusProcessor $statusProcessor,
+        private WhatsAppTemplateService $templateService,
     ) {}
 
     /**
@@ -70,7 +72,18 @@ class WhatsAppWebhookController extends Controller
                 $changes = $entry['changes'] ?? [];
 
                 foreach ($changes as $change) {
+                    $field = $change['field'] ?? null;
                     $value = $change['value'] ?? [];
+
+                    // Template status updates (APPROVED / REJECTED / PAUSED /
+                    // DISABLED) come on the message_template_status_update
+                    // field, NOT under the messages field. Route them to the
+                    // template service before the messaging_product gate
+                    // (template events have no messaging_product).
+                    if ($field === 'message_template_status_update') {
+                        $this->templateService->applyStatusUpdate($value);
+                        continue;
+                    }
 
                     // Only process messages (not statuses or other events)
                     if (($value['messaging_product'] ?? '') !== 'whatsapp') {
