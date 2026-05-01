@@ -6,13 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Jobs\ProcessChannelMessage;
 use App\Models\Channel;
 use App\Services\ChannelMessageService;
+use App\Services\Channels\MessageStatusProcessor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class FacebookWebhookController extends Controller
 {
-    public function __construct(private ChannelMessageService $messageService) {}
+    public function __construct(
+        private ChannelMessageService $messageService,
+        private MessageStatusProcessor $statusProcessor,
+    ) {}
 
     /**
      * GET endpoint for Facebook webhook verification.
@@ -63,6 +67,28 @@ class FacebookWebhookController extends Controller
                 $messagingEvents = $entry['messaging'] ?? [];
 
                 foreach ($messagingEvents as $event) {
+                    $pageId = $event['recipient']['id'] ?? null;
+                    $senderPsid = $event['sender']['id'] ?? null;
+
+                    // Delivery / read receipts for OUR outbound messages —
+                    // route to the status processor (it watermarks read).
+                    // We need a channel_id to scope the watermark sweep —
+                    // resolve once before dispatching.
+                    if ((isset($event['delivery']) || isset($event['read'])) && $pageId && $senderPsid) {
+                        $statusChannel = Channel::where('type', Channel::TYPE_FACEBOOK_MESSENGER)
+                            ->where('external_id', $pageId)
+                            ->where('is_active', true)
+                            ->first();
+                        if ($statusChannel) {
+                            $this->statusProcessor->processMessengerEvent(
+                                $statusChannel->id,
+                                $senderPsid,
+                                $event,
+                            );
+                        }
+                        continue;
+                    }
+
                     // Only process message events (not delivery, read receipts, etc.)
                     if (!isset($event['message'])) {
                         continue;
@@ -73,8 +99,6 @@ class FacebookWebhookController extends Controller
                         continue;
                     }
 
-                    $pageId = $event['recipient']['id'] ?? null;
-                    $senderPsid = $event['sender']['id'] ?? null;
                     $messageText = $event['message']['text'] ?? null;
 
                     if (!$pageId || !$senderPsid || !$messageText) {

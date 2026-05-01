@@ -6,13 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Jobs\ProcessChannelMessage;
 use App\Models\Channel;
 use App\Services\ChannelMessageService;
+use App\Services\Channels\MessageStatusProcessor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class InstagramWebhookController extends Controller
 {
-    public function __construct(private ChannelMessageService $messageService) {}
+    public function __construct(
+        private ChannelMessageService $messageService,
+        private MessageStatusProcessor $statusProcessor,
+    ) {}
 
     /**
      * GET endpoint for Instagram webhook verification.
@@ -62,6 +66,26 @@ class InstagramWebhookController extends Controller
                 $messagingEvents = $entry['messaging'] ?? [];
 
                 foreach ($messagingEvents as $event) {
+                    $instagramId = $event['recipient']['id'] ?? null;
+                    $senderId = $event['sender']['id'] ?? null;
+
+                    // Delivery / read receipts for OUR outbound messages.
+                    // Same shape as FB Messenger (Meta unified the protocol).
+                    if ((isset($event['delivery']) || isset($event['read'])) && $instagramId && $senderId) {
+                        $statusChannel = Channel::where('type', Channel::TYPE_INSTAGRAM_DM)
+                            ->where('external_id', $instagramId)
+                            ->where('is_active', true)
+                            ->first();
+                        if ($statusChannel) {
+                            $this->statusProcessor->processMessengerEvent(
+                                $statusChannel->id,
+                                $senderId,
+                                $event,
+                            );
+                        }
+                        continue;
+                    }
+
                     // Only process message events (not delivery, read receipts, etc.)
                     if (!isset($event['message'])) {
                         continue;
@@ -72,8 +96,6 @@ class InstagramWebhookController extends Controller
                         continue;
                     }
 
-                    $instagramId = $event['recipient']['id'] ?? null;
-                    $senderId = $event['sender']['id'] ?? null;
                     $messageText = $event['message']['text'] ?? null;
 
                     if (!$instagramId || !$senderId || !$messageText) {
