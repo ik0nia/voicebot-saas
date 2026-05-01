@@ -527,6 +527,25 @@ Route::middleware('auth')->prefix('dashboard/agenti/{bot}/canale')->group(functi
             ->name('dashboard.bots.channels.instagram.store');
         Route::get('/instagram/{channel}/connected', [ChannelController::class, 'instagramConnected'])
             ->name('dashboard.bots.channels.instagram.connected');
+
+        // WhatsApp template management (Etapa 3 of the omnichannel roadmap).
+        // Templates are scoped per channel because Meta scopes per WABA.
+        Route::get('/{channel}/templates', [\App\Http\Controllers\Dashboard\WhatsAppTemplateController::class, 'index'])
+            ->name('dashboard.bots.channels.whatsapp-templates.index');
+        Route::get('/{channel}/templates/new', [\App\Http\Controllers\Dashboard\WhatsAppTemplateController::class, 'create'])
+            ->name('dashboard.bots.channels.whatsapp-templates.create');
+        Route::post('/{channel}/templates', [\App\Http\Controllers\Dashboard\WhatsAppTemplateController::class, 'store'])
+            ->name('dashboard.bots.channels.whatsapp-templates.store');
+        Route::get('/{channel}/templates/{template}', [\App\Http\Controllers\Dashboard\WhatsAppTemplateController::class, 'edit'])
+            ->name('dashboard.bots.channels.whatsapp-templates.edit');
+        Route::put('/{channel}/templates/{template}', [\App\Http\Controllers\Dashboard\WhatsAppTemplateController::class, 'update'])
+            ->name('dashboard.bots.channels.whatsapp-templates.update');
+        Route::post('/{channel}/templates/{template}/submit', [\App\Http\Controllers\Dashboard\WhatsAppTemplateController::class, 'submit'])
+            ->name('dashboard.bots.channels.whatsapp-templates.submit');
+        Route::delete('/{channel}/templates/{template}', [\App\Http\Controllers\Dashboard\WhatsAppTemplateController::class, 'destroy'])
+            ->name('dashboard.bots.channels.whatsapp-templates.destroy');
+        Route::post('/{channel}/templates/sync', [\App\Http\Controllers\Dashboard\WhatsAppTemplateController::class, 'syncFromMeta'])
+            ->name('dashboard.bots.channels.whatsapp-templates.sync');
     });
 });
 
