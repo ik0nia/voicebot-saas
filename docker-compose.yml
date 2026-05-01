@@ -154,8 +154,50 @@ services:
           - reverb
       coolify: {}
 
+  # Letta sidecar (formerly MemGPT) for cross-channel Contact memory.
+  # Opt-in: uncomment when ready to roll out memory-aware agents. The app
+  # gracefully degrades if this container is not running (LettaBridgeService
+  # short-circuits when LETTA_URL is empty).
+  #
+  # Provision API keys for Letta inside the container env block (LETTA_PG_URI
+  # for the agent state DB, OPENAI_API_KEY / ANTHROPIC_API_KEY for the agent's
+  # underlying LLM). Letta uses its own Postgres schema — point it at a
+  # dedicated DB or namespace, NEVER share with voicebot's main DB.
+  #
+  # letta:
+  #   image: letta/letta:latest
+  #   container_name: voicebot-letta
+  #   restart: unless-stopped
+  #   environment:
+  #     TZ: Europe/Bucharest
+  #     LETTA_PG_URI: postgresql://letta:letta@letta-pg:5432/letta
+  #     OPENAI_API_KEY: ${OPENAI_API_KEY}
+  #     LETTA_SERVER_PASSWORD: ${LETTA_TOKEN}
+  #   ports:
+  #     - "8283:8283"
+  #   depends_on:
+  #     - letta-pg
+  #   networks:
+  #     default:
+  #       aliases:
+  #         - letta
+  #
+  # letta-pg:
+  #   image: pgvector/pgvector:pg16
+  #   container_name: voicebot-letta-pg
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_USER: letta
+  #     POSTGRES_PASSWORD: letta
+  #     POSTGRES_DB: letta
+  #   volumes:
+  #     - letta-pg-data:/var/lib/postgresql/data
+  #   networks:
+  #     default: {}
+
 volumes:
   app-storage:
+  # letta-pg-data:
 
 networks:
   default:

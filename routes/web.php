@@ -555,6 +555,18 @@ Route::middleware('auth')->prefix('dashboard/agenti/{bot}/canale')->group(functi
     });
 });
 
+// MCP server management (per-tenant). Lets tenants register their own
+// Model Context Protocol endpoints; the orchestrator surfaces those tools
+// to the LLM at conversation time.
+Route::middleware(['auth', 'tenant.role:tenant_admin,tenant_manager'])
+    ->prefix('dashboard/mcp-servere')
+    ->group(function () {
+        Route::get('/', [\App\Http\Controllers\Dashboard\McpServerController::class, 'index'])->name('dashboard.mcp-servers.index');
+        Route::post('/', [\App\Http\Controllers\Dashboard\McpServerController::class, 'store'])->name('dashboard.mcp-servers.store');
+        Route::post('/{server}/ping', [\App\Http\Controllers\Dashboard\McpServerController::class, 'ping'])->name('dashboard.mcp-servers.ping');
+        Route::delete('/{server}', [\App\Http\Controllers\Dashboard\McpServerController::class, 'destroy'])->name('dashboard.mcp-servers.destroy');
+    });
+
 // Site management routes (dashboard)
 Route::middleware('auth')->prefix('dashboard/sites')->group(function () {
     Route::get('/', [SiteController::class, 'index'])->name('dashboard.sites.index');
