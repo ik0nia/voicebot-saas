@@ -37,3 +37,6 @@ docker-compose.override.yml
 .env.bak*
 # Social-image prompt-iteration artifacts — generated during dev, not for git
 /public/test-gpt-image-2/
+# Side-projects served from public/ but not part of voicebot-saas
+/public/ancpi-v2
+/public/palma
