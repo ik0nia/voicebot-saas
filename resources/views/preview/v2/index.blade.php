@@ -18,7 +18,7 @@ $pages = [
         'title' => 'Dashboard',
         'desc' => 'Overview Notion-style: KPI tiles, chart 7 zile, agent health, pipeline.',
         'href' => '/preview/v2/dashboard',
-        'status' => 'wip',
+        'status' => 'ready',
         'thumb' => 'split-content',
     ],
     [
@@ -46,7 +46,7 @@ $pages = [
         'title' => 'Inbox',
         'desc' => '3-pane density Linear: listă conversații + thread + customer panel.',
         'href' => '/preview/v2/inbox',
-        'status' => 'wip',
+        'status' => 'ready',
         'thumb' => 'three-pane',
     ],
     [
