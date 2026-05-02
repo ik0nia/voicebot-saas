@@ -118,6 +118,13 @@ Route::prefix('preview')->group(function () {
     Route::view('/dashboard/notion',    'preview.dashboard-notion');
     Route::view('/dashboard/stripe',    'preview.dashboard-stripe');
     Route::view('/niche/stomatologie',  'preview.niche-stomatologie');
+
+    // v2 — redesign integrat (Notion base + Linear density pe operator pages)
+    Route::prefix('v2')->group(function () {
+        Route::view('/',          'preview.v2.index');
+        Route::view('/dashboard', 'preview.v2.dashboard');
+        Route::view('/inbox',     'preview.v2.inbox');
+    });
 });
 
 /*
