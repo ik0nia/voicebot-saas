@@ -88,6 +88,9 @@
         </div>
     </div>
 
+    {{-- Live activity widget — pulse-update la 5s --}}
+    @include('partials.live-activity-widget')
+
     {{-- Action Items --}}
     @include('dashboard.partials.action-items')
 

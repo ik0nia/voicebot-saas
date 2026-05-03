@@ -479,6 +479,11 @@ Route::middleware('auth')
     ->get('/dashboard/canale', [\App\Http\Controllers\Dashboard\ChannelsHubController::class, 'index'])
     ->name('dashboard.channels-hub.index');
 
+// Live activity snapshot endpoint — JSON, polled la 5s de widget-ul live
+Route::middleware('auth')
+    ->get('/dashboard/live-activity', [\App\Http\Controllers\Dashboard\LiveActivityController::class, 'snapshot'])
+    ->name('dashboard.live-activity');
+
 // Playground per bot: chat tester + voice preview + embed live preview
 Route::middleware('auth')->group(function () {
     $pg = \App\Http\Controllers\Dashboard\PlaygroundController::class;
