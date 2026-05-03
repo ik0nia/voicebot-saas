@@ -23,6 +23,57 @@
 
 @push('scripts')
 <script>
+function autoTag(conversationId, initialTags) {
+    return {
+        loading: false,
+        tags: initialTags || null,
+        error: null,
+
+        async fetch() {
+            this.loading = true;
+            this.error = null;
+            try {
+                const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+                const r = await fetch('/dashboard/conversatie/' + conversationId + '/auto-tag', {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                });
+                const d = await r.json();
+                if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+                this.tags = d;
+            } catch (e) {
+                this.error = e.message;
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        sentimentColor(s) {
+            return { positive: 'bg-emerald-100 text-emerald-700',
+                     neutral:  'bg-cream text-inkSoft',
+                     negative: 'bg-amber-100 text-amber-800',
+                     frustrated: 'bg-coralsoft text-coralh' }[s] || 'bg-cream text-inkSoft';
+        },
+        urgencyColor(u) {
+            return { low: 'bg-cream text-muted',
+                     medium: 'bg-[#DCEBFA] text-[#1E40AF]',
+                     high: 'bg-amber-100 text-amber-800',
+                     critical: 'bg-coralsoft text-coralh' }[u] || 'bg-cream text-muted';
+        },
+        leadColor(l) {
+            return { low: 'bg-cream text-muted',
+                     medium: 'bg-[#FDE2D0] text-[#9A3412]',
+                     high: 'bg-emerald-100 text-emerald-700' }[l] || 'bg-cream text-muted';
+        },
+        intentLabel(i) {
+            return { info_request: 'cere info', pricing_question: 'preț', booking_request: 'programare',
+                     product_inquiry: 'produs', support_issue: 'suport', complaint: 'reclamație',
+                     feedback: 'feedback', compare_options: 'comparare', cancel_or_modify: 'anulare',
+                     small_talk: 'small talk', spam_or_test: 'spam/test', other: 'altele' }[i] || i;
+        },
+    };
+}
+
 function smartReply(conversationId) {
     return {
         loading: false,
@@ -240,6 +291,49 @@ function smartReply(conversationId) {
                         </svg>
                     </div>
                     <p class="text-sm text-muted">Niciun mesaj în această conversație.</p>
+                </div>
+            @endif
+
+            {{-- Auto-tag panel — intent + sentiment + urgency + topics --}}
+            @if($messages->count() > 0)
+                <div x-data="autoTag({{ $conversation->id }}, {{ \Illuminate\Support\Js::from($conversation->metadata['auto_tags'] ?? null) }})" class="mt-6 pt-6 border-t border-line">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded-lg bg-[#E6DFF3] text-[#5B21B6] flex items-center justify-center text-xs">🏷️</div>
+                            <h3 class="display text-sm font-semibold text-ink">Auto-tag AI</h3>
+                            <span x-show="tags?.cached" class="text-2xs text-muted">cached</span>
+                        </div>
+                        <button @click="fetch()" :disabled="loading"
+                                class="text-2xs px-3 py-1.5 rounded-pill border border-line bg-white hover:bg-cream font-medium disabled:opacity-50">
+                            <span x-show="!loading && !tags">🏷️ Analizează</span>
+                            <span x-show="!loading && tags">↻ Re-analizează</span>
+                            <span x-show="loading">analizez…</span>
+                        </button>
+                    </div>
+
+                    <template x-if="error">
+                        <div class="p-2 rounded-lg bg-coralsoft border border-coral/30 text-2xs text-coralh" x-text="error"></div>
+                    </template>
+
+                    <template x-if="tags">
+                        <div class="space-y-3">
+                            <p x-show="tags.summary" class="text-sm text-inkSoft italic" x-text="'„' + tags.summary + '"'"></p>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <template x-for="i in tags.intents" :key="i">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-pill text-2xs font-medium bg-[#E6DFF3] text-[#5B21B6]" x-text="intentLabel(i)"></span>
+                                </template>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-pill text-2xs font-medium" :class="sentimentColor(tags.sentiment)" x-text="'sentiment: ' + tags.sentiment"></span>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-pill text-2xs font-medium" :class="urgencyColor(tags.urgency)" x-text="'urgență: ' + tags.urgency"></span>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-pill text-2xs font-medium" :class="leadColor(tags.lead_potential)" x-text="'lead: ' + tags.lead_potential"></span>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-1" x-show="tags.topics?.length">
+                                <span class="text-2xs text-muted">topics:</span>
+                                <template x-for="t in tags.topics" :key="t">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-pill text-2xs bg-cream text-inkSoft border border-line mono" x-text="t"></span>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
                 </div>
             @endif
 

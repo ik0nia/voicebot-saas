@@ -509,6 +509,11 @@ Route::middleware('auth')
     ->post('/dashboard/conversatie/{conversation}/smart-reply', [\App\Http\Controllers\Dashboard\SmartReplyController::class, 'suggest'])
     ->name('dashboard.conversation.smart-reply');
 
+// Auto-tag conversație cu LLM — intent + sentiment + urgency + topics
+Route::middleware('auth')
+    ->post('/dashboard/conversatie/{conversation}/auto-tag', [\App\Http\Controllers\Dashboard\AutoTagController::class, 'tag'])
+    ->name('dashboard.conversation.auto-tag');
+
 // Knowledge gaps — listă query-uri zero-result + AI suggester
 Route::middleware('auth')->group(function () {
     $kg = \App\Http\Controllers\Dashboard\KnowledgeGapsController::class;
