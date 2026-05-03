@@ -113,11 +113,22 @@
                     </td>
                     <td class="px-4 py-3 text-muted text-xs">{{ $lead->created_at->format('d.m H:i') }}</td>
                     <td class="px-4 py-3">
-                        <a href="{{ route('dashboard.leads.show', $lead) }}" class="text-blue-600 hover:text-blue-800 text-xs font-medium">Detalii →</a>
+                        <a href="{{ route('dashboard.leads.show', $lead) }}" class="text-coralh hover:text-coral text-xs font-medium">Detalii →</a>
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="9" class="px-4 py-8 text-center text-muted">Nu există leads încă.</td></tr>
+                <tr>
+                    <td colspan="9" class="px-4 py-12">
+                        <div class="text-center max-w-md mx-auto">
+                            <div class="w-12 h-12 rounded-2xl bg-coralsoft text-coralh mx-auto mb-3 flex items-center justify-center">
+                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
+                            </div>
+                            <h3 class="display text-base font-semibold text-ink mb-1">Niciun lead încă</h3>
+                            <p class="text-xs text-muted mb-4">Lead-urile sunt capturate automat din conversații (≥3 mesaje cu intent comercial) și prin widget-ul de callback.</p>
+                            <a href="{{ route('dashboard.bots.index') }}" class="text-xs text-coralh hover:underline font-medium">Verifică agenții tăi →</a>
+                        </div>
+                    </td>
+                </tr>
                 @endforelse
             </tbody>
         </table>

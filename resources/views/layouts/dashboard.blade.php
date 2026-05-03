@@ -315,6 +315,15 @@
 
                 {{-- Right cluster --}}
                 <div class="flex items-center gap-2 shrink-0">
+                    {{-- ⌘K palette trigger — vizibil mereu, dă hint pentru shortcut --}}
+                    <button type="button"
+                            onclick="window.dispatchEvent(new KeyboardEvent('keydown', {key: 'k', metaKey: true}))"
+                            class="hidden md:inline-flex items-center gap-2 px-2.5 py-1 rounded-pill bg-paper border border-line hover:bg-cream text-2xs text-muted transition"
+                            aria-label="Deschide command palette">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 21l-4.35-4.35M10 17a7 7 0 100-14 7 7 0 000 14z"/></svg>
+                        <span>Caută</span>
+                        <span class="mono opacity-60">⌘K</span>
+                    </button>
                     @auth
                         {{-- Super-admin: View-as widget --}}
                         @if(auth()->user()->isSuperAdmin())
@@ -445,6 +454,9 @@
             </main>
         </div>
     </div>
+
+    {{-- ⌘K command palette — încarcat global pe dashboard --}}
+    @include('partials.command-palette')
 
     {{-- Sambla AI agent widget (bot #66, channel #2) --}}
     <script src="{{ rtrim(config('app.url'), '/') }}/widget/sambla-chat.min.js" data-channel-id="2" data-bot-name="Sambla Assistant" data-color="#991b1b" data-lang="ro" data-greeting="Salut! 👋 Sunt aici să te ajut cu configurarea platformei. Ce ai nevoie?" async defer></script>
