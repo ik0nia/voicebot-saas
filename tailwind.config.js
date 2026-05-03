@@ -48,14 +48,24 @@ export default {
                 lilac:     '#C7B8E8',
                 sky:       '#A7C7F0',
             },
+            borderRadius: {
+                card:    '20px',
+                primary: '48px',
+                pill:    '999px',
+            },
+            fontSize: {
+                '2xs': ['0.6875rem', { lineHeight: '1rem' }],
+            },
         },
     },
     // Safelist pentru clase construite dinamic (slug niche, preț) care
     // altfel ar fi purgate la build.
     safelist: [
         'bg-paper', 'bg-cream', 'bg-sand', 'bg-ink',
-        'text-ink', 'text-muted', 'text-cream',
+        'text-ink', 'text-muted', 'text-cream', 'text-inkSoft', 'text-coralh',
         'border-line',
+        'bg-coral', 'bg-coralh', 'bg-coralsoft',
+        'text-coral',
         'bg-[var(--accent)]',
         'text-[var(--accent)]',
         'border-[var(--accent)]',

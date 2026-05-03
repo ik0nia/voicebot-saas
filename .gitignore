@@ -40,3 +40,6 @@ docker-compose.override.yml
 # Side-projects served from public/ but not part of voicebot-saas
 /public/ancpi-v2
 /public/palma
+# Live status page — runtime artifact while Claude lucrează la redesign
+/public/sambla-status.html
+/tmp/sambla-status-state.json
