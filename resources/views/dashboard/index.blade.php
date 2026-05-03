@@ -2,7 +2,7 @@
 
 @section('title', 'Dashboard')
 @section('breadcrumb')
-<span class="text-slate-900 font-medium">Dashboard</span>
+<span class="text-ink font-medium">Dashboard</span>
 @endsection
 
 @section('content')
@@ -12,14 +12,14 @@
          Without this the dashboard looks broken — every stat card shows 0
          because TenantScope filters to tenant_id=0 in this mode. --}}
     @if(auth()->user()->hasRole('super_admin') && !auth()->user()->getAttributes()['tenant_id'] && !session('admin_as_tenant_id') && !session('admin_view_all', false))
-    <div class="rounded-xl border border-slate-200 bg-slate-50 p-6">
+    <div class="rounded-xl border border-line bg-cream p-6">
         <div class="flex items-start gap-4">
-            <div class="shrink-0 w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center">
-                <svg class="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div class="shrink-0 w-10 h-10 rounded-full bg-sand flex items-center justify-center">
+                <svg class="w-5 h-5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
             <div class="flex-1">
-                <h3 class="text-base font-semibold text-slate-900">Nu ai date proprii în acest dashboard</h3>
-                <p class="mt-1 text-sm text-slate-600">Ești logat ca super admin fără tenant propriu. Folosește selectorul din dreapta-sus („<span class="font-medium">Doar eu</span>") ca să vizualizezi platforma ca un tenant anume sau să vezi agregat toate tenant-urile.</p>
+                <h3 class="text-base font-semibold text-ink">Nu ai date proprii în acest dashboard</h3>
+                <p class="mt-1 text-sm text-muted">Ești logat ca super admin fără tenant propriu. Folosește selectorul din dreapta-sus („<span class="font-medium">Doar eu</span>") ca să vizualizezi platforma ca un tenant anume sau să vezi agregat toate tenant-urile.</p>
             </div>
         </div>
     </div>
@@ -27,10 +27,10 @@
 
     {{-- No Sites Banner --}}
     @if(auth()->user()->tenant?->sites()->count() === 0 && auth()->user()->tenant)
-    <div class="bg-gradient-to-r from-red-50 to-amber-50 border border-red-200 rounded-xl p-6">
-        <h3 class="text-lg font-bold text-slate-900 mb-2">Incepe prin adaugarea site-ului tau</h3>
-        <p class="text-sm text-slate-600 mb-4">Pentru a folosi agentul AI, trebuie mai intai sa adaugi si verifici domeniul site-ului tau.</p>
-        <a href="{{ route('dashboard.sites.create') }}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-red-800 text-white text-sm font-semibold rounded-lg hover:bg-red-900 transition-colors shadow-sm">
+    <div class="bg-gradient-to-r from-red-50 to-amber-50 border border-coral/30 rounded-xl p-6">
+        <h3 class="text-lg font-bold text-ink mb-2">Incepe prin adaugarea site-ului tau</h3>
+        <p class="text-sm text-muted mb-4">Pentru a folosi agentul AI, trebuie mai intai sa adaugi si verifici domeniul site-ului tau.</p>
+        <a href="{{ route('dashboard.sites.create') }}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-coral text-white text-sm font-semibold rounded-lg hover:bg-coralh transition-colors shadow-sm">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
             Adauga site-ul tau
         </a>
@@ -42,8 +42,8 @@
     <div id="onboarding-banner" class="relative rounded-xl border border-primary-100 bg-gradient-to-br from-primary-50 to-white p-6 shadow-sm">
         <div class="flex items-start justify-between">
             <div class="flex-1">
-                <h2 class="text-xl font-semibold text-slate-900">Bine ai venit! Configureaza Sambla-ul tau</h2>
-                <p class="mt-1 text-sm text-slate-500">Urmeaza pasii de mai jos:</p>
+                <h2 class="text-xl font-semibold text-ink">Bine ai venit! Configureaza Sambla-ul tau</h2>
+                <p class="mt-1 text-sm text-muted">Urmeaza pasii de mai jos:</p>
                 <ul class="mt-4 space-y-2.5">
                     @foreach([
                         ['done' => $onboarding['account'], 'label' => 'Cont creat'],
@@ -53,21 +53,21 @@
                     <li class="flex items-center gap-2.5">
                         @if($step['done'])
                             <svg class="w-5 h-5 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                            <span class="text-sm text-slate-500 line-through">{{ $step['label'] }}</span>
+                            <span class="text-sm text-muted line-through">{{ $step['label'] }}</span>
                         @else
-                            <div class="w-5 h-5 rounded-full border-2 border-slate-300 shrink-0"></div>
+                            <div class="w-5 h-5 rounded-full border-2 border-line shrink-0"></div>
                             @if(isset($step['link']))
                                 <a href="{{ $step['link'] }}" class="text-sm font-medium text-primary-600 hover:underline">{{ $step['label'] }}</a>
                             @else
-                                <span class="text-sm text-slate-500">{{ $step['label'] }}</span>
+                                <span class="text-sm text-muted">{{ $step['label'] }}</span>
                             @endif
                         @endif
                     </li>
                     @endforeach
                 </ul>
-                <button onclick="document.getElementById('onboarding-banner').remove();document.cookie='sambla_hide_onboarding=1;path=/;max-age=31536000;SameSite=Lax';" class="mt-4 text-xs text-slate-400 hover:text-slate-600 underline">Nu mai arata</button>
+                <button onclick="document.getElementById('onboarding-banner').remove();document.cookie='sambla_hide_onboarding=1;path=/;max-age=31536000;SameSite=Lax';" class="mt-4 text-xs text-muted hover:text-muted underline">Nu mai arata</button>
             </div>
-            <button onclick="document.getElementById('onboarding-banner').style.display='none'" class="ml-4 shrink-0 p-1.5 text-slate-400 hover:bg-slate-100 rounded-lg"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button>
+            <button onclick="document.getElementById('onboarding-banner').style.display='none'" class="ml-4 shrink-0 p-1.5 text-muted hover:bg-cream rounded-lg"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button>
         </div>
     </div>
     @endif
@@ -96,7 +96,7 @@
     @endif
         @php
             $stats = [
-                ['label' => 'Agenți activi', 'value' => $activeBots, 'sub' => null, 'icon' => 'M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25zm.75-12h9v9h-9v-9z', 'cardBg' => 'bg-red-50 border-red-100', 'iconBg' => 'bg-red-100 text-red-700', 'valueColor' => 'text-red-700'],
+                ['label' => 'Agenți activi', 'value' => $activeBots, 'sub' => null, 'icon' => 'M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25zm.75-12h9v9h-9v-9z', 'cardBg' => 'bg-coralsoft border-red-100', 'iconBg' => 'bg-coralsoft text-coralh', 'valueColor' => 'text-coralh'],
                 ['label' => 'Conversatii', 'value' => $conversationsToday, 'sub' => $messagesToday . ' mesaje azi', 'icon' => 'M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z', 'cardBg' => 'bg-blue-50 border-blue-100', 'iconBg' => 'bg-blue-100 text-blue-700', 'valueColor' => 'text-blue-700'],
                 ['label' => 'Leads noi', 'value' => $leadsToday, 'sub' => $leadsNew . ' necontactate', 'icon' => 'M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z', 'cardBg' => 'bg-emerald-50 border-emerald-100', 'iconBg' => 'bg-emerald-100 text-emerald-700', 'valueColor' => 'text-emerald-700'],
                 ['label' => 'Adaugari cos', 'value' => $addToCartToday, 'sub' => $productClicksToday . ' clickuri', 'icon' => 'M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121 0 2.09-.773 2.34-1.87l1.5-6.69a1.5 1.5 0 00-1.467-1.837H5.106l-.382-1.428A1.5 1.5 0 003.636 1.5H2.25', 'cardBg' => 'bg-purple-50 border-purple-100', 'iconBg' => 'bg-purple-100 text-purple-700', 'valueColor' => 'text-purple-700'],
@@ -110,9 +110,9 @@
         <div class="rounded-xl border {{ $stat['cardBg'] }} p-4 shadow-sm transition-all hover:shadow-md">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-[11px] font-medium text-slate-500 uppercase tracking-wider">{{ $stat['label'] }}</p>
+                    <p class="text-[11px] font-medium text-muted uppercase tracking-wider">{{ $stat['label'] }}</p>
                     <p class="mt-1 text-3xl font-bold {{ $stat['valueColor'] }}">{{ $stat['value'] }}</p>
-                    @if($stat['sub'])<p class="text-[11px] text-slate-400 mt-0.5">{{ $stat['sub'] }}</p>@endif
+                    @if($stat['sub'])<p class="text-[11px] text-muted mt-0.5">{{ $stat['sub'] }}</p>@endif
                 </div>
                 <div class="flex h-10 w-10 items-center justify-center rounded-lg {{ $stat['iconBg'] }}">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $stat['icon'] }}" /></svg>
@@ -127,13 +127,13 @@
 
     {{-- Plan Usage --}}
     @if($planUsage)
-    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div class="rounded-xl border border-line bg-white p-5 shadow-sm">
         <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-2">
-                <h3 class="text-sm font-semibold text-slate-900">Utilizare plan</h3>
-                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-red-100 to-red-50 text-red-800 ring-1 ring-red-200/50">{{ $planUsage['plan']['name'] }}</span>
+                <h3 class="text-sm font-semibold text-ink">Utilizare plan</h3>
+                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-red-100 to-red-50 text-coralh ring-1 ring-red-200/50">{{ $planUsage['plan']['name'] }}</span>
             </div>
-            <a href="{{ route('dashboard.billing.index') }}" class="text-xs font-medium text-red-700 hover:underline">Upgrade &rarr;</a>
+            <a href="{{ route('dashboard.billing.index') }}" class="text-xs font-medium text-coralh hover:underline">Upgrade &rarr;</a>
         </div>
         @if($hasVoice)
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -146,19 +146,19 @@
             ] as $usage)
             <div>
                 <div class="flex items-center justify-between text-xs mb-1.5">
-                    <span class="text-slate-600 font-medium">{{ $usage['label'] }}</span>
-                    <span class="{{ $usage['data']['percent'] >= 90 ? 'text-red-600 font-bold' : 'text-slate-500 font-medium' }}">{{ number_format($usage['data']['used']) }}/{{ number_format($usage['data']['limit']) }}</span>
+                    <span class="text-muted font-medium">{{ $usage['label'] }}</span>
+                    <span class="{{ $usage['data']['percent'] >= 90 ? 'text-coral font-bold' : 'text-muted font-medium' }}">{{ number_format($usage['data']['used']) }}/{{ number_format($usage['data']['limit']) }}</span>
                 </div>
-                <div class="h-2.5 w-full rounded-full bg-slate-100"><div class="h-2.5 rounded-full transition-all {{ $usage['data']['percent'] >= 90 ? 'bg-red-500' : ($usage['data']['percent'] >= 70 ? 'bg-amber-500' : 'bg-emerald-500') }}" style="width: {{ min($usage['data']['percent'], 100) }}%"></div></div>
+                <div class="h-2.5 w-full rounded-full bg-cream"><div class="h-2.5 rounded-full transition-all {{ $usage['data']['percent'] >= 90 ? 'bg-red-500' : ($usage['data']['percent'] >= 70 ? 'bg-amber-500' : 'bg-emerald-500') }}" style="width: {{ min($usage['data']['percent'], 100) }}%"></div></div>
             </div>
             @endforeach
             @if($hasVoice)
             <div>
                 <div class="flex items-center justify-between text-xs mb-1.5">
-                    <span class="text-slate-600 font-medium">Minute voce</span>
-                    <span class="text-slate-500 font-medium">{{ number_format($planUsage['voice_minutes']['used']) }}/{{ $planUsage['voice_minutes']['limit'] == -1 ? '&infin;' : number_format($planUsage['voice_minutes']['limit']) }}</span>
+                    <span class="text-muted font-medium">Minute voce</span>
+                    <span class="text-muted font-medium">{{ number_format($planUsage['voice_minutes']['used']) }}/{{ $planUsage['voice_minutes']['limit'] == -1 ? '&infin;' : number_format($planUsage['voice_minutes']['limit']) }}</span>
                 </div>
-                <div class="h-2.5 w-full rounded-full bg-slate-100"><div class="h-2.5 rounded-full bg-purple-500 transition-all" style="width: {{ min($planUsage['voice_minutes']['percent'], 100) }}%"></div></div>
+                <div class="h-2.5 w-full rounded-full bg-cream"><div class="h-2.5 rounded-full bg-purple-500 transition-all" style="width: {{ min($planUsage['voice_minutes']['percent'], 100) }}%"></div></div>
             </div>
             @endif
         </div>
@@ -167,30 +167,30 @@
 
     {{-- Chart + Lead Pipeline --}}
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div class="lg:col-span-2 rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-            <div class="bg-red-50 border-b border-red-100 px-5 py-3">
-                <h3 class="text-sm font-semibold text-red-900">Activitate &mdash; 7 zile</h3>
+        <div class="lg:col-span-2 rounded-xl border border-line bg-white shadow-sm overflow-hidden">
+            <div class="bg-coralsoft border-b border-red-100 px-5 py-3">
+                <h3 class="text-sm font-semibold text-coralh">Activitate &mdash; 7 zile</h3>
             </div>
             <div class="p-5" style="height: 240px;"><canvas id="activityChart"></canvas></div>
         </div>
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="rounded-xl border border-line bg-white p-5 shadow-sm">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-sm font-semibold text-slate-900">Pipeline Leads</h3>
-                <a href="/dashboard/leads" class="text-xs text-red-700 hover:underline">Toate &rarr;</a>
+                <h3 class="text-sm font-semibold text-ink">Pipeline Leads</h3>
+                <a href="/dashboard/leads" class="text-xs text-coralh hover:underline">Toate &rarr;</a>
             </div>
             @php $stages = ['new'=>['Noi','bg-blue-500'],'contacted'=>['Contactati','bg-sky-500'],'scheduled'=>['Programati','bg-amber-500'],'met'=>['Intalnire','bg-orange-500'],'quoted'=>['Oferta','bg-purple-500'],'won'=>['Castigati','bg-emerald-500'],'lost'=>['Pierduti','bg-red-500']]; @endphp
             <div class="space-y-2.5">
                 @foreach($stages as $key => [$label, $color])
                 @php $c = $leadPipeline[$key] ?? 0; @endphp
                 <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2.5"><div class="w-2.5 h-2.5 rounded-full {{ $color }} ring-2 ring-offset-1 {{ str_replace('bg-', 'ring-', $color) }}/30"></div><span class="text-xs text-slate-600 font-medium">{{ $label }}</span></div>
-                    <span class="text-xs font-bold {{ $c > 0 ? 'text-slate-900' : 'text-slate-300' }}">{{ $c }}</span>
+                    <div class="flex items-center gap-2.5"><div class="w-2.5 h-2.5 rounded-full {{ $color }} ring-2 ring-offset-1 {{ str_replace('bg-', 'ring-', $color) }}/30"></div><span class="text-xs text-muted font-medium">{{ $label }}</span></div>
+                    <span class="text-xs font-bold {{ $c > 0 ? 'text-ink' : 'text-slate-300' }}">{{ $c }}</span>
                 </div>
                 @endforeach
             </div>
-            <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
-                <span class="text-xs font-medium text-slate-600">Total</span>
-                <span class="text-base font-bold text-slate-900">{{ $leadsTotal }}</span>
+            <div class="mt-3 pt-3 border-t border-line flex items-center justify-between">
+                <span class="text-xs font-medium text-muted">Total</span>
+                <span class="text-base font-bold text-ink">{{ $leadsTotal }}</span>
             </div>
         </div>
     </div>
@@ -198,50 +198,50 @@
     {{-- Recent Activity: Conversations + Leads --}}
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {{-- Conversations --}}
-        <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-            <div class="flex items-center justify-between bg-slate-50 border-b border-slate-200 px-5 py-3">
-                <h3 class="text-sm font-semibold text-slate-900">Ultimele conversatii</h3>
-                <span class="text-[11px] text-slate-400">{{ number_format($totalConversations) }} total</span>
+        <div class="rounded-xl border border-line bg-white shadow-sm overflow-hidden">
+            <div class="flex items-center justify-between bg-cream border-b border-line px-5 py-3">
+                <h3 class="text-sm font-semibold text-ink">Ultimele conversatii</h3>
+                <span class="text-[11px] text-muted">{{ number_format($totalConversations) }} total</span>
             </div>
             @forelse($recentConversations as $conv)
-            <a href="{{ route('dashboard.conversations.show', $conv) }}" class="flex items-center gap-3 px-5 py-2.5 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-b-0">
+            <a href="{{ route('dashboard.conversations.show', $conv) }}" class="flex items-center gap-3 px-5 py-2.5 hover:bg-cream transition-colors border-b border-slate-50 last:border-b-0">
                 <div class="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-red-100 to-red-200 flex items-center justify-center">
-                    <span class="text-xs font-bold text-red-700">{{ mb_strtoupper(mb_substr($conv->contact_name ?: ($conv->contact_identifier ?: 'V'), 0, 1)) }}</span>
+                    <span class="text-xs font-bold text-coralh">{{ mb_strtoupper(mb_substr($conv->contact_name ?: ($conv->contact_identifier ?: 'V'), 0, 1)) }}</span>
                 </div>
                 <div class="min-w-0 flex-1">
-                    <span class="text-sm font-medium text-slate-900 truncate block">{{ $conv->contact_name ?: ($conv->contact_identifier ?: 'Vizitator') }}</span>
-                    <span class="text-[11px] text-slate-400">{{ $conv->bot?->name }} &middot; {{ $conv->messages_count }} msg</span>
+                    <span class="text-sm font-medium text-ink truncate block">{{ $conv->contact_name ?: ($conv->contact_identifier ?: 'Vizitator') }}</span>
+                    <span class="text-[11px] text-muted">{{ $conv->bot?->name }} &middot; {{ $conv->messages_count }} msg</span>
                 </div>
-                <span class="text-[10px] text-slate-400 ml-3 whitespace-nowrap">{{ $conv->created_at->diffForHumans() }}</span>
+                <span class="text-[10px] text-muted ml-3 whitespace-nowrap">{{ $conv->created_at->diffForHumans() }}</span>
             </a>
             @empty
-            <div class="px-5 py-6 text-center text-xs text-slate-400">Nicio conversatie inca.</div>
+            <div class="px-5 py-6 text-center text-xs text-muted">Nicio conversatie inca.</div>
             @endforelse
         </div>
 
         {{-- Leads --}}
-        <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-            <div class="flex items-center justify-between bg-slate-50 border-b border-slate-200 px-5 py-3">
-                <h3 class="text-sm font-semibold text-slate-900">Ultimele leads</h3>
-                <a href="/dashboard/leads" class="text-[11px] text-red-700 hover:underline">Toate &rarr;</a>
+        <div class="rounded-xl border border-line bg-white shadow-sm overflow-hidden">
+            <div class="flex items-center justify-between bg-cream border-b border-line px-5 py-3">
+                <h3 class="text-sm font-semibold text-ink">Ultimele leads</h3>
+                <a href="/dashboard/leads" class="text-[11px] text-coralh hover:underline">Toate &rarr;</a>
             </div>
             @forelse($recentLeads as $lead)
-            <a href="{{ route('dashboard.leads.show', $lead) }}" class="flex items-center gap-3 px-5 py-2.5 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-b-0">
+            <a href="{{ route('dashboard.leads.show', $lead) }}" class="flex items-center gap-3 px-5 py-2.5 hover:bg-cream transition-colors border-b border-slate-50 last:border-b-0">
                 <div class="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-red-100 to-red-200 flex items-center justify-center">
-                    <span class="text-xs font-bold text-red-700">{{ mb_strtoupper(mb_substr($lead->name ?: ($lead->email ?: ($lead->phone ?: 'L')), 0, 1)) }}</span>
+                    <span class="text-xs font-bold text-coralh">{{ mb_strtoupper(mb_substr($lead->name ?: ($lead->email ?: ($lead->phone ?: 'L')), 0, 1)) }}</span>
                 </div>
                 <div class="min-w-0 flex-1">
-                    <span class="text-sm font-medium text-slate-900 truncate block">{{ $lead->name ?: ($lead->email ?: ($lead->phone ?: 'Lead #'.$lead->id)) }}</span>
-                    <span class="text-[11px] text-slate-400">{{ $lead->email ?: $lead->phone ?: '-' }}</span>
+                    <span class="text-sm font-medium text-ink truncate block">{{ $lead->name ?: ($lead->email ?: ($lead->phone ?: 'Lead #'.$lead->id)) }}</span>
+                    <span class="text-[11px] text-muted">{{ $lead->email ?: $lead->phone ?: '-' }}</span>
                 </div>
                 <div class="text-right ml-3">
-                    @php $sc = ['new'=>'bg-blue-100 text-blue-700','contacted'=>'bg-sky-100 text-sky-700','won'=>'bg-emerald-100 text-emerald-700','lost'=>'bg-red-100 text-red-700']; @endphp
-                    <span class="inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-medium {{ $sc[$lead->pipeline_stage] ?? 'bg-slate-100 text-slate-500' }}">{{ \App\Models\Lead::STAGES[$lead->pipeline_stage] ?? $lead->pipeline_stage }}</span>
-                    <div class="text-[10px] text-slate-400 mt-0.5">{{ $lead->created_at->diffForHumans() }}</div>
+                    @php $sc = ['new'=>'bg-blue-100 text-blue-700','contacted'=>'bg-sky-100 text-sky-700','won'=>'bg-emerald-100 text-emerald-700','lost'=>'bg-coralsoft text-coralh']; @endphp
+                    <span class="inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-medium {{ $sc[$lead->pipeline_stage] ?? 'bg-cream text-muted' }}">{{ \App\Models\Lead::STAGES[$lead->pipeline_stage] ?? $lead->pipeline_stage }}</span>
+                    <div class="text-[10px] text-muted mt-0.5">{{ $lead->created_at->diffForHumans() }}</div>
                 </div>
             </a>
             @empty
-            <div class="px-5 py-6 text-center text-xs text-slate-400">Lead-urile sunt capturate automat din conversatii.</div>
+            <div class="px-5 py-6 text-center text-xs text-muted">Lead-urile sunt capturate automat din conversatii.</div>
             @endforelse
         </div>
     </div>
@@ -255,12 +255,12 @@
         ] as $action)
         @php
             $cardStyles = [
-                'primary' => 'bg-red-50 border-red-100 hover:border-red-200 hover:bg-red-50/80',
+                'primary' => 'bg-coralsoft border-red-100 hover:border-coral/30 hover:bg-coralsoft/80',
                 'emerald' => 'bg-emerald-50 border-emerald-100 hover:border-emerald-200 hover:bg-emerald-50/80',
                 'sky' => 'bg-sky-50 border-sky-100 hover:border-sky-200 hover:bg-sky-50/80',
             ];
             $iconStyles = [
-                'primary' => 'bg-red-100 text-red-700',
+                'primary' => 'bg-coralsoft text-coralh',
                 'emerald' => 'bg-emerald-100 text-emerald-700',
                 'sky' => 'bg-sky-100 text-sky-700',
             ];
@@ -269,7 +269,7 @@
             <div class="flex h-10 w-10 items-center justify-center rounded-lg {{ $iconStyles[$action['color']] }} shrink-0">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $action['icon'] }}" /></svg>
             </div>
-            <div><h4 class="text-sm font-semibold text-slate-900">{{ $action['title'] }}</h4><p class="text-xs text-slate-500">{{ $action['desc'] }}</p></div>
+            <div><h4 class="text-sm font-semibold text-ink">{{ $action['title'] }}</h4><p class="text-xs text-muted">{{ $action['desc'] }}</p></div>
         </a>
         @endforeach
     </div>

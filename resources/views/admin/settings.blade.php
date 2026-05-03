@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('title', 'Setări Platformă')
-@section('breadcrumb')<span class="text-slate-900 font-medium">Setări Platformă</span>@endsection
+@section('breadcrumb')<span class="text-ink font-medium">Setări Platformă</span>@endsection
 
 @section('content')
 <div class="space-y-6">
@@ -15,8 +15,8 @@
             </svg>
         </div>
         <div>
-            <h1 class="text-xl font-bold text-slate-900">Setări Platformă</h1>
-            <p class="text-sm text-slate-500">Configurare globală a platformei Sambla</p>
+            <h1 class="text-xl font-bold text-ink">Setări Platformă</h1>
+            <p class="text-sm text-muted">Configurare globală a platformei Sambla</p>
         </div>
     </div>
 
@@ -34,8 +34,8 @@
 
     {{-- Error Messages --}}
     @if($errors->any())
-        <div class="rounded-lg border border-red-200 bg-red-50 p-4">
-            <ul class="text-sm text-red-700 space-y-1">
+        <div class="rounded-lg border border-coral/30 bg-coralsoft p-4">
+            <ul class="text-sm text-coralh space-y-1">
                 @foreach($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
@@ -44,7 +44,7 @@
     @endif
 
     {{-- Tab Navigation --}}
-    <div class="border-b border-slate-200">
+    <div class="border-b border-line">
         <nav class="-mb-px flex gap-x-1 overflow-x-auto" aria-label="Tabs">
             @php
                 $tabs = [
@@ -69,8 +69,8 @@
                 <a href="{{ url('/admin/setari?tab=' . $key) }}"
                    class="whitespace-nowrap flex items-center gap-1.5 border-b-2 px-4 py-3 text-sm font-medium transition-colors
                           {{ $tab === $key
-                              ? 'border-red-600 text-red-600'
-                              : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700' }}">
+                              ? 'border-red-600 text-coral'
+                              : 'border-transparent text-muted hover:border-line hover:text-inkSoft' }}">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
                         <path stroke-linecap="round" stroke-linejoin="round" d="{{ $info['icon'] }}" />
                     </svg>
@@ -84,9 +84,9 @@
     {{-- TAB: General --}}
     {{-- ============================================================ --}}
     @if($tab === 'general')
-        <div class="bg-white rounded-xl border border-slate-200 p-6">
-            <h2 class="text-lg font-semibold text-slate-900">Setări Generale</h2>
-            <p class="mt-1 text-sm text-slate-500">Configurarea de bază a platformei.</p>
+        <div class="bg-white rounded-xl border border-line p-6">
+            <h2 class="text-lg font-semibold text-ink">Setări Generale</h2>
+            <p class="mt-1 text-sm text-muted">Configurarea de bază a platformei.</p>
 
             <form method="POST" action="{{ url('/admin/setari/general') }}" class="mt-6 space-y-5">
                 @csrf
@@ -95,36 +95,36 @@
                 <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
                     {{-- Nume Platformă --}}
                     <div>
-                        <label for="platform_name" class="block text-sm font-medium text-slate-700">Nume Platformă</label>
+                        <label for="platform_name" class="block text-sm font-medium text-inkSoft">Nume Platformă</label>
                         <input type="text" name="platform_name" id="platform_name"
                                value="{{ old('platform_name', $settings['general']['platform_name'] ?? 'Sambla') }}"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors"
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors"
                                required>
                     </div>
 
                     {{-- URL Platformă --}}
                     <div>
-                        <label for="platform_url" class="block text-sm font-medium text-slate-700">URL Platformă</label>
+                        <label for="platform_url" class="block text-sm font-medium text-inkSoft">URL Platformă</label>
                         <input type="url" name="platform_url" id="platform_url"
                                value="{{ old('platform_url', $settings['general']['platform_url'] ?? '') }}"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors"
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors"
                                required>
                     </div>
 
                     {{-- Email Suport --}}
                     <div>
-                        <label for="support_email" class="block text-sm font-medium text-slate-700">Email Suport</label>
+                        <label for="support_email" class="block text-sm font-medium text-inkSoft">Email Suport</label>
                         <input type="email" name="support_email" id="support_email"
                                value="{{ old('support_email', $settings['general']['support_email'] ?? '') }}"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors"
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors"
                                required>
                     </div>
 
                     {{-- Fus orar implicit --}}
                     <div>
-                        <label for="default_timezone" class="block text-sm font-medium text-slate-700">Fus Orar Implicit</label>
+                        <label for="default_timezone" class="block text-sm font-medium text-inkSoft">Fus Orar Implicit</label>
                         <select name="default_timezone" id="default_timezone"
-                                class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                                class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors">
                             @php
                                 $tzOptions = ['Europe/Bucharest', 'Europe/London', 'Europe/Berlin', 'Europe/Paris', 'America/New_York', 'America/Los_Angeles', 'UTC'];
                                 $currentTz = old('default_timezone', $settings['general']['default_timezone'] ?? 'Europe/Bucharest');
@@ -137,9 +137,9 @@
 
                     {{-- Limba implicită --}}
                     <div>
-                        <label for="default_language" class="block text-sm font-medium text-slate-700">Limba Implicită</label>
+                        <label for="default_language" class="block text-sm font-medium text-inkSoft">Limba Implicită</label>
                         <select name="default_language" id="default_language"
-                                class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                                class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors">
                             @php $currentLang = old('default_language', $settings['general']['default_language'] ?? 'ro'); @endphp
                             <option value="ro" {{ $currentLang === 'ro' ? 'selected' : '' }}>Română</option>
                             <option value="en" {{ $currentLang === 'en' ? 'selected' : '' }}>English</option>
@@ -149,14 +149,14 @@
 
                 {{-- Toggle switches --}}
                 <div class="space-y-4 pt-2">
-                    <label class="flex items-center justify-between p-4 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer">
+                    <label class="flex items-center justify-between p-4 rounded-lg border border-line hover:bg-cream transition-colors cursor-pointer">
                         <div>
-                            <span class="text-sm font-medium text-slate-900">Înregistrare publică</span>
-                            <p class="text-sm text-slate-500 mt-0.5">Permite utilizatorilor noi să se înregistreze.</p>
+                            <span class="text-sm font-medium text-ink">Înregistrare publică</span>
+                            <p class="text-sm text-muted mt-0.5">Permite utilizatorilor noi să se înregistreze.</p>
                         </div>
                         <input type="checkbox" name="registration_enabled" value="1"
                                {{ ($settings['general']['registration_enabled'] ?? '1') === '1' ? 'checked' : '' }}
-                               class="h-4 w-4 rounded border-slate-300 text-red-600 focus:ring-red-500/20">
+                               class="h-4 w-4 rounded border-line text-coral focus:ring-coral/20">
                     </label>
 
                     <label class="flex items-center justify-between p-4 rounded-lg border border-amber-200 bg-amber-50 hover:bg-amber-100 transition-colors cursor-pointer">
@@ -172,7 +172,7 @@
 
                 <div class="flex justify-end pt-2">
                     <button type="submit"
-                            class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-colors">
+                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coral focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
                         Salvează setările
                     </button>
                 </div>
@@ -184,9 +184,9 @@
     {{-- TAB: OpenAI --}}
     {{-- ============================================================ --}}
     @if($tab === 'openai')
-        <div class="bg-white rounded-xl border border-slate-200 p-6">
-            <h2 class="text-lg font-semibold text-slate-900">Configurare OpenAI</h2>
-            <p class="mt-1 text-sm text-slate-500">Cheile API și parametrii pentru OpenAI Realtime API.</p>
+        <div class="bg-white rounded-xl border border-line p-6">
+            <h2 class="text-lg font-semibold text-ink">Configurare OpenAI</h2>
+            <p class="mt-1 text-sm text-muted">Cheile API și parametrii pentru OpenAI Realtime API.</p>
 
             <form method="POST" action="{{ url('/admin/setari/openai') }}" class="mt-6 space-y-5">
                 @csrf
@@ -195,37 +195,37 @@
                 <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
                     {{-- API Key --}}
                     <div class="sm:col-span-2">
-                        <label for="openai_api_key" class="block text-sm font-medium text-slate-700">API Key</label>
+                        <label for="openai_api_key" class="block text-sm font-medium text-inkSoft">API Key</label>
                         <div class="relative mt-1.5">
                             <input type="password" name="openai_api_key" id="openai_api_key"
                                    value="{{ old('openai_api_key', $settings['openai']['openai_api_key'] ?? '') }}"
                                    placeholder="sk-..."
-                                   class="block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 pr-10 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors"
+                                   class="block w-full rounded-lg border border-line px-3.5 py-2.5 pr-10 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors"
                                    required>
-                            <button type="button" onclick="togglePassword('openai_api_key')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                            <button type="button" onclick="togglePassword('openai_api_key')" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-muted">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                 </svg>
                             </button>
                         </div>
-                        <p class="mt-1 text-xs text-slate-500">Cheia ta de API de la OpenAI. Începe cu "sk-".</p>
+                        <p class="mt-1 text-xs text-muted">Cheia ta de API de la OpenAI. Începe cu "sk-".</p>
                     </div>
 
                     {{-- Organization --}}
                     <div>
-                        <label for="openai_organization" class="block text-sm font-medium text-slate-700">Organizație (opțional)</label>
+                        <label for="openai_organization" class="block text-sm font-medium text-inkSoft">Organizație (opțional)</label>
                         <input type="text" name="openai_organization" id="openai_organization"
                                value="{{ old('openai_organization', $settings['openai']['openai_organization'] ?? '') }}"
                                placeholder="org-..."
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors">
                     </div>
 
                     {{-- Model --}}
                     <div>
-                        <label for="openai_realtime_model" class="block text-sm font-medium text-slate-700">Model Realtime</label>
+                        <label for="openai_realtime_model" class="block text-sm font-medium text-inkSoft">Model Realtime</label>
                         <select name="openai_realtime_model" id="openai_realtime_model"
-                                class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                                class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors">
                             @php $currentModel = old('openai_realtime_model', $settings['openai']['openai_realtime_model'] ?? 'gpt-4o-realtime-preview'); @endphp
                             <option value="gpt-4o-realtime-preview" {{ $currentModel === 'gpt-4o-realtime-preview' ? 'selected' : '' }}>gpt-4o-realtime-preview</option>
                             <option value="gpt-4o-realtime-preview-2024-12-17" {{ $currentModel === 'gpt-4o-realtime-preview-2024-12-17' ? 'selected' : '' }}>gpt-4o-realtime-preview-2024-12-17</option>
@@ -235,29 +235,29 @@
 
                     {{-- Max Tokens --}}
                     <div>
-                        <label for="openai_max_tokens" class="block text-sm font-medium text-slate-700">Max Tokens</label>
+                        <label for="openai_max_tokens" class="block text-sm font-medium text-inkSoft">Max Tokens</label>
                         <input type="number" name="openai_max_tokens" id="openai_max_tokens"
                                value="{{ old('openai_max_tokens', $settings['openai']['openai_max_tokens'] ?? '4096') }}"
                                min="256" max="32768"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors"
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors"
                                required>
                     </div>
 
                     {{-- Temperature --}}
                     <div>
-                        <label for="openai_temperature" class="block text-sm font-medium text-slate-700">Temperature</label>
+                        <label for="openai_temperature" class="block text-sm font-medium text-inkSoft">Temperature</label>
                         <input type="number" name="openai_temperature" id="openai_temperature"
                                value="{{ old('openai_temperature', $settings['openai']['openai_temperature'] ?? '0.7') }}"
                                min="0" max="2" step="0.1"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors"
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors"
                                required>
-                        <p class="mt-1 text-xs text-slate-500">0 = deterministic, 2 = creativ maxim</p>
+                        <p class="mt-1 text-xs text-muted">0 = deterministic, 2 = creativ maxim</p>
                     </div>
                 </div>
 
                 <div class="flex justify-end pt-2">
                     <button type="submit"
-                            class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-colors">
+                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coral focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
                         Salvează setările OpenAI
                     </button>
                 </div>
@@ -265,33 +265,33 @@
         </div>
 
         {{-- Anthropic (Claude) --}}
-        <div class="bg-white rounded-xl border border-slate-200 p-6 mt-6">
-            <h2 class="text-lg font-semibold text-slate-900">Configurare Anthropic (Claude)</h2>
-            <p class="mt-1 text-sm text-slate-500">API key pentru Claude — folosit ca smart tier și fallback. Opțional dar recomandat.</p>
+        <div class="bg-white rounded-xl border border-line p-6 mt-6">
+            <h2 class="text-lg font-semibold text-ink">Configurare Anthropic (Claude)</h2>
+            <p class="mt-1 text-sm text-muted">API key pentru Claude — folosit ca smart tier și fallback. Opțional dar recomandat.</p>
 
             <form method="POST" action="{{ url('/admin/setari/anthropic') }}" class="mt-6 space-y-5">
                 @csrf
                 @method('PUT')
 
                 <div>
-                    <label for="anthropic_api_key" class="block text-sm font-medium text-slate-700">Anthropic API Key</label>
+                    <label for="anthropic_api_key" class="block text-sm font-medium text-inkSoft">Anthropic API Key</label>
                     <div class="relative mt-1.5">
                         <input type="password" name="anthropic_api_key" id="anthropic_api_key"
                                value="{{ old('anthropic_api_key', $settings['anthropic']['anthropic_api_key'] ?? '') }}"
                                placeholder="sk-ant-..."
-                               class="block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 pr-10 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
-                        <button type="button" onclick="togglePassword('anthropic_api_key')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                               class="block w-full rounded-lg border border-line px-3.5 py-2.5 pr-10 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors">
+                        <button type="button" onclick="togglePassword('anthropic_api_key')" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-muted">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                             </svg>
                         </button>
                     </div>
-                    <p class="mt-1 text-xs text-slate-500">De la <a href="https://console.anthropic.com/settings/keys" target="_blank" class="text-blue-600 hover:underline">console.anthropic.com</a>. Începe cu "sk-ant-".</p>
+                    <p class="mt-1 text-xs text-muted">De la <a href="https://console.anthropic.com/settings/keys" target="_blank" class="text-blue-600 hover:underline">console.anthropic.com</a>. Începe cu "sk-ant-".</p>
                 </div>
 
                 <div class="flex justify-end pt-2">
-                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 transition-colors">
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coral transition-colors">
                         Salvează Anthropic
                     </button>
                 </div>
@@ -299,24 +299,24 @@
         </div>
 
         {{-- Sentry --}}
-        <div class="bg-white rounded-xl border border-slate-200 p-6 mt-6">
-            <h2 class="text-lg font-semibold text-slate-900">Sentry — Error Tracking</h2>
-            <p class="mt-1 text-sm text-slate-500">DSN pentru monitorizare erori în producție. Opțional.</p>
+        <div class="bg-white rounded-xl border border-line p-6 mt-6">
+            <h2 class="text-lg font-semibold text-ink">Sentry — Error Tracking</h2>
+            <p class="mt-1 text-sm text-muted">DSN pentru monitorizare erori în producție. Opțional.</p>
 
             <form method="POST" action="{{ url('/admin/setari/sentry') }}" class="mt-6 space-y-5">
                 @csrf
                 @method('PUT')
 
                 <div>
-                    <label for="sentry_dsn" class="block text-sm font-medium text-slate-700">Sentry DSN</label>
+                    <label for="sentry_dsn" class="block text-sm font-medium text-inkSoft">Sentry DSN</label>
                     <input type="text" name="sentry_dsn" id="sentry_dsn"
                            value="{{ old('sentry_dsn', $settings['sentry']['sentry_dsn'] ?? '') }}"
                            placeholder="https://xxx@xxx.ingest.sentry.io/xxx"
-                           class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                           class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors">
                 </div>
 
                 <div class="flex justify-end pt-2">
-                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 transition-colors">
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coral transition-colors">
                         Salvează Sentry
                     </button>
                 </div>
@@ -328,12 +328,12 @@
     {{-- TAB: Twilio (primary telephony provider, post-migration)     --}}
     {{-- ============================================================ --}}
     @if($tab === 'twilio')
-        <div class="bg-white rounded-xl border border-slate-200 p-6">
-            <h2 class="text-lg font-semibold text-slate-900">Configurare Twilio</h2>
-            <p class="mt-1 text-sm text-slate-500">
+        <div class="bg-white rounded-xl border border-line p-6">
+            <h2 class="text-lg font-semibold text-ink">Configurare Twilio</h2>
+            <p class="mt-1 text-sm text-muted">
                 Credențiale pentru furnizorul principal de telefonie. După migrare,
                 numerele noi sunt provisionate automat prin Twilio
-                (<code class="text-xs bg-slate-100 px-1 py-0.5 rounded">TELEPHONY_DEFAULT_PROVIDER=twilio</code>).
+                (<code class="text-xs bg-cream px-1 py-0.5 rounded">TELEPHONY_DEFAULT_PROVIDER=twilio</code>).
             </p>
 
             <form method="POST" action="{{ url('/admin/setari/twilio') }}" class="mt-6 space-y-5">
@@ -343,76 +343,76 @@
                 <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
                     {{-- Account SID --}}
                     <div>
-                        <label for="twilio_account_sid" class="block text-sm font-medium text-slate-700">Account SID</label>
+                        <label for="twilio_account_sid" class="block text-sm font-medium text-inkSoft">Account SID</label>
                         <input type="text" name="twilio_account_sid" id="twilio_account_sid"
                                value="{{ old('twilio_account_sid', $settings['twilio']['twilio_account_sid'] ?? '') }}"
                                placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors font-mono text-xs"
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors font-mono text-xs"
                                required>
                     </div>
 
                     {{-- Auth Token --}}
                     <div>
-                        <label for="twilio_auth_token" class="block text-sm font-medium text-slate-700">Auth Token</label>
+                        <label for="twilio_auth_token" class="block text-sm font-medium text-inkSoft">Auth Token</label>
                         <div class="relative mt-1.5">
                             <input type="password" name="twilio_auth_token" id="twilio_auth_token"
                                    value="{{ old('twilio_auth_token', '') }}"
                                    placeholder="{{ ($settings['twilio']['twilio_auth_token__present'] ?? false) ? '•••••••• (salvat)' : 'Token de 32+ caractere' }}"
-                                   class="block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 pr-10 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors font-mono text-xs"
+                                   class="block w-full rounded-lg border border-line px-3.5 py-2.5 pr-10 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors font-mono text-xs"
                                    {{ ($settings['twilio']['twilio_auth_token__present'] ?? false) ? '' : 'required' }}>
-                            <button type="button" onclick="togglePassword('twilio_auth_token')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                            <button type="button" onclick="togglePassword('twilio_auth_token')" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-muted">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                 </svg>
                             </button>
                         </div>
-                        <p class="mt-1 text-xs text-slate-500">Folosit și pentru verificarea semnăturii X-Twilio-Signature pe webhook-uri.</p>
+                        <p class="mt-1 text-xs text-muted">Folosit și pentru verificarea semnăturii X-Twilio-Signature pe webhook-uri.</p>
                     </div>
 
                     {{-- TwiML App SID (optional) --}}
                     <div>
-                        <label for="twilio_twiml_app_sid" class="block text-sm font-medium text-slate-700">TwiML App SID <span class="text-slate-400">(opțional)</span></label>
+                        <label for="twilio_twiml_app_sid" class="block text-sm font-medium text-inkSoft">TwiML App SID <span class="text-muted">(opțional)</span></label>
                         <input type="text" name="twilio_twiml_app_sid" id="twilio_twiml_app_sid"
                                value="{{ old('twilio_twiml_app_sid', $settings['twilio']['twilio_twiml_app_sid'] ?? '') }}"
                                placeholder="APxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors font-mono text-xs">
-                        <p class="mt-1 text-xs text-slate-500">Pentru browser calling via Twilio Client SDK. Lasă gol dacă nu folosești.</p>
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors font-mono text-xs">
+                        <p class="mt-1 text-xs text-muted">Pentru browser calling via Twilio Client SDK. Lasă gol dacă nu folosești.</p>
                     </div>
 
                     {{-- Webhook URL (display-only hint) --}}
                     <div>
-                        <label for="twilio_webhook_url" class="block text-sm font-medium text-slate-700">Webhook URL <span class="text-slate-400">(pe numerele Twilio)</span></label>
+                        <label for="twilio_webhook_url" class="block text-sm font-medium text-inkSoft">Webhook URL <span class="text-muted">(pe numerele Twilio)</span></label>
                         <input type="url" name="twilio_webhook_url" id="twilio_webhook_url"
                                value="{{ old('twilio_webhook_url', $settings['twilio']['twilio_webhook_url'] ?? url('/webhook/twilio/voice')) }}"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
-                        <p class="mt-1 text-xs text-slate-500">Setează pe fiecare număr în Twilio Console la "A Call Comes In".</p>
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors">
+                        <p class="mt-1 text-xs text-muted">Setează pe fiecare număr în Twilio Console la "A Call Comes In".</p>
                     </div>
                 </div>
 
                 {{-- Regulatory Bundle (RO) — required for RO number provisioning.
                      Shared across subaccounts, depus o singură dată la nivel platform. --}}
-                <div class="mt-6 pt-5 border-t border-slate-200">
-                    <h3 class="text-sm font-semibold text-slate-900 mb-1">Regulatory Bundle — România</h3>
-                    <p class="text-xs text-slate-500 mb-3">
+                <div class="mt-6 pt-5 border-t border-line">
+                    <h3 class="text-sm font-semibold text-ink mb-1">Regulatory Bundle — România</h3>
+                    <p class="text-xs text-muted mb-3">
                         Twilio cere un Bundle regulatory + Address pentru numere RO. Depui o singură dată
                         (CUI Sambla + adresă sediu), iar toate subaccount-urile clienților îl folosesc.
                         Găsești SID-urile în Twilio Console → <strong>Regulatory Compliance</strong> (Bundle, <code>BU...</code>) și <strong>Addresses</strong> (<code>AD...</code>).
                     </p>
                     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
                         <div>
-                            <label for="twilio_ro_bundle_sid" class="block text-sm font-medium text-slate-700">RO Bundle SID</label>
+                            <label for="twilio_ro_bundle_sid" class="block text-sm font-medium text-inkSoft">RO Bundle SID</label>
                             <input type="text" name="twilio_ro_bundle_sid" id="twilio_ro_bundle_sid"
                                    value="{{ old('twilio_ro_bundle_sid', $settings['twilio']['twilio_ro_bundle_sid'] ?? '') }}"
                                    placeholder="BUxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                                   class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors font-mono text-xs">
+                                   class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors font-mono text-xs">
                         </div>
                         <div>
-                            <label for="twilio_ro_address_sid" class="block text-sm font-medium text-slate-700">RO Address SID</label>
+                            <label for="twilio_ro_address_sid" class="block text-sm font-medium text-inkSoft">RO Address SID</label>
                             <input type="text" name="twilio_ro_address_sid" id="twilio_ro_address_sid"
                                    value="{{ old('twilio_ro_address_sid', $settings['twilio']['twilio_ro_address_sid'] ?? '') }}"
                                    placeholder="ADxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                                   class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors font-mono text-xs">
+                                   class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors font-mono text-xs">
                         </div>
                     </div>
                 </div>
@@ -429,7 +429,7 @@
 
                 <div class="flex justify-end pt-2">
                     <button type="submit"
-                            class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-colors">
+                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coral focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
                         Salvează setările Twilio
                     </button>
                 </div>
@@ -441,9 +441,9 @@
     {{-- TAB: Telnyx (legacy — kept for pre-migration numbers)         --}}
     {{-- ============================================================ --}}
     @if($tab === 'telnyx')
-        <div class="bg-white rounded-xl border border-slate-200 p-6">
-            <h2 class="text-lg font-semibold text-slate-900">Configurare Telnyx</h2>
-            <p class="mt-1 text-sm text-slate-500">Credențiale și configurări pentru serviciul de telefonie Telnyx.</p>
+        <div class="bg-white rounded-xl border border-line p-6">
+            <h2 class="text-lg font-semibold text-ink">Configurare Telnyx</h2>
+            <p class="mt-1 text-sm text-muted">Credențiale și configurări pentru serviciul de telefonie Telnyx.</p>
             <div class="mt-4 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-900">
                 <p class="font-semibold">⚠ Furnizor legacy.</p>
                 <p class="mt-1 text-xs">Telnyx rămâne activ doar pentru numerele provisionate înainte de migrare. Numerele noi se creează pe Twilio. Păstrează credențialele valide până la ultimul cutover per tenant (<code class="bg-white px-1 py-0.5 rounded">php artisan telephony:migrate-tenant &lt;slug&gt;</code>).</p>
@@ -456,14 +456,14 @@
                 <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
                     {{-- API Key --}}
                     <div>
-                        <label for="telnyx_api_key" class="block text-sm font-medium text-slate-700">API Key</label>
+                        <label for="telnyx_api_key" class="block text-sm font-medium text-inkSoft">API Key</label>
                         <div class="relative mt-1.5">
                             <input type="password" name="telnyx_api_key" id="telnyx_api_key"
                                    value="{{ old('telnyx_api_key', $settings['telnyx']['telnyx_api_key'] ?? '') }}"
                                    placeholder="KEYxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                                   class="block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 pr-10 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors font-mono text-xs"
+                                   class="block w-full rounded-lg border border-line px-3.5 py-2.5 pr-10 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors font-mono text-xs"
                                    required>
-                            <button type="button" onclick="togglePassword('telnyx_api_key')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                            <button type="button" onclick="togglePassword('telnyx_api_key')" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-muted">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -474,49 +474,49 @@
 
                     {{-- Connection ID --}}
                     <div>
-                        <label for="telnyx_connection_id" class="block text-sm font-medium text-slate-700">Connection ID</label>
+                        <label for="telnyx_connection_id" class="block text-sm font-medium text-inkSoft">Connection ID</label>
                         <input type="text" name="telnyx_connection_id" id="telnyx_connection_id"
                                value="{{ old('telnyx_connection_id', $settings['telnyx']['telnyx_connection_id'] ?? '') }}"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors font-mono text-xs"
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors font-mono text-xs"
                                required>
                     </div>
 
                     {{-- Public Key --}}
                     <div>
-                        <label for="telnyx_public_key" class="block text-sm font-medium text-slate-700">Public Key</label>
+                        <label for="telnyx_public_key" class="block text-sm font-medium text-inkSoft">Public Key</label>
                         <input type="text" name="telnyx_public_key" id="telnyx_public_key"
                                value="{{ old('telnyx_public_key', $settings['telnyx']['telnyx_public_key'] ?? '') }}"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors font-mono text-xs"
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors font-mono text-xs"
                                required>
                     </div>
 
                     {{-- Webhook URL --}}
                     <div>
-                        <label for="telnyx_webhook_url" class="block text-sm font-medium text-slate-700">Webhook URL</label>
+                        <label for="telnyx_webhook_url" class="block text-sm font-medium text-inkSoft">Webhook URL</label>
                         <input type="url" name="telnyx_webhook_url" id="telnyx_webhook_url"
                                value="{{ old('telnyx_webhook_url', $settings['telnyx']['telnyx_webhook_url'] ?? '') }}"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors"
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors"
                                required>
                     </div>
                 </div>
 
                 {{-- Phone number cost --}}
-                <div class="mt-6 pt-5 border-t border-slate-200">
-                    <h3 class="text-sm font-semibold text-slate-900 mb-1">Cost lunar numere de telefon</h3>
-                    <p class="text-xs text-slate-500 mb-3">Prețul implicit facturat clienților per număr de telefon pe lună. Poate fi suprascris per tenant.</p>
+                <div class="mt-6 pt-5 border-t border-line">
+                    <h3 class="text-sm font-semibold text-ink mb-1">Cost lunar numere de telefon</h3>
+                    <p class="text-xs text-muted mb-3">Prețul implicit facturat clienților per număr de telefon pe lună. Poate fi suprascris per tenant.</p>
                     <div class="w-48">
-                        <label for="phone_number_monthly_cost_lei" class="block text-sm font-medium text-slate-700">Cost lunar (lei)</label>
+                        <label for="phone_number_monthly_cost_lei" class="block text-sm font-medium text-inkSoft">Cost lunar (lei)</label>
                         <input type="number" name="phone_number_monthly_cost_lei" id="phone_number_monthly_cost_lei"
                                value="{{ old('phone_number_monthly_cost_lei', $settings['telnyx']['phone_number_monthly_cost_lei'] ?? '27') }}"
                                min="0" step="0.01"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors"
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors"
                                required>
                     </div>
                 </div>
 
                 <div class="flex justify-end pt-2">
                     <button type="submit"
-                            class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-colors">
+                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coral focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
                         Salvează setările Telnyx
                     </button>
                 </div>
@@ -528,9 +528,9 @@
     {{-- TAB: ElevenLabs --}}
     {{-- ============================================================ --}}
     @if($tab === 'elevenlabs')
-        <div class="bg-white rounded-xl border border-slate-200 p-6">
-            <h2 class="text-lg font-semibold text-slate-900">Configurare ElevenLabs</h2>
-            <p class="mt-1 text-sm text-slate-500">Setari pentru clonarea vocii si sinteza vocala cu ElevenLabs.</p>
+        <div class="bg-white rounded-xl border border-line p-6">
+            <h2 class="text-lg font-semibold text-ink">Configurare ElevenLabs</h2>
+            <p class="mt-1 text-sm text-muted">Setari pentru clonarea vocii si sinteza vocala cu ElevenLabs.</p>
 
             <form method="POST" action="{{ url('/admin/setari/elevenlabs') }}" class="mt-6 space-y-5">
                 @csrf
@@ -539,28 +539,28 @@
                 <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
                     {{-- API Key --}}
                     <div class="sm:col-span-2">
-                        <label for="elevenlabs_api_key" class="block text-sm font-medium text-slate-700">API Key</label>
+                        <label for="elevenlabs_api_key" class="block text-sm font-medium text-inkSoft">API Key</label>
                         <div class="relative mt-1.5">
                             <input type="password" name="elevenlabs_api_key" id="elevenlabs_api_key"
                                    value="{{ old('elevenlabs_api_key', $settings['elevenlabs']['elevenlabs_api_key'] ?? '') }}"
                                    placeholder="xi-..."
-                                   class="block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 pr-10 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors"
+                                   class="block w-full rounded-lg border border-line px-3.5 py-2.5 pr-10 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors"
                                    required>
-                            <button type="button" onclick="togglePassword('elevenlabs_api_key')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                            <button type="button" onclick="togglePassword('elevenlabs_api_key')" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-muted">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                 </svg>
                             </button>
                         </div>
-                        <p class="mt-1 text-xs text-slate-500">Cheia API de la ElevenLabs. O gasesti in Settings > API Keys.</p>
+                        <p class="mt-1 text-xs text-muted">Cheia API de la ElevenLabs. O gasesti in Settings > API Keys.</p>
                     </div>
 
                     {{-- Model --}}
                     <div>
-                        <label for="elevenlabs_model_id" class="block text-sm font-medium text-slate-700">Model TTS</label>
+                        <label for="elevenlabs_model_id" class="block text-sm font-medium text-inkSoft">Model TTS</label>
                         <select name="elevenlabs_model_id" id="elevenlabs_model_id"
-                                class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                                class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors">
                             @php $currentModel = old('elevenlabs_model_id', $settings['elevenlabs']['elevenlabs_model_id'] ?? 'eleven_multilingual_v2'); @endphp
                             <option value="eleven_multilingual_v2" {{ $currentModel === 'eleven_multilingual_v2' ? 'selected' : '' }}>Multilingual v2 (recomandat)</option>
                             <option value="eleven_turbo_v2_5" {{ $currentModel === 'eleven_turbo_v2_5' ? 'selected' : '' }}>Turbo v2.5 (latenta mica)</option>
@@ -570,30 +570,30 @@
 
                     {{-- Stability --}}
                     <div>
-                        <label for="elevenlabs_stability" class="block text-sm font-medium text-slate-700">Stabilitate</label>
+                        <label for="elevenlabs_stability" class="block text-sm font-medium text-inkSoft">Stabilitate</label>
                         <input type="number" name="elevenlabs_stability" id="elevenlabs_stability"
                                value="{{ old('elevenlabs_stability', $settings['elevenlabs']['elevenlabs_stability'] ?? '0.5') }}"
                                min="0" max="1" step="0.05"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors"
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors"
                                required>
-                        <p class="mt-1 text-xs text-slate-500">0 = mai variata, 1 = mai consistenta</p>
+                        <p class="mt-1 text-xs text-muted">0 = mai variata, 1 = mai consistenta</p>
                     </div>
 
                     {{-- Similarity Boost --}}
                     <div>
-                        <label for="elevenlabs_similarity_boost" class="block text-sm font-medium text-slate-700">Similarity Boost</label>
+                        <label for="elevenlabs_similarity_boost" class="block text-sm font-medium text-inkSoft">Similarity Boost</label>
                         <input type="number" name="elevenlabs_similarity_boost" id="elevenlabs_similarity_boost"
                                value="{{ old('elevenlabs_similarity_boost', $settings['elevenlabs']['elevenlabs_similarity_boost'] ?? '0.75') }}"
                                min="0" max="1" step="0.05"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors"
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors"
                                required>
-                        <p class="mt-1 text-xs text-slate-500">0 = mai generic, 1 = mai asemanator cu vocea clonata</p>
+                        <p class="mt-1 text-xs text-muted">0 = mai generic, 1 = mai asemanator cu vocea clonata</p>
                     </div>
                 </div>
 
                 <div class="flex justify-end pt-2">
                     <button type="submit"
-                            class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-colors">
+                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coral focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
                         Salveaza setarile ElevenLabs
                     </button>
                 </div>
@@ -614,97 +614,97 @@
             $hasLive = !empty($settings['stripe']['stripe_secret_key__present'] ?? false);
             $hasTest = !empty($settings['stripe']['stripe_test_secret_key__present'] ?? false);
         @endphp
-        <div class="bg-white rounded-xl border border-slate-200 p-6">
-            <h2 class="text-lg font-semibold text-slate-900">Configurare Stripe</h2>
-            <p class="mt-1 text-sm text-slate-500">Două seturi de chei (Live + Test). Modul activ este folosit de Cashier la runtime.</p>
+        <div class="bg-white rounded-xl border border-line p-6">
+            <h2 class="text-lg font-semibold text-ink">Configurare Stripe</h2>
+            <p class="mt-1 text-sm text-muted">Două seturi de chei (Live + Test). Modul activ este folosit de Cashier la runtime.</p>
 
             <form method="POST" action="{{ url('/admin/setari/stripe') }}" class="mt-6 space-y-6">
                 @csrf
                 @method('PUT')
 
                 {{-- Mode toggle --}}
-                <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                    <label class="block text-sm font-semibold text-slate-700">Mod activ</label>
-                    <p class="mt-1 text-xs text-slate-500">Selectează ce set de chei folosește aplicația acum. Comutarea NU șterge cheile celuilalt mod.</p>
+                <div class="rounded-lg border border-line bg-cream p-4">
+                    <label class="block text-sm font-semibold text-inkSoft">Mod activ</label>
+                    <p class="mt-1 text-xs text-muted">Selectează ce set de chei folosește aplicația acum. Comutarea NU șterge cheile celuilalt mod.</p>
                     <div class="mt-3 grid grid-cols-2 gap-3">
-                        <label class="relative flex cursor-pointer rounded-lg border bg-white p-3 {{ $currentMode === 'live' ? 'border-red-500 ring-2 ring-red-500/20' : 'border-slate-300' }}">
+                        <label class="relative flex cursor-pointer rounded-lg border bg-white p-3 {{ $currentMode === 'live' ? 'border-red-500 ring-2 ring-coral/20' : 'border-line' }}">
                             <input type="radio" name="stripe_mode" value="live" {{ $currentMode === 'live' ? 'checked' : '' }} class="sr-only">
                             <div class="flex flex-col">
-                                <span class="text-sm font-semibold text-slate-900">🔴 LIVE</span>
-                                <span class="mt-1 text-xs text-slate-500">Plăți reale. {{ $hasLive ? 'Configurat ✓' : 'Lipsesc cheile' }}</span>
+                                <span class="text-sm font-semibold text-ink">🔴 LIVE</span>
+                                <span class="mt-1 text-xs text-muted">Plăți reale. {{ $hasLive ? 'Configurat ✓' : 'Lipsesc cheile' }}</span>
                             </div>
                         </label>
-                        <label class="relative flex cursor-pointer rounded-lg border bg-white p-3 {{ $currentMode === 'test' ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-slate-300' }}">
+                        <label class="relative flex cursor-pointer rounded-lg border bg-white p-3 {{ $currentMode === 'test' ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-line' }}">
                             <input type="radio" name="stripe_mode" value="test" {{ $currentMode === 'test' ? 'checked' : '' }} class="sr-only">
                             <div class="flex flex-col">
-                                <span class="text-sm font-semibold text-slate-900">🧪 TEST</span>
-                                <span class="mt-1 text-xs text-slate-500">Sandbox. {{ $hasTest ? 'Configurat ✓' : 'Lipsesc cheile' }}</span>
+                                <span class="text-sm font-semibold text-ink">🧪 TEST</span>
+                                <span class="mt-1 text-xs text-muted">Sandbox. {{ $hasTest ? 'Configurat ✓' : 'Lipsesc cheile' }}</span>
                             </div>
                         </label>
                     </div>
                 </div>
 
                 {{-- LIVE keys --}}
-                <details class="rounded-lg border border-slate-200" {{ $currentMode === 'live' ? 'open' : '' }}>
-                    <summary class="cursor-pointer p-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">🔴 Chei LIVE (producție)</summary>
-                    <div class="border-t border-slate-200 p-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <details class="rounded-lg border border-line" {{ $currentMode === 'live' ? 'open' : '' }}>
+                    <summary class="cursor-pointer p-4 text-sm font-semibold text-inkSoft hover:bg-cream">🔴 Chei LIVE (producție)</summary>
+                    <div class="border-t border-line p-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div class="sm:col-span-2">
-                            <label class="block text-xs font-medium text-slate-700">Publishable Key</label>
+                            <label class="block text-xs font-medium text-inkSoft">Publishable Key</label>
                             <input type="text" name="stripe_public_key"
                                    value="{{ old('stripe_public_key', $settings['stripe']['stripe_public_key'] ?? '') }}"
                                    placeholder="pk_live_..."
-                                   class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-900 shadow-sm font-mono focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                                   class="mt-1.5 block w-full rounded-lg border border-line px-3 py-2 text-xs text-ink shadow-sm font-mono focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none">
                         </div>
                         <div class="sm:col-span-2">
-                            <label class="block text-xs font-medium text-slate-700">Secret Key</label>
+                            <label class="block text-xs font-medium text-inkSoft">Secret Key</label>
                             <input type="password" name="stripe_secret_key" id="stripe_secret_key"
                                    value="{{ old('stripe_secret_key', $settings['stripe']['stripe_secret_key'] ?? '') }}"
                                    placeholder="sk_live_..."
-                                   class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-900 shadow-sm font-mono focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                                   class="mt-1.5 block w-full rounded-lg border border-line px-3 py-2 text-xs text-ink shadow-sm font-mono focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none">
                         </div>
                         <div class="sm:col-span-2">
-                            <label class="block text-xs font-medium text-slate-700">Webhook Secret</label>
+                            <label class="block text-xs font-medium text-inkSoft">Webhook Secret</label>
                             <input type="password" name="stripe_webhook_secret" id="stripe_webhook_secret"
                                    value="{{ old('stripe_webhook_secret', $settings['stripe']['stripe_webhook_secret'] ?? '') }}"
                                    placeholder="whsec_..."
-                                   class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-900 shadow-sm font-mono focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                                   class="mt-1.5 block w-full rounded-lg border border-line px-3 py-2 text-xs text-ink shadow-sm font-mono focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none">
                         </div>
                     </div>
                 </details>
 
                 {{-- TEST keys --}}
-                <details class="rounded-lg border border-slate-200" {{ $currentMode === 'test' ? 'open' : '' }}>
-                    <summary class="cursor-pointer p-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">🧪 Chei TEST (sandbox)</summary>
-                    <div class="border-t border-slate-200 p-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <details class="rounded-lg border border-line" {{ $currentMode === 'test' ? 'open' : '' }}>
+                    <summary class="cursor-pointer p-4 text-sm font-semibold text-inkSoft hover:bg-cream">🧪 Chei TEST (sandbox)</summary>
+                    <div class="border-t border-line p-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div class="sm:col-span-2">
-                            <label class="block text-xs font-medium text-slate-700">Publishable Key</label>
+                            <label class="block text-xs font-medium text-inkSoft">Publishable Key</label>
                             <input type="text" name="stripe_test_public_key"
                                    value="{{ old('stripe_test_public_key', $settings['stripe']['stripe_test_public_key'] ?? '') }}"
                                    placeholder="pk_test_..."
-                                   class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-900 shadow-sm font-mono focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none">
+                                   class="mt-1.5 block w-full rounded-lg border border-line px-3 py-2 text-xs text-ink shadow-sm font-mono focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none">
                         </div>
                         <div class="sm:col-span-2">
-                            <label class="block text-xs font-medium text-slate-700">Secret Key</label>
+                            <label class="block text-xs font-medium text-inkSoft">Secret Key</label>
                             <input type="password" name="stripe_test_secret_key" id="stripe_test_secret_key"
                                    value="{{ old('stripe_test_secret_key', $settings['stripe']['stripe_test_secret_key'] ?? '') }}"
                                    placeholder="sk_test_..."
-                                   class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-900 shadow-sm font-mono focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none">
+                                   class="mt-1.5 block w-full rounded-lg border border-line px-3 py-2 text-xs text-ink shadow-sm font-mono focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none">
                         </div>
                         <div class="sm:col-span-2">
-                            <label class="block text-xs font-medium text-slate-700">Webhook Secret</label>
+                            <label class="block text-xs font-medium text-inkSoft">Webhook Secret</label>
                             <input type="password" name="stripe_test_webhook_secret" id="stripe_test_webhook_secret"
                                    value="{{ old('stripe_test_webhook_secret', $settings['stripe']['stripe_test_webhook_secret'] ?? '') }}"
                                    placeholder="whsec_..."
-                                   class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-900 shadow-sm font-mono focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none">
+                                   class="mt-1.5 block w-full rounded-lg border border-line px-3 py-2 text-xs text-ink shadow-sm font-mono focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none">
                         </div>
                     </div>
                 </details>
 
                 {{-- Currency --}}
                 <div>
-                    <label for="stripe_currency" class="block text-sm font-medium text-slate-700">Monedă</label>
+                    <label for="stripe_currency" class="block text-sm font-medium text-inkSoft">Monedă</label>
                     <select name="stripe_currency" id="stripe_currency"
-                            class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                            class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none">
                         @php $currentCurrency = old('stripe_currency', $settings['stripe']['stripe_currency'] ?? 'eur'); @endphp
                         <option value="eur" {{ $currentCurrency === 'eur' ? 'selected' : '' }}>EUR (Euro)</option>
                         <option value="usd" {{ $currentCurrency === 'usd' ? 'selected' : '' }}>USD (Dollar)</option>
@@ -715,7 +715,7 @@
 
                 <div class="flex justify-end pt-2">
                     <button type="submit"
-                            class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-colors">
+                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coral focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
                         Salvează setările Stripe
                     </button>
                 </div>
@@ -727,9 +727,9 @@
     {{-- TAB: Email --}}
     {{-- ============================================================ --}}
     @if($tab === 'email')
-        <div class="bg-white rounded-xl border border-slate-200 p-6">
-            <h2 class="text-lg font-semibold text-slate-900">Configurare Email / SMTP</h2>
-            <p class="mt-1 text-sm text-slate-500">Setări pentru trimiterea emailurilor din platformă.</p>
+        <div class="bg-white rounded-xl border border-line p-6">
+            <h2 class="text-lg font-semibold text-ink">Configurare Email / SMTP</h2>
+            <p class="mt-1 text-sm text-muted">Setări pentru trimiterea emailurilor din platformă.</p>
 
             <form method="POST" action="{{ url('/admin/setari/email') }}" class="mt-6 space-y-5">
                 @csrf
@@ -738,9 +738,9 @@
                 <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
                     {{-- Mailer --}}
                     <div>
-                        <label for="mail_mailer" class="block text-sm font-medium text-slate-700">Mailer</label>
+                        <label for="mail_mailer" class="block text-sm font-medium text-inkSoft">Mailer</label>
                         <select name="mail_mailer" id="mail_mailer"
-                                class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                                class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors">
                             @php $currentMailer = old('mail_mailer', $settings['email']['mail_mailer'] ?? 'smtp'); @endphp
                             @foreach(['smtp' => 'SMTP', 'sendmail' => 'Sendmail', 'mailgun' => 'Mailgun', 'ses' => 'Amazon SES', 'postmark' => 'Postmark', 'resend' => 'Resend', 'log' => 'Log (test)'] as $val => $lbl)
                                 <option value="{{ $val }}" {{ $currentMailer === $val ? 'selected' : '' }}>{{ $lbl }}</option>
@@ -750,9 +750,9 @@
 
                     {{-- Encryption --}}
                     <div>
-                        <label for="mail_encryption" class="block text-sm font-medium text-slate-700">Criptare</label>
+                        <label for="mail_encryption" class="block text-sm font-medium text-inkSoft">Criptare</label>
                         <select name="mail_encryption" id="mail_encryption"
-                                class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                                class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors">
                             @php $currentEnc = old('mail_encryption', $settings['email']['mail_encryption'] ?? 'tls'); @endphp
                             <option value="tls" {{ $currentEnc === 'tls' ? 'selected' : '' }}>TLS</option>
                             <option value="ssl" {{ $currentEnc === 'ssl' ? 'selected' : '' }}>SSL</option>
@@ -762,39 +762,39 @@
 
                     {{-- Host --}}
                     <div>
-                        <label for="mail_host" class="block text-sm font-medium text-slate-700">SMTP Host</label>
+                        <label for="mail_host" class="block text-sm font-medium text-inkSoft">SMTP Host</label>
                         <input type="text" name="mail_host" id="mail_host"
                                value="{{ old('mail_host', $settings['email']['mail_host'] ?? '') }}"
                                placeholder="smtp.gmail.com"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors">
                     </div>
 
                     {{-- Port --}}
                     <div>
-                        <label for="mail_port" class="block text-sm font-medium text-slate-700">Port</label>
+                        <label for="mail_port" class="block text-sm font-medium text-inkSoft">Port</label>
                         <input type="number" name="mail_port" id="mail_port"
                                value="{{ old('mail_port', $settings['email']['mail_port'] ?? '587') }}"
                                min="1" max="65535"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors"
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors"
                                required>
                     </div>
 
                     {{-- Username --}}
                     <div>
-                        <label for="mail_username" class="block text-sm font-medium text-slate-700">Username</label>
+                        <label for="mail_username" class="block text-sm font-medium text-inkSoft">Username</label>
                         <input type="text" name="mail_username" id="mail_username"
                                value="{{ old('mail_username', $settings['email']['mail_username'] ?? '') }}"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors">
                     </div>
 
                     {{-- Password --}}
                     <div>
-                        <label for="mail_password" class="block text-sm font-medium text-slate-700">Password</label>
+                        <label for="mail_password" class="block text-sm font-medium text-inkSoft">Password</label>
                         <div class="relative mt-1.5">
                             <input type="password" name="mail_password" id="mail_password"
                                    value="{{ old('mail_password', $settings['email']['mail_password'] ?? '') }}"
-                                   class="block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 pr-10 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
-                            <button type="button" onclick="togglePassword('mail_password')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                   class="block w-full rounded-lg border border-line px-3.5 py-2.5 pr-10 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors">
+                            <button type="button" onclick="togglePassword('mail_password')" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-muted">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -805,28 +805,28 @@
 
                     {{-- From Address --}}
                     <div>
-                        <label for="mail_from_address" class="block text-sm font-medium text-slate-700">Adresă expeditor (From)</label>
+                        <label for="mail_from_address" class="block text-sm font-medium text-inkSoft">Adresă expeditor (From)</label>
                         <input type="email" name="mail_from_address" id="mail_from_address"
                                value="{{ old('mail_from_address', $settings['email']['mail_from_address'] ?? '') }}"
                                placeholder="noreply@sambla.ro"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors"
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors"
                                required>
                     </div>
 
                     {{-- From Name --}}
                     <div>
-                        <label for="mail_from_name" class="block text-sm font-medium text-slate-700">Nume expeditor</label>
+                        <label for="mail_from_name" class="block text-sm font-medium text-inkSoft">Nume expeditor</label>
                         <input type="text" name="mail_from_name" id="mail_from_name"
                                value="{{ old('mail_from_name', $settings['email']['mail_from_name'] ?? '') }}"
                                placeholder="Sambla"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors"
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors"
                                required>
                     </div>
                 </div>
 
                 <div class="flex justify-end pt-2">
                     <button type="submit"
-                            class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-colors">
+                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coral focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
                         Salvează setările Email
                     </button>
                 </div>
@@ -838,9 +838,9 @@
     {{-- TAB: WhatsApp --}}
     {{-- ============================================================ --}}
     @if($tab === 'whatsapp')
-        <div class="bg-white rounded-xl border border-slate-200 p-6">
-            <h2 class="text-lg font-semibold text-slate-900">Configurare WhatsApp</h2>
-            <p class="mt-1 text-sm text-slate-500">Setări pentru integrarea cu WhatsApp Business API.</p>
+        <div class="bg-white rounded-xl border border-line p-6">
+            <h2 class="text-lg font-semibold text-ink">Configurare WhatsApp</h2>
+            <p class="mt-1 text-sm text-muted">Setări pentru integrarea cu WhatsApp Business API.</p>
 
             <form method="POST" action="{{ url('/admin/setari/whatsapp') }}" class="mt-6 space-y-5">
                 @csrf
@@ -849,9 +849,9 @@
                 <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
                     {{-- Provider --}}
                     <div>
-                        <label for="whatsapp_provider" class="block text-sm font-medium text-slate-700">Provider</label>
+                        <label for="whatsapp_provider" class="block text-sm font-medium text-inkSoft">Provider</label>
                         <select name="whatsapp_provider" id="whatsapp_provider"
-                                class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                                class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors">
                             @php $currentProvider = old('whatsapp_provider', $settings['whatsapp']['whatsapp_provider'] ?? 'meta_cloud_api'); @endphp
                             <option value="telnyx_whatsapp" {{ $currentProvider === 'telnyx_whatsapp' ? 'selected' : '' }}>Telnyx WhatsApp</option>
                             <option value="meta_cloud_api" {{ $currentProvider === 'meta_cloud_api' ? 'selected' : '' }}>Meta Cloud API</option>
@@ -860,12 +860,12 @@
 
                     {{-- API Key --}}
                     <div>
-                        <label for="whatsapp_api_key" class="block text-sm font-medium text-slate-700">API Key</label>
+                        <label for="whatsapp_api_key" class="block text-sm font-medium text-inkSoft">API Key</label>
                         <div class="relative mt-1.5">
                             <input type="password" name="whatsapp_api_key" id="whatsapp_api_key"
                                    value="{{ old('whatsapp_api_key', $settings['whatsapp']['whatsapp_api_key'] ?? '') }}"
-                                   class="block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 pr-10 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
-                            <button type="button" onclick="togglePassword('whatsapp_api_key')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                   class="block w-full rounded-lg border border-line px-3.5 py-2.5 pr-10 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors">
+                            <button type="button" onclick="togglePassword('whatsapp_api_key')" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-muted">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -876,46 +876,46 @@
 
                     {{-- Phone Number ID --}}
                     <div>
-                        <label for="whatsapp_phone_number_id" class="block text-sm font-medium text-slate-700">Phone Number ID</label>
+                        <label for="whatsapp_phone_number_id" class="block text-sm font-medium text-inkSoft">Phone Number ID</label>
                         <input type="text" name="whatsapp_phone_number_id" id="whatsapp_phone_number_id"
                                value="{{ old('whatsapp_phone_number_id', $settings['whatsapp']['whatsapp_phone_number_id'] ?? '') }}"
                                placeholder="123456789012345"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors">
                     </div>
 
                     {{-- Business Account ID --}}
                     <div>
-                        <label for="whatsapp_business_account_id" class="block text-sm font-medium text-slate-700">Business Account ID</label>
+                        <label for="whatsapp_business_account_id" class="block text-sm font-medium text-inkSoft">Business Account ID</label>
                         <input type="text" name="whatsapp_business_account_id" id="whatsapp_business_account_id"
                                value="{{ old('whatsapp_business_account_id', $settings['whatsapp']['whatsapp_business_account_id'] ?? '') }}"
                                placeholder="123456789012345"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors">
                     </div>
 
                     {{-- Verify Token --}}
                     <div>
-                        <label for="whatsapp_verify_token" class="block text-sm font-medium text-slate-700">Verify Token</label>
+                        <label for="whatsapp_verify_token" class="block text-sm font-medium text-inkSoft">Verify Token</label>
                         <input type="text" name="whatsapp_verify_token" id="whatsapp_verify_token"
                                value="{{ old('whatsapp_verify_token', $settings['whatsapp']['whatsapp_verify_token'] ?? '') }}"
                                placeholder="Token pentru verificare webhook"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
-                        <p class="mt-1 text-xs text-slate-500">Token folosit pentru verificarea webhook-ului de către Meta/Telnyx.</p>
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors">
+                        <p class="mt-1 text-xs text-muted">Token folosit pentru verificarea webhook-ului de către Meta/Telnyx.</p>
                     </div>
 
                     {{-- Webhook URL (readonly) --}}
                     <div>
-                        <label for="whatsapp_webhook_url" class="block text-sm font-medium text-slate-700">Webhook URL</label>
+                        <label for="whatsapp_webhook_url" class="block text-sm font-medium text-inkSoft">Webhook URL</label>
                         <input type="text" id="whatsapp_webhook_url"
                                value="https://sambla.ro/webhook/whatsapp"
                                readonly
-                               class="mt-1.5 block w-full rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-500 shadow-sm cursor-not-allowed focus:outline-none transition-colors">
-                        <p class="mt-1 text-xs text-slate-500">URL-ul webhook-ului (auto-generat, nu poate fi modificat).</p>
+                               class="mt-1.5 block w-full rounded-lg border border-line bg-cream px-3.5 py-2.5 text-sm text-muted shadow-sm cursor-not-allowed focus:outline-none transition-colors">
+                        <p class="mt-1 text-xs text-muted">URL-ul webhook-ului (auto-generat, nu poate fi modificat).</p>
                     </div>
                 </div>
 
                 <div class="flex justify-end pt-2">
                     <button type="submit"
-                            class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-colors">
+                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coral focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
                         Salvează setările WhatsApp
                     </button>
                 </div>
@@ -927,9 +927,9 @@
     {{-- TAB: Facebook --}}
     {{-- ============================================================ --}}
     @if($tab === 'facebook')
-        <div class="bg-white rounded-xl border border-slate-200 p-6">
-            <h2 class="text-lg font-semibold text-slate-900">Configurare Facebook</h2>
-            <p class="mt-1 text-sm text-slate-500">Setări pentru integrarea cu Facebook Messenger.</p>
+        <div class="bg-white rounded-xl border border-line p-6">
+            <h2 class="text-lg font-semibold text-ink">Configurare Facebook</h2>
+            <p class="mt-1 text-sm text-muted">Setări pentru integrarea cu Facebook Messenger.</p>
 
             <form method="POST" action="{{ url('/admin/setari/facebook') }}" class="mt-6 space-y-5">
                 @csrf
@@ -938,21 +938,21 @@
                 <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
                     {{-- App ID --}}
                     <div>
-                        <label for="facebook_app_id" class="block text-sm font-medium text-slate-700">App ID</label>
+                        <label for="facebook_app_id" class="block text-sm font-medium text-inkSoft">App ID</label>
                         <input type="text" name="facebook_app_id" id="facebook_app_id"
                                value="{{ old('facebook_app_id', $settings['facebook']['facebook_app_id'] ?? '') }}"
                                placeholder="123456789012345"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors">
                     </div>
 
                     {{-- App Secret --}}
                     <div>
-                        <label for="facebook_app_secret" class="block text-sm font-medium text-slate-700">App Secret</label>
+                        <label for="facebook_app_secret" class="block text-sm font-medium text-inkSoft">App Secret</label>
                         <div class="relative mt-1.5">
                             <input type="password" name="facebook_app_secret" id="facebook_app_secret"
                                    value="{{ old('facebook_app_secret', $settings['facebook']['facebook_app_secret'] ?? '') }}"
-                                   class="block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 pr-10 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
-                            <button type="button" onclick="togglePassword('facebook_app_secret')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                   class="block w-full rounded-lg border border-line px-3.5 py-2.5 pr-10 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors">
+                            <button type="button" onclick="togglePassword('facebook_app_secret')" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-muted">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -963,45 +963,45 @@
 
                     {{-- Page Access Token --}}
                     <div class="sm:col-span-2">
-                        <label for="facebook_page_access_token" class="block text-sm font-medium text-slate-700">Page Access Token</label>
+                        <label for="facebook_page_access_token" class="block text-sm font-medium text-inkSoft">Page Access Token</label>
                         <div class="relative mt-1.5">
                             <input type="password" name="facebook_page_access_token" id="facebook_page_access_token"
                                    value="{{ old('facebook_page_access_token', $settings['facebook']['facebook_page_access_token'] ?? '') }}"
-                                   class="block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 pr-10 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
-                            <button type="button" onclick="togglePassword('facebook_page_access_token')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                   class="block w-full rounded-lg border border-line px-3.5 py-2.5 pr-10 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors">
+                            <button type="button" onclick="togglePassword('facebook_page_access_token')" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-muted">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                 </svg>
                             </button>
                         </div>
-                        <p class="mt-1 text-xs text-slate-500">Token-ul de acces pentru pagina Facebook conectată.</p>
+                        <p class="mt-1 text-xs text-muted">Token-ul de acces pentru pagina Facebook conectată.</p>
                     </div>
 
                     {{-- Verify Token --}}
                     <div>
-                        <label for="facebook_verify_token" class="block text-sm font-medium text-slate-700">Verify Token</label>
+                        <label for="facebook_verify_token" class="block text-sm font-medium text-inkSoft">Verify Token</label>
                         <input type="text" name="facebook_verify_token" id="facebook_verify_token"
                                value="{{ old('facebook_verify_token', $settings['facebook']['facebook_verify_token'] ?? '') }}"
                                placeholder="Token pentru verificare webhook"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
-                        <p class="mt-1 text-xs text-slate-500">Token folosit pentru verificarea webhook-ului de către Facebook.</p>
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors">
+                        <p class="mt-1 text-xs text-muted">Token folosit pentru verificarea webhook-ului de către Facebook.</p>
                     </div>
 
                     {{-- Webhook URL (readonly) --}}
                     <div>
-                        <label for="facebook_webhook_url" class="block text-sm font-medium text-slate-700">Webhook URL</label>
+                        <label for="facebook_webhook_url" class="block text-sm font-medium text-inkSoft">Webhook URL</label>
                         <input type="text" id="facebook_webhook_url"
                                value="https://sambla.ro/webhook/facebook"
                                readonly
-                               class="mt-1.5 block w-full rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-500 shadow-sm cursor-not-allowed focus:outline-none transition-colors">
-                        <p class="mt-1 text-xs text-slate-500">URL-ul webhook-ului (auto-generat, nu poate fi modificat).</p>
+                               class="mt-1.5 block w-full rounded-lg border border-line bg-cream px-3.5 py-2.5 text-sm text-muted shadow-sm cursor-not-allowed focus:outline-none transition-colors">
+                        <p class="mt-1 text-xs text-muted">URL-ul webhook-ului (auto-generat, nu poate fi modificat).</p>
                     </div>
                 </div>
 
                 <div class="flex justify-end pt-2">
                     <button type="submit"
-                            class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-colors">
+                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coral focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
                         Salvează setările Facebook
                     </button>
                 </div>
@@ -1013,9 +1013,9 @@
     {{-- TAB: Instagram --}}
     {{-- ============================================================ --}}
     @if($tab === 'instagram')
-        <div class="bg-white rounded-xl border border-slate-200 p-6">
-            <h2 class="text-lg font-semibold text-slate-900">Configurare Instagram</h2>
-            <p class="mt-1 text-sm text-slate-500">Setări pentru integrarea cu Instagram Messaging API.</p>
+        <div class="bg-white rounded-xl border border-line p-6">
+            <h2 class="text-lg font-semibold text-ink">Configurare Instagram</h2>
+            <p class="mt-1 text-sm text-muted">Setări pentru integrarea cu Instagram Messaging API.</p>
 
             <form method="POST" action="{{ url('/admin/setari/instagram') }}" class="mt-6 space-y-5">
                 @csrf
@@ -1024,22 +1024,22 @@
                 <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
                     {{-- App ID --}}
                     <div>
-                        <label for="instagram_app_id" class="block text-sm font-medium text-slate-700">App ID</label>
+                        <label for="instagram_app_id" class="block text-sm font-medium text-inkSoft">App ID</label>
                         <input type="text" name="instagram_app_id" id="instagram_app_id"
                                value="{{ old('instagram_app_id', $settings['instagram']['instagram_app_id'] ?? '') }}"
                                placeholder="123456789012345"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
-                        <p class="mt-1 text-xs text-slate-500">De obicei același App ID ca la Facebook.</p>
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors">
+                        <p class="mt-1 text-xs text-muted">De obicei același App ID ca la Facebook.</p>
                     </div>
 
                     {{-- App Secret --}}
                     <div>
-                        <label for="instagram_app_secret" class="block text-sm font-medium text-slate-700">App Secret</label>
+                        <label for="instagram_app_secret" class="block text-sm font-medium text-inkSoft">App Secret</label>
                         <div class="relative mt-1.5">
                             <input type="password" name="instagram_app_secret" id="instagram_app_secret"
                                    value="{{ old('instagram_app_secret', $settings['instagram']['instagram_app_secret'] ?? '') }}"
-                                   class="block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 pr-10 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
-                            <button type="button" onclick="togglePassword('instagram_app_secret')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                   class="block w-full rounded-lg border border-line px-3.5 py-2.5 pr-10 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors">
+                            <button type="button" onclick="togglePassword('instagram_app_secret')" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-muted">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -1050,45 +1050,45 @@
 
                     {{-- Access Token --}}
                     <div class="sm:col-span-2">
-                        <label for="instagram_access_token" class="block text-sm font-medium text-slate-700">Access Token</label>
+                        <label for="instagram_access_token" class="block text-sm font-medium text-inkSoft">Access Token</label>
                         <div class="relative mt-1.5">
                             <input type="password" name="instagram_access_token" id="instagram_access_token"
                                    value="{{ old('instagram_access_token', $settings['instagram']['instagram_access_token'] ?? '') }}"
-                                   class="block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 pr-10 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
-                            <button type="button" onclick="togglePassword('instagram_access_token')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                   class="block w-full rounded-lg border border-line px-3.5 py-2.5 pr-10 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors">
+                            <button type="button" onclick="togglePassword('instagram_access_token')" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-muted">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                 </svg>
                             </button>
                         </div>
-                        <p class="mt-1 text-xs text-slate-500">Token-ul de acces pentru Instagram API.</p>
+                        <p class="mt-1 text-xs text-muted">Token-ul de acces pentru Instagram API.</p>
                     </div>
 
                     {{-- Verify Token --}}
                     <div>
-                        <label for="instagram_verify_token" class="block text-sm font-medium text-slate-700">Verify Token</label>
+                        <label for="instagram_verify_token" class="block text-sm font-medium text-inkSoft">Verify Token</label>
                         <input type="text" name="instagram_verify_token" id="instagram_verify_token"
                                value="{{ old('instagram_verify_token', $settings['instagram']['instagram_verify_token'] ?? '') }}"
                                placeholder="Token pentru verificare webhook"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
-                        <p class="mt-1 text-xs text-slate-500">Token folosit pentru verificarea webhook-ului de către Instagram.</p>
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors">
+                        <p class="mt-1 text-xs text-muted">Token folosit pentru verificarea webhook-ului de către Instagram.</p>
                     </div>
 
                     {{-- Webhook URL (readonly) --}}
                     <div>
-                        <label for="instagram_webhook_url" class="block text-sm font-medium text-slate-700">Webhook URL</label>
+                        <label for="instagram_webhook_url" class="block text-sm font-medium text-inkSoft">Webhook URL</label>
                         <input type="text" id="instagram_webhook_url"
                                value="https://sambla.ro/webhook/instagram"
                                readonly
-                               class="mt-1.5 block w-full rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-500 shadow-sm cursor-not-allowed focus:outline-none transition-colors">
-                        <p class="mt-1 text-xs text-slate-500">URL-ul webhook-ului (auto-generat, nu poate fi modificat).</p>
+                               class="mt-1.5 block w-full rounded-lg border border-line bg-cream px-3.5 py-2.5 text-sm text-muted shadow-sm cursor-not-allowed focus:outline-none transition-colors">
+                        <p class="mt-1 text-xs text-muted">URL-ul webhook-ului (auto-generat, nu poate fi modificat).</p>
                     </div>
                 </div>
 
                 <div class="flex justify-end pt-2">
                     <button type="submit"
-                            class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-colors">
+                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coral focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
                         Salvează setările Instagram
                     </button>
                 </div>
@@ -1100,9 +1100,9 @@
     {{-- TAB: Marketing & Analytics --}}
     {{-- ============================================================ --}}
     @if($tab === 'marketing')
-        <div class="bg-white rounded-xl border border-slate-200 p-6">
-            <h2 class="text-lg font-semibold text-slate-900">Marketing & Analytics</h2>
-            <p class="mt-1 text-sm text-slate-500">Google Tag Manager, GA4, Google Ads, Meta Pixel, Consent Mode v2.</p>
+        <div class="bg-white rounded-xl border border-line p-6">
+            <h2 class="text-lg font-semibold text-ink">Marketing & Analytics</h2>
+            <p class="mt-1 text-sm text-muted">Google Tag Manager, GA4, Google Ads, Meta Pixel, Consent Mode v2.</p>
 
             <form method="POST" action="{{ url('/admin/setari/marketing') }}" class="mt-6 space-y-6">
                 @csrf
@@ -1110,49 +1110,49 @@
 
                 {{-- Toggles --}}
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <label class="flex items-start gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 cursor-pointer">
+                    <label class="flex items-start gap-3 p-4 bg-cream rounded-xl border border-line cursor-pointer">
                         <input type="checkbox" name="analytics_enabled" value="1" class="mt-0.5"
                                {{ ($settings['marketing']['analytics_enabled'] ?? '1') === '1' ? 'checked' : '' }}>
                         <div>
-                            <p class="text-sm font-semibold text-slate-900">Analytics activat</p>
-                            <p class="text-xs text-slate-500 mt-0.5">Master switch — dezactivează GTM + orice tag.</p>
+                            <p class="text-sm font-semibold text-ink">Analytics activat</p>
+                            <p class="text-xs text-muted mt-0.5">Master switch — dezactivează GTM + orice tag.</p>
                         </div>
                     </label>
-                    <label class="flex items-start gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 cursor-pointer">
+                    <label class="flex items-start gap-3 p-4 bg-cream rounded-xl border border-line cursor-pointer">
                         <input type="checkbox" name="cookie_consent_enabled" value="1" class="mt-0.5"
                                {{ ($settings['marketing']['cookie_consent_enabled'] ?? '1') === '1' ? 'checked' : '' }}>
                         <div>
-                            <p class="text-sm font-semibold text-slate-900">Widget consent activ</p>
-                            <p class="text-xs text-slate-500 mt-0.5">Banner cookie + Consent Mode v2 (GDPR).</p>
+                            <p class="text-sm font-semibold text-ink">Widget consent activ</p>
+                            <p class="text-xs text-muted mt-0.5">Banner cookie + Consent Mode v2 (GDPR).</p>
                         </div>
                     </label>
                 </div>
 
                 {{-- Google Tag Manager --}}
-                <div class="pt-4 border-t border-slate-200">
-                    <h3 class="text-sm font-semibold text-slate-900">Google Tag Manager</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Containerul prin care livrezi toate tag-urile (GA4, Ads, Meta).</p>
+                <div class="pt-4 border-t border-line">
+                    <h3 class="text-sm font-semibold text-ink">Google Tag Manager</h3>
+                    <p class="text-xs text-muted mt-0.5">Containerul prin care livrezi toate tag-urile (GA4, Ads, Meta).</p>
                     <div class="mt-3">
-                        <label for="gtm_container_id" class="block text-sm font-medium text-slate-700">GTM Container ID</label>
+                        <label for="gtm_container_id" class="block text-sm font-medium text-inkSoft">GTM Container ID</label>
                         <input type="text" name="gtm_container_id" id="gtm_container_id" placeholder="GTM-XXXXXXX"
                                value="{{ old('gtm_container_id', $settings['marketing']['gtm_container_id'] ?? '') }}"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none">
                     </div>
                 </div>
 
                 {{-- GA4 --}}
-                <div class="pt-4 border-t border-slate-200">
-                    <h3 class="text-sm font-semibold text-slate-900">Google Analytics 4</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Property ID + API secret pentru Measurement Protocol (conversii server-side).</p>
+                <div class="pt-4 border-t border-line">
+                    <h3 class="text-sm font-semibold text-ink">Google Analytics 4</h3>
+                    <p class="text-xs text-muted mt-0.5">Property ID + API secret pentru Measurement Protocol (conversii server-side).</p>
                     <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label for="ga4_measurement_id" class="block text-sm font-medium text-slate-700">Measurement ID</label>
+                            <label for="ga4_measurement_id" class="block text-sm font-medium text-inkSoft">Measurement ID</label>
                             <input type="text" name="ga4_measurement_id" id="ga4_measurement_id" placeholder="G-XXXXXXXXXX"
                                    value="{{ old('ga4_measurement_id', $settings['marketing']['ga4_measurement_id'] ?? '') }}"
-                                   class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                                   class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none">
                         </div>
                         <div>
-                            <label for="ga4_api_secret" class="block text-sm font-medium text-slate-700">
+                            <label for="ga4_api_secret" class="block text-sm font-medium text-inkSoft">
                                 API Secret
                                 @if($settings['marketing']['ga4_api_secret__present'] ?? false)
                                     <span class="ml-1 text-xs text-emerald-600">(setat)</span>
@@ -1160,37 +1160,37 @@
                             </label>
                             <input type="password" name="ga4_api_secret" id="ga4_api_secret" placeholder="••••••••••"
                                    autocomplete="new-password"
-                                   class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
-                            <p class="mt-1 text-xs text-slate-500">Lasă gol ca să păstrezi valoarea curentă.</p>
+                                   class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none">
+                            <p class="mt-1 text-xs text-muted">Lasă gol ca să păstrezi valoarea curentă.</p>
                         </div>
                     </div>
                 </div>
 
                 {{-- Google Ads --}}
-                <div class="pt-4 border-t border-slate-200">
-                    <h3 class="text-sm font-semibold text-slate-900">Google Ads</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Conversion ID-ul din contul Google Ads (label-urile pentru sign_up/lead/purchase se setează în GTM).</p>
+                <div class="pt-4 border-t border-line">
+                    <h3 class="text-sm font-semibold text-ink">Google Ads</h3>
+                    <p class="text-xs text-muted mt-0.5">Conversion ID-ul din contul Google Ads (label-urile pentru sign_up/lead/purchase se setează în GTM).</p>
                     <div class="mt-3">
-                        <label for="google_ads_conversion_id" class="block text-sm font-medium text-slate-700">Conversion ID</label>
+                        <label for="google_ads_conversion_id" class="block text-sm font-medium text-inkSoft">Conversion ID</label>
                         <input type="text" name="google_ads_conversion_id" id="google_ads_conversion_id" placeholder="AW-123456789"
                                value="{{ old('google_ads_conversion_id', $settings['marketing']['google_ads_conversion_id'] ?? '') }}"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none">
                     </div>
                 </div>
 
                 {{-- Meta Pixel + CAPI --}}
-                <div class="pt-4 border-t border-slate-200">
-                    <h3 class="text-sm font-semibold text-slate-900">Meta (Facebook / Instagram)</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Pixel ID + Conversions API token pentru event matching server-side.</p>
+                <div class="pt-4 border-t border-line">
+                    <h3 class="text-sm font-semibold text-ink">Meta (Facebook / Instagram)</h3>
+                    <p class="text-xs text-muted mt-0.5">Pixel ID + Conversions API token pentru event matching server-side.</p>
                     <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label for="meta_pixel_id" class="block text-sm font-medium text-slate-700">Pixel ID</label>
+                            <label for="meta_pixel_id" class="block text-sm font-medium text-inkSoft">Pixel ID</label>
                             <input type="text" name="meta_pixel_id" id="meta_pixel_id" placeholder="123456789012345"
                                    value="{{ old('meta_pixel_id', $settings['marketing']['meta_pixel_id'] ?? '') }}"
-                                   class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                                   class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none">
                         </div>
                         <div>
-                            <label for="meta_capi_access_token" class="block text-sm font-medium text-slate-700">
+                            <label for="meta_capi_access_token" class="block text-sm font-medium text-inkSoft">
                                 CAPI Access Token
                                 @if($settings['marketing']['meta_capi_access_token__present'] ?? false)
                                     <span class="ml-1 text-xs text-emerald-600">(setat)</span>
@@ -1198,32 +1198,32 @@
                             </label>
                             <input type="password" name="meta_capi_access_token" id="meta_capi_access_token" placeholder="••••••••••"
                                    autocomplete="new-password"
-                                   class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                                   class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none">
                         </div>
                         <div>
-                            <label for="meta_test_event_code" class="block text-sm font-medium text-slate-700">Test Event Code <span class="text-slate-400">(opțional)</span></label>
+                            <label for="meta_test_event_code" class="block text-sm font-medium text-inkSoft">Test Event Code <span class="text-muted">(opțional)</span></label>
                             <input type="text" name="meta_test_event_code" id="meta_test_event_code" placeholder="TEST12345"
                                    value="{{ old('meta_test_event_code', $settings['marketing']['meta_test_event_code'] ?? '') }}"
-                                   class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
-                            <p class="mt-1 text-xs text-slate-500">Activează doar în timp ce verifici din Meta Event Manager — lasă gol în prod.</p>
+                                   class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none">
+                            <p class="mt-1 text-xs text-muted">Activează doar în timp ce verifici din Meta Event Manager — lasă gol în prod.</p>
                         </div>
                     </div>
                 </div>
 
                 {{-- Server-Side Tagging --}}
-                <div class="pt-4 border-t border-slate-200">
-                    <h3 class="text-sm font-semibold text-slate-900">Server-Side Tagging</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Dacă ai un sGTM self-hostat (ex. <span class="font-mono">tags.sambla.ro</span>), GTM + GA4 vor ruta prin el pentru fiabilitate față de ad-blockere.</p>
+                <div class="pt-4 border-t border-line">
+                    <h3 class="text-sm font-semibold text-ink">Server-Side Tagging</h3>
+                    <p class="text-xs text-muted mt-0.5">Dacă ai un sGTM self-hostat (ex. <span class="font-mono">tags.sambla.ro</span>), GTM + GA4 vor ruta prin el pentru fiabilitate față de ad-blockere.</p>
                     <div class="mt-3">
-                        <label for="sgtm_url" class="block text-sm font-medium text-slate-700">sGTM URL</label>
+                        <label for="sgtm_url" class="block text-sm font-medium text-inkSoft">sGTM URL</label>
                         <input type="url" name="sgtm_url" id="sgtm_url" placeholder="https://tags.sambla.ro"
                                value="{{ old('sgtm_url', $settings['marketing']['sgtm_url'] ?? '') }}"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none">
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none">
                     </div>
                 </div>
 
-                <div class="pt-4 border-t border-slate-200 flex justify-end">
-                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-red-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-800">
+                <div class="pt-4 border-t border-line flex justify-end">
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coral">
                         Salvează
                     </button>
                 </div>
@@ -1232,23 +1232,23 @@
 
         {{-- Onboarding rollout switch — separate card so it has its
              own save action and doesn't mix with analytics config. --}}
-        <div class="bg-white rounded-xl border border-slate-200 p-6 mt-4">
-            <h2 class="text-lg font-semibold text-slate-900">Onboarding nou (niche-driven)</h2>
-            <p class="mt-1 text-sm text-slate-500">Când e activ, utilizatorii nou-înregistrați intră în <code class="text-xs bg-slate-100 px-1.5 py-0.5 rounded">/dashboard/setup-wow</code> (nișă → site → agent → test). Altfel, rămân pe wizardul legacy.</p>
+        <div class="bg-white rounded-xl border border-line p-6 mt-4">
+            <h2 class="text-lg font-semibold text-ink">Onboarding nou (niche-driven)</h2>
+            <p class="mt-1 text-sm text-muted">Când e activ, utilizatorii nou-înregistrați intră în <code class="text-xs bg-cream px-1.5 py-0.5 rounded">/dashboard/setup-wow</code> (nișă → site → agent → test). Altfel, rămân pe wizardul legacy.</p>
             <form method="POST" action="{{ url('/admin/setari/onboarding') }}" class="mt-5">
                 @csrf
                 @method('PUT')
-                <label class="flex items-start gap-3 p-4 rounded-lg border border-slate-200 cursor-pointer hover:border-slate-300">
+                <label class="flex items-start gap-3 p-4 rounded-lg border border-line cursor-pointer hover:border-line">
                     <input type="checkbox" name="onboarding_v2_enabled" value="1"
                            {{ ($settings['onboarding']['onboarding_v2_enabled'] ?? '0') === '1' ? 'checked' : '' }}
                            class="mt-0.5">
                     <div>
-                        <p class="text-sm font-semibold text-slate-900">Trimite utilizatorii noi la noul wizard cu nișe</p>
-                        <p class="text-xs text-slate-500 mt-0.5">Flipul se aplică doar sign-up-urilor de după salvare — utilizatorii existenți nu sunt afectați.</p>
+                        <p class="text-sm font-semibold text-ink">Trimite utilizatorii noi la noul wizard cu nișe</p>
+                        <p class="text-xs text-muted mt-0.5">Flipul se aplică doar sign-up-urilor de după salvare — utilizatorii existenți nu sunt afectați.</p>
                     </div>
                 </label>
                 <div class="mt-4 flex justify-end">
-                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-red-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-800">
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coral">
                         Salvează
                     </button>
                 </div>
@@ -1260,9 +1260,9 @@
     {{-- TAB: Securitate --}}
     {{-- ============================================================ --}}
     @if($tab === 'securitate')
-        <div class="bg-white rounded-xl border border-slate-200 p-6">
-            <h2 class="text-lg font-semibold text-slate-900">Setări Securitate</h2>
-            <p class="mt-1 text-sm text-slate-500">Parametri de securitate și autentificare.</p>
+        <div class="bg-white rounded-xl border border-line p-6">
+            <h2 class="text-lg font-semibold text-ink">Setări Securitate</h2>
+            <p class="mt-1 text-sm text-muted">Parametri de securitate și autentificare.</p>
 
             <form method="POST" action="{{ url('/admin/setari/securitate') }}" class="mt-6 space-y-5">
                 @csrf
@@ -1271,59 +1271,59 @@
                 <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                     {{-- Bcrypt Rounds --}}
                     <div>
-                        <label for="bcrypt_rounds" class="block text-sm font-medium text-slate-700">Bcrypt Rounds</label>
+                        <label for="bcrypt_rounds" class="block text-sm font-medium text-inkSoft">Bcrypt Rounds</label>
                         <input type="number" name="bcrypt_rounds" id="bcrypt_rounds"
                                value="{{ old('bcrypt_rounds', $settings['security']['bcrypt_rounds'] ?? '12') }}"
                                min="4" max="31"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors"
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors"
                                required>
-                        <p class="mt-1 text-xs text-slate-500">Recomandat: 10-12</p>
+                        <p class="mt-1 text-xs text-muted">Recomandat: 10-12</p>
                     </div>
 
                     {{-- Session Lifetime --}}
                     <div>
-                        <label for="session_lifetime" class="block text-sm font-medium text-slate-700">Durata Sesiune (minute)</label>
+                        <label for="session_lifetime" class="block text-sm font-medium text-inkSoft">Durata Sesiune (minute)</label>
                         <input type="number" name="session_lifetime" id="session_lifetime"
                                value="{{ old('session_lifetime', $settings['security']['session_lifetime'] ?? '120') }}"
                                min="5" max="1440"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors"
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors"
                                required>
                     </div>
 
                     {{-- API Rate Limit --}}
                     <div>
-                        <label for="api_rate_limit" class="block text-sm font-medium text-slate-700">Limită API (req/min)</label>
+                        <label for="api_rate_limit" class="block text-sm font-medium text-inkSoft">Limită API (req/min)</label>
                         <input type="number" name="api_rate_limit" id="api_rate_limit"
                                value="{{ old('api_rate_limit', $settings['security']['api_rate_limit'] ?? '60') }}"
                                min="10" max="1000"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors"
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors"
                                required>
                     </div>
 
                     {{-- Max Login Attempts --}}
                     <div>
-                        <label for="max_login_attempts" class="block text-sm font-medium text-slate-700">Max încercări login</label>
+                        <label for="max_login_attempts" class="block text-sm font-medium text-inkSoft">Max încercări login</label>
                         <input type="number" name="max_login_attempts" id="max_login_attempts"
                                value="{{ old('max_login_attempts', $settings['security']['max_login_attempts'] ?? '5') }}"
                                min="3" max="20"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors"
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors"
                                required>
                     </div>
 
                     {{-- Password Min Length --}}
                     <div>
-                        <label for="password_min_length" class="block text-sm font-medium text-slate-700">Lungime min. parolă</label>
+                        <label for="password_min_length" class="block text-sm font-medium text-inkSoft">Lungime min. parolă</label>
                         <input type="number" name="password_min_length" id="password_min_length"
                                value="{{ old('password_min_length', $settings['security']['password_min_length'] ?? '8') }}"
                                min="6" max="32"
-                               class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors"
+                               class="mt-1.5 block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors"
                                required>
                     </div>
                 </div>
 
                 <div class="flex justify-end pt-2">
                     <button type="submit"
-                            class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 transition-colors">
+                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coral focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
                         Salvează setările de securitate
                     </button>
                 </div>
@@ -1335,24 +1335,24 @@
     {{-- TAB: Tenanți --}}
     {{-- ============================================================ --}}
     @if($tab === 'tenanti')
-        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-200">
-                <h2 class="text-lg font-semibold text-slate-900">Gestionare Tenanți</h2>
-                <p class="mt-1 text-sm text-slate-500">Toate organizațiile înregistrate pe platformă.</p>
+        <div class="bg-white rounded-xl border border-line overflow-hidden">
+            <div class="px-6 py-4 border-b border-line">
+                <h2 class="text-lg font-semibold text-ink">Gestionare Tenanți</h2>
+                <p class="mt-1 text-sm text-muted">Toate organizațiile înregistrate pe platformă.</p>
             </div>
 
             @if(isset($extra['tenants']) && $extra['tenants']->count() > 0)
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-slate-200">
-                        <thead class="bg-slate-50">
+                        <thead class="bg-cream">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Organizație</th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Plan</th>
-                                <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Utilizatori</th>
-                                <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Boți</th>
-                                <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Apeluri</th>
-                                <th class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                                <th class="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Acțiuni</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-muted uppercase tracking-wider">Organizație</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-muted uppercase tracking-wider">Plan</th>
+                                <th class="px-6 py-3 text-center text-xs font-semibold text-muted uppercase tracking-wider">Utilizatori</th>
+                                <th class="px-6 py-3 text-center text-xs font-semibold text-muted uppercase tracking-wider">Boți</th>
+                                <th class="px-6 py-3 text-center text-xs font-semibold text-muted uppercase tracking-wider">Apeluri</th>
+                                <th class="px-6 py-3 text-center text-xs font-semibold text-muted uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-right text-xs font-semibold text-muted uppercase tracking-wider">Acțiuni</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-200">
@@ -1360,16 +1360,16 @@
                                 @php
                                     $isSuspended = ($t->settings['suspended'] ?? false);
                                     $planColors = [
-                                        'starter' => 'bg-slate-100 text-slate-700',
-                                        'professional' => 'bg-red-100 text-red-800',
-                                        'enterprise' => 'bg-red-100 text-red-800',
+                                        'starter' => 'bg-cream text-inkSoft',
+                                        'professional' => 'bg-coralsoft text-coralh',
+                                        'enterprise' => 'bg-coralsoft text-coralh',
                                     ];
                                 @endphp
-                                <tr class="{{ $isSuspended ? 'bg-red-50/50' : '' }}">
+                                <tr class="{{ $isSuspended ? 'bg-coralsoft/50' : '' }}">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div>
-                                            <p class="text-sm font-medium text-slate-900">{{ $t->name }}</p>
-                                            <p class="text-xs text-slate-500">{{ $t->slug }} &middot; Creat {{ $t->created_at->format('d.m.Y') }}</p>
+                                            <p class="text-sm font-medium text-ink">{{ $t->name }}</p>
+                                            <p class="text-xs text-muted">{{ $t->slug }} &middot; Creat {{ $t->created_at->format('d.m.Y') }}</p>
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
@@ -1378,19 +1378,19 @@
                                             @method('PUT')
                                             <input type="hidden" name="name" value="{{ $t->name }}">
                                             <select name="plan" onchange="this.form.submit()"
-                                                    class="rounded-md border-slate-300 text-xs py-1 pr-7 focus:border-red-500 focus:ring-red-500/20">
+                                                    class="rounded-md border-line text-xs py-1 pr-7 focus:border-coral focus:ring-coral/20">
                                                 <option value="starter" {{ $t->plan === 'starter' ? 'selected' : '' }}>Starter</option>
                                                 <option value="professional" {{ $t->plan === 'professional' ? 'selected' : '' }}>Pro</option>
                                                 <option value="enterprise" {{ $t->plan === 'enterprise' ? 'selected' : '' }}>Enterprise</option>
                                             </select>
                                         </form>
                                     </td>
-                                    <td class="px-6 py-4 text-center text-sm text-slate-700">{{ $t->users_count }}</td>
-                                    <td class="px-6 py-4 text-center text-sm text-slate-700">{{ $t->bots_count }}</td>
-                                    <td class="px-6 py-4 text-center text-sm text-slate-700">{{ $t->calls_count }}</td>
+                                    <td class="px-6 py-4 text-center text-sm text-inkSoft">{{ $t->users_count }}</td>
+                                    <td class="px-6 py-4 text-center text-sm text-inkSoft">{{ $t->bots_count }}</td>
+                                    <td class="px-6 py-4 text-center text-sm text-inkSoft">{{ $t->calls_count }}</td>
                                     <td class="px-6 py-4 text-center">
                                         @if($isSuspended)
-                                            <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700">Suspendat</span>
+                                            <span class="inline-flex items-center rounded-full bg-coralsoft px-2.5 py-0.5 text-xs font-medium text-coralh">Suspendat</span>
                                         @else
                                             <span class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">Activ</span>
                                         @endif
@@ -1403,7 +1403,7 @@
                                                     class="text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors
                                                            {{ $isSuspended
                                                                ? 'border-emerald-200 text-emerald-600 hover:bg-emerald-50'
-                                                               : 'border-red-200 text-red-600 hover:bg-red-50' }}"
+                                                               : 'border-coral/30 text-coral hover:bg-coralsoft' }}"
                                                     onclick="return confirm('{{ $isSuspended ? 'Reactivezi' : 'Suspendezi' }} tenantul {{ $t->name }}?')">
                                                 {{ $isSuspended ? 'Reactivează' : 'Suspendează' }}
                                             </button>
@@ -1416,7 +1416,7 @@
                 </div>
             @else
                 <div class="px-6 py-10 text-center">
-                    <p class="text-sm text-slate-500">Nu există tenanți înregistrați.</p>
+                    <p class="text-sm text-muted">Nu există tenanți înregistrați.</p>
                 </div>
             @endif
         </div>
@@ -1429,17 +1429,17 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             @foreach(($extra['plans'] ?? []) as $planKey => $plan)
                 @php
-                    $borderColors = ['starter' => 'border-slate-200', 'professional' => 'border-red-200', 'enterprise' => 'border-red-200'];
+                    $borderColors = ['starter' => 'border-line', 'professional' => 'border-coral/30', 'enterprise' => 'border-coral/30'];
                     $headerColors = ['starter' => 'from-slate-50 to-slate-100', 'professional' => 'from-red-50 to-red-100', 'enterprise' => 'from-red-50 to-red-100'];
-                    $textColors = ['starter' => 'text-slate-700', 'professional' => 'text-red-800', 'enterprise' => 'text-red-800'];
+                    $textColors = ['starter' => 'text-inkSoft', 'professional' => 'text-coralh', 'enterprise' => 'text-coralh'];
                 @endphp
-                <div class="bg-white rounded-xl border-2 {{ $borderColors[$planKey] ?? 'border-slate-200' }} overflow-hidden">
+                <div class="bg-white rounded-xl border-2 {{ $borderColors[$planKey] ?? 'border-line' }} overflow-hidden">
                     <div class="bg-gradient-to-br {{ $headerColors[$planKey] ?? '' }} px-6 py-5">
                         <h3 class="text-lg font-bold {{ $textColors[$planKey] ?? '' }}">{{ $plan['name'] }}</h3>
                         <div class="mt-2">
                             @if($plan['price_monthly'] > 0)
                                 <span class="text-3xl font-bold {{ $textColors[$planKey] ?? '' }}">{{ $plan['price_monthly'] }}€</span>
-                                <span class="text-sm text-slate-500">/lună</span>
+                                <span class="text-sm text-muted">/lună</span>
                             @else
                                 <span class="text-3xl font-bold {{ $textColors[$planKey] ?? '' }}">Custom</span>
                             @endif
@@ -1447,35 +1447,35 @@
                     </div>
                     <div class="px-6 py-5 space-y-3">
                         <div class="flex justify-between text-sm">
-                            <span class="text-slate-500">Minute/lună:</span>
-                            <span class="font-medium text-slate-900">{{ $plan['minutes'] >= 999999 ? 'Nelimitate' : number_format($plan['minutes']) }}</span>
+                            <span class="text-muted">Minute/lună:</span>
+                            <span class="font-medium text-ink">{{ $plan['minutes'] >= 999999 ? 'Nelimitate' : number_format($plan['minutes']) }}</span>
                         </div>
                         <div class="flex justify-between text-sm">
-                            <span class="text-slate-500">Boți:</span>
-                            <span class="font-medium text-slate-900">{{ $plan['bots'] >= 999 ? 'Nelimitați' : $plan['bots'] }}</span>
+                            <span class="text-muted">Boți:</span>
+                            <span class="font-medium text-ink">{{ $plan['bots'] >= 999 ? 'Nelimitați' : $plan['bots'] }}</span>
                         </div>
                         <div class="flex justify-between text-sm">
-                            <span class="text-slate-500">Canale:</span>
-                            <span class="font-medium text-slate-900">{{ $plan['channels'] >= 999 ? 'Nelimitate' : $plan['channels'] }}</span>
+                            <span class="text-muted">Canale:</span>
+                            <span class="font-medium text-ink">{{ $plan['channels'] >= 999 ? 'Nelimitate' : $plan['channels'] }}</span>
                         </div>
                         @if($plan['overage_per_minute'] > 0)
                         <div class="flex justify-between text-sm">
-                            <span class="text-slate-500">Cost depășire/min:</span>
-                            <span class="font-medium text-slate-900">{{ $plan['overage_per_minute'] }}€</span>
+                            <span class="text-muted">Cost depășire/min:</span>
+                            <span class="font-medium text-ink">{{ $plan['overage_per_minute'] }}€</span>
                         </div>
                         @endif
                         @if($plan['price_yearly'] > 0)
                         <div class="flex justify-between text-sm">
-                            <span class="text-slate-500">Preț anual/lună:</span>
+                            <span class="text-muted">Preț anual/lună:</span>
                             <span class="font-medium text-emerald-600">{{ $plan['price_yearly'] }}€</span>
                         </div>
                         @endif
 
-                        <div class="border-t border-slate-100 pt-3">
-                            <p class="text-xs font-semibold text-slate-500 uppercase mb-2">Funcționalități</p>
+                        <div class="border-t border-line pt-3">
+                            <p class="text-xs font-semibold text-muted uppercase mb-2">Funcționalități</p>
                             <ul class="space-y-1.5">
                                 @foreach($plan['features'] as $feature)
-                                    <li class="flex items-center gap-2 text-sm text-slate-600">
+                                    <li class="flex items-center gap-2 text-sm text-muted">
                                         <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                                         </svg>
@@ -1489,9 +1489,9 @@
             @endforeach
         </div>
 
-        <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
-            <p class="text-sm text-slate-600">
-                Planurile sunt configurate în <code class="text-xs bg-white px-1.5 py-0.5 rounded border border-slate-200 font-mono">config/plans.php</code>.
+        <div class="rounded-lg border border-line bg-cream p-4">
+            <p class="text-sm text-muted">
+                Planurile sunt configurate în <code class="text-xs bg-white px-1.5 py-0.5 rounded border border-line font-mono">config/plans.php</code>.
                 Pentru a modifica planurile, editează fișierul de configurare și redeploy.
             </p>
         </div>
@@ -1502,9 +1502,9 @@
     {{-- ============================================================ --}}
     @if($tab === 'mentenanta')
         {{-- System Info --}}
-        <div class="bg-white rounded-xl border border-slate-200 p-6">
-            <h2 class="text-lg font-semibold text-slate-900">Informații Sistem</h2>
-            <p class="mt-1 text-sm text-slate-500">Starea curentă a serverului și aplicației.</p>
+        <div class="bg-white rounded-xl border border-line p-6">
+            <h2 class="text-lg font-semibold text-ink">Informații Sistem</h2>
+            <p class="mt-1 text-sm text-muted">Starea curentă a serverului și aplicației.</p>
 
             <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 @foreach(($extra['systemInfo'] ?? []) as $label => $value)
@@ -1527,18 +1527,18 @@
                             'total_calls' => 'Total Apeluri',
                         ];
                     @endphp
-                    <div class="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-100">
-                        <span class="text-sm text-slate-500">{{ $labelMap[$label] ?? $label }}</span>
-                        <span class="text-sm font-medium text-slate-900">{{ $value }}</span>
+                    <div class="flex items-center justify-between p-3 rounded-lg bg-cream border border-line">
+                        <span class="text-sm text-muted">{{ $labelMap[$label] ?? $label }}</span>
+                        <span class="text-sm font-medium text-ink">{{ $value }}</span>
                     </div>
                 @endforeach
             </div>
         </div>
 
         {{-- Actions --}}
-        <div class="bg-white rounded-xl border border-slate-200 p-6">
-            <h2 class="text-lg font-semibold text-slate-900">Acțiuni Mentenanță</h2>
-            <p class="mt-1 text-sm text-slate-500">Operațiuni de întreținere a platformei.</p>
+        <div class="bg-white rounded-xl border border-line p-6">
+            <h2 class="text-lg font-semibold text-ink">Acțiuni Mentenanță</h2>
+            <p class="mt-1 text-sm text-muted">Operațiuni de întreținere a platformei.</p>
 
             <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {{-- Clear Cache --}}
@@ -1546,28 +1546,28 @@
                     @csrf
                     <button type="submit"
                             onclick="return confirm('Ștergi tot cache-ul aplicației?')"
-                            class="w-full flex items-center gap-4 p-4 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors text-left">
-                        <div class="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center shrink-0">
-                            <svg class="w-5 h-5 text-red-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            class="w-full flex items-center gap-4 p-4 rounded-lg border border-line hover:bg-cream transition-colors text-left">
+                        <div class="w-10 h-10 rounded-lg bg-coralsoft flex items-center justify-center shrink-0">
+                            <svg class="w-5 h-5 text-coralh" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                             </svg>
                         </div>
                         <div>
-                            <p class="text-sm font-medium text-slate-900">Șterge Cache</p>
-                            <p class="text-xs text-slate-500">Șterge cache-ul aplicației, config, views și routes.</p>
+                            <p class="text-sm font-medium text-ink">Șterge Cache</p>
+                            <p class="text-xs text-muted">Șterge cache-ul aplicației, config, views și routes.</p>
                         </div>
                     </button>
                 </form>
 
                 {{-- App Info --}}
-                <div class="flex items-center gap-4 p-4 rounded-lg border border-slate-200">
+                <div class="flex items-center gap-4 p-4 rounded-lg border border-line">
                     <div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
                         <svg class="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
                     <div>
-                        <p class="text-sm font-medium text-slate-900">Status Aplicație</p>
+                        <p class="text-sm font-medium text-ink">Status Aplicație</p>
                         <p class="text-xs text-emerald-600 font-medium">Funcțională</p>
                     </div>
                 </div>

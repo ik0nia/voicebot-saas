@@ -1,22 +1,22 @@
 <div class="p-6">
-    <h3 class="text-lg font-semibold text-slate-900 mb-1">Upload Fisiere</h3>
-    <p class="text-sm text-slate-500 mb-6">Incarca fisiere PDF, DOCX, TXT sau CSV. Continutul va fi extras, fragmentat si vectorizat automat.</p>
+    <h3 class="text-lg font-semibold text-ink mb-1">Upload Fisiere</h3>
+    <p class="text-sm text-muted mb-6">Incarca fisiere PDF, DOCX, TXT sau CSV. Continutul va fi extras, fragmentat si vectorizat automat.</p>
 
     {{-- Upload tabs --}}
-    <div class="flex border-b border-slate-200 mb-6">
-        <button onclick="switchUploadTab('text')" id="utab-text" class="upload-tab-btn px-4 py-2.5 text-sm font-medium border-b-2 transition-colors border-red-800 text-red-800">Text</button>
-        <button onclick="switchUploadTab('url')" id="utab-url" class="upload-tab-btn px-4 py-2.5 text-sm font-medium border-b-2 transition-colors border-transparent text-slate-500 hover:text-slate-700">URL</button>
-        <button onclick="switchUploadTab('file')" id="utab-file" class="upload-tab-btn px-4 py-2.5 text-sm font-medium border-b-2 transition-colors border-transparent text-slate-500 hover:text-slate-700">Fisier</button>
+    <div class="flex border-b border-line mb-6">
+        <button onclick="switchUploadTab('text')" id="utab-text" class="upload-tab-btn px-4 py-2.5 text-sm font-medium border-b-2 transition-colors border-coral text-coralh">Text</button>
+        <button onclick="switchUploadTab('url')" id="utab-url" class="upload-tab-btn px-4 py-2.5 text-sm font-medium border-b-2 transition-colors border-transparent text-muted hover:text-inkSoft">URL</button>
+        <button onclick="switchUploadTab('file')" id="utab-file" class="upload-tab-btn px-4 py-2.5 text-sm font-medium border-b-2 transition-colors border-transparent text-muted hover:text-inkSoft">Fisier</button>
     </div>
 
     {{-- Validation errors banner --}}
     @if($errors->any())
-        <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+        <div class="mb-4 p-3 bg-coralsoft border border-coral/30 rounded-lg">
             <div class="flex items-start gap-2">
-                <svg class="w-4 h-4 text-red-600 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <svg class="w-4 h-4 text-coral mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <div>
                     @foreach($errors->all() as $error)
-                        <p class="text-sm text-red-700">{{ $error }}</p>
+                        <p class="text-sm text-coralh">{{ $error }}</p>
                     @endforeach
                 </div>
             </div>
@@ -28,15 +28,15 @@
         @csrf
         <input type="hidden" name="type" value="text">
         <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1.5">Titlu</label>
-            <input type="text" name="title" required class="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" placeholder="ex: Informatii despre companie">
+            <label class="block text-sm font-medium text-inkSoft mb-1.5">Titlu</label>
+            <input type="text" name="title" required class="w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink placeholder-slate-400 focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none transition" placeholder="ex: Informatii despre companie">
         </div>
         <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1.5">Continut</label>
-            <textarea name="content" rows="8" required class="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition resize-y" placeholder="Introdu textul..."></textarea>
+            <label class="block text-sm font-medium text-inkSoft mb-1.5">Continut</label>
+            <textarea name="content" rows="8" required class="w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink placeholder-slate-400 focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none transition resize-y" placeholder="Introdu textul..."></textarea>
         </div>
         <div class="flex justify-end">
-            <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 bg-red-800 text-white text-sm font-semibold rounded-lg hover:bg-red-900 transition-colors shadow-sm">
+            <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 bg-coral text-white text-sm font-semibold rounded-lg hover:bg-coralh transition-colors shadow-sm">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                 Adauga
             </button>
@@ -48,15 +48,15 @@
         @csrf
         <input type="hidden" name="type" value="url">
         <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1.5">Titlu</label>
-            <input type="text" name="title" required class="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" placeholder="ex: Pagina de preturi">
+            <label class="block text-sm font-medium text-inkSoft mb-1.5">Titlu</label>
+            <input type="text" name="title" required class="w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink placeholder-slate-400 focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none transition" placeholder="ex: Pagina de preturi">
         </div>
         <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1.5">URL</label>
-            <input type="url" name="url" required class="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" placeholder="https://exemplu.ro/pagina">
+            <label class="block text-sm font-medium text-inkSoft mb-1.5">URL</label>
+            <input type="url" name="url" required class="w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink placeholder-slate-400 focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none transition" placeholder="https://exemplu.ro/pagina">
         </div>
         <div class="flex justify-end">
-            <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 bg-red-800 text-white text-sm font-semibold rounded-lg hover:bg-red-900 transition-colors shadow-sm">
+            <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 bg-coral text-white text-sm font-semibold rounded-lg hover:bg-coralh transition-colors shadow-sm">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                 Adauga
             </button>
@@ -66,28 +66,28 @@
     {{-- File form -- BATCH UPLOAD cu progress per fisier --}}
     <div id="uform-file" class="space-y-4 hidden">
         <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1.5">Fisiere</label>
-            <div id="upload-drop-zone" class="relative border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:border-red-400 hover:bg-red-50/50 transition-all duration-200 cursor-pointer"
+            <label class="block text-sm font-medium text-inkSoft mb-1.5">Fisiere</label>
+            <div id="upload-drop-zone" class="relative border-2 border-dashed border-line rounded-lg p-8 text-center hover:border-red-400 hover:bg-coralsoft/50 transition-all duration-200 cursor-pointer"
                  onclick="document.getElementById('upload-file-input').click()">
                 <input type="file" id="upload-file-input" multiple accept=".pdf,.docx,.txt,.csv" class="hidden" onchange="handleBatchFileSelect(this)">
-                <svg class="w-10 h-10 text-slate-400 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
-                <p id="upload-drop-text" class="text-sm text-slate-600">
-                    <span class="font-semibold text-red-800">Click pentru a alege</span> sau trage fisierele aici
+                <svg class="w-10 h-10 text-muted mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                <p id="upload-drop-text" class="text-sm text-muted">
+                    <span class="font-semibold text-coralh">Click pentru a alege</span> sau trage fisierele aici
                 </p>
-                <p id="upload-drop-hint" class="text-xs text-slate-400 mt-1">PDF, DOCX, TXT, CSV &mdash; max. 10 MB per fisier &mdash; poti selecta mai multe fisiere odata</p>
+                <p id="upload-drop-hint" class="text-xs text-muted mt-1">PDF, DOCX, TXT, CSV &mdash; max. 10 MB per fisier &mdash; poti selecta mai multe fisiere odata</p>
             </div>
         </div>
 
         {{-- File queue list (appears after selection) --}}
         <div id="upload-file-queue" class="hidden space-y-2">
             <div class="flex items-center justify-between">
-                <label class="block text-sm font-medium text-slate-700">Fisiere selectate</label>
-                <button type="button" onclick="clearFileQueue()" class="text-xs text-slate-500 hover:text-red-600 transition-colors">Sterge toate</button>
+                <label class="block text-sm font-medium text-inkSoft">Fisiere selectate</label>
+                <button type="button" onclick="clearFileQueue()" class="text-xs text-muted hover:text-coral transition-colors">Sterge toate</button>
             </div>
             <div id="upload-file-list" class="space-y-2 max-h-80 overflow-y-auto"></div>
-            <div id="upload-batch-summary" class="flex items-center justify-between pt-2 border-t border-slate-200">
-                <span class="text-xs text-slate-500"><span id="batch-file-count">0</span> fisiere &mdash; <span id="batch-total-size">0 MB</span></span>
-                <button type="button" onclick="startBatchUpload()" id="btn-batch-upload" class="inline-flex items-center gap-2 px-5 py-2.5 bg-red-800 text-white text-sm font-semibold rounded-lg hover:bg-red-900 transition-colors shadow-sm">
+            <div id="upload-batch-summary" class="flex items-center justify-between pt-2 border-t border-line">
+                <span class="text-xs text-muted"><span id="batch-file-count">0</span> fisiere &mdash; <span id="batch-total-size">0 MB</span></span>
+                <button type="button" onclick="startBatchUpload()" id="btn-batch-upload" class="inline-flex items-center gap-2 px-5 py-2.5 bg-coral text-white text-sm font-semibold rounded-lg hover:bg-coralh transition-colors shadow-sm">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
                     Incarca toate
                 </button>
@@ -96,13 +96,13 @@
 
         {{-- Batch upload global progress --}}
         <div id="upload-batch-progress" class="hidden">
-            <div class="bg-slate-50 rounded-lg border border-slate-200 p-4">
+            <div class="bg-cream rounded-lg border border-line p-4">
                 <div class="flex items-center justify-between mb-2">
-                    <span class="text-sm font-medium text-slate-700">Progres upload</span>
-                    <span id="batch-progress-label" class="text-xs text-slate-500">0 / 0</span>
+                    <span class="text-sm font-medium text-inkSoft">Progres upload</span>
+                    <span id="batch-progress-label" class="text-xs text-muted">0 / 0</span>
                 </div>
-                <div class="w-full bg-slate-200 rounded-full h-2">
-                    <div id="batch-progress-bar" class="bg-red-700 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                <div class="w-full bg-sand rounded-full h-2">
+                    <div id="batch-progress-bar" class="bg-coral h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
                 </div>
             </div>
         </div>
@@ -114,13 +114,13 @@
     function switchUploadTab(tab) {
         document.querySelectorAll('[id^="uform-"]').forEach(function(f) { f.classList.add('hidden'); });
         document.querySelectorAll('.upload-tab-btn').forEach(function(t) {
-            t.classList.remove('border-red-800', 'text-red-800');
-            t.classList.add('border-transparent', 'text-slate-500');
+            t.classList.remove('border-coral', 'text-coralh');
+            t.classList.add('border-transparent', 'text-muted');
         });
         document.getElementById('uform-' + tab).classList.remove('hidden');
         var btn = document.getElementById('utab-' + tab);
-        btn.classList.remove('border-transparent', 'text-slate-500');
-        btn.classList.add('border-red-800', 'text-red-800');
+        btn.classList.remove('border-transparent', 'text-muted');
+        btn.classList.add('border-coral', 'text-coralh');
     }
 
     // ─── Batch upload state ───
@@ -212,14 +212,14 @@
 
         if (batchFiles.length === 0) {
             queueEl.classList.add('hidden');
-            dropText.innerHTML = '<span class="font-semibold text-red-800">Click pentru a alege</span> sau trage fisierele aici';
+            dropText.innerHTML = '<span class="font-semibold text-coralh">Click pentru a alege</span> sau trage fisierele aici';
             dropHint.classList.remove('hidden');
             listEl.innerHTML = '';
             return;
         }
 
         queueEl.classList.remove('hidden');
-        dropText.innerHTML = '<span class="font-semibold text-red-800">+ Adauga mai multe fisiere</span>';
+        dropText.innerHTML = '<span class="font-semibold text-coralh">+ Adauga mai multe fisiere</span>';
         dropHint.classList.add('hidden');
 
         var totalSize = 0;
@@ -228,42 +228,42 @@
         batchFiles.forEach(function(item, idx) {
             totalSize += item.file.size;
             var ext = getFileExtension(item.file.name);
-            var extColor = ext === 'pdf' ? 'bg-red-100 text-red-700' :
+            var extColor = ext === 'pdf' ? 'bg-coralsoft text-coralh' :
                            ext === 'docx' ? 'bg-blue-100 text-blue-700' :
                            ext === 'csv' ? 'bg-green-100 text-green-700' :
-                           'bg-slate-100 text-slate-600';
+                           'bg-cream text-muted';
 
             var statusIcon = '';
             var rowOpacity = '';
             if (item.status === 'uploading') {
-                statusIcon = '<svg class="w-4 h-4 animate-spin text-red-700 shrink-0" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>';
+                statusIcon = '<svg class="w-4 h-4 animate-spin text-coralh shrink-0" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>';
             } else if (item.status === 'done') {
                 statusIcon = '<svg class="w-4 h-4 text-green-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>';
                 rowOpacity = 'opacity-60';
             } else if (item.status === 'error') {
-                statusIcon = '<svg class="w-4 h-4 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>';
+                statusIcon = '<svg class="w-4 h-4 text-coral shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>';
             }
 
-            html += '<div class="flex items-center gap-3 bg-white border border-slate-200 rounded-lg px-3 py-2.5 ' + rowOpacity + '">';
+            html += '<div class="flex items-center gap-3 bg-white border border-line rounded-lg px-3 py-2.5 ' + rowOpacity + '">';
             html += '  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ' + extColor + '">' + ext + '</span>';
             html += '  <div class="flex-1 min-w-0">';
             if (item.status === 'pending') {
-                html += '    <input type="text" value="' + item.title.replace(/"/g, '&quot;') + '" onchange="updateFileTitle(' + idx + ', this.value)" class="w-full text-sm text-slate-900 border-0 border-b border-transparent focus:border-slate-300 outline-none px-0 py-0.5 bg-transparent placeholder-slate-400" placeholder="Titlu document">';
+                html += '    <input type="text" value="' + item.title.replace(/"/g, '&quot;') + '" onchange="updateFileTitle(' + idx + ', this.value)" class="w-full text-sm text-ink border-0 border-b border-transparent focus:border-line outline-none px-0 py-0.5 bg-transparent placeholder-slate-400" placeholder="Titlu document">';
             } else {
-                html += '    <span class="text-sm text-slate-900 truncate block">' + item.title + '</span>';
+                html += '    <span class="text-sm text-ink truncate block">' + item.title + '</span>';
             }
-            html += '    <span class="text-[11px] text-slate-400">' + item.file.name + ' &mdash; ' + formatFileSize(item.file.size) + '</span>';
+            html += '    <span class="text-[11px] text-muted">' + item.file.name + ' &mdash; ' + formatFileSize(item.file.size) + '</span>';
             if (item.status === 'error') {
-                html += '    <span class="text-[11px] text-red-500 block">' + item.errorMsg + '</span>';
+                html += '    <span class="text-[11px] text-coral block">' + item.errorMsg + '</span>';
             }
             if (item.status === 'uploading') {
-                html += '    <div class="w-full bg-slate-200 rounded-full h-1 mt-1"><div class="bg-red-700 h-1 rounded-full transition-all duration-200" style="width:' + item.progress + '%"></div></div>';
+                html += '    <div class="w-full bg-sand rounded-full h-1 mt-1"><div class="bg-coral h-1 rounded-full transition-all duration-200" style="width:' + item.progress + '%"></div></div>';
             }
             html += '  </div>';
             html += '  <div class="flex items-center gap-1.5">';
             html += statusIcon;
             if (item.status === 'pending') {
-                html += '    <button type="button" onclick="removeFileFromQueue(' + idx + ')" class="p-1 text-slate-400 hover:text-red-500 transition-colors"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>';
+                html += '    <button type="button" onclick="removeFileFromQueue(' + idx + ')" class="p-1 text-muted hover:text-coral transition-colors"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>';
             }
             html += '  </div>';
             html += '</div>';
@@ -396,7 +396,7 @@
         var colors = {
             success: 'bg-green-50 border-green-200 text-green-800',
             warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
-            error: 'bg-red-50 border-red-200 text-red-800',
+            error: 'bg-coralsoft border-coral/30 text-coralh',
             info: 'bg-blue-50 border-blue-200 text-blue-800'
         };
         var toastEl = document.createElement('div');
@@ -419,14 +419,14 @@
             dz.addEventListener(e, function(ev) {
                 ev.preventDefault();
                 ev.stopPropagation();
-                dz.classList.add('border-red-400', 'bg-red-50', 'scale-[1.01]');
+                dz.classList.add('border-red-400', 'bg-coralsoft', 'scale-[1.01]');
             });
         });
         ['dragleave', 'drop'].forEach(function(e) {
             dz.addEventListener(e, function(ev) {
                 ev.preventDefault();
                 ev.stopPropagation();
-                dz.classList.remove('border-red-400', 'bg-red-50', 'scale-[1.01]');
+                dz.classList.remove('border-red-400', 'bg-coralsoft', 'scale-[1.01]');
             });
         });
         dz.addEventListener('drop', function(e) {

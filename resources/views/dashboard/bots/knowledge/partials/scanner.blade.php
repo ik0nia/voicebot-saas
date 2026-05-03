@@ -1,13 +1,13 @@
 <div class="p-6">
-    <h3 class="text-lg font-semibold text-slate-900 mb-1">Scanner Website</h3>
-    <p class="text-sm text-slate-500 mb-6">Scaneaza automat un website si importa continutul paginilor in baza de cunostinte.</p>
+    <h3 class="text-lg font-semibold text-ink mb-1">Scanner Website</h3>
+    <p class="text-sm text-muted mb-6">Scaneaza automat un website si importa continutul paginilor in baza de cunostinte.</p>
 
     {{-- New scan form --}}
-    <div class="bg-slate-50 rounded-lg border border-slate-200 p-5 mb-6">
+    <div class="bg-cream rounded-lg border border-line p-5 mb-6">
         <div class="flex flex-col sm:flex-row gap-4">
             <div class="flex-1">
-                <label class="block text-sm font-medium text-slate-700 mb-1.5">URL Website</label>
-                <input type="url" id="scan-url" class="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" placeholder="https://exemplu.ro" @if(isset($site) && $site && $site->isVerified()) value="https://{{ $site->domain }}" @endif>
+                <label class="block text-sm font-medium text-inkSoft mb-1.5">URL Website</label>
+                <input type="url" id="scan-url" class="w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink placeholder-slate-400 focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none transition" placeholder="https://exemplu.ro" @if(isset($site) && $site && $site->isVerified()) value="https://{{ $site->domain }}" @endif>
                 @if(isset($site) && $site && $site->isVerified())
                     <p class="text-[11px] text-green-600 mt-1 flex items-center gap-1">
                         <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
@@ -16,46 +16,46 @@
                 @endif
             </div>
             <div class="w-32">
-                <label class="block text-sm font-medium text-slate-700 mb-1.5">Max pagini</label>
-                <input type="number" id="scan-max-pages" value="50" min="1" max="200" class="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" onchange="updateScanEstimate()" oninput="updateScanEstimate()">
+                <label class="block text-sm font-medium text-inkSoft mb-1.5">Max pagini</label>
+                <input type="number" id="scan-max-pages" value="50" min="1" max="200" class="w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none transition" onchange="updateScanEstimate()" oninput="updateScanEstimate()">
             </div>
             <div class="flex items-end">
-                <button onclick="startScan()" id="btn-start-scan" class="inline-flex items-center gap-2 px-5 py-2.5 bg-red-800 text-white text-sm font-semibold rounded-lg hover:bg-red-900 transition-colors shadow-sm whitespace-nowrap">
+                <button onclick="startScan()" id="btn-start-scan" class="inline-flex items-center gap-2 px-5 py-2.5 bg-coral text-white text-sm font-semibold rounded-lg hover:bg-coralh transition-colors shadow-sm whitespace-nowrap">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/></svg>
                     Scaneaza
                 </button>
             </div>
         </div>
         {{-- Time estimate --}}
-        <p id="scan-time-estimate" class="text-xs text-slate-400 mt-2">
+        <p id="scan-time-estimate" class="text-xs text-muted mt-2">
             Timp estimat: <span id="scan-est-value">~1 minut</span> (depinde de viteza site-ului)
         </p>
     </div>
 
     {{-- Active scan progress --}}
     <div id="scan-progress" class="hidden mb-6">
-        <div class="bg-white rounded-lg border border-slate-200 p-5">
+        <div class="bg-white rounded-lg border border-line p-5">
             <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-2">
-                    <svg class="w-4 h-4 animate-spin text-red-700" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                    <span class="text-sm font-medium text-slate-900">Scanare in curs...</span>
+                    <svg class="w-4 h-4 animate-spin text-coralh" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    <span class="text-sm font-medium text-ink">Scanare in curs...</span>
                 </div>
                 <div class="flex items-center gap-3">
-                    <span id="scan-eta" class="text-xs text-slate-400"></span>
-                    <button onclick="cancelCurrentScan()" class="text-xs text-red-600 hover:text-red-800 font-medium px-2 py-1 rounded border border-red-200 hover:bg-red-50 transition-colors">Anuleaza</button>
+                    <span id="scan-eta" class="text-xs text-muted"></span>
+                    <button onclick="cancelCurrentScan()" class="text-xs text-coral hover:text-coralh font-medium px-2 py-1 rounded border border-coral/30 hover:bg-coralsoft transition-colors">Anuleaza</button>
                 </div>
             </div>
-            <div class="w-full bg-slate-200 rounded-full h-2 mb-2">
-                <div id="scan-progress-bar" class="bg-red-700 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+            <div class="w-full bg-sand rounded-full h-2 mb-2">
+                <div id="scan-progress-bar" class="bg-coral h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
             </div>
-            <div class="flex justify-between text-xs text-slate-500">
+            <div class="flex justify-between text-xs text-muted">
                 <span id="scan-progress-text">0 pagini procesate</span>
                 <span id="scan-progress-percent">0%</span>
             </div>
 
             {{-- Live page list --}}
-            <div class="mt-4 border-t border-slate-100 pt-3">
-                <button onclick="toggleLivePages()" class="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-700 transition-colors">
+            <div class="mt-4 border-t border-line pt-3">
+                <button onclick="toggleLivePages()" class="flex items-center gap-1 text-xs font-medium text-muted hover:text-inkSoft transition-colors">
                     <svg id="live-pages-chevron" class="w-3 h-3 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
                     Pagini gasite (<span id="live-pages-count">0</span>)
                 </button>
@@ -68,21 +68,21 @@
 
     {{-- Scan results (post-scan review) --}}
     <div id="scan-results" class="hidden mb-6">
-        <div class="bg-white rounded-lg border border-slate-200 p-5">
+        <div class="bg-white rounded-lg border border-line p-5">
             <div class="flex items-center justify-between mb-3">
-                <h4 class="text-sm font-semibold text-slate-900">Rezultate scanare</h4>
+                <h4 class="text-sm font-semibold text-ink">Rezultate scanare</h4>
                 <div class="flex items-center gap-2">
-                    <button onclick="selectAllScanResults(true)" class="text-xs text-red-700 hover:underline">Selecteaza toate</button>
+                    <button onclick="selectAllScanResults(true)" class="text-xs text-coralh hover:underline">Selecteaza toate</button>
                     <span class="text-slate-300">|</span>
-                    <button onclick="selectAllScanResults(false)" class="text-xs text-slate-500 hover:underline">Deselecteaza</button>
+                    <button onclick="selectAllScanResults(false)" class="text-xs text-muted hover:underline">Deselecteaza</button>
                 </div>
             </div>
             <div id="scan-results-list" class="max-h-64 overflow-y-auto space-y-1.5">
                 {{-- Populated dynamically --}}
             </div>
-            <div class="flex items-center justify-between mt-3 pt-3 border-t border-slate-100">
-                <span class="text-xs text-slate-500"><span id="scan-selected-count">0</span> pagini selectate</span>
-                <button onclick="importSelectedPages()" id="btn-import-selected" class="inline-flex items-center gap-2 px-4 py-2 bg-red-800 text-white text-xs font-semibold rounded-lg hover:bg-red-900 transition-colors shadow-sm">
+            <div class="flex items-center justify-between mt-3 pt-3 border-t border-line">
+                <span class="text-xs text-muted"><span id="scan-selected-count">0</span> pagini selectate</span>
+                <button onclick="importSelectedPages()" id="btn-import-selected" class="inline-flex items-center gap-2 px-4 py-2 bg-coral text-white text-xs font-semibold rounded-lg hover:bg-coralh transition-colors shadow-sm">
                     Importa selectate
                 </button>
             </div>
@@ -91,32 +91,32 @@
 
     {{-- Scan history --}}
     @if($scans->isNotEmpty())
-        <h4 class="text-sm font-semibold text-slate-700 mb-3">Scanari anterioare</h4>
+        <h4 class="text-sm font-semibold text-inkSoft mb-3">Scanari anterioare</h4>
         <div class="space-y-2">
             @foreach($scans as $scan)
-                <div class="flex items-center justify-between bg-white rounded-lg border border-slate-200 px-4 py-3">
+                <div class="flex items-center justify-between bg-white rounded-lg border border-line px-4 py-3">
                     <div class="flex items-center gap-3 min-w-0">
                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
                             @if($scan->status === 'completed') bg-green-100 text-green-700
                             @elseif($scan->status === 'scanning') bg-blue-100 text-blue-700
                             @elseif($scan->status === 'cancelled') bg-yellow-100 text-yellow-700
-                            @else bg-red-100 text-red-700 @endif">
+                            @else bg-coralsoft text-coralh @endif">
                             {{ ucfirst($scan->status) }}
                         </span>
-                        <span class="text-sm text-slate-900 truncate">{{ $scan->base_url }}</span>
+                        <span class="text-sm text-ink truncate">{{ $scan->base_url }}</span>
                     </div>
-                    <div class="flex items-center gap-4 text-xs text-slate-500 shrink-0">
+                    <div class="flex items-center gap-4 text-xs text-muted shrink-0">
                         <span>{{ $scan->pages_processed }}/{{ $scan->max_pages }} pagini</span>
                         <span>{{ $scan->created_at->diffForHumans() }}</span>
                         @if($scan->status === 'failed')
-                            <button onclick="retryScan('{{ $scan->base_url }}', {{ $scan->max_pages }})" class="text-red-600 hover:text-red-800 font-medium">Reincearca</button>
+                            <button onclick="retryScan('{{ $scan->base_url }}', {{ $scan->max_pages }})" class="text-coral hover:text-coralh font-medium">Reincearca</button>
                         @endif
                     </div>
                 </div>
             @endforeach
         </div>
     @else
-        <div class="text-center py-8 text-slate-400">
+        <div class="text-center py-8 text-muted">
             <svg class="w-12 h-12 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/></svg>
             <p class="text-sm">Nicio scanare efectuata inca.</p>
         </div>
@@ -256,10 +256,10 @@
             var statusDot = page.status === 'processed' ? 'bg-green-400' :
                             page.status === 'duplicate' ? 'bg-yellow-400' :
                             page.status === 'failed' ? 'bg-red-400' : 'bg-slate-300';
-            html += '<div class="flex items-center gap-2 px-2 py-1 rounded hover:bg-slate-50">';
+            html += '<div class="flex items-center gap-2 px-2 py-1 rounded hover:bg-cream">';
             html += '  <span class="w-1.5 h-1.5 rounded-full ' + statusDot + ' shrink-0"></span>';
             var pageLabel = (page.title || page.url || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            html += '  <span class="text-xs text-slate-600 truncate">' + pageLabel + '</span>';
+            html += '  <span class="text-xs text-muted truncate">' + pageLabel + '</span>';
             html += '</div>';
         });
 
@@ -328,7 +328,7 @@
         var colors = {
             success: 'bg-green-50 border-green-200 text-green-800',
             warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
-            error: 'bg-red-50 border-red-200 text-red-800',
+            error: 'bg-coralsoft border-coral/30 text-coralh',
             info: 'bg-blue-50 border-blue-200 text-blue-800'
         };
         var toastEl = document.createElement('div');

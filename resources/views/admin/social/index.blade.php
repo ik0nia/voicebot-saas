@@ -6,11 +6,11 @@
 @section('content')
 @php
     $statusColors = [
-        'draft'      => 'bg-slate-100 text-slate-700',
+        'draft'      => 'bg-cream text-inkSoft',
         'scheduled'  => 'bg-blue-100 text-blue-700',
         'publishing' => 'bg-amber-100 text-amber-700',
         'published'  => 'bg-green-100 text-green-700',
-        'failed'     => 'bg-red-100 text-red-700',
+        'failed'     => 'bg-coralsoft text-coralh',
     ];
     $platformIcon = ['facebook' => 'FB', 'instagram' => 'IG', 'blog' => 'Blog'];
     $platformBg = ['facebook' => 'bg-blue-600', 'instagram' => 'bg-pink-600', 'blog' => 'bg-slate-600'];
@@ -36,12 +36,12 @@
     {{-- Header --}}
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-5">
         <div class="flex-1">
-            <h1 class="text-2xl font-bold text-slate-900">Social Media</h1>
+            <h1 class="text-2xl font-bold text-ink">Social Media</h1>
             @if($bufferUntil)
-                <p class="text-sm font-semibold text-slate-700 mt-1">
+                <p class="text-sm font-semibold text-inkSoft mt-1">
                     📅 Postări programate până la
                     <span class="text-blue-700">{{ $bufferUntil->translatedFormat('l, d F Y') }}</span>
-                    <span class="text-slate-500 font-normal">({{ $bufferDaysLeft }} {{ $bufferDaysLeft === 1 ? 'zi' : 'zile' }})</span>
+                    <span class="text-muted font-normal">({{ $bufferDaysLeft }} {{ $bufferDaysLeft === 1 ? 'zi' : 'zile' }})</span>
                 </p>
             @endif
 
@@ -76,75 +76,75 @@
                     <p class="text-xl font-extrabold text-amber-900 mt-0.5">{{ $scheduledThisMonth }} <span class="text-xs font-semibold text-amber-700">rămase de publicat</span></p>
                 </div>
             </div>
-            <p class="text-sm text-slate-500 mt-0.5">
-                <kbd class="px-1.5 py-0.5 text-[10px] font-mono bg-slate-100 border border-slate-200 rounded">j</kbd>
-                <kbd class="px-1.5 py-0.5 text-[10px] font-mono bg-slate-100 border border-slate-200 rounded">k</kbd>
+            <p class="text-sm text-muted mt-0.5">
+                <kbd class="px-1.5 py-0.5 text-[10px] font-mono bg-cream border border-line rounded">j</kbd>
+                <kbd class="px-1.5 py-0.5 text-[10px] font-mono bg-cream border border-line rounded">k</kbd>
                 navigare ·
-                <kbd class="px-1.5 py-0.5 text-[10px] font-mono bg-slate-100 border border-slate-200 rounded">e</kbd> editează ·
-                <kbd class="px-1.5 py-0.5 text-[10px] font-mono bg-slate-100 border border-slate-200 rounded">a</kbd> publică ·
-                <kbd class="px-1.5 py-0.5 text-[10px] font-mono bg-slate-100 border border-slate-200 rounded">?</kbd> ajutor
+                <kbd class="px-1.5 py-0.5 text-[10px] font-mono bg-cream border border-line rounded">e</kbd> editează ·
+                <kbd class="px-1.5 py-0.5 text-[10px] font-mono bg-cream border border-line rounded">a</kbd> publică ·
+                <kbd class="px-1.5 py-0.5 text-[10px] font-mono bg-cream border border-line rounded">?</kbd> ajutor
             </p>
         </div>
         <div class="flex flex-wrap gap-2">
-            <a href="{{ route('admin.social.style') }}" class="px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">Style</a>
-            <a href="{{ route('admin.social.accounts') }}" class="px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">Conturi</a>
-            <a href="{{ route('admin.social.schedule') }}" class="px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">Programare</a>
+            <a href="{{ route('admin.social.style') }}" class="px-3 py-2 text-sm font-medium text-inkSoft bg-white border border-line rounded-lg hover:bg-cream">Style</a>
+            <a href="{{ route('admin.social.accounts') }}" class="px-3 py-2 text-sm font-medium text-inkSoft bg-white border border-line rounded-lg hover:bg-cream">Conturi</a>
+            <a href="{{ route('admin.social.schedule') }}" class="px-3 py-2 text-sm font-medium text-inkSoft bg-white border border-line rounded-lg hover:bg-cream">Programare</a>
         </div>
     </div>
 
     {{-- Stat chips row --}}
     <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
         @foreach([
-            ['label' => 'Total', 'value' => $stats['total_posts'], 'color' => 'text-slate-900', 'status' => null],
-            ['label' => 'De review', 'value' => $stats['draft'], 'color' => $stats['draft'] < 100 ? 'text-amber-600' : 'text-slate-700', 'status' => 'draft'],
+            ['label' => 'Total', 'value' => $stats['total_posts'], 'color' => 'text-ink', 'status' => null],
+            ['label' => 'De review', 'value' => $stats['draft'], 'color' => $stats['draft'] < 100 ? 'text-amber-600' : 'text-inkSoft', 'status' => 'draft'],
             ['label' => 'Programate', 'value' => $stats['scheduled'], 'color' => 'text-blue-600', 'status' => 'scheduled'],
             ['label' => 'Publicate', 'value' => $stats['published'], 'color' => 'text-green-600', 'status' => 'published'],
-            ['label' => 'Eșuate', 'value' => $stats['failed'], 'color' => 'text-red-600', 'status' => 'failed'],
+            ['label' => 'Eșuate', 'value' => $stats['failed'], 'color' => 'text-coral', 'status' => 'failed'],
         ] as $chip)
             <a href="{{ route('admin.social.index', $chip['status'] ? ['status' => $chip['status']] : []) }}"
-               class="bg-white rounded-lg border border-slate-200 px-3 py-2 hover:border-slate-400 flex items-center justify-between">
-                <span class="text-xs font-semibold text-slate-500 uppercase">{{ $chip['label'] }}</span>
+               class="bg-white rounded-lg border border-line px-3 py-2 hover:border-slate-400 flex items-center justify-between">
+                <span class="text-xs font-semibold text-muted uppercase">{{ $chip['label'] }}</span>
                 <span class="text-lg font-bold {{ $chip['color'] }}">{{ $chip['value'] }}</span>
             </a>
         @endforeach
     </div>
 
     {{-- Toolbar: search + filters + generate --}}
-    <form method="GET" action="{{ route('admin.social.index') }}" class="bg-white rounded-xl border border-slate-200 p-3 mb-4 flex flex-wrap items-center gap-2">
+    <form method="GET" action="{{ route('admin.social.index') }}" class="bg-white rounded-xl border border-line p-3 mb-4 flex flex-wrap items-center gap-2">
         <input type="text" name="q" value="{{ request('q') }}" placeholder="Caută în text, prompt..."
-               class="flex-1 min-w-[180px] rounded-lg border-slate-300 text-sm focus:border-red-500 focus:ring-red-500">
-        <select name="platform" class="rounded-lg border-slate-300 text-sm">
+               class="flex-1 min-w-[180px] rounded-lg border-line text-sm focus:border-coral focus:ring-coral">
+        <select name="platform" class="rounded-lg border-line text-sm">
             <option value="">Toate platformele</option>
             @foreach(['facebook','instagram','blog'] as $p)
                 <option value="{{ $p }}" @selected(request('platform')===$p)>{{ ucfirst($p) }}</option>
             @endforeach
         </select>
-        <select name="status" class="rounded-lg border-slate-300 text-sm">
+        <select name="status" class="rounded-lg border-line text-sm">
             <option value="">Orice status</option>
             @foreach(['draft','scheduled','publishing','published','failed'] as $s)
                 <option value="{{ $s }}" @selected(request('status')===$s)>{{ ucfirst($s) }}</option>
             @endforeach
         </select>
-        <input type="date" name="from" value="{{ request('from') }}" class="rounded-lg border-slate-300 text-sm" title="De la">
-        <input type="date" name="to" value="{{ request('to') }}" class="rounded-lg border-slate-300 text-sm" title="Până la">
+        <input type="date" name="from" value="{{ request('from') }}" class="rounded-lg border-line text-sm" title="De la">
+        <input type="date" name="to" value="{{ request('to') }}" class="rounded-lg border-line text-sm" title="Până la">
         <button type="submit" class="px-3 py-2 text-sm font-medium text-white bg-slate-800 rounded-lg hover:bg-slate-900">Filtrează</button>
         @if(request()->hasAny(['q','platform','status','from','to']))
-            <a href="{{ route('admin.social.index') }}" class="px-3 py-2 text-sm text-slate-500 hover:text-slate-800">Resetează</a>
+            <a href="{{ route('admin.social.index') }}" class="px-3 py-2 text-sm text-muted hover:text-ink">Resetează</a>
         @endif
     </form>
 
     {{-- Quick generate --}}
-    <details class="bg-white rounded-xl border border-slate-200 p-4 mb-4" {{ request('new') ? 'open' : '' }}>
-        <summary class="cursor-pointer text-sm font-semibold text-slate-900">➕ Generează postare nouă</summary>
+    <details class="bg-white rounded-xl border border-line p-4 mb-4" {{ request('new') ? 'open' : '' }}>
+        <summary class="cursor-pointer text-sm font-semibold text-ink">➕ Generează postare nouă</summary>
         <form method="POST" action="{{ route('admin.social.generate') }}" class="mt-3 flex flex-col sm:flex-row gap-2">
             @csrf
-            <select name="platform" class="rounded-lg border-slate-300 text-sm w-full sm:w-36">
+            <select name="platform" class="rounded-lg border-line text-sm w-full sm:w-36">
                 <option value="facebook">Facebook</option>
                 <option value="instagram">Instagram</option>
                 <option value="blog">Blog</option>
             </select>
-            <input type="text" name="topic" placeholder="Subiect..." required class="flex-1 rounded-lg border-slate-300 text-sm">
-            <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">Generează</button>
+            <input type="text" name="topic" placeholder="Subiect..." required class="flex-1 rounded-lg border-line text-sm">
+            <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-coral rounded-lg hover:bg-coral">Generează</button>
         </form>
     </details>
 
@@ -152,8 +152,8 @@
     @if($deck->count() > 0)
     <div id="cardDeck" class="lg:hidden mb-4 select-none">
         <div class="flex items-center justify-between mb-2 px-1">
-            <h2 class="text-sm font-bold text-slate-900">Review rapid</h2>
-            <span id="deckCount" class="text-xs text-slate-500">{{ $deck->count() }} drafturi</span>
+            <h2 class="text-sm font-bold text-ink">Review rapid</h2>
+            <span id="deckCount" class="text-xs text-muted">{{ $deck->count() }} drafturi</span>
         </div>
         <div id="deckArea" class="relative" style="height: 65vh;">
             @foreach($deck as $i => $post)
@@ -177,15 +177,15 @@
                     @endif
                     {{-- Text --}}
                     <div class="p-4 flex-1 overflow-y-auto">
-                        <p class="text-sm text-slate-800 whitespace-pre-wrap leading-relaxed">{{ $post->content }}</p>
+                        <p class="text-sm text-ink whitespace-pre-wrap leading-relaxed">{{ $post->content }}</p>
                     </div>
                     {{-- Swipe labels --}}
                     <div class="card-label-approve pointer-events-none absolute top-6 left-4 px-3 py-1 rounded-lg border-4 border-green-500 text-green-500 text-2xl font-black opacity-0" style="transform: rotate(-15deg);">APROBĂ</div>
-                    <div class="card-label-reject pointer-events-none absolute top-6 right-4 px-3 py-1 rounded-lg border-4 border-red-500 text-red-500 text-2xl font-black opacity-0" style="transform: rotate(15deg);">REFUZĂ</div>
+                    <div class="card-label-reject pointer-events-none absolute top-6 right-4 px-3 py-1 rounded-lg border-4 border-red-500 text-coral text-2xl font-black opacity-0" style="transform: rotate(15deg);">REFUZĂ</div>
                 </div>
             @endforeach
             <div id="deckEmpty" class="hidden absolute inset-0 flex items-center justify-center text-center">
-                <div class="text-slate-500">
+                <div class="text-muted">
                     <div class="text-4xl mb-2">🎉</div>
                     <p class="text-sm font-semibold">Ai terminat!</p>
                     <p class="text-xs mt-1">Se vor genera mai multe la următorul cron.</p>
@@ -196,48 +196,48 @@
         {{-- Action buttons below cards --}}
         <div class="flex items-center justify-center gap-4 mt-4">
             <button type="button" id="btn-card-reject" aria-label="Refuză"
-                    class="w-16 h-16 rounded-full bg-white border-2 border-red-400 text-red-500 text-3xl shadow-lg active:scale-90 transition flex items-center justify-center">✕</button>
+                    class="w-16 h-16 rounded-full bg-white border-2 border-red-400 text-coral text-3xl shadow-lg active:scale-90 transition flex items-center justify-center">✕</button>
             <button type="button" id="btn-card-detail" aria-label="Detalii"
                     class="h-12 px-4 rounded-full bg-slate-800 text-white text-xs font-semibold shadow active:scale-95 transition">Detalii</button>
             <button type="button" id="btn-card-approve" aria-label="Aprobă"
                     class="w-16 h-16 rounded-full bg-white border-2 border-green-500 text-green-600 text-3xl shadow-lg active:scale-90 transition flex items-center justify-center">♥</button>
         </div>
-        <p class="mt-2 text-center text-[11px] text-slate-400">Trage card-ul → dreapta aprobă, stânga refuză</p>
+        <p class="mt-2 text-center text-[11px] text-muted">Trage card-ul → dreapta aprobă, stânga refuză</p>
     </div>
     @endif
 
     {{-- Main split-pane layout (desktop + mobile list fallback) --}}
     <div class="flex gap-4 items-start">
         {{-- LEFT: grouped list --}}
-        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden flex-1 min-w-0">
-            <div class="px-4 py-2.5 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-white z-10">
+        <div class="bg-white rounded-xl border border-line overflow-hidden flex-1 min-w-0">
+            <div class="px-4 py-2.5 border-b border-line flex items-center justify-between sticky top-0 bg-white z-10">
                 <div class="flex items-center gap-3">
-                    <label class="flex items-center gap-1.5 text-xs text-slate-500">
-                        <input type="checkbox" id="selectAll" class="rounded border-slate-300">
+                    <label class="flex items-center gap-1.5 text-xs text-muted">
+                        <input type="checkbox" id="selectAll" class="rounded border-line">
                         Selectează tot
                     </label>
-                    <span class="text-xs text-slate-500">{{ $posts->total() }} postări</span>
+                    <span class="text-xs text-muted">{{ $posts->total() }} postări</span>
                 </div>
                 <div id="bulkBar" class="hidden items-center gap-2 flex-wrap">
-                    <span id="bulkCount" class="text-xs font-semibold text-slate-700">0 selectate</span>
+                    <span id="bulkCount" class="text-xs font-semibold text-inkSoft">0 selectate</span>
                     <button type="button" onclick="bulkAction('publish')" class="px-2 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700">Publică</button>
                     <div class="flex items-center gap-1">
-                        <input type="datetime-local" id="bulkRescheduleAt" class="rounded border-slate-300 text-xs px-2 py-1">
+                        <input type="datetime-local" id="bulkRescheduleAt" class="rounded border-line text-xs px-2 py-1">
                         <button type="button" onclick="bulkAction('reschedule')" class="px-2 py-1 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700">Mută</button>
                     </div>
-                    <button type="button" onclick="bulkAction('delete')" class="px-2 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700">Șterge</button>
+                    <button type="button" onclick="bulkAction('delete')" class="px-2 py-1 text-xs font-medium text-white bg-coral rounded hover:bg-coral">Șterge</button>
                 </div>
             </div>
 
             <ul class="divide-y divide-slate-100" id="postList">
                 @forelse($grouped as $groupLabel => $groupPosts)
-                    <li class="bg-slate-50 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{{ $groupLabel }}</li>
+                    <li class="bg-cream px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted">{{ $groupLabel }}</li>
                     @foreach($groupPosts as $post)
                         <li class="post-row group" data-post-id="{{ $post->id }}" data-edit-url="{{ route('admin.social.edit', $post) }}">
-                            <div class="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 cursor-pointer relative">
-                                <input type="checkbox" class="post-check rounded border-slate-300 shrink-0" value="{{ $post->id }}" onclick="event.stopPropagation(); updateBulk();">
+                            <div class="flex items-center gap-3 px-4 py-3 hover:bg-cream cursor-pointer relative">
+                                <input type="checkbox" class="post-check rounded border-line shrink-0" value="{{ $post->id }}" onclick="event.stopPropagation(); updateBulk();">
 
-                                <div class="shrink-0 w-14 h-14 rounded-lg overflow-hidden bg-slate-100 border border-slate-200 relative">
+                                <div class="shrink-0 w-14 h-14 rounded-lg overflow-hidden bg-cream border border-line relative">
                                     @if($post->image_url)
                                         <img src="{{ $post->image_url }}" alt="" class="w-full h-full object-cover" loading="lazy">
                                     @else
@@ -248,14 +248,14 @@
 
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center gap-2 mb-0.5">
-                                        <span class="inline-flex px-1.5 py-0.5 text-[10px] font-semibold rounded {{ $statusColors[$post->status] ?? 'bg-slate-100' }}">{{ strtoupper($post->status) }}</span>
+                                        <span class="inline-flex px-1.5 py-0.5 text-[10px] font-semibold rounded {{ $statusColors[$post->status] ?? 'bg-cream' }}">{{ strtoupper($post->status) }}</span>
                                         @if($post->metadata['category'] ?? null)
-                                            <span class="inline-flex px-1.5 py-0.5 text-[10px] font-semibold rounded bg-slate-50 text-slate-500">{{ $post->metadata['category'] }}</span>
+                                            <span class="inline-flex px-1.5 py-0.5 text-[10px] font-semibold rounded bg-cream text-muted">{{ $post->metadata['category'] }}</span>
                                         @endif
                                         @if(($post->regen_count ?? 0) > 0)
                                             <span class="inline-flex px-1.5 py-0.5 text-[10px] text-amber-700" title="Regenerări">↻{{ $post->regen_count }}</span>
                                         @endif
-                                        <span class="text-[11px] text-slate-400 ml-auto">
+                                        <span class="text-[11px] text-muted ml-auto">
                                             @if($post->status === 'published' && $post->published_at)
                                                 {{ $post->published_at->format('H:i') }}
                                             @elseif($post->scheduled_at)
@@ -263,18 +263,18 @@
                                             @endif
                                         </span>
                                     </div>
-                                    <p class="text-sm text-slate-700 line-clamp-1">{{ \Illuminate\Support\Str::limit($post->content, 120) }}</p>
+                                    <p class="text-sm text-inkSoft line-clamp-1">{{ \Illuminate\Support\Str::limit($post->content, 120) }}</p>
                                 </div>
                             </div>
                         </li>
                     @endforeach
                 @empty
-                    <li class="px-6 py-10 text-center text-sm text-slate-400">Niciun post. Generează primul din butonul de sus.</li>
+                    <li class="px-6 py-10 text-center text-sm text-muted">Niciun post. Generează primul din butonul de sus.</li>
                 @endforelse
             </ul>
 
             @if($posts->hasPages())
-                <div class="px-4 py-3 border-t border-slate-200">{{ $posts->onEachSide(1)->links() }}</div>
+                <div class="px-4 py-3 border-t border-line">{{ $posts->onEachSide(1)->links() }}</div>
             @endif
         </div>
 
@@ -282,33 +282,33 @@
         <aside id="postPanel"
                class="hidden lg:flex lg:flex-col lg:sticky lg:top-4 lg:w-[560px] lg:shrink-0
                       fixed inset-x-0 bottom-0 lg:inset-auto z-40
-                      bg-white lg:rounded-xl lg:border lg:border-slate-200 lg:shadow-xl
+                      bg-white lg:rounded-xl lg:border lg:border-line lg:shadow-xl
                       max-h-[92vh] lg:max-h-[calc(100vh-7rem)] overflow-hidden">
             {{-- Empty state --}}
-            <div id="panelEmpty" class="flex-1 flex items-center justify-center p-10 text-center text-sm text-slate-400">
+            <div id="panelEmpty" class="flex-1 flex items-center justify-center p-10 text-center text-sm text-muted">
                 <div>
                     <div class="text-3xl mb-2">👈</div>
                     Selectează o postare din stânga.<br>
-                    <span class="text-xs mt-2 block">sau folosește <kbd class="px-1 py-0.5 text-[10px] bg-slate-100 border rounded">j</kbd>/<kbd class="px-1 py-0.5 text-[10px] bg-slate-100 border rounded">k</kbd></span>
+                    <span class="text-xs mt-2 block">sau folosește <kbd class="px-1 py-0.5 text-[10px] bg-cream border rounded">j</kbd>/<kbd class="px-1 py-0.5 text-[10px] bg-cream border rounded">k</kbd></span>
                 </div>
             </div>
 
             {{-- Loaded state --}}
             <div id="panelContent" class="hidden flex-1 overflow-y-auto">
                 {{-- Sticky header --}}
-                <div class="sticky top-0 bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-2 z-10">
-                    <button type="button" data-close-panel class="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg" aria-label="Închide">
+                <div class="sticky top-0 bg-white border-b border-line px-4 py-3 flex items-center gap-2 z-10">
+                    <button type="button" data-close-panel class="p-1.5 text-muted hover:text-ink hover:bg-cream rounded-lg" aria-label="Închide">
                         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
-                    <span id="panel-platform" class="px-2 py-0.5 text-xs font-semibold rounded-full bg-slate-100 text-slate-700"></span>
+                    <span id="panel-platform" class="px-2 py-0.5 text-xs font-semibold rounded-full bg-cream text-inkSoft"></span>
                     <span id="panel-fanout" class="hidden px-2 py-0.5 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-700" title="Postare de grup"></span>
                     <span id="panel-status" class="px-2 py-0.5 text-xs font-semibold rounded-full"></span>
-                    <span id="panel-saved" class="text-[11px] text-slate-400 ml-auto">—</span>
+                    <span id="panel-saved" class="text-[11px] text-muted ml-auto">—</span>
                     <div class="flex items-center gap-1">
-                        <button type="button" onclick="navPost(-1)" class="p-1 text-slate-400 hover:text-slate-700" title="Anterior (k)" aria-label="Anterior">
+                        <button type="button" onclick="navPost(-1)" class="p-1 text-muted hover:text-inkSoft" title="Anterior (k)" aria-label="Anterior">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
                         </button>
-                        <button type="button" onclick="navPost(1)" class="p-1 text-slate-400 hover:text-slate-700" title="Următor (j)" aria-label="Următor">
+                        <button type="button" onclick="navPost(1)" class="p-1 text-muted hover:text-inkSoft" title="Următor (j)" aria-label="Următor">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
                         </button>
                     </div>
@@ -317,42 +317,42 @@
                 <div class="p-4 space-y-4">
                     {{-- Image: neutral canvas, centered, respects native aspect ratio --}}
                     <div id="panel-image-wrap" class="relative hidden">
-                        <div class="flex items-center justify-center bg-slate-50 rounded-lg border border-slate-200 overflow-hidden" style="min-height: 180px;">
+                        <div class="flex items-center justify-center bg-cream rounded-lg border border-line overflow-hidden" style="min-height: 180px;">
                             <img id="panel-image" src="" alt="" class="block max-w-full max-h-[55vh] h-auto w-auto object-contain">
                         </div>
-                        <div id="panel-image-loading" class="hidden absolute inset-0 flex items-center justify-center bg-white/85 rounded-lg text-sm text-slate-600">
-                            <svg class="animate-spin w-5 h-5 mr-2 text-slate-500" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" opacity=".25"/><path fill="currentColor" d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"/></svg>
+                        <div id="panel-image-loading" class="hidden absolute inset-0 flex items-center justify-center bg-white/85 rounded-lg text-sm text-muted">
+                            <svg class="animate-spin w-5 h-5 mr-2 text-muted" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" opacity=".25"/><path fill="currentColor" d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"/></svg>
                             Se generează...
                         </div>
                     </div>
 
                     {{-- Error message --}}
                     <div id="panel-error-wrap" class="hidden">
-                        <p class="text-xs font-semibold text-red-700 uppercase">Eroare publicare</p>
-                        <p id="panel-error" class="mt-1 text-xs text-red-700 bg-red-50 border border-red-200 p-2 rounded"></p>
+                        <p class="text-xs font-semibold text-coralh uppercase">Eroare publicare</p>
+                        <p id="panel-error" class="mt-1 text-xs text-coralh bg-coralsoft border border-coral/30 p-2 rounded"></p>
                     </div>
 
                     {{-- Content editor --}}
                     <div>
                         <div class="flex items-center justify-between">
-                            <label class="text-xs font-semibold text-slate-500 uppercase">Text postare</label>
+                            <label class="text-xs font-semibold text-muted uppercase">Text postare</label>
                             <button id="panel-undo-text" type="button" onclick="undoTextRegen()" class="hidden text-[11px] text-amber-600 hover:text-amber-800">↶ revino la text-ul anterior</button>
                         </div>
-                        <div id="panel-text-diff" class="hidden mt-1 text-xs text-slate-500 bg-amber-50 border border-amber-200 rounded p-2 leading-relaxed"></div>
+                        <div id="panel-text-diff" class="hidden mt-1 text-xs text-muted bg-amber-50 border border-amber-200 rounded p-2 leading-relaxed"></div>
                         <textarea id="panel-content" rows="8"
-                                  class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-red-500 focus:ring-red-500"
+                                  class="mt-1 w-full rounded-lg border-line text-sm focus:border-coral focus:ring-coral"
                                   placeholder="Textul postării..."></textarea>
                     </div>
 
                     {{-- Schedule --}}
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="text-xs font-semibold text-slate-500 uppercase">Programat pentru</label>
-                            <input type="datetime-local" id="panel-scheduled" class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-red-500 focus:ring-red-500">
+                            <label class="text-xs font-semibold text-muted uppercase">Programat pentru</label>
+                            <input type="datetime-local" id="panel-scheduled" class="mt-1 w-full rounded-lg border-line text-sm focus:border-coral focus:ring-coral">
                         </div>
                         <div>
-                            <label class="text-xs font-semibold text-slate-500 uppercase">Tip</label>
-                            <select id="panel-post-type" class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-red-500 focus:ring-red-500">
+                            <label class="text-xs font-semibold text-muted uppercase">Tip</label>
+                            <select id="panel-post-type" class="mt-1 w-full rounded-lg border-line text-sm focus:border-coral focus:ring-coral">
                                 <option value="post">Post</option>
                                 <option value="story">Story</option>
                                 <option value="reel">Reel</option>
@@ -362,9 +362,9 @@
 
                     {{-- Image prompt editable + regen with custom prompt --}}
                     <details id="panel-prompt-wrap" open>
-                        <summary class="text-xs font-semibold text-slate-500 uppercase cursor-pointer">Prompt imagine (editabil)</summary>
+                        <summary class="text-xs font-semibold text-muted uppercase cursor-pointer">Prompt imagine (editabil)</summary>
                         <textarea id="panel-image-prompt" rows="3"
-                                  class="mt-1 w-full rounded-lg border-slate-300 text-xs font-mono focus:border-red-500 focus:ring-red-500"
+                                  class="mt-1 w-full rounded-lg border-line text-xs font-mono focus:border-coral focus:ring-coral"
                                   placeholder="Ce să conțină imaginea... (ex: birou modern, laptop, culori calde)"></textarea>
                         <button type="button" onclick="regenImage()" id="btn-regen-img-prompt"
                                 class="mt-1 w-full px-3 py-2 text-xs font-semibold text-white bg-slate-800 rounded hover:bg-slate-900 disabled:opacity-50">
@@ -374,9 +374,9 @@
 
                     {{-- Text regen instructions --}}
                     <details class="mt-2">
-                        <summary class="text-xs font-semibold text-slate-500 uppercase cursor-pointer">Instrucțiuni text nou</summary>
+                        <summary class="text-xs font-semibold text-muted uppercase cursor-pointer">Instrucțiuni text nou</summary>
                         <textarea id="panel-text-instructions" rows="2"
-                                  class="mt-1 w-full rounded-lg border-slate-300 text-xs focus:border-red-500 focus:ring-red-500"
+                                  class="mt-1 w-full rounded-lg border-line text-xs focus:border-coral focus:ring-coral"
                                   placeholder="Ex: mai scurt, ton mai entuziast, menționează prețul..."></textarea>
                         <button type="button" onclick="regenText()"
                                 class="mt-1 w-full px-3 py-2 text-xs font-semibold text-white bg-slate-800 rounded hover:bg-slate-900 disabled:opacity-50">
@@ -393,43 +393,43 @@
 
                     {{-- Variants --}}
                     <div id="panel-variants-wrap" class="hidden">
-                        <p class="text-xs font-semibold text-slate-500 uppercase mb-1">Versiuni anterioare</p>
+                        <p class="text-xs font-semibold text-muted uppercase mb-1">Versiuni anterioare</p>
                         <div id="panel-variants" class="flex flex-wrap gap-1"></div>
                     </div>
 
                     {{-- Past rejections --}}
                     <div id="panel-rejections-wrap" class="hidden">
-                        <p class="text-xs font-semibold text-slate-500 uppercase mb-1">Refuzuri anterioare</p>
-                        <ul id="panel-rejections" class="text-xs text-slate-600 space-y-0.5"></ul>
+                        <p class="text-xs font-semibold text-muted uppercase mb-1">Refuzuri anterioare</p>
+                        <ul id="panel-rejections" class="text-xs text-muted space-y-0.5"></ul>
                     </div>
                 </div>
 
                 {{-- Sticky footer actions --}}
-                <div class="sticky bottom-0 bg-white border-t border-slate-200 px-4 py-3 space-y-2">
+                <div class="sticky bottom-0 bg-white border-t border-line px-4 py-3 space-y-2">
                     <div class="grid grid-cols-2 gap-2">
-                        <button type="button" onclick="regenImage()" id="btn-regen-img" class="px-3 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50">🖼️ Imagine nouă</button>
-                        <button type="button" onclick="regenText()" id="btn-regen-txt" class="px-3 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50">✏️ Text nou</button>
-                        <button type="button" onclick="duplicatePost()" class="px-3 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-50">📋 Duplică</button>
-                        <button type="button" onclick="showRejectForm()" class="px-3 py-2 text-xs font-medium text-red-700 bg-white border border-red-300 rounded hover:bg-red-50">❌ Refuză</button>
+                        <button type="button" onclick="regenImage()" id="btn-regen-img" class="px-3 py-2 text-xs font-medium text-inkSoft bg-white border border-line rounded hover:bg-cream disabled:opacity-50">🖼️ Imagine nouă</button>
+                        <button type="button" onclick="regenText()" id="btn-regen-txt" class="px-3 py-2 text-xs font-medium text-inkSoft bg-white border border-line rounded hover:bg-cream disabled:opacity-50">✏️ Text nou</button>
+                        <button type="button" onclick="duplicatePost()" class="px-3 py-2 text-xs font-medium text-inkSoft bg-white border border-line rounded hover:bg-cream">📋 Duplică</button>
+                        <button type="button" onclick="showRejectForm()" class="px-3 py-2 text-xs font-medium text-coralh bg-white border border-red-300 rounded hover:bg-coralsoft">❌ Refuză</button>
                     </div>
                     <div class="grid grid-cols-3 gap-2">
                         <button type="button" onclick="deletePost()" class="px-2 py-2.5 text-xs font-semibold text-white bg-slate-700 rounded hover:bg-slate-800">🗑️ Șterge</button>
-                        <button type="button" onclick="publishNow()" id="btn-publish" class="px-2 py-2.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-50">Publică acum</button>
+                        <button type="button" onclick="publishNow()" id="btn-publish" class="px-2 py-2.5 text-xs font-semibold text-inkSoft bg-white border border-line rounded hover:bg-cream">Publică acum</button>
                         <button type="button" onclick="approvePost()" id="btn-approve" class="px-2 py-2.5 text-sm font-bold text-white bg-green-600 rounded hover:bg-green-700">✓ Aprobă →</button>
                     </div>
-                    <p id="panel-next-slot" class="text-[11px] text-slate-500 text-center">—</p>
+                    <p id="panel-next-slot" class="text-[11px] text-muted text-center">—</p>
 
                     {{-- Reject form (inline) --}}
-                    <div id="reject-form" class="hidden bg-red-50 border border-red-200 rounded p-3 space-y-2">
+                    <div id="reject-form" class="hidden bg-coralsoft border border-coral/30 rounded p-3 space-y-2">
                         <div class="flex flex-wrap gap-1">
                             @foreach(['text' => 'Text', 'tone' => 'Ton', 'length' => 'Lungime', 'image' => 'Imagine', 'topic' => 'Subiect', 'other' => 'Altceva'] as $val => $label)
-                                <button type="button" data-cat="{{ $val }}" onclick="setRejectCategory('{{ $val }}', this)" class="reject-chip px-2 py-1 text-[11px] font-medium border border-red-300 text-red-700 rounded-full hover:bg-red-100">{{ $label }}</button>
+                                <button type="button" data-cat="{{ $val }}" onclick="setRejectCategory('{{ $val }}', this)" class="reject-chip px-2 py-1 text-[11px] font-medium border border-red-300 text-coralh rounded-full hover:bg-coralsoft">{{ $label }}</button>
                             @endforeach
                         </div>
-                        <textarea id="reject-feedback" rows="2" placeholder="Ce nu merge? (opțional)" class="w-full text-xs rounded border-red-300 focus:border-red-500 focus:ring-red-500"></textarea>
+                        <textarea id="reject-feedback" rows="2" placeholder="Ce nu merge? (opțional)" class="w-full text-xs rounded border-red-300 focus:border-coral focus:ring-coral"></textarea>
                         <div class="flex gap-2">
-                            <button type="button" onclick="confirmReject()" class="flex-1 px-3 py-1.5 text-xs font-semibold text-white bg-red-600 rounded hover:bg-red-700">Confirmă</button>
-                            <button type="button" onclick="document.getElementById('reject-form').classList.add('hidden')" class="px-3 py-1.5 text-xs text-slate-600">Anulează</button>
+                            <button type="button" onclick="confirmReject()" class="flex-1 px-3 py-1.5 text-xs font-semibold text-white bg-coral rounded hover:bg-coral">Confirmă</button>
+                            <button type="button" onclick="document.getElementById('reject-form').classList.add('hidden')" class="px-3 py-1.5 text-xs text-muted">Anulează</button>
                         </div>
                     </div>
                 </div>
@@ -447,16 +447,16 @@
 {{-- Shortcuts help overlay --}}
 <div id="helpOverlay" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onclick="if(event.target===this)this.classList.add('hidden')">
     <div class="bg-white rounded-xl max-w-md w-full p-6">
-        <h2 class="text-lg font-bold text-slate-900 mb-3">Scurtături tastatură</h2>
+        <h2 class="text-lg font-bold text-ink mb-3">Scurtături tastatură</h2>
         <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-            <dt><kbd class="px-1.5 py-0.5 font-mono bg-slate-100 border rounded">j</kbd> / <kbd class="px-1.5 py-0.5 font-mono bg-slate-100 border rounded">↓</kbd></dt><dd class="text-slate-600">Post următor</dd>
-            <dt><kbd class="px-1.5 py-0.5 font-mono bg-slate-100 border rounded">k</kbd> / <kbd class="px-1.5 py-0.5 font-mono bg-slate-100 border rounded">↑</kbd></dt><dd class="text-slate-600">Post anterior</dd>
-            <dt><kbd class="px-1.5 py-0.5 font-mono bg-slate-100 border rounded">e</kbd></dt><dd class="text-slate-600">Editează textul</dd>
-            <dt><kbd class="px-1.5 py-0.5 font-mono bg-slate-100 border rounded">a</kbd></dt><dd class="text-slate-600">Aprobă (→ swipe dreapta pe mobil)</dd>
-            <dt><kbd class="px-1.5 py-0.5 font-mono bg-slate-100 border rounded">r</kbd></dt><dd class="text-slate-600">Refuză</dd>
-            <dt><kbd class="px-1.5 py-0.5 font-mono bg-slate-100 border rounded">⌫</kbd></dt><dd class="text-slate-600">Șterge (cu confirmare)</dd>
-            <dt><kbd class="px-1.5 py-0.5 font-mono bg-slate-100 border rounded">Esc</kbd></dt><dd class="text-slate-600">Închide panel</dd>
-            <dt><kbd class="px-1.5 py-0.5 font-mono bg-slate-100 border rounded">?</kbd></dt><dd class="text-slate-600">Acest ajutor</dd>
+            <dt><kbd class="px-1.5 py-0.5 font-mono bg-cream border rounded">j</kbd> / <kbd class="px-1.5 py-0.5 font-mono bg-cream border rounded">↓</kbd></dt><dd class="text-muted">Post următor</dd>
+            <dt><kbd class="px-1.5 py-0.5 font-mono bg-cream border rounded">k</kbd> / <kbd class="px-1.5 py-0.5 font-mono bg-cream border rounded">↑</kbd></dt><dd class="text-muted">Post anterior</dd>
+            <dt><kbd class="px-1.5 py-0.5 font-mono bg-cream border rounded">e</kbd></dt><dd class="text-muted">Editează textul</dd>
+            <dt><kbd class="px-1.5 py-0.5 font-mono bg-cream border rounded">a</kbd></dt><dd class="text-muted">Aprobă (→ swipe dreapta pe mobil)</dd>
+            <dt><kbd class="px-1.5 py-0.5 font-mono bg-cream border rounded">r</kbd></dt><dd class="text-muted">Refuză</dd>
+            <dt><kbd class="px-1.5 py-0.5 font-mono bg-cream border rounded">⌫</kbd></dt><dd class="text-muted">Șterge (cu confirmare)</dd>
+            <dt><kbd class="px-1.5 py-0.5 font-mono bg-cream border rounded">Esc</kbd></dt><dd class="text-muted">Închide panel</dd>
+            <dt><kbd class="px-1.5 py-0.5 font-mono bg-cream border rounded">?</kbd></dt><dd class="text-muted">Acest ajutor</dd>
         </dl>
         <button type="button" onclick="document.getElementById('helpOverlay').classList.add('hidden')" class="mt-4 w-full px-3 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg">Închide</button>
     </div>
@@ -472,7 +472,7 @@ window.addEventListener('error', (e) => {
     b.textContent = 'JS error: ' + (e.message || e.error) + ' @ ' + (e.filename || '') + ':' + (e.lineno || '');
 });
 </script>
-<div id="jsErrorBanner" class="hidden fixed top-0 inset-x-0 z-[100] bg-red-600 text-white text-xs px-3 py-2 font-mono"></div>
+<div id="jsErrorBanner" class="hidden fixed top-0 inset-x-0 z-[100] bg-coral text-white text-xs px-3 py-2 font-mono"></div>
 <script>
 (() => {
     const csrf = document.getElementById('socialRoot').dataset.csrf;
@@ -487,11 +487,11 @@ window.addEventListener('error', (e) => {
     const $ = (id) => document.getElementById(id);
     const platformLabels = { facebook: 'Facebook', instagram: 'Instagram', blog: 'Blog' };
     const statusColors = {
-        draft: 'bg-slate-100 text-slate-700',
+        draft: 'bg-cream text-inkSoft',
         scheduled: 'bg-blue-100 text-blue-700',
         publishing: 'bg-amber-100 text-amber-700',
         published: 'bg-green-100 text-green-700',
-        failed: 'bg-red-100 text-red-700',
+        failed: 'bg-coralsoft text-coralh',
     };
 
     // ---------- Toast ----------
@@ -548,7 +548,7 @@ window.addEventListener('error', (e) => {
         $('reject-form').classList.add('hidden');
         $('reject-feedback').value = '';
         rejectCategory = 'other';
-        document.querySelectorAll('.reject-chip').forEach(b => b.classList.remove('bg-red-600','text-white'));
+        document.querySelectorAll('.reject-chip').forEach(b => b.classList.remove('bg-coral','text-white'));
 
         // Abort any in-flight fetch from a previous post.
         if (currentFetchAbort) currentFetchAbort.abort();
@@ -587,7 +587,7 @@ window.addEventListener('error', (e) => {
         $('panel-platform').textContent = platformLabels[d.platform] ?? d.platform;
         const st = $('panel-status');
         st.textContent = (d.status || '').toUpperCase();
-        st.className = 'px-2 py-0.5 text-xs font-semibold rounded-full ' + (statusColors[d.status] || 'bg-slate-100');
+        st.className = 'px-2 py-0.5 text-xs font-semibold rounded-full ' + (statusColors[d.status] || 'bg-cream');
         $('panel-saved').textContent = 'Salvat';
 
         $('panel-content').value = d.content ?? '';
@@ -644,7 +644,7 @@ window.addEventListener('error', (e) => {
         if (d.variants && d.variants.length) {
             vwrap.classList.remove('hidden');
             vlist.innerHTML = d.variants.map(v => `
-                <button type="button" onclick="useVariant(${v.id})" class="flex items-center gap-1 px-2 py-1 text-[11px] bg-slate-100 hover:bg-slate-200 rounded border border-slate-200" title="${(v.content||'').replace(/"/g,'&quot;').slice(0,80)}">
+                <button type="button" onclick="useVariant(${v.id})" class="flex items-center gap-1 px-2 py-1 text-[11px] bg-cream hover:bg-sand rounded border border-line" title="${(v.content||'').replace(/"/g,'&quot;').slice(0,80)}">
                     ${v.kind === 'image' ? '🖼️' : '✏️'} ${v.created_at}
                 </button>
             `).join('');
@@ -656,7 +656,7 @@ window.addEventListener('error', (e) => {
         const rwrap = $('panel-rejections-wrap'), rlist = $('panel-rejections');
         if (d.rejections && d.rejections.length) {
             rwrap.classList.remove('hidden');
-            rlist.innerHTML = d.rejections.map(r => `<li>• <b>${r.reason_category ?? 'other'}</b>: ${r.feedback ?? ''} <span class="text-slate-400">(${r.created_at})</span></li>`).join('');
+            rlist.innerHTML = d.rejections.map(r => `<li>• <b>${r.reason_category ?? 'other'}</b>: ${r.feedback ?? ''} <span class="text-muted">(${r.created_at})</span></li>`).join('');
         } else {
             rwrap.classList.add('hidden');
         }
@@ -880,8 +880,8 @@ window.addEventListener('error', (e) => {
     function showRejectForm() { $('reject-form').classList.remove('hidden'); }
     function setRejectCategory(cat, btn) {
         rejectCategory = cat;
-        document.querySelectorAll('.reject-chip').forEach(b => b.classList.remove('bg-red-600','text-white'));
-        btn.classList.add('bg-red-600','text-white');
+        document.querySelectorAll('.reject-chip').forEach(b => b.classList.remove('bg-coral','text-white'));
+        btn.classList.add('bg-coral','text-white');
     }
     async function confirmReject() {
         if (!currentId) return;

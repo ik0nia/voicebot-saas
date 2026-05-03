@@ -124,24 +124,24 @@
 
     {{-- ========== SUGGESTIONS ========== --}}
     @if(!empty($suggestions))
-    <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-        <div class="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex items-center gap-2.5">
+    <div class="rounded-xl border border-line bg-white shadow-sm overflow-hidden">
+        <div class="px-5 py-3.5 bg-cream border-b border-line flex items-center gap-2.5">
             <span class="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
                 <svg class="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
                 </svg>
             </span>
-            <span class="text-sm font-bold text-slate-800">Ce poti imbunatati</span>
+            <span class="text-sm font-bold text-ink">Ce poti imbunatati</span>
         </div>
         <div class="divide-y divide-slate-100">
             @foreach(array_slice($suggestions, 0, 3) as $sug)
             <div class="px-5 py-3.5 flex items-start gap-3">
-                <span class="mt-0.5 w-5 h-5 rounded-full {{ ($sug['type'] ?? '') === 'critical' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600' }} flex items-center justify-center shrink-0">
+                <span class="mt-0.5 w-5 h-5 rounded-full {{ ($sug['type'] ?? '') === 'critical' ? 'bg-coralsoft text-coral' : 'bg-amber-100 text-amber-600' }} flex items-center justify-center shrink-0">
                     <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
                     </svg>
                 </span>
-                <p class="text-sm text-slate-700 leading-relaxed flex-1">{{ $sug['message'] ?? '' }}</p>
+                <p class="text-sm text-inkSoft leading-relaxed flex-1">{{ $sug['message'] ?? '' }}</p>
             </div>
             @endforeach
         </div>
@@ -154,7 +154,7 @@
         {{-- Quick Actions (2/3) --}}
         <div class="lg:col-span-2 grid grid-cols-2 gap-3">
             @foreach([
-                ['tab' => 'instructions', 'label' => 'Instructiuni', 'desc' => 'Prompt & greeting', 'emoji' => "\u{1F4DD}", 'bg' => 'bg-red-50', 'border' => 'border-red-200', 'hoverBorder' => 'hover:border-red-400', 'iconBg' => 'bg-red-100'],
+                ['tab' => 'instructions', 'label' => 'Instructiuni', 'desc' => 'Prompt & greeting', 'emoji' => "\u{1F4DD}", 'bg' => 'bg-coralsoft', 'border' => 'border-coral/30', 'hoverBorder' => 'hover:border-red-400', 'iconBg' => 'bg-coralsoft'],
                 ['tab' => 'knowledge', 'label' => 'Knowledge Base', 'desc' => $kbDocs . ' documente', 'emoji' => "\u{1F4DA}", 'bg' => 'bg-emerald-50', 'border' => 'border-emerald-200', 'hoverBorder' => 'hover:border-emerald-400', 'iconBg' => 'bg-emerald-100'],
                 ['tab' => 'personality', 'label' => 'Personalitate', 'desc' => $toneMap[$policy->tone ?? 'professional'] ?? '-', 'emoji' => "\u{1F3AD}", 'bg' => 'bg-purple-50', 'border' => 'border-purple-200', 'hoverBorder' => 'hover:border-purple-400', 'iconBg' => 'bg-purple-100'],
                 ['tab' => 'channels', 'label' => 'Canale', 'desc' => $activeChannels . ' active', 'emoji' => "\u{1F517}", 'bg' => 'bg-blue-50', 'border' => 'border-blue-200', 'hoverBorder' => 'hover:border-blue-400', 'iconBg' => 'bg-blue-100'],
@@ -163,10 +163,10 @@
                 class="group flex items-center gap-4 p-4 rounded-xl border {{ $a['bg'] }} {{ $a['border'] }} {{ $a['hoverBorder'] }} hover:shadow-md transition-all duration-200 text-left">
                 <span class="text-2xl shrink-0 w-10 h-10 rounded-lg {{ $a['iconBg'] }} flex items-center justify-center">{{ $a['emoji'] }}</span>
                 <div class="min-w-0 flex-1">
-                    <p class="text-sm font-bold text-slate-800">{{ $a['label'] }}</p>
-                    <p class="text-xs text-slate-500 mt-0.5 truncate">{{ $a['desc'] }}</p>
+                    <p class="text-sm font-bold text-ink">{{ $a['label'] }}</p>
+                    <p class="text-xs text-muted mt-0.5 truncate">{{ $a['desc'] }}</p>
                 </div>
-                <svg class="w-4 h-4 text-slate-300 group-hover:text-slate-500 shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <svg class="w-4 h-4 text-slate-300 group-hover:text-muted shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                 </svg>
             </button>
@@ -174,9 +174,9 @@
         </div>
 
         {{-- Settings Preview (1/3) --}}
-        <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-            <div class="px-4 py-3 bg-slate-50 border-b border-slate-200">
-                <span class="text-sm font-bold text-slate-800">Setari curente</span>
+        <div class="rounded-xl border border-line bg-white shadow-sm overflow-hidden">
+            <div class="px-4 py-3 bg-cream border-b border-line">
+                <span class="text-sm font-bold text-ink">Setari curente</span>
             </div>
             <div class="divide-y divide-slate-100">
                 @foreach([
@@ -187,13 +187,13 @@
                     ['l' => 'Voce', 'v' => ucfirst($bot->voice ?? 'alloy')],
                 ] as $setting)
                 <div class="flex items-center justify-between px-4 py-2.5">
-                    <span class="text-xs text-slate-500">{{ $setting['l'] }}</span>
-                    <span class="text-xs font-bold text-slate-800">{{ $setting['v'] }}</span>
+                    <span class="text-xs text-muted">{{ $setting['l'] }}</span>
+                    <span class="text-xs font-bold text-ink">{{ $setting['v'] }}</span>
                 </div>
                 @endforeach
             </div>
-            <div class="px-4 py-3 bg-slate-50 border-t border-slate-200">
-                <button @click="$dispatch('set-tab', 'personality')" class="text-xs text-red-700 font-bold hover:underline">
+            <div class="px-4 py-3 bg-cream border-t border-line">
+                <button @click="$dispatch('set-tab', 'personality')" class="text-xs text-coralh font-bold hover:underline">
                     Modifica setarile &rarr;
                 </button>
             </div>
@@ -202,22 +202,22 @@
 
     {{-- ========== RECENT ACTIVITY ========== --}}
     @if(isset($recentConversations) && $recentConversations->isNotEmpty())
-    <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-        <div class="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-            <span class="text-sm font-bold text-slate-800">Activitate recenta</span>
-            <span class="text-xs text-slate-400 font-medium">{{ $convTotal }} total</span>
+    <div class="rounded-xl border border-line bg-white shadow-sm overflow-hidden">
+        <div class="px-5 py-3.5 bg-cream border-b border-line flex items-center justify-between">
+            <span class="text-sm font-bold text-ink">Activitate recenta</span>
+            <span class="text-xs text-muted font-medium">{{ $convTotal }} total</span>
         </div>
         <div class="divide-y divide-slate-100">
             @foreach($recentConversations->take(5) as $conv)
-            <div class="flex items-center justify-between px-5 py-3 hover:bg-slate-50/60 transition-colors">
+            <div class="flex items-center justify-between px-5 py-3 hover:bg-cream/60 transition-colors">
                 <div class="flex items-center gap-3 min-w-0">
                     @php $initial = mb_strtoupper(mb_substr($conv->contact_name ?: ($conv->contact_identifier ?: 'V'), 0, 1)); @endphp
                     <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-xs font-bold text-white" style="background: linear-gradient(135deg, #991b1b, #dc2626);">
                         {{ $initial }}
                     </div>
                     <div class="min-w-0">
-                        <p class="text-sm font-semibold text-slate-800 truncate">{{ $conv->contact_name ?: ($conv->contact_identifier ?: 'Vizitator') }}</p>
-                        <p class="text-xs text-slate-400 mt-0.5">
+                        <p class="text-sm font-semibold text-ink truncate">{{ $conv->contact_name ?: ($conv->contact_identifier ?: 'Vizitator') }}</p>
+                        <p class="text-xs text-muted mt-0.5">
                             {{ $conv->messages_count ?? 0 }} mesaje
                             &middot;
                             @if($conv->status === 'active')
@@ -228,7 +228,7 @@
                         </p>
                     </div>
                 </div>
-                <span class="text-xs text-slate-400 shrink-0 ml-4">{{ $conv->created_at->diffForHumans() }}</span>
+                <span class="text-xs text-muted shrink-0 ml-4">{{ $conv->created_at->diffForHumans() }}</span>
             </div>
             @endforeach
         </div>

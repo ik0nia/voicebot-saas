@@ -3,14 +3,14 @@
 @section('title', 'Facebook conectat - ' . $bot->name)
 
 @section('breadcrumb')
-    <span class="text-slate-400">/</span>
-    <a href="{{ route('dashboard.bots.index') }}" class="text-slate-500 hover:text-slate-700 transition-colors">Agenți AI</a>
-    <span class="text-slate-400">/</span>
-    <a href="{{ route('dashboard.bots.show', $bot) }}" class="text-slate-500 hover:text-slate-700 transition-colors">{{ $bot->name }}</a>
-    <span class="text-slate-400">/</span>
-    <a href="{{ route('dashboard.bots.channels.index', $bot) }}" class="text-slate-500 hover:text-slate-700 transition-colors">Canale</a>
-    <span class="text-slate-400">/</span>
-    <span class="font-medium text-slate-700">Configurare webhook</span>
+    <span class="text-muted">/</span>
+    <a href="{{ route('dashboard.bots.index') }}" class="text-muted hover:text-inkSoft transition-colors">Agenți AI</a>
+    <span class="text-muted">/</span>
+    <a href="{{ route('dashboard.bots.show', $bot) }}" class="text-muted hover:text-inkSoft transition-colors">{{ $bot->name }}</a>
+    <span class="text-muted">/</span>
+    <a href="{{ route('dashboard.bots.channels.index', $bot) }}" class="text-muted hover:text-inkSoft transition-colors">Canale</a>
+    <span class="text-muted">/</span>
+    <span class="font-medium text-inkSoft">Configurare webhook</span>
 @endsection
 
 @section('content')
@@ -22,25 +22,25 @@
     @endif
 
     <div class="mb-6">
-        <h1 class="text-2xl font-bold text-slate-900">Aproape gata — un pas în Meta</h1>
-        <p class="text-sm text-slate-500 mt-1">
-            Canalul Facebook Messenger <span class="font-medium text-slate-700">{{ $channel->name }}</span> e creat și criptat. Acum spune-i lui Meta unde să livreze mesajele paginii tale.
+        <h1 class="text-2xl font-bold text-ink">Aproape gata — un pas în Meta</h1>
+        <p class="text-sm text-muted mt-1">
+            Canalul Facebook Messenger <span class="font-medium text-inkSoft">{{ $channel->name }}</span> e creat și criptat. Acum spune-i lui Meta unde să livreze mesajele paginii tale.
         </p>
     </div>
 
     <div class="space-y-4">
         {{-- Step 1: webhook URL --}}
-        <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="rounded-xl border border-line bg-white p-6 shadow-sm">
             <div class="flex items-start gap-4">
                 <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-semibold text-sm">1</div>
                 <div class="flex-1">
-                    <h2 class="text-base font-semibold text-slate-900">Webhook URL</h2>
-                    <p class="text-sm text-slate-500 mt-0.5 mb-3">În Meta Developer Console → App-ul tău → Messenger → Settings → Webhooks → Add Callback URL.</p>
+                    <h2 class="text-base font-semibold text-ink">Webhook URL</h2>
+                    <p class="text-sm text-muted mt-0.5 mb-3">În Meta Developer Console → App-ul tău → Messenger → Settings → Webhooks → Add Callback URL.</p>
                     <div class="flex items-center gap-2">
                         <input type="text" readonly value="{{ $webhookUrl }}" id="webhook-url"
-                               class="flex-1 font-mono text-sm rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 select-all">
+                               class="flex-1 font-mono text-sm rounded-lg border border-line bg-cream px-3 py-2 select-all">
                         <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('webhook-url').value); this.textContent='Copiat!'"
-                                class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                                class="rounded-lg border border-line bg-white px-4 py-2 text-sm font-medium text-inkSoft hover:bg-cream transition-colors">
                             Copiază
                         </button>
                     </div>
@@ -49,38 +49,38 @@
         </div>
 
         {{-- Step 2: verify token --}}
-        <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="rounded-xl border border-line bg-white p-6 shadow-sm">
             <div class="flex items-start gap-4">
                 <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-semibold text-sm">2</div>
                 <div class="flex-1">
-                    <h2 class="text-base font-semibold text-slate-900">Verify Token</h2>
-                    <p class="text-sm text-slate-500 mt-0.5 mb-3">Lipește token-ul de mai jos în câmpul „Verify Token" din aceeași pagină Meta.</p>
+                    <h2 class="text-base font-semibold text-ink">Verify Token</h2>
+                    <p class="text-sm text-muted mt-0.5 mb-3">Lipește token-ul de mai jos în câmpul „Verify Token" din aceeași pagină Meta.</p>
                     <div class="flex items-center gap-2">
                         <input type="text" readonly value="{{ $channel->webhook_secret }}" id="verify-token"
-                               class="flex-1 font-mono text-sm rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 select-all">
+                               class="flex-1 font-mono text-sm rounded-lg border border-line bg-cream px-3 py-2 select-all">
                         <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('verify-token').value); this.textContent='Copiat!'"
-                                class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                                class="rounded-lg border border-line bg-white px-4 py-2 text-sm font-medium text-inkSoft hover:bg-cream transition-colors">
                             Copiază
                         </button>
                     </div>
-                    <p class="mt-2 text-xs text-slate-500">Token unic, generat aleatoriu, valabil doar pentru acest canal.</p>
+                    <p class="mt-2 text-xs text-muted">Token unic, generat aleatoriu, valabil doar pentru acest canal.</p>
                 </div>
             </div>
         </div>
 
         {{-- Step 3: subscribe fields --}}
-        <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="rounded-xl border border-line bg-white p-6 shadow-sm">
             <div class="flex items-start gap-4">
                 <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-semibold text-sm">3</div>
                 <div class="flex-1">
-                    <h2 class="text-base font-semibold text-slate-900">Subscribe la câmpurile webhook</h2>
-                    <p class="text-sm text-slate-500 mt-0.5 mb-3">După verificare, abonează pagina la câmpurile (Subscribe) — minim:</p>
-                    <ul class="space-y-1 text-sm text-slate-700">
-                        <li>• <code class="bg-slate-100 px-1.5 py-0.5 rounded text-xs">messages</code> &mdash; mesajele primite în Messenger</li>
-                        <li>• <code class="bg-slate-100 px-1.5 py-0.5 rounded text-xs">messaging_postbacks</code> &mdash; click pe butoane</li>
-                        <li>• <code class="bg-slate-100 px-1.5 py-0.5 rounded text-xs">message_reads</code> &mdash; confirmări de citire (opțional)</li>
+                    <h2 class="text-base font-semibold text-ink">Subscribe la câmpurile webhook</h2>
+                    <p class="text-sm text-muted mt-0.5 mb-3">După verificare, abonează pagina la câmpurile (Subscribe) — minim:</p>
+                    <ul class="space-y-1 text-sm text-inkSoft">
+                        <li>• <code class="bg-cream px-1.5 py-0.5 rounded text-xs">messages</code> &mdash; mesajele primite în Messenger</li>
+                        <li>• <code class="bg-cream px-1.5 py-0.5 rounded text-xs">messaging_postbacks</code> &mdash; click pe butoane</li>
+                        <li>• <code class="bg-cream px-1.5 py-0.5 rounded text-xs">message_reads</code> &mdash; confirmări de citire (opțional)</li>
                     </ul>
-                    <p class="mt-3 text-xs text-slate-500">
+                    <p class="mt-3 text-xs text-muted">
                         În același ecran, în secțiunea <strong>Add or Remove Pages</strong>, selectează pagina ta și abonează-o la app.
                     </p>
                 </div>

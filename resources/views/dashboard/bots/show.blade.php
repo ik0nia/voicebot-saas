@@ -3,10 +3,10 @@
 @section('title', $bot->name)
 
 @section('breadcrumb')
-    <span class="text-slate-400">/</span>
-    <a href="{{ route('dashboard.bots.index') }}" class="text-slate-500 hover:text-slate-700 transition-colors">Agenți AI</a>
-    <span class="text-slate-400">/</span>
-    <span class="font-medium text-slate-700">{{ $bot->name }}</span>
+    <span class="text-muted">/</span>
+    <a href="{{ route('dashboard.bots.index') }}" class="text-muted hover:text-inkSoft transition-colors">Agenți AI</a>
+    <span class="text-muted">/</span>
+    <span class="font-medium text-inkSoft">{{ $bot->name }}</span>
 @endsection
 
 @section('content')
@@ -37,7 +37,7 @@
     <div x-data="{ tab: '{{ request('tab', 'overview') }}' }" @set-tab.window="tab = $event.detail" class="mt-6">
 
         {{-- Tab Navigation --}}
-        <div class="bg-slate-50/80 rounded-xl p-1.5 -mx-4 lg:-mx-6 mx-0 shadow-sm">
+        <div class="bg-cream/80 rounded-xl p-1.5 -mx-4 lg:-mx-6 mx-0 shadow-sm">
             <nav class="flex gap-1 overflow-x-auto scrollbar-hide">
                 @php
                     $tabs = [
@@ -52,7 +52,7 @@
                 @endphp
                 @foreach($tabs as $t)
                 <button @click="tab = '{{ $t['id'] }}'; history.replaceState(null, '', '?tab={{ $t['id'] }}')"
-                        :class="tab === '{{ $t['id'] }}' ? 'bg-red-700 text-white shadow-md' : 'text-slate-600 hover:bg-red-50 hover:text-red-800'"
+                        :class="tab === '{{ $t['id'] }}' ? 'bg-coral text-white shadow-md' : 'text-muted hover:bg-coralsoft hover:text-coralh'"
                         class="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium whitespace-nowrap rounded-lg transition-all duration-200">
                     <span class="text-sm">{{ $t['dot'] }}</span>
                     {{ $t['label'] }}

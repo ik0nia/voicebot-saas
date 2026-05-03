@@ -5,17 +5,17 @@
 @section('content')
 <div class="max-w-5xl mx-auto py-8 px-4">
     <div class="mb-8">
-        <div class="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase">
-            <span class="text-red-700">Pasul 1 din 4</span>
+        <div class="flex items-center gap-2 text-xs font-semibold text-muted uppercase">
+            <span class="text-coralh">Pasul 1 din 4</span>
             <span class="text-slate-300">·</span>
             <span>Nișă</span>
         </div>
-        <h1 class="mt-2 text-3xl font-extrabold text-slate-900">Ce face afacerea ta?</h1>
-        <p class="mt-2 text-slate-600">Alege nișa care se potrivește cel mai bine. Agentul tău vine cu flow-uri, vocabular și prompt-uri gata-configurate.</p>
+        <h1 class="mt-2 text-3xl font-extrabold text-ink">Ce face afacerea ta?</h1>
+        <p class="mt-2 text-muted">Alege nișa care se potrivește cel mai bine. Agentul tău vine cu flow-uri, vocabular și prompt-uri gata-configurate.</p>
     </div>
 
     @if($errors->any())
-        <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-900">
+        <div class="mb-4 p-3 bg-coralsoft border border-coral/30 rounded-lg text-sm text-coralh">
             @foreach($errors->all() as $err)<p>{{ $err }}</p>@endforeach
         </div>
     @endif
@@ -50,10 +50,10 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             @foreach($featuredNiches as $n)
                 <button type="button"
-                        class="niche-card text-left p-4 rounded-xl border-2 border-slate-200 bg-white hover:border-red-300 hover:shadow-sm transition-all"
+                        class="niche-card text-left p-4 rounded-xl border-2 border-line bg-white hover:border-red-300 hover:shadow-sm transition-all"
                         data-slug="{{ $n['slug'] }}">
                     <div class="flex items-start justify-between gap-2">
-                        <p class="font-semibold text-slate-900">{{ $n['display_name'] }}</p>
+                        <p class="font-semibold text-ink">{{ $n['display_name'] }}</p>
                         <span class="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded
                                    @switch($n['archetype'])
                                        @case('booking') bg-indigo-50 text-indigo-700 @break
@@ -66,7 +66,7 @@
                         </span>
                     </div>
                     @if($n['wow_demo'])
-                        <p class="mt-2 text-xs text-slate-500 italic line-clamp-2">„{{ $n['wow_demo'] }}"</p>
+                        <p class="mt-2 text-xs text-muted italic line-clamp-2">„{{ $n['wow_demo'] }}"</p>
                     @endif
                 </button>
             @endforeach
@@ -75,7 +75,7 @@
         @if(count($restNiches) > 0)
             <div class="mt-4 text-center">
                 <button type="button" @click="showAll = !showAll"
-                        class="inline-flex items-center gap-2 text-sm font-medium text-red-700 hover:text-red-900 transition">
+                        class="inline-flex items-center gap-2 text-sm font-medium text-coralh hover:text-coralh transition">
                     <span x-show="!showAll">Vezi toate nișele ({{ count($restNiches) }} mai multe) ↓</span>
                     <span x-show="showAll" x-cloak>Ascunde nișele suplimentare ↑</span>
                 </button>
@@ -85,10 +85,10 @@
                  class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 @foreach($restNiches as $n)
                     <button type="button"
-                            class="niche-card text-left p-4 rounded-xl border-2 border-slate-200 bg-white hover:border-red-300 hover:shadow-sm transition-all"
+                            class="niche-card text-left p-4 rounded-xl border-2 border-line bg-white hover:border-red-300 hover:shadow-sm transition-all"
                             data-slug="{{ $n['slug'] }}">
                         <div class="flex items-start justify-between gap-2">
-                            <p class="font-semibold text-slate-900">{{ $n['display_name'] }}</p>
+                            <p class="font-semibold text-ink">{{ $n['display_name'] }}</p>
                             <span class="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded
                                        @switch($n['archetype'])
                                            @case('booking') bg-indigo-50 text-indigo-700 @break
@@ -101,7 +101,7 @@
                             </span>
                         </div>
                         @if($n['wow_demo'])
-                            <p class="mt-2 text-xs text-slate-500 italic line-clamp-2">„{{ $n['wow_demo'] }}"</p>
+                            <p class="mt-2 text-xs text-muted italic line-clamp-2">„{{ $n['wow_demo'] }}"</p>
                         @endif
                     </button>
                 @endforeach
@@ -110,7 +110,7 @@
 
         <div class="mt-6 flex justify-end">
             <button type="submit" id="niche-submit" disabled
-                    class="px-6 py-2.5 rounded-lg bg-red-700 text-white text-sm font-semibold disabled:bg-slate-300 disabled:cursor-not-allowed hover:bg-red-800">
+                    class="px-6 py-2.5 rounded-lg bg-coral text-white text-sm font-semibold disabled:bg-slate-300 disabled:cursor-not-allowed hover:bg-coral">
                 Continuă →
             </button>
         </div>
@@ -122,11 +122,11 @@
 document.querySelectorAll('.niche-card').forEach(function (btn) {
     btn.addEventListener('click', function () {
         document.querySelectorAll('.niche-card').forEach(function (b) {
-            b.classList.remove('border-red-500', 'bg-red-50', 'ring-2', 'ring-red-500');
-            b.classList.add('border-slate-200', 'bg-white');
+            b.classList.remove('border-red-500', 'bg-coralsoft', 'ring-2', 'ring-coral');
+            b.classList.add('border-line', 'bg-white');
         });
-        btn.classList.remove('border-slate-200', 'bg-white');
-        btn.classList.add('border-red-500', 'bg-red-50', 'ring-2', 'ring-red-500');
+        btn.classList.remove('border-line', 'bg-white');
+        btn.classList.add('border-red-500', 'bg-coralsoft', 'ring-2', 'ring-coral');
         document.getElementById('niche_slug').value = btn.dataset.slug;
         document.getElementById('niche-submit').disabled = false;
     });

@@ -3,8 +3,8 @@
 @section('title', 'Numere Telefon')
 
 @section('breadcrumb')
-    <span class="text-slate-400">/</span>
-    <span class="font-medium text-slate-700">Numere Telefon</span>
+    <span class="text-muted">/</span>
+    <span class="font-medium text-inkSoft">Numere Telefon</span>
 @endsection
 
 @section('content')
@@ -21,14 +21,14 @@
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-            <h1 class="text-2xl font-bold text-slate-900">Numere de telefon</h1>
-            <p class="mt-1 text-sm text-slate-500">Gestionează numerele de telefon asociate boților tăi.</p>
+            <h1 class="text-2xl font-bold text-ink">Numere de telefon</h1>
+            <p class="mt-1 text-sm text-muted">Gestionează numerele de telefon asociate boților tăi.</p>
         </div>
         <div class="flex items-center gap-2">
             <form method="POST" action="{{ route('dashboard.numbers.syncStatuses') }}">
                 @csrf
                 <button type="submit"
-                        class="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition-colors">
+                        class="inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-white px-4 py-2.5 text-sm font-medium text-inkSoft shadow-sm hover:bg-cream transition-colors">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
@@ -36,7 +36,7 @@
                 </button>
             </form>
             <button onclick="document.getElementById('add-number-modal').classList.remove('hidden')"
-                    class="inline-flex items-center justify-center gap-2 rounded-lg bg-red-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 transition-colors">
+                    class="inline-flex items-center justify-center gap-2 rounded-lg bg-coral px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coralh transition-colors">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
@@ -86,9 +86,9 @@
             {{-- Modal content --}}
             <div class="relative bg-white rounded-xl shadow-xl w-full max-w-lg p-6 z-10">
                 <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-lg font-bold text-slate-900">Adaugă număr de telefon</h2>
+                    <h2 class="text-lg font-bold text-ink">Adaugă număr de telefon</h2>
                     <button onclick="document.getElementById('add-number-modal').classList.add('hidden')"
-                            class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+                            class="p-1.5 rounded-lg text-muted hover:text-muted hover:bg-cream transition-colors">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                         </svg>
@@ -102,9 +102,9 @@
                     {{-- Alege număr de telefon --}}
                     <div>
                         <div class="flex items-center justify-between mb-2">
-                            <label class="block text-sm font-medium text-slate-700">Alege un număr de telefon</label>
+                            <label class="block text-sm font-medium text-inkSoft">Alege un număr de telefon</label>
                             <button type="button" onclick="loadAvailableNumbers()"
-                                    class="inline-flex items-center gap-1.5 text-xs font-medium text-red-700 hover:text-red-900 transition-colors"
+                                    class="inline-flex items-center gap-1.5 text-xs font-medium text-coralh hover:text-coralh transition-colors"
                                     id="refresh-numbers-btn">
                                 <svg class="w-3.5 h-3.5" id="refresh-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -115,15 +115,15 @@
 
                         {{-- Loading state --}}
                         <div id="numbers-loading" class="hidden py-8 text-center">
-                            <svg class="animate-spin h-6 w-6 text-red-700 mx-auto mb-2" fill="none" viewBox="0 0 24 24">
+                            <svg class="animate-spin h-6 w-6 text-coralh mx-auto mb-2" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                             </svg>
-                            <p class="text-sm text-slate-500">Se caută numere disponibile...</p>
+                            <p class="text-sm text-muted">Se caută numere disponibile...</p>
                         </div>
 
                         {{-- Error state --}}
-                        <div id="numbers-error" class="hidden rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+                        <div id="numbers-error" class="hidden rounded-lg bg-coralsoft border border-coral/30 px-4 py-3 text-sm text-coralh">
                             Nu s-au putut încărca numerele. Încearcă din nou.
                         </div>
 
@@ -134,23 +134,23 @@
 
                         <input type="hidden" name="number" id="selected-number" required>
                         @error('number')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-1 text-sm text-coral">{{ $message }}</p>
                         @enderror
                     </div>
 
                     {{-- Nume prietenos --}}
                     <div>
-                        <label for="friendly_name" class="block text-sm font-medium text-slate-700 mb-1">Nume prietenos <span class="text-slate-400">(opțional)</span></label>
+                        <label for="friendly_name" class="block text-sm font-medium text-inkSoft mb-1">Nume prietenos <span class="text-muted">(opțional)</span></label>
                         <input type="text" name="friendly_name" id="friendly_name" placeholder="Linia principală"
                                value="{{ old('friendly_name') }}"
-                               class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" />
+                               class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm text-inkSoft placeholder-slate-400 focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none transition" />
                     </div>
 
                     {{-- Asociază cu agent AI --}}
                     <div>
-                        <label for="bot_id" class="block text-sm font-medium text-slate-700 mb-1">Asociază cu agent AI <span class="text-slate-400">(opțional)</span></label>
+                        <label for="bot_id" class="block text-sm font-medium text-inkSoft mb-1">Asociază cu agent AI <span class="text-muted">(opțional)</span></label>
                         <select name="bot_id" id="bot_id"
-                                class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition">
+                                class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm text-inkSoft focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none transition">
                             <option value="">— Fără agent AI asociat —</option>
                             @foreach($bots as $bot)
                                 <option value="{{ $bot->id }}" {{ old('bot_id') == $bot->id ? 'selected' : '' }}>{{ $bot->name }}</option>
@@ -161,11 +161,11 @@
                     {{-- Buttons --}}
                     <div class="flex items-center justify-end gap-3 pt-2">
                         <button type="button" onclick="document.getElementById('add-number-modal').classList.add('hidden')"
-                                class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                                class="rounded-lg border border-line bg-white px-4 py-2.5 text-sm font-medium text-inkSoft hover:bg-cream transition-colors">
                             Anulează
                         </button>
                         <button type="submit" id="submit-number-btn" disabled
-                                class="rounded-lg bg-red-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                class="rounded-lg bg-coral px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coralh transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                             Activează numărul
                         </button>
                     </div>
@@ -176,34 +176,34 @@
 
     {{-- Numbers Table --}}
     @if($numbers->count() > 0)
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="bg-white rounded-xl border border-line shadow-sm overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-sm text-left">
                     <thead>
-                        <tr class="border-b border-slate-200 bg-slate-50">
-                            <th class="px-4 py-3 font-semibold text-slate-600">Număr</th>
-                            <th class="px-4 py-3 font-semibold text-slate-600">Nume</th>
-                            <th class="px-4 py-3 font-semibold text-slate-600 hidden md:table-cell">Agent AI asociat</th>
-                            <th class="px-4 py-3 font-semibold text-slate-600 hidden lg:table-cell">Cost lunar</th>
-                            <th class="px-4 py-3 font-semibold text-slate-600">Status</th>
-                            <th class="px-4 py-3 font-semibold text-slate-600 text-right">Acțiuni</th>
+                        <tr class="border-b border-line bg-cream">
+                            <th class="px-4 py-3 font-semibold text-muted">Număr</th>
+                            <th class="px-4 py-3 font-semibold text-muted">Nume</th>
+                            <th class="px-4 py-3 font-semibold text-muted hidden md:table-cell">Agent AI asociat</th>
+                            <th class="px-4 py-3 font-semibold text-muted hidden lg:table-cell">Cost lunar</th>
+                            <th class="px-4 py-3 font-semibold text-muted">Status</th>
+                            <th class="px-4 py-3 font-semibold text-muted text-right">Acțiuni</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         @foreach($numbers as $phoneNumber)
-                            <tr class="hover:bg-slate-50 transition-colors" id="row-{{ $phoneNumber->id }}">
+                            <tr class="hover:bg-cream transition-colors" id="row-{{ $phoneNumber->id }}">
                                 {{-- Număr --}}
                                 <td class="px-4 py-3">
                                     <div class="flex items-center gap-2">
                                         @if(str_starts_with($phoneNumber->number, '+40'))
                                             <span class="text-base leading-none" title="România">&#x1F1F7;&#x1F1F4;</span>
                                         @endif
-                                        <span class="font-medium text-slate-900">{{ $phoneNumber->number }}</span>
+                                        <span class="font-medium text-ink">{{ $phoneNumber->number }}</span>
                                     </div>
                                 </td>
 
                                 {{-- Nume --}}
-                                <td class="px-4 py-3 text-slate-600">
+                                <td class="px-4 py-3 text-muted">
                                     {{ $phoneNumber->friendly_name ?? '—' }}
                                 </td>
 
@@ -215,7 +215,7 @@
                                             @csrf
                                             @method('PUT')
                                             <select name="bot_id"
-                                                    class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition">
+                                                    class="rounded-lg border border-line bg-white px-3 py-1.5 text-sm text-inkSoft focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none transition">
                                                 <option value="">— Fără agent AI —</option>
                                                 @foreach($bots as $bot)
                                                     <option value="{{ $bot->id }}" {{ $phoneNumber->bot_id == $bot->id ? 'selected' : '' }}>{{ $bot->name }}</option>
@@ -226,7 +226,7 @@
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                                                 </svg>
                                             </button>
-                                            <button type="button" onclick="toggleEditBot({{ $phoneNumber->id }})" class="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 transition-colors" title="Anulează">
+                                            <button type="button" onclick="toggleEditBot({{ $phoneNumber->id }})" class="p-1.5 rounded-lg text-muted hover:bg-cream transition-colors" title="Anulează">
                                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                                                 </svg>
@@ -236,17 +236,17 @@
                                     {{-- Display (shown by default) --}}
                                     <div id="display-bot-{{ $phoneNumber->id }}">
                                         @if($phoneNumber->bot)
-                                            <a href="{{ route('dashboard.bots.show', $phoneNumber->bot) }}" class="text-red-800 hover:text-red-900 font-medium transition-colors">
+                                            <a href="{{ route('dashboard.bots.show', $phoneNumber->bot) }}" class="text-coralh hover:text-coralh font-medium transition-colors">
                                                 {{ $phoneNumber->bot->name }}
                                             </a>
                                         @else
-                                            <span class="text-slate-400">Neasociat</span>
+                                            <span class="text-muted">Neasociat</span>
                                         @endif
                                     </div>
                                 </td>
 
                                 {{-- Cost lunar --}}
-                                <td class="px-4 py-3 hidden lg:table-cell text-slate-600">
+                                <td class="px-4 py-3 hidden lg:table-cell text-muted">
                                     {{ number_format(($phoneNumber->monthly_cost_cents ?? 0) / 100, 2, ',', '.') }} lei
                                 </td>
 
@@ -263,7 +263,7 @@
                                             Activ
                                         </span>
                                     @else
-                                        <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500">
+                                        <span class="inline-flex items-center gap-1.5 rounded-full bg-cream px-2.5 py-0.5 text-xs font-medium text-muted">
                                             <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
                                             Inactiv
                                         </span>
@@ -275,7 +275,7 @@
                                     <div class="flex items-center justify-end gap-1.5">
                                         {{-- Edit bot association --}}
                                         <button onclick="toggleEditBot({{ $phoneNumber->id }})" title="Editează asocierea"
-                                                class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors">
+                                                class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-line bg-white text-muted hover:bg-cream hover:text-inkSoft transition-colors">
                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                             </svg>
@@ -286,7 +286,7 @@
                                             @csrf
                                             @method('PATCH')
                                             <button type="submit" title="{{ $phoneNumber->is_active ? 'Dezactivează' : 'Activează' }}"
-                                                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg border {{ $phoneNumber->is_active ? 'border-green-200 bg-green-50 text-green-600 hover:bg-green-100' : 'border-slate-200 bg-slate-50 text-slate-400 hover:bg-slate-100' }} transition-colors">
+                                                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg border {{ $phoneNumber->is_active ? 'border-green-200 bg-green-50 text-green-600 hover:bg-green-100' : 'border-line bg-cream text-muted hover:bg-cream' }} transition-colors">
                                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                     @if($phoneNumber->is_active)
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -304,7 +304,7 @@
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" title="Șterge"
-                                                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-red-200 bg-white text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors">
+                                                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-coral/30 bg-white text-red-400 hover:bg-coralsoft hover:text-coral transition-colors">
                                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                 </svg>
@@ -320,23 +320,23 @@
 
             {{-- Pagination --}}
             @if($numbers->hasPages())
-                <div class="px-4 py-3 border-t border-slate-200">
+                <div class="px-4 py-3 border-t border-line">
                     {{ $numbers->links() }}
                 </div>
             @endif
         </div>
     @else
         {{-- Empty state --}}
-        <div class="flex flex-col items-center justify-center py-16 px-4 bg-white rounded-xl border border-slate-200">
-            <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-                <svg class="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <div class="flex flex-col items-center justify-center py-16 px-4 bg-white rounded-xl border border-line">
+            <div class="w-16 h-16 rounded-full bg-cream flex items-center justify-center mb-4">
+                <svg class="w-8 h-8 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                 </svg>
             </div>
-            <h3 class="text-lg font-semibold text-slate-900 mb-1">Nu ai numere de telefon încă</h3>
-            <p class="text-sm text-slate-500 mb-6 text-center max-w-sm">Adaugă primul număr pentru a conecta un agent AI.</p>
+            <h3 class="text-lg font-semibold text-ink mb-1">Nu ai numere de telefon încă</h3>
+            <p class="text-sm text-muted mb-6 text-center max-w-sm">Adaugă primul număr pentru a conecta un agent AI.</p>
             <button onclick="document.getElementById('add-number-modal').classList.remove('hidden')"
-                    class="inline-flex items-center gap-2 rounded-lg bg-red-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 transition-colors">
+                    class="inline-flex items-center gap-2 rounded-lg bg-coral px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coralh transition-colors">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
@@ -407,20 +407,20 @@
 
                 var div = document.createElement('div');
                 div.innerHTML =
-                    '<label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 cursor-pointer hover:border-red-300 hover:bg-red-50/50 transition-all' + (i === 0 ? '' : '') + '">' +
-                        '<input type="radio" name="number_selection" value="' + num.number + '" class="w-4 h-4 text-red-700 border-slate-300 focus:ring-red-700">' +
+                    '<label class="flex items-center gap-3 p-3 rounded-lg border border-line cursor-pointer hover:border-red-300 hover:bg-coralsoft/50 transition-all' + (i === 0 ? '' : '') + '">' +
+                        '<input type="radio" name="number_selection" value="' + num.number + '" class="w-4 h-4 text-coralh border-line focus:ring-coral">' +
                         '<div class="flex-1 min-w-0">' +
                             '<div class="flex items-center gap-2">' +
                                 '<span class="text-base leading-none">&#x1F1F7;&#x1F1F4;</span>' +
-                                '<span class="font-semibold text-slate-900">' + num.number + '</span>' +
+                                '<span class="font-semibold text-ink">' + num.number + '</span>' +
                             '</div>' +
                             '<div class="flex items-center gap-3 mt-0.5">' +
-                                (region ? '<span class="text-xs text-slate-500">' + region + '</span>' : '') +
+                                (region ? '<span class="text-xs text-muted">' + region + '</span>' : '') +
                                 (num.capabilities && num.capabilities.voice ? '<span class="text-xs text-green-600 font-medium">Voice</span>' : '') +
                                 (num.capabilities && num.capabilities.sms ? '<span class="text-xs text-blue-600 font-medium">SMS</span>' : '') +
                             '</div>' +
                         '</div>' +
-                        '<span class="text-sm font-medium text-slate-500">' + {{ json_encode(number_format((float)$phoneNumberCostLei, 2, ',', '.')) }} + ' lei/lună</span>' +
+                        '<span class="text-sm font-medium text-muted">' + {{ json_encode(number_format((float)$phoneNumberCostLei, 2, ',', '.')) }} + ' lei/lună</span>' +
                     '</label>';
                 list.appendChild(div);
             });
@@ -431,9 +431,9 @@
                     submitBtn.disabled = false;
 
                     list.querySelectorAll('label').forEach(function(l) {
-                        l.classList.remove('border-red-500', 'bg-red-50');
+                        l.classList.remove('border-red-500', 'bg-coralsoft');
                     });
-                    this.closest('label').classList.add('border-red-500', 'bg-red-50');
+                    this.closest('label').classList.add('border-red-500', 'bg-coralsoft');
                 });
             });
         })

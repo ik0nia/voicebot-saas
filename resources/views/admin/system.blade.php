@@ -16,13 +16,13 @@
     {{-- Page header --}}
     <div class="flex items-center justify-between">
         <div>
-            <h1 class="text-2xl font-bold text-slate-900">System Health</h1>
-            <p class="text-sm text-slate-500 mt-1">Monitorizare infrastructura si performanta platforma</p>
+            <h1 class="text-2xl font-bold text-ink">System Health</h1>
+            <p class="text-sm text-muted mt-1">Monitorizare infrastructura si performanta platforma</p>
         </div>
         <div class="flex gap-2">
             <form method="POST" action="{{ route('admin.system.clearCaches') }}">
                 @csrf
-                <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">
+                <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-inkSoft bg-white border border-line rounded-lg hover:bg-cream">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                     Clear Caches
                 </button>
@@ -39,9 +39,9 @@
     {{-- ============================================================= --}}
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {{-- Redis --}}
-        <div class="bg-white rounded-xl border border-slate-200 p-5">
+        <div class="bg-white rounded-xl border border-line p-5">
             <div class="flex items-center justify-between mb-3">
-                <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Redis</h3>
+                <h3 class="text-sm font-semibold text-muted uppercase tracking-wider">Redis</h3>
                 @if(($infra['redis']['status'] ?? '') === 'ok')
                     <span class="w-3 h-3 rounded-full bg-green-500"></span>
                 @else
@@ -49,17 +49,17 @@
                 @endif
             </div>
             @if(($infra['redis']['status'] ?? '') === 'ok')
-                <p class="text-2xl font-bold text-slate-900">{{ $infra['redis']['latency_ms'] }} ms</p>
-                <p class="text-xs text-slate-500 mt-1">Latency ping</p>
+                <p class="text-2xl font-bold text-ink">{{ $infra['redis']['latency_ms'] }} ms</p>
+                <p class="text-xs text-muted mt-1">Latency ping</p>
             @else
-                <p class="text-sm text-red-600">{{ $infra['redis']['message'] ?? 'Connection failed' }}</p>
+                <p class="text-sm text-coral">{{ $infra['redis']['message'] ?? 'Connection failed' }}</p>
             @endif
         </div>
 
         {{-- PostgreSQL --}}
-        <div class="bg-white rounded-xl border border-slate-200 p-5">
+        <div class="bg-white rounded-xl border border-line p-5">
             <div class="flex items-center justify-between mb-3">
-                <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider">PostgreSQL</h3>
+                <h3 class="text-sm font-semibold text-muted uppercase tracking-wider">PostgreSQL</h3>
                 @if(($infra['database']['status'] ?? '') === 'ok')
                     <span class="w-3 h-3 rounded-full bg-green-500"></span>
                 @else
@@ -67,17 +67,17 @@
                 @endif
             </div>
             @if(($infra['database']['status'] ?? '') === 'ok')
-                <p class="text-2xl font-bold text-slate-900">{{ $infra['database']['latency_ms'] }} ms</p>
-                <p class="text-xs text-slate-500 mt-1">Size: {{ $infra['database']['size'] ?? 'N/A' }} | Connections: {{ $infra['database']['connections'] ?? 'N/A' }}</p>
+                <p class="text-2xl font-bold text-ink">{{ $infra['database']['latency_ms'] }} ms</p>
+                <p class="text-xs text-muted mt-1">Size: {{ $infra['database']['size'] ?? 'N/A' }} | Connections: {{ $infra['database']['connections'] ?? 'N/A' }}</p>
             @else
-                <p class="text-sm text-red-600">{{ $infra['database']['message'] ?? 'Connection failed' }}</p>
+                <p class="text-sm text-coral">{{ $infra['database']['message'] ?? 'Connection failed' }}</p>
             @endif
         </div>
 
         {{-- Disk --}}
-        <div class="bg-white rounded-xl border border-slate-200 p-5">
+        <div class="bg-white rounded-xl border border-line p-5">
             <div class="flex items-center justify-between mb-3">
-                <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Disk</h3>
+                <h3 class="text-sm font-semibold text-muted uppercase tracking-wider">Disk</h3>
                 @if(($infra['disk']['usage_pct'] ?? 0) < 80)
                     <span class="w-3 h-3 rounded-full bg-green-500"></span>
                 @elseif(($infra['disk']['usage_pct'] ?? 0) < 90)
@@ -86,17 +86,17 @@
                     <span class="w-3 h-3 rounded-full bg-red-500"></span>
                 @endif
             </div>
-            <p class="text-2xl font-bold text-slate-900">{{ $infra['disk']['usage_pct'] ?? 0 }}%</p>
-            <p class="text-xs text-slate-500 mt-1">{{ $infra['disk']['free'] ?? 'N/A' }} free / {{ $infra['disk']['total'] ?? 'N/A' }} total</p>
-            <div class="mt-2 w-full bg-slate-100 rounded-full h-2">
+            <p class="text-2xl font-bold text-ink">{{ $infra['disk']['usage_pct'] ?? 0 }}%</p>
+            <p class="text-xs text-muted mt-1">{{ $infra['disk']['free'] ?? 'N/A' }} free / {{ $infra['disk']['total'] ?? 'N/A' }} total</p>
+            <div class="mt-2 w-full bg-cream rounded-full h-2">
                 <div class="h-2 rounded-full {{ ($infra['disk']['usage_pct'] ?? 0) >= 90 ? 'bg-red-500' : (($infra['disk']['usage_pct'] ?? 0) >= 80 ? 'bg-yellow-500' : 'bg-green-500') }}" style="width: {{ $infra['disk']['usage_pct'] ?? 0 }}%"></div>
             </div>
         </div>
 
         {{-- Memory --}}
-        <div class="bg-white rounded-xl border border-slate-200 p-5">
+        <div class="bg-white rounded-xl border border-line p-5">
             <div class="flex items-center justify-between mb-3">
-                <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Memory</h3>
+                <h3 class="text-sm font-semibold text-muted uppercase tracking-wider">Memory</h3>
                 @if(($infra['memory']['usage_pct'] ?? 0) < 80)
                     <span class="w-3 h-3 rounded-full bg-green-500"></span>
                 @elseif(($infra['memory']['usage_pct'] ?? 0) < 90)
@@ -105,27 +105,27 @@
                     <span class="w-3 h-3 rounded-full bg-red-500"></span>
                 @endif
             </div>
-            <p class="text-2xl font-bold text-slate-900">{{ $infra['memory']['usage_pct'] ?? 0 }}%</p>
-            <p class="text-xs text-slate-500 mt-1">{{ $infra['memory']['available_gb'] ?? 'N/A' }} GB free / {{ $infra['memory']['total_gb'] ?? 'N/A' }} GB total</p>
-            <div class="mt-2 w-full bg-slate-100 rounded-full h-2">
+            <p class="text-2xl font-bold text-ink">{{ $infra['memory']['usage_pct'] ?? 0 }}%</p>
+            <p class="text-xs text-muted mt-1">{{ $infra['memory']['available_gb'] ?? 'N/A' }} GB free / {{ $infra['memory']['total_gb'] ?? 'N/A' }} GB total</p>
+            <div class="mt-2 w-full bg-cream rounded-full h-2">
                 <div class="h-2 rounded-full {{ ($infra['memory']['usage_pct'] ?? 0) >= 90 ? 'bg-red-500' : (($infra['memory']['usage_pct'] ?? 0) >= 80 ? 'bg-yellow-500' : 'bg-green-500') }}" style="width: {{ $infra['memory']['usage_pct'] ?? 0 }}%"></div>
             </div>
         </div>
     </div>
 
     {{-- PHP Info row --}}
-    <div class="bg-white rounded-xl border border-slate-200 p-5">
-        <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">PHP Runtime</h3>
+    <div class="bg-white rounded-xl border border-line p-5">
+        <h3 class="text-sm font-semibold text-muted uppercase tracking-wider mb-3">PHP Runtime</h3>
         <div class="flex flex-wrap gap-6 text-sm">
-            <div><span class="text-slate-500">Version:</span> <span class="font-medium text-slate-900">{{ $infra['php']['version'] ?? 'N/A' }}</span></div>
-            <div><span class="text-slate-500">Memory Limit:</span> <span class="font-medium text-slate-900">{{ $infra['php']['memory_limit'] ?? 'N/A' }}</span></div>
-            <div><span class="text-slate-500">Max Execution:</span> <span class="font-medium text-slate-900">{{ $infra['php']['max_execution_time'] ?? 'N/A' }}s</span></div>
+            <div><span class="text-muted">Version:</span> <span class="font-medium text-ink">{{ $infra['php']['version'] ?? 'N/A' }}</span></div>
+            <div><span class="text-muted">Memory Limit:</span> <span class="font-medium text-ink">{{ $infra['php']['memory_limit'] ?? 'N/A' }}</span></div>
+            <div><span class="text-muted">Max Execution:</span> <span class="font-medium text-ink">{{ $infra['php']['max_execution_time'] ?? 'N/A' }}s</span></div>
             <div>
-                <span class="text-slate-500">OPcache:</span>
+                <span class="text-muted">OPcache:</span>
                 @if(!empty($infra['php']['opcache']['opcache_enabled']))
                     <span class="font-medium text-green-600">Enabled</span>
                 @else
-                    <span class="font-medium text-red-600">Disabled</span>
+                    <span class="font-medium text-coral">Disabled</span>
                 @endif
             </div>
         </div>
@@ -135,9 +135,9 @@
     {{-- 2. PLATFORM METRICS --}}
     {{-- ============================================================= --}}
     <div>
-        <h2 class="text-lg font-bold text-slate-900 mb-3">Platform Metrics</h2>
+        <h2 class="text-lg font-bold text-ink mb-3">Platform Metrics</h2>
         @if(!empty($metrics['error']))
-            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{{ $metrics['error'] }}</div>
+            <div class="bg-coralsoft border border-coral/30 text-coralh px-4 py-3 rounded-lg text-sm">{{ $metrics['error'] }}</div>
         @else
             <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
                 @php
@@ -153,11 +153,11 @@
                     ];
                 @endphp
                 @foreach($metricCards as $card)
-                    <div class="bg-white rounded-xl border border-slate-200 p-4">
-                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">{{ $card['label'] }}</p>
-                        <p class="text-xl font-bold text-slate-900 mt-1">{{ $card['value'] }}</p>
+                    <div class="bg-white rounded-xl border border-line p-4">
+                        <p class="text-xs font-semibold text-muted uppercase tracking-wider">{{ $card['label'] }}</p>
+                        <p class="text-xl font-bold text-ink mt-1">{{ $card['value'] }}</p>
                         @if($card['sub'])
-                            <p class="text-xs text-slate-400 mt-0.5">{{ $card['sub'] }}</p>
+                            <p class="text-xs text-muted mt-0.5">{{ $card['sub'] }}</p>
                         @endif
                     </div>
                 @endforeach
@@ -169,55 +169,55 @@
     {{-- 3. AI API HEALTH --}}
     {{-- ============================================================= --}}
     <div>
-        <h2 class="text-lg font-bold text-slate-900 mb-3">AI API Health (24h)</h2>
+        <h2 class="text-lg font-bold text-ink mb-3">AI API Health (24h)</h2>
         @if(!empty($aiHealth['error']))
-            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{{ $aiHealth['error'] }}</div>
+            <div class="bg-coralsoft border border-coral/30 text-coralh px-4 py-3 rounded-lg text-sm">{{ $aiHealth['error'] }}</div>
         @else
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div class="bg-white rounded-xl border border-slate-200 p-5">
-                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Error Rate</p>
-                    <p class="text-2xl font-bold {{ ($aiHealth['error_rate'] ?? 0) > 5 ? 'text-red-600' : (($aiHealth['error_rate'] ?? 0) > 1 ? 'text-yellow-600' : 'text-green-600') }}">
+                <div class="bg-white rounded-xl border border-line p-5">
+                    <p class="text-xs font-semibold text-muted uppercase tracking-wider">Error Rate</p>
+                    <p class="text-2xl font-bold {{ ($aiHealth['error_rate'] ?? 0) > 5 ? 'text-coral' : (($aiHealth['error_rate'] ?? 0) > 1 ? 'text-yellow-600' : 'text-green-600') }}">
                         {{ number_format($aiHealth['error_rate'] ?? 0, 1) }}%
                     </p>
                 </div>
-                <div class="bg-white rounded-xl border border-slate-200 p-5">
-                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Avg Latency</p>
-                    <p class="text-2xl font-bold text-slate-900">{{ $aiHealth['avg_latency'] ?? 0 }} ms</p>
+                <div class="bg-white rounded-xl border border-line p-5">
+                    <p class="text-xs font-semibold text-muted uppercase tracking-wider">Avg Latency</p>
+                    <p class="text-2xl font-bold text-ink">{{ $aiHealth['avg_latency'] ?? 0 }} ms</p>
                 </div>
-                <div class="bg-white rounded-xl border border-slate-200 p-5">
-                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Cost Today</p>
-                    <p class="text-2xl font-bold text-slate-900">${{ number_format($aiHealth['total_cost_today'] ?? 0, 2) }}</p>
+                <div class="bg-white rounded-xl border border-line p-5">
+                    <p class="text-xs font-semibold text-muted uppercase tracking-wider">Cost Today</p>
+                    <p class="text-2xl font-bold text-ink">${{ number_format($aiHealth['total_cost_today'] ?? 0, 2) }}</p>
                 </div>
             </div>
 
             @if(!empty($aiHealth['by_provider']) && count($aiHealth['by_provider']))
-                <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                <div class="bg-white rounded-xl border border-line overflow-hidden">
                     <table class="w-full text-sm">
-                        <thead class="bg-slate-50 border-b border-slate-200">
+                        <thead class="bg-cream border-b border-line">
                             <tr>
-                                <th class="px-4 py-3 text-left font-semibold text-slate-600">Provider</th>
-                                <th class="px-4 py-3 text-left font-semibold text-slate-600">Model</th>
-                                <th class="px-4 py-3 text-left font-semibold text-slate-600">Status</th>
-                                <th class="px-4 py-3 text-right font-semibold text-slate-600">Requests</th>
-                                <th class="px-4 py-3 text-right font-semibold text-slate-600">Avg Latency</th>
-                                <th class="px-4 py-3 text-right font-semibold text-slate-600">Cost</th>
-                                <th class="px-4 py-3 text-right font-semibold text-slate-600">Tokens (In/Out)</th>
+                                <th class="px-4 py-3 text-left font-semibold text-muted">Provider</th>
+                                <th class="px-4 py-3 text-left font-semibold text-muted">Model</th>
+                                <th class="px-4 py-3 text-left font-semibold text-muted">Status</th>
+                                <th class="px-4 py-3 text-right font-semibold text-muted">Requests</th>
+                                <th class="px-4 py-3 text-right font-semibold text-muted">Avg Latency</th>
+                                <th class="px-4 py-3 text-right font-semibold text-muted">Cost</th>
+                                <th class="px-4 py-3 text-right font-semibold text-muted">Tokens (In/Out)</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
                             @foreach($aiHealth['by_provider'] as $row)
-                                <tr class="hover:bg-slate-50">
-                                    <td class="px-4 py-2.5 font-medium text-slate-900">{{ $row->provider }}</td>
-                                    <td class="px-4 py-2.5 text-slate-700">{{ $row->model }}</td>
+                                <tr class="hover:bg-cream">
+                                    <td class="px-4 py-2.5 font-medium text-ink">{{ $row->provider }}</td>
+                                    <td class="px-4 py-2.5 text-inkSoft">{{ $row->model }}</td>
                                     <td class="px-4 py-2.5">
-                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium {{ $row->status === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium {{ $row->status === 'success' ? 'bg-green-100 text-green-700' : 'bg-coralsoft text-coralh' }}">
                                             {{ $row->status }}
                                         </span>
                                     </td>
-                                    <td class="px-4 py-2.5 text-right text-slate-700">{{ number_format($row->cnt) }}</td>
-                                    <td class="px-4 py-2.5 text-right text-slate-700">{{ round($row->avg_latency) }} ms</td>
-                                    <td class="px-4 py-2.5 text-right text-slate-700">${{ number_format(($row->total_cost ?? 0) / 100, 2) }}</td>
-                                    <td class="px-4 py-2.5 text-right text-slate-700">{{ number_format($row->total_input ?? 0) }} / {{ number_format($row->total_output ?? 0) }}</td>
+                                    <td class="px-4 py-2.5 text-right text-inkSoft">{{ number_format($row->cnt) }}</td>
+                                    <td class="px-4 py-2.5 text-right text-inkSoft">{{ round($row->avg_latency) }} ms</td>
+                                    <td class="px-4 py-2.5 text-right text-inkSoft">${{ number_format(($row->total_cost ?? 0) / 100, 2) }}</td>
+                                    <td class="px-4 py-2.5 text-right text-inkSoft">{{ number_format($row->total_input ?? 0) }} / {{ number_format($row->total_output ?? 0) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -231,31 +231,31 @@
     {{-- 4. QUEUE HEALTH --}}
     {{-- ============================================================= --}}
     <div>
-        <h2 class="text-lg font-bold text-slate-900 mb-3">Queue Health</h2>
+        <h2 class="text-lg font-bold text-ink mb-3">Queue Health</h2>
         @if(!empty($queues['error']))
-            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{{ $queues['error'] }}</div>
+            <div class="bg-coralsoft border border-coral/30 text-coralh px-4 py-3 rounded-lg text-sm">{{ $queues['error'] }}</div>
         @else
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div class="bg-white rounded-xl border border-slate-200 p-5">
+                <div class="bg-white rounded-xl border border-line p-5">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Failed Jobs (Total)</p>
-                            <p class="text-2xl font-bold {{ ($queues['failed_jobs'] ?? 0) > 0 ? 'text-red-600' : 'text-green-600' }}">{{ $queues['failed_jobs'] ?? 0 }}</p>
+                            <p class="text-xs font-semibold text-muted uppercase tracking-wider">Failed Jobs (Total)</p>
+                            <p class="text-2xl font-bold {{ ($queues['failed_jobs'] ?? 0) > 0 ? 'text-coral' : 'text-green-600' }}">{{ $queues['failed_jobs'] ?? 0 }}</p>
                         </div>
                         <div>
-                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Last 24h</p>
+                            <p class="text-xs font-semibold text-muted uppercase tracking-wider">Last 24h</p>
                             <p class="text-2xl font-bold {{ ($queues['failed_recent'] ?? 0) > 0 ? 'text-yellow-600' : 'text-green-600' }}">{{ $queues['failed_recent'] ?? 0 }}</p>
                         </div>
                     </div>
                 </div>
-                <div class="bg-white rounded-xl border border-slate-200 p-5 flex items-center gap-2">
+                <div class="bg-white rounded-xl border border-line p-5 flex items-center gap-2">
                     <form method="POST" action="{{ route('admin.system.retryAll') }}">
                         @csrf
                         <button type="submit" class="px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">Retry All</button>
                     </form>
                     <form method="POST" action="{{ route('admin.system.clearFailed') }}">
                         @csrf
-                        <button type="submit" class="px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700" onclick="return confirm('Sigur stergi toate job-urile esuate?')">Clear All Failed</button>
+                        <button type="submit" class="px-3 py-2 text-sm font-medium text-white bg-coral rounded-lg hover:bg-coral" onclick="return confirm('Sigur stergi toate job-urile esuate?')">Clear All Failed</button>
                     </form>
                     <form method="POST" action="{{ route('admin.system.reprocessKb') }}">
                         @csrf
@@ -265,22 +265,22 @@
             </div>
 
             @if(!empty($queues['failed_types']) && count($queues['failed_types']))
-                <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                    <div class="px-4 py-3 border-b border-slate-200 bg-slate-50">
-                        <h4 class="text-sm font-semibold text-slate-700">Failed Job Types (7 zile)</h4>
+                <div class="bg-white rounded-xl border border-line overflow-hidden">
+                    <div class="px-4 py-3 border-b border-line bg-cream">
+                        <h4 class="text-sm font-semibold text-inkSoft">Failed Job Types (7 zile)</h4>
                     </div>
                     <table class="w-full text-sm">
-                        <thead class="bg-slate-50 border-b border-slate-100">
+                        <thead class="bg-cream border-b border-line">
                             <tr>
-                                <th class="px-4 py-2.5 text-left font-semibold text-slate-600">Job Type</th>
-                                <th class="px-4 py-2.5 text-right font-semibold text-slate-600">Count</th>
+                                <th class="px-4 py-2.5 text-left font-semibold text-muted">Job Type</th>
+                                <th class="px-4 py-2.5 text-right font-semibold text-muted">Count</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
                             @foreach($queues['failed_types'] as $ft)
-                                <tr class="hover:bg-slate-50">
-                                    <td class="px-4 py-2 text-slate-700">{{ $ft->job_type ?? 'Unknown' }}</td>
-                                    <td class="px-4 py-2 text-right font-medium text-slate-900">{{ $ft->cnt }}</td>
+                                <tr class="hover:bg-cream">
+                                    <td class="px-4 py-2 text-inkSoft">{{ $ft->job_type ?? 'Unknown' }}</td>
+                                    <td class="px-4 py-2 text-right font-medium text-ink">{{ $ft->cnt }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -294,9 +294,9 @@
     {{-- 4b. SOCIAL MEDIA COSTS --}}
     {{-- ============================================================= --}}
     <div>
-        <h2 class="text-lg font-bold text-slate-900 mb-3">Social Media AI Costs</h2>
+        <h2 class="text-lg font-bold text-ink mb-3">Social Media AI Costs</h2>
         @if(!empty($socialCosts['error']))
-            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{{ $socialCosts['error'] }}</div>
+            <div class="bg-coralsoft border border-coral/30 text-coralh px-4 py-3 rounded-lg text-sm">{{ $socialCosts['error'] }}</div>
         @else
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                 <div class="bg-purple-50 rounded-lg p-4 border border-purple-100">
@@ -318,21 +318,21 @@
             </div>
             <table class="w-full text-sm border-collapse">
                 <thead>
-                    <tr class="border-b border-slate-200">
-                        <th class="text-left py-2 px-3 text-xs font-semibold text-slate-500 uppercase">Tip</th>
-                        <th class="text-right py-2 px-3 text-xs font-semibold text-slate-500 uppercase">Apeluri 7d</th>
-                        <th class="text-right py-2 px-3 text-xs font-semibold text-slate-500 uppercase">Cost azi</th>
-                        <th class="text-right py-2 px-3 text-xs font-semibold text-slate-500 uppercase">Cost 7d</th>
+                    <tr class="border-b border-line">
+                        <th class="text-left py-2 px-3 text-xs font-semibold text-muted uppercase">Tip</th>
+                        <th class="text-right py-2 px-3 text-xs font-semibold text-muted uppercase">Apeluri 7d</th>
+                        <th class="text-right py-2 px-3 text-xs font-semibold text-muted uppercase">Cost azi</th>
+                        <th class="text-right py-2 px-3 text-xs font-semibold text-muted uppercase">Cost 7d</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr class="border-b border-slate-100">
+                    <tr class="border-b border-line">
                         <td class="py-2 px-3 font-medium">📝 Text (GPT-4o-mini)</td>
                         <td class="py-2 px-3 text-right">{{ $socialCosts['text_calls_7d'] ?? 0 }}</td>
                         <td class="py-2 px-3 text-right">${{ number_format($socialCosts['text_today'] ?? 0, 4) }}</td>
                         <td class="py-2 px-3 text-right">${{ number_format($socialCosts['text_7d'] ?? 0, 4) }}</td>
                     </tr>
-                    <tr class="border-b border-slate-100">
+                    <tr class="border-b border-line">
                         <td class="py-2 px-3 font-medium">🖼️ Imagini (Gemini 3.1 Flash)</td>
                         <td class="py-2 px-3 text-right">{{ $socialCosts['image_calls_7d'] ?? 0 }}</td>
                         <td class="py-2 px-3 text-right">${{ number_format($socialCosts['image_today'] ?? 0, 4) }}</td>
@@ -341,7 +341,7 @@
                 </tbody>
             </table>
             @if(($aiHealth['chat_cost_today'] ?? null) !== null)
-                <p class="text-xs text-slate-500 mt-3">💬 Cost chat AI azi (fără social): ${{ number_format($aiHealth['chat_cost_today'], 4) }}</p>
+                <p class="text-xs text-muted mt-3">💬 Cost chat AI azi (fără social): ${{ number_format($aiHealth['chat_cost_today'], 4) }}</p>
             @endif
         @endif
     </div>
@@ -350,54 +350,54 @@
     {{-- 5. KNOWLEDGE BASE HEALTH --}}
     {{-- ============================================================= --}}
     <div>
-        <h2 class="text-lg font-bold text-slate-900 mb-3">Knowledge Base Health</h2>
+        <h2 class="text-lg font-bold text-ink mb-3">Knowledge Base Health</h2>
         @if(!empty($kbHealth['error']))
-            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{{ $kbHealth['error'] }}</div>
+            <div class="bg-coralsoft border border-coral/30 text-coralh px-4 py-3 rounded-lg text-sm">{{ $kbHealth['error'] }}</div>
         @else
             <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
-                <div class="bg-white rounded-xl border border-slate-200 p-4">
-                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Chunks</p>
-                    <p class="text-xl font-bold text-slate-900 mt-1">{{ number_format($kbHealth['total_chunks'] ?? 0) }}</p>
+                <div class="bg-white rounded-xl border border-line p-4">
+                    <p class="text-xs font-semibold text-muted uppercase tracking-wider">Total Chunks</p>
+                    <p class="text-xl font-bold text-ink mt-1">{{ number_format($kbHealth['total_chunks'] ?? 0) }}</p>
                 </div>
-                <div class="bg-white rounded-xl border border-slate-200 p-4">
-                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Ready</p>
+                <div class="bg-white rounded-xl border border-line p-4">
+                    <p class="text-xs font-semibold text-muted uppercase tracking-wider">Ready</p>
                     <p class="text-xl font-bold text-green-600 mt-1">{{ number_format($kbHealth['ready'] ?? 0) }}</p>
                 </div>
-                <div class="bg-white rounded-xl border border-slate-200 p-4">
-                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pending</p>
+                <div class="bg-white rounded-xl border border-line p-4">
+                    <p class="text-xs font-semibold text-muted uppercase tracking-wider">Pending</p>
                     <p class="text-xl font-bold text-yellow-600 mt-1">{{ number_format($kbHealth['pending'] ?? 0) }}</p>
                 </div>
-                <div class="bg-white rounded-xl border border-slate-200 p-4">
-                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Failed</p>
-                    <p class="text-xl font-bold text-red-600 mt-1">{{ number_format($kbHealth['failed'] ?? 0) }}</p>
+                <div class="bg-white rounded-xl border border-line p-4">
+                    <p class="text-xs font-semibold text-muted uppercase tracking-wider">Failed</p>
+                    <p class="text-xl font-bold text-coral mt-1">{{ number_format($kbHealth['failed'] ?? 0) }}</p>
                 </div>
-                <div class="bg-white rounded-xl border border-slate-200 p-4">
-                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">No Embedding</p>
-                    <p class="text-xl font-bold {{ ($kbHealth['without_embedding'] ?? 0) > 0 ? 'text-yellow-600' : 'text-slate-900' }} mt-1">{{ number_format($kbHealth['without_embedding'] ?? 0) }}</p>
+                <div class="bg-white rounded-xl border border-line p-4">
+                    <p class="text-xs font-semibold text-muted uppercase tracking-wider">No Embedding</p>
+                    <p class="text-xl font-bold {{ ($kbHealth['without_embedding'] ?? 0) > 0 ? 'text-yellow-600' : 'text-ink' }} mt-1">{{ number_format($kbHealth['without_embedding'] ?? 0) }}</p>
                 </div>
             </div>
 
             @if(!empty($kbHealth['failed_details']) && count($kbHealth['failed_details']))
-                <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                    <div class="px-4 py-3 border-b border-slate-200 bg-slate-50">
-                        <h4 class="text-sm font-semibold text-slate-700">Failed Documents per Bot</h4>
+                <div class="bg-white rounded-xl border border-line overflow-hidden">
+                    <div class="px-4 py-3 border-b border-line bg-cream">
+                        <h4 class="text-sm font-semibold text-inkSoft">Failed Documents per Bot</h4>
                     </div>
                     <table class="w-full text-sm">
-                        <thead class="bg-slate-50 border-b border-slate-100">
+                        <thead class="bg-cream border-b border-line">
                             <tr>
-                                <th class="px-4 py-2.5 text-left font-semibold text-slate-600">Bot ID</th>
-                                <th class="px-4 py-2.5 text-right font-semibold text-slate-600">Failed Count</th>
-                                <th class="px-4 py-2.5 text-left font-semibold text-slate-600">Last Error</th>
+                                <th class="px-4 py-2.5 text-left font-semibold text-muted">Bot ID</th>
+                                <th class="px-4 py-2.5 text-right font-semibold text-muted">Failed Count</th>
+                                <th class="px-4 py-2.5 text-left font-semibold text-muted">Last Error</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
                             @foreach($kbHealth['failed_details'] as $fd)
-                                <tr class="hover:bg-slate-50">
-                                    <td class="px-4 py-2 text-slate-700">
+                                <tr class="hover:bg-cream">
+                                    <td class="px-4 py-2 text-inkSoft">
                                         <a href="{{ route('admin.bots.show', $fd->bot_id) }}" class="text-blue-600 hover:underline">{{ $fd->bot_id }}</a>
                                     </td>
-                                    <td class="px-4 py-2 text-right font-medium text-red-600">{{ $fd->cnt }}</td>
-                                    <td class="px-4 py-2 text-slate-500 text-xs max-w-md truncate">{{ \Illuminate\Support\Str::limit($fd->last_error, 120) }}</td>
+                                    <td class="px-4 py-2 text-right font-medium text-coral">{{ $fd->cnt }}</td>
+                                    <td class="px-4 py-2 text-muted text-xs max-w-md truncate">{{ \Illuminate\Support\Str::limit($fd->last_error, 120) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -411,44 +411,44 @@
     {{-- 6. SEARCH QUALITY --}}
     {{-- ============================================================= --}}
     <div>
-        <h2 class="text-lg font-bold text-slate-900 mb-3">Search Quality (7 zile)</h2>
+        <h2 class="text-lg font-bold text-ink mb-3">Search Quality (7 zile)</h2>
         @if(!empty($searchQuality['error']))
-            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{{ $searchQuality['error'] }}</div>
+            <div class="bg-coralsoft border border-coral/30 text-coralh px-4 py-3 rounded-lg text-sm">{{ $searchQuality['error'] }}</div>
         @else
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div class="bg-white rounded-xl border border-slate-200 p-5">
-                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Searches</p>
-                    <p class="text-2xl font-bold text-slate-900">{{ number_format($searchQuality['total'] ?? 0) }}</p>
+                <div class="bg-white rounded-xl border border-line p-5">
+                    <p class="text-xs font-semibold text-muted uppercase tracking-wider">Total Searches</p>
+                    <p class="text-2xl font-bold text-ink">{{ number_format($searchQuality['total'] ?? 0) }}</p>
                 </div>
-                <div class="bg-white rounded-xl border border-slate-200 p-5">
-                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Failed (0 results)</p>
-                    <p class="text-2xl font-bold text-red-600">{{ number_format($searchQuality['failed'] ?? 0) }}</p>
+                <div class="bg-white rounded-xl border border-line p-5">
+                    <p class="text-xs font-semibold text-muted uppercase tracking-wider">Failed (0 results)</p>
+                    <p class="text-2xl font-bold text-coral">{{ number_format($searchQuality['failed'] ?? 0) }}</p>
                 </div>
-                <div class="bg-white rounded-xl border border-slate-200 p-5">
-                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Fail Rate</p>
-                    <p class="text-2xl font-bold {{ ($searchQuality['fail_rate'] ?? 0) > 20 ? 'text-red-600' : (($searchQuality['fail_rate'] ?? 0) > 10 ? 'text-yellow-600' : 'text-green-600') }}">
+                <div class="bg-white rounded-xl border border-line p-5">
+                    <p class="text-xs font-semibold text-muted uppercase tracking-wider">Fail Rate</p>
+                    <p class="text-2xl font-bold {{ ($searchQuality['fail_rate'] ?? 0) > 20 ? 'text-coral' : (($searchQuality['fail_rate'] ?? 0) > 10 ? 'text-yellow-600' : 'text-green-600') }}">
                         {{ $searchQuality['fail_rate'] ?? 0 }}%
                     </p>
                 </div>
             </div>
 
             @if(!empty($searchQuality['top_failed']) && count($searchQuality['top_failed']))
-                <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                    <div class="px-4 py-3 border-b border-slate-200 bg-slate-50">
-                        <h4 class="text-sm font-semibold text-slate-700">Top Failed Queries</h4>
+                <div class="bg-white rounded-xl border border-line overflow-hidden">
+                    <div class="px-4 py-3 border-b border-line bg-cream">
+                        <h4 class="text-sm font-semibold text-inkSoft">Top Failed Queries</h4>
                     </div>
                     <table class="w-full text-sm">
-                        <thead class="bg-slate-50 border-b border-slate-100">
+                        <thead class="bg-cream border-b border-line">
                             <tr>
-                                <th class="px-4 py-2.5 text-left font-semibold text-slate-600">Query</th>
-                                <th class="px-4 py-2.5 text-right font-semibold text-slate-600">Count</th>
+                                <th class="px-4 py-2.5 text-left font-semibold text-muted">Query</th>
+                                <th class="px-4 py-2.5 text-right font-semibold text-muted">Count</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
                             @foreach($searchQuality['top_failed'] as $sq)
-                                <tr class="hover:bg-slate-50">
-                                    <td class="px-4 py-2 text-slate-700">{{ \Illuminate\Support\Str::limit($sq->query, 100) }}</td>
-                                    <td class="px-4 py-2 text-right font-medium text-slate-900">{{ $sq->cnt }}</td>
+                                <tr class="hover:bg-cream">
+                                    <td class="px-4 py-2 text-inkSoft">{{ \Illuminate\Support\Str::limit($sq->query, 100) }}</td>
+                                    <td class="px-4 py-2 text-right font-medium text-ink">{{ $sq->cnt }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -462,20 +462,20 @@
     {{-- 7. CONVERSATION RATINGS --}}
     {{-- ============================================================= --}}
     <div>
-        <h2 class="text-lg font-bold text-slate-900 mb-3">Conversation Ratings (7 zile)</h2>
+        <h2 class="text-lg font-bold text-ink mb-3">Conversation Ratings (7 zile)</h2>
         @if(!empty($ratings['error']))
-            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{{ $ratings['error'] }}</div>
+            <div class="bg-coralsoft border border-coral/30 text-coralh px-4 py-3 rounded-lg text-sm">{{ $ratings['error'] }}</div>
         @else
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div class="bg-white rounded-xl border border-slate-200 p-5">
+                <div class="bg-white rounded-xl border border-line p-5">
                     <div class="flex items-center gap-6">
                         <div>
-                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Average Rating</p>
-                            <p class="text-3xl font-bold text-slate-900">{{ $ratings['avg'] ?? 0 }}</p>
-                            <p class="text-xs text-slate-400">din {{ $ratings['total'] ?? 0 }} voturi</p>
+                            <p class="text-xs font-semibold text-muted uppercase tracking-wider">Average Rating</p>
+                            <p class="text-3xl font-bold text-ink">{{ $ratings['avg'] ?? 0 }}</p>
+                            <p class="text-xs text-muted">din {{ $ratings['total'] ?? 0 }} voturi</p>
                         </div>
                         <div class="flex-1">
-                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Distribution</p>
+                            <p class="text-xs font-semibold text-muted uppercase tracking-wider mb-2">Distribution</p>
                             @for($i = 5; $i >= 1; $i--)
                                 @php
                                     $count = $ratings['distribution'][$i] ?? 0;
@@ -483,38 +483,38 @@
                                     $pct = $total > 0 ? round($count / $total * 100) : 0;
                                 @endphp
                                 <div class="flex items-center gap-2 mb-1">
-                                    <span class="text-xs text-slate-500 w-4 text-right">{{ $i }}</span>
-                                    <div class="flex-1 bg-slate-100 rounded-full h-2">
+                                    <span class="text-xs text-muted w-4 text-right">{{ $i }}</span>
+                                    <div class="flex-1 bg-cream rounded-full h-2">
                                         <div class="h-2 rounded-full {{ $i >= 4 ? 'bg-green-500' : ($i === 3 ? 'bg-yellow-500' : 'bg-red-500') }}" style="width: {{ $pct }}%"></div>
                                     </div>
-                                    <span class="text-xs text-slate-400 w-8">{{ $count }}</span>
+                                    <span class="text-xs text-muted w-8">{{ $count }}</span>
                                 </div>
                             @endfor
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                    <div class="px-4 py-3 border-b border-slate-200 bg-slate-50">
-                        <h4 class="text-sm font-semibold text-slate-700">Recent Low Ratings (1-2)</h4>
+                <div class="bg-white rounded-xl border border-line overflow-hidden">
+                    <div class="px-4 py-3 border-b border-line bg-cream">
+                        <h4 class="text-sm font-semibold text-inkSoft">Recent Low Ratings (1-2)</h4>
                     </div>
                     @if(!empty($ratings['recent_low']) && count($ratings['recent_low']))
                         <div class="divide-y divide-slate-100 max-h-64 overflow-y-auto">
                             @foreach($ratings['recent_low'] as $lr)
                                 <div class="px-4 py-2.5">
                                     <div class="flex items-center gap-2">
-                                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-100 text-red-700 text-xs font-bold">{{ $lr->rating }}</span>
-                                        <span class="text-xs text-slate-500">{{ $lr->bot->name ?? 'Bot #' . $lr->bot_id }}</span>
-                                        <span class="text-xs text-slate-400 ml-auto">{{ \Carbon\Carbon::parse($lr->created_at)->diffForHumans() }}</span>
+                                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-coralsoft text-coralh text-xs font-bold">{{ $lr->rating }}</span>
+                                        <span class="text-xs text-muted">{{ $lr->bot->name ?? 'Bot #' . $lr->bot_id }}</span>
+                                        <span class="text-xs text-muted ml-auto">{{ \Carbon\Carbon::parse($lr->created_at)->diffForHumans() }}</span>
                                     </div>
                                     @if($lr->feedback)
-                                        <p class="text-xs text-slate-600 mt-1 pl-8">{{ \Illuminate\Support\Str::limit($lr->feedback, 150) }}</p>
+                                        <p class="text-xs text-muted mt-1 pl-8">{{ \Illuminate\Support\Str::limit($lr->feedback, 150) }}</p>
                                     @endif
                                 </div>
                             @endforeach
                         </div>
                     @else
-                        <div class="px-4 py-6 text-center text-sm text-slate-400">Niciun rating scazut in ultimele 7 zile.</div>
+                        <div class="px-4 py-6 text-center text-sm text-muted">Niciun rating scazut in ultimele 7 zile.</div>
                     @endif
                 </div>
             </div>
@@ -525,38 +525,38 @@
     {{-- 8. A/B EXPERIMENTS --}}
     {{-- ============================================================= --}}
     <div>
-        <h2 class="text-lg font-bold text-slate-900 mb-3">A/B Experiments</h2>
+        <h2 class="text-lg font-bold text-ink mb-3">A/B Experiments</h2>
         @if(!empty($experiments) && count($experiments))
-            <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div class="bg-white rounded-xl border border-line overflow-hidden">
                 <table class="w-full text-sm">
-                    <thead class="bg-slate-50 border-b border-slate-200">
+                    <thead class="bg-cream border-b border-line">
                         <tr>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-600">Experiment</th>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-600">Bot</th>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-600">Status</th>
-                            <th class="px-4 py-3 text-right font-semibold text-slate-600">Assignments</th>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-600">Created</th>
+                            <th class="px-4 py-3 text-left font-semibold text-muted">Experiment</th>
+                            <th class="px-4 py-3 text-left font-semibold text-muted">Bot</th>
+                            <th class="px-4 py-3 text-left font-semibold text-muted">Status</th>
+                            <th class="px-4 py-3 text-right font-semibold text-muted">Assignments</th>
+                            <th class="px-4 py-3 text-left font-semibold text-muted">Created</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         @foreach($experiments as $exp)
-                            <tr class="hover:bg-slate-50">
-                                <td class="px-4 py-2.5 font-medium text-slate-900">{{ $exp->name ?? 'Experiment #' . $exp->id }}</td>
-                                <td class="px-4 py-2.5 text-slate-700">{{ $exp->bot->name ?? 'N/A' }}</td>
+                            <tr class="hover:bg-cream">
+                                <td class="px-4 py-2.5 font-medium text-ink">{{ $exp->name ?? 'Experiment #' . $exp->id }}</td>
+                                <td class="px-4 py-2.5 text-inkSoft">{{ $exp->bot->name ?? 'N/A' }}</td>
                                 <td class="px-4 py-2.5">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ ($exp->status ?? '') === 'running' ? 'bg-green-100 text-green-700' : (($exp->status ?? '') === 'completed' ? 'bg-slate-100 text-slate-600' : 'bg-yellow-100 text-yellow-700') }}">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ ($exp->status ?? '') === 'running' ? 'bg-green-100 text-green-700' : (($exp->status ?? '') === 'completed' ? 'bg-cream text-muted' : 'bg-yellow-100 text-yellow-700') }}">
                                         {{ $exp->status ?? 'unknown' }}
                                     </span>
                                 </td>
-                                <td class="px-4 py-2.5 text-right text-slate-700">{{ number_format($exp->assignments_count ?? 0) }}</td>
-                                <td class="px-4 py-2.5 text-slate-500 text-xs">{{ $exp->created_at ? $exp->created_at->diffForHumans() : '' }}</td>
+                                <td class="px-4 py-2.5 text-right text-inkSoft">{{ number_format($exp->assignments_count ?? 0) }}</td>
+                                <td class="px-4 py-2.5 text-muted text-xs">{{ $exp->created_at ? $exp->created_at->diffForHumans() : '' }}</td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
             </div>
         @else
-            <div class="bg-white rounded-xl border border-slate-200 px-4 py-6 text-center text-sm text-slate-400">Niciun experiment gasit.</div>
+            <div class="bg-white rounded-xl border border-line px-4 py-6 text-center text-sm text-muted">Niciun experiment gasit.</div>
         @endif
     </div>
 
@@ -564,28 +564,28 @@
     {{-- 9. ERROR LOG --}}
     {{-- ============================================================= --}}
     <div>
-        <h2 class="text-lg font-bold text-slate-900 mb-3">Error Log (Failed Jobs - Last 20)</h2>
+        <h2 class="text-lg font-bold text-ink mb-3">Error Log (Failed Jobs - Last 20)</h2>
         @if(!empty($errors) && count($errors))
-            <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div class="bg-white rounded-xl border border-line overflow-hidden">
                 <table class="w-full text-sm">
-                    <thead class="bg-slate-50 border-b border-slate-200">
+                    <thead class="bg-cream border-b border-line">
                         <tr>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-600">ID</th>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-600">Job</th>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-600">Queue</th>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-600">Error</th>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-600">Failed At</th>
-                            <th class="px-4 py-3 text-center font-semibold text-slate-600">Action</th>
+                            <th class="px-4 py-3 text-left font-semibold text-muted">ID</th>
+                            <th class="px-4 py-3 text-left font-semibold text-muted">Job</th>
+                            <th class="px-4 py-3 text-left font-semibold text-muted">Queue</th>
+                            <th class="px-4 py-3 text-left font-semibold text-muted">Error</th>
+                            <th class="px-4 py-3 text-left font-semibold text-muted">Failed At</th>
+                            <th class="px-4 py-3 text-center font-semibold text-muted">Action</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         @foreach($errors as $err)
-                            <tr class="hover:bg-slate-50">
-                                <td class="px-4 py-2.5 text-slate-500 font-mono text-xs">{{ $err['id'] }}</td>
-                                <td class="px-4 py-2.5 font-medium text-slate-900 text-xs">{{ $err['job'] }}</td>
-                                <td class="px-4 py-2.5 text-slate-500 text-xs">{{ $err['queue'] }}</td>
-                                <td class="px-4 py-2.5 text-red-600 text-xs max-w-xs truncate" title="{{ $err['error'] }}">{{ \Illuminate\Support\Str::limit($err['error'], 100) }}</td>
-                                <td class="px-4 py-2.5 text-slate-500 text-xs whitespace-nowrap">{{ \Carbon\Carbon::parse($err['failed_at'])->diffForHumans() }}</td>
+                            <tr class="hover:bg-cream">
+                                <td class="px-4 py-2.5 text-muted font-mono text-xs">{{ $err['id'] }}</td>
+                                <td class="px-4 py-2.5 font-medium text-ink text-xs">{{ $err['job'] }}</td>
+                                <td class="px-4 py-2.5 text-muted text-xs">{{ $err['queue'] }}</td>
+                                <td class="px-4 py-2.5 text-coral text-xs max-w-xs truncate" title="{{ $err['error'] }}">{{ \Illuminate\Support\Str::limit($err['error'], 100) }}</td>
+                                <td class="px-4 py-2.5 text-muted text-xs whitespace-nowrap">{{ \Carbon\Carbon::parse($err['failed_at'])->diffForHumans() }}</td>
                                 <td class="px-4 py-2.5 text-center">
                                     <form method="POST" action="{{ route('admin.system.retryJob', $err['id']) }}" class="inline">
                                         @csrf
@@ -598,7 +598,7 @@
                 </table>
             </div>
         @else
-            <div class="bg-white rounded-xl border border-slate-200 px-4 py-6 text-center text-sm text-slate-400">Niciun job esuat. Totul functioneaza corect.</div>
+            <div class="bg-white rounded-xl border border-line px-4 py-6 text-center text-sm text-muted">Niciun job esuat. Totul functioneaza corect.</div>
         @endif
     </div>
 

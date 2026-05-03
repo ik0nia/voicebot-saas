@@ -1,7 +1,7 @@
 {{-- Bot page header — clean, simple, no health score (that's in Overview tab) --}}
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div class="flex items-center gap-4">
-        <h1 id="bot-name-display" class="text-2xl font-bold text-slate-900">{{ $bot->name }}</h1>
+        <h1 id="bot-name-display" class="text-2xl font-bold text-ink">{{ $bot->name }}</h1>
         <form method="POST" action="{{ route('dashboard.bots.toggle', $bot) }}" class="inline">
             @csrf
             @method('PATCH')
@@ -9,7 +9,7 @@
                 class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition-colors cursor-pointer
                 {{ $bot->is_active
                     ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
-                    : 'bg-slate-100 text-slate-500 border border-slate-200 hover:bg-slate-200' }}">
+                    : 'bg-cream text-muted border border-line hover:bg-sand' }}">
                 <span class="w-1.5 h-1.5 rounded-full {{ $bot->is_active ? 'bg-emerald-500' : 'bg-slate-400' }}"></span>
                 {{ $bot->is_active ? 'Activ' : 'Inactiv' }}
             </button>
@@ -32,7 +32,7 @@
                 : route('public.demo', $bot->slug);
         @endphp
         <a href="{{ $demoUrl }}" target="_blank"
-           class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+           class="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-4 py-2 text-sm font-medium text-inkSoft hover:bg-cream transition-colors">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
             Demo Link
         </a>

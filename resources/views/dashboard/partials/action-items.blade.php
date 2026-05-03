@@ -17,9 +17,9 @@
                     <div class="w-2 h-2 rounded-full bg-blue-400 shrink-0"></div>
                 @endif
                 <div class="min-w-0">
-                    <p class="text-sm text-slate-800">{{ $item['message'] }}</p>
+                    <p class="text-sm text-ink">{{ $item['message'] }}</p>
                     @if($item['type'] === 'bot')
-                        <p class="text-xs text-slate-500">Bot: {{ $item['bot'] }}</p>
+                        <p class="text-xs text-muted">Bot: {{ $item['bot'] }}</p>
                     @endif
                 </div>
             </div>

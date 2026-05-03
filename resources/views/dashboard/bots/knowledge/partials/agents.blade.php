@@ -2,22 +2,22 @@
     {{-- Search bar --}}
     <div class="mb-6">
         <div class="relative">
-            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
             <input type="text" id="agent-search" placeholder="Caută agenți..." oninput="filterAgents(this.value)"
-                class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-900 placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition">
+                class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-line text-sm text-ink placeholder-slate-400 focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none transition">
         </div>
     </div>
 
     {{-- Category navigation --}}
-    <div class="flex flex-wrap items-center gap-2 mb-6 pb-4 border-b border-slate-200">
-        <button onclick="filterAgentCategory('all', this)" class="agent-cat-btn px-3 py-1.5 text-xs font-medium rounded-full bg-red-800 text-white transition-colors">
+    <div class="flex flex-wrap items-center gap-2 mb-6 pb-4 border-b border-line">
+        <button onclick="filterAgentCategory('all', this)" class="agent-cat-btn px-3 py-1.5 text-xs font-medium rounded-full bg-coral text-white transition-colors">
             Toate
             <span class="ml-1 inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-xs bg-white/20">{{ collect($agentsByCategory)->flatten(1)->count() }}</span>
         </button>
         @foreach($agentsByCategory as $category => $categoryAgents)
-            <button onclick="filterAgentCategory('{{ Str::slug($category) }}', this)" class="agent-cat-btn px-3 py-1.5 text-xs font-medium rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
+            <button onclick="filterAgentCategory('{{ Str::slug($category) }}', this)" class="agent-cat-btn px-3 py-1.5 text-xs font-medium rounded-full bg-cream text-muted hover:bg-sand transition-colors">
                 {{ $category }}
-                <span class="ml-1 inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-xs bg-slate-200/60 text-slate-500">{{ count($categoryAgents) }}</span>
+                <span class="ml-1 inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-xs bg-sand/60 text-muted">{{ count($categoryAgents) }}</span>
             </button>
         @endforeach
     </div>
@@ -25,7 +25,7 @@
     {{-- No results message --}}
     <div id="agents-no-results" class="hidden text-center py-8">
         <svg class="w-12 h-12 text-slate-300 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-        <p class="text-sm text-slate-500">Niciun agent găsit pentru căutarea ta.</p>
+        <p class="text-sm text-muted">Niciun agent găsit pentru căutarea ta.</p>
     </div>
 
     @php
@@ -35,10 +35,10 @@
 
     @foreach($agentsByCategory as $category => $categoryAgents)
         <div class="agent-category-group mb-8 last:mb-0" data-category="{{ Str::slug($category) }}">
-            <div class="flex items-center gap-3 mb-4 pb-2 border-b border-slate-100">
-                <div class="w-1 h-5 bg-red-700 rounded-full"></div>
-                <h3 class="text-sm font-semibold text-slate-700 uppercase tracking-wider">{{ $category }}</h3>
-                <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">{{ count($categoryAgents) }}</span>
+            <div class="flex items-center gap-3 mb-4 pb-2 border-b border-line">
+                <div class="w-1 h-5 bg-coral rounded-full"></div>
+                <h3 class="text-sm font-semibold text-inkSoft uppercase tracking-wider">{{ $category }}</h3>
+                <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-medium bg-cream text-muted">{{ count($categoryAgents) }}</span>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @foreach($categoryAgents as $agent)
@@ -46,7 +46,7 @@
                         $isLocked = in_array($agent['slug'], $lockedSlugs);
                         $wasUsed = in_array($agent['slug'], $recentRunSlugs);
                     @endphp
-                    <div class="agent-card border border-slate-200 rounded-lg p-4 transition-all {{ $isLocked ? 'opacity-60 cursor-not-allowed' : 'hover:border-red-300 hover:shadow-sm cursor-pointer group' }}"
+                    <div class="agent-card border border-line rounded-lg p-4 transition-all {{ $isLocked ? 'opacity-60 cursor-not-allowed' : 'hover:border-red-300 hover:shadow-sm cursor-pointer group' }}"
                          data-agent-name="{{ strtolower($agent['name']) }}"
                          data-agent-desc="{{ strtolower($agent['description']) }}"
                          @if(!$isLocked)
@@ -56,7 +56,7 @@
                          title="Disponibil pe Pro"
                          @endif>
                         <div class="flex items-start gap-3">
-                            <div class="shrink-0 w-10 h-10 rounded-lg {{ $isLocked ? 'bg-slate-100 text-slate-400' : 'bg-red-50 text-red-700 group-hover:bg-red-100' }} flex items-center justify-center transition-colors">
+                            <div class="shrink-0 w-10 h-10 rounded-lg {{ $isLocked ? 'bg-cream text-muted' : 'bg-coralsoft text-coralh group-hover:bg-coralsoft' }} flex items-center justify-center transition-colors">
                                 @switch($agent['icon'])
                                     @case('box')
                                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
@@ -124,9 +124,9 @@
                             </div>
                             <div class="min-w-0 flex-1">
                                 <div class="flex items-center gap-2">
-                                    <h4 class="text-sm font-semibold text-slate-900">{{ $agent['name'] }}</h4>
+                                    <h4 class="text-sm font-semibold text-ink">{{ $agent['name'] }}</h4>
                                     @if($isLocked)
-                                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-slate-200 text-slate-500" title="Disponibil pe Pro">
+                                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-sand text-muted" title="Disponibil pe Pro">
                                             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
                                             Pro
                                         </span>
@@ -138,7 +138,7 @@
                                         </span>
                                     @endif
                                 </div>
-                                <p class="text-xs text-slate-500 mt-0.5 line-clamp-2">{{ $agent['description'] }}</p>
+                                <p class="text-xs text-muted mt-0.5 line-clamp-2">{{ $agent['description'] }}</p>
                             </div>
                         </div>
                     </div>
@@ -179,11 +179,11 @@
     function filterAgentCategory(catSlug, btn) {
         // Update active button
         document.querySelectorAll('.agent-cat-btn').forEach(function(b) {
-            b.classList.remove('bg-red-800', 'text-white');
-            b.classList.add('bg-slate-100', 'text-slate-600');
+            b.classList.remove('bg-coral', 'text-white');
+            b.classList.add('bg-cream', 'text-muted');
         });
-        btn.classList.remove('bg-slate-100', 'text-slate-600');
-        btn.classList.add('bg-red-800', 'text-white');
+        btn.classList.remove('bg-cream', 'text-muted');
+        btn.classList.add('bg-coral', 'text-white');
 
         var groups = document.querySelectorAll('.agent-category-group');
         if (catSlug === 'all') {

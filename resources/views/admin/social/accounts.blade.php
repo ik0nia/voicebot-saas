@@ -2,7 +2,7 @@
 
 @section('title', 'Conturi Social Media')
 @section('breadcrumb')
-    <a href="{{ route('admin.social.index') }}" class="text-slate-400 hover:text-slate-600">Social Media</a>
+    <a href="{{ route('admin.social.index') }}" class="text-muted hover:text-muted">Social Media</a>
     <span class="mx-1.5 text-slate-300">/</span>
     Conturi
 @endsection
@@ -19,42 +19,42 @@
 
     {{-- Header --}}
     <div class="flex items-center gap-3">
-        <a href="{{ route('admin.social.index') }}" class="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100">
+        <a href="{{ route('admin.social.index') }}" class="p-2 rounded-lg text-muted hover:text-inkSoft hover:bg-cream">
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
         </a>
         <div>
-            <h1 class="text-2xl font-bold text-slate-900">Conturi Social Media</h1>
-            <p class="text-sm text-slate-500 mt-1">Configureaza conturile pentru fiecare platforma</p>
+            <h1 class="text-2xl font-bold text-ink">Conturi Social Media</h1>
+            <p class="text-sm text-muted mt-1">Configureaza conturile pentru fiecare platforma</p>
         </div>
     </div>
 
     {{-- API Keys Settings --}}
-    <div class="bg-white rounded-xl border border-slate-200 p-6">
+    <div class="bg-white rounded-xl border border-line p-6">
         <div class="flex items-center gap-2 mb-4">
             <svg class="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
-            <h2 class="text-lg font-semibold text-slate-900">API Keys</h2>
+            <h2 class="text-lg font-semibold text-ink">API Keys</h2>
         </div>
         <form method="POST" action="{{ route('admin.social.apikeys.save') }}" class="space-y-4">
             @csrf
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Gemini API Key</label>
+                    <label class="block text-sm font-medium text-inkSoft mb-1">Gemini API Key</label>
                     @php
                         $hasGeminiKey = DB::table('settings')->where('key', 'gemini_api_key')->exists();
                     @endphp
                     <input type="password" name="gemini_api_key" value="{{ $hasGeminiKey ? '••••••••••' : '' }}" placeholder="AIza..."
-                           class="w-full rounded-lg border-slate-300 text-sm focus:border-red-500 focus:ring-red-500"
+                           class="w-full rounded-lg border-line text-sm focus:border-coral focus:ring-coral"
                            onfocus="if(this.value==='••••••••••')this.value=''">
-                    <p class="text-xs text-slate-400 mt-1">Pentru generarea de imagini. <a href="https://aistudio.google.com/apikey" target="_blank" class="text-red-600 hover:underline">Obtine cheie</a> @if($hasGeminiKey)<span class="text-green-600">&#10003; Configurata</span>@endif</p>
+                    <p class="text-xs text-muted mt-1">Pentru generarea de imagini. <a href="https://aistudio.google.com/apikey" target="_blank" class="text-coral hover:underline">Obtine cheie</a> @if($hasGeminiKey)<span class="text-green-600">&#10003; Configurata</span>@endif</p>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Gemini Image Model</label>
+                    <label class="block text-sm font-medium text-inkSoft mb-1">Gemini Image Model</label>
                     <input type="text" name="gemini_image_model" value="{{ DB::table('settings')->where('key', 'gemini_image_model')->value('value') ?: 'gemini-3.1-flash' }}" placeholder="gemini-3.1-flash"
-                           class="w-full rounded-lg border-slate-300 text-sm focus:border-red-500 focus:ring-red-500">
-                    <p class="text-xs text-slate-400 mt-1">Modelul Gemini pentru imagini</p>
+                           class="w-full rounded-lg border-line text-sm focus:border-coral focus:ring-coral">
+                    <p class="text-xs text-muted mt-1">Modelul Gemini pentru imagini</p>
                 </div>
             </div>
-            <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">
+            <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-coral rounded-lg hover:bg-coral">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                 Salveaza API Keys
             </button>
@@ -73,15 +73,15 @@
         @php
             $account = $accounts->firstWhere('platform', $platformKey);
         @endphp
-        <div class="bg-white rounded-xl border border-slate-200 p-6">
+        <div class="bg-white rounded-xl border border-line p-6">
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center gap-2">
                     @if($pConfig['icon'])
                         <svg class="w-5 h-5 text-{{ $pConfig['color'] }}-600" fill="currentColor" viewBox="0 0 24 24"><path d="{{ $pConfig['icon'] }}"/></svg>
                     @else
-                        <svg class="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>
+                        <svg class="w-5 h-5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>
                     @endif
-                    <h2 class="text-lg font-semibold text-slate-900">{{ $pConfig['label'] }}</h2>
+                    <h2 class="text-lg font-semibold text-ink">{{ $pConfig['label'] }}</h2>
                     @if($account)
                         <span class="w-2 h-2 rounded-full bg-green-500" title="Configurat"></span>
                     @else
@@ -89,7 +89,7 @@
                     @endif
                 </div>
                 <button type="button" onclick="generateBio('{{ $platformKey }}')"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-inkSoft bg-white border border-line rounded-lg hover:bg-cream">
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                     Genereaza Bio
                 </button>
@@ -100,22 +100,22 @@
                 <input type="hidden" name="platform" value="{{ $platformKey }}">
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Nume cont</label>
+                        <label class="block text-sm font-medium text-inkSoft mb-1">Nume cont</label>
                         <input type="text" name="name" value="{{ $account?->name }}" required placeholder="Sambla Romania"
-                               class="w-full rounded-lg border-slate-300 text-sm focus:border-red-500 focus:ring-red-500">
+                               class="w-full rounded-lg border-line text-sm focus:border-coral focus:ring-coral">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Platform ID</label>
+                        <label class="block text-sm font-medium text-inkSoft mb-1">Platform ID</label>
                         <input type="text" name="platform_id" value="{{ $account?->platform_id }}" placeholder="Page ID / Account ID"
-                               class="w-full rounded-lg border-slate-300 text-sm focus:border-red-500 focus:ring-red-500">
+                               class="w-full rounded-lg border-line text-sm focus:border-coral focus:ring-coral">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Access Token</label>
+                        <label class="block text-sm font-medium text-inkSoft mb-1">Access Token</label>
                         <input type="password" name="access_token" value="{{ $account?->access_token }}" placeholder="Token..."
-                               class="w-full rounded-lg border-slate-300 text-sm focus:border-red-500 focus:ring-red-500">
+                               class="w-full rounded-lg border-line text-sm focus:border-coral focus:ring-coral">
                     </div>
                 </div>
-                <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">
+                <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-coral rounded-lg hover:bg-coral">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                     Salveaza
                 </button>
@@ -123,8 +123,8 @@
 
             {{-- Bio display --}}
             <div id="bio-{{ $platformKey }}" class="mt-4 hidden">
-                <h3 class="text-sm font-semibold text-slate-700 mb-1">Bio generat:</h3>
-                <div id="bio-content-{{ $platformKey }}" class="text-sm text-slate-600 bg-slate-50 rounded-lg p-3"></div>
+                <h3 class="text-sm font-semibold text-inkSoft mb-1">Bio generat:</h3>
+                <div id="bio-content-{{ $platformKey }}" class="text-sm text-muted bg-cream rounded-lg p-3"></div>
             </div>
         </div>
     @endforeach

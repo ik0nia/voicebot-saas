@@ -3,12 +3,12 @@
 @section('title', 'Editează: ' . $bot->name)
 
 @section('breadcrumb')
-    <span class="text-slate-400">/</span>
-    <a href="{{ route('dashboard.bots.index') }}" class="text-slate-500 hover:text-slate-700 transition-colors">Agenți AI</a>
-    <span class="text-slate-400">/</span>
-    <a href="{{ route('dashboard.bots.show', $bot) }}" class="text-slate-500 hover:text-slate-700 transition-colors">{{ $bot->name }}</a>
-    <span class="text-slate-400">/</span>
-    <span class="font-medium text-slate-700">Editează</span>
+    <span class="text-muted">/</span>
+    <a href="{{ route('dashboard.bots.index') }}" class="text-muted hover:text-inkSoft transition-colors">Agenți AI</a>
+    <span class="text-muted">/</span>
+    <a href="{{ route('dashboard.bots.show', $bot) }}" class="text-muted hover:text-inkSoft transition-colors">{{ $bot->name }}</a>
+    <span class="text-muted">/</span>
+    <span class="font-medium text-inkSoft">Editează</span>
 @endsection
 
 @php
@@ -119,7 +119,7 @@
         <div class="mb-4 rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">{{ session('success') }}</div>
     @endif
     @if($errors->any())
-        <div class="mb-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+        <div class="mb-6 rounded-lg bg-coralsoft border border-coral/30 px-4 py-3 text-sm text-coralh">
             <ul class="list-disc list-inside space-y-1">
                 @foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach
             </ul>
@@ -129,11 +129,11 @@
     {{-- ============== HEADER ============== --}}
     <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
         <div>
-            <h1 class="text-2xl font-bold text-slate-900">Editează agent AI</h1>
-            <p class="mt-1 text-sm text-slate-500">
+            <h1 class="text-2xl font-bold text-ink">Editează agent AI</h1>
+            <p class="mt-1 text-sm text-muted">
                 <strong>{{ $bot->name }}</strong>
                 @if($bot->niche_slug)
-                    <span class="inline-flex items-center gap-1 ml-2 px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs">
+                    <span class="inline-flex items-center gap-1 ml-2 px-2 py-0.5 rounded-full bg-cream text-muted text-xs">
                         {{ $nicheLabel }}
                     </span>
                 @endif
@@ -141,33 +141,33 @@
             {{-- Completeness badge — clickable to show per-item breakdown (Iter A) --}}
             <div class="mt-3 relative inline-block" @click.away="checklistOpen = false">
                 <button type="button" @click="checklistOpen = !checklistOpen"
-                        class="group inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 hover:border-red-300 hover:shadow-sm transition text-left">
-                    <span class="text-xs text-slate-600">Profil:</span>
-                    <span class="text-xs font-semibold text-slate-800" x-text="completenessPercent() + '%'"></span>
-                    <div class="w-28 h-2 bg-slate-200 rounded-full overflow-hidden">
+                        class="group inline-flex items-center gap-2 rounded-md border border-line bg-white px-2.5 py-1.5 hover:border-red-300 hover:shadow-sm transition text-left">
+                    <span class="text-xs text-muted">Profil:</span>
+                    <span class="text-xs font-semibold text-ink" x-text="completenessPercent() + '%'"></span>
+                    <div class="w-28 h-2 bg-sand rounded-full overflow-hidden">
                         <div class="h-full bg-gradient-to-r from-red-500 to-red-700 transition-all duration-300"
                              :style="'width: ' + completenessPercent() + '%'"></div>
                     </div>
-                    <svg class="w-3 h-3 text-slate-400 group-hover:text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <svg class="w-3 h-3 text-muted group-hover:text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                     </svg>
                 </button>
                 <div x-show="checklistOpen" x-cloak x-transition.origin.top.left
-                     class="absolute z-40 mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-lg shadow-lg border border-slate-200 p-3 left-0">
-                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Ce-ți mai trebuie agentului</p>
+                     class="absolute z-40 mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-lg shadow-lg border border-line p-3 left-0">
+                    <p class="text-xs font-semibold text-muted uppercase tracking-wider mb-2">Ce-ți mai trebuie agentului</p>
                     <ul class="space-y-1 text-sm">
                         <template x-for="(item, i) in completenessItems()" :key="'chk_' + i">
                             <li>
                                 <button type="button"
                                         @click="item.done ? (checklistOpen = false) : (tab = item.tab, checklistOpen = false, $nextTick(() => focusFieldInTab(item.focus)))"
-                                        class="w-full flex items-start gap-2 text-left px-2 py-1.5 rounded hover:bg-slate-50 transition">
+                                        class="w-full flex items-start gap-2 text-left px-2 py-1.5 rounded hover:bg-cream transition">
                                     <span class="mt-0.5 font-bold" x-text="item.done ? '✓' : '○'"
                                           :class="item.done ? 'text-green-600' : 'text-slate-300'"></span>
                                     <div class="flex-1 min-w-0">
-                                        <div class="text-xs font-medium" :class="item.done ? 'text-slate-500' : 'text-slate-700'" x-text="item.label"></div>
-                                        <div x-show="item.hint" class="text-[11px] text-slate-400" x-text="item.hint"></div>
+                                        <div class="text-xs font-medium" :class="item.done ? 'text-muted' : 'text-inkSoft'" x-text="item.label"></div>
+                                        <div x-show="item.hint" class="text-[11px] text-muted" x-text="item.hint"></div>
                                     </div>
-                                    <svg x-show="!item.done" class="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <svg x-show="!item.done" class="w-3.5 h-3.5 text-muted shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                                     </svg>
                                 </button>
@@ -186,7 +186,7 @@
             </button>
             {{-- 👁 Vezi cum răspunde --}}
             <a href="{{ route('dashboard.bots.testVocal', $bot) }}" target="_blank"
-               class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition">
+               class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border border-line text-inkSoft hover:bg-cream transition">
                 <span>👁</span> Vezi cum răspunde
             </a>
         </div>
@@ -233,18 +233,18 @@
                 <div class="lg:hidden mb-4">
                     <label for="tab-select-mobile" class="sr-only">Secțiune</label>
                     <select id="tab-select-mobile" x-model="tab"
-                            class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none">
+                            class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm font-medium text-inkSoft focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">
                         @foreach($tabs as $t)
                             <option value="{{ $t['id'] }}">{{ $t['icon'] }}  {{ $t['label'] }}</option>
                         @endforeach
                     </select>
                 </div>
                 {{-- Desktop: vertical tab nav --}}
-                <nav class="hidden lg:flex bg-white rounded-xl border border-slate-200 shadow-sm p-1.5 flex-col gap-1">
+                <nav class="hidden lg:flex bg-white rounded-xl border border-line shadow-sm p-1.5 flex-col gap-1">
                     @foreach($tabs as $t)
                     <button type="button"
                             @click="tab = '{{ $t['id'] }}'"
-                            :class="tab === '{{ $t['id'] }}' ? 'bg-red-700 text-white shadow-sm' : 'text-slate-600 hover:bg-red-50 hover:text-red-800'"
+                            :class="tab === '{{ $t['id'] }}' ? 'bg-coral text-white shadow-sm' : 'text-muted hover:bg-coralsoft hover:text-coralh'"
                             class="flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-lg whitespace-nowrap transition text-left">
                         <span>{{ $t['icon'] }}</span>
                         <span>{{ $t['label'] }}</span>
@@ -257,11 +257,11 @@
 
             {{-- ============== TAB 0: BAZĂ (Quick Setup) — Iteration A ============== --}}
             <section x-show="tab === 'baza'" x-cloak class="space-y-6">
-                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+                <div class="bg-white rounded-xl border border-line shadow-sm p-6">
                     <div class="flex items-start justify-between mb-1 gap-3">
                         <div>
-                            <h2 class="text-lg font-semibold text-slate-900">Setup de bază</h2>
-                            <p class="text-sm text-slate-500">Strictul necesar ca agentul să fie funcțional. Restul setărilor pot fi ajustate mai târziu din celelalte secțiuni.</p>
+                            <h2 class="text-lg font-semibold text-ink">Setup de bază</h2>
+                            <p class="text-sm text-muted">Strictul necesar ca agentul să fie funcțional. Restul setărilor pot fi ajustate mai târziu din celelalte secțiuni.</p>
                         </div>
                         <span class="hidden sm:inline-flex items-center gap-1 shrink-0 px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-medium">⚡ Rapid</span>
                     </div>
@@ -269,16 +269,16 @@
                     <div class="mt-5 space-y-5">
                         {{-- Nume agent (canonical) --}}
                         <div>
-                            <label for="baza_name" class="block text-sm font-medium text-slate-700 mb-1.5">Nume agent AI <span class="text-red-500">*</span></label>
+                            <label for="baza_name" class="block text-sm font-medium text-inkSoft mb-1.5">Nume agent AI <span class="text-coral">*</span></label>
                             <input type="text" name="name" id="baza_name" x-model="core.name" required
-                                   class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none" />
+                                   class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none" />
                         </div>
 
                         {{-- Voce (canonical) --}}
                         <div>
-                            <label for="baza_voice" class="block text-sm font-medium text-slate-700 mb-1.5">Voce <span class="text-red-500">*</span></label>
+                            <label for="baza_voice" class="block text-sm font-medium text-inkSoft mb-1.5">Voce <span class="text-coral">*</span></label>
                             <select name="voice" id="baza_voice" x-model="core.voice" required
-                                    class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none">
+                                    class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">
                                 <option value="coral">Coral (feminin, cald)</option>
                                 <option value="sage">Sage (feminin, clar)</option>
                                 <option value="shimmer">Shimmer (feminin)</option>
@@ -294,37 +294,37 @@
 
                         {{-- Greeting (canonical) --}}
                         <div>
-                            <label for="baza_greeting" class="block text-sm font-medium text-slate-700 mb-1.5">Mesaj de întâmpinare</label>
-                            <p class="text-xs text-slate-500 mb-2">Textul pe care îl spune agentul când răspunde. Lasă gol dacă preferi să aștepte clientul să vorbească primul.</p>
+                            <label for="baza_greeting" class="block text-sm font-medium text-inkSoft mb-1.5">Mesaj de întâmpinare</label>
+                            <p class="text-xs text-muted mb-2">Textul pe care îl spune agentul când răspunde. Lasă gol dacă preferi să aștepte clientul să vorbească primul.</p>
                             <input type="text" name="greeting_message" id="baza_greeting" x-model="core.greeting"
                                    placeholder="Bună ziua, sunt Greg de la Sambla. Cu ce vă pot ajuta?"
-                                   class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none">
+                                   class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">
                         </div>
 
                         {{-- Adresă + Telefon + Email (canonical for business_info.address/phone/email) --}}
                         <div>
-                            <label for="baza_address" class="block text-sm font-medium text-slate-700 mb-1.5">Adresă business</label>
+                            <label for="baza_address" class="block text-sm font-medium text-inkSoft mb-1.5">Adresă business</label>
                             <textarea name="settings[business_info][address]" id="baza_address" rows="2" x-model="businessInfo.address"
                                       placeholder="Str. Victoriei 10, Cluj-Napoca, jud. Cluj"
-                                      class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none resize-y"></textarea>
+                                      class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none resize-y"></textarea>
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label for="baza_phone" class="block text-sm font-medium text-slate-700 mb-1.5">Telefon</label>
-                                <div class="flex rounded-lg border border-slate-300 overflow-hidden focus-within:border-red-700 focus-within:ring-2 focus-within:ring-red-700/20 bg-white">
-                                    <span class="inline-flex items-center gap-1 px-3 text-sm text-slate-600 bg-slate-50 border-r border-slate-200">🇷🇴 +40</span>
+                                <label for="baza_phone" class="block text-sm font-medium text-inkSoft mb-1.5">Telefon</label>
+                                <div class="flex rounded-lg border border-line overflow-hidden focus-within:border-coral focus-within:ring-2 focus-within:ring-coral/20 bg-white">
+                                    <span class="inline-flex items-center gap-1 px-3 text-sm text-muted bg-cream border-r border-line">🇷🇴 +40</span>
                                     <input type="tel" name="settings[business_info][phone]" id="baza_phone" x-model="businessInfo.phone"
                                            @blur="normalizePhone()"
                                            placeholder="721 234 567" class="flex-1 px-3 py-2.5 text-sm outline-none bg-transparent">
                                 </div>
                             </div>
                             <div>
-                                <label for="baza_email" class="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
+                                <label for="baza_email" class="block text-sm font-medium text-inkSoft mb-1.5">Email</label>
                                 <input type="email" name="settings[business_info][email]" id="baza_email"
                                        x-model="businessInfo.email"
                                        placeholder="contact@exemplu.ro"
-                                       class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none">
+                                       class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">
                             </div>
                         </div>
 
@@ -333,10 +333,10 @@
                             <label class="flex items-center gap-3 cursor-pointer">
                                 <input type="hidden" name="is_active" value="0" />
                                 <input type="checkbox" name="is_active" value="1" x-model="core.is_active"
-                                       class="w-5 h-5 rounded border-slate-300 text-red-800 focus:ring-red-700/20" />
+                                       class="w-5 h-5 rounded border-line text-coralh focus:ring-coral/20" />
                                 <div>
-                                    <span class="text-sm font-medium text-slate-700">Agent AI activ</span>
-                                    <p class="text-xs text-slate-400">Poate primi și efectua apeluri / conversații.</p>
+                                    <span class="text-sm font-medium text-inkSoft">Agent AI activ</span>
+                                    <p class="text-xs text-muted">Poate primi și efectua apeluri / conversații.</p>
                                 </div>
                             </label>
                         </div>
@@ -344,7 +344,7 @@
                         {{-- Marker that this save came from Bază tab — controller uses it for post-save CTA --}}
                         <input type="hidden" name="origin" value="baza" x-bind:value="tab === 'baza' ? 'baza' : ''">
 
-                        <div class="pt-2 flex items-start gap-2 text-xs text-slate-500">
+                        <div class="pt-2 flex items-start gap-2 text-xs text-muted">
                             <span>💡</span>
                             <span>Pentru FAQ-uri, reguli sau ton, folosește secțiunile din stânga. Agentul merge și doar cu setările de aici.</span>
                         </div>
@@ -354,33 +354,33 @@
 
             {{-- ============== TAB 1: IDENTITATE ============== --}}
             <section x-show="tab === 'identitate'" x-cloak class="space-y-6">
-                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-                    <h2 class="text-lg font-semibold text-slate-900 mb-1">Identitate</h2>
-                    <p class="text-sm text-slate-500 mb-6">Numele, limba, vocea și mesajul de întâmpinare.</p>
+                <div class="bg-white rounded-xl border border-line shadow-sm p-6">
+                    <h2 class="text-lg font-semibold text-ink mb-1">Identitate</h2>
+                    <p class="text-sm text-muted mb-6">Numele, limba, vocea și mesajul de întâmpinare.</p>
 
                     <div class="space-y-5">
                         <div>
-                            <label for="ident_name" class="block text-sm font-medium text-slate-700 mb-1.5">Nume agent AI <span class="text-red-500">*</span></label>
+                            <label for="ident_name" class="block text-sm font-medium text-inkSoft mb-1.5">Nume agent AI <span class="text-coral">*</span></label>
                             {{-- Iter A: mirror only (canonical input lives in Bază tab). --}}
                             <input type="text" id="ident_name" x-model="core.name" required
-                                   class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none" />
+                                   class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none" />
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1.5">Slug</label>
+                            <label class="block text-sm font-medium text-inkSoft mb-1.5">Slug</label>
                             <input type="text" value="{{ $bot->slug }}" disabled
-                                   class="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-500 cursor-not-allowed" />
-                            <p class="text-xs text-slate-400 mt-1">Identificator generat automat. Nu se poate modifica.</p>
+                                   class="w-full rounded-lg border border-line bg-cream px-4 py-2.5 text-sm text-muted cursor-not-allowed" />
+                            <p class="text-xs text-muted mt-1">Identificator generat automat. Nu se poate modifica.</p>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1.5">Site asociat</label>
+                            <label class="block text-sm font-medium text-inkSoft mb-1.5">Site asociat</label>
                             @if($sites->isEmpty())
                                 <div class="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                                     <p class="text-sm text-yellow-800">Nu ai niciun site adăugat. <a href="{{ route('dashboard.sites.create') }}" class="font-semibold underline">Adaugă un site</a> mai întâi.</p>
                                 </div>
                             @else
-                                <select name="site_id" class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none">
+                                <select name="site_id" class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">
                                     <option value="">— Fără site asociat —</option>
                                     @foreach($sites as $site)
                                         <option value="{{ $site->id }}" {{ old('site_id', $bot->site_id) == $site->id ? 'selected' : '' }}>
@@ -392,9 +392,9 @@
                         </div>
 
                         <div>
-                            <label for="language" class="block text-sm font-medium text-slate-700 mb-1.5">Limbă principală <span class="text-red-500">*</span></label>
+                            <label for="language" class="block text-sm font-medium text-inkSoft mb-1.5">Limbă principală <span class="text-coral">*</span></label>
                             <select name="language" id="language" required
-                                    class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none">
+                                    class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">
                                 <option value="ro" {{ old('language', $bot->language) === 'ro' ? 'selected' : '' }}>Română</option>
                                 <option value="en" {{ old('language', $bot->language) === 'en' ? 'selected' : '' }}>English</option>
                                 <option value="de" {{ old('language', $bot->language) === 'de' ? 'selected' : '' }}>Deutsch</option>
@@ -408,13 +408,13 @@
                             if (!is_array($chatLangs)) $chatLangs = [$bot->language];
                         @endphp
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1.5">Limbi pentru chat web + Meta</label>
+                            <label class="block text-sm font-medium text-inkSoft mb-1.5">Limbi pentru chat web + Meta</label>
                             <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                 @foreach (['ro' => 'Română', 'en' => 'English', 'de' => 'Deutsch', 'fr' => 'Français', 'es' => 'Español'] as $code => $label)
-                                    <label class="flex items-center gap-2 text-sm text-slate-700 border border-slate-200 rounded-lg px-3 py-2 hover:bg-slate-50 cursor-pointer">
+                                    <label class="flex items-center gap-2 text-sm text-inkSoft border border-line rounded-lg px-3 py-2 hover:bg-cream cursor-pointer">
                                         <input type="checkbox" name="chat_languages[]" value="{{ $code }}"
                                                {{ in_array($code, $chatLangs, true) ? 'checked' : '' }}
-                                               class="rounded border-slate-300 text-red-700 focus:ring-red-700/20">
+                                               class="rounded border-line text-coralh focus:ring-coral/20">
                                         {{ $label }}
                                     </label>
                                 @endforeach
@@ -423,10 +423,10 @@
                         <input type="hidden" name="voice_language" value="ro">
 
                         <div>
-                            <label for="ident_voice" class="block text-sm font-medium text-slate-700 mb-1.5">Voce <span class="text-red-500">*</span></label>
+                            <label for="ident_voice" class="block text-sm font-medium text-inkSoft mb-1.5">Voce <span class="text-coral">*</span></label>
                             {{-- Iter A: mirror only (canonical lives in Bază tab). --}}
                             <select id="ident_voice" x-model="core.voice" required
-                                    class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none">
+                                    class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">
                                 <option value="coral">Coral (feminin, cald)</option>
                                 <option value="sage">Sage (feminin, clar)</option>
                                 <option value="shimmer">Shimmer (feminin)</option>
@@ -441,22 +441,22 @@
                         </div>
 
                         <div>
-                            <label for="ident_greeting" class="block text-sm font-medium text-slate-700 mb-1.5">Mesaj de întâmpinare</label>
-                            <p class="text-xs text-slate-500 mb-2">Textul pe care îl spune agentul când răspunde. Lasă gol dacă vrei să aștepte clientul să vorbească primul.</p>
+                            <label for="ident_greeting" class="block text-sm font-medium text-inkSoft mb-1.5">Mesaj de întâmpinare</label>
+                            <p class="text-xs text-muted mb-2">Textul pe care îl spune agentul când răspunde. Lasă gol dacă vrei să aștepte clientul să vorbească primul.</p>
                             {{-- Iter A: mirror only. --}}
                             <input type="text" id="ident_greeting" x-model="core.greeting"
                                    placeholder="Bună ziua, sunt Greg de la Sambla. Cu ce vă pot ajuta?"
-                                   class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none">
+                                   class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">
                         </div>
 
                         <div>
                             <label class="flex items-center gap-3 cursor-pointer">
                                 {{-- Iter A: mirror only, canonical is_active posts from Bază tab. --}}
                                 <input type="checkbox" x-model="core.is_active"
-                                       class="w-5 h-5 rounded border-slate-300 text-red-800 focus:ring-red-700/20" />
+                                       class="w-5 h-5 rounded border-line text-coralh focus:ring-coral/20" />
                                 <div>
-                                    <span class="text-sm font-medium text-slate-700">Agent AI activ</span>
-                                    <p class="text-xs text-slate-400">Poate primi și efectua apeluri / conversații.</p>
+                                    <span class="text-sm font-medium text-inkSoft">Agent AI activ</span>
+                                    <p class="text-xs text-muted">Poate primi și efectua apeluri / conversații.</p>
                                 </div>
                             </label>
                         </div>
@@ -469,22 +469,22 @@
 
             {{-- ============== TAB 2: INFORMAȚII BUSINESS ============== --}}
             <section x-show="tab === 'business'" x-cloak class="space-y-6">
-                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-                    <h2 class="text-lg font-semibold text-slate-900 mb-1">Informații business</h2>
-                    <p class="text-sm text-slate-500 mb-6">Ce spune agentul când clienții întreabă despre program, adresă, contact etc.</p>
+                <div class="bg-white rounded-xl border border-line shadow-sm p-6">
+                    <h2 class="text-lg font-semibold text-ink mb-1">Informații business</h2>
+                    <p class="text-sm text-muted mb-6">Ce spune agentul când clienții întreabă despre program, adresă, contact etc.</p>
 
                     <div class="space-y-6">
                         {{-- Adresă (Iter A: mirror only; canonical lives in Bază) --}}
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1.5">Adresă</label>
+                            <label class="block text-sm font-medium text-inkSoft mb-1.5">Adresă</label>
                             <textarea rows="2" x-model="businessInfo.address"
                                       placeholder="Str. Victoriei 10, Cluj-Napoca, jud. Cluj"
-                                      class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none resize-y"></textarea>
+                                      class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none resize-y"></textarea>
                             <div class="mt-2">
                                 <a :href="businessInfo.address ? ('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(businessInfo.address)) : '#'"
                                    :class="businessInfo.address ? '' : 'pointer-events-none opacity-40'"
                                    target="_blank"
-                                   class="text-xs inline-flex items-center gap-1 text-red-700 hover:text-red-900 font-medium">
+                                   class="text-xs inline-flex items-center gap-1 text-coralh hover:text-coralh font-medium">
                                     📍 Vezi pe hartă
                                 </a>
                             </div>
@@ -492,36 +492,36 @@
 
                         {{-- Program de lucru --}}
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Program de lucru</label>
+                            <label class="block text-sm font-medium text-inkSoft mb-2">Program de lucru</label>
                             {{-- Iter A: stacked cards on mobile, 12-col grid on sm+ --}}
-                            <div class="border border-slate-200 rounded-lg divide-y divide-slate-100 bg-slate-50/30">
+                            <div class="border border-line rounded-lg divide-y divide-slate-100 bg-cream/30">
                                 <template x-for="(day, idx) in days" :key="day.key">
                                     <div class="flex flex-col sm:grid sm:grid-cols-12 sm:gap-2 sm:items-center px-3 py-3">
-                                        <div class="sm:col-span-2 text-sm font-semibold text-slate-800 sm:font-medium sm:text-slate-700 mb-2 sm:mb-0" x-text="day.label"></div>
-                                        <label class="sm:col-span-2 flex items-center gap-2 text-sm text-slate-600 mb-2 sm:mb-0">
-                                            <input type="checkbox" x-model="day.closed" class="rounded border-slate-300 text-red-700 focus:ring-red-700/20">
+                                        <div class="sm:col-span-2 text-sm font-semibold text-ink sm:font-medium sm:text-inkSoft mb-2 sm:mb-0" x-text="day.label"></div>
+                                        <label class="sm:col-span-2 flex items-center gap-2 text-sm text-muted mb-2 sm:mb-0">
+                                            <input type="checkbox" x-model="day.closed" class="rounded border-line text-coralh focus:ring-coral/20">
                                             <span>Închis</span>
                                         </label>
                                         <div class="sm:col-span-2 flex items-center gap-1 mb-2 sm:mb-0">
-                                            <span class="sm:hidden text-[11px] text-slate-500 w-20">Deschis</span>
+                                            <span class="sm:hidden text-[11px] text-muted w-20">Deschis</span>
                                             <input type="time" x-model="day.open" :disabled="day.closed"
-                                                   class="w-full rounded-md border border-slate-300 px-2 py-1 text-xs disabled:bg-slate-100 disabled:text-slate-400">
+                                                   class="w-full rounded-md border border-line px-2 py-1 text-xs disabled:bg-cream disabled:text-muted">
                                         </div>
                                         <div class="sm:col-span-2 flex items-center gap-1 mb-2 sm:mb-0">
-                                            <span class="sm:hidden text-[11px] text-slate-500 w-20">Închide</span>
+                                            <span class="sm:hidden text-[11px] text-muted w-20">Închide</span>
                                             <input type="time" x-model="day.close" :disabled="day.closed"
-                                                   class="w-full rounded-md border border-slate-300 px-2 py-1 text-xs disabled:bg-slate-100 disabled:text-slate-400">
+                                                   class="w-full rounded-md border border-line px-2 py-1 text-xs disabled:bg-cream disabled:text-muted">
                                         </div>
                                         <div class="sm:col-span-4 flex flex-wrap items-center gap-2">
                                             <button type="button" @click="toggleBreak(day)" :disabled="day.closed"
-                                                    class="text-xs text-slate-600 hover:text-red-700 disabled:opacity-40 px-2 py-1">
+                                                    class="text-xs text-muted hover:text-coralh disabled:opacity-40 px-2 py-1">
                                                 <span x-text="day.break_start ? '✎ Pauză' : '+ Pauză'"></span>
                                             </button>
                                             <template x-if="day.break_start !== null && !day.closed">
                                                 <div class="flex items-center gap-1 text-xs">
-                                                    <input type="time" x-model="day.break_start" class="w-20 rounded-md border border-slate-300 px-1 py-0.5 text-xs">
-                                                    <span class="text-slate-400">-</span>
-                                                    <input type="time" x-model="day.break_end" class="w-20 rounded-md border border-slate-300 px-1 py-0.5 text-xs">
+                                                    <input type="time" x-model="day.break_start" class="w-20 rounded-md border border-line px-1 py-0.5 text-xs">
+                                                    <span class="text-muted">-</span>
+                                                    <input type="time" x-model="day.break_end" class="w-20 rounded-md border border-line px-1 py-0.5 text-xs">
                                                 </div>
                                             </template>
                                         </div>
@@ -530,11 +530,11 @@
                             </div>
                             <div class="flex flex-wrap gap-2 mt-2">
                                 <button type="button" @click="copyMonToWeekdays()"
-                                        class="text-xs px-3 py-1.5 rounded-md border border-slate-300 hover:bg-slate-50 text-slate-700">
+                                        class="text-xs px-3 py-1.5 rounded-md border border-line hover:bg-cream text-inkSoft">
                                     Copiază Luni pe L-V
                                 </button>
                                 <button type="button" @click="markAllClosed(true)"
-                                        class="text-xs px-3 py-1.5 rounded-md border border-slate-300 hover:bg-slate-50 text-slate-700">
+                                        class="text-xs px-3 py-1.5 rounded-md border border-line hover:bg-cream text-inkSoft">
                                     Weekend închis
                                 </button>
                             </div>
@@ -543,18 +543,18 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1.5">Notă specială program</label>
+                            <label class="block text-sm font-medium text-inkSoft mb-1.5">Notă specială program</label>
                             <textarea name="settings[business_info][hours_text]" rows="2"
                                       placeholder="ex: În august închidem între 10-20 august."
-                                      class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none">{{ $businessInfo['hours_text'] ?? '' }}</textarea>
+                                      class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">{{ $businessInfo['hours_text'] ?? '' }}</textarea>
                         </div>
 
                         {{-- Contact fields --}}
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1.5">Telefon</label>
-                                <div class="flex rounded-lg border border-slate-300 overflow-hidden focus-within:border-red-700 focus-within:ring-2 focus-within:ring-red-700/20 bg-white">
-                                    <span class="inline-flex items-center gap-1 px-3 text-sm text-slate-600 bg-slate-50 border-r border-slate-200">🇷🇴 +40</span>
+                                <label class="block text-sm font-medium text-inkSoft mb-1.5">Telefon</label>
+                                <div class="flex rounded-lg border border-line overflow-hidden focus-within:border-coral focus-within:ring-2 focus-within:ring-coral/20 bg-white">
+                                    <span class="inline-flex items-center gap-1 px-3 text-sm text-muted bg-cream border-r border-line">🇷🇴 +40</span>
                                     {{-- Iter A: mirror only. --}}
                                     <input type="tel" x-model="businessInfo.phone"
                                            @blur="normalizePhone()"
@@ -562,60 +562,60 @@
                                 </div>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
+                                <label class="block text-sm font-medium text-inkSoft mb-1.5">Email</label>
                                 {{-- Iter A: mirror only; canonical posts from Bază. Email is a plain input so we sync via Alpine. --}}
                                 <input type="email" x-model="businessInfo.email"
                                        placeholder="contact@exemplu.ro"
-                                       class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none">
+                                       class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1.5">Website</label>
+                                <label class="block text-sm font-medium text-inkSoft mb-1.5">Website</label>
                                 <input type="url" name="settings[business_info][website]" x-model="businessInfo.website"
                                        @blur="normalizeWebsite()"
                                        placeholder="https://exemplu.ro"
-                                       class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none">
+                                       class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1.5">
+                                <label class="block text-sm font-medium text-inkSoft mb-1.5">
                                     <span class="inline-flex items-center gap-1">💬 WhatsApp</span>
                                 </label>
                                 <input type="text" name="settings[business_info][whatsapp]" value="{{ $businessInfo['whatsapp'] ?? '' }}"
                                        placeholder="+40 721 234 567"
-                                       class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none">
+                                       class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1.5">
+                                <label class="block text-sm font-medium text-inkSoft mb-1.5">
                                     <span class="inline-flex items-center gap-1">📘 Facebook</span>
                                 </label>
                                 <input type="text" name="settings[business_info][facebook]" value="{{ $businessInfo['facebook'] ?? '' }}"
                                        placeholder="facebook.com/pagina"
-                                       class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none">
+                                       class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1.5">
+                                <label class="block text-sm font-medium text-inkSoft mb-1.5">
                                     <span class="inline-flex items-center gap-1">📷 Instagram</span>
                                 </label>
                                 <input type="text" name="settings[business_info][instagram]" value="{{ $businessInfo['instagram'] ?? '' }}"
                                        placeholder="@username"
-                                       class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none">
+                                       class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">
                             </div>
                         </div>
 
                         {{-- Extras catch-all --}}
                         <div>
                             <div class="flex items-center justify-between mb-1.5">
-                                <label class="block text-sm font-medium text-slate-700">Ce te face diferit / alte detalii</label>
+                                <label class="block text-sm font-medium text-inkSoft">Ce te face diferit / alte detalii</label>
                                 <button type="button" @click="aiGenerate('extras_suggest', null, 'extras')"
                                         :disabled="aiLoading.extras"
-                                        class="text-xs font-medium text-red-700 hover:text-red-900 disabled:opacity-50 inline-flex items-center gap-1">
+                                        class="text-xs font-medium text-coralh hover:text-coralh disabled:opacity-50 inline-flex items-center gap-1">
                                     <span x-show="!aiLoading.extras">✨ Generează cu AI</span>
                                     <span x-show="aiLoading.extras">Se generează...</span>
                                 </button>
                             </div>
                             <textarea name="settings[business_info][extras]" rows="5" x-ref="extrasField"
                                       placeholder="@if($bot->niche_slug === 'restaurant')ex: specialități de casă, bucătărie tradițională italiană, terasă de vară.@elseif($bot->niche_slug === 'stomatologie')ex: medici cu experiență internațională, tehnologie 3D, plan de plată în rate.@else Ce ar trebui să știe agentul AI despre afacerea ta? Ce o diferențiază? Ce oferte speciale aveți?@endif"
-                                      class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none resize-y">{{ $businessInfo['extras'] ?? '' }}</textarea>
-                            <p class="text-xs text-slate-400 mt-1">4-5 fraze. Descriere sintetică pe care agentul să o folosească când e întrebat despre firmă.</p>
+                                      class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none resize-y">{{ $businessInfo['extras'] ?? '' }}</textarea>
+                            <p class="text-xs text-muted mt-1">4-5 fraze. Descriere sintetică pe care agentul să o folosească când e întrebat despre firmă.</p>
                         </div>
                     </div>
                 </div>
@@ -623,14 +623,14 @@
 
             {{-- ============== TAB 3: FAQ ============== --}}
             <section x-show="tab === 'faq'" x-cloak class="space-y-6">
-                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+                <div class="bg-white rounded-xl border border-line shadow-sm p-6">
                     <div class="flex items-center justify-between mb-6">
                         <div>
-                            <h2 class="text-lg font-semibold text-slate-900 mb-1">Întrebări frecvente</h2>
-                            <p class="text-sm text-slate-500">Răspunsuri pe care agentul le folosește direct când clienții întreabă.</p>
+                            <h2 class="text-lg font-semibold text-ink mb-1">Întrebări frecvente</h2>
+                            <p class="text-sm text-muted">Răspunsuri pe care agentul le folosește direct când clienții întreabă.</p>
                         </div>
-                        <div class="text-sm text-slate-500">
-                            <span class="font-semibold" :class="faqs.length >= 45 ? 'text-red-700' : 'text-slate-800'" x-text="faqs.length"></span>
+                        <div class="text-sm text-muted">
+                            <span class="font-semibold" :class="faqs.length >= 45 ? 'text-coralh' : 'text-ink'" x-text="faqs.length"></span>
                             / 50
                         </div>
                     </div>
@@ -638,12 +638,12 @@
                     {{-- Suggested FAQs (niche-driven) --}}
                     @if(!empty($suggestedFaqs))
                         <div class="mb-5">
-                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Sugestii rapide pentru {{ $nicheLabel }}</p>
+                            <p class="text-xs font-semibold text-muted uppercase tracking-wider mb-2">Sugestii rapide pentru {{ $nicheLabel }}</p>
                             <div class="flex flex-wrap gap-2">
                                 @foreach($suggestedFaqs as $sug)
                                     <button type="button"
                                             @click="addFaq({{ \Illuminate\Support\Js::from($sug) }})"
-                                            class="shrink-0 px-3 py-1.5 bg-slate-100 hover:bg-red-50 hover:text-red-800 rounded-full text-xs text-slate-700 transition">
+                                            class="shrink-0 px-3 py-1.5 bg-cream hover:bg-coralsoft hover:text-coralh rounded-full text-xs text-inkSoft transition">
                                         + {{ $sug['question'] }}
                                     </button>
                                 @endforeach
@@ -654,29 +654,29 @@
                     {{-- FAQ repeater --}}
                     <div class="space-y-3">
                         <template x-for="(faq, idx) in faqs" :key="'faq_' + idx">
-                            <div class="border border-slate-200 rounded-lg p-4 bg-white" :class="faq._new ? 'ring-2 ring-red-200' : ''">
+                            <div class="border border-line rounded-lg p-4 bg-white" :class="faq._new ? 'ring-2 ring-red-200' : ''">
                                 <div class="flex items-center gap-2 mb-2">
-                                    <span class="text-xs font-semibold text-slate-400" x-text="'#' + (idx + 1)"></span>
-                                    <span x-show="faq._new" class="px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-[10px] font-semibold">NEW</span>
+                                    <span class="text-xs font-semibold text-muted" x-text="'#' + (idx + 1)"></span>
+                                    <span x-show="faq._new" class="px-2 py-0.5 bg-coralsoft text-coralh rounded-full text-[10px] font-semibold">NEW</span>
                                 </div>
                                 <input x-model="faq.question" placeholder="Întrebare..." maxlength="300"
-                                       class="w-full mb-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-medium focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none">
+                                       class="w-full mb-2 rounded-md border border-line px-3 py-2 text-sm font-medium focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">
                                 {{-- Iter A: taller on mobile for easier editing. --}}
                                 <textarea x-model="faq.answer" rows="3" placeholder="Răspuns..." maxlength="2000"
-                                          class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none resize-y min-h-[7rem] sm:min-h-[5rem]"></textarea>
+                                          class="w-full rounded-md border border-line px-3 py-2 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none resize-y min-h-[7rem] sm:min-h-[5rem]"></textarea>
                                 <div class="flex flex-wrap items-center gap-2 mt-2">
                                     <button type="button" @click="rephraseFaqAnswer(idx)"
                                             :disabled="aiLoading['faq_a_' + idx] || !faq.question"
-                                            class="text-xs px-2 py-1 rounded-md text-red-700 hover:bg-red-50 disabled:opacity-40">
+                                            class="text-xs px-2 py-1 rounded-md text-coralh hover:bg-coralsoft disabled:opacity-40">
                                         <span x-show="!aiLoading['faq_a_' + idx]">✨ Reformulează răspunsul</span>
                                         <span x-show="aiLoading['faq_a_' + idx]">Se lucrează...</span>
                                     </button>
                                     <button type="button" @click="rephraseFaqQuestion(idx)"
                                             :disabled="aiLoading['faq_q_' + idx] || !faq.question"
-                                            class="text-xs px-2 py-1 rounded-md text-red-700 hover:bg-red-50 disabled:opacity-40">
+                                            class="text-xs px-2 py-1 rounded-md text-coralh hover:bg-coralsoft disabled:opacity-40">
                                         ✨ Reformulează întrebarea
                                     </button>
-                                    <button type="button" @click="removeFaq(idx)" class="ml-auto text-xs text-red-600 hover:text-red-800 px-2 py-1">
+                                    <button type="button" @click="removeFaq(idx)" class="ml-auto text-xs text-coral hover:text-coralh px-2 py-1">
                                         🗑 Elimină
                                     </button>
                                 </div>
@@ -686,17 +686,17 @@
                         </template>
                     </div>
 
-                    <div x-show="faqs.length === 0" class="text-center text-sm text-slate-400 py-8">
+                    <div x-show="faqs.length === 0" class="text-center text-sm text-muted py-8">
                         Nicio întrebare adăugată încă. Folosește sugestiile de mai sus sau adaugă manual.
                     </div>
 
                     <div class="flex flex-wrap items-center gap-2 mt-4">
                         <button type="button" @click="addFaq()" :disabled="faqs.length >= 50"
-                                class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-md border border-slate-300 hover:bg-slate-50 disabled:opacity-40">
+                                class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-md border border-line hover:bg-cream disabled:opacity-40">
                             + Adaugă întrebare nouă
                         </button>
                         <button type="button" @click="generateFaqBulk(5)" :disabled="faqs.length >= 45 || aiLoading.faq_bulk"
-                                class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-md text-red-700 border border-red-200 hover:bg-red-50 disabled:opacity-40">
+                                class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-md text-coralh border border-coral/30 hover:bg-coralsoft disabled:opacity-40">
                             <span x-show="!aiLoading.faq_bulk">✨ Generează 5 întrebări cu AI</span>
                             <span x-show="aiLoading.faq_bulk">Se generează...</span>
                         </button>
@@ -707,19 +707,19 @@
 
             {{-- ============== TAB 4: REGULI STRICTE ============== --}}
             <section x-show="tab === 'reguli'" x-cloak class="space-y-6">
-                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-                    <h2 class="text-lg font-semibold text-slate-900 mb-1">Reguli stricte — ce NU face agentul</h2>
-                    <p class="text-sm text-slate-500 mb-6">Lucruri pe care agentul nu trebuie să le spună sau să le promită. Apar ca "dont" în prompt.</p>
+                <div class="bg-white rounded-xl border border-line shadow-sm p-6">
+                    <h2 class="text-lg font-semibold text-ink mb-1">Reguli stricte — ce NU face agentul</h2>
+                    <p class="text-sm text-muted mb-6">Lucruri pe care agentul nu trebuie să le spună sau să le promită. Apar ca "dont" în prompt.</p>
 
                     @if(!empty($standardRules))
                         <div class="mb-6">
-                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Reguli standard pentru {{ $nicheLabel }}</p>
+                            <p class="text-xs font-semibold text-muted uppercase tracking-wider mb-2">Reguli standard pentru {{ $nicheLabel }}</p>
                             <div class="space-y-2">
                                 @foreach($standardRules as $i => $rule)
-                                    <label class="flex items-start gap-3 p-3 rounded-md border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                                    <label class="flex items-start gap-3 p-3 rounded-md border border-line hover:bg-cream cursor-pointer">
                                         <input type="checkbox" x-model="standard[{{ $i }}]"
-                                               class="mt-0.5 rounded border-slate-300 text-red-700 focus:ring-red-700/20">
-                                        <span class="text-sm text-slate-700">{{ $rule }}</span>
+                                               class="mt-0.5 rounded border-line text-coralh focus:ring-coral/20">
+                                        <span class="text-sm text-inkSoft">{{ $rule }}</span>
                                     </label>
                                 @endforeach
                             </div>
@@ -728,18 +728,18 @@
 
                     <div>
                         <div class="flex items-center justify-between mb-2">
-                            <label class="block text-sm font-medium text-slate-700">Reguli proprii</label>
+                            <label class="block text-sm font-medium text-inkSoft">Reguli proprii</label>
                             <button type="button" @click="aiGenerate('rules_suggest', null, 'rules')"
                                     :disabled="aiLoading.rules"
-                                    class="text-xs font-medium text-red-700 hover:text-red-900 disabled:opacity-50">
+                                    class="text-xs font-medium text-coralh hover:text-coralh disabled:opacity-50">
                                 <span x-show="!aiLoading.rules">✨ Sugerează reguli cu AI</span>
                                 <span x-show="aiLoading.rules">Se generează...</span>
                             </button>
                         </div>
                         <textarea x-model="customLines" rows="7"
                                   placeholder="O regulă pe rând. Ex: Nu oferi reduceri dacă nu apar în sistem."
-                                  class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none resize-y"></textarea>
-                        <p class="text-xs text-slate-400 mt-1">O regulă pe rând. Liniile goale sunt ignorate.</p>
+                                  class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none resize-y"></textarea>
+                        <p class="text-xs text-muted mt-1">O regulă pe rând. Liniile goale sunt ignorate.</p>
                     </div>
                 </div>
 
@@ -751,15 +751,15 @@
 
             {{-- ============== TAB 5: TON & STIL ============== --}}
             <section x-show="tab === 'ton'" x-cloak class="space-y-6">
-                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+                <div class="bg-white rounded-xl border border-line shadow-sm p-6">
                     <div class="flex items-center justify-between mb-6">
                         <div>
-                            <h2 class="text-lg font-semibold text-slate-900 mb-1">Ton &amp; stil</h2>
-                            <p class="text-sm text-slate-500">Cum se exprimă agentul: scurt sau detaliat, formal sau colocvial.</p>
+                            <h2 class="text-lg font-semibold text-ink mb-1">Ton &amp; stil</h2>
+                            <p class="text-sm text-muted">Cum se exprimă agentul: scurt sau detaliat, formal sau colocvial.</p>
                         </div>
                         <button type="button" @click="aiGenerate('tone_suggest', null, 'tone')"
                                 :disabled="aiLoading.tone"
-                                class="text-xs font-medium text-red-700 hover:text-red-900 disabled:opacity-50">
+                                class="text-xs font-medium text-coralh hover:text-coralh disabled:opacity-50">
                             <span x-show="!aiLoading.tone">✨ Sugerează tonul potrivit</span>
                             <span x-show="aiLoading.tone">Se generează...</span>
                         </button>
@@ -768,12 +768,12 @@
                     <div class="space-y-5">
                         {{-- Length segmented control --}}
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Lungimea răspunsurilor</label>
-                            <div class="inline-flex rounded-lg border border-slate-300 overflow-hidden">
+                            <label class="block text-sm font-medium text-inkSoft mb-2">Lungimea răspunsurilor</label>
+                            <div class="inline-flex rounded-lg border border-line overflow-hidden">
                                 <template x-for="opt in [['short','Scurt'], ['medium','Mediu'], ['long','Detaliat']]" :key="opt[0]">
                                     <button type="button" @click="tone.length = opt[0]"
-                                            :class="tone.length === opt[0] ? 'bg-red-700 text-white' : 'bg-white text-slate-700 hover:bg-slate-50'"
-                                            class="px-4 py-2 text-sm font-medium transition border-r last:border-r-0 border-slate-300"
+                                            :class="tone.length === opt[0] ? 'bg-coral text-white' : 'bg-white text-inkSoft hover:bg-cream'"
+                                            class="px-4 py-2 text-sm font-medium transition border-r last:border-r-0 border-line"
                                             x-text="opt[1]"></button>
                                 </template>
                             </div>
@@ -782,16 +782,16 @@
 
                         {{-- Register --}}
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Adresare</label>
+                            <label class="block text-sm font-medium text-inkSoft mb-2">Adresare</label>
                             <div class="flex gap-4">
                                 <label class="flex items-center gap-2 text-sm">
                                     <input type="radio" name="settings[tone_guide][register]" value="tu" x-model="tone.register"
-                                           class="border-slate-300 text-red-700 focus:ring-red-700/20">
+                                           class="border-line text-coralh focus:ring-coral/20">
                                     <span>Tutuiește (tu)</span>
                                 </label>
                                 <label class="flex items-center gap-2 text-sm">
                                     <input type="radio" name="settings[tone_guide][register]" value="dvs" x-model="tone.register"
-                                           class="border-slate-300 text-red-700 focus:ring-red-700/20">
+                                           class="border-line text-coralh focus:ring-coral/20">
                                     <span>Dumneavoastră (dvs.)</span>
                                 </label>
                             </div>
@@ -802,23 +802,23 @@
                             <label class="flex items-center gap-3 cursor-pointer">
                                 <input type="hidden" name="settings[tone_guide][emoji_ok]" value="0">
                                 <input type="checkbox" name="settings[tone_guide][emoji_ok]" value="1" x-model="tone.emoji_ok"
-                                       class="rounded border-slate-300 text-red-700 focus:ring-red-700/20">
+                                       class="rounded border-line text-coralh focus:ring-coral/20">
                                 <div>
-                                    <span class="text-sm font-medium text-slate-700">Poate folosi emoji</span>
-                                    <p class="text-xs text-slate-400">cu moderație (max 1 per mesaj)</p>
+                                    <span class="text-sm font-medium text-inkSoft">Poate folosi emoji</span>
+                                    <p class="text-xs text-muted">cu moderație (max 1 per mesaj)</p>
                                 </div>
                             </label>
                         </div>
 
                         {{-- Languages --}}
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Limbi acceptate</label>
+                            <label class="block text-sm font-medium text-inkSoft mb-2">Limbi acceptate</label>
                             <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                 @foreach (['ro' => 'Română', 'en' => 'English', 'hu' => 'Magyar', 'de' => 'Deutsch', 'fr' => 'Français'] as $code => $label)
-                                    <label class="flex items-center gap-2 text-sm border border-slate-200 rounded-lg px-3 py-2 hover:bg-slate-50 cursor-pointer">
+                                    <label class="flex items-center gap-2 text-sm border border-line rounded-lg px-3 py-2 hover:bg-cream cursor-pointer">
                                         <input type="checkbox" value="{{ $code }}" @change="toggleToneLang('{{ $code }}', $event.target.checked)"
                                                :checked="tone.languages.includes('{{ $code }}')"
-                                               class="rounded border-slate-300 text-red-700 focus:ring-red-700/20">
+                                               class="rounded border-line text-coralh focus:ring-coral/20">
                                         {{ $label }}
                                     </label>
                                 @endforeach
@@ -829,11 +829,11 @@
                         </div>
 
                         {{-- Live preview --}}
-                        <div class="bg-slate-50 border border-slate-200 p-4 rounded-lg">
-                            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Preview — cum va răspunde</div>
+                        <div class="bg-cream border border-line p-4 rounded-lg">
+                            <div class="text-xs font-semibold text-muted uppercase tracking-wider mb-2">Preview — cum va răspunde</div>
                             <div class="space-y-2 text-sm">
-                                <div><span class="text-slate-500">Client:</span> <span class="text-slate-700" x-text="previewQuestion()"></span></div>
-                                <div><span class="text-slate-500">Agent:</span> <span class="text-slate-900 font-medium" x-text="previewAnswer()"></span></div>
+                                <div><span class="text-muted">Client:</span> <span class="text-inkSoft" x-text="previewQuestion()"></span></div>
+                                <div><span class="text-muted">Agent:</span> <span class="text-ink font-medium" x-text="previewAnswer()"></span></div>
                             </div>
                         </div>
                     </div>
@@ -842,11 +842,11 @@
 
             {{-- ============== TAB: TRANSFER OPERATOR ============== --}}
             <section x-show="tab === 'transfer'" x-cloak class="space-y-6">
-                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+                <div class="bg-white rounded-xl border border-line shadow-sm p-6">
                     <div class="flex items-start justify-between mb-4 gap-3">
                         <div>
-                            <h2 class="text-lg font-semibold text-slate-900">Transfer către operator uman</h2>
-                            <p class="text-sm text-slate-500">
+                            <h2 class="text-lg font-semibold text-ink">Transfer către operator uman</h2>
+                            <p class="text-sm text-muted">
                                 Când clientul cere să vorbească cu o persoană, agentul spune un mesaj scurt, sună operatorul pe numărul de mai jos,
                                 îi citește un rezumat de 10-15 secunde despre ce cere clientul, apoi îi conectează pe amândoi pe același apel.
                             </p>
@@ -855,12 +855,12 @@
                     </div>
 
                     <div class="space-y-5">
-                        <label class="flex items-start gap-3 p-4 rounded-lg border border-slate-200 bg-slate-50 cursor-pointer hover:border-red-300 transition">
+                        <label class="flex items-start gap-3 p-4 rounded-lg border border-line bg-cream cursor-pointer hover:border-red-300 transition">
                             <input type="checkbox" x-model="transfer.enabled"
-                                   class="mt-0.5 w-4 h-4 rounded border-slate-300 text-red-700 focus:ring-red-700">
+                                   class="mt-0.5 w-4 h-4 rounded border-line text-coralh focus:ring-coral">
                             <div>
-                                <div class="text-sm font-medium text-slate-900">Activează transferul către operator</div>
-                                <div class="text-xs text-slate-500 mt-0.5">
+                                <div class="text-sm font-medium text-ink">Activează transferul către operator</div>
+                                <div class="text-xs text-muted mt-0.5">
                                     Funcționează doar pe apelurile telefonice (nu în chat). Costă timp de apel standard + minute outbound către numărul operatorului.
                                 </div>
                             </div>
@@ -869,25 +869,25 @@
 
                         <div x-show="transfer.enabled" x-cloak class="space-y-5 pl-1">
                             <div>
-                                <label for="transfer_operator_number" class="block text-sm font-medium text-slate-700 mb-1.5">
-                                    Numărul operatorului <span class="text-red-500">*</span>
+                                <label for="transfer_operator_number" class="block text-sm font-medium text-inkSoft mb-1.5">
+                                    Numărul operatorului <span class="text-coral">*</span>
                                 </label>
                                 <input type="tel" id="transfer_operator_number" name="transfer_operator_number"
                                        x-model="transfer.operator_number"
                                        placeholder="+40 742 000 000 sau 0742000000"
-                                       class="w-full max-w-md rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none">
-                                <p class="text-xs text-slate-400 mt-1">Format acceptat: 07xxxxxxxx sau +40xxxxxxxxx. Un singur număr, operatorul confirmă preluarea cu tasta 1.</p>
+                                       class="w-full max-w-md rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">
+                                <p class="text-xs text-muted mt-1">Format acceptat: 07xxxxxxxx sau +40xxxxxxxxx. Un singur număr, operatorul confirmă preluarea cu tasta 1.</p>
                             </div>
 
                             <div>
-                                <label for="transfer_max_ring_seconds" class="block text-sm font-medium text-slate-700 mb-1.5">
+                                <label for="transfer_max_ring_seconds" class="block text-sm font-medium text-inkSoft mb-1.5">
                                     Timp de sonerie înainte de renunțare (secunde)
                                 </label>
                                 <input type="number" id="transfer_max_ring_seconds" name="transfer_max_ring_seconds"
                                        x-model.number="transfer.max_ring_seconds"
                                        min="10" max="60" step="1"
-                                       class="w-full max-w-[12rem] rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none">
-                                <p class="text-xs text-slate-400 mt-1">Dacă operatorul nu răspunde în acest interval, agentul se scuză clientului și închide. 25 secunde e un default sănătos.</p>
+                                       class="w-full max-w-[12rem] rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">
+                                <p class="text-xs text-muted mt-1">Dacă operatorul nu răspunde în acest interval, agentul se scuză clientului și închide. 25 secunde e un default sănătos.</p>
                             </div>
 
                             <div class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 space-y-1">
@@ -907,25 +907,25 @@
 
             {{-- ============== TAB 6: AVANSAT ============== --}}
             <section x-show="tab === 'avansat'" x-cloak class="space-y-6">
-                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+                <div class="bg-white rounded-xl border border-line shadow-sm p-6">
                     <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-lg font-semibold text-slate-900">Avansat</h2>
+                        <h2 class="text-lg font-semibold text-ink">Avansat</h2>
                     </div>
                     <div class="mb-4 p-3 rounded-md bg-amber-50 border border-amber-200 text-xs text-amber-800">
                         Pentru utilizatori avansați. Setările din tab-urile de mai sus sunt suficiente pentru majoritatea cazurilor.
                     </div>
 
                     <div class="space-y-5">
-                        <label class="flex items-start gap-3 cursor-pointer p-3 rounded-lg border border-slate-200 hover:bg-slate-50"
+                        <label class="flex items-start gap-3 cursor-pointer p-3 rounded-lg border border-line hover:bg-cream"
                                :class="!nicheSlug ? 'opacity-60 cursor-not-allowed' : ''">
                             <input type="hidden" name="settings[use_structured_prompt]" value="0">
                             <input type="checkbox" name="settings[use_structured_prompt]" value="1"
                                    {{ $useStructured ? 'checked' : '' }}
                                    @if(!$bot->niche_slug) disabled @endif
-                                   class="mt-0.5 rounded border-slate-300 text-red-700 focus:ring-red-700/20">
+                                   class="mt-0.5 rounded border-line text-coralh focus:ring-coral/20">
                             <div>
-                                <span class="text-sm font-medium text-slate-800">Folosește prompt structurat</span>
-                                <p class="text-xs text-slate-500 mt-0.5">
+                                <span class="text-sm font-medium text-ink">Folosește prompt structurat</span>
+                                <p class="text-xs text-muted mt-0.5">
                                     @if($bot->niche_slug)
                                         Când e bifată, agentul folosește secțiunile de mai sus (FAQ, Reguli, Ton) ca sursă principală, cu promptul liber adăugat la sfârșit.
                                     @else
@@ -937,26 +937,26 @@
 
                         <div>
                             <div class="flex items-center justify-between mb-1.5">
-                                <label for="system_prompt" class="block text-sm font-medium text-slate-700">Prompt sistem (instrucțiuni suplimentare)</label>
+                                <label for="system_prompt" class="block text-sm font-medium text-inkSoft">Prompt sistem (instrucțiuni suplimentare)</label>
                                 <button type="button" @click="openPromptPreview()"
-                                        class="text-xs text-red-700 hover:text-red-900 font-medium">
+                                        class="text-xs text-coralh hover:text-coralh font-medium">
                                     👁 Vezi promptul final
                                 </button>
                             </div>
                             <textarea name="system_prompt" id="system_prompt" rows="8"
                                       placeholder="Instrucțiuni suplimentare pe care le vrei în prompt..."
-                                      class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none resize-y">{{ old('system_prompt', $bot->system_prompt) }}</textarea>
-                            <p class="text-xs text-slate-400 mt-1">Când promptul structurat e activ, acest text apare în secțiunea "Instrucțiuni suplimentare" la finalul promptului.</p>
+                                      class="w-full rounded-lg border border-line bg-white px-4 py-3 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none resize-y">{{ old('system_prompt', $bot->system_prompt) }}</textarea>
+                            <p class="text-xs text-muted mt-1">Când promptul structurat e activ, acest text apare în secțiunea "Instrucțiuni suplimentare" la finalul promptului.</p>
                         </div>
 
                         @php $adv = $bot->settings ?? []; @endphp
-                        <details class="rounded-lg border border-slate-200">
-                            <summary class="px-4 py-3 text-sm font-medium text-slate-700 cursor-pointer select-none">Parametri tehnici</summary>
-                            <div class="p-4 space-y-5 border-t border-slate-200">
+                        <details class="rounded-lg border border-line">
+                            <summary class="px-4 py-3 text-sm font-medium text-inkSoft cursor-pointer select-none">Parametri tehnici</summary>
+                            <div class="p-4 space-y-5 border-t border-line">
                                 <div>
                                     <div class="flex items-center justify-between mb-1.5">
-                                        <label for="vad_threshold" class="text-sm font-medium text-slate-700">VAD Threshold</label>
-                                        <span id="vad_threshold_value" class="text-sm font-mono text-slate-500">{{ old('settings.vad_threshold', $adv['vad_threshold'] ?? 0.5) }}</span>
+                                        <label for="vad_threshold" class="text-sm font-medium text-inkSoft">VAD Threshold</label>
+                                        <span id="vad_threshold_value" class="text-sm font-mono text-muted">{{ old('settings.vad_threshold', $adv['vad_threshold'] ?? 0.5) }}</span>
                                     </div>
                                     <input type="range" name="settings[vad_threshold]" id="vad_threshold" min="0" max="1" step="0.05"
                                            value="{{ old('settings.vad_threshold', $adv['vad_threshold'] ?? 0.5) }}"
@@ -965,8 +965,8 @@
                                 </div>
                                 <div>
                                     <div class="flex items-center justify-between mb-1.5">
-                                        <label for="silence_duration" class="text-sm font-medium text-slate-700">Durată tăcere (ms)</label>
-                                        <span id="silence_duration_value" class="text-sm font-mono text-slate-500">{{ old('settings.silence_duration_ms', $adv['silence_duration_ms'] ?? 500) }}</span>
+                                        <label for="silence_duration" class="text-sm font-medium text-inkSoft">Durată tăcere (ms)</label>
+                                        <span id="silence_duration_value" class="text-sm font-mono text-muted">{{ old('settings.silence_duration_ms', $adv['silence_duration_ms'] ?? 500) }}</span>
                                     </div>
                                     <input type="range" name="settings[silence_duration_ms]" id="silence_duration" min="200" max="2000" step="50"
                                            value="{{ old('settings.silence_duration_ms', $adv['silence_duration_ms'] ?? 500) }}"
@@ -975,8 +975,8 @@
                                 </div>
                                 <div>
                                     <div class="flex items-center justify-between mb-1.5">
-                                        <label for="temperature" class="text-sm font-medium text-slate-700">Temperatură</label>
-                                        <span id="temperature_value" class="text-sm font-mono text-slate-500">{{ old('settings.temperature', $adv['temperature'] ?? 0.7) }}</span>
+                                        <label for="temperature" class="text-sm font-medium text-inkSoft">Temperatură</label>
+                                        <span id="temperature_value" class="text-sm font-mono text-muted">{{ old('settings.temperature', $adv['temperature'] ?? 0.7) }}</span>
                                     </div>
                                     <input type="range" name="settings[temperature]" id="temperature" min="0" max="1" step="0.05"
                                            value="{{ old('settings.temperature', $adv['temperature'] ?? 0.7) }}"
@@ -984,22 +984,22 @@
                                            class="w-full accent-red-800">
                                 </div>
                                 <div>
-                                    <label for="max_tokens" class="block text-sm font-medium text-slate-700 mb-1.5">Tokeni maximi</label>
+                                    <label for="max_tokens" class="block text-sm font-medium text-inkSoft mb-1.5">Tokeni maximi</label>
                                     <input type="number" name="settings[max_tokens]" id="max_tokens" min="64" max="4096"
                                            value="{{ old('settings.max_tokens', $adv['max_tokens'] ?? 1024) }}"
-                                           class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm">
+                                           class="w-full rounded-lg border border-line px-4 py-2.5 text-sm">
                                 </div>
                                 <div>
-                                    <label for="knowledge_search_limit" class="block text-sm font-medium text-slate-700 mb-1.5">Rezultate knowledge base</label>
+                                    <label for="knowledge_search_limit" class="block text-sm font-medium text-inkSoft mb-1.5">Rezultate knowledge base</label>
                                     <input type="number" name="knowledge_search_limit" id="knowledge_search_limit" min="1" max="20"
                                            value="{{ old('knowledge_search_limit', $bot->knowledge_search_limit ?? 5) }}"
-                                           class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm">
+                                           class="w-full rounded-lg border border-line px-4 py-2.5 text-sm">
                                 </div>
                                 <div>
-                                    <label for="max_call_duration_minutes" class="block text-sm font-medium text-slate-700 mb-1.5">Durată maximă apel (minute)</label>
+                                    <label for="max_call_duration_minutes" class="block text-sm font-medium text-inkSoft mb-1.5">Durată maximă apel (minute)</label>
                                     <input type="number" name="max_call_duration_minutes" id="max_call_duration_minutes" min="5" max="60"
                                            value="{{ old('max_call_duration_minutes', intval(($bot->max_call_duration_seconds ?? 1800) / 60)) }}"
-                                           class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm">
+                                           class="w-full rounded-lg border border-line px-4 py-2.5 text-sm">
                                 </div>
                             </div>
                         </details>
@@ -1009,13 +1009,13 @@
 
             {{-- ============== ACTION BAR (desktop) ============== --}}
             <div class="hidden sm:flex items-center justify-between gap-3 mt-6 pb-2">
-                <div class="text-xs text-slate-400 flex items-center gap-3 flex-wrap">
+                <div class="text-xs text-muted flex items-center gap-3 flex-wrap">
                     <span>
                         AI folosit azi: <span x-text="aiCost.count"></span> (<span x-text="aiCost.cost_ron.toFixed(4)"></span> lei)
                     </span>
                     {{-- Iteration B: tenant-wide spend progress --}}
                     <span x-show="tenantUsage.limit_ron > 0" class="flex items-center gap-2">
-                        <span class="inline-block w-24 h-1.5 bg-slate-200 rounded-full overflow-hidden align-middle">
+                        <span class="inline-block w-24 h-1.5 bg-sand rounded-full overflow-hidden align-middle">
                             <span class="block h-full transition-all"
                                   :class="tenantUsage.pct_of_limit >= 80 ? 'bg-red-500' : (tenantUsage.pct_of_limit >= 50 ? 'bg-amber-400' : 'bg-emerald-500')"
                                   :style="'width: ' + Math.min(100, tenantUsage.pct_of_limit) + '%'"></span>
@@ -1030,11 +1030,11 @@
                 </div>
                 <div class="flex items-center gap-3">
                     <a href="{{ route('dashboard.bots.show', $bot) }}"
-                       class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">
+                       class="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-4 py-2.5 text-sm font-medium text-inkSoft hover:bg-cream transition">
                         Anulează
                     </a>
                     <button type="submit"
-                            class="inline-flex items-center gap-2 rounded-lg bg-red-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 transition">
+                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coralh transition">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
                         Salvează modificările
                     </button>
@@ -1048,13 +1048,13 @@
         </div>{{-- /flex --}}
 
         {{-- Iter A: sticky bottom save bar on mobile --}}
-        <div class="sm:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur border-t border-slate-200 px-4 py-3 flex items-center gap-2 shadow-lg">
+        <div class="sm:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur border-t border-line px-4 py-3 flex items-center gap-2 shadow-lg">
             <a href="{{ route('dashboard.bots.show', $bot) }}"
-               class="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition shrink-0">
+               class="inline-flex items-center justify-center rounded-lg border border-line bg-white px-3 py-2 text-sm font-medium text-inkSoft hover:bg-cream transition shrink-0">
                 Anulează
             </a>
             <button type="submit"
-                    class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-red-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-900 transition">
+                    class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-coral px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coralh transition">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
                 Salvează
             </button>
@@ -1065,21 +1065,21 @@
     <div x-show="modal.fullProfile" x-cloak @click.self="modal.fullProfile = false"
          class="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-xl max-w-lg w-full p-6">
-            <h3 class="text-lg font-semibold text-slate-900 mb-2">Completează profilul cu AI</h3>
-            <p class="text-sm text-slate-600 mb-4">
+            <h3 class="text-lg font-semibold text-ink mb-2">Completează profilul cu AI</h3>
+            <p class="text-sm text-muted mb-4">
                 AI-ul va completa automat <strong>informații business</strong>, <strong>FAQ-uri</strong>,
                 <strong>reguli</strong> și <strong>ton</strong> pe baza nișei și a site-ului tău.
-                <br><span class="text-xs text-slate-500">Cost estimat: ~0,05 lei. Tot ce e generat poate fi editat după.</span>
+                <br><span class="text-xs text-muted">Cost estimat: ~0,05 lei. Tot ce e generat poate fi editat după.</span>
             </p>
-            <div x-show="aiLoading.full_profile" class="mb-3 text-sm text-slate-700 flex items-center gap-2">
+            <div x-show="aiLoading.full_profile" class="mb-3 text-sm text-inkSoft flex items-center gap-2">
                 <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                 Se generează... poate dura 10-20 secunde.
             </div>
             <div class="flex justify-end gap-2">
                 <button type="button" @click="modal.fullProfile = false" :disabled="aiLoading.full_profile"
-                        class="px-4 py-2 text-sm rounded-lg border border-slate-300 hover:bg-slate-50">Anulează</button>
+                        class="px-4 py-2 text-sm rounded-lg border border-line hover:bg-cream">Anulează</button>
                 <button type="button" @click="runFullProfile()" :disabled="aiLoading.full_profile"
-                        class="px-4 py-2 text-sm rounded-lg bg-red-700 text-white hover:bg-red-800 disabled:opacity-50">
+                        class="px-4 py-2 text-sm rounded-lg bg-coral text-white hover:bg-coral disabled:opacity-50">
                     <span x-show="!aiLoading.full_profile">✨ Generează</span>
                     <span x-show="aiLoading.full_profile">Se lucrează...</span>
                 </button>
@@ -1091,12 +1091,12 @@
     <div x-show="modal.prompt" x-cloak @click.self="modal.prompt = false"
          class="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[85vh] overflow-hidden flex flex-col">
-            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200">
-                <h3 class="text-lg font-semibold text-slate-900">Promptul final</h3>
-                <button type="button" @click="modal.prompt = false" class="text-slate-400 hover:text-slate-600">✕</button>
+            <div class="flex items-center justify-between px-6 py-4 border-b border-line">
+                <h3 class="text-lg font-semibold text-ink">Promptul final</h3>
+                <button type="button" @click="modal.prompt = false" class="text-muted hover:text-muted">✕</button>
             </div>
             <div class="overflow-y-auto p-6 text-sm">
-                <div x-show="promptPreview.loading" class="text-slate-500">Se încarcă...</div>
+                <div x-show="promptPreview.loading" class="text-muted">Se încarcă...</div>
                 <div x-show="!promptPreview.loading && !promptPreview.flag_on"
                      class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-md text-amber-800 text-xs">
                     Promptul structurat nu e activ — agentul va folosi DOAR secțiunea "Instrucțiuni suplimentare" de mai jos.
@@ -1107,22 +1107,22 @@
                         <div>
                             <div class="flex items-center gap-2 mb-1">
                                 <span class="text-xs font-semibold uppercase tracking-wider"
-                                      :class="section.enabled && section.content ? 'text-slate-500' : 'text-slate-300 line-through'"
+                                      :class="section.enabled && section.content ? 'text-muted' : 'text-slate-300 line-through'"
                                       x-text="section.name"></span>
                                 <span x-show="!section.content" class="text-xs text-slate-300">(gol)</span>
                             </div>
-                            <pre class="whitespace-pre-wrap text-xs bg-slate-50 border border-slate-200 p-3 rounded"
+                            <pre class="whitespace-pre-wrap text-xs bg-cream border border-line p-3 rounded"
                                  x-text="section.content || '—'"></pre>
                         </div>
                     </template>
-                    <div class="mt-4 pt-4 border-t border-slate-200">
-                        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Compus integral</div>
+                    <div class="mt-4 pt-4 border-t border-line">
+                        <div class="text-xs font-semibold text-muted uppercase tracking-wider mb-1">Compus integral</div>
                         <pre class="whitespace-pre-wrap text-xs bg-slate-900 text-slate-100 p-3 rounded" x-text="promptPreview.prompt || '(gol)'"></pre>
                     </div>
                 </div>
             </div>
-            <div class="px-6 py-3 border-t border-slate-200 flex justify-end">
-                <button type="button" @click="modal.prompt = false" class="px-4 py-2 text-sm rounded-lg border border-slate-300 hover:bg-slate-50">Închide</button>
+            <div class="px-6 py-3 border-t border-line flex justify-end">
+                <button type="button" @click="modal.prompt = false" class="px-4 py-2 text-sm rounded-lg border border-line hover:bg-cream">Închide</button>
             </div>
         </div>
     </div>

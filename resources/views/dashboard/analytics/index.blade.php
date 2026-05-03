@@ -2,7 +2,7 @@
 
 @section('title', 'Analiză')
 @section('breadcrumb')
-<span class="text-slate-900 font-medium">Analiză</span>
+<span class="text-ink font-medium">Analiză</span>
 @endsection
 
 @section('content')
@@ -10,9 +10,9 @@
 
     {{-- Page header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 class="text-2xl font-bold text-slate-900">Analiză</h1>
+        <h1 class="text-2xl font-bold text-ink">Analiză</h1>
         <a href="/dashboard/analiza/export?date_from={{ $dateFrom->toDateString() }}&date_to={{ $dateTo->toDateString() }}"
-           class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition-colors">
+           class="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-4 py-2 text-sm font-medium text-inkSoft shadow-sm hover:bg-cream transition-colors">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
             </svg>
@@ -22,21 +22,21 @@
 
     {{-- Period selector --}}
     <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-        <div class="inline-flex rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
+        <div class="inline-flex rounded-lg border border-line bg-white p-1 shadow-sm">
             <a href="/dashboard/analiza?period=today"
-               class="rounded-md px-3.5 py-1.5 text-sm font-medium transition-colors {{ $period === 'today' ? 'bg-red-800 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
+               class="rounded-md px-3.5 py-1.5 text-sm font-medium transition-colors {{ $period === 'today' ? 'bg-coral text-white shadow-sm' : 'text-muted hover:text-ink hover:bg-cream' }}">
                 Azi
             </a>
             <a href="/dashboard/analiza?period=week"
-               class="rounded-md px-3.5 py-1.5 text-sm font-medium transition-colors {{ $period === 'week' ? 'bg-red-800 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
+               class="rounded-md px-3.5 py-1.5 text-sm font-medium transition-colors {{ $period === 'week' ? 'bg-coral text-white shadow-sm' : 'text-muted hover:text-ink hover:bg-cream' }}">
                 Săptămâna
             </a>
             <a href="/dashboard/analiza?period=month"
-               class="rounded-md px-3.5 py-1.5 text-sm font-medium transition-colors {{ $period === 'month' ? 'bg-red-800 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
+               class="rounded-md px-3.5 py-1.5 text-sm font-medium transition-colors {{ $period === 'month' ? 'bg-coral text-white shadow-sm' : 'text-muted hover:text-ink hover:bg-cream' }}">
                 Luna
             </a>
             <button type="button" id="custom-period-btn"
-               class="rounded-md px-3.5 py-1.5 text-sm font-medium transition-colors {{ $period === 'custom' ? 'bg-red-800 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
+               class="rounded-md px-3.5 py-1.5 text-sm font-medium transition-colors {{ $period === 'custom' ? 'bg-coral text-white shadow-sm' : 'text-muted hover:text-ink hover:bg-cream' }}">
                 Custom
             </button>
         </div>
@@ -46,12 +46,12 @@
               class="{{ $period === 'custom' ? 'flex' : 'hidden' }} items-center gap-2">
             <input type="hidden" name="period" value="custom">
             <input type="date" name="date_from" value="{{ $period === 'custom' ? $dateFrom->toDateString() : now()->subDays(7)->toDateString() }}"
-                   class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 shadow-sm focus:border-red-700 focus:ring-red-700">
-            <span class="text-sm text-slate-400">—</span>
+                   class="rounded-lg border border-line bg-white px-3 py-1.5 text-sm text-inkSoft shadow-sm focus:border-coral focus:ring-coral">
+            <span class="text-sm text-muted">—</span>
             <input type="date" name="date_to" value="{{ $period === 'custom' ? $dateTo->toDateString() : now()->toDateString() }}"
-                   class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 shadow-sm focus:border-red-700 focus:ring-red-700">
+                   class="rounded-lg border border-line bg-white px-3 py-1.5 text-sm text-inkSoft shadow-sm focus:border-coral focus:ring-coral">
             <button type="submit"
-                    class="rounded-lg bg-red-800 px-3.5 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-red-900 transition-colors">
+                    class="rounded-lg bg-coral px-3.5 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-coralh transition-colors">
                 Aplică
             </button>
         </form>
@@ -60,13 +60,13 @@
     {{-- Summary metric cards --}}
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {{-- Total apeluri --}}
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="rounded-xl border border-line bg-white p-5 shadow-sm">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-slate-500">Total apeluri</p>
-                    <p class="mt-1 text-3xl font-bold text-slate-900">{{ number_format($totalCalls) }}</p>
+                    <p class="text-sm font-medium text-muted">Total apeluri</p>
+                    <p class="mt-1 text-3xl font-bold text-ink">{{ number_format($totalCalls) }}</p>
                 </div>
-                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 text-red-800">
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-coralsoft text-coralh">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
                     </svg>
@@ -75,11 +75,11 @@
         </div>
 
         {{-- Total minute --}}
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="rounded-xl border border-line bg-white p-5 shadow-sm">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-slate-500">Total minute</p>
-                    <p class="mt-1 text-3xl font-bold text-slate-900">{{ number_format($totalMinutes, 1) }}</p>
+                    <p class="text-sm font-medium text-muted">Total minute</p>
+                    <p class="mt-1 text-3xl font-bold text-ink">{{ number_format($totalMinutes, 1) }}</p>
                 </div>
                 <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -90,11 +90,11 @@
         </div>
 
         {{-- Rata completare --}}
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="rounded-xl border border-line bg-white p-5 shadow-sm">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-slate-500">Rata completare</p>
-                    <p class="mt-1 text-3xl font-bold text-slate-900">{{ $completionRate }}%</p>
+                    <p class="text-sm font-medium text-muted">Rata completare</p>
+                    <p class="mt-1 text-3xl font-bold text-ink">{{ $completionRate }}%</p>
                 </div>
                 <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -105,11 +105,11 @@
         </div>
 
         {{-- Durată medie --}}
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="rounded-xl border border-line bg-white p-5 shadow-sm">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-slate-500">Durată medie</p>
-                    <p class="mt-1 text-3xl font-bold text-slate-900">
+                    <p class="text-sm font-medium text-muted">Durată medie</p>
+                    <p class="mt-1 text-3xl font-bold text-ink">
                         @if($avgDuration >= 60)
                             {{ floor($avgDuration / 60) }}m {{ $avgDuration % 60 }}s
                         @else
@@ -117,7 +117,7 @@
                         @endif
                     </p>
                 </div>
-                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 text-red-800">
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-coralsoft text-coralh">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -127,21 +127,21 @@
     </div>
 
     {{-- Sentiment summary card --}}
-    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div class="rounded-xl border border-line bg-white p-5 shadow-sm">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-slate-500">Sentiment mediu clienți</p>
+                <p class="text-sm font-medium text-muted">Sentiment mediu clienți</p>
                 @if($avgSentiment !== null)
                     @php
                         $sentLabel = $avgSentiment > 0.2 ? 'Pozitiv' : ($avgSentiment < -0.2 ? 'Negativ' : 'Neutru');
                         $sentEmoji = $avgSentiment > 0.2 ? '😊' : ($avgSentiment < -0.2 ? '😟' : '😐');
-                        $sentColor = $avgSentiment > 0.2 ? 'text-emerald-600' : ($avgSentiment < -0.2 ? 'text-red-600' : 'text-slate-700');
+                        $sentColor = $avgSentiment > 0.2 ? 'text-emerald-600' : ($avgSentiment < -0.2 ? 'text-coral' : 'text-inkSoft');
                     @endphp
                     <p class="mt-1 text-3xl font-bold {{ $sentColor }}">{{ $sentEmoji }} {{ $sentLabel }}</p>
-                    <p class="mt-0.5 text-xs text-slate-400">Scor mediu: {{ number_format($avgSentiment, 2) }}</p>
+                    <p class="mt-0.5 text-xs text-muted">Scor mediu: {{ number_format($avgSentiment, 2) }}</p>
                 @else
-                    <p class="mt-1 text-3xl font-bold text-slate-400">—</p>
-                    <p class="mt-0.5 text-xs text-slate-400">Nicio analiză disponibilă</p>
+                    <p class="mt-1 text-3xl font-bold text-muted">—</p>
+                    <p class="mt-0.5 text-xs text-muted">Nicio analiză disponibilă</p>
                 @endif
             </div>
             <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
@@ -151,7 +151,7 @@
             </div>
         </div>
         @if($sentimentDistribution->isNotEmpty())
-            <div class="mt-3 flex items-center gap-3 text-xs text-slate-500">
+            <div class="mt-3 flex items-center gap-3 text-xs text-muted">
                 @if($sentimentDistribution->get('positive'))
                     <span class="flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span> {{ $sentimentDistribution->get('positive') }} pozitive</span>
                 @endif
@@ -168,40 +168,40 @@
     {{-- Charts section --}}
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {{-- Volume apeluri - Bar chart --}}
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 class="text-base font-semibold text-slate-900">Volume apeluri</h3>
+        <div class="rounded-xl border border-line bg-white p-5 shadow-sm">
+            <h3 class="text-base font-semibold text-ink">Volume apeluri</h3>
             <div class="mt-4" style="height: 260px;">
                 <canvas id="callVolumeChart"></canvas>
             </div>
         </div>
 
         {{-- Durată medie per zi - Line chart --}}
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 class="text-base font-semibold text-slate-900">Durată medie per zi</h3>
+        <div class="rounded-xl border border-line bg-white p-5 shadow-sm">
+            <h3 class="text-base font-semibold text-ink">Durată medie per zi</h3>
             <div class="mt-4" style="height: 260px;">
                 <canvas id="avgDurationChart"></canvas>
             </div>
         </div>
 
         {{-- Distribuție status - Doughnut chart --}}
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 class="text-base font-semibold text-slate-900">Distribuție status</h3>
+        <div class="rounded-xl border border-line bg-white p-5 shadow-sm">
+            <h3 class="text-base font-semibold text-ink">Distribuție status</h3>
             <div class="mt-4 flex items-center justify-center" style="height: 260px;">
                 <canvas id="statusChart"></canvas>
             </div>
         </div>
 
         {{-- Top agenți AI - Horizontal bar chart --}}
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 class="text-base font-semibold text-slate-900">Top agenți AI</h3>
+        <div class="rounded-xl border border-line bg-white p-5 shadow-sm">
+            <h3 class="text-base font-semibold text-ink">Top agenți AI</h3>
             <div class="mt-4" style="height: 260px;">
                 <canvas id="topBotsChart"></canvas>
             </div>
         </div>
 
         {{-- Sentiment distribution - Doughnut chart --}}
-        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 class="text-base font-semibold text-slate-900">Distribuție sentiment</h3>
+        <div class="rounded-xl border border-line bg-white p-5 shadow-sm">
+            <h3 class="text-base font-semibold text-ink">Distribuție sentiment</h3>
             <div class="mt-4 flex items-center justify-center" style="height: 260px;">
                 <canvas id="sentimentChart"></canvas>
             </div>
@@ -210,27 +210,27 @@
 
     {{-- Top Bots table --}}
     @if($topBots->isNotEmpty())
-    <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div class="border-b border-slate-200 px-5 py-4">
-            <h3 class="text-base font-semibold text-slate-900">Clasament agenți AI</h3>
+    <div class="rounded-xl border border-line bg-white shadow-sm">
+        <div class="border-b border-line px-5 py-4">
+            <h3 class="text-base font-semibold text-ink">Clasament agenți AI</h3>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-left text-sm">
                 <thead>
-                    <tr class="border-b border-slate-100 bg-slate-50/50">
-                        <th class="px-5 py-3 font-medium text-slate-500 w-16">#</th>
-                        <th class="px-5 py-3 font-medium text-slate-500">Agent AI</th>
-                        <th class="px-5 py-3 font-medium text-slate-500 text-right">Apeluri</th>
-                        <th class="px-5 py-3 font-medium text-slate-500 text-right">% din total</th>
+                    <tr class="border-b border-line bg-cream/50">
+                        <th class="px-5 py-3 font-medium text-muted w-16">#</th>
+                        <th class="px-5 py-3 font-medium text-muted">Agent AI</th>
+                        <th class="px-5 py-3 font-medium text-muted text-right">Apeluri</th>
+                        <th class="px-5 py-3 font-medium text-muted text-right">% din total</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                     @foreach($topBots as $index => $bot)
-                    <tr class="hover:bg-slate-50/50 transition-colors">
-                        <td class="whitespace-nowrap px-5 py-3 text-slate-400 font-semibold">{{ $index + 1 }}</td>
-                        <td class="whitespace-nowrap px-5 py-3 font-medium text-slate-900">{{ $bot->name }}</td>
-                        <td class="whitespace-nowrap px-5 py-3 text-slate-600 text-right">{{ number_format($bot->period_calls_count) }}</td>
-                        <td class="whitespace-nowrap px-5 py-3 text-slate-600 text-right">
+                    <tr class="hover:bg-cream/50 transition-colors">
+                        <td class="whitespace-nowrap px-5 py-3 text-muted font-semibold">{{ $index + 1 }}</td>
+                        <td class="whitespace-nowrap px-5 py-3 font-medium text-ink">{{ $bot->name }}</td>
+                        <td class="whitespace-nowrap px-5 py-3 text-muted text-right">{{ number_format($bot->period_calls_count) }}</td>
+                        <td class="whitespace-nowrap px-5 py-3 text-muted text-right">
                             {{ $totalCalls > 0 ? round(($bot->period_calls_count / $totalCalls) * 100, 1) : 0 }}%
                         </td>
                     </tr>

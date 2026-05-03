@@ -1,6 +1,6 @@
 @extends('layouts.dashboard')
 @section('title', 'Programări')
-@section('breadcrumb')<span class="text-slate-900 font-medium">Programări Callback</span>@endsection
+@section('breadcrumb')<span class="text-ink font-medium">Programări Callback</span>@endsection
 @section('content')
 <div class="space-y-6">
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -16,50 +16,50 @@
             <p class="text-xs text-emerald-600">Finalizate</p>
             <p class="text-2xl font-bold text-emerald-700 mt-1">{{ $stats['completed'] }}</p>
         </div>
-        <div class="bg-white rounded-xl border border-slate-200 p-4">
-            <p class="text-xs text-slate-500">Total</p>
-            <p class="text-2xl font-bold text-slate-900 mt-1">{{ $stats['total'] }}</p>
+        <div class="bg-white rounded-xl border border-line p-4">
+            <p class="text-xs text-muted">Total</p>
+            <p class="text-2xl font-bold text-ink mt-1">{{ $stats['total'] }}</p>
         </div>
     </div>
 
-    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+    <div class="bg-white rounded-xl border border-line overflow-hidden">
         <table class="w-full text-sm">
-            <thead class="bg-slate-50 border-b border-slate-200">
+            <thead class="bg-cream border-b border-line">
                 <tr>
-                    <th class="text-left px-4 py-3 text-slate-600 font-medium">Status</th>
-                    <th class="text-left px-4 py-3 text-slate-600 font-medium">Nume</th>
-                    <th class="text-left px-4 py-3 text-slate-600 font-medium">Telefon</th>
-                    <th class="text-left px-4 py-3 text-slate-600 font-medium">Serviciu</th>
-                    <th class="text-left px-4 py-3 text-slate-600 font-medium">Data preferată</th>
-                    <th class="text-left px-4 py-3 text-slate-600 font-medium">Interval</th>
-                    <th class="text-left px-4 py-3 text-slate-600 font-medium">Sursă</th>
-                    <th class="text-left px-4 py-3 text-slate-600 font-medium">Primit</th>
+                    <th class="text-left px-4 py-3 text-muted font-medium">Status</th>
+                    <th class="text-left px-4 py-3 text-muted font-medium">Nume</th>
+                    <th class="text-left px-4 py-3 text-muted font-medium">Telefon</th>
+                    <th class="text-left px-4 py-3 text-muted font-medium">Serviciu</th>
+                    <th class="text-left px-4 py-3 text-muted font-medium">Data preferată</th>
+                    <th class="text-left px-4 py-3 text-muted font-medium">Interval</th>
+                    <th class="text-left px-4 py-3 text-muted font-medium">Sursă</th>
+                    <th class="text-left px-4 py-3 text-muted font-medium">Primit</th>
                     <th class="px-4 py-3"></th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
                 @forelse($callbacks as $cb)
                 @php
-                    $statusColors = ['pending' => 'bg-amber-100 text-amber-700', 'confirmed' => 'bg-blue-100 text-blue-700', 'completed' => 'bg-emerald-100 text-emerald-700', 'cancelled' => 'bg-slate-100 text-slate-500', 'no_answer' => 'bg-red-100 text-red-700'];
+                    $statusColors = ['pending' => 'bg-amber-100 text-amber-700', 'confirmed' => 'bg-blue-100 text-blue-700', 'completed' => 'bg-emerald-100 text-emerald-700', 'cancelled' => 'bg-cream text-muted', 'no_answer' => 'bg-coralsoft text-coralh'];
                     $sourceLabels = ['voice' => '🎙️ Voice', 'chat' => '💬 Chat', 'service_page' => '🌐 Pagină', 'widget' => '💬 Widget'];
                 @endphp
-                <tr class="hover:bg-slate-50">
-                    <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-medium {{ $statusColors[$cb->status] ?? 'bg-slate-100 text-slate-600' }}">{{ $cb->status_label }}</span></td>
-                    <td class="px-4 py-3 font-medium text-slate-900">{{ $cb->name }}</td>
-                    <td class="px-4 py-3 text-slate-600"><a href="tel:{{ $cb->phone }}" class="text-blue-600 hover:underline">{{ $cb->phone }}</a></td>
-                    <td class="px-4 py-3 text-slate-600">{{ $cb->service_type ?: '—' }}</td>
-                    <td class="px-4 py-3 text-slate-600">{{ $cb->preferred_date ? $cb->preferred_date->format('d.m.Y') : '—' }}</td>
-                    <td class="px-4 py-3 text-slate-500 text-xs">{{ $cb->time_slot_label }}</td>
+                <tr class="hover:bg-cream">
+                    <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-medium {{ $statusColors[$cb->status] ?? 'bg-cream text-muted' }}">{{ $cb->status_label }}</span></td>
+                    <td class="px-4 py-3 font-medium text-ink">{{ $cb->name }}</td>
+                    <td class="px-4 py-3 text-muted"><a href="tel:{{ $cb->phone }}" class="text-blue-600 hover:underline">{{ $cb->phone }}</a></td>
+                    <td class="px-4 py-3 text-muted">{{ $cb->service_type ?: '—' }}</td>
+                    <td class="px-4 py-3 text-muted">{{ $cb->preferred_date ? $cb->preferred_date->format('d.m.Y') : '—' }}</td>
+                    <td class="px-4 py-3 text-muted text-xs">{{ $cb->time_slot_label }}</td>
                     <td class="px-4 py-3"><span class="text-xs">{{ $sourceLabels[$cb->source] ?? $cb->source }}</span></td>
-                    <td class="px-4 py-3 text-xs text-slate-400">{{ $cb->created_at->diffForHumans() }}</td>
+                    <td class="px-4 py-3 text-xs text-muted">{{ $cb->created_at->diffForHumans() }}</td>
                     <td class="px-4 py-3"><a href="{{ route('dashboard.callbacks.show', $cb) }}" class="text-blue-600 text-xs font-medium">Detalii →</a></td>
                 </tr>
                 @empty
-                <tr><td colspan="9" class="px-4 py-8 text-center text-slate-400">Nicio programare încă.</td></tr>
+                <tr><td colspan="9" class="px-4 py-8 text-center text-muted">Nicio programare încă.</td></tr>
                 @endforelse
             </tbody>
         </table>
-        <div class="px-4 py-3 border-t border-slate-100">{{ $callbacks->links() }}</div>
+        <div class="px-4 py-3 border-t border-line">{{ $callbacks->links() }}</div>
     </div>
 </div>
 @endsection

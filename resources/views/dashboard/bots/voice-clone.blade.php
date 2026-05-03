@@ -6,12 +6,12 @@
 <div class="max-w-3xl mx-auto">
     {{-- Header --}}
     <div class="flex items-center gap-3 mb-6">
-        <a href="{{ route('dashboard.bots.edit', $bot) }}" class="text-slate-400 hover:text-slate-600 transition-colors">
+        <a href="{{ route('dashboard.bots.edit', $bot) }}" class="text-muted hover:text-muted transition-colors">
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
         </a>
         <div>
-            <h1 class="text-xl font-bold text-slate-900">Voce clonata</h1>
-            <p class="text-sm text-slate-500">{{ $bot->name }}</p>
+            <h1 class="text-xl font-bold text-ink">Voce clonata</h1>
+            <p class="text-sm text-muted">{{ $bot->name }}</p>
         </div>
     </div>
 
@@ -20,15 +20,15 @@
         <div class="mb-4 p-3 rounded-lg bg-green-50 border border-green-200 text-sm text-green-700">{{ session('success') }}</div>
     @endif
     @if(session('error'))
-        <div class="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">{{ session('error') }}</div>
+        <div class="mb-4 p-3 rounded-lg bg-coralsoft border border-coral/30 text-sm text-coralh">{{ session('error') }}</div>
     @endif
 
     {{-- Existing cloned voice status --}}
     @if($clonedVoice)
-    <div class="bg-white rounded-xl border border-slate-200 p-5 mb-6" id="voice-status-card">
+    <div class="bg-white rounded-xl border border-line p-5 mb-6" id="voice-status-card">
         <div class="flex items-center justify-between">
             <div>
-                <h3 class="text-sm font-semibold text-slate-900">{{ $clonedVoice->name }}</h3>
+                <h3 class="text-sm font-semibold text-ink">{{ $clonedVoice->name }}</h3>
                 <div class="flex items-center gap-2 mt-1">
                     @if($clonedVoice->status === 'ready')
                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
@@ -43,7 +43,7 @@
                             <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span> In asteptare...
                         </span>
                     @elseif($clonedVoice->status === 'failed')
-                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-coralsoft text-coralh">
                             <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Esuat
                         </span>
                     @endif
@@ -53,10 +53,10 @@
                     @endif
                 </div>
                 @if($clonedVoice->error_message)
-                    <p class="text-xs text-red-600 mt-1">{{ $clonedVoice->error_message }}</p>
+                    <p class="text-xs text-coral mt-1">{{ $clonedVoice->error_message }}</p>
                 @endif
                 @if($clonedVoice->isPending())
-                    <p class="text-xs text-slate-500 mt-1" id="poll-message">Se verifica statusul automat... <span id="poll-countdown">5</span>s</p>
+                    <p class="text-xs text-muted mt-1" id="poll-message">Se verifica statusul automat... <span id="poll-countdown">5</span>s</p>
                 @endif
             </div>
             <div class="flex items-center gap-2 shrink-0">
@@ -70,13 +70,13 @@
                 @elseif($bot->cloned_voice_id === $clonedVoice->id)
                     <form method="POST" action="{{ route('dashboard.bots.voiceClone.deactivate', $bot) }}">
                         @csrf
-                        <button type="submit" class="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors">Dezactiveaza</button>
+                        <button type="submit" class="px-4 py-2 text-sm font-medium rounded-lg border border-line text-inkSoft hover:bg-cream transition-colors">Dezactiveaza</button>
                     </form>
                 @endif
                 <form method="POST" action="{{ route('dashboard.bots.voiceClone.destroy', [$bot, $clonedVoice]) }}" onsubmit="return confirm('Sigur doriti sa stergeti aceasta voce clonata?')">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="px-3 py-1.5 text-xs font-medium rounded-lg border border-red-300 text-red-600 hover:bg-red-50 transition-colors">Sterge</button>
+                    <button type="submit" class="px-3 py-1.5 text-xs font-medium rounded-lg border border-red-300 text-coral hover:bg-coralsoft transition-colors">Sterge</button>
                 </form>
             </div>
         </div>
@@ -84,28 +84,28 @@
     @endif
 
     {{-- Recording section --}}
-    <div class="bg-white rounded-xl border border-slate-200 p-6">
-        <h2 class="text-lg font-semibold text-slate-900 mb-1">Inregistreaza vocea</h2>
-        <p class="text-sm text-slate-500 mb-5">Citeste textul de mai jos cu voce tare. Inregistrarea trebuie sa fie de minim 60 de secunde.</p>
+    <div class="bg-white rounded-xl border border-line p-6">
+        <h2 class="text-lg font-semibold text-ink mb-1">Inregistreaza vocea</h2>
+        <p class="text-sm text-muted mb-5">Citeste textul de mai jos cu voce tare. Inregistrarea trebuie sa fie de minim 60 de secunde.</p>
 
         {{-- Text to read --}}
-        <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6">
-            <p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Citeste cu voce tare:</p>
-            <p class="text-sm text-slate-700 leading-relaxed">
+        <div class="bg-cream border border-line rounded-lg p-4 mb-6">
+            <p class="text-xs font-medium text-muted uppercase tracking-wider mb-2">Citeste cu voce tare:</p>
+            <p class="text-sm text-inkSoft leading-relaxed">
                 Buna ziua, ma numesc si sunt asistentul dumneavoastra virtual. Sunt aici pentru a va ajuta cu orice intrebare sau solicitare. Compania noastra ofera servicii de inalta calitate, personalizate pentru nevoile fiecarui client. Putem programa intalniri, oferi informatii despre produsele si serviciile noastre, sau va putem pune in legatura cu un consultant specializat. Suntem disponibili pentru dumneavoastra in fiecare zi. Nu ezitati sa ne contactati oricand aveti nevoie de asistenta. Va multumim ca ne-ati ales si va dorim o zi minunata. Pentru orice alta intrebare, va stam la dispozitie cu drag. Repet, suntem aici pentru dumneavoastra si ne dorim sa va oferim cea mai buna experienta posibila.
             </p>
         </div>
 
         {{-- Voice name --}}
         <div class="mb-4">
-            <label for="voice-name" class="block text-sm font-medium text-slate-700 mb-1">Numele vocii</label>
+            <label for="voice-name" class="block text-sm font-medium text-inkSoft mb-1">Numele vocii</label>
             <input type="text" id="voice-name" placeholder="ex: Vocea lui Andrei"
-                   class="block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition-colors">
+                   class="block w-full rounded-lg border border-line px-3.5 py-2.5 text-sm text-ink shadow-sm placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/20 focus:outline-none transition-colors">
         </div>
 
         {{-- Recording controls --}}
         <div class="flex items-center gap-4 mb-4">
-            <button id="btn-record" onclick="startRecording()" class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors">
+            <button id="btn-record" onclick="startRecording()" class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-lg bg-coral text-white hover:bg-coral transition-colors">
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/></svg>
                 Incepe inregistrarea
             </button>
@@ -113,7 +113,7 @@
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
                 Opreste
             </button>
-            <div id="timer" class="hidden text-lg font-mono text-slate-700">
+            <div id="timer" class="hidden text-lg font-mono text-inkSoft">
                 <span class="inline-block w-2 h-2 rounded-full bg-red-500 animate-pulse mr-2"></span>
                 <span id="timer-value">00:00</span>
             </div>
@@ -121,21 +121,21 @@
 
         {{-- Playback --}}
         <div id="playback-section" class="hidden mb-4">
-            <p class="text-sm font-medium text-slate-700 mb-1">Asculta inregistrarea:</p>
+            <p class="text-sm font-medium text-inkSoft mb-1">Asculta inregistrarea:</p>
             <audio id="audio-preview" controls class="w-full"></audio>
             <p id="duration-warning" class="hidden text-xs text-yellow-600 mt-1">Inregistrarea este sub 60 de secunde. Rezultatul poate fi de calitate mai scazuta.</p>
         </div>
 
         {{-- Upload button --}}
         <div id="upload-section" class="hidden">
-            <button id="btn-upload" onclick="uploadRecording()" class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors">
+            <button id="btn-upload" onclick="uploadRecording()" class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-lg bg-coral text-white hover:bg-coral transition-colors">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                 Trimite pentru clonare
             </button>
             <div id="upload-progress" class="hidden mt-3">
                 <div class="flex items-center gap-2">
-                    <svg class="animate-spin h-4 w-4 text-red-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
-                    <span class="text-sm text-slate-600">Se incarca...</span>
+                    <svg class="animate-spin h-4 w-4 text-coral" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                    <span class="text-sm text-muted">Se incarca...</span>
                 </div>
             </div>
         </div>
@@ -255,7 +255,7 @@ function uploadRecording() {
                     setTimeout(() => window.location.reload(), 500);
                 } else if (data.status === 'failed') {
                     if (msgEl) {
-                        msgEl.innerHTML = '<span class="text-red-600 font-medium">Clonarea a esuat. Se reincarca...</span>';
+                        msgEl.innerHTML = '<span class="text-coral font-medium">Clonarea a esuat. Se reincarca...</span>';
                     }
                     setTimeout(() => window.location.reload(), 500);
                 } else {

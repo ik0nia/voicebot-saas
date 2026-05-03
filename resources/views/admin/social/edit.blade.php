@@ -6,11 +6,11 @@
 @section('content')
 @php
     $statusColors = [
-        'draft'      => 'bg-slate-100 text-slate-700',
+        'draft'      => 'bg-cream text-inkSoft',
         'scheduled'  => 'bg-blue-100 text-blue-700',
         'publishing' => 'bg-amber-100 text-amber-700',
         'published'  => 'bg-green-100 text-green-700',
-        'failed'     => 'bg-red-100 text-red-700',
+        'failed'     => 'bg-coralsoft text-coralh',
         'rejected'   => 'bg-rose-100 text-rose-700',
     ];
     $platformBg = ['facebook' => 'bg-blue-600', 'instagram' => 'bg-pink-600', 'blog' => 'bg-slate-600'];
@@ -21,13 +21,13 @@
 
     {{-- Top bar --}}
     <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <a href="{{ route('admin.social.index') }}" class="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900">
+        <a href="{{ route('admin.social.index') }}" class="inline-flex items-center gap-1 text-sm text-muted hover:text-ink">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
             Înapoi la listă
         </a>
         <div class="flex flex-wrap items-center gap-2">
             <span class="px-2 py-1 text-[10px] font-bold rounded-full text-white {{ $platformBg[$post->platform] ?? 'bg-slate-600' }}">{{ strtoupper($post->platform) }}</span>
-            <span class="px-2 py-1 text-[10px] font-bold rounded-full {{ $statusColors[$post->status] ?? 'bg-slate-100' }}">{{ strtoupper($post->status) }}</span>
+            <span class="px-2 py-1 text-[10px] font-bold rounded-full {{ $statusColors[$post->status] ?? 'bg-cream' }}">{{ strtoupper($post->status) }}</span>
             @if($post->post_type !== 'post')
                 <span class="px-2 py-1 text-[10px] font-bold rounded-full bg-purple-100 text-purple-700">{{ strtoupper($post->post_type) }}</span>
             @endif
@@ -35,9 +35,9 @@
                 <span class="px-2 py-1 text-[10px] font-bold rounded-full bg-amber-100 text-amber-700" title="Regenerări">↻ {{ $post->regen_count }}</span>
             @endif
             @if($post->scheduled_at)
-                <span class="text-xs text-slate-500">📅 {{ $post->scheduled_at->translatedFormat('l d M, H:i') }}</span>
+                <span class="text-xs text-muted">📅 {{ $post->scheduled_at->translatedFormat('l d M, H:i') }}</span>
             @elseif($post->published_at)
-                <span class="text-xs text-slate-500">✓ Publicat {{ $post->published_at->translatedFormat('d M, H:i') }}</span>
+                <span class="text-xs text-muted">✓ Publicat {{ $post->published_at->translatedFormat('d M, H:i') }}</span>
             @endif
         </div>
     </div>
@@ -54,7 +54,7 @@
     @endif
 
     @if($post->error_message)
-        <div class="mb-4 px-4 py-3 rounded-lg bg-red-50 text-red-800 text-sm border border-red-200">
+        <div class="mb-4 px-4 py-3 rounded-lg bg-coralsoft text-coralh text-sm border border-coral/30">
             <strong>Eroare publicare:</strong> {{ $post->error_message }}
         </div>
     @endif
@@ -64,23 +64,23 @@
         {{-- LEFT: image + content --}}
         <div class="space-y-6">
             {{-- Image card --}}
-            <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                <div class="flex items-center justify-center bg-slate-50" style="min-height: 320px;">
+            <div class="bg-white rounded-xl border border-line overflow-hidden">
+                <div class="flex items-center justify-center bg-cream" style="min-height: 320px;">
                     @if($post->image_url)
                         <img id="postImage" src="{{ $post->image_url }}" alt="" class="block max-w-full max-h-[70vh] h-auto w-auto object-contain">
                     @else
-                        <div class="py-20 text-center text-slate-400 text-sm">
+                        <div class="py-20 text-center text-muted text-sm">
                             <div class="text-4xl mb-2">🖼️</div>
                             Fără imagine
-                            <div class="text-[11px] mt-1 text-slate-400">Worker-ul de backfill o va genera automat</div>
+                            <div class="text-[11px] mt-1 text-muted">Worker-ul de backfill o va genera automat</div>
                         </div>
                     @endif
                 </div>
                 @if($isEditable)
-                    <div class="border-t border-slate-200 p-4 space-y-2">
-                        <label class="block text-[11px] font-semibold text-slate-500 uppercase">Prompt imagine</label>
+                    <div class="border-t border-line p-4 space-y-2">
+                        <label class="block text-[11px] font-semibold text-muted uppercase">Prompt imagine</label>
                         <textarea id="imagePrompt" rows="3"
-                                  class="w-full rounded-lg border-slate-300 text-xs font-mono focus:border-red-500 focus:ring-red-500"
+                                  class="w-full rounded-lg border-line text-xs font-mono focus:border-coral focus:ring-coral"
                                   placeholder="Ce să conțină imaginea...">{{ $post->image_prompt }}</textarea>
                         <button type="button" id="btnRegenImage"
                                 class="w-full px-3 py-2 text-xs font-semibold text-white bg-slate-900 rounded-lg hover:bg-slate-800 disabled:opacity-50">
@@ -88,41 +88,41 @@
                         </button>
                     </div>
                 @elseif($post->image_prompt)
-                    <div class="border-t border-slate-200 p-4">
-                        <label class="block text-[11px] font-semibold text-slate-500 uppercase mb-1">Prompt imagine</label>
-                        <p class="text-xs font-mono text-slate-600 whitespace-pre-wrap">{{ $post->image_prompt }}</p>
+                    <div class="border-t border-line p-4">
+                        <label class="block text-[11px] font-semibold text-muted uppercase mb-1">Prompt imagine</label>
+                        <p class="text-xs font-mono text-muted whitespace-pre-wrap">{{ $post->image_prompt }}</p>
                     </div>
                 @endif
             </div>
 
             {{-- Content card --}}
-            <form id="contentForm" method="POST" action="{{ route('admin.social.update', $post) }}" class="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
+            <form id="contentForm" method="POST" action="{{ route('admin.social.update', $post) }}" class="bg-white rounded-xl border border-line p-5 space-y-4">
                 @csrf
                 @method('PUT')
 
                 <div>
-                    <label class="block text-[11px] font-semibold text-slate-500 uppercase mb-1">Conținut</label>
+                    <label class="block text-[11px] font-semibold text-muted uppercase mb-1">Conținut</label>
                     <textarea name="content" id="postContent" rows="10" {{ $isEditable ? '' : 'readonly' }}
-                        class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-red-500 focus:ring-red-500 {{ $isEditable ? '' : 'bg-slate-50 text-slate-600' }}">{{ old('content', $post->content) }}</textarea>
+                        class="w-full px-3 py-2 text-sm rounded-lg border border-line focus:border-coral focus:ring-coral {{ $isEditable ? '' : 'bg-cream text-muted' }}">{{ old('content', $post->content) }}</textarea>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-[11px] font-semibold text-slate-500 uppercase mb-1">Hashtag-uri (opțional)</label>
+                        <label class="block text-[11px] font-semibold text-muted uppercase mb-1">Hashtag-uri (opțional)</label>
                         <input type="text" name="hashtags" {{ $isEditable ? '' : 'readonly' }}
                             value="{{ old('hashtags', is_array($post->hashtags) ? implode(', ', $post->hashtags) : '') }}"
-                            class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 {{ $isEditable ? '' : 'bg-slate-50' }}">
+                            class="w-full px-3 py-2 text-sm rounded-lg border border-line {{ $isEditable ? '' : 'bg-cream' }}">
                     </div>
                     <div>
-                        <label class="block text-[11px] font-semibold text-slate-500 uppercase mb-1">Programat la</label>
+                        <label class="block text-[11px] font-semibold text-muted uppercase mb-1">Programat la</label>
                         <input type="datetime-local" name="scheduled_at" {{ $isEditable ? '' : 'readonly' }}
                             value="{{ old('scheduled_at', $post->scheduled_at?->format('Y-m-d\TH:i')) }}"
-                            class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 {{ $isEditable ? '' : 'bg-slate-50' }}">
+                            class="w-full px-3 py-2 text-sm rounded-lg border border-line {{ $isEditable ? '' : 'bg-cream' }}">
                     </div>
                 </div>
 
                 @if($isEditable)
-                    <div class="flex flex-wrap gap-2 pt-3 border-t border-slate-200">
+                    <div class="flex flex-wrap gap-2 pt-3 border-t border-line">
                         <button type="submit" name="action" value="save"
                             class="px-4 py-2 text-sm font-semibold rounded-lg bg-slate-900 text-white hover:bg-slate-800">
                             💾 Salvează draft
@@ -133,16 +133,16 @@
                         </button>
                     </div>
                 @else
-                    <div class="text-xs text-slate-500 italic pt-3 border-t border-slate-200">Acest post nu mai poate fi editat (status: {{ $post->status }}).</div>
+                    <div class="text-xs text-muted italic pt-3 border-t border-line">Acest post nu mai poate fi editat (status: {{ $post->status }}).</div>
                 @endif
             </form>
 
             {{-- Regenerate text card --}}
             @if($isEditable)
-                <div class="bg-white rounded-xl border border-slate-200 p-5">
-                    <label class="block text-[11px] font-semibold text-slate-500 uppercase mb-2">Regenerează text cu instrucțiuni</label>
+                <div class="bg-white rounded-xl border border-line p-5">
+                    <label class="block text-[11px] font-semibold text-muted uppercase mb-2">Regenerează text cu instrucțiuni</label>
                     <textarea id="textInstructions" rows="2"
-                        class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:border-red-500 focus:ring-red-500"
+                        class="w-full px-3 py-2 text-xs rounded-lg border border-line focus:border-coral focus:ring-coral"
                         placeholder="Ex: mai scurt, ton mai entuziast, menționează prețul..."></textarea>
                     <button type="button" id="btnRegenText"
                         class="mt-2 w-full px-3 py-2 text-xs font-semibold text-white bg-slate-900 rounded-lg hover:bg-slate-800 disabled:opacity-50">
@@ -155,20 +155,20 @@
         {{-- RIGHT: actions + meta --}}
         <aside class="space-y-4 lg:sticky lg:top-4 self-start">
             @if($isEditable)
-                <div class="bg-white rounded-xl border border-slate-200 p-4 space-y-2">
+                <div class="bg-white rounded-xl border border-line p-4 space-y-2">
                     <button type="button" id="btnApprove"
                         class="w-full px-4 py-3 text-sm font-bold text-white bg-green-600 rounded-lg hover:bg-green-700">
                         ✓ Aprobă & programează
                     </button>
                     <button type="button" id="btnPublish"
-                        class="w-full px-4 py-2.5 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">
+                        class="w-full px-4 py-2.5 text-sm font-semibold text-inkSoft bg-white border border-line rounded-lg hover:bg-cream">
                         🚀 Publică acum
                     </button>
                     <div class="grid grid-cols-2 gap-2 pt-1">
                         <button type="button" id="btnDuplicate"
-                            class="px-3 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">📋 Duplică</button>
+                            class="px-3 py-2 text-xs font-medium text-inkSoft bg-white border border-line rounded-lg hover:bg-cream">📋 Duplică</button>
                         <button type="button" id="btnReject"
-                            class="px-3 py-2 text-xs font-medium text-red-700 bg-white border border-red-300 rounded-lg hover:bg-red-50">❌ Refuză</button>
+                            class="px-3 py-2 text-xs font-medium text-coralh bg-white border border-red-300 rounded-lg hover:bg-coralsoft">❌ Refuză</button>
                     </div>
                     <button type="button" id="btnDelete"
                         class="w-full px-3 py-2 text-xs font-semibold text-white bg-slate-700 rounded-lg hover:bg-slate-800">
@@ -177,44 +177,44 @@
                 </div>
 
                 {{-- Reject form --}}
-                <div id="rejectForm" class="hidden bg-red-50 border border-red-200 rounded-xl p-4 space-y-2">
-                    <p class="text-xs font-semibold text-red-800">De ce refuzi?</p>
+                <div id="rejectForm" class="hidden bg-coralsoft border border-coral/30 rounded-xl p-4 space-y-2">
+                    <p class="text-xs font-semibold text-coralh">De ce refuzi?</p>
                     <div class="flex flex-wrap gap-1">
                         @foreach(['text' => 'Text', 'tone' => 'Ton', 'length' => 'Lungime', 'image' => 'Imagine', 'topic' => 'Subiect', 'other' => 'Altceva'] as $val => $label)
-                            <button type="button" data-cat="{{ $val }}" class="reject-chip px-2 py-1 text-[11px] font-medium border border-red-300 text-red-700 rounded-full hover:bg-red-100">{{ $label }}</button>
+                            <button type="button" data-cat="{{ $val }}" class="reject-chip px-2 py-1 text-[11px] font-medium border border-red-300 text-coralh rounded-full hover:bg-coralsoft">{{ $label }}</button>
                         @endforeach
                     </div>
                     <textarea id="rejectFeedback" rows="2" placeholder="Ce nu merge? (opțional)"
-                        class="w-full text-xs rounded border-red-300 focus:border-red-500 focus:ring-red-500"></textarea>
+                        class="w-full text-xs rounded border-red-300 focus:border-coral focus:ring-coral"></textarea>
                     <div class="flex gap-2">
-                        <button type="button" id="btnRejectConfirm" class="flex-1 px-3 py-1.5 text-xs font-semibold text-white bg-red-600 rounded hover:bg-red-700">Confirmă refuz</button>
-                        <button type="button" id="btnRejectCancel" class="px-3 py-1.5 text-xs text-slate-600">Anulează</button>
+                        <button type="button" id="btnRejectConfirm" class="flex-1 px-3 py-1.5 text-xs font-semibold text-white bg-coral rounded hover:bg-coral">Confirmă refuz</button>
+                        <button type="button" id="btnRejectCancel" class="px-3 py-1.5 text-xs text-muted">Anulează</button>
                     </div>
                 </div>
             @endif
 
             @if($post->external_url)
                 <a href="{{ $post->external_url }}" target="_blank" rel="noopener"
-                   class="block bg-white rounded-xl border border-slate-200 p-4 text-sm text-blue-600 hover:bg-slate-50">
+                   class="block bg-white rounded-xl border border-line p-4 text-sm text-blue-600 hover:bg-cream">
                     🔗 Vezi pe platformă →
                 </a>
             @endif
 
             {{-- Group siblings --}}
             @if(!empty($fanout) && count($fanout) > 1)
-                <div class="bg-white rounded-xl border border-slate-200 p-4">
-                    <p class="text-[11px] font-semibold uppercase text-slate-500 mb-2">Grup ({{ count($fanout) }} variante)</p>
+                <div class="bg-white rounded-xl border border-line p-4">
+                    <p class="text-[11px] font-semibold uppercase text-muted mb-2">Grup ({{ count($fanout) }} variante)</p>
                     <ul class="space-y-1.5">
                         @foreach($fanout as $sib)
                             <li class="flex items-center justify-between gap-2 text-xs">
                                 <span class="flex items-center gap-1.5">
                                     <span class="w-1.5 h-1.5 rounded-full {{ $platformBg[$sib->platform] ?? 'bg-slate-400' }}"></span>
-                                    <span class="text-slate-700">{{ $sib->platform }}</span>
-                                    <span class="text-slate-400">· {{ $sib->post_type }}</span>
-                                    <span class="px-1.5 py-0.5 text-[9px] font-bold rounded {{ $statusColors[$sib->status] ?? 'bg-slate-100' }}">{{ strtoupper($sib->status) }}</span>
+                                    <span class="text-inkSoft">{{ $sib->platform }}</span>
+                                    <span class="text-muted">· {{ $sib->post_type }}</span>
+                                    <span class="px-1.5 py-0.5 text-[9px] font-bold rounded {{ $statusColors[$sib->status] ?? 'bg-cream' }}">{{ strtoupper($sib->status) }}</span>
                                 </span>
                                 @if($sib->id === $post->id)
-                                    <span class="text-slate-400">curent</span>
+                                    <span class="text-muted">curent</span>
                                 @else
                                     <a href="{{ route('admin.social.edit', $sib->id) }}" class="text-blue-600 hover:underline">deschide</a>
                                 @endif
@@ -226,12 +226,12 @@
 
             {{-- Variants --}}
             @if($post->variants && $post->variants->count())
-                <div class="bg-white rounded-xl border border-slate-200 p-4">
-                    <p class="text-[11px] font-semibold uppercase text-slate-500 mb-2">Versiuni anterioare</p>
+                <div class="bg-white rounded-xl border border-line p-4">
+                    <p class="text-[11px] font-semibold uppercase text-muted mb-2">Versiuni anterioare</p>
                     <div class="space-y-1.5">
                         @foreach($post->variants as $v)
                             <div class="flex items-center justify-between gap-2 text-xs">
-                                <span class="text-slate-600">{{ $v->kind === 'image' ? '🖼️' : '✏️' }} {{ $v->created_at?->diffForHumans() }}</span>
+                                <span class="text-muted">{{ $v->kind === 'image' ? '🖼️' : '✏️' }} {{ $v->created_at?->diffForHumans() }}</span>
                                 <button type="button" class="btn-use-variant text-blue-600 hover:underline" data-variant-id="{{ $v->id }}">restaurează</button>
                             </div>
                         @endforeach
@@ -241,11 +241,11 @@
 
             {{-- Rejections history --}}
             @if($post->rejections && $post->rejections->count())
-                <div class="bg-white rounded-xl border border-slate-200 p-4">
-                    <p class="text-[11px] font-semibold uppercase text-slate-500 mb-2">Refuzuri anterioare</p>
-                    <ul class="space-y-1 text-xs text-slate-600">
+                <div class="bg-white rounded-xl border border-line p-4">
+                    <p class="text-[11px] font-semibold uppercase text-muted mb-2">Refuzuri anterioare</p>
+                    <ul class="space-y-1 text-xs text-muted">
                         @foreach($post->rejections as $r)
-                            <li>• <b>{{ $r->reason_category ?? 'other' }}</b> {{ $r->feedback ? '— ' . $r->feedback : '' }} <span class="text-slate-400">({{ $r->created_at?->diffForHumans() }})</span></li>
+                            <li>• <b>{{ $r->reason_category ?? 'other' }}</b> {{ $r->feedback ? '— ' . $r->feedback : '' }} <span class="text-muted">({{ $r->created_at?->diffForHumans() }})</span></li>
                         @endforeach
                     </ul>
                 </div>
@@ -371,8 +371,8 @@
     document.querySelectorAll('.reject-chip').forEach(c => {
         c.addEventListener('click', () => {
             rejectCategory = c.dataset.cat;
-            document.querySelectorAll('.reject-chip').forEach(x => x.classList.remove('bg-red-600','text-white'));
-            c.classList.add('bg-red-600','text-white');
+            document.querySelectorAll('.reject-chip').forEach(x => x.classList.remove('bg-coral','text-white'));
+            c.classList.add('bg-coral','text-white');
         });
     });
     $('btnRejectConfirm')?.addEventListener('click', async () => {

@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('title', 'Audit Platformă')
-@section('breadcrumb')<span class="text-slate-900 font-medium">Audit Platformă</span>@endsection
+@section('breadcrumb')<span class="text-ink font-medium">Audit Platformă</span>@endsection
 
 @section('content')
 <div class="space-y-6">
@@ -14,51 +14,51 @@
             </svg>
         </div>
         <div>
-            <h1 class="text-xl font-bold text-slate-900">Audit Platformă</h1>
-            <p class="text-sm text-slate-500">Raport complet de audit — algoritmi, securitate, performanță</p>
+            <h1 class="text-xl font-bold text-ink">Audit Platformă</h1>
+            <p class="text-sm text-muted">Raport complet de audit — algoritmi, securitate, performanță</p>
         </div>
-        <div class="ml-auto text-xs text-slate-400">Generat: 24 Martie 2026</div>
+        <div class="ml-auto text-xs text-muted">Generat: 24 Martie 2026</div>
     </div>
 
     {{-- Summary Cards --}}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-white rounded-xl border border-slate-200 p-4">
+        <div class="bg-white rounded-xl border border-line p-4">
             <div class="flex items-center gap-2 mb-1">
                 <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">Critice</span>
+                <span class="text-xs font-medium text-muted uppercase tracking-wider">Critice</span>
             </div>
-            <div class="text-2xl font-bold text-red-600">10</div>
-            <div class="text-xs text-slate-400 mt-1">Necesită rezolvare imediată</div>
+            <div class="text-2xl font-bold text-coral">10</div>
+            <div class="text-xs text-muted mt-1">Necesită rezolvare imediată</div>
         </div>
-        <div class="bg-white rounded-xl border border-slate-200 p-4">
+        <div class="bg-white rounded-xl border border-line p-4">
             <div class="flex items-center gap-2 mb-1">
                 <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-                <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">High</span>
+                <span class="text-xs font-medium text-muted uppercase tracking-wider">High</span>
             </div>
             <div class="text-2xl font-bold text-amber-600">20</div>
-            <div class="text-xs text-slate-400 mt-1">Prioritate ridicată</div>
+            <div class="text-xs text-muted mt-1">Prioritate ridicată</div>
         </div>
-        <div class="bg-white rounded-xl border border-slate-200 p-4">
+        <div class="bg-white rounded-xl border border-line p-4">
             <div class="flex items-center gap-2 mb-1">
                 <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">Medium</span>
+                <span class="text-xs font-medium text-muted uppercase tracking-wider">Medium</span>
             </div>
             <div class="text-2xl font-bold text-blue-600">30</div>
-            <div class="text-xs text-slate-400 mt-1">De planificat</div>
+            <div class="text-xs text-muted mt-1">De planificat</div>
         </div>
-        <div class="bg-white rounded-xl border border-slate-200 p-4">
+        <div class="bg-white rounded-xl border border-line p-4">
             <div class="flex items-center gap-2 mb-1">
                 <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">Zone auditate</span>
+                <span class="text-xs font-medium text-muted uppercase tracking-wider">Zone auditate</span>
             </div>
             <div class="text-2xl font-bold text-emerald-600">15</div>
-            <div class="text-xs text-slate-400 mt-1">Module analizate</div>
+            <div class="text-xs text-muted mt-1">Module analizate</div>
         </div>
     </div>
 
     {{-- Tab Navigation --}}
     <div x-data="{ tab: 'critical' }" class="space-y-4">
-        <div class="border-b border-slate-200">
+        <div class="border-b border-line">
             <nav class="-mb-px flex gap-x-1 overflow-x-auto">
                 @php
                     $tabs = [
@@ -74,7 +74,7 @@
                 @endphp
                 @foreach($tabs as $key => $label)
                     <button @click="tab = '{{ $key }}'"
-                            :class="tab === '{{ $key }}' ? 'border-red-600 text-red-700 bg-red-50/50' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'"
+                            :class="tab === '{{ $key }}' ? 'border-red-600 text-coralh bg-coralsoft/50' : 'border-transparent text-muted hover:text-inkSoft hover:border-line'"
                             class="whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors">
                         {{ $label }}
                     </button>
@@ -84,10 +84,10 @@
 
         {{-- CRITICE --}}
         <div x-show="tab === 'critical'" x-cloak>
-            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <div class="px-5 py-4 border-b border-slate-100 bg-red-50/50">
-                    <h2 class="text-base font-semibold text-red-900">Probleme Critice — Rezolvare Imediată</h2>
-                    <p class="text-xs text-red-700 mt-1">Aceste probleme afectează securitatea, stabilitatea sau corectitudinea financiară a platformei.</p>
+            <div class="bg-white rounded-xl border border-line shadow-sm overflow-hidden">
+                <div class="px-5 py-4 border-b border-line bg-coralsoft/50">
+                    <h2 class="text-base font-semibold text-coralh">Probleme Critice — Rezolvare Imediată</h2>
+                    <p class="text-xs text-coralh mt-1">Aceste probleme afectează securitatea, stabilitatea sau corectitudinea financiară a platformei.</p>
                 </div>
                 <div class="divide-y divide-slate-100">
                     @php
@@ -175,18 +175,18 @@
                         ];
                     @endphp
                     @foreach($criticals as $i => $item)
-                        <div class="px-5 py-4 hover:bg-slate-50/50 transition-colors">
+                        <div class="px-5 py-4 hover:bg-cream/50 transition-colors">
                             <div class="flex items-start gap-3">
-                                <span class="mt-0.5 inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-100 text-red-700 text-xs font-bold shrink-0">{{ $i + 1 }}</span>
+                                <span class="mt-0.5 inline-flex items-center justify-center w-6 h-6 rounded-full bg-coralsoft text-coralh text-xs font-bold shrink-0">{{ $i + 1 }}</span>
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center gap-2 flex-wrap">
-                                        <h3 class="text-sm font-semibold text-slate-900">{{ $item['title'] }}</h3>
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-100 text-red-700">CRITIC</span>
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600">{{ $item['zone'] }}</span>
+                                        <h3 class="text-sm font-semibold text-ink">{{ $item['title'] }}</h3>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-coralsoft text-coralh">CRITIC</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-cream text-muted">{{ $item['zone'] }}</span>
                                     </div>
-                                    <p class="text-sm text-slate-600 mt-1">{{ $item['desc'] }}</p>
+                                    <p class="text-sm text-muted mt-1">{{ $item['desc'] }}</p>
                                     <div class="mt-2 flex flex-col sm:flex-row sm:items-center gap-2">
-                                        <code class="text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded font-mono">{{ $item['file'] }}</code>
+                                        <code class="text-xs bg-cream text-inkSoft px-2 py-1 rounded font-mono">{{ $item['file'] }}</code>
                                     </div>
                                     <div class="mt-2 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
                                         <div class="flex items-start gap-2">
@@ -194,7 +194,7 @@
                                             <p class="text-xs text-emerald-800"><strong>Fix:</strong> {{ $item['fix'] }}</p>
                                         </div>
                                     </div>
-                                    <p class="text-xs text-red-600 mt-1"><strong>Impact:</strong> {{ $item['impact'] }}</p>
+                                    <p class="text-xs text-coral mt-1"><strong>Impact:</strong> {{ $item['impact'] }}</p>
                                 </div>
                             </div>
                         </div>
@@ -205,8 +205,8 @@
 
         {{-- HIGH PRIORITY --}}
         <div x-show="tab === 'high'" x-cloak>
-            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <div class="px-5 py-4 border-b border-slate-100 bg-amber-50/50">
+            <div class="bg-white rounded-xl border border-line shadow-sm overflow-hidden">
+                <div class="px-5 py-4 border-b border-line bg-amber-50/50">
                     <h2 class="text-base font-semibold text-amber-900">Prioritate Ridicată — Sprint-ul următor</h2>
                 </div>
                 <div class="divide-y divide-slate-100">
@@ -235,16 +235,16 @@
                         ];
                     @endphp
                     @foreach($highs as $i => $item)
-                        <div class="px-5 py-3 hover:bg-slate-50/50 transition-colors">
+                        <div class="px-5 py-3 hover:bg-cream/50 transition-colors">
                             <div class="flex items-start gap-3">
                                 <span class="mt-0.5 inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-100 text-amber-700 text-xs font-bold shrink-0">{{ $i + 1 }}</span>
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center gap-2 flex-wrap">
-                                        <h3 class="text-sm font-medium text-slate-900">{{ $item[0] }}</h3>
+                                        <h3 class="text-sm font-medium text-ink">{{ $item[0] }}</h3>
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-700">HIGH</span>
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600">{{ $item[1] }}</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-cream text-muted">{{ $item[1] }}</span>
                                     </div>
-                                    <p class="text-xs text-slate-500 mt-1">{{ $item[2] }}</p>
+                                    <p class="text-xs text-muted mt-1">{{ $item[2] }}</p>
                                 </div>
                             </div>
                         </div>
@@ -255,8 +255,8 @@
 
         {{-- MEDIUM --}}
         <div x-show="tab === 'medium'" x-cloak>
-            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <div class="px-5 py-4 border-b border-slate-100 bg-blue-50/50">
+            <div class="bg-white rounded-xl border border-line shadow-sm overflow-hidden">
+                <div class="px-5 py-4 border-b border-line bg-blue-50/50">
                     <h2 class="text-base font-semibold text-blue-900">Prioritate Medie — De planificat</h2>
                 </div>
                 <div class="divide-y divide-slate-100">
@@ -295,16 +295,16 @@
                         ];
                     @endphp
                     @foreach($mediums as $i => $item)
-                        <div class="px-5 py-2.5 hover:bg-slate-50/50 transition-colors">
+                        <div class="px-5 py-2.5 hover:bg-cream/50 transition-colors">
                             <div class="flex items-start gap-3">
                                 <span class="mt-0.5 inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold shrink-0">{{ $i + 1 }}</span>
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center gap-2 flex-wrap">
-                                        <h3 class="text-sm font-medium text-slate-800">{{ $item[0] }}</h3>
+                                        <h3 class="text-sm font-medium text-ink">{{ $item[0] }}</h3>
                                         <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-700">MED</span>
-                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-500">{{ $item[1] }}</span>
+                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-cream text-muted">{{ $item[1] }}</span>
                                     </div>
-                                    <p class="text-xs text-slate-500 mt-0.5">{{ $item[2] }}</p>
+                                    <p class="text-xs text-muted mt-0.5">{{ $item[2] }}</p>
                                 </div>
                             </div>
                         </div>
@@ -315,16 +315,16 @@
 
         {{-- SECURITY --}}
         <div x-show="tab === 'security'" x-cloak>
-            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <div class="px-5 py-4 border-b border-slate-100">
-                    <h2 class="text-base font-semibold text-slate-900">Securitate & Multi-Tenancy</h2>
+            <div class="bg-white rounded-xl border border-line shadow-sm overflow-hidden">
+                <div class="px-5 py-4 border-b border-line">
+                    <h2 class="text-base font-semibold text-ink">Securitate & Multi-Tenancy</h2>
                 </div>
                 <div class="p-5 space-y-4">
-                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                        <h3 class="text-sm font-semibold text-red-900 mb-2">Modele fără tenant isolation</h3>
+                    <div class="bg-coralsoft border border-coral/30 rounded-lg p-4">
+                        <h3 class="text-sm font-semibold text-coralh mb-2">Modele fără tenant isolation</h3>
                         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
                             @foreach(['Channel', 'BotKnowledge', 'WooCommerceProduct', 'KnowledgeConnector', 'Message', 'Transcript', 'CallEvent', 'WebsiteScan', 'WebsiteScanPage', 'KnowledgeAgentRun'] as $model)
-                                <div class="flex items-center gap-1.5 text-xs text-red-800 bg-red-100 rounded px-2 py-1">
+                                <div class="flex items-center gap-1.5 text-xs text-coralh bg-coralsoft rounded px-2 py-1">
                                     <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                                     {{ $model }}
                                 </div>
@@ -352,21 +352,21 @@
 
         {{-- PERFORMANCE --}}
         <div x-show="tab === 'performance'" x-cloak>
-            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <div class="px-5 py-4 border-b border-slate-100">
-                    <h2 class="text-base font-semibold text-slate-900">Performanță Database</h2>
+            <div class="bg-white rounded-xl border border-line shadow-sm overflow-hidden">
+                <div class="px-5 py-4 border-b border-line">
+                    <h2 class="text-base font-semibold text-ink">Performanță Database</h2>
                 </div>
                 <div class="p-5 space-y-4">
-                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                        <h3 class="text-sm font-semibold text-red-900 mb-2">Indexuri lipsă (critice)</h3>
+                    <div class="bg-coralsoft border border-coral/30 rounded-lg p-4">
+                        <h3 class="text-sm font-semibold text-coralh mb-2">Indexuri lipsă (critice)</h3>
                         <div class="overflow-x-auto">
                             <table class="w-full text-xs">
-                                <thead><tr class="text-left text-red-700">
+                                <thead><tr class="text-left text-coralh">
                                     <th class="pb-2 font-medium">Tabelă</th>
                                     <th class="pb-2 font-medium">Index recomandat</th>
                                     <th class="pb-2 font-medium">Impact</th>
                                 </tr></thead>
-                                <tbody class="text-red-800">
+                                <tbody class="text-coralh">
                                     <tr><td class="py-1 font-mono">messages</td><td>conversation_id, direction, created_at</td><td>Full table scan pe orice query chat</td></tr>
                                     <tr><td class="py-1 font-mono">calls</td><td>(tenant_id, created_at), (bot_id, created_at)</td><td>Analytics queries lente</td></tr>
                                     <tr><td class="py-1 font-mono">conversations</td><td>(channel_id, status), (tenant_id, created_at)</td><td>Dashboard filtering lent</td></tr>
@@ -399,9 +399,9 @@
 
         {{-- VOICE & REALTIME --}}
         <div x-show="tab === 'voice'" x-cloak>
-            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <div class="px-5 py-4 border-b border-slate-100">
-                    <h2 class="text-base font-semibold text-slate-900">Voice Bot & Realtime API</h2>
+            <div class="bg-white rounded-xl border border-line shadow-sm overflow-hidden">
+                <div class="px-5 py-4 border-b border-line">
+                    <h2 class="text-base font-semibold text-ink">Voice Bot & Realtime API</h2>
                 </div>
                 <div class="p-5 space-y-4">
                     @php
@@ -421,12 +421,12 @@
                     @foreach($voiceIssues as $item)
                         <div class="flex items-start gap-3">
                             @php
-                                $colors = ['CRITICAL' => 'bg-red-100 text-red-700', 'HIGH' => 'bg-amber-100 text-amber-700', 'MEDIUM' => 'bg-blue-100 text-blue-700', 'LOW' => 'bg-slate-100 text-slate-600', 'FIXED' => 'bg-emerald-100 text-emerald-700'];
+                                $colors = ['CRITICAL' => 'bg-coralsoft text-coralh', 'HIGH' => 'bg-amber-100 text-amber-700', 'MEDIUM' => 'bg-blue-100 text-blue-700', 'LOW' => 'bg-cream text-muted', 'FIXED' => 'bg-emerald-100 text-emerald-700'];
                             @endphp
                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium {{ $colors[$item[1]] }} shrink-0 mt-0.5">{{ $item[1] }}</span>
                             <div>
-                                <h4 class="text-sm font-medium text-slate-800">{{ $item[0] }}</h4>
-                                <p class="text-xs text-slate-500">{{ $item[2] }}</p>
+                                <h4 class="text-sm font-medium text-ink">{{ $item[0] }}</h4>
+                                <p class="text-xs text-muted">{{ $item[2] }}</p>
                             </div>
                         </div>
                     @endforeach
@@ -436,9 +436,9 @@
 
         {{-- BILLING --}}
         <div x-show="tab === 'billing'" x-cloak>
-            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <div class="px-5 py-4 border-b border-slate-100">
-                    <h2 class="text-base font-semibold text-slate-900">Billing & Cost Tracking</h2>
+            <div class="bg-white rounded-xl border border-line shadow-sm overflow-hidden">
+                <div class="px-5 py-4 border-b border-line">
+                    <h2 class="text-base font-semibold text-ink">Billing & Cost Tracking</h2>
                 </div>
                 <div class="p-5 space-y-4">
                     @php
@@ -455,13 +455,13 @@
                     @endphp
                     @foreach($billingIssues as $item)
                         @php
-                            $colors = ['CRITICAL' => 'bg-red-100 text-red-700', 'HIGH' => 'bg-amber-100 text-amber-700', 'MEDIUM' => 'bg-blue-100 text-blue-700', 'LOW' => 'bg-slate-100 text-slate-600'];
+                            $colors = ['CRITICAL' => 'bg-coralsoft text-coralh', 'HIGH' => 'bg-amber-100 text-amber-700', 'MEDIUM' => 'bg-blue-100 text-blue-700', 'LOW' => 'bg-cream text-muted'];
                         @endphp
                         <div class="flex items-start gap-3 py-1">
                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium {{ $colors[$item[1]] }} shrink-0 mt-0.5">{{ $item[1] }}</span>
                             <div>
-                                <h4 class="text-sm font-medium text-slate-800">{{ $item[0] }}</h4>
-                                <p class="text-xs text-slate-500">{{ $item[2] }}</p>
+                                <h4 class="text-sm font-medium text-ink">{{ $item[0] }}</h4>
+                                <p class="text-xs text-muted">{{ $item[2] }}</p>
                             </div>
                         </div>
                     @endforeach
@@ -471,29 +471,29 @@
 
         {{-- QUEUE & JOBS --}}
         <div x-show="tab === 'queue'" x-cloak>
-            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <div class="px-5 py-4 border-b border-slate-100">
-                    <h2 class="text-base font-semibold text-slate-900">Queue Jobs & Scheduling</h2>
+            <div class="bg-white rounded-xl border border-line shadow-sm overflow-hidden">
+                <div class="px-5 py-4 border-b border-line">
+                    <h2 class="text-base font-semibold text-ink">Queue Jobs & Scheduling</h2>
                 </div>
                 <div class="p-5 space-y-4">
                     <div class="overflow-x-auto">
                         <table class="w-full text-xs">
-                            <thead><tr class="text-left border-b border-slate-200">
-                                <th class="pb-2 font-medium text-slate-500">Job</th>
-                                <th class="pb-2 font-medium text-slate-500">Queue</th>
-                                <th class="pb-2 font-medium text-slate-500">Tries</th>
-                                <th class="pb-2 font-medium text-slate-500">Timeout</th>
-                                <th class="pb-2 font-medium text-slate-500">Unique</th>
-                                <th class="pb-2 font-medium text-slate-500">Probleme</th>
+                            <thead><tr class="text-left border-b border-line">
+                                <th class="pb-2 font-medium text-muted">Job</th>
+                                <th class="pb-2 font-medium text-muted">Queue</th>
+                                <th class="pb-2 font-medium text-muted">Tries</th>
+                                <th class="pb-2 font-medium text-muted">Timeout</th>
+                                <th class="pb-2 font-medium text-muted">Unique</th>
+                                <th class="pb-2 font-medium text-muted">Probleme</th>
                             </tr></thead>
                             <tbody class="divide-y divide-slate-100">
-                                <tr><td class="py-2 font-mono text-slate-800">ProcessKnowledgeDocument</td><td>default</td><td>3</td><td class="text-red-600 font-bold">NONE</td><td class="text-red-600">NO</td><td class="text-red-600">Fără timeout, poate rula la infinit</td></tr>
-                                <tr><td class="py-2 font-mono text-slate-800">CrawlWebsite</td><td>crawling</td><td>2</td><td>600s</td><td class="text-red-600">NO</td><td class="text-amber-600">Timeout prea scurt pt site-uri mari</td></tr>
-                                <tr><td class="py-2 font-mono text-slate-800">RunKnowledgeAgent</td><td>agents</td><td>3</td><td class="text-red-600 font-bold">NONE</td><td class="text-red-600">NO</td><td class="text-red-600">Fără timeout</td></tr>
-                                <tr><td class="py-2 font-mono text-slate-800">SyncConnector</td><td>default</td><td>2</td><td>300s</td><td class="text-red-600">NO</td><td class="text-amber-600">5 min insuficient pt cataloage mari</td></tr>
-                                <tr><td class="py-2 font-mono text-slate-800">AnalyzeCallSentiment</td><td>default</td><td>2</td><td>30s</td><td class="text-red-600">NO</td><td class="text-amber-600">Fără failed() handler</td></tr>
-                                <tr><td class="py-2 font-mono text-slate-800">ProcessVoiceCloning</td><td>default</td><td>2</td><td>180s</td><td class="text-red-600">NO</td><td class="text-slate-500">OK</td></tr>
-                                <tr><td class="py-2 font-mono text-slate-800">VerifySite</td><td>default</td><td>1</td><td>30s</td><td class="text-red-600">NO</td><td class="text-amber-600">Doar 1 try, DNS needs retry</td></tr>
+                                <tr><td class="py-2 font-mono text-ink">ProcessKnowledgeDocument</td><td>default</td><td>3</td><td class="text-coral font-bold">NONE</td><td class="text-coral">NO</td><td class="text-coral">Fără timeout, poate rula la infinit</td></tr>
+                                <tr><td class="py-2 font-mono text-ink">CrawlWebsite</td><td>crawling</td><td>2</td><td>600s</td><td class="text-coral">NO</td><td class="text-amber-600">Timeout prea scurt pt site-uri mari</td></tr>
+                                <tr><td class="py-2 font-mono text-ink">RunKnowledgeAgent</td><td>agents</td><td>3</td><td class="text-coral font-bold">NONE</td><td class="text-coral">NO</td><td class="text-coral">Fără timeout</td></tr>
+                                <tr><td class="py-2 font-mono text-ink">SyncConnector</td><td>default</td><td>2</td><td>300s</td><td class="text-coral">NO</td><td class="text-amber-600">5 min insuficient pt cataloage mari</td></tr>
+                                <tr><td class="py-2 font-mono text-ink">AnalyzeCallSentiment</td><td>default</td><td>2</td><td>30s</td><td class="text-coral">NO</td><td class="text-amber-600">Fără failed() handler</td></tr>
+                                <tr><td class="py-2 font-mono text-ink">ProcessVoiceCloning</td><td>default</td><td>2</td><td>180s</td><td class="text-coral">NO</td><td class="text-muted">OK</td></tr>
+                                <tr><td class="py-2 font-mono text-ink">VerifySite</td><td>default</td><td>1</td><td>30s</td><td class="text-coral">NO</td><td class="text-amber-600">Doar 1 try, DNS needs retry</td></tr>
                             </tbody>
                         </table>
                     </div>

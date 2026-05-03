@@ -5,15 +5,15 @@
 @section('content')
 <div class="max-w-6xl mx-auto px-4 py-6">
     <div class="mb-6">
-        <a href="{{ route('dashboard.bots.show', $bot) }}" class="text-sm text-slate-500 hover:text-slate-700">← Înapoi la agent</a>
-        <h1 class="text-2xl font-bold text-slate-900 mt-2">Mapări metadate WooCommerce</h1>
-        <p class="mt-1 text-sm text-slate-500 max-w-3xl">
+        <a href="{{ route('dashboard.bots.show', $bot) }}" class="text-sm text-muted hover:text-inkSoft">← Înapoi la agent</a>
+        <h1 class="text-2xl font-bold text-ink mt-2">Mapări metadate WooCommerce</h1>
+        <p class="mt-1 text-sm text-muted max-w-3xl">
             Fiecare site WordPress stochează informațiile custom (unitatea de măsură, furnizor, timp livrare, etc.)
             în locuri diferite. Aici spui o singură dată: "pe site-ul meu, acest câmp = unitate de măsură" —
             și agentul vocal / chat le folosește automat în răspunsuri.
         </p>
-        <p class="mt-2 text-xs text-slate-400">
-            Conector: <code class="bg-slate-100 px-1.5 py-0.5 rounded">{{ $connector->site_url }}</code>
+        <p class="mt-2 text-xs text-muted">
+            Conector: <code class="bg-cream px-1.5 py-0.5 rounded">{{ $connector->site_url }}</code>
             — ultima sincronizare: {{ $connector->last_synced_at?->diffForHumans() ?? 'niciodată' }}
         </p>
     </div>
@@ -30,28 +30,28 @@
     @endif
 
     @if($mappings->isEmpty())
-        <div class="bg-white rounded-xl border border-slate-200 p-10 text-center">
-            <p class="text-slate-500">Nu am detectat încă metadate pe produsele tale.</p>
-            <p class="mt-2 text-xs text-slate-400">Pornește o sincronizare WooCommerce — după primul batch apar aici toate câmpurile custom cu exemple.</p>
+        <div class="bg-white rounded-xl border border-line p-10 text-center">
+            <p class="text-muted">Nu am detectat încă metadate pe produsele tale.</p>
+            <p class="mt-2 text-xs text-muted">Pornește o sincronizare WooCommerce — după primul batch apar aici toate câmpurile custom cu exemple.</p>
         </div>
     @else
         <form method="POST" action="{{ route('dashboard.bots.wcMeta.update', $bot) }}">
             @csrf
             @method('PUT')
 
-            <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                <div class="px-5 py-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+            <div class="bg-white rounded-xl border border-line overflow-hidden">
+                <div class="px-5 py-3 border-b border-line bg-cream flex items-center justify-between">
                     <div>
-                        <h2 class="text-sm font-semibold text-slate-900">{{ $mappings->count() }} câmpuri detectate</h2>
-                        <p class="text-xs text-slate-500 mt-0.5">Sortate după câte produse le folosesc.</p>
+                        <h2 class="text-sm font-semibold text-ink">{{ $mappings->count() }} câmpuri detectate</h2>
+                        <p class="text-xs text-muted mt-0.5">Sortate după câte produse le folosesc.</p>
                     </div>
-                    <button type="submit" class="rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800">
+                    <button type="submit" class="rounded-lg bg-coral px-4 py-2 text-sm font-semibold text-white hover:bg-coral">
                         Salvează mapările
                     </button>
                 </div>
 
                 <table class="w-full text-sm">
-                    <thead class="bg-slate-50 text-slate-600 text-xs uppercase">
+                    <thead class="bg-cream text-muted text-xs uppercase">
                         <tr>
                             <th class="px-5 py-2 text-left font-semibold">Cheie WordPress</th>
                             <th class="px-5 py-2 text-left font-semibold">Exemplu valoare</th>
@@ -61,19 +61,19 @@
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         @foreach($mappings as $idx => $m)
-                            <tr class="hover:bg-slate-50/50">
+                            <tr class="hover:bg-cream/50">
                                 <td class="px-5 py-3 align-top">
                                     <input type="hidden" name="mappings[{{ $idx }}][id]" value="{{ $m->id }}">
-                                    <code class="text-xs bg-slate-100 px-1.5 py-0.5 rounded font-mono break-all">{{ $m->meta_key }}</code>
+                                    <code class="text-xs bg-cream px-1.5 py-0.5 rounded font-mono break-all">{{ $m->meta_key }}</code>
                                 </td>
-                                <td class="px-5 py-3 align-top text-xs text-slate-600 max-w-xs">
+                                <td class="px-5 py-3 align-top text-xs text-muted max-w-xs">
                                     @if($m->sample_value)
                                         <span class="italic">"{{ Str::limit($m->sample_value, 80) }}"</span>
                                     @else
-                                        <span class="text-slate-400">—</span>
+                                        <span class="text-muted">—</span>
                                     @endif
                                 </td>
-                                <td class="px-5 py-3 align-top text-center tabular-nums text-xs text-slate-500">
+                                <td class="px-5 py-3 align-top text-center tabular-nums text-xs text-muted">
                                     {{ $m->product_count }}
                                 </td>
                                 <td class="px-5 py-3 align-top">
@@ -81,14 +81,14 @@
                                         <select name="mappings[{{ $idx }}][standard_field]"
                                                 data-idx="{{ $idx }}"
                                                 onchange="samblaToggleCustomInput(this)"
-                                                class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none">
+                                                class="rounded-lg border border-line bg-white px-3 py-1.5 text-sm text-inkSoft focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">
                                             <option value="" {{ $m->standard_field === null ? 'selected' : '' }}>— Ignoră —</option>
                                             <optgroup label="Câmpuri standard">
                                                 @foreach($standardFields as $code => $info)
                                                     <option value="{{ $code }}"
                                                             data-label="{{ $info['label'] }}"
                                                             {{ $m->standard_field === $code ? 'selected' : '' }}>
-                                                        {{ $info['label'] }}@if(!empty($info['hint'])) <span class="text-slate-400">({{ $info['hint'] }})</span>@endif
+                                                        {{ $info['label'] }}@if(!empty($info['hint'])) <span class="text-muted">({{ $info['hint'] }})</span>@endif
                                                     </option>
                                                 @endforeach
                                             </optgroup>
@@ -106,7 +106,7 @@
                                                    name="mappings[{{ $idx }}][label]"
                                                    value="{{ $m->label }}"
                                                    placeholder="Nume afișabil (ex: Clasă energetică)"
-                                                   class="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-700 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none">
+                                                   class="flex-1 rounded-lg border border-line px-3 py-1.5 text-xs text-inkSoft focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">
                                         </div>
                                     </div>
                                 </td>
@@ -115,8 +115,8 @@
                     </tbody>
                 </table>
 
-                <div class="px-5 py-3 border-t border-slate-200 bg-slate-50 text-right">
-                    <button type="submit" class="rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800">
+                <div class="px-5 py-3 border-t border-line bg-cream text-right">
+                    <button type="submit" class="rounded-lg bg-coral px-4 py-2 text-sm font-semibold text-white hover:bg-coral">
                         Salvează mapările
                     </button>
                 </div>

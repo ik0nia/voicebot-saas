@@ -3,23 +3,23 @@
 @section('title', 'Test Vocal — ' . $bot->name)
 
 @section('breadcrumb')
-    <span class="text-slate-400">/</span>
-    <a href="{{ route('dashboard.bots.index') }}" class="text-slate-500 hover:text-slate-700 transition-colors">Agenți AI</a>
-    <span class="text-slate-400">/</span>
-    <a href="{{ route('dashboard.bots.show', $bot) }}" class="text-slate-500 hover:text-slate-700 transition-colors">{{ $bot->name }}</a>
-    <span class="text-slate-400">/</span>
-    <span class="font-medium text-slate-700">Test Vocal</span>
+    <span class="text-muted">/</span>
+    <a href="{{ route('dashboard.bots.index') }}" class="text-muted hover:text-inkSoft transition-colors">Agenți AI</a>
+    <span class="text-muted">/</span>
+    <a href="{{ route('dashboard.bots.show', $bot) }}" class="text-muted hover:text-inkSoft transition-colors">{{ $bot->name }}</a>
+    <span class="text-muted">/</span>
+    <span class="font-medium text-inkSoft">Test Vocal</span>
 @endsection
 
 @section('content')
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-            <h1 class="text-2xl font-bold text-slate-900">Test Vocal &mdash; {{ $bot->name }}</h1>
-            <p class="mt-1 text-sm text-slate-500">Testati agentul AI vocal direct din browser, fara a fi nevoie de un numar de telefon.</p>
+            <h1 class="text-2xl font-bold text-ink">Test Vocal &mdash; {{ $bot->name }}</h1>
+            <p class="mt-1 text-sm text-muted">Testati agentul AI vocal direct din browser, fara a fi nevoie de un numar de telefon.</p>
         </div>
         <a href="{{ route('dashboard.bots.show', $bot) }}"
-           class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+           class="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-4 py-2 text-sm font-medium text-inkSoft hover:bg-cream transition-colors">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
@@ -86,9 +86,9 @@
                         <div id="textInputArea" class="hidden mb-3">
                             <div class="flex gap-2">
                                 <input type="text" id="textMessage" placeholder="Scrieti un mesaj..."
-                                       class="flex-1 rounded-full bg-white/10 border border-white/20 text-white text-sm px-4 py-2.5 placeholder-white/40 focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/30">
+                                       class="flex-1 rounded-full bg-white/10 border border-white/20 text-white text-sm px-4 py-2.5 placeholder-white/40 focus:outline-none focus:border-coral/50 focus:ring-1 focus:ring-coral/30">
                                 <button id="sendTextBtn" onclick="sendTextMessage()"
-                                        class="w-10 h-10 rounded-full bg-red-700 hover:bg-red-600 flex items-center justify-center transition-colors shrink-0">
+                                        class="w-10 h-10 rounded-full bg-coral hover:bg-coral flex items-center justify-center transition-colors shrink-0">
                                     <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                                     </svg>
@@ -136,7 +136,7 @@
 
             {{-- Info text below phone --}}
             <div class="mt-4 text-center">
-                <p class="text-xs text-slate-400">
+                <p class="text-xs text-muted">
                     Simulator de test &mdash; Raspunsurile sunt generate local (mock).
                     <br>Conectati OpenAI Realtime API pentru raspunsuri reale.
                 </p>
@@ -206,7 +206,7 @@
                 if (!interimDiv) {
                     interimDiv = document.createElement('div');
                     interimDiv.className = 'flex justify-end';
-                    interimDiv.innerHTML = '<div class="max-w-[80%] rounded-2xl rounded-br-md px-4 py-2.5 bg-red-700/50 text-white/70 text-sm italic"></div>';
+                    interimDiv.innerHTML = '<div class="max-w-[80%] rounded-2xl rounded-br-md px-4 py-2.5 bg-coral/50 text-white/70 text-sm italic"></div>';
                     transcriptArea.appendChild(interimDiv);
                 }
                 interimDiv.querySelector('div').textContent = interim + '...';
@@ -243,7 +243,7 @@
             timerInterval = setInterval(updateTimer, 1000);
             conversationHistory = [];
 
-            callButton.className = 'w-16 h-16 rounded-full bg-red-600 hover:bg-red-500 flex items-center justify-center transition-all duration-300 shadow-lg shadow-red-500/30 active:scale-95';
+            callButton.className = 'w-16 h-16 rounded-full bg-coral hover:bg-red-500 flex items-center justify-center transition-all duration-300 shadow-lg shadow-red-500/30 active:scale-95';
             callIcon.classList.add('hidden');
             hangupIcon.classList.remove('hidden');
             callButtonLabel.textContent = 'Încheie Apel';
@@ -414,7 +414,7 @@
         wrapper.className = 'flex ' + (type === 'user' ? 'justify-end' : type === 'system' ? 'justify-center' : 'justify-start');
         wrapper.style.animation = 'fadeInUp 0.3s ease-out';
         var bubble = document.createElement('div');
-        if (type === 'user') bubble.className = 'max-w-[80%] rounded-2xl rounded-br-md px-4 py-2.5 bg-red-700 text-white text-sm';
+        if (type === 'user') bubble.className = 'max-w-[80%] rounded-2xl rounded-br-md px-4 py-2.5 bg-coral text-white text-sm';
         else if (type === 'bot') bubble.className = 'max-w-[80%] rounded-2xl rounded-bl-md px-4 py-2.5 bg-white/10 text-white/90 text-sm';
         else bubble.className = 'rounded-full px-3 py-1 bg-white/5 text-white/40 text-xs';
         bubble.textContent = text;

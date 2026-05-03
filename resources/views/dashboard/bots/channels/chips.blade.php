@@ -3,21 +3,21 @@
 @section('title', 'Butoane rapide — ' . $bot->name)
 
 @section('breadcrumb')
-    <span class="text-slate-400">/</span>
-    <a href="{{ route('dashboard.bots.index') }}" class="text-slate-500 hover:text-slate-700">Agenți AI</a>
-    <span class="text-slate-400">/</span>
-    <a href="{{ route('dashboard.bots.show', $bot) }}" class="text-slate-500 hover:text-slate-700">{{ $bot->name }}</a>
-    <span class="text-slate-400">/</span>
-    <a href="{{ route('dashboard.bots.channels.index', $bot) }}" class="text-slate-500 hover:text-slate-700">Canale</a>
-    <span class="text-slate-400">/</span>
-    <span class="font-medium text-slate-700">Butoane rapide</span>
+    <span class="text-muted">/</span>
+    <a href="{{ route('dashboard.bots.index') }}" class="text-muted hover:text-inkSoft">Agenți AI</a>
+    <span class="text-muted">/</span>
+    <a href="{{ route('dashboard.bots.show', $bot) }}" class="text-muted hover:text-inkSoft">{{ $bot->name }}</a>
+    <span class="text-muted">/</span>
+    <a href="{{ route('dashboard.bots.channels.index', $bot) }}" class="text-muted hover:text-inkSoft">Canale</a>
+    <span class="text-muted">/</span>
+    <span class="font-medium text-inkSoft">Butoane rapide</span>
 @endsection
 
 @section('content')
     <div class="max-w-4xl">
         <div class="mb-6">
-            <h1 class="text-2xl font-bold text-slate-900">Butoane rapide (Quick Replies)</h1>
-            <p class="mt-1 text-sm text-slate-500">Editează sugestiile care apar când vizitatorul deschide widget-ul, în funcție de tipul paginii. Fiecare agent îşi poate avea setul lui.</p>
+            <h1 class="text-2xl font-bold text-ink">Butoane rapide (Quick Replies)</h1>
+            <p class="mt-1 text-sm text-muted">Editează sugestiile care apar când vizitatorul deschide widget-ul, în funcție de tipul paginii. Fiecare agent îşi poate avea setul lui.</p>
         </div>
 
         @if (session('success'))
@@ -27,15 +27,15 @@
         @endif
 
         {{-- Context banner — the 3 "phases" when chips show up --}}
-        <div class="mb-6 rounded-xl border border-slate-200 bg-white p-5">
-            <h2 class="text-sm font-semibold text-slate-900">Când apar butoanele</h2>
-            <ul class="mt-3 space-y-2 text-sm text-slate-600">
+        <div class="mb-6 rounded-xl border border-line bg-white p-5">
+            <h2 class="text-sm font-semibold text-ink">Când apar butoanele</h2>
+            <ul class="mt-3 space-y-2 text-sm text-muted">
                 <li class="flex gap-2">
                     <span class="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-[11px] font-bold text-emerald-700">1</span>
                     <span><strong>La deschiderea conversației</strong> — setate mai jos, grupate pe tipul paginii. <em>Editabile.</em></span>
                 </li>
                 <li class="flex gap-2">
-                    <span class="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-[11px] font-bold text-slate-700">2</span>
+                    <span class="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-cream text-[11px] font-bold text-inkSoft">2</span>
                     <span><strong>După fiecare răspuns al agentului</strong> — butoane adaptive care se schimbă în funcție de starea conversației (compară, aproape de finalizare, blocat, sensibil la preț). <em>Optimizate automat — nu-s editabile momentan.</em></span>
                 </li>
                 <li class="flex gap-2">
@@ -53,37 +53,37 @@
 
             <div class="space-y-5">
                 <template x-for="(card, idx) in cards" :key="card.key">
-                    <div class="rounded-xl border border-slate-200 bg-white">
-                        <div class="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4">
+                    <div class="rounded-xl border border-line bg-white">
+                        <div class="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
                             <div>
                                 <div class="flex items-center gap-2">
-                                    <h3 class="text-base font-semibold text-slate-900" x-text="card.title"></h3>
+                                    <h3 class="text-base font-semibold text-ink" x-text="card.title"></h3>
                                     <span x-show="card.is_overridden"
-                                          class="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-700">
+                                          class="inline-flex items-center rounded-full bg-coralsoft px-2 py-0.5 text-[10px] font-medium text-coralh">
                                         Personalizat
                                     </span>
                                 </div>
-                                <p class="mt-1 text-sm text-slate-500" x-text="card.description"></p>
-                                <p class="mt-1 font-mono text-[11px] text-slate-400" x-text="'page_type: ' + card.key"></p>
+                                <p class="mt-1 text-sm text-muted" x-text="card.description"></p>
+                                <p class="mt-1 font-mono text-[11px] text-muted" x-text="'page_type: ' + card.key"></p>
                             </div>
                             <button type="button" @click="resetCard(idx)"
-                                    class="whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
+                                    class="whitespace-nowrap rounded-lg border border-line bg-white px-3 py-1.5 text-xs font-medium text-muted hover:bg-cream">
                                 Resetează la default
                             </button>
                         </div>
 
                         <div class="space-y-4 p-5">
                             <div>
-                                <label class="block text-xs font-medium text-slate-600 mb-1">Mesaj de întâmpinare (opțional)</label>
+                                <label class="block text-xs font-medium text-muted mb-1">Mesaj de întâmpinare (opțional)</label>
                                 <input type="text" x-model="card.opening" maxlength="240"
-                                       class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none"
+                                       class="w-full rounded-lg border border-line px-3 py-2 text-sm text-inkSoft focus:border-coral focus:ring-1 focus:ring-coral outline-none"
                                        placeholder="Afișat deasupra butoanelor la prima deschidere">
                             </div>
 
                             <div>
                                 <div class="mb-2 flex items-center justify-between">
-                                    <label class="block text-xs font-medium text-slate-600">Butoane (max 6)</label>
-                                    <span class="text-[11px] text-slate-400" x-text="card.chips.length + '/6'"></span>
+                                    <label class="block text-xs font-medium text-muted">Butoane (max 6)</label>
+                                    <span class="text-[11px] text-muted" x-text="card.chips.length + '/6'"></span>
                                 </div>
 
                                 <div class="space-y-2">
@@ -91,12 +91,12 @@
                                         <div class="flex gap-2 items-start">
                                             <div class="flex-1 grid grid-cols-1 md:grid-cols-5 gap-2">
                                                 <input type="text" x-model="chip.label" maxlength="40" placeholder="Label (ce vede userul)"
-                                                       class="md:col-span-2 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none">
+                                                       class="md:col-span-2 rounded-lg border border-line px-3 py-2 text-sm text-inkSoft focus:border-coral focus:ring-1 focus:ring-coral outline-none">
                                                 <input type="text" x-model="chip.text" maxlength="500" placeholder="Text trimis ca mesaj (ce „spune" userul la click)"
-                                                       class="md:col-span-3 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none">
+                                                       class="md:col-span-3 rounded-lg border border-line px-3 py-2 text-sm text-inkSoft focus:border-coral focus:ring-1 focus:ring-coral outline-none">
                                             </div>
                                             <button type="button" @click="removeChip(idx, cidx)"
-                                                    class="shrink-0 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-slate-400 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                                                    class="shrink-0 rounded-lg border border-line bg-white px-2.5 py-2 text-muted hover:border-coral/30 hover:bg-coralsoft hover:text-coral"
                                                     title="Șterge butonul">
                                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M10 7V4a1 1 0 011-1h2a1 1 0 011 1v3"/></svg>
                                             </button>
@@ -105,12 +105,12 @@
                                 </div>
 
                                 <button type="button" @click="addChip(idx)" x-show="card.chips.length < 6"
-                                        class="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-dashed border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-red-300 hover:text-red-700">
+                                        class="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-dashed border-line px-3 py-1.5 text-xs font-medium text-muted hover:border-red-300 hover:text-coralh">
                                     <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                                     Adaugă buton
                                 </button>
 
-                                <p x-show="card.chips.length === 0" class="mt-2 text-xs italic text-slate-400">
+                                <p x-show="card.chips.length === 0" class="mt-2 text-xs italic text-muted">
                                     Fără butoane — la deschidere nu se afişează sugestii rapide pentru acest tip de pagină.
                                 </p>
                             </div>
@@ -121,14 +121,14 @@
 
             <div class="mt-6 flex items-center justify-between gap-3">
                 <a href="{{ route('dashboard.bots.channels.index', $bot) }}"
-                   class="text-sm text-slate-500 hover:text-slate-700">← Înapoi la canale</a>
+                   class="text-sm text-muted hover:text-inkSoft">← Înapoi la canale</a>
                 <div class="flex items-center gap-3">
                     <button type="button" @click="resetAll"
-                            class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
+                            class="rounded-lg border border-line bg-white px-4 py-2 text-sm font-medium text-muted hover:bg-cream">
                         Resetează totul la default
                     </button>
                     <button type="submit"
-                            class="rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800">
+                            class="rounded-lg bg-coral px-4 py-2 text-sm font-semibold text-white hover:bg-coral">
                         Salvează butoanele
                     </button>
                 </div>

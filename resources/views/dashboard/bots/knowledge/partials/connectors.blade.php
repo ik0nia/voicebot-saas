@@ -1,10 +1,10 @@
 <div class="p-6">
-    <h3 class="text-lg font-semibold text-slate-900 mb-1">Conectori</h3>
-    <p class="text-sm text-slate-500 mb-6">Conecteaza WordPress sau WooCommerce pentru a importa automat continutul in baza de cunostinte.</p>
+    <h3 class="text-lg font-semibold text-ink mb-1">Conectori</h3>
+    <p class="text-sm text-muted mb-6">Conecteaza WordPress sau WooCommerce pentru a importa automat continutul in baza de cunostinte.</p>
 
     {{-- Existing connectors --}}
     @foreach($connectors as $connector)
-        <div class="bg-white rounded-lg border border-slate-200 p-5 mb-4" id="connector-{{ $connector->id }}">
+        <div class="bg-white rounded-lg border border-line p-5 mb-4" id="connector-{{ $connector->id }}">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-lg flex items-center justify-center {{ $connector->type === 'wordpress' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600' }}">
@@ -15,21 +15,21 @@
                         @endif
                     </div>
                     <div>
-                        <h4 class="text-sm font-semibold text-slate-900">{{ ucfirst($connector->type) }}</h4>
-                        <p class="text-xs text-slate-500">{{ $connector->site_url }}</p>
+                        <h4 class="text-sm font-semibold text-ink">{{ ucfirst($connector->type) }}</h4>
+                        <p class="text-xs text-muted">{{ $connector->site_url }}</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
                         @if($connector->status === 'connected') bg-green-100 text-green-700
                         @elseif($connector->status === 'syncing') bg-blue-100 text-blue-700
-                        @elseif($connector->status === 'error') bg-red-100 text-red-700
-                        @else bg-slate-100 text-slate-600 @endif">
+                        @elseif($connector->status === 'error') bg-coralsoft text-coralh
+                        @else bg-cream text-muted @endif">
                         {{ ucfirst($connector->status) }}
                     </span>
-                    <button onclick="testConnector({{ $connector->id }})" class="px-3 py-1.5 text-xs font-medium text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">Test</button>
-                    <button onclick="syncConnector({{ $connector->id }})" class="px-3 py-1.5 text-xs font-medium text-white bg-red-800 rounded-lg hover:bg-red-900 transition-colors">Sync</button>
-                    <button onclick="deleteConnector({{ $connector->id }})" class="px-2 py-1.5 text-xs text-slate-400 hover:text-red-500 transition-colors">
+                    <button onclick="testConnector({{ $connector->id }})" class="px-3 py-1.5 text-xs font-medium text-muted border border-line rounded-lg hover:bg-cream transition-colors">Test</button>
+                    <button onclick="syncConnector({{ $connector->id }})" class="px-3 py-1.5 text-xs font-medium text-white bg-coral rounded-lg hover:bg-coralh transition-colors">Sync</button>
+                    <button onclick="deleteConnector({{ $connector->id }})" class="px-2 py-1.5 text-xs text-muted hover:text-coral transition-colors">
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     </button>
                 </div>
@@ -39,7 +39,7 @@
             <div id="connector-feedback-{{ $connector->id }}" class="hidden mt-3 p-3 rounded-lg text-xs"></div>
 
             @if($connector->last_synced_at)
-                <p class="text-xs text-slate-400 mt-2">Ultima sincronizare: {{ $connector->last_synced_at->diffForHumans() }}</p>
+                <p class="text-xs text-muted mt-2">Ultima sincronizare: {{ $connector->last_synced_at->diffForHumans() }}</p>
             @endif
         </div>
     @endforeach
@@ -47,10 +47,10 @@
     {{-- ============================================================ --}}
     {{-- Google Drive (per-tenant OAuth + per-bot file picker) --}}
     {{-- ============================================================ --}}
-    <div class="bg-white rounded-lg border border-slate-200 p-5 mb-4" id="google-drive-card">
+    <div class="bg-white rounded-lg border border-line p-5 mb-4" id="google-drive-card">
         <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-white border border-slate-200 flex items-center justify-center">
+                <div class="w-10 h-10 rounded-lg bg-white border border-line flex items-center justify-center">
                     {{-- Google Drive triangle logo --}}
                     <svg class="w-6 h-6" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg">
                         <path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/>
@@ -62,10 +62,10 @@
                     </svg>
                 </div>
                 <div>
-                    <h4 class="text-sm font-semibold text-slate-900">Google Drive</h4>
-                    <p class="text-xs text-slate-500">
+                    <h4 class="text-sm font-semibold text-ink">Google Drive</h4>
+                    <p class="text-xs text-muted">
                         @if($googleToken)
-                            Conectat ca <span class="font-medium text-slate-700">{{ $googleToken->google_email ?? 'cont Google' }}</span>
+                            Conectat ca <span class="font-medium text-inkSoft">{{ $googleToken->google_email ?? 'cont Google' }}</span>
                         @else
                             Importă fișiere PDF, DOCX, Google Docs și Sheets din Drive
                         @endif
@@ -79,7 +79,7 @@
                 @elseif($googleToken)
                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">Neactivat pentru acest agent AI</span>
                 @else
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Neconectat</span>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-cream text-muted">Neconectat</span>
                 @endif
             </div>
         </div>
@@ -92,7 +92,7 @@
                     Folosim scope-ul <code class="px-1 bg-blue-100 rounded">drive.file</code> — vedem doar fișierele pe care le alegi explicit, nimic altceva.
                 </p>
                 <a href="{{ route('oauth.google.connect', ['return_to' => url()->current() . '#connectors']) }}"
-                   class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors shadow-sm">
+                   class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-line text-inkSoft text-sm font-medium rounded-lg hover:bg-cream transition-colors shadow-sm">
                     <svg class="w-4 h-4" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="m6.306 14.691 6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571.001-.001.002-.001.003-.002l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>
                     Conectează contul Google
                 </a>
@@ -106,26 +106,26 @@
                 <form action="/dashboard/boti/{{ $bot->id }}/knowledge/connector" method="POST">
                     @csrf
                     <input type="hidden" name="type" value="google_drive">
-                    <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-red-800 text-white text-sm font-semibold rounded-lg hover:bg-red-900 transition-colors shadow-sm">
+                    <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-coral text-white text-sm font-semibold rounded-lg hover:bg-coralh transition-colors shadow-sm">
                         Activează Google Drive pentru acest agent AI
                     </button>
                 </form>
                 <form action="{{ route('oauth.google.disconnect') }}" method="POST" class="mt-3 inline-block">
                     @csrf
                     <button type="submit" onclick="return confirm('Sigur deconectezi contul Google al tenantului? Toate agenții AI care folosesc Drive-ul vor pierde accesul.')"
-                            class="text-xs text-slate-500 hover:text-red-600">Deconectează contul Google al tenantului</button>
+                            class="text-xs text-muted hover:text-coral">Deconectează contul Google al tenantului</button>
                 </form>
             </div>
         @else
             {{-- STATE C: ready — show files + add button --}}
             <div class="space-y-3">
                 <div class="flex items-center justify-between">
-                    <span class="text-sm text-slate-600">
+                    <span class="text-sm text-muted">
                         {{ $driveFiles->count() }} fișier(e) importat(e)
                     </span>
                     <div class="flex items-center gap-2">
                         <button type="button" onclick="openDrivePicker()" id="btn-open-drive-picker"
-                                class="inline-flex items-center gap-2 px-4 py-2 bg-red-800 text-white text-sm font-semibold rounded-lg hover:bg-red-900 transition-colors shadow-sm">
+                                class="inline-flex items-center gap-2 px-4 py-2 bg-coral text-white text-sm font-semibold rounded-lg hover:bg-coralh transition-colors shadow-sm">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                             Adaugă fișiere din Drive
                         </button>
@@ -133,43 +133,43 @@
                 </div>
 
                 @if($driveFiles->isNotEmpty())
-                    <div class="border border-slate-200 rounded-lg divide-y divide-slate-100 max-h-96 overflow-y-auto">
+                    <div class="border border-line rounded-lg divide-y divide-slate-100 max-h-96 overflow-y-auto">
                         @foreach($driveFiles as $df)
                             @php $cat = $driveCategories[$df->category] ?? $driveCategories['other'] ?? ['label' => $df->category]; @endphp
                             <div class="flex items-center gap-3 px-4 py-2.5">
-                                <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                <svg class="w-4 h-4 text-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center gap-2">
                                         @if($df->web_view_link)
-                                            <a href="{{ $df->web_view_link }}" target="_blank" rel="noopener" class="text-sm font-medium text-slate-900 hover:text-red-700 truncate">{{ $df->name }}</a>
+                                            <a href="{{ $df->web_view_link }}" target="_blank" rel="noopener" class="text-sm font-medium text-ink hover:text-coralh truncate">{{ $df->name }}</a>
                                         @else
-                                            <span class="text-sm font-medium text-slate-900 truncate">{{ $df->name }}</span>
+                                            <span class="text-sm font-medium text-ink truncate">{{ $df->name }}</span>
                                         @endif
                                     </div>
                                     <div class="flex items-center gap-2 mt-0.5">
-                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600">{{ $cat['label'] }}</span>
+                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-cream text-muted">{{ $cat['label'] }}</span>
                                         <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium
                                             @if($df->status === 'imported') bg-green-100 text-green-700
                                             @elseif($df->status === 'importing') bg-blue-100 text-blue-700
                                             @elseif($df->status === 'pending') bg-yellow-100 text-yellow-700
-                                            @else bg-red-100 text-red-700 @endif">
+                                            @else bg-coralsoft text-coralh @endif">
                                             @if($df->status === 'imported') Importat
                                             @elseif($df->status === 'importing') Se importă
                                             @elseif($df->status === 'pending') În așteptare
                                             @else Eșuat @endif
                                         </span>
                                         @if($df->user_description)
-                                            <span class="text-[11px] text-slate-400 italic truncate">"{{ Str::limit($df->user_description, 60) }}"</span>
+                                            <span class="text-[11px] text-muted italic truncate">"{{ Str::limit($df->user_description, 60) }}"</span>
                                         @endif
                                     </div>
                                     @if($df->status === 'failed' && $df->error_message)
-                                        <p class="text-[11px] text-red-500 mt-0.5 truncate" title="{{ $df->error_message }}">{{ Str::limit($df->error_message, 100) }}</p>
+                                        <p class="text-[11px] text-coral mt-0.5 truncate" title="{{ $df->error_message }}">{{ Str::limit($df->error_message, 100) }}</p>
                                     @endif
                                 </div>
                                 <form action="{{ route('dashboard.bots.knowledge.drive.destroy', [$bot, $driveConnector, $df]) }}" method="POST" onsubmit="return confirm('Sigur ștergi acest fișier și conținutul lui din Knowledge Base?')">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="p-1.5 text-slate-400 hover:text-red-600 transition-colors">
+                                    <button type="submit" class="p-1.5 text-muted hover:text-coral transition-colors">
                                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                     </button>
                                 </form>
@@ -181,7 +181,7 @@
                 <form action="{{ route('oauth.google.disconnect') }}" method="POST" class="pt-2">
                     @csrf
                     <button type="submit" onclick="return confirm('Sigur deconectezi contul Google al tenantului? Toate agenții AI care folosesc Drive-ul vor pierde accesul.')"
-                            class="text-xs text-slate-500 hover:text-red-600">Deconectează contul Google al tenantului</button>
+                            class="text-xs text-muted hover:text-coral">Deconectează contul Google al tenantului</button>
                 </form>
             </div>
         @endif
@@ -193,12 +193,12 @@
     @if($driveConnector)
     <div id="drive-import-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4" onclick="if(event.target===this)closeDriveModal()">
         <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col">
-            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+            <div class="px-6 py-4 border-b border-line flex items-center justify-between">
                 <div>
-                    <h3 class="text-base font-semibold text-slate-900">Categorizează fișierele</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Spune-i agentului AI ce reprezintă fiecare fișier — categoria îmbunătățește răspunsurile.</p>
+                    <h3 class="text-base font-semibold text-ink">Categorizează fișierele</h3>
+                    <p class="text-xs text-muted mt-0.5">Spune-i agentului AI ce reprezintă fiecare fișier — categoria îmbunătățește răspunsurile.</p>
                 </div>
-                <button type="button" onclick="closeDriveModal()" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg">
+                <button type="button" onclick="closeDriveModal()" class="p-1.5 text-muted hover:text-muted hover:bg-cream rounded-lg">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
@@ -207,12 +207,12 @@
                 {{-- populated by JS --}}
             </div>
 
-            <div class="px-6 py-4 border-t border-slate-200 flex items-center justify-between bg-slate-50">
-                <span id="drive-modal-count" class="text-xs text-slate-500">0 fișier(e) selectat(e)</span>
+            <div class="px-6 py-4 border-t border-line flex items-center justify-between bg-cream">
+                <span id="drive-modal-count" class="text-xs text-muted">0 fișier(e) selectat(e)</span>
                 <div class="flex items-center gap-2">
-                    <button type="button" onclick="closeDriveModal()" class="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg">Anulează</button>
+                    <button type="button" onclick="closeDriveModal()" class="px-4 py-2 text-sm font-medium text-inkSoft hover:bg-cream rounded-lg">Anulează</button>
                     <button type="button" onclick="submitDriveImport()" id="btn-drive-submit"
-                            class="inline-flex items-center gap-2 px-5 py-2 bg-red-800 text-white text-sm font-semibold rounded-lg hover:bg-red-900 transition-colors shadow-sm">
+                            class="inline-flex items-center gap-2 px-5 py-2 bg-coral text-white text-sm font-semibold rounded-lg hover:bg-coralh transition-colors shadow-sm">
                         Importă în Knowledge Base
                     </button>
                 </div>
@@ -224,14 +224,14 @@
     {{-- Add connector --}}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
         {{-- WordPress --}}
-        <div class="border border-slate-200 rounded-lg p-5">
+        <div class="border border-line rounded-lg p-5">
             <div class="flex items-center gap-3 mb-4">
                 <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
                     <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm-1.5 15.5L5.7 8.4c.7-.1 1.3-.2 1.3-.2.6-.1.5-.9-.1-.9 0 0-1.8.1-2.9.1C5.5 4.8 8.5 3 12 3c2.6 0 5 1 6.8 2.6-.1 0-.1 0-.2 0-1.1 0-1.8.9-1.8 1.9 0 .9.5 1.6 1.1 2.5.4.7.9 1.6.9 2.9 0 .9-.3 1.9-.8 3.4l-1 3.4-3.7-10.9c.6-.1 1.2-.2 1.2-.2.6-.1.5-.9-.1-.9 0 0-1.8.1-2.9.1h-.7L8 17.3l-.5.2zm1.5.5l3-8.7 1.1 3c.4 1 .7 1.7.7 2.3 0 .9-.3 1.5-.6 2l-.4.8c-.7.4-1.4.6-2.2.6h-1.6z"/></svg>
                 </div>
                 <div>
-                    <h4 class="text-sm font-semibold text-slate-900">WordPress</h4>
-                    <p class="text-xs text-slate-500">Importa pagini si articole publice</p>
+                    <h4 class="text-sm font-semibold text-ink">WordPress</h4>
+                    <p class="text-xs text-muted">Importa pagini si articole publice</p>
                 </div>
             </div>
 
@@ -253,14 +253,14 @@
                 @csrf
                 <input type="hidden" name="type" value="wordpress">
                 <div>
-                    <input type="url" name="site_url" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" placeholder="https://site-ul-tau.ro" @if(isset($site) && $site) value="https://{{ $site->domain }}" @endif>
+                    <input type="url" name="site_url" required class="w-full rounded-lg border border-line px-3 py-2 text-sm placeholder-slate-400 focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none transition" placeholder="https://site-ul-tau.ro" @if(isset($site) && $site) value="https://{{ $site->domain }}" @endif>
                     @if(isset($site) && $site)
                         <p class="text-[11px] text-green-600 mt-1 flex items-center gap-1">
                             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                             URL pre-completat din site-ul asociat
                         </p>
                     @else
-                        <p class="text-[11px] text-slate-400 mt-1">URL-ul principal al site-ului WordPress</p>
+                        <p class="text-[11px] text-muted mt-1">URL-ul principal al site-ului WordPress</p>
                     @endif
                 </div>
                 <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">Conecteaza WordPress</button>
@@ -268,14 +268,14 @@
         </div>
 
         {{-- WooCommerce --}}
-        <div class="border border-slate-200 rounded-lg p-5">
+        <div class="border border-line rounded-lg p-5">
             <div class="flex items-center gap-3 mb-4">
                 <div class="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
                     <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
                 </div>
                 <div>
-                    <h4 class="text-sm font-semibold text-slate-900">WooCommerce</h4>
-                    <p class="text-xs text-slate-500">Importa produse din magazin</p>
+                    <h4 class="text-sm font-semibold text-ink">WooCommerce</h4>
+                    <p class="text-xs text-muted">Importa produse din magazin</p>
                 </div>
             </div>
 
@@ -299,18 +299,18 @@
                 @csrf
                 <input type="hidden" name="type" value="woocommerce">
                 <div>
-                    <input type="url" name="site_url" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition" placeholder="https://magazin.ro" @if(isset($site) && $site) value="https://{{ $site->domain }}" @endif>
+                    <input type="url" name="site_url" required class="w-full rounded-lg border border-line px-3 py-2 text-sm placeholder-slate-400 focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none transition" placeholder="https://magazin.ro" @if(isset($site) && $site) value="https://{{ $site->domain }}" @endif>
                     @if(isset($site) && $site)
                         <p class="text-[11px] text-green-600 mt-1 flex items-center gap-1">
                             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                             URL pre-completat din site-ul asociat
                         </p>
                     @else
-                        <p class="text-[11px] text-slate-400 mt-1">URL-ul magazinului WooCommerce</p>
+                        <p class="text-[11px] text-muted mt-1">URL-ul magazinului WooCommerce</p>
                     @endif
                 </div>
-                <input type="text" name="consumer_key" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition font-mono" placeholder="ck_xxxxxxxxxxxxxxxxxxxxxxxx">
-                <input type="password" name="consumer_secret" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none transition font-mono" placeholder="cs_xxxxxxxxxxxxxxxxxxxxxxxx">
+                <input type="text" name="consumer_key" required class="w-full rounded-lg border border-line px-3 py-2 text-sm placeholder-slate-400 focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none transition font-mono" placeholder="ck_xxxxxxxxxxxxxxxxxxxxxxxx">
+                <input type="password" name="consumer_secret" required class="w-full rounded-lg border border-line px-3 py-2 text-sm placeholder-slate-400 focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none transition font-mono" placeholder="cs_xxxxxxxxxxxxxxxxxxxxxxxx">
                 <button type="submit" class="w-full px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors">Conecteaza WooCommerce</button>
             </form>
         </div>
@@ -335,9 +335,9 @@
 
         var colors = {
             success: 'bg-green-50 border border-green-200 text-green-700',
-            error: 'bg-red-50 border border-red-200 text-red-700',
+            error: 'bg-coralsoft border border-coral/30 text-coralh',
             info: 'bg-blue-50 border border-blue-200 text-blue-700',
-            loading: 'bg-slate-50 border border-slate-200 text-slate-600'
+            loading: 'bg-cream border border-line text-muted'
         };
 
         el.className = 'mt-3 p-3 rounded-lg text-xs ' + (colors[type] || colors.info);
@@ -362,7 +362,7 @@
                 showConnectorFeedback(id, 'Conexiune reusita! ' + (data.details || ''), 'success');
                 setTimeout(function() { location.reload(); }, 2000);
             } else {
-                showConnectorFeedback(id, 'Test esuat: ' + (data.message || 'Eroare necunoscuta') + '<br><span class="text-[10px] text-slate-400 mt-1 block">Verifica URL-ul si credentialele.</span>', 'error');
+                showConnectorFeedback(id, 'Test esuat: ' + (data.message || 'Eroare necunoscuta') + '<br><span class="text-[10px] text-muted mt-1 block">Verifica URL-ul si credentialele.</span>', 'error');
             }
         })
         .catch(function() {
@@ -509,21 +509,21 @@
                     catOptions += '<option value="' + key + '" ' + selected + ' title="' + escapeHtml(cat.description || '') + '">' + escapeHtml(cat.label) + '</option>';
                 });
 
-                html += '<div class="border border-slate-200 rounded-lg p-3">';
+                html += '<div class="border border-line rounded-lg p-3">';
                 html += '  <div class="flex items-start gap-3 mb-2">';
-                html += '    <svg class="w-4 h-4 text-slate-400 mt-1 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>';
+                html += '    <svg class="w-4 h-4 text-muted mt-1 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>';
                 html += '    <div class="flex-1 min-w-0">';
-                html += '      <p class="text-sm font-medium text-slate-900 truncate">' + escapeHtml(f.name) + '</p>';
-                html += '      <p class="text-[11px] text-slate-400">' + escapeHtml(f.mime_type || '') + '</p>';
+                html += '      <p class="text-sm font-medium text-ink truncate">' + escapeHtml(f.name) + '</p>';
+                html += '      <p class="text-[11px] text-muted">' + escapeHtml(f.mime_type || '') + '</p>';
                 html += '    </div>';
-                html += '    <button type="button" onclick="removeDriveFile(' + idx + ')" class="p-1 text-slate-400 hover:text-red-500"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>';
+                html += '    <button type="button" onclick="removeDriveFile(' + idx + ')" class="p-1 text-muted hover:text-coral"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>';
                 html += '  </div>';
-                html += '  <label class="block text-[11px] font-medium text-slate-600 mb-1">Ce reprezintă acest fișier?</label>';
-                html += '  <select onchange="updateDriveFileCategory(' + idx + ', this.value)" class="w-full mb-2 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none">';
+                html += '  <label class="block text-[11px] font-medium text-muted mb-1">Ce reprezintă acest fișier?</label>';
+                html += '  <select onchange="updateDriveFileCategory(' + idx + ', this.value)" class="w-full mb-2 rounded-lg border border-line px-3 py-2 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">';
                 html += catOptions;
                 html += '  </select>';
-                html += '  <label class="block text-[11px] font-medium text-slate-600 mb-1">Descriere (opțional, dar ajută agentul AI)</label>';
-                html += '  <textarea onchange="updateDriveFileDescription(' + idx + ', this.value)" rows="2" maxlength="1000" placeholder="Ex: Lista de prețuri pentru pachetele Pro și Enterprise, valabilă din martie 2026" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm placeholder-slate-400 focus:border-red-700 focus:ring-2 focus:ring-red-700/20 outline-none resize-none">' + escapeHtml(f.description || '') + '</textarea>';
+                html += '  <label class="block text-[11px] font-medium text-muted mb-1">Descriere (opțional, dar ajută agentul AI)</label>';
+                html += '  <textarea onchange="updateDriveFileDescription(' + idx + ', this.value)" rows="2" maxlength="1000" placeholder="Ex: Lista de prețuri pentru pachetele Pro și Enterprise, valabilă din martie 2026" class="w-full rounded-lg border border-line px-3 py-2 text-sm placeholder-slate-400 focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none resize-none">' + escapeHtml(f.description || '') + '</textarea>';
                 html += '</div>';
             });
 

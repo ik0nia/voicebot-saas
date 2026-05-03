@@ -7,16 +7,16 @@
 
     <div class="flex items-center justify-between mb-5">
         <div>
-            <h1 class="text-2xl font-bold text-slate-900">Analytics chips</h1>
-            <p class="text-sm text-slate-500 mt-1">
+            <h1 class="text-2xl font-bold text-ink">Analytics chips</h1>
+            <p class="text-sm text-muted mt-1">
                 Conversion per quick-reply label — ultimele <strong>{{ $days }}</strong> zile
                 (din {{ $since->format('d M Y') }}).
             </p>
         </div>
         <form method="GET" class="flex items-center gap-2">
-            <label class="text-sm text-slate-600">Perioadă:</label>
+            <label class="text-sm text-muted">Perioadă:</label>
             <select name="days" onchange="this.form.submit()"
-                    class="rounded border border-slate-300 text-sm px-2 py-1.5 bg-white">
+                    class="rounded border border-line text-sm px-2 py-1.5 bg-white">
                 @foreach([7, 14, 30, 60, 90] as $d)
                     <option value="{{ $d }}" @if($d == $days) selected @endif>{{ $d }} zile</option>
                 @endforeach
@@ -26,27 +26,27 @@
 
     {{-- Overall KPIs --}}
     <div class="grid grid-cols-3 gap-4 mb-6">
-        <div class="bg-white rounded-xl border border-slate-200 p-4">
-            <div class="text-xs font-semibold text-slate-500 uppercase">Chips afișate</div>
-            <div class="text-3xl font-bold text-slate-900 mt-1">{{ number_format($totalShown) }}</div>
+        <div class="bg-white rounded-xl border border-line p-4">
+            <div class="text-xs font-semibold text-muted uppercase">Chips afișate</div>
+            <div class="text-3xl font-bold text-ink mt-1">{{ number_format($totalShown) }}</div>
         </div>
-        <div class="bg-white rounded-xl border border-slate-200 p-4">
-            <div class="text-xs font-semibold text-slate-500 uppercase">Click-uri</div>
+        <div class="bg-white rounded-xl border border-line p-4">
+            <div class="text-xs font-semibold text-muted uppercase">Click-uri</div>
             <div class="text-3xl font-bold text-emerald-600 mt-1">{{ number_format($totalClicked) }}</div>
         </div>
-        <div class="bg-white rounded-xl border border-slate-200 p-4">
-            <div class="text-xs font-semibold text-slate-500 uppercase">CTR global</div>
-            <div class="text-3xl font-bold text-red-700 mt-1">{{ $overallCtr }}%</div>
+        <div class="bg-white rounded-xl border border-line p-4">
+            <div class="text-xs font-semibold text-muted uppercase">CTR global</div>
+            <div class="text-3xl font-bold text-coralh mt-1">{{ $overallCtr }}%</div>
         </div>
     </div>
 
     {{-- User-state distribution --}}
     @if(!empty($stateCounts))
-        <div class="bg-white rounded-xl border border-slate-200 p-4 mb-6">
-            <div class="text-sm font-semibold text-slate-700 mb-2">Distribuție stări utilizator</div>
+        <div class="bg-white rounded-xl border border-line p-4 mb-6">
+            <div class="text-sm font-semibold text-inkSoft mb-2">Distribuție stări utilizator</div>
             <div class="flex flex-wrap gap-2">
                 @foreach($stateCounts as $state => $count)
-                    <div class="px-3 py-1.5 rounded-full text-xs bg-slate-100 text-slate-700">
+                    <div class="px-3 py-1.5 rounded-full text-xs bg-cream text-inkSoft">
                         <strong>{{ $state }}</strong>: {{ number_format($count) }}
                     </div>
                 @endforeach
@@ -55,23 +55,23 @@
     @endif
 
     {{-- Per-chip table --}}
-    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <div class="px-4 py-3 border-b border-slate-200">
-            <div class="text-sm font-semibold text-slate-700">Top chips (sortate după click-uri)</div>
-            <div class="text-xs text-slate-500 mt-0.5">
+    <div class="bg-white rounded-xl border border-line overflow-hidden">
+        <div class="px-4 py-3 border-b border-line">
+            <div class="text-sm font-semibold text-inkSoft">Top chips (sortate după click-uri)</div>
+            <div class="text-xs text-muted mt-0.5">
                 Un rând per combinație label × page_type. Etichetele care apar fără click-uri
                 sunt candidate pentru rewrite.
             </div>
         </div>
         @if(count($rows) === 0)
-            <div class="p-6 text-center text-sm text-slate-500">
+            <div class="p-6 text-center text-sm text-muted">
                 Niciun eveniment încă — chips trebuie afișate și click-uite în widget
                 pentru ca rapoartele să apară aici.
             </div>
         @else
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
-                    <thead class="text-xs uppercase text-slate-500 bg-slate-50">
+                    <thead class="text-xs uppercase text-muted bg-cream">
                         <tr>
                             <th class="text-left px-4 py-2">Label</th>
                             <th class="text-left px-4 py-2">Page type</th>
@@ -82,9 +82,9 @@
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         @foreach($rows as $r)
-                            <tr class="hover:bg-slate-50/50">
-                                <td class="px-4 py-2 font-medium text-slate-900">{{ $r['label'] }}</td>
-                                <td class="px-4 py-2 text-slate-500">{{ $r['page_type'] }}</td>
+                            <tr class="hover:bg-cream/50">
+                                <td class="px-4 py-2 font-medium text-ink">{{ $r['label'] }}</td>
+                                <td class="px-4 py-2 text-muted">{{ $r['page_type'] }}</td>
                                 <td class="px-4 py-2 text-right tabular-nums">{{ number_format($r['shown']) }}</td>
                                 <td class="px-4 py-2 text-right tabular-nums text-emerald-700 font-semibold">
                                     {{ number_format($r['clicked']) }}
@@ -93,13 +93,13 @@
                                     @if($r['ctr'] === null)
                                         <span class="text-slate-300">—</span>
                                     @else
-                                        <span class="@if($r['ctr'] >= 20) text-emerald-700 font-semibold @elseif($r['ctr'] < 5) text-slate-400 @else text-slate-700 @endif">
+                                        <span class="@if($r['ctr'] >= 20) text-emerald-700 font-semibold @elseif($r['ctr'] < 5) text-muted @else text-inkSoft @endif">
                                             {{ $r['ctr'] }}%
                                         </span>
                                         @if($r['shown'] >= 100 && $r['ctr'] < 1.0)
                                             {{-- X6: CTR alert — chip had enough exposure to judge AND
                                                  converts below 1%. Candidate for rewrite or removal. --}}
-                                            <span class="ml-1 inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-700 align-middle" title="Underperformer: >100 afișări, CTR <1%">⚠ slab</span>
+                                            <span class="ml-1 inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-coralsoft text-coralh align-middle" title="Underperformer: >100 afișări, CTR <1%">⚠ slab</span>
                                         @endif
                                     @endif
                                 </td>
@@ -111,7 +111,7 @@
         @endif
     </div>
 
-    <p class="text-xs text-slate-400 mt-4">
+    <p class="text-xs text-muted mt-4">
         CTR = click-uri / afișări per label. Afișările cresc la fiecare chip strip rendered server-side (chip_shown).
         Click-urile vin de pe widget (quick_reply_clicked). Etichete noi apar imediat ce sunt afișate prima dată.
     </p>
