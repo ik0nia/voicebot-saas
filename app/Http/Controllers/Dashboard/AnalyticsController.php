@@ -113,4 +113,51 @@ class AnalyticsController extends Controller
             ->header('Content-Type', 'text/csv')
             ->header('Content-Disposition', 'attachment; filename=analytics-export.csv');
     }
+
+    /**
+     * Conversation heatmap — JSON cu matrix [day_of_week 0=Mon][hour 0-23] = count.
+     * Date din ultimele 30 zile. Cache 10 min/tenant.
+     */
+    public function heatmap(): \Illuminate\Http\JsonResponse
+    {
+        $tenantId = auth()->user()?->tenant_id ?? 0;
+        $cacheKey = "heatmap:v1:{$tenantId}";
+
+        $payload = Cache::remember($cacheKey, now()->addMinutes(10), function () {
+            $rows = \App\Models\Conversation::where('created_at', '>=', now()->subDays(30))
+                ->selectRaw("EXTRACT(DOW FROM created_at) as dow, EXTRACT(HOUR FROM created_at) as hr, COUNT(*) as cnt")
+                ->groupByRaw('dow, hr')
+                ->get();
+
+            // Postgres DOW: 0=Sun..6=Sat. Vrem 0=Mon..6=Sun (RO standard).
+            $matrix = array_fill(0, 7, array_fill(0, 24, 0));
+            $total = 0;
+            $max = 0;
+            $peak = ['dow' => 0, 'hr' => 0, 'cnt' => 0];
+            foreach ($rows as $r) {
+                $pgDow = (int) $r->dow;
+                $rowDow = ($pgDow + 6) % 7;
+                $hr = (int) $r->hr;
+                $cnt = (int) $r->cnt;
+                $matrix[$rowDow][$hr] = $cnt;
+                $total += $cnt;
+                if ($cnt > $max) $max = $cnt;
+                if ($cnt > $peak['cnt']) $peak = ['dow' => $rowDow, 'hr' => $hr, 'cnt' => $cnt];
+            }
+
+            $dayLabels = ['Luni', 'Marți', 'Miercuri', 'Joi', 'Vineri', 'Sâmbătă', 'Duminică'];
+            $peakLabel = $peak['cnt'] > 0
+                ? "{$dayLabels[$peak['dow']]} la {$peak['hr']}:00 ({$peak['cnt']} conv)"
+                : 'fără date';
+
+            return [
+                'matrix' => $matrix,
+                'total' => $total,
+                'max' => $max,
+                'peak_label' => $peakLabel,
+            ];
+        });
+
+        return response()->json($payload);
+    }
 }

@@ -241,10 +241,117 @@
     </div>
     @endif
 
+    {{-- Conversation heatmap — hour x day-of-week, încărcat lazy via JS --}}
+    <div x-data="conversationHeatmap()" x-init="load()" class="card overflow-hidden mt-6">
+        <div class="px-5 py-3 border-b border-line bg-cream/40 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg bg-coralsoft text-coralh flex items-center justify-center">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2"/></svg>
+                </div>
+                <h3 class="display text-base font-semibold text-ink">Heatmap conversații (oră × zi)</h3>
+                <span x-show="totalConv > 0" class="text-2xs text-muted mono" x-text="'· ' + totalConv + ' total în 30z'"></span>
+            </div>
+            <span class="text-2xs text-muted">click pe celulă pentru detaliu</span>
+        </div>
+        <div class="p-5">
+            <template x-if="loading">
+                <p class="text-sm text-muted text-center py-8">Se încarcă heatmap-ul…</p>
+            </template>
+            <template x-if="!loading && totalConv === 0">
+                <p class="text-sm text-muted text-center py-8">Nicio conversație în ultimele 30 zile.</p>
+            </template>
+            <div x-show="!loading && totalConv > 0" class="overflow-x-auto">
+                {{-- Grid: 7 rows (zile) × 25 cols (ora label + 24 ore) --}}
+                <div class="inline-block min-w-full">
+                    <div class="grid gap-1" style="grid-template-columns: 32px repeat(24, minmax(20px, 1fr));">
+                        {{-- Header: hour labels --}}
+                        <div></div>
+                        <template x-for="h in 24" :key="'h' + h">
+                            <div class="text-2xs text-muted text-center mono" x-text="(h - 1) % 4 === 0 ? (h - 1) : ''"></div>
+                        </template>
+                        {{-- 7 rows: Monday → Sunday --}}
+                        <template x-for="(day, dIdx) in days" :key="'d' + dIdx">
+                            <template x-for="(_, hIdx) in 25" :key="'cell-' + dIdx + '-' + hIdx">
+                                <template x-if="hIdx === 0">
+                                    <div class="text-2xs text-muted text-right pr-2 mono" x-text="day"></div>
+                                </template>
+                                <template x-if="hIdx > 0">
+                                    <div :title="day + ' ' + (hIdx-1) + ':00 — ' + (matrix[dIdx]?.[hIdx-1] || 0) + ' conv'"
+                                         :style="{ backgroundColor: cellColor(matrix[dIdx]?.[hIdx-1] || 0) }"
+                                         :class="{ 'cursor-pointer': (matrix[dIdx]?.[hIdx-1] || 0) > 0 }"
+                                         class="h-6 rounded-sm transition-all hover:scale-110 hover:ring-1 hover:ring-coral hover:z-10 relative">
+                                        <span x-show="(matrix[dIdx]?.[hIdx-1] || 0) >= 5" class="text-2xs text-cream font-mono leading-none flex items-center justify-center h-full" x-text="matrix[dIdx]?.[hIdx-1] || ''"></span>
+                                    </div>
+                                </template>
+                            </template>
+                        </template>
+                    </div>
+
+                    {{-- Color legend --}}
+                    <div class="flex items-center justify-end gap-1 mt-3 text-2xs text-muted">
+                        <span>0</span>
+                        <template x-for="step in 5" :key="'leg' + step">
+                            <div class="w-4 h-4 rounded-sm" :style="{ backgroundColor: cellColor((step / 5) * maxCount) }"></div>
+                        </template>
+                        <span x-text="maxCount + '+'"></span>
+                    </div>
+
+                    <p class="text-2xs text-muted mt-2">
+                        <strong>Pic activitate:</strong>
+                        <span x-text="peakLabel"></span> ·
+                        ultimele 30 zile.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 @endsection
 
 @push('scripts')
+<script>
+function conversationHeatmap() {
+    return {
+        loading: true,
+        matrix: [],         // 7 days × 24 hours, day 0 = Monday
+        days: ['L','Ma','Mi','J','V','S','D'],
+        totalConv: 0,
+        maxCount: 0,
+        peakLabel: '—',
+
+        async load() {
+            try {
+                const r = await fetch('/dashboard/heatmap', { headers: { Accept: 'application/json' } });
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                const d = await r.json();
+                this.matrix = d.matrix || [];
+                this.totalConv = d.total || 0;
+                this.maxCount = d.max || 0;
+                this.peakLabel = d.peak_label || '—';
+            } catch (e) {
+                console.error('heatmap load failed', e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        cellColor(count) {
+            if (!count || count === 0) return '#F5F1E8'; // bg-cream
+            const ratio = Math.min(1, count / Math.max(1, this.maxCount));
+            // Coral gradient: light to dark
+            //   0   → #FEE2E2 (coralsoft)
+            //   0.5 → #FCA5A5 (light coral)
+            //   1   → #991B1B (coralh)
+            if (ratio < 0.2) return '#FEE2E2';
+            if (ratio < 0.4) return '#FCA5A5';
+            if (ratio < 0.6) return '#F87171';
+            if (ratio < 0.8) return '#DC2626';
+            return '#991B1B';
+        },
+    };
+}
+</script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {

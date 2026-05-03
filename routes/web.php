@@ -489,6 +489,11 @@ Route::middleware('auth')
     ->post('/dashboard/insights', [\App\Http\Controllers\Dashboard\InsightsController::class, 'generate'])
     ->name('dashboard.insights.generate');
 
+// Conversation heatmap — JSON pentru widget pe /dashboard/analiza
+Route::middleware('auth')
+    ->get('/dashboard/heatmap', [\App\Http\Controllers\Dashboard\AnalyticsController::class, 'heatmap'])
+    ->name('dashboard.analytics.heatmap');
+
 // Playground per bot: chat tester + voice preview + embed live preview
 Route::middleware('auth')->group(function () {
     $pg = \App\Http\Controllers\Dashboard\PlaygroundController::class;
