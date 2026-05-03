@@ -11,6 +11,17 @@ class CallbackController extends Controller
     public function index(Request $request)
     {
         $tenant = auth()->user()->tenant;
+
+        // Super-admin fără tenant — randăm shell gol în loc să crash-ăm
+        // pe $tenant->bots() (null pointer).
+        if (!$tenant) {
+            return view('dashboard.callbacks.index', [
+                'callbacks' => CallbackRequest::query()->whereRaw('1=0')->paginate(25),
+                'bots' => collect(),
+                'stats' => ['pending' => 0, 'today' => 0, 'total' => 0, 'completed' => 0],
+            ]);
+        }
+
         $query = CallbackRequest::with('bot', 'lead')
             ->orderByDesc('created_at');
 

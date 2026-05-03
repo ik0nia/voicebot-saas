@@ -19,6 +19,16 @@ class SiteController extends Controller
     {
         $tenant = auth()->user()->tenant;
 
+        // Super-admin fără tenant propriu (ex. nou-creat, fără view-as activ)
+        // — randăm o pagină informativă în loc să crash-uim cu null pointer.
+        if (!$tenant) {
+            return view('dashboard.sites.index', [
+                'sites' => collect(),
+                'canAddSite' => false,
+                'noTenant' => true,
+            ]);
+        }
+
         $sites = $tenant->sites()
             ->withCount('bots')
             ->latest()
