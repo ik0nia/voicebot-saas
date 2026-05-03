@@ -30,7 +30,7 @@ class ChannelController extends Controller
 
         // Check plan limits for allowed channels
         $tenant = auth()->user()->tenant;
-        $allowedChannels = $tenant->settings['allowed_channels'] ?? ['voice'];
+        $allowedChannels = data_get($tenant, 'settings.allowed_channels', ['voice']);
 
         if (!in_array($validated['type'], $allowedChannels)) {
             return back()->withErrors(['type' => 'Planul tău nu include acest tip de canal. Fă upgrade pentru acces.']);
@@ -90,7 +90,7 @@ class ChannelController extends Controller
     public function connectWhatsApp(Bot $bot)
     {
         $tenant = auth()->user()->tenant;
-        $allowedChannels = $tenant->settings['allowed_channels'] ?? ['voice'];
+        $allowedChannels = data_get($tenant, 'settings.allowed_channels', ['voice']);
 
         if (!in_array(Channel::TYPE_WHATSAPP, $allowedChannels, true)) {
             return redirect()
@@ -115,7 +115,7 @@ class ChannelController extends Controller
     public function storeWhatsApp(Request $request, Bot $bot)
     {
         $tenant = auth()->user()->tenant;
-        $allowedChannels = $tenant->settings['allowed_channels'] ?? ['voice'];
+        $allowedChannels = data_get($tenant, 'settings.allowed_channels', ['voice']);
         if (!in_array(Channel::TYPE_WHATSAPP, $allowedChannels, true)) {
             return back()->withErrors(['type' => 'Planul tău nu include canalul WhatsApp.']);
         }
@@ -203,7 +203,7 @@ class ChannelController extends Controller
     public function connectFacebook(Bot $bot)
     {
         $tenant = auth()->user()->tenant;
-        $allowedChannels = $tenant->settings['allowed_channels'] ?? ['voice'];
+        $allowedChannels = data_get($tenant, 'settings.allowed_channels', ['voice']);
 
         if (!in_array(Channel::TYPE_FACEBOOK_MESSENGER, $allowedChannels, true)) {
             return redirect()
@@ -225,7 +225,7 @@ class ChannelController extends Controller
     public function storeFacebook(Request $request, Bot $bot)
     {
         $tenant = auth()->user()->tenant;
-        $allowedChannels = $tenant->settings['allowed_channels'] ?? ['voice'];
+        $allowedChannels = data_get($tenant, 'settings.allowed_channels', ['voice']);
         if (!in_array(Channel::TYPE_FACEBOOK_MESSENGER, $allowedChannels, true)) {
             return back()->withErrors(['type' => 'Planul tău nu include canalul Facebook Messenger.']);
         }
@@ -309,7 +309,7 @@ class ChannelController extends Controller
     public function connectInstagram(Bot $bot)
     {
         $tenant = auth()->user()->tenant;
-        $allowedChannels = $tenant->settings['allowed_channels'] ?? ['voice'];
+        $allowedChannels = data_get($tenant, 'settings.allowed_channels', ['voice']);
 
         if (!in_array(Channel::TYPE_INSTAGRAM_DM, $allowedChannels, true)) {
             return redirect()
@@ -331,7 +331,7 @@ class ChannelController extends Controller
     public function storeInstagram(Request $request, Bot $bot)
     {
         $tenant = auth()->user()->tenant;
-        $allowedChannels = $tenant->settings['allowed_channels'] ?? ['voice'];
+        $allowedChannels = data_get($tenant, 'settings.allowed_channels', ['voice']);
         if (!in_array(Channel::TYPE_INSTAGRAM_DM, $allowedChannels, true)) {
             return back()->withErrors(['type' => 'Planul tău nu include canalul Instagram DM.']);
         }
