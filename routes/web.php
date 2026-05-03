@@ -514,6 +514,12 @@ Route::middleware('auth')->group(function () {
     $mc = \App\Http\Controllers\Dashboard\MockCustomerController::class;
     Route::get('/dashboard/agenti/{bot}/mock-customer', [$mc, 'show'])->name('dashboard.mock-customer.show');
     Route::post('/dashboard/agenti/{bot}/mock-customer/run', [$mc, 'run'])->name('dashboard.mock-customer.run');
+
+    // Embed customizer — color, position, greeting, lang cu live preview
+    $ec = \App\Http\Controllers\Dashboard\EmbedCustomizerController::class;
+    Route::get('/dashboard/agenti/{bot}/embed-customizer', [$ec, 'show'])->name('dashboard.embed-customizer.show');
+    Route::post('/dashboard/agenti/{bot}/embed-customizer', [$ec, 'update'])->name('dashboard.embed-customizer.update');
+    Route::get('/dashboard/agenti/{bot}/embed-customizer/preview', [$ec, 'previewFrame'])->name('dashboard.embed-customizer.preview');
 });
 
 // Playground per bot: chat tester + voice preview + embed live preview
