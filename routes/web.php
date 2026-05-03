@@ -484,6 +484,11 @@ Route::middleware('auth')
     ->get('/dashboard/live-activity', [\App\Http\Controllers\Dashboard\LiveActivityController::class, 'snapshot'])
     ->name('dashboard.live-activity');
 
+// AI Insights — POST endpoint, cache 30 min/tenant, force=1 pentru regenerare
+Route::middleware('auth')
+    ->post('/dashboard/insights', [\App\Http\Controllers\Dashboard\InsightsController::class, 'generate'])
+    ->name('dashboard.insights.generate');
+
 // Playground per bot: chat tester + voice preview + embed live preview
 Route::middleware('auth')->group(function () {
     $pg = \App\Http\Controllers\Dashboard\PlaygroundController::class;

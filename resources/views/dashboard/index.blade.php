@@ -91,6 +91,9 @@
     {{-- Live activity widget — pulse-update la 5s --}}
     @include('partials.live-activity-widget')
 
+    {{-- AI Insights — analiză LLM a ultimei săptămâni --}}
+    @include('partials.insights-widget')
+
     {{-- Action Items --}}
     @include('dashboard.partials.action-items')
 
