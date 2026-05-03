@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Events\KnowledgeSearchCompleted;
 use App\Listeners\HandleStripeCheckoutCompleted;
 use App\Listeners\LogKnowledgeActivity;
+use App\Listeners\PersistKnowledgeSearchLog;
 use App\Listeners\ReportFailedJob;
 use App\Listeners\SendWelcomeEmail;
 use App\Listeners\SyncTenantPlanFromSubscription;
@@ -24,6 +26,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         JobFailed::class => [
             ReportFailedJob::class,
+        ],
+        KnowledgeSearchCompleted::class => [
+            PersistKnowledgeSearchLog::class,
         ],
     ];
 

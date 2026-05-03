@@ -474,6 +474,11 @@ Route::middleware(['auth', 'tenant.role:tenant_admin,tenant_manager'])
     ->get('/dashboard/activitate', [\App\Http\Controllers\Dashboard\AuditController::class, 'index'])
     ->name('dashboard.audit.index');
 
+// Admin RAG analytics
+Route::middleware(['auth', 'super_admin'])
+    ->get('/admin/rag', [\App\Http\Controllers\Admin\AdminRagAnalyticsController::class, 'index'])
+    ->name('admin.rag.index');
+
 // Outbound webhooks tenant — CRUD + delivery log
 Route::middleware(['auth', 'tenant.role:tenant_admin,tenant_manager'])
     ->prefix('dashboard/webhooks')->group(function () {
