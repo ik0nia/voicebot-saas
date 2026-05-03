@@ -44,7 +44,7 @@
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-{{ min(count($latencyBreakdown['per_model']), 5) }} gap-3 mb-4">
                 @foreach($latencyBreakdown['per_model'] as $lm)
                 <div class="bg-white/10 backdrop-blur rounded-xl p-4">
-                    <p class="text-xs font-medium text-slate-300 mb-2">{{ $lm['provider'] }}/{{ $lm['model'] }}</p>
+                    <p class="text-xs font-medium text-line mb-2">{{ $lm['provider'] }}/{{ $lm['model'] }}</p>
                     <p class="text-2xl font-bold text-white">{{ $lm['avg_ms'] }}<span class="text-sm font-normal text-muted">ms</span></p>
                     <div class="flex gap-3 mt-2 text-xs">
                         <span class="text-muted">p50 <span class="text-white font-semibold">{{ $lm['p50'] }}</span></span>
@@ -260,7 +260,7 @@
                                             <th class="text-right px-3 py-2.5 text-xs font-semibold text-muted">Total</th>
                                         </tr>
                                     </thead>
-                                    <tbody class="divide-y divide-slate-100">
+                                    <tbody class="divide-y divide-line">
                                         @foreach($costAnalysis['top_tenants'] as $t)
                                             <tr class="hover:bg-cream">
                                                 <td class="px-3 py-2 font-medium text-ink">{{ Str::limit($t['tenant_name'], 20) }}</td>
@@ -293,7 +293,7 @@
                                             <th class="text-right px-3 py-2.5 text-xs font-semibold text-muted">Cost</th>
                                         </tr>
                                     </thead>
-                                    <tbody class="divide-y divide-slate-100">
+                                    <tbody class="divide-y divide-line">
                                         @foreach($costAnalysis['cost_by_model'] as $m)
                                             <tr class="hover:bg-cream">
                                                 <td class="px-3 py-2 text-ink text-xs">
@@ -598,7 +598,7 @@
                                             <th class="text-right px-3 py-2 text-xs font-semibold text-muted">Nr.</th>
                                         </tr>
                                     </thead>
-                                    <tbody class="divide-y divide-slate-100">
+                                    <tbody class="divide-y divide-line">
                                         @foreach($errorAnalysis['top_errors'] as $err)
                                             <tr class="hover:bg-cream">
                                                 <td class="px-3 py-2 text-xs font-mono text-coralh">{{ Str::limit($err['error_type'], 40) }}</td>
@@ -739,7 +739,7 @@
                                                 <th class="text-right px-2 py-1.5 font-semibold text-muted">Vârstă</th>
                                             </tr>
                                         </thead>
-                                        <tbody class="divide-y divide-slate-100">
+                                        <tbody class="divide-y divide-line">
                                             @foreach($handoffCallback['unresolved_handoffs'] as $uh)
                                                 <tr class="hover:bg-cream">
                                                     <td class="px-2 py-1.5 text-inkSoft">{{ Str::limit($uh['tenant_name'], 15) }}</td>
@@ -822,7 +822,7 @@
                                                 <th class="text-right px-2 py-1.5 font-semibold text-muted">Creat</th>
                                             </tr>
                                         </thead>
-                                        <tbody class="divide-y divide-slate-100">
+                                        <tbody class="divide-y divide-line">
                                             @foreach($handoffCallback['pending_callbacks'] as $pc)
                                                 <tr class="hover:bg-cream">
                                                     <td class="px-2 py-1.5 text-inkSoft">{{ Str::limit($pc['name'] ?? '—', 15) }}</td>
@@ -868,7 +868,7 @@
                         <p class="text-xs font-semibold text-emerald-500 uppercase tracking-wider">Venituri Platformă</p>
                         <p class="text-xl font-bold text-emerald-900 mt-1">{{ number_format(($pf['revenue'] ?? 0) / 100, 2) }} <span class="text-sm font-normal">lei</span></p>
                     </div>
-                    <div class="bg-coralsoft rounded-xl p-4 border border-red-100">
+                    <div class="bg-coralsoft rounded-xl p-4 border border-coralsoft">
                         <p class="text-xs font-semibold text-coral uppercase tracking-wider">Costuri Platformă</p>
                         <p class="text-xl font-bold text-coralh mt-1">{{ number_format(($pf['cost'] ?? 0) / 100, 2) }} <span class="text-sm font-normal">lei</span></p>
                     </div>
@@ -900,7 +900,7 @@
                                     <th class="text-right px-3 py-2.5 text-xs font-semibold text-muted">%</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-100">
+                            <tbody class="divide-y divide-line">
                                 @foreach($profitability['tenants'] as $idx => $pt)
                                     <tr class="hover:bg-cream">
                                         <td class="px-3 py-2 text-muted">{{ $idx + 1 }}</td>
@@ -1042,7 +1042,7 @@
                                             <th class="text-left px-2 py-1.5 font-semibold text-muted">Eroare</th>
                                         </tr>
                                     </thead>
-                                    <tbody class="divide-y divide-slate-100">
+                                    <tbody class="divide-y divide-line">
                                         @foreach($knowledgePipeline['knowledge_items']['recent_failures'] as $rf)
                                             <tr class="hover:bg-cream">
                                                 <td class="px-2 py-1.5 text-inkSoft">{{ Str::limit($rf['title'] ?? '—', 25) }}</td>
@@ -1124,7 +1124,7 @@
                                                 <th class="text-left px-2 py-1.5 font-semibold text-muted">Ultima Sincr.</th>
                                             </tr>
                                         </thead>
-                                        <tbody class="divide-y divide-slate-100">
+                                        <tbody class="divide-y divide-line">
                                             @foreach($integrationHealth['stale_connectors'] as $sc)
                                                 <tr class="hover:bg-cream">
                                                     <td class="px-2 py-1.5 text-inkSoft font-medium">{{ $sc['type'] }}</td>
@@ -1194,7 +1194,7 @@
                 <div class="bg-coralsoft border border-coral/30 text-coralh px-4 py-3 rounded-lg text-sm">{{ $abTesting['error'] }}</div>
             @elseif(count($abTesting['experiments'] ?? []) === 0)
                 <div class="text-center py-8">
-                    <svg class="w-12 h-12 text-slate-300 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    <svg class="w-12 h-12 text-line mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                     <p class="text-sm text-muted">Nu există experimente active.</p>
                     <p class="text-xs text-muted mt-1">Creați un experiment A/B din pagina de configurare a botului.</p>
                 </div>
@@ -1214,7 +1214,7 @@
                                 <th class="text-left px-3 py-2.5 text-xs font-semibold text-muted">Sfârșit</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100">
+                        <tbody class="divide-y divide-line">
                             @foreach($abTesting['experiments'] as $exp)
                                 @php
                                     $statusColors = match($exp['status'] ?? '') {
@@ -1318,7 +1318,7 @@
                     {{-- Queue sizes --}}
                     @foreach($workerStatus['queue_sizes'] ?? [] as $queueName => $size)
                         @php
-                            $qColor = $size === 0 ? 'bg-green-50 border-green-100' : ($size <= 10 ? 'bg-amber-50 border-amber-100' : 'bg-coralsoft border-red-100');
+                            $qColor = $size === 0 ? 'bg-green-50 border-green-100' : ($size <= 10 ? 'bg-amber-50 border-amber-100' : 'bg-coralsoft border-coralsoft');
                             $qText = $size === 0 ? 'text-green-900' : ($size <= 10 ? 'text-amber-900' : 'text-coralh');
                             $qDot = $size === 0 ? 'bg-green-500' : ($size <= 10 ? 'bg-amber-500' : 'bg-red-500');
                         @endphp
@@ -1333,7 +1333,7 @@
                     @endforeach
 
                     {{-- Failed jobs 24h --}}
-                    <div class="{{ ($workerStatus['failed_jobs_24h'] ?? 0) > 0 ? 'bg-coralsoft border-red-100' : 'bg-green-50 border-green-100' }} rounded-xl p-4 border">
+                    <div class="{{ ($workerStatus['failed_jobs_24h'] ?? 0) > 0 ? 'bg-coralsoft border-coralsoft' : 'bg-green-50 border-green-100' }} rounded-xl p-4 border">
                         <p class="text-xs font-semibold text-muted uppercase tracking-wider mb-2">Eșuate (24h)</p>
                         <p class="text-lg font-bold {{ ($workerStatus['failed_jobs_24h'] ?? 0) > 0 ? 'text-coralh' : 'text-green-900' }}">{{ $workerStatus['failed_jobs_24h'] ?? 0 }}</p>
                         <p class="text-[10px] text-muted mt-1">joburi eșuate</p>
@@ -1427,7 +1427,7 @@
                                                 <th class="text-right px-3 py-2 font-semibold text-muted">Procese</th>
                                             </tr>
                                         </thead>
-                                        <tbody class="divide-y divide-slate-100">
+                                        <tbody class="divide-y divide-line">
                                             @foreach($workerStatus['workload'] as $wl)
                                                 <tr class="hover:bg-cream">
                                                     <td class="px-3 py-2 font-medium text-inkSoft font-mono">{{ $wl['queue'] }}</td>

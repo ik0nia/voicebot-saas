@@ -80,7 +80,7 @@
                             <th class="text-right px-4 py-2">CTR</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody class="divide-y divide-line">
                         @foreach($rows as $r)
                             <tr class="hover:bg-cream/50">
                                 <td class="px-4 py-2 font-medium text-ink">{{ $r['label'] }}</td>
@@ -91,7 +91,7 @@
                                 </td>
                                 <td class="px-4 py-2 text-right tabular-nums">
                                     @if($r['ctr'] === null)
-                                        <span class="text-slate-300">—</span>
+                                        <span class="text-line">—</span>
                                     @else
                                         <span class="@if($r['ctr'] >= 20) text-emerald-700 font-semibold @elseif($r['ctr'] < 5) text-muted @else text-inkSoft @endif">
                                             {{ $r['ctr'] }}%

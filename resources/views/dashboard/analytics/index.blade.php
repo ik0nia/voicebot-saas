@@ -224,7 +224,7 @@
                         <th class="px-5 py-3 font-medium text-muted text-right">% din total</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="divide-y divide-line">
                     @foreach($topBots as $index => $bot)
                     <tr class="hover:bg-cream/50 transition-colors">
                         <td class="whitespace-nowrap px-5 py-3 text-muted font-semibold">{{ $index + 1 }}</td>

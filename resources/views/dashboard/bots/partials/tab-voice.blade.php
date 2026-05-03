@@ -21,7 +21,7 @@
                     <div>
                         <label class="block text-sm font-medium text-inkSoft mb-1">Voce presetata OpenAI</label>
                         <select id="field-voice" onchange="updateField('voice', this.value)"
-                            class="w-full rounded-lg border border-line px-3 py-2 text-sm text-ink focus:border-red-300 focus:ring-1 focus:ring-red-300 transition-colors">
+                            class="w-full rounded-lg border border-line px-3 py-2 text-sm text-ink focus:border-coral/40 focus:ring-1 focus:ring-red-300 transition-colors">
                             @foreach($voices as $v)
                                 <option value="{{ $v }}" {{ $bot->voice === $v ? 'selected' : '' }}>{{ $voiceLabels[$v] }}</option>
                             @endforeach
@@ -53,7 +53,7 @@
                                         <p class="text-xs text-muted">Disponibila (neactivata)</p>
                                     </div>
                                 @else
-                                    <span class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
+                                    <span class="w-2.5 h-2.5 rounded-full bg-line"></span>
                                     <p class="text-sm text-muted">Nicio voce clonata</p>
                                 @endif
                             </div>

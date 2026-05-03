@@ -108,7 +108,7 @@
         </div>
 
         <div class="mt-5 flex justify-end">
-            <button type="submit" class="px-6 py-2.5 rounded-lg bg-coral text-white text-sm font-semibold hover:bg-coral">
+            <button type="submit" class="px-6 py-2.5 rounded-lg bg-coral text-white text-sm font-semibold hover:bg-coralh">
                 Salvează
             </button>
         </div>

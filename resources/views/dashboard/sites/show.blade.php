@@ -67,7 +67,7 @@
                                 <p class="text-sm font-medium text-inkSoft mb-2">{{ $embedBot->name }}</p>
                                 <div class="relative">
                                     <pre class="rounded-lg bg-slate-900 px-4 py-3 text-sm text-green-400 font-mono overflow-x-auto" id="embed-{{ $embedBot->id }}">{{ $embedBot->getEmbedCode() }}</pre>
-                                    <button type="button" onclick="copyCode('embed-{{ $embedBot->id }}', this)" class="absolute top-2 right-2 inline-flex items-center gap-1.5 rounded-md bg-slate-700 px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-600 transition-colors">
+                                    <button type="button" onclick="copyCode('embed-{{ $embedBot->id }}', this)" class="absolute top-2 right-2 inline-flex items-center gap-1.5 rounded-md bg-slate-700 px-2.5 py-1.5 text-xs font-medium text-line hover:bg-slate-600 transition-colors">
                                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                                         Copiază
                                     </button>
@@ -87,7 +87,7 @@
                     <span class="text-xs font-medium text-muted">{{ $bots->count() }} {{ $bots->count() == 1 ? 'agent AI' : 'agenți AI' }}</span>
                 </div>
                 @if($bots->isNotEmpty())
-                    <div class="divide-y divide-slate-100">
+                    <div class="divide-y divide-line">
                         @foreach($bots as $bot)
                             <div class="flex items-center justify-between px-5 py-3 hover:bg-cream transition-colors">
                                 <div class="flex items-center gap-3 min-w-0">

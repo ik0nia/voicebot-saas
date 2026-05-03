@@ -3,7 +3,7 @@
 @section('title', 'Style Training')
 @section('breadcrumb')
     <a href="{{ route('admin.social.index') }}" class="text-muted hover:text-muted">Social Media</a>
-    <span class="mx-1.5 text-slate-300">/</span>
+    <span class="mx-1.5 text-line">/</span>
     Style Training
 @endsection
 
@@ -70,7 +70,7 @@
                 <textarea name="content" id="content" rows="5" required placeholder="Lipeste aici un exemplu de postare in stilul dorit..."
                           class="w-full rounded-lg border-line text-sm focus:border-coral focus:ring-coral"></textarea>
             </div>
-            <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-coral rounded-lg hover:bg-coral">
+            <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-coral rounded-lg hover:bg-coralh">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                 Adauga Exemplu
             </button>
@@ -82,7 +82,7 @@
         <div class="px-6 py-4 border-b border-line">
             <h2 class="text-lg font-semibold text-ink">Exemple in asteptare</h2>
         </div>
-        <div class="divide-y divide-slate-100">
+        <div class="divide-y divide-line">
             @forelse($unreviewed as $example)
                 <div class="p-6">
                     <div class="flex items-start justify-between gap-4">

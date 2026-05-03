@@ -141,7 +141,7 @@
             {{-- Completeness badge — clickable to show per-item breakdown (Iter A) --}}
             <div class="mt-3 relative inline-block" @click.away="checklistOpen = false">
                 <button type="button" @click="checklistOpen = !checklistOpen"
-                        class="group inline-flex items-center gap-2 rounded-md border border-line bg-white px-2.5 py-1.5 hover:border-red-300 hover:shadow-sm transition text-left">
+                        class="group inline-flex items-center gap-2 rounded-md border border-line bg-white px-2.5 py-1.5 hover:border-coral/40 hover:shadow-sm transition text-left">
                     <span class="text-xs text-muted">Profil:</span>
                     <span class="text-xs font-semibold text-ink" x-text="completenessPercent() + '%'"></span>
                     <div class="w-28 h-2 bg-sand rounded-full overflow-hidden">
@@ -162,7 +162,7 @@
                                         @click="item.done ? (checklistOpen = false) : (tab = item.tab, checklistOpen = false, $nextTick(() => focusFieldInTab(item.focus)))"
                                         class="w-full flex items-start gap-2 text-left px-2 py-1.5 rounded hover:bg-cream transition">
                                     <span class="mt-0.5 font-bold" x-text="item.done ? '✓' : '○'"
-                                          :class="item.done ? 'text-green-600' : 'text-slate-300'"></span>
+                                          :class="item.done ? 'text-green-600' : 'text-line'"></span>
                                     <div class="flex-1 min-w-0">
                                         <div class="text-xs font-medium" :class="item.done ? 'text-muted' : 'text-inkSoft'" x-text="item.label"></div>
                                         <div x-show="item.hint" class="text-[11px] text-muted" x-text="item.hint"></div>
@@ -494,7 +494,7 @@
                         <div>
                             <label class="block text-sm font-medium text-inkSoft mb-2">Program de lucru</label>
                             {{-- Iter A: stacked cards on mobile, 12-col grid on sm+ --}}
-                            <div class="border border-line rounded-lg divide-y divide-slate-100 bg-cream/30">
+                            <div class="border border-line rounded-lg divide-y divide-line bg-cream/30">
                                 <template x-for="(day, idx) in days" :key="day.key">
                                     <div class="flex flex-col sm:grid sm:grid-cols-12 sm:gap-2 sm:items-center px-3 py-3">
                                         <div class="sm:col-span-2 text-sm font-semibold text-ink sm:font-medium sm:text-inkSoft mb-2 sm:mb-0" x-text="day.label"></div>
@@ -855,7 +855,7 @@
                     </div>
 
                     <div class="space-y-5">
-                        <label class="flex items-start gap-3 p-4 rounded-lg border border-line bg-cream cursor-pointer hover:border-red-300 transition">
+                        <label class="flex items-start gap-3 p-4 rounded-lg border border-line bg-cream cursor-pointer hover:border-coral/40 transition">
                             <input type="checkbox" x-model="transfer.enabled"
                                    class="mt-0.5 w-4 h-4 rounded border-line text-coralh focus:ring-coral">
                             <div>
@@ -1025,7 +1025,7 @@
                             / <span x-text="tenantUsage.limit_ron.toFixed(2)"></span> lei
                             (<span x-text="Math.round(tenantUsage.pct_of_limit)"></span>%)
                         </span>
-                        <span x-show="!tenantUsage.flag_enabled" class="text-slate-300" title="Limita nu este încă aplicată — doar vizualizare.">(info)</span>
+                        <span x-show="!tenantUsage.flag_enabled" class="text-line" title="Limita nu este încă aplicată — doar vizualizare.">(info)</span>
                     </span>
                 </div>
                 <div class="flex items-center gap-3">
@@ -1079,7 +1079,7 @@
                 <button type="button" @click="modal.fullProfile = false" :disabled="aiLoading.full_profile"
                         class="px-4 py-2 text-sm rounded-lg border border-line hover:bg-cream">Anulează</button>
                 <button type="button" @click="runFullProfile()" :disabled="aiLoading.full_profile"
-                        class="px-4 py-2 text-sm rounded-lg bg-coral text-white hover:bg-coral disabled:opacity-50">
+                        class="px-4 py-2 text-sm rounded-lg bg-coral text-white hover:bg-coralh disabled:opacity-50">
                     <span x-show="!aiLoading.full_profile">✨ Generează</span>
                     <span x-show="aiLoading.full_profile">Se lucrează...</span>
                 </button>
@@ -1107,9 +1107,9 @@
                         <div>
                             <div class="flex items-center gap-2 mb-1">
                                 <span class="text-xs font-semibold uppercase tracking-wider"
-                                      :class="section.enabled && section.content ? 'text-muted' : 'text-slate-300 line-through'"
+                                      :class="section.enabled && section.content ? 'text-muted' : 'text-line line-through'"
                                       x-text="section.name"></span>
-                                <span x-show="!section.content" class="text-xs text-slate-300">(gol)</span>
+                                <span x-show="!section.content" class="text-xs text-line">(gol)</span>
                             </div>
                             <pre class="whitespace-pre-wrap text-xs bg-cream border border-line p-3 rounded"
                                  x-text="section.content || '—'"></pre>

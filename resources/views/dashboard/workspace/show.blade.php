@@ -65,7 +65,7 @@
     {{-- Tab: Acum --}}
     @if($tab === 'acum')
         {{-- Archetype-aware headline banner --}}
-        <div class="mb-4 rounded-xl border border-red-100 bg-gradient-to-r from-red-50 to-orange-50 p-4">
+        <div class="mb-4 rounded-xl border border-coralsoft bg-gradient-to-r from-red-50 to-orange-50 p-4">
             <p class="text-base font-semibold text-coralh">{{ $headline }}</p>
             <p class="text-xs text-coralh/70 mt-1">Azi, {{ now()->translatedFormat('l, j F') }} · Toate valorile se actualizează la fiecare conversație.</p>
         </div>
@@ -147,7 +147,7 @@
                         <th class="px-4 py-2"></th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="divide-y divide-line">
                     @forelse($recentConversations as $c)
                         <tr class="hover:bg-cream">
                             <td class="px-4 py-2">{{ $c->contact_name ?? $c->contact_identifier ?? 'Anonim' }}</td>
@@ -306,7 +306,7 @@
                         <th class="px-4 py-2 text-left">Ultima activitate</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="divide-y divide-line">
                     @forelse($channels as $ch)
                         <tr>
                             <td class="px-4 py-2 font-mono text-xs">{{ $ch->type }}</td>

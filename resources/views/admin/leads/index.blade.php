@@ -46,7 +46,7 @@
             <option value="niche_landing" @selected($source==='niche_landing')>Landing nișă</option>
         </select>
     </div>
-    <button type="submit" class="rounded-lg bg-coral px-4 py-2 text-sm font-semibold text-white hover:bg-coral">
+    <button type="submit" class="rounded-lg bg-coral px-4 py-2 text-sm font-semibold text-white hover:bg-coralh">
         Filtrează
     </button>
     @if($q || $status || $source)
@@ -68,7 +68,7 @@
                 <th class="px-4 py-2"></th>
             </tr>
         </thead>
-        <tbody class="divide-y divide-slate-100">
+        <tbody class="divide-y divide-line">
             @forelse($leads as $lead)
                 <tr class="hover:bg-cream">
                     <td class="px-4 py-2 text-xs text-muted whitespace-nowrap">{{ $lead->created_at->format('d M, H:i') }}</td>

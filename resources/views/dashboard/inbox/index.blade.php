@@ -87,7 +87,7 @@
         </div>
     @else
         <div class="overflow-hidden rounded-xl border border-line bg-white shadow-sm">
-            <table class="min-w-full divide-y divide-slate-200">
+            <table class="min-w-full divide-y divide-line">
                 <thead class="bg-cream">
                     <tr>
                         <th class="px-4 py-3 text-left text-xs font-semibold text-muted uppercase">Contact</th>
@@ -98,7 +98,7 @@
                         <th class="px-4 py-3 text-right text-xs font-semibold text-muted uppercase">Acțiuni</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="divide-y divide-line">
                     @foreach($conversations as $convo)
                         @php
                             $assignType = $convo->isHumanAssigned() ? 'user' : ($convo->isBotAssigned() ? 'bot' : 'none');

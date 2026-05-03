@@ -133,7 +133,7 @@
             </span>
             <span class="text-sm font-bold text-ink">Ce poti imbunatati</span>
         </div>
-        <div class="divide-y divide-slate-100">
+        <div class="divide-y divide-line">
             @foreach(array_slice($suggestions, 0, 3) as $sug)
             <div class="px-5 py-3.5 flex items-start gap-3">
                 <span class="mt-0.5 w-5 h-5 rounded-full {{ ($sug['type'] ?? '') === 'critical' ? 'bg-coralsoft text-coral' : 'bg-amber-100 text-amber-600' }} flex items-center justify-center shrink-0">
@@ -166,7 +166,7 @@
                     <p class="text-sm font-bold text-ink">{{ $a['label'] }}</p>
                     <p class="text-xs text-muted mt-0.5 truncate">{{ $a['desc'] }}</p>
                 </div>
-                <svg class="w-4 h-4 text-slate-300 group-hover:text-muted shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <svg class="w-4 h-4 text-line group-hover:text-muted shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                 </svg>
             </button>
@@ -178,7 +178,7 @@
             <div class="px-4 py-3 bg-cream border-b border-line">
                 <span class="text-sm font-bold text-ink">Setari curente</span>
             </div>
-            <div class="divide-y divide-slate-100">
+            <div class="divide-y divide-line">
                 @foreach([
                     ['l' => 'Ton', 'v' => $toneMap[$policy->tone ?? 'professional'] ?? '-'],
                     ['l' => 'Raspunsuri', 'v' => $verbMap[$policy->verbosity ?? 'concise'] ?? '-'],
@@ -207,7 +207,7 @@
             <span class="text-sm font-bold text-ink">Activitate recenta</span>
             <span class="text-xs text-muted font-medium">{{ $convTotal }} total</span>
         </div>
-        <div class="divide-y divide-slate-100">
+        <div class="divide-y divide-line">
             @foreach($recentConversations->take(5) as $conv)
             <div class="flex items-center justify-between px-5 py-3 hover:bg-cream/60 transition-colors">
                 <div class="flex items-center gap-3 min-w-0">

@@ -58,7 +58,7 @@
             <input type="number" name="user_id" value="{{ $userFilter }}" class="rounded-lg border border-line px-3 py-2 text-sm w-24">
         </div>
     @endif
-    <button type="submit" class="rounded-lg bg-coral px-4 py-2 text-sm font-semibold text-white hover:bg-coral">
+    <button type="submit" class="rounded-lg bg-coral px-4 py-2 text-sm font-semibold text-white hover:bg-coralh">
         Aplică
     </button>
 </form>
@@ -99,7 +99,7 @@
                 <th class="px-3 py-2 text-right">Cost RON</th>
             </tr>
         </thead>
-        <tbody class="divide-y divide-slate-100">
+        <tbody class="divide-y divide-line">
             @forelse($rows as $row)
                 @php
                     $target = $row->metadata['target'] ?? null;

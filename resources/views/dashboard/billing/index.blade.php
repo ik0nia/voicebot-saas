@@ -87,7 +87,7 @@
                     @if($isActive)
                         <form method="POST" action="{{ route('dashboard.billing.cancel') }}" onsubmit="return confirm('Sigur vrei să anulezi abonamentul? Vei avea acces până la finalul ciclului curent.');">
                             @csrf
-                            <button type="submit" class="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-coralh hover:bg-coralsoft transition-colors">
+                            <button type="submit" class="inline-flex items-center gap-2 rounded-lg border border-coral/40 bg-white px-4 py-2 text-sm font-semibold text-coralh hover:bg-coralsoft transition-colors">
                                 Anulează abonament
                             </button>
                         </form>
@@ -144,7 +144,7 @@
                             @csrf
                             <button type="submit"
                                     @if(!$priceId) disabled @endif
-                                    class="w-full rounded-lg bg-coral px-4 py-2 text-sm font-semibold text-white hover:bg-coral disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors">
+                                    class="w-full rounded-lg bg-coral px-4 py-2 text-sm font-semibold text-white hover:bg-coralh disabled:bg-line disabled:cursor-not-allowed transition-colors">
                                 {{ $priceId ? 'Cumpără' : 'Nesincronizat în Stripe' }}
                             </button>
                         </form>
@@ -258,7 +258,7 @@
         <div class="px-6 py-4 border-b border-line">
             <h3 class="text-base font-semibold text-ink">Utilizare detaliată</h3>
         </div>
-        <table class="min-w-full divide-y divide-slate-200">
+        <table class="min-w-full divide-y divide-line">
             <thead class="bg-cream">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-semibold text-muted uppercase">Resursă</th>
@@ -267,7 +267,7 @@
                     <th class="px-6 py-3 text-right text-xs font-semibold text-muted uppercase">Utilizare</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody class="divide-y divide-line">
                 @foreach([
                     ['Mesaje', $usage['messages']['used'], $usage['messages']['limit'], $usage['messages']['percent']],
                     ['Chatboți', $usage['bots']['used'], $usage['bots']['limit'], $usage['bots']['percent']],
@@ -335,7 +335,7 @@
             <div class="px-6 py-4 border-b border-line">
                 <h3 class="text-base font-semibold text-ink">Istoric cumpărări credite</h3>
             </div>
-            <table class="min-w-full divide-y divide-slate-200 text-sm">
+            <table class="min-w-full divide-y divide-line text-sm">
                 <thead class="bg-cream text-xs uppercase text-muted">
                     <tr>
                         <th class="px-6 py-3 text-left">Data</th>
@@ -344,7 +344,7 @@
                         <th class="px-6 py-3 text-right">Preț</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="divide-y divide-line">
                     @foreach($recentPurchases as $p)
                         <tr>
                             <td class="px-6 py-3 text-muted">{{ $p->created_at->format('d M Y, H:i') }}</td>
@@ -373,7 +373,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 @foreach($list as $p)
                                     @php $isCurrent = $currentPlan && $currentPlan->id === $p->id; @endphp
-                                    <div class="rounded-xl border @if($isCurrent) border-red-300 bg-coralsoft @else border-line @endif p-5 flex flex-col">
+                                    <div class="rounded-xl border @if($isCurrent) border-coral/40 bg-coralsoft @else border-line @endif p-5 flex flex-col">
                                         <div class="flex items-center gap-2">
                                             <h4 class="text-sm font-bold text-ink">{{ $p->name }}</h4>
                                             @if($p->is_popular)<span class="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-semibold text-yellow-800">Popular</span>@endif
@@ -410,7 +410,7 @@
                                                 <input type="hidden" name="interval" value="monthly">
                                                 <button type="submit"
                                                         @if($isCurrent || !$p->stripePriceId('monthly')) disabled @endif
-                                                        class="w-full rounded-lg bg-coral px-3 py-2 text-xs font-semibold text-white hover:bg-coral disabled:bg-slate-300 disabled:cursor-not-allowed">
+                                                        class="w-full rounded-lg bg-coral px-3 py-2 text-xs font-semibold text-white hover:bg-coralh disabled:bg-line disabled:cursor-not-allowed">
                                                     {{ $btnLabelPrefix }}Lunar
                                                 </button>
                                             </form>
@@ -419,7 +419,7 @@
                                                 <input type="hidden" name="interval" value="yearly">
                                                 <button type="submit"
                                                         @if($isCurrent || !$p->stripePriceId('yearly')) disabled @endif
-                                                        class="w-full rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:bg-slate-300 disabled:cursor-not-allowed">
+                                                        class="w-full rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:bg-line disabled:cursor-not-allowed">
                                                     {{ $btnLabelPrefix }}Anual
                                                 </button>
                                             </form>

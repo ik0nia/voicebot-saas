@@ -24,7 +24,7 @@
 
     {{-- No results message --}}
     <div id="agents-no-results" class="hidden text-center py-8">
-        <svg class="w-12 h-12 text-slate-300 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <svg class="w-12 h-12 text-line mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
         <p class="text-sm text-muted">Niciun agent găsit pentru căutarea ta.</p>
     </div>
 
@@ -46,7 +46,7 @@
                         $isLocked = in_array($agent['slug'], $lockedSlugs);
                         $wasUsed = in_array($agent['slug'], $recentRunSlugs);
                     @endphp
-                    <div class="agent-card border border-line rounded-lg p-4 transition-all {{ $isLocked ? 'opacity-60 cursor-not-allowed' : 'hover:border-red-300 hover:shadow-sm cursor-pointer group' }}"
+                    <div class="agent-card border border-line rounded-lg p-4 transition-all {{ $isLocked ? 'opacity-60 cursor-not-allowed' : 'hover:border-coral/40 hover:shadow-sm cursor-pointer group' }}"
                          data-agent-name="{{ strtolower($agent['name']) }}"
                          data-agent-desc="{{ strtolower($agent['description']) }}"
                          @if(!$isLocked)

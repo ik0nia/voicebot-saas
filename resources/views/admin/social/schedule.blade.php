@@ -3,7 +3,7 @@
 @section('title', 'Programare Social Media')
 @section('breadcrumb')
     <a href="{{ route('admin.social.index') }}" class="text-muted hover:text-muted">Social Media</a>
-    <span class="mx-1.5 text-slate-300">/</span>
+    <span class="mx-1.5 text-line">/</span>
     Programare
 @endsection
 
@@ -126,7 +126,7 @@
                     </div>
                 @endif
 
-                <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-coral rounded-lg hover:bg-coral">
+                <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-coral rounded-lg hover:bg-coralh">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                     Salveaza {{ $pConfig['label'] }}
                 </button>

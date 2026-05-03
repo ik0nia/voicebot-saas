@@ -138,7 +138,7 @@
                         <th class="px-5 py-3 font-medium text-muted text-right">Acțiuni</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="divide-y divide-line">
                     @foreach($members as $member)
                         @php
                             $initials = collect(explode(' ', $member->name))->map(fn($w) => mb_strtoupper(mb_substr($w, 0, 1)))->take(2)->join('');
@@ -270,7 +270,7 @@
                             <th class="px-5 py-3 font-medium text-muted text-center">Vizualizator</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody class="divide-y divide-line">
                         @php
                             $permissions = [
                                 ['label' => 'Gestiune agenți AI', 'admin' => true, 'manager' => true, 'viewer' => false],

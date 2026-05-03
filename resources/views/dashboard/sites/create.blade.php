@@ -46,7 +46,7 @@
                 <div>
                     <label for="domain" class="block text-sm font-medium text-inkSoft mb-1.5">Domain <span class="text-coral">*</span></label>
                     <input type="text" name="domain" id="domain" value="{{ old('domain') }}" placeholder="exemplu.ro" required
-                           class="w-full rounded-lg border {{ $errors->has('domain') ? 'border-red-300 focus:border-coral focus:ring-coral/20' : 'border-line focus:border-coral focus:ring-coral/20' }} bg-white px-4 py-2.5 text-sm text-inkSoft placeholder-slate-400 focus:ring-2 outline-none transition" />
+                           class="w-full rounded-lg border {{ $errors->has('domain') ? 'border-coral/40 focus:border-coral focus:ring-coral/20' : 'border-line focus:border-coral focus:ring-coral/20' }} bg-white px-4 py-2.5 text-sm text-inkSoft placeholder-slate-400 focus:ring-2 outline-none transition" />
                     <p class="mt-1.5 text-xs text-muted">Introdu domeniul fără https:// sau www</p>
                     @error('domain')
                         <p class="mt-1 text-xs text-coral">{{ $message }}</p>
@@ -57,7 +57,7 @@
                 <div>
                     <label for="name" class="block text-sm font-medium text-inkSoft mb-1.5">Nume site</label>
                     <input type="text" name="name" id="name" value="{{ old('name') }}" placeholder="Site-ul meu principal"
-                           class="w-full rounded-lg border {{ $errors->has('name') ? 'border-red-300 focus:border-coral focus:ring-coral/20' : 'border-line focus:border-coral focus:ring-coral/20' }} bg-white px-4 py-2.5 text-sm text-inkSoft placeholder-slate-400 focus:ring-2 outline-none transition" />
+                           class="w-full rounded-lg border {{ $errors->has('name') ? 'border-coral/40 focus:border-coral focus:ring-coral/20' : 'border-line focus:border-coral focus:ring-coral/20' }} bg-white px-4 py-2.5 text-sm text-inkSoft placeholder-slate-400 focus:ring-2 outline-none transition" />
                     @error('name')
                         <p class="mt-1 text-xs text-coral">{{ $message }}</p>
                     @enderror

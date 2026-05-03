@@ -105,7 +105,7 @@
                                 </div>
 
                                 <button type="button" @click="addChip(idx)" x-show="card.chips.length < 6"
-                                        class="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-dashed border-line px-3 py-1.5 text-xs font-medium text-muted hover:border-red-300 hover:text-coralh">
+                                        class="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-dashed border-line px-3 py-1.5 text-xs font-medium text-muted hover:border-coral/40 hover:text-coralh">
                                     <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                                     Adaugă buton
                                 </button>
@@ -128,7 +128,7 @@
                         Resetează totul la default
                     </button>
                     <button type="submit"
-                            class="rounded-lg bg-coral px-4 py-2 text-sm font-semibold text-white hover:bg-coral">
+                            class="rounded-lg bg-coral px-4 py-2 text-sm font-semibold text-white hover:bg-coralh">
                         Salvează butoanele
                     </button>
                 </div>

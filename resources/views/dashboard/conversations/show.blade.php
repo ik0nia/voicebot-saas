@@ -47,7 +47,7 @@
                 @csrf
                 @method('DELETE')
                 <button type="submit"
-                        class="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2.5 text-sm font-medium text-coral hover:bg-coralsoft transition-colors">
+                        class="inline-flex items-center gap-2 rounded-lg border border-coral/40 bg-white px-4 py-2.5 text-sm font-medium text-coral hover:bg-coralsoft transition-colors">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
@@ -132,16 +132,16 @@
                                             &middot; {{ $msg->sent_at->format('H:i') }}
                                         @endif
                                         @if($msg->ai_model)
-                                            &middot; <span class="text-slate-300">{{ $msg->ai_model }}</span>
+                                            &middot; <span class="text-line">{{ $msg->ai_model }}</span>
                                         @endif
                                         @if($msg->cost_cents > 0)
-                                            &middot; <span class="text-slate-300">${{ number_format($msg->cost_cents / 100, 4) }}</span>
+                                            &middot; <span class="text-line">${{ number_format($msg->cost_cents / 100, 4) }}</span>
                                         @endif
                                     </p>
                                     {{-- AI Debug Info (collapsible) --}}
                                     @if(!empty($msg->detected_intents) || !empty($msg->pipelines_executed) || !empty($msg->knowledge_chunks_used))
                                         <details class="mt-1 ml-1">
-                                            <summary class="text-[10px] text-slate-300 cursor-pointer hover:text-muted transition-colors">AI Debug</summary>
+                                            <summary class="text-[10px] text-line cursor-pointer hover:text-muted transition-colors">AI Debug</summary>
                                             <div class="mt-1 text-[10px] text-muted space-y-0.5 bg-cream rounded p-2">
                                                 @if(!empty($msg->detected_intents))
                                                     <p><span class="font-medium">Intents:</span>
@@ -175,12 +175,12 @@
                                         @endif
                                         {{-- Page context badge --}}
                                         @if(!empty($msg->metadata['page_context']['page_title']))
-                                            &middot; <span class="inline-flex items-center gap-0.5 text-slate-300" title="{{ $msg->metadata['page_context']['page_url'] ?? '' }}">
+                                            &middot; <span class="inline-flex items-center gap-0.5 text-line" title="{{ $msg->metadata['page_context']['page_url'] ?? '' }}">
                                                 <svg class="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
                                                 {{ Str::limit($msg->metadata['page_context']['page_title'], 30) }}
                                             </span>
                                         @elseif(!empty($msg->metadata['page_context']['page_path']))
-                                            &middot; <span class="text-slate-300">{{ $msg->metadata['page_context']['page_path'] }}</span>
+                                            &middot; <span class="text-line">{{ $msg->metadata['page_context']['page_path'] }}</span>
                                         @endif
                                     </p>
                                 </div>

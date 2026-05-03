@@ -16,7 +16,7 @@
             <th class="px-5 py-3 text-xs font-medium uppercase tracking-wider text-muted">Cost total</th>
             <th class="px-5 py-3 text-xs font-medium uppercase tracking-wider text-muted">Creat</th>
         </tr></thead>
-        <tbody class="divide-y divide-slate-100">
+        <tbody class="divide-y divide-line">
             @forelse($tenants as $tenant)
             <tr class="hover:bg-cream">
                 <td class="px-5 py-3"><a href="{{ route('admin.tenants.show', $tenant) }}" class="font-medium text-coralh hover:underline">{{ $tenant->name }}</a></td>

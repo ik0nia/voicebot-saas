@@ -4,7 +4,7 @@
 
     {{-- Tone --}}
     <div class="bg-white rounded-xl border border-line shadow-sm overflow-hidden">
-        <div class="border-l-4 border-red-500 p-5">
+        <div class="border-l-4 border-coral p-5">
             <label class="block text-sm font-semibold text-ink mb-1">Tonul conversatiei</label>
             <p class="text-xs text-muted mb-4">Cum se adreseaza agentul AI clientilor tai?</p>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -59,7 +59,7 @@
                     <p class="text-xs text-muted mt-0.5">Agentul AI va adauga emoji-uri ocazional pentru un ton mai prietenos.</p>
                 </div>
                 <button type="button" @click="form.emoji_allowed = !form.emoji_allowed; dirty = true"
-                        :class="form.emoji_allowed ? 'bg-purple-500' : 'bg-slate-300'"
+                        :class="form.emoji_allowed ? 'bg-purple-500' : 'bg-line'"
                         class="relative w-16 h-9 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:ring-offset-1 flex-shrink-0">
                     <div class="absolute top-1 left-1 w-7 h-7 bg-white rounded-full shadow-md transition-transform duration-200 flex items-center justify-center"
                          :class="form.emoji_allowed ? 'translate-x-7' : ''">

@@ -35,7 +35,7 @@
             <th class="px-5 py-3 text-xs font-medium uppercase tracking-wider text-muted">Status</th>
             <th class="px-5 py-3 text-xs font-medium uppercase tracking-wider text-muted">Data</th>
         </tr></thead>
-        <tbody class="divide-y divide-slate-100">
+        <tbody class="divide-y divide-line">
             @forelse($conversations as $conv)
             <tr class="hover:bg-cream">
                 <td class="px-5 py-3"><a href="{{ route('admin.conversations.show', $conv) }}" class="font-medium text-coralh hover:underline">#{{ $conv->id }}</a></td>

@@ -144,7 +144,7 @@
                 <option value="blog">Blog</option>
             </select>
             <input type="text" name="topic" placeholder="Subiect..." required class="flex-1 rounded-lg border-line text-sm">
-            <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-coral rounded-lg hover:bg-coral">Generează</button>
+            <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-coral rounded-lg hover:bg-coralh">Generează</button>
         </form>
     </details>
 
@@ -181,7 +181,7 @@
                     </div>
                     {{-- Swipe labels --}}
                     <div class="card-label-approve pointer-events-none absolute top-6 left-4 px-3 py-1 rounded-lg border-4 border-green-500 text-green-500 text-2xl font-black opacity-0" style="transform: rotate(-15deg);">APROBĂ</div>
-                    <div class="card-label-reject pointer-events-none absolute top-6 right-4 px-3 py-1 rounded-lg border-4 border-red-500 text-coral text-2xl font-black opacity-0" style="transform: rotate(15deg);">REFUZĂ</div>
+                    <div class="card-label-reject pointer-events-none absolute top-6 right-4 px-3 py-1 rounded-lg border-4 border-coral text-coral text-2xl font-black opacity-0" style="transform: rotate(15deg);">REFUZĂ</div>
                 </div>
             @endforeach
             <div id="deckEmpty" class="hidden absolute inset-0 flex items-center justify-center text-center">
@@ -225,11 +225,11 @@
                         <input type="datetime-local" id="bulkRescheduleAt" class="rounded border-line text-xs px-2 py-1">
                         <button type="button" onclick="bulkAction('reschedule')" class="px-2 py-1 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700">Mută</button>
                     </div>
-                    <button type="button" onclick="bulkAction('delete')" class="px-2 py-1 text-xs font-medium text-white bg-coral rounded hover:bg-coral">Șterge</button>
+                    <button type="button" onclick="bulkAction('delete')" class="px-2 py-1 text-xs font-medium text-white bg-coral rounded hover:bg-coralh">Șterge</button>
                 </div>
             </div>
 
-            <ul class="divide-y divide-slate-100" id="postList">
+            <ul class="divide-y divide-line" id="postList">
                 @forelse($grouped as $groupLabel => $groupPosts)
                     <li class="bg-cream px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted">{{ $groupLabel }}</li>
                     @foreach($groupPosts as $post)
@@ -241,7 +241,7 @@
                                     @if($post->image_url)
                                         <img src="{{ $post->image_url }}" alt="" class="w-full h-full object-cover" loading="lazy">
                                     @else
-                                        <div class="w-full h-full flex items-center justify-center text-slate-300 text-[10px]">no img</div>
+                                        <div class="w-full h-full flex items-center justify-center text-line text-[10px]">no img</div>
                                     @endif
                                     <span class="absolute bottom-0 left-0 px-1 py-0.5 text-[9px] font-bold text-white bg-slate-800 rounded-tr">{{ $post->fanout_label ?? $platformIcon[$post->platform] ?? $post->platform }}</span>
                                 </div>
@@ -410,7 +410,7 @@
                         <button type="button" onclick="regenImage()" id="btn-regen-img" class="px-3 py-2 text-xs font-medium text-inkSoft bg-white border border-line rounded hover:bg-cream disabled:opacity-50">🖼️ Imagine nouă</button>
                         <button type="button" onclick="regenText()" id="btn-regen-txt" class="px-3 py-2 text-xs font-medium text-inkSoft bg-white border border-line rounded hover:bg-cream disabled:opacity-50">✏️ Text nou</button>
                         <button type="button" onclick="duplicatePost()" class="px-3 py-2 text-xs font-medium text-inkSoft bg-white border border-line rounded hover:bg-cream">📋 Duplică</button>
-                        <button type="button" onclick="showRejectForm()" class="px-3 py-2 text-xs font-medium text-coralh bg-white border border-red-300 rounded hover:bg-coralsoft">❌ Refuză</button>
+                        <button type="button" onclick="showRejectForm()" class="px-3 py-2 text-xs font-medium text-coralh bg-white border border-coral/40 rounded hover:bg-coralsoft">❌ Refuză</button>
                     </div>
                     <div class="grid grid-cols-3 gap-2">
                         <button type="button" onclick="deletePost()" class="px-2 py-2.5 text-xs font-semibold text-white bg-slate-700 rounded hover:bg-slate-800">🗑️ Șterge</button>
@@ -423,12 +423,12 @@
                     <div id="reject-form" class="hidden bg-coralsoft border border-coral/30 rounded p-3 space-y-2">
                         <div class="flex flex-wrap gap-1">
                             @foreach(['text' => 'Text', 'tone' => 'Ton', 'length' => 'Lungime', 'image' => 'Imagine', 'topic' => 'Subiect', 'other' => 'Altceva'] as $val => $label)
-                                <button type="button" data-cat="{{ $val }}" onclick="setRejectCategory('{{ $val }}', this)" class="reject-chip px-2 py-1 text-[11px] font-medium border border-red-300 text-coralh rounded-full hover:bg-coralsoft">{{ $label }}</button>
+                                <button type="button" data-cat="{{ $val }}" onclick="setRejectCategory('{{ $val }}', this)" class="reject-chip px-2 py-1 text-[11px] font-medium border border-coral/40 text-coralh rounded-full hover:bg-coralsoft">{{ $label }}</button>
                             @endforeach
                         </div>
-                        <textarea id="reject-feedback" rows="2" placeholder="Ce nu merge? (opțional)" class="w-full text-xs rounded border-red-300 focus:border-coral focus:ring-coral"></textarea>
+                        <textarea id="reject-feedback" rows="2" placeholder="Ce nu merge? (opțional)" class="w-full text-xs rounded border-coral/40 focus:border-coral focus:ring-coral"></textarea>
                         <div class="flex gap-2">
-                            <button type="button" onclick="confirmReject()" class="flex-1 px-3 py-1.5 text-xs font-semibold text-white bg-coral rounded hover:bg-coral">Confirmă</button>
+                            <button type="button" onclick="confirmReject()" class="flex-1 px-3 py-1.5 text-xs font-semibold text-white bg-coral rounded hover:bg-coralh">Confirmă</button>
                             <button type="button" onclick="document.getElementById('reject-form').classList.add('hidden')" class="px-3 py-1.5 text-xs text-muted">Anulează</button>
                         </div>
                     </div>

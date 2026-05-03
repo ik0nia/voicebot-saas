@@ -133,7 +133,7 @@
                 </div>
 
                 @if($driveFiles->isNotEmpty())
-                    <div class="border border-line rounded-lg divide-y divide-slate-100 max-h-96 overflow-y-auto">
+                    <div class="border border-line rounded-lg divide-y divide-line max-h-96 overflow-y-auto">
                         @foreach($driveFiles as $df)
                             @php $cat = $driveCategories[$df->category] ?? $driveCategories['other'] ?? ['label' => $df->category]; @endphp
                             <div class="flex items-center gap-3 px-4 py-2.5">

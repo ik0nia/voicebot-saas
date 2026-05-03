@@ -23,7 +23,7 @@
         </div>
     @else
         <div class="rounded-xl border border-line bg-white shadow-sm overflow-hidden">
-            <table class="min-w-full divide-y divide-slate-200 text-sm">
+            <table class="min-w-full divide-y divide-line text-sm">
                 <thead class="bg-cream text-xs uppercase text-muted">
                     <tr>
                         <th class="px-6 py-3 text-left">Număr</th>
@@ -33,7 +33,7 @@
                         <th class="px-6 py-3 text-right">Acțiuni</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="divide-y divide-line">
                     @foreach($invoices as $invoice)
                         @php
                             $statusLabel = match($invoice->status) {

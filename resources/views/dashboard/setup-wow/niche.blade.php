@@ -7,7 +7,7 @@
     <div class="mb-8">
         <div class="flex items-center gap-2 text-xs font-semibold text-muted uppercase">
             <span class="text-coralh">Pasul 1 din 4</span>
-            <span class="text-slate-300">·</span>
+            <span class="text-line">·</span>
             <span>Nișă</span>
         </div>
         <h1 class="mt-2 text-3xl font-extrabold text-ink">Ce face afacerea ta?</h1>
@@ -50,7 +50,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             @foreach($featuredNiches as $n)
                 <button type="button"
-                        class="niche-card text-left p-4 rounded-xl border-2 border-line bg-white hover:border-red-300 hover:shadow-sm transition-all"
+                        class="niche-card text-left p-4 rounded-xl border-2 border-line bg-white hover:border-coral/40 hover:shadow-sm transition-all"
                         data-slug="{{ $n['slug'] }}">
                     <div class="flex items-start justify-between gap-2">
                         <p class="font-semibold text-ink">{{ $n['display_name'] }}</p>
@@ -85,7 +85,7 @@
                  class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 @foreach($restNiches as $n)
                     <button type="button"
-                            class="niche-card text-left p-4 rounded-xl border-2 border-line bg-white hover:border-red-300 hover:shadow-sm transition-all"
+                            class="niche-card text-left p-4 rounded-xl border-2 border-line bg-white hover:border-coral/40 hover:shadow-sm transition-all"
                             data-slug="{{ $n['slug'] }}">
                         <div class="flex items-start justify-between gap-2">
                             <p class="font-semibold text-ink">{{ $n['display_name'] }}</p>
@@ -110,7 +110,7 @@
 
         <div class="mt-6 flex justify-end">
             <button type="submit" id="niche-submit" disabled
-                    class="px-6 py-2.5 rounded-lg bg-coral text-white text-sm font-semibold disabled:bg-slate-300 disabled:cursor-not-allowed hover:bg-coral">
+                    class="px-6 py-2.5 rounded-lg bg-coral text-white text-sm font-semibold disabled:bg-line disabled:cursor-not-allowed hover:bg-coralh">
                 Continuă →
             </button>
         </div>
@@ -122,11 +122,11 @@
 document.querySelectorAll('.niche-card').forEach(function (btn) {
     btn.addEventListener('click', function () {
         document.querySelectorAll('.niche-card').forEach(function (b) {
-            b.classList.remove('border-red-500', 'bg-coralsoft', 'ring-2', 'ring-coral');
+            b.classList.remove('border-coral', 'bg-coralsoft', 'ring-2', 'ring-coral');
             b.classList.add('border-line', 'bg-white');
         });
         btn.classList.remove('border-line', 'bg-white');
-        btn.classList.add('border-red-500', 'bg-coralsoft', 'ring-2', 'ring-coral');
+        btn.classList.add('border-coral', 'bg-coralsoft', 'ring-2', 'ring-coral');
         document.getElementById('niche_slug').value = btn.dataset.slug;
         document.getElementById('niche-submit').disabled = false;
     });

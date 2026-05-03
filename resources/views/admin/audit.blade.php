@@ -89,7 +89,7 @@
                     <h2 class="text-base font-semibold text-coralh">Probleme Critice — Rezolvare Imediată</h2>
                     <p class="text-xs text-coralh mt-1">Aceste probleme afectează securitatea, stabilitatea sau corectitudinea financiară a platformei.</p>
                 </div>
-                <div class="divide-y divide-slate-100">
+                <div class="divide-y divide-line">
                     @php
                         $criticals = [
                             [
@@ -209,7 +209,7 @@
                 <div class="px-5 py-4 border-b border-line bg-amber-50/50">
                     <h2 class="text-base font-semibold text-amber-900">Prioritate Ridicată — Sprint-ul următor</h2>
                 </div>
-                <div class="divide-y divide-slate-100">
+                <div class="divide-y divide-line">
                     @php
                         $highs = [
                             ['Anthropic API calls fără timeout', 'ChatCompletionService', 'Calls pot atârna la infinit. Adăugați ->timeout(30) la factory.'],
@@ -259,7 +259,7 @@
                 <div class="px-5 py-4 border-b border-line bg-blue-50/50">
                     <h2 class="text-base font-semibold text-blue-900">Prioritate Medie — De planificat</h2>
                 </div>
-                <div class="divide-y divide-slate-100">
+                <div class="divide-y divide-line">
                     @php
                         $mediums = [
                             ['Similarity threshold prea mic (0.35)', 'KnowledgeSearch', 'Pentru text-embedding-3-small, 0.35 e scăzut. Crește la 0.50 pentru rezultate mai relevante.'],
@@ -486,7 +486,7 @@
                                 <th class="pb-2 font-medium text-muted">Unique</th>
                                 <th class="pb-2 font-medium text-muted">Probleme</th>
                             </tr></thead>
-                            <tbody class="divide-y divide-slate-100">
+                            <tbody class="divide-y divide-line">
                                 <tr><td class="py-2 font-mono text-ink">ProcessKnowledgeDocument</td><td>default</td><td>3</td><td class="text-coral font-bold">NONE</td><td class="text-coral">NO</td><td class="text-coral">Fără timeout, poate rula la infinit</td></tr>
                                 <tr><td class="py-2 font-mono text-ink">CrawlWebsite</td><td>crawling</td><td>2</td><td>600s</td><td class="text-coral">NO</td><td class="text-amber-600">Timeout prea scurt pt site-uri mari</td></tr>
                                 <tr><td class="py-2 font-mono text-ink">RunKnowledgeAgent</td><td>agents</td><td>3</td><td class="text-coral font-bold">NONE</td><td class="text-coral">NO</td><td class="text-coral">Fără timeout</td></tr>

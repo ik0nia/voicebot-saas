@@ -26,7 +26,7 @@
             <p class="text-sm text-muted">Landing pages verticale pentru clienți potențiali</p>
         </div>
         <a href="{{ route('admin.niches.create') }}"
-           class="px-4 py-2 bg-coral text-white text-sm font-medium rounded-lg hover:bg-coral transition-colors flex items-center gap-2">
+           class="px-4 py-2 bg-coral text-white text-sm font-medium rounded-lg hover:bg-coralh transition-colors flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
             </svg>
@@ -55,7 +55,7 @@
                     <th class="px-3 py-3 text-right w-40">Acțiuni</th>
                 </tr>
             </thead>
-            <tbody id="nichesTbody" class="divide-y divide-slate-100">
+            <tbody id="nichesTbody" class="divide-y divide-line">
                 @forelse($niches as $n)
                     <tr data-id="{{ $n->id }}" class="hover:bg-cream">
                         <td class="px-3 py-3 text-muted cursor-move select-none" title="Trage pentru a reordona">
@@ -68,7 +68,7 @@
                         <td class="px-3 py-3 text-muted">{{ $n->vertical_label }}</td>
                         <td class="px-3 py-3">
                             <div class="flex items-center gap-2">
-                                <span class="inline-block w-4 h-4 rounded-full {{ $themeSwatch[$n->color_theme] ?? 'bg-slate-300' }}"></span>
+                                <span class="inline-block w-4 h-4 rounded-full {{ $themeSwatch[$n->color_theme] ?? 'bg-line' }}"></span>
                                 <span class="text-xs text-muted">{{ $n->color_theme }}</span>
                             </div>
                         </td>

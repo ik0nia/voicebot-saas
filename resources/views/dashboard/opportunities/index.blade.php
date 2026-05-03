@@ -41,7 +41,7 @@
                     <th class="text-left px-4 py-3 text-muted font-medium"></th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody class="divide-y divide-line">
                 @forelse($opportunities as $opp)
                 <tr class="hover:bg-cream">
                     <td class="px-4 py-3 text-muted">#{{ $opp->id }}</td>

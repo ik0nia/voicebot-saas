@@ -71,7 +71,7 @@
 
     {{-- Versions Table --}}
     <div class="bg-white rounded-xl border border-line overflow-hidden">
-        <table class="min-w-full divide-y divide-slate-200">
+        <table class="min-w-full divide-y divide-line">
             <thead class="bg-cream">
                 <tr>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-muted uppercase">Versiune</th>
@@ -83,7 +83,7 @@
                     <th class="px-4 py-3 text-right text-xs font-semibold text-muted uppercase">Acțiuni</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody class="divide-y divide-line">
                 @forelse($versions as $v)
                 <tr class="{{ $v->is_active ? '' : 'opacity-50' }}">
                     <form method="POST" action="{{ route('admin.prompt-versions.update', $v) }}">
@@ -164,7 +164,7 @@
                     <input type="checkbox" name="is_active" value="1" checked class="rounded border-line text-coral focus:ring-coral">
                     Activă imediat
                 </label>
-                <button type="submit" class="px-4 py-2 bg-coral text-white text-sm font-medium rounded-lg hover:bg-coral transition-colors">
+                <button type="submit" class="px-4 py-2 bg-coral text-white text-sm font-medium rounded-lg hover:bg-coralh transition-colors">
                     Adaugă versiune
                 </button>
             </div>

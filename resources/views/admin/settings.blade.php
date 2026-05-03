@@ -172,7 +172,7 @@
 
                 <div class="flex justify-end pt-2">
                     <button type="submit"
-                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coral focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
+                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coralh focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
                         Salvează setările
                     </button>
                 </div>
@@ -257,7 +257,7 @@
 
                 <div class="flex justify-end pt-2">
                     <button type="submit"
-                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coral focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
+                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coralh focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
                         Salvează setările OpenAI
                     </button>
                 </div>
@@ -291,7 +291,7 @@
                 </div>
 
                 <div class="flex justify-end pt-2">
-                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coral transition-colors">
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coralh transition-colors">
                         Salvează Anthropic
                     </button>
                 </div>
@@ -316,7 +316,7 @@
                 </div>
 
                 <div class="flex justify-end pt-2">
-                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coral transition-colors">
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coralh transition-colors">
                         Salvează Sentry
                     </button>
                 </div>
@@ -429,7 +429,7 @@
 
                 <div class="flex justify-end pt-2">
                     <button type="submit"
-                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coral focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
+                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coralh focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
                         Salvează setările Twilio
                     </button>
                 </div>
@@ -516,7 +516,7 @@
 
                 <div class="flex justify-end pt-2">
                     <button type="submit"
-                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coral focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
+                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coralh focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
                         Salvează setările Telnyx
                     </button>
                 </div>
@@ -593,7 +593,7 @@
 
                 <div class="flex justify-end pt-2">
                     <button type="submit"
-                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coral focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
+                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coralh focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
                         Salveaza setarile ElevenLabs
                     </button>
                 </div>
@@ -627,7 +627,7 @@
                     <label class="block text-sm font-semibold text-inkSoft">Mod activ</label>
                     <p class="mt-1 text-xs text-muted">Selectează ce set de chei folosește aplicația acum. Comutarea NU șterge cheile celuilalt mod.</p>
                     <div class="mt-3 grid grid-cols-2 gap-3">
-                        <label class="relative flex cursor-pointer rounded-lg border bg-white p-3 {{ $currentMode === 'live' ? 'border-red-500 ring-2 ring-coral/20' : 'border-line' }}">
+                        <label class="relative flex cursor-pointer rounded-lg border bg-white p-3 {{ $currentMode === 'live' ? 'border-coral ring-2 ring-coral/20' : 'border-line' }}">
                             <input type="radio" name="stripe_mode" value="live" {{ $currentMode === 'live' ? 'checked' : '' }} class="sr-only">
                             <div class="flex flex-col">
                                 <span class="text-sm font-semibold text-ink">🔴 LIVE</span>
@@ -715,7 +715,7 @@
 
                 <div class="flex justify-end pt-2">
                     <button type="submit"
-                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coral focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
+                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coralh focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
                         Salvează setările Stripe
                     </button>
                 </div>
@@ -826,7 +826,7 @@
 
                 <div class="flex justify-end pt-2">
                     <button type="submit"
-                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coral focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
+                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coralh focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
                         Salvează setările Email
                     </button>
                 </div>
@@ -915,7 +915,7 @@
 
                 <div class="flex justify-end pt-2">
                     <button type="submit"
-                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coral focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
+                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coralh focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
                         Salvează setările WhatsApp
                     </button>
                 </div>
@@ -1001,7 +1001,7 @@
 
                 <div class="flex justify-end pt-2">
                     <button type="submit"
-                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coral focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
+                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coralh focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
                         Salvează setările Facebook
                     </button>
                 </div>
@@ -1088,7 +1088,7 @@
 
                 <div class="flex justify-end pt-2">
                     <button type="submit"
-                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coral focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
+                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coralh focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
                         Salvează setările Instagram
                     </button>
                 </div>
@@ -1223,7 +1223,7 @@
                 </div>
 
                 <div class="pt-4 border-t border-line flex justify-end">
-                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coral">
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coralh">
                         Salvează
                     </button>
                 </div>
@@ -1248,7 +1248,7 @@
                     </div>
                 </label>
                 <div class="mt-4 flex justify-end">
-                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coral">
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coralh">
                         Salvează
                     </button>
                 </div>
@@ -1323,7 +1323,7 @@
 
                 <div class="flex justify-end pt-2">
                     <button type="submit"
-                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coral focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
+                            class="inline-flex items-center gap-2 rounded-lg bg-coral px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-coralh focus:outline-none focus:ring-2 focus:ring-coral/20 transition-colors">
                         Salvează setările de securitate
                     </button>
                 </div>
@@ -1343,7 +1343,7 @@
 
             @if(isset($extra['tenants']) && $extra['tenants']->count() > 0)
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-slate-200">
+                    <table class="min-w-full divide-y divide-line">
                         <thead class="bg-cream">
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-muted uppercase tracking-wider">Organizație</th>
@@ -1355,7 +1355,7 @@
                                 <th class="px-6 py-3 text-right text-xs font-semibold text-muted uppercase tracking-wider">Acțiuni</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-200">
+                        <tbody class="divide-y divide-line">
                             @foreach($extra['tenants'] as $t)
                                 @php
                                     $isSuspended = ($t->settings['suspended'] ?? false);

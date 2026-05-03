@@ -3,7 +3,7 @@
 @section('title', $plan ? 'Editează pachet' : 'Pachet nou')
 @section('breadcrumb')
     <a href="{{ route('admin.plans.index') }}" class="text-muted hover:text-inkSoft">Pachete & Prețuri</a>
-    <span class="mx-1.5 text-slate-300">/</span>
+    <span class="mx-1.5 text-line">/</span>
     <span class="text-ink font-medium">{{ $plan ? 'Editează: ' . $plan->name : 'Pachet nou' }}</span>
 @endsection
 
@@ -309,7 +309,7 @@
             <a href="{{ route('admin.plans.index') }}" class="text-sm text-muted hover:text-inkSoft">
                 &larr; Înapoi la pachete
             </a>
-            <button type="submit" class="px-6 py-2.5 bg-coral text-white text-sm font-medium rounded-lg hover:bg-coral transition-colors">
+            <button type="submit" class="px-6 py-2.5 bg-coral text-white text-sm font-medium rounded-lg hover:bg-coralh transition-colors">
                 {{ $plan ? 'Salvează modificările' : 'Creează pachetul' }}
             </button>
         </div>

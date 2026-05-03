@@ -50,7 +50,7 @@
 
     {{-- Models Table --}}
     <div class="bg-white rounded-xl border border-line overflow-hidden">
-        <table class="min-w-full divide-y divide-slate-200">
+        <table class="min-w-full divide-y divide-line">
             <thead class="bg-cream">
                 <tr>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-muted uppercase">Model</th>
@@ -63,7 +63,7 @@
                     <th class="px-4 py-3 text-right text-xs font-semibold text-muted uppercase">Acțiuni</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody class="divide-y divide-line">
                 @forelse($pricing as $model)
                 <tr class="{{ !$model->is_active ? 'opacity-50' : '' }}">
                     <form method="POST" action="{{ route('admin.model-pricing.update', $model) }}">
@@ -168,7 +168,7 @@
                 <input type="number" name="max_context_tokens" placeholder="128000" required
                        class="w-28 text-sm border border-line rounded-md px-3 py-2 focus:ring-coral focus:border-coral">
             </div>
-            <button type="submit" class="px-4 py-2 bg-coral text-white text-sm font-medium rounded-lg hover:bg-coral transition-colors">
+            <button type="submit" class="px-4 py-2 bg-coral text-white text-sm font-medium rounded-lg hover:bg-coralh transition-colors">
                 Adaugă
             </button>
         </form>
@@ -447,7 +447,7 @@
         <div class="px-4 py-3 border-b border-line">
             <h3 class="text-sm font-semibold text-ink">Utilizare astăzi</h3>
         </div>
-        <table class="min-w-full divide-y divide-slate-200">
+        <table class="min-w-full divide-y divide-line">
             <thead class="bg-cream">
                 <tr>
                     <th class="px-4 py-2 text-left text-xs font-semibold text-muted">Model</th>
@@ -457,7 +457,7 @@
                     <th class="px-4 py-2 text-right text-xs font-semibold text-muted">Erori</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody class="divide-y divide-line">
                 @foreach($metricsToday as $m)
                 <tr>
                     <td class="px-4 py-2 text-sm font-mono">{{ $m->model }}</td>

@@ -26,11 +26,11 @@
                 @endphp
                 <a href="{{ $count > 0 ? '?stage=' . $stageKey : '#' }}"
                    class="flex-1 min-w-[110px] rounded-xl border p-3 text-center transition-all {{ $isActive ? 'ring-2 ring-blue-500 border-blue-300' : 'border-line' }} {{ $count > 0 ? 'hover:border-blue-300 cursor-pointer' : 'opacity-50' }}">
-                    <p class="text-2xl font-bold {{ $count > 0 ? 'text-ink' : 'text-slate-300' }}">{{ $count }}</p>
+                    <p class="text-2xl font-bold {{ $count > 0 ? 'text-ink' : 'text-line' }}">{{ $count }}</p>
                     <p class="text-[10px] font-medium mt-0.5"><span class="px-1.5 py-0.5 rounded-full {{ $color }}">{{ $stageLabel }}</span></p>
                 </a>
                 @if(!$loop->last)
-                <div class="flex items-center text-slate-300 shrink-0">→</div>
+                <div class="flex items-center text-line shrink-0">→</div>
                 @endif
             @endforeach
         </div>
@@ -81,7 +81,7 @@
                     <th class="px-4 py-3"></th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody class="divide-y divide-line">
                 @forelse($leads as $lead)
                 <tr class="hover:bg-cream">
                     <td class="px-4 py-3 font-medium text-ink">{{ $lead->name ?: '—' }}</td>
@@ -89,7 +89,7 @@
                         @if($lead->phone)<a href="tel:{{ $lead->phone }}" class="text-blue-600 text-xs">{{ $lead->phone }}</a>@endif
                         @if($lead->phone && $lead->email)<br>@endif
                         @if($lead->email)<span class="text-xs text-muted">{{ $lead->email }}</span>@endif
-                        @if(!$lead->phone && !$lead->email)<span class="text-slate-300">—</span>@endif
+                        @if(!$lead->phone && !$lead->email)<span class="text-line">—</span>@endif
                     </td>
                     <td class="px-4 py-3">
                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold {{ $lead->stage_color }}">

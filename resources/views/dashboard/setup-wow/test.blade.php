@@ -30,7 +30,7 @@
     <div class="mb-6">
         <div class="flex items-center gap-2 text-xs font-semibold text-muted uppercase">
             <span class="text-coralh">Pasul 4 din 4</span>
-            <span class="text-slate-300">·</span>
+            <span class="text-line">·</span>
             <span>Test live</span>
         </div>
         <h1 class="mt-2 text-3xl font-extrabold text-ink">Vorbește cu agentul tău 🎙️</h1>
@@ -97,7 +97,7 @@
         <div class="mt-4 flex flex-col sm:flex-row sm:items-stretch gap-2">
             @if($bot)
                 <a href="{{ route('dashboard.bots.testVocal', $bot) }}" target="_blank"
-                   class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-coral text-white text-sm font-semibold hover:bg-coral shadow-sm transition">
+                   class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-coral text-white text-sm font-semibold hover:bg-coralh shadow-sm transition">
                     🎙 Testează prin voce
                 </a>
                 <a href="{{ route('dashboard.bots.edit', $bot) }}"

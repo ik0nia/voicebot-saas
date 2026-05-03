@@ -14,7 +14,7 @@
             <th class="px-5 py-3 text-xs font-medium uppercase tracking-wider text-muted">Cost</th>
             <th class="px-5 py-3 text-xs font-medium uppercase tracking-wider text-muted">Data</th>
         </tr></thead>
-        <tbody class="divide-y divide-slate-100">
+        <tbody class="divide-y divide-line">
             @forelse($calls as $call)
             <tr class="hover:bg-cream">
                 <td class="px-5 py-3"><a href="{{ route('admin.calls.show', $call) }}" class="font-medium text-coralh hover:underline">#{{ $call->id }}</a></td>

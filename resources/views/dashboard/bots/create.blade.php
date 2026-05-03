@@ -25,13 +25,13 @@
                     <div class="flex items-center justify-center w-9 h-9 rounded-full bg-coral text-white text-sm font-semibold transition-colors">1</div>
                     <span class="ml-2 text-sm font-medium text-coralh hidden sm:inline">Informații de bază</span>
                 </div>
-                <div class="w-10 sm:w-16 h-px bg-slate-300 mx-3"></div>
+                <div class="w-10 sm:w-16 h-px bg-line mx-3"></div>
                 {{-- Step 2 --}}
                 <div id="step-indicator-2" class="flex items-center">
                     <div class="flex items-center justify-center w-9 h-9 rounded-full bg-sand text-muted text-sm font-semibold transition-colors">2</div>
                     <span class="ml-2 text-sm font-medium text-muted hidden sm:inline">Prompt sistem</span>
                 </div>
-                <div class="w-10 sm:w-16 h-px bg-slate-300 mx-3"></div>
+                <div class="w-10 sm:w-16 h-px bg-line mx-3"></div>
                 {{-- Step 3 --}}
                 <div id="step-indicator-3" class="flex items-center">
                     <div class="flex items-center justify-center w-9 h-9 rounded-full bg-sand text-muted text-sm font-semibold transition-colors">3</div>

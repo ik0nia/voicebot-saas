@@ -107,7 +107,7 @@
                     <th class="px-6 py-3">Creat</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody class="divide-y divide-line">
                 @forelse($tenants as $tenant)
                 <tr class="hover:bg-cream">
                     <td class="px-6 py-3">
@@ -157,7 +157,7 @@
                     <th class="px-6 py-3">Cost</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody class="divide-y divide-line">
                 @foreach($botCosts as $bot)
                 <tr class="hover:bg-cream">
                     <td class="px-6 py-3 text-sm font-medium text-ink">{{ $bot->name }}</td>
@@ -190,7 +190,7 @@
                     <th class="px-6 py-3">Data</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody class="divide-y divide-line">
                 @forelse($recentCalls as $call)
                 <tr class="hover:bg-cream">
                     <td class="px-6 py-3 text-sm text-muted">{{ $call->tenant?->name ?? '—' }}</td>
@@ -241,7 +241,7 @@
                     <th class="px-6 py-3 text-xs font-medium uppercase tracking-wider text-muted">Data</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody class="divide-y divide-line">
                 @forelse($recentConversations as $conv)
                 <tr class="hover:bg-cream">
                     <td class="px-6 py-3 font-medium text-inkSoft">{{ $conv->bot?->name ?? '—' }}</td>

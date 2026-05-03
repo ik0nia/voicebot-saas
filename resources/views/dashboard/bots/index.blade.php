@@ -69,7 +69,7 @@
                                 </a>
                             </div>
                             <span class="shrink-0 ml-3 flex items-center gap-1.5 text-xs font-medium {{ $bot->is_active ? 'text-green-600' : 'text-muted' }}">
-                                <span class="w-2 h-2 rounded-full {{ $bot->is_active ? 'bg-green-500' : 'bg-slate-300' }}"></span>
+                                <span class="w-2 h-2 rounded-full {{ $bot->is_active ? 'bg-green-500' : 'bg-line' }}"></span>
                                 {{ $bot->is_active ? 'Activ' : 'Inactiv' }}
                             </span>
                         </div>

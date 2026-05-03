@@ -57,7 +57,7 @@
             </select>
         </div>
     @endif
-    <button type="submit" class="rounded-lg bg-coral px-4 py-2 text-sm font-semibold text-white hover:bg-coral">
+    <button type="submit" class="rounded-lg bg-coral px-4 py-2 text-sm font-semibold text-white hover:bg-coralh">
         Aplică
     </button>
 </form>
@@ -160,7 +160,7 @@
                 <th class="px-4 py-2 text-right">Total lei</th>
             </tr>
         </thead>
-        <tbody class="divide-y divide-slate-100">
+        <tbody class="divide-y divide-line">
             @forelse($grouped as $r)
                 @php
                     // Tenant-mode rows can carry a per-tenant setup-AI
@@ -171,7 +171,7 @@
                     $setup30d = $mode === 'tenant' ? ($setupAi30dByTenant[$r['id']] ?? null) : null;
                     $setup30dRon = $setup30d?->cost_ron ?? 0;
                     $highlight = match(true) {
-                        $setup30dRon > 50 => 'bg-coralsoft border-l-4 border-red-500',
+                        $setup30dRon > 50 => 'bg-coralsoft border-l-4 border-coral',
                         $setup30dRon > 10 => 'bg-amber-50 border-l-4 border-amber-500',
                         default => '',
                     };
@@ -205,7 +205,7 @@
                                 </a>
                                 <span class="block text-[10px] text-muted">{{ $setupRow->call_count }} req</span>
                             @else
-                                <span class="text-slate-300">—</span>
+                                <span class="text-line">—</span>
                             @endif
                         </td>
                     @endif
@@ -254,7 +254,7 @@
                     <th class="px-4 py-2 text-right">Cost lei</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody class="divide-y divide-line">
                 @foreach($platform as $p)
                     <tr class="hover:bg-cream">
                         <td class="px-4 py-2 font-medium text-ink">{{ $p->purpose ?? '—' }}</td>
@@ -281,7 +281,7 @@
                 — enforcement-ul efectiv e muncă viitoare.
             </p>
         </div>
-        <div class="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-200">
+        <div class="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-line">
             {{-- By cost --}}
             <div class="p-4">
                 <p class="text-xs font-semibold text-inkSoft mb-2">Top 5 după cost</p>
@@ -330,7 +330,7 @@
                                                        x-model="limitValue"
                                                        class="rounded border border-line px-2 py-1 text-sm font-mono w-32" required>
                                             </div>
-                                            <button type="submit" class="rounded bg-coral px-3 py-1.5 text-xs font-semibold text-white hover:bg-coral">Salvează</button>
+                                            <button type="submit" class="rounded bg-coral px-3 py-1.5 text-xs font-semibold text-white hover:bg-coralh">Salvează</button>
                                             <span class="text-xs text-muted">Enforcement în follow-up; acum doar persistă valoarea.</span>
                                         </form>
                                     </td>

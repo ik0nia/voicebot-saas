@@ -5,7 +5,7 @@
                 <button onclick="closePromptModal()" class="text-muted hover:text-muted transition-colors text-xl leading-none">&times;</button>
             </div>
             <div class="p-6 flex-1 overflow-y-auto">
-                <textarea id="prompt-textarea" class="w-full h-64 rounded-lg border border-line p-4 text-sm font-mono resize-y focus:border-red-300 focus:ring-1 focus:ring-red-300 transition-colors">{{ $bot->system_prompt }}</textarea>
+                <textarea id="prompt-textarea" class="w-full h-64 rounded-lg border border-line p-4 text-sm font-mono resize-y focus:border-coral/40 focus:ring-1 focus:ring-red-300 transition-colors">{{ $bot->system_prompt }}</textarea>
             </div>
             <div class="px-6 py-4 border-t flex justify-end gap-3">
                 <button onclick="closePromptModal()" class="px-4 py-2 text-sm font-medium rounded-lg border border-line text-inkSoft hover:bg-cream transition-colors">Anuleaza</button>

@@ -200,7 +200,7 @@
                 @if(!empty($knowledgeGaps['suggestions']))
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-5">
                         @foreach($knowledgeGaps['suggestions'] as $suggestion)
-                            <div class="rounded-lg border border-line p-4 hover:border-red-300 hover:bg-coralsoft/30 transition-colors">
+                            <div class="rounded-lg border border-line p-4 hover:border-coral/40 hover:bg-coralsoft/30 transition-colors">
                                 <div class="flex items-center gap-2 mb-2">
                                     <span class="text-lg">{{ $suggestion['icon'] ?? '📄' }}</span>
                                     <h4 class="text-sm font-semibold text-ink">{{ $suggestion['title'] }}</h4>

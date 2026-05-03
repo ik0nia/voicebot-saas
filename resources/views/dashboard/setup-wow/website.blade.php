@@ -7,7 +7,7 @@
     <div class="mb-8">
         <div class="flex items-center gap-2 text-xs font-semibold text-muted uppercase">
             <span class="text-coralh">Pasul 2 din 4</span>
-            <span class="text-slate-300">·</span>
+            <span class="text-line">·</span>
             <span>Site</span>
         </div>
         <h1 class="mt-2 text-3xl font-extrabold text-ink">Despre afacerea ta</h1>
@@ -40,7 +40,7 @@
 
         <div class="flex justify-between pt-2">
             <a href="{{ route('dashboard.setup-wow.step', ['step' => 'niche']) }}" class="text-sm text-muted hover:text-ink">← Înapoi</a>
-            <button type="submit" class="px-6 py-2.5 rounded-lg bg-coral text-white text-sm font-semibold hover:bg-coral">Continuă →</button>
+            <button type="submit" class="px-6 py-2.5 rounded-lg bg-coral text-white text-sm font-semibold hover:bg-coralh">Continuă →</button>
         </div>
     </form>
 </div>

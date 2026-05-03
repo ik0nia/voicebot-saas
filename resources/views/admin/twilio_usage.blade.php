@@ -23,7 +23,7 @@
                 <option value="allTime"   {{ $window === 'allTime' ? 'selected' : '' }}>Tot</option>
             </select>
         </label>
-        <button class="rounded-lg bg-coral text-white px-4 py-1.5 text-sm hover:bg-coral">Aplică</button>
+        <button class="rounded-lg bg-coral text-white px-4 py-1.5 text-sm hover:bg-coralh">Aplică</button>
     </form>
 
     <div class="bg-white rounded-xl border border-line overflow-hidden">
@@ -39,7 +39,7 @@
                     <th class="px-4 py-3 text-right font-semibold">Numere</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody class="divide-y divide-line">
                 @forelse($rows as $r)
                     <tr class="hover:bg-cream">
                         <td class="px-4 py-3 font-medium text-ink">

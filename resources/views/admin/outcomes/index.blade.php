@@ -52,7 +52,7 @@
             @endforeach
         </select>
     </div>
-    <button type="submit" class="rounded-lg bg-coral px-4 py-2 text-sm font-semibold text-white hover:bg-coral">Aplică</button>
+    <button type="submit" class="rounded-lg bg-coral px-4 py-2 text-sm font-semibold text-white hover:bg-coralh">Aplică</button>
 </form>
 
 {{-- Spend vs value card --}}
@@ -123,7 +123,7 @@
                 <th class="px-4 py-2 text-right">Conversații</th>
             </tr>
         </thead>
-        <tbody class="divide-y divide-slate-100">
+        <tbody class="divide-y divide-line">
             @forelse($grouped as $r)
                 <tr class="hover:bg-cream">
                     <td class="px-4 py-2 font-medium text-ink">{{ $r['name'] }}</td>

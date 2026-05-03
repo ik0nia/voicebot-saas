@@ -3,7 +3,7 @@
 @section('title', 'Lead — ' . $lead->name)
 @section('breadcrumb')
     <a href="{{ route('admin.leads.index') }}" class="text-muted hover:text-ink">Lead-uri</a>
-    <span class="text-slate-300 mx-1">/</span>
+    <span class="text-line mx-1">/</span>
     <span class="text-ink font-medium">{{ $lead->name }}</span>
 @endsection
 
@@ -41,7 +41,7 @@
 
         {{-- Replies thread --}}
         @foreach($lead->replies as $r)
-            <div class="rounded-xl p-5 {{ $r->direction === 'out' ? 'bg-coralsoft border border-red-100' : 'bg-white border border-line' }}">
+            <div class="rounded-xl p-5 {{ $r->direction === 'out' ? 'bg-coralsoft border border-coralsoft' : 'bg-white border border-line' }}">
                 <div class="flex items-center justify-between gap-2 mb-2">
                     <p class="text-sm font-semibold text-ink">
                         {{ $r->direction === 'out' ? ('Sambla — ' . ($r->sender?->name ?? 'Admin')) : $lead->name }}
@@ -67,7 +67,7 @@
                     <textarea name="body" rows="6" required placeholder="Scrie răspunsul tău…" class="w-full rounded-lg border border-line px-3 py-2 text-sm"></textarea>
                 </div>
                 <div class="flex justify-end">
-                    <button type="submit" class="rounded-lg bg-coral px-5 py-2 text-sm font-semibold text-white hover:bg-coral">
+                    <button type="submit" class="rounded-lg bg-coral px-5 py-2 text-sm font-semibold text-white hover:bg-coralh">
                         Trimite
                     </button>
                 </div>

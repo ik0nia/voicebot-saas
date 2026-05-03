@@ -7,7 +7,7 @@
     <div class="mb-8">
         <div class="flex items-center gap-2 text-xs font-semibold text-muted uppercase">
             <span class="text-coralh">Pasul 3 din 4</span>
-            <span class="text-slate-300">·</span>
+            <span class="text-line">·</span>
             <span>Agent</span>
         </div>
         <h1 class="mt-2 text-3xl font-extrabold text-ink">Agentul tău</h1>
@@ -47,7 +47,7 @@
                     <label class="cursor-pointer">
                         <input type="radio" name="voice_style" value="{{ $key }}" class="peer sr-only"
                                @if(old('voice_style', 'professional') === $key) checked @endif>
-                        <div class="p-3 rounded-lg border-2 border-line peer-checked:border-red-500 peer-checked:bg-coralsoft transition-colors">
+                        <div class="p-3 rounded-lg border-2 border-line peer-checked:border-coral peer-checked:bg-coralsoft transition-colors">
                             <p class="font-semibold text-sm text-ink">{{ $info[0] }}</p>
                             <p class="text-xs text-muted mt-0.5">{{ $info[1] }}</p>
                         </div>
@@ -58,7 +58,7 @@
 
         <div class="flex justify-between pt-2">
             <a href="{{ route('dashboard.setup-wow.step', ['step' => 'website']) }}" class="text-sm text-muted hover:text-ink">← Înapoi</a>
-            <button type="submit" class="px-6 py-2.5 rounded-lg bg-coral text-white text-sm font-semibold hover:bg-coral">Creează și testează →</button>
+            <button type="submit" class="px-6 py-2.5 rounded-lg bg-coral text-white text-sm font-semibold hover:bg-coralh">Creează și testează →</button>
         </div>
     </form>
 </div>

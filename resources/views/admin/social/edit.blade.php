@@ -168,7 +168,7 @@
                         <button type="button" id="btnDuplicate"
                             class="px-3 py-2 text-xs font-medium text-inkSoft bg-white border border-line rounded-lg hover:bg-cream">📋 Duplică</button>
                         <button type="button" id="btnReject"
-                            class="px-3 py-2 text-xs font-medium text-coralh bg-white border border-red-300 rounded-lg hover:bg-coralsoft">❌ Refuză</button>
+                            class="px-3 py-2 text-xs font-medium text-coralh bg-white border border-coral/40 rounded-lg hover:bg-coralsoft">❌ Refuză</button>
                     </div>
                     <button type="button" id="btnDelete"
                         class="w-full px-3 py-2 text-xs font-semibold text-white bg-slate-700 rounded-lg hover:bg-slate-800">
@@ -181,13 +181,13 @@
                     <p class="text-xs font-semibold text-coralh">De ce refuzi?</p>
                     <div class="flex flex-wrap gap-1">
                         @foreach(['text' => 'Text', 'tone' => 'Ton', 'length' => 'Lungime', 'image' => 'Imagine', 'topic' => 'Subiect', 'other' => 'Altceva'] as $val => $label)
-                            <button type="button" data-cat="{{ $val }}" class="reject-chip px-2 py-1 text-[11px] font-medium border border-red-300 text-coralh rounded-full hover:bg-coralsoft">{{ $label }}</button>
+                            <button type="button" data-cat="{{ $val }}" class="reject-chip px-2 py-1 text-[11px] font-medium border border-coral/40 text-coralh rounded-full hover:bg-coralsoft">{{ $label }}</button>
                         @endforeach
                     </div>
                     <textarea id="rejectFeedback" rows="2" placeholder="Ce nu merge? (opțional)"
-                        class="w-full text-xs rounded border-red-300 focus:border-coral focus:ring-coral"></textarea>
+                        class="w-full text-xs rounded border-coral/40 focus:border-coral focus:ring-coral"></textarea>
                     <div class="flex gap-2">
-                        <button type="button" id="btnRejectConfirm" class="flex-1 px-3 py-1.5 text-xs font-semibold text-white bg-coral rounded hover:bg-coral">Confirmă refuz</button>
+                        <button type="button" id="btnRejectConfirm" class="flex-1 px-3 py-1.5 text-xs font-semibold text-white bg-coral rounded hover:bg-coralh">Confirmă refuz</button>
                         <button type="button" id="btnRejectCancel" class="px-3 py-1.5 text-xs text-muted">Anulează</button>
                     </div>
                 </div>

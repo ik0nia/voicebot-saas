@@ -88,7 +88,7 @@
                                 <input type="text" id="textMessage" placeholder="Scrieti un mesaj..."
                                        class="flex-1 rounded-full bg-white/10 border border-white/20 text-white text-sm px-4 py-2.5 placeholder-white/40 focus:outline-none focus:border-coral/50 focus:ring-1 focus:ring-coral/30">
                                 <button id="sendTextBtn" onclick="sendTextMessage()"
-                                        class="w-10 h-10 rounded-full bg-coral hover:bg-coral flex items-center justify-center transition-colors shrink-0">
+                                        class="w-10 h-10 rounded-full bg-coral hover:bg-coralh flex items-center justify-center transition-colors shrink-0">
                                     <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                                     </svg>

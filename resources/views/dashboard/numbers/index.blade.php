@@ -189,7 +189,7 @@
                             <th class="px-4 py-3 font-semibold text-muted text-right">Acțiuni</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody class="divide-y divide-line">
                         @foreach($numbers as $phoneNumber)
                             <tr class="hover:bg-cream transition-colors" id="row-{{ $phoneNumber->id }}">
                                 {{-- Număr --}}
@@ -407,7 +407,7 @@
 
                 var div = document.createElement('div');
                 div.innerHTML =
-                    '<label class="flex items-center gap-3 p-3 rounded-lg border border-line cursor-pointer hover:border-red-300 hover:bg-coralsoft/50 transition-all' + (i === 0 ? '' : '') + '">' +
+                    '<label class="flex items-center gap-3 p-3 rounded-lg border border-line cursor-pointer hover:border-coral/40 hover:bg-coralsoft/50 transition-all' + (i === 0 ? '' : '') + '">' +
                         '<input type="radio" name="number_selection" value="' + num.number + '" class="w-4 h-4 text-coralh border-line focus:ring-coral">' +
                         '<div class="flex-1 min-w-0">' +
                             '<div class="flex items-center gap-2">' +
@@ -431,9 +431,9 @@
                     submitBtn.disabled = false;
 
                     list.querySelectorAll('label').forEach(function(l) {
-                        l.classList.remove('border-red-500', 'bg-coralsoft');
+                        l.classList.remove('border-coral', 'bg-coralsoft');
                     });
-                    this.closest('label').classList.add('border-red-500', 'bg-coralsoft');
+                    this.closest('label').classList.add('border-coral', 'bg-coralsoft');
                 });
             });
         })

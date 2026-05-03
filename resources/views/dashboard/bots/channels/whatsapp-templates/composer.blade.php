@@ -193,7 +193,7 @@
                         @if($previewBody)
                             <p class="text-sm text-inkSoft whitespace-pre-line">{{ $previewBody }}</p>
                         @else
-                            <p class="text-sm text-slate-300 italic">— body apare aici —</p>
+                            <p class="text-sm text-line italic">— body apare aici —</p>
                         @endif
                         @if(!empty($footerComp['text']))
                             <p class="text-xs text-muted mt-2">{{ $footerComp['text'] }}</p>

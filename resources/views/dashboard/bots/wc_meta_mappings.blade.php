@@ -45,7 +45,7 @@
                         <h2 class="text-sm font-semibold text-ink">{{ $mappings->count() }} câmpuri detectate</h2>
                         <p class="text-xs text-muted mt-0.5">Sortate după câte produse le folosesc.</p>
                     </div>
-                    <button type="submit" class="rounded-lg bg-coral px-4 py-2 text-sm font-semibold text-white hover:bg-coral">
+                    <button type="submit" class="rounded-lg bg-coral px-4 py-2 text-sm font-semibold text-white hover:bg-coralh">
                         Salvează mapările
                     </button>
                 </div>
@@ -59,7 +59,7 @@
                             <th class="px-5 py-2 text-left font-semibold">Mapează la</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody class="divide-y divide-line">
                         @foreach($mappings as $idx => $m)
                             <tr class="hover:bg-cream/50">
                                 <td class="px-5 py-3 align-top">
@@ -116,7 +116,7 @@
                 </table>
 
                 <div class="px-5 py-3 border-t border-line bg-cream text-right">
-                    <button type="submit" class="rounded-lg bg-coral px-4 py-2 text-sm font-semibold text-white hover:bg-coral">
+                    <button type="submit" class="rounded-lg bg-coral px-4 py-2 text-sm font-semibold text-white hover:bg-coralh">
                         Salvează mapările
                     </button>
                 </div>

@@ -104,7 +104,7 @@
                     <span class="relative inline-block w-10 h-5">
                         <input type="checkbox" class="sr-only peer" x-model="advancedMode"
                                @change="$el.form.requestSubmit()">
-                        <span class="block w-10 h-5 rounded-full bg-slate-300 peer-checked:bg-coral transition"></span>
+                        <span class="block w-10 h-5 rounded-full bg-line peer-checked:bg-coral transition"></span>
                         <span class="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full transition"
                               :class="advancedMode ? 'translate-x-5' : ''"></span>
                     </span>
@@ -138,7 +138,7 @@
                 <p class="text-sm text-muted">Ce oferi. Editează inline — Enter salvează.</p>
             </div>
             <button type="button" @click="openServiceModal()"
-                    class="px-4 py-2 text-sm font-semibold rounded-lg bg-coral text-white hover:bg-coral">
+                    class="px-4 py-2 text-sm font-semibold rounded-lg bg-coral text-white hover:bg-coralh">
                 + Adaugă serviciu
             </button>
         </div>
@@ -151,7 +151,7 @@
 
         <template x-if="services.length > 0">
             <div class="overflow-x-auto border border-line rounded-lg">
-                <table class="min-w-full text-sm divide-y divide-slate-200">
+                <table class="min-w-full text-sm divide-y divide-line">
                     <thead class="bg-cream text-xs font-semibold uppercase text-muted">
                         <tr>
                             <th class="px-3 py-2 text-left">Nume</th>
@@ -162,7 +162,7 @@
                             <th class="px-3 py-2 w-24"></th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100 bg-white">
+                    <tbody class="divide-y divide-line bg-white">
                         <template x-for="s in services" :key="s.id">
                             <tr class="hover:bg-cream/50">
                                 <td class="px-3 py-2">
@@ -230,7 +230,7 @@
                     </div>
                     <div class="flex justify-end gap-2 pt-2">
                         <button type="button" @click="showServiceModal = false" class="px-4 py-2 text-sm rounded-lg border border-line text-inkSoft">Renunță</button>
-                        <button type="submit" class="px-4 py-2 text-sm font-semibold rounded-lg bg-coral text-white hover:bg-coral">Adaugă</button>
+                        <button type="submit" class="px-4 py-2 text-sm font-semibold rounded-lg bg-coral text-white hover:bg-coralh">Adaugă</button>
                     </div>
                 </form>
             </div>
@@ -245,7 +245,7 @@
                 <p class="text-sm text-muted">Cine poate prelua programări. Lasă „Cabinetul" dacă ești singur.</p>
             </div>
             <button type="button" @click="openStaffModal()"
-                    class="px-4 py-2 text-sm font-semibold rounded-lg bg-coral text-white hover:bg-coral">
+                    class="px-4 py-2 text-sm font-semibold rounded-lg bg-coral text-white hover:bg-coralh">
                 + Adaugă persoană
             </button>
         </div>
@@ -258,7 +258,7 @@
 
         <template x-if="staff.length > 0">
             <div class="overflow-x-auto border border-line rounded-lg">
-                <table class="min-w-full text-sm divide-y divide-slate-200">
+                <table class="min-w-full text-sm divide-y divide-line">
                     <thead class="bg-cream text-xs font-semibold uppercase text-muted">
                         <tr>
                             <th class="px-3 py-2 text-left">Nume</th>
@@ -268,7 +268,7 @@
                             <th class="px-3 py-2 w-24"></th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100 bg-white">
+                    <tbody class="divide-y divide-line bg-white">
                         <template x-for="p in staff" :key="p.id">
                             <tr class="hover:bg-cream/50">
                                 <td class="px-3 py-2">
@@ -342,7 +342,7 @@
                     <label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" name="is_active" value="1" checked class="rounded"> Activ</label>
                     <div class="flex justify-end gap-2 pt-2">
                         <button type="button" @click="showStaffModal = false" class="px-4 py-2 text-sm rounded-lg border border-line text-inkSoft">Renunță</button>
-                        <button type="submit" class="px-4 py-2 text-sm font-semibold rounded-lg bg-coral text-white hover:bg-coral">Adaugă</button>
+                        <button type="submit" class="px-4 py-2 text-sm font-semibold rounded-lg bg-coral text-white hover:bg-coralh">Adaugă</button>
                     </div>
                 </form>
             </div>

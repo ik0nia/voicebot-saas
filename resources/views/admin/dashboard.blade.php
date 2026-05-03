@@ -241,7 +241,7 @@
         </div>
         <div class="space-y-2">
             @foreach($alerts->take(8) as $alert)
-            <div class="flex items-center justify-between bg-white rounded-xl px-4 py-2.5 border border-red-100">
+            <div class="flex items-center justify-between bg-white rounded-xl px-4 py-2.5 border border-coralsoft">
                 <div class="flex items-center gap-3">
                     <span>{{ $alert['status'] === 'critical' ? '🔴' : '🟡' }}</span>
                     <a href="{{ route('admin.tenants.show', $alert['id']) }}" class="text-sm font-medium text-ink hover:text-blue-600">{{ $alert['name'] }}</a>
@@ -297,19 +297,19 @@
                         <td class="px-3 py-2.5 text-center text-sm text-muted">{{ $th['bots_count'] }}</td>
                         <td class="px-3 py-2.5 text-center text-sm text-muted">{{ $th['conversations_count'] }}</td>
                         <td class="px-3 py-2.5 text-center">
-                            @if($th['woo_connected'])<span class="text-emerald-500">✓</span>@else<span class="text-slate-300">—</span>@endif
+                            @if($th['woo_connected'])<span class="text-emerald-500">✓</span>@else<span class="text-line">—</span>@endif
                         </td>
-                        <td class="px-3 py-2.5 text-center text-sm {{ $th['products'] > 0 ? 'text-muted' : 'text-slate-300' }}">{{ number_format($th['products']) }}</td>
+                        <td class="px-3 py-2.5 text-center text-sm {{ $th['products'] > 0 ? 'text-muted' : 'text-line' }}">{{ number_format($th['products']) }}</td>
                         <td class="px-3 py-2.5 text-center text-sm {{ $th['knowledge'] >= 3 ? 'text-muted' : 'text-red-400' }}">{{ $th['knowledge'] }}</td>
                         <td class="px-3 py-2.5 text-center">
-                            @if($th['has_voice'])<span class="text-emerald-500">✓</span>@else<span class="text-slate-300">—</span>@endif
+                            @if($th['has_voice'])<span class="text-emerald-500">✓</span>@else<span class="text-line">—</span>@endif
                         </td>
                         <td class="px-3 py-2.5 text-center">
                             @if($th['billing_complete'])<span class="text-emerald-500">✓</span>@else<span class="text-red-400">✗</span>@endif
                         </td>
                         <td class="px-4 py-2.5">
                             @foreach(array_slice($th['warnings'], 0, 2) as $w)
-                            <span class="text-[10px] {{ str_contains($w, 'Limită') ? 'text-coral' : 'text-amber-500' }}">{{ $w }}</span>@if(!$loop->last)<span class="text-slate-300"> · </span>@endif
+                            <span class="text-[10px] {{ str_contains($w, 'Limită') ? 'text-coral' : 'text-amber-500' }}">{{ $w }}</span>@if(!$loop->last)<span class="text-line"> · </span>@endif
                             @endforeach
                         </td>
                         <td class="px-3 py-2.5">

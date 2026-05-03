@@ -38,7 +38,7 @@
                                     <th class="text-left px-4 py-3 text-xs font-medium text-muted uppercase tracking-wider">Data</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-100">
+                            <tbody class="divide-y divide-line">
                                 @foreach($recentCalls as $call)
                                     <tr class="hover:bg-cream transition-colors">
                                         <td class="px-4 py-3 font-mono text-xs text-muted">#{{ $call->id }}</td>

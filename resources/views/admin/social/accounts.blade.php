@@ -3,7 +3,7 @@
 @section('title', 'Conturi Social Media')
 @section('breadcrumb')
     <a href="{{ route('admin.social.index') }}" class="text-muted hover:text-muted">Social Media</a>
-    <span class="mx-1.5 text-slate-300">/</span>
+    <span class="mx-1.5 text-line">/</span>
     Conturi
 @endsection
 
@@ -54,7 +54,7 @@
                     <p class="text-xs text-muted mt-1">Modelul Gemini pentru imagini</p>
                 </div>
             </div>
-            <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-coral rounded-lg hover:bg-coral">
+            <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-coral rounded-lg hover:bg-coralh">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                 Salveaza API Keys
             </button>
@@ -85,7 +85,7 @@
                     @if($account)
                         <span class="w-2 h-2 rounded-full bg-green-500" title="Configurat"></span>
                     @else
-                        <span class="w-2 h-2 rounded-full bg-slate-300" title="Neconfigurat"></span>
+                        <span class="w-2 h-2 rounded-full bg-line" title="Neconfigurat"></span>
                     @endif
                 </div>
                 <button type="button" onclick="generateBio('{{ $platformKey }}')"
@@ -115,7 +115,7 @@
                                class="w-full rounded-lg border-line text-sm focus:border-coral focus:ring-coral">
                     </div>
                 </div>
-                <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-coral rounded-lg hover:bg-coral">
+                <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-coral rounded-lg hover:bg-coralh">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                     Salveaza
                 </button>

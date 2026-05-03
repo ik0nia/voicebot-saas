@@ -17,7 +17,7 @@
     day objects at form submit and builds the `staff[id][weekday]`
     payload — see _hours-editor usage in booking/index.blade.php).
 --}}
-<div class="border border-line rounded-lg divide-y divide-slate-100 bg-cream/30">
+<div class="border border-line rounded-lg divide-y divide-line bg-cream/30">
     <template x-for="(day, idx) in days" :key="idx">
         <div class="grid grid-cols-12 gap-2 items-center px-3 py-2.5">
             <div class="col-span-12 sm:col-span-2 text-sm font-medium text-inkSoft" x-text="day.label"></div>

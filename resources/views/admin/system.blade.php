@@ -204,7 +204,7 @@
                                 <th class="px-4 py-3 text-right font-semibold text-muted">Tokens (In/Out)</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100">
+                        <tbody class="divide-y divide-line">
                             @foreach($aiHealth['by_provider'] as $row)
                                 <tr class="hover:bg-cream">
                                     <td class="px-4 py-2.5 font-medium text-ink">{{ $row->provider }}</td>
@@ -255,7 +255,7 @@
                     </form>
                     <form method="POST" action="{{ route('admin.system.clearFailed') }}">
                         @csrf
-                        <button type="submit" class="px-3 py-2 text-sm font-medium text-white bg-coral rounded-lg hover:bg-coral" onclick="return confirm('Sigur stergi toate job-urile esuate?')">Clear All Failed</button>
+                        <button type="submit" class="px-3 py-2 text-sm font-medium text-white bg-coral rounded-lg hover:bg-coralh" onclick="return confirm('Sigur stergi toate job-urile esuate?')">Clear All Failed</button>
                     </form>
                     <form method="POST" action="{{ route('admin.system.reprocessKb') }}">
                         @csrf
@@ -276,7 +276,7 @@
                                 <th class="px-4 py-2.5 text-right font-semibold text-muted">Count</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100">
+                        <tbody class="divide-y divide-line">
                             @foreach($queues['failed_types'] as $ft)
                                 <tr class="hover:bg-cream">
                                     <td class="px-4 py-2 text-inkSoft">{{ $ft->job_type ?? 'Unknown' }}</td>
@@ -390,7 +390,7 @@
                                 <th class="px-4 py-2.5 text-left font-semibold text-muted">Last Error</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100">
+                        <tbody class="divide-y divide-line">
                             @foreach($kbHealth['failed_details'] as $fd)
                                 <tr class="hover:bg-cream">
                                     <td class="px-4 py-2 text-inkSoft">
@@ -444,7 +444,7 @@
                                 <th class="px-4 py-2.5 text-right font-semibold text-muted">Count</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100">
+                        <tbody class="divide-y divide-line">
                             @foreach($searchQuality['top_failed'] as $sq)
                                 <tr class="hover:bg-cream">
                                     <td class="px-4 py-2 text-inkSoft">{{ \Illuminate\Support\Str::limit($sq->query, 100) }}</td>
@@ -499,7 +499,7 @@
                         <h4 class="text-sm font-semibold text-inkSoft">Recent Low Ratings (1-2)</h4>
                     </div>
                     @if(!empty($ratings['recent_low']) && count($ratings['recent_low']))
-                        <div class="divide-y divide-slate-100 max-h-64 overflow-y-auto">
+                        <div class="divide-y divide-line max-h-64 overflow-y-auto">
                             @foreach($ratings['recent_low'] as $lr)
                                 <div class="px-4 py-2.5">
                                     <div class="flex items-center gap-2">
@@ -538,7 +538,7 @@
                             <th class="px-4 py-3 text-left font-semibold text-muted">Created</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody class="divide-y divide-line">
                         @foreach($experiments as $exp)
                             <tr class="hover:bg-cream">
                                 <td class="px-4 py-2.5 font-medium text-ink">{{ $exp->name ?? 'Experiment #' . $exp->id }}</td>
@@ -578,7 +578,7 @@
                             <th class="px-4 py-3 text-center font-semibold text-muted">Action</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody class="divide-y divide-line">
                         @foreach($errors as $err)
                             <tr class="hover:bg-cream">
                                 <td class="px-4 py-2.5 text-muted font-mono text-xs">{{ $err['id'] }}</td>

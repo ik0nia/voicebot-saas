@@ -306,7 +306,7 @@
         <div class="flex items-center justify-between">
             <a href="{{ route('admin.niches.index') }}" class="text-sm text-muted hover:text-inkSoft">← Înapoi la listă</a>
             <button type="submit"
-                    class="px-5 py-2.5 bg-coral text-white text-sm font-semibold rounded-lg hover:bg-coral transition-colors">
+                    class="px-5 py-2.5 bg-coral text-white text-sm font-semibold rounded-lg hover:bg-coralh transition-colors">
                 {{ $isEdit ? 'Salvează modificările' : 'Creează nișa' }}
             </button>
         </div>

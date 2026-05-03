@@ -105,7 +105,7 @@
                             <th class="px-5 py-3 font-medium text-muted">Acțiuni</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody class="divide-y divide-line">
                         @foreach($conversations as $convo)
                             <tr class="hover:bg-cream/50 transition-colors">
                                 <td class="whitespace-nowrap px-5 py-3 text-muted font-mono text-xs">

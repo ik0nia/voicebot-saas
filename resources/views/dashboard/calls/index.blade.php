@@ -119,7 +119,7 @@
                             <th class="px-5 py-3 font-medium text-muted">Acțiuni</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody class="divide-y divide-line">
                         @foreach($calls as $call)
                             <tr class="hover:bg-cream/50 transition-colors">
                                 {{-- ID --}}
@@ -194,7 +194,7 @@
                                             {{ $call->sentimentEmoji() }}
                                         </span>
                                     @else
-                                        <span class="text-slate-300">—</span>
+                                        <span class="text-line">—</span>
                                     @endif
                                 </td>
 

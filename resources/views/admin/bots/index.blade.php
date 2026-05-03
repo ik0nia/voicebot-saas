@@ -4,7 +4,7 @@
 <div class="flex items-center justify-between mb-6">
     <h1 class="text-2xl font-bold text-ink">Toti botii</h1>
     <form class="flex gap-2">
-        <input type="text" name="search" value="{{ request('search') }}" placeholder="Cauta bot..." class="rounded-lg border border-line px-3 py-2 text-sm focus:border-red-300 focus:ring-1 focus:ring-red-300">
+        <input type="text" name="search" value="{{ request('search') }}" placeholder="Cauta bot..." class="rounded-lg border border-line px-3 py-2 text-sm focus:border-coral/40 focus:ring-1 focus:ring-red-300">
         <button class="px-4 py-2 text-sm font-medium rounded-lg bg-coral text-white hover:bg-coralh">Cauta</button>
     </form>
 </div>
@@ -18,7 +18,7 @@
             <th class="px-5 py-3 text-xs font-medium uppercase tracking-wider text-muted">Apeluri</th>
             <th class="px-5 py-3 text-xs font-medium uppercase tracking-wider text-muted">Creat</th>
         </tr></thead>
-        <tbody class="divide-y divide-slate-100">
+        <tbody class="divide-y divide-line">
             @forelse($bots as $bot)
             <tr class="hover:bg-cream transition-colors">
                 <td class="px-5 py-3"><a href="{{ route('admin.bots.show', $bot) }}" class="font-medium text-coralh hover:underline">{{ $bot->name }}</a></td>

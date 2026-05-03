@@ -73,7 +73,7 @@
                 <h4 class="text-sm font-semibold text-ink">Rezultate scanare</h4>
                 <div class="flex items-center gap-2">
                     <button onclick="selectAllScanResults(true)" class="text-xs text-coralh hover:underline">Selecteaza toate</button>
-                    <span class="text-slate-300">|</span>
+                    <span class="text-line">|</span>
                     <button onclick="selectAllScanResults(false)" class="text-xs text-muted hover:underline">Deselecteaza</button>
                 </div>
             </div>
@@ -255,7 +255,7 @@
         scanPagesData.forEach(function(page) {
             var statusDot = page.status === 'processed' ? 'bg-green-400' :
                             page.status === 'duplicate' ? 'bg-yellow-400' :
-                            page.status === 'failed' ? 'bg-red-400' : 'bg-slate-300';
+                            page.status === 'failed' ? 'bg-red-400' : 'bg-line';
             html += '<div class="flex items-center gap-2 px-2 py-1 rounded hover:bg-cream">';
             html += '  <span class="w-1.5 h-1.5 rounded-full ' + statusDot + ' shrink-0"></span>';
             var pageLabel = (page.title || page.url || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');

@@ -18,7 +18,7 @@
                 <p class="text-sm text-muted">Gestionează pachetele disponibile pentru clienți</p>
             </div>
         </div>
-        <a href="{{ route('admin.plans.create') }}" class="px-4 py-2 bg-coral text-white text-sm font-medium rounded-lg hover:bg-coral transition-colors flex items-center gap-2">
+        <a href="{{ route('admin.plans.create') }}" class="px-4 py-2 bg-coral text-white text-sm font-medium rounded-lg hover:bg-coralh transition-colors flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
             Adaugă pachet
         </a>
@@ -74,7 +74,7 @@
             @else
                 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     @foreach($typePlans as $plan)
-                        <div class="bg-white rounded-xl border {{ $plan->is_popular ? 'border-red-300 ring-2 ring-red-100' : 'border-line' }} p-5 relative {{ !$plan->is_active ? 'opacity-60' : '' }}">
+                        <div class="bg-white rounded-xl border {{ $plan->is_popular ? 'border-coral/40 ring-2 ring-red-100' : 'border-line' }} p-5 relative {{ !$plan->is_active ? 'opacity-60' : '' }}">
                             {{-- Popular / Custom badges --}}
                             <div class="absolute -top-2.5 left-4 flex gap-1">
                                 @if($plan->is_popular)
