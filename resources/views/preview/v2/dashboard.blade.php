@@ -6,6 +6,8 @@ $kpis = [
         'delta' => '+12%',
         'deltaDir' => 'up',
         'sub' => 'vs ieri (42)',
+        'tint' => 'sky',
+        'icon' => '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 5a2 2 0 012-2h3l2 4-2 1a11 11 0 005 5l1-2 4 2v3a2 2 0 01-2 2A16 16 0 013 5z"/></svg>',
     ],
     [
         'label' => 'Leads săptămâna',
@@ -13,6 +15,8 @@ $kpis = [
         'delta' => '+18%',
         'deltaDir' => 'up',
         'sub' => 'vs săpt. trecută',
+        'tint' => 'peach',
+        'icon' => '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>',
     ],
     [
         'label' => 'Agenți activi',
@@ -20,6 +24,8 @@ $kpis = [
         'delta' => '1 atenție',
         'deltaDir' => 'warn',
         'sub' => 'Estetică Ploiești · health 71%',
+        'tint' => 'sun',
+        'icon' => '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a3 3 0 00-3 3v6a3 3 0 006 0V5a3 3 0 00-3-3z"/><path d="M19 11a7 7 0 11-14 0M12 18v3"/></svg>',
     ],
     [
         'label' => 'Următoarea factură',
@@ -27,7 +33,16 @@ $kpis = [
         'delta' => 'estimat',
         'deltaDir' => 'neutral',
         'sub' => '18 mai · plan Professional',
+        'tint' => 'lilac',
+        'icon' => '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>',
     ],
+];
+
+$kpiTints = [
+    'sky'   => ['bg' => 'bg-[#E0EBF7]', 'text' => 'text-[#1E40AF]'],
+    'peach' => ['bg' => 'bg-[#FFE4D2]', 'text' => 'text-[#9A3412]'],
+    'sun'   => ['bg' => 'bg-[#FAF1C2]', 'text' => 'text-[#854D0E]'],
+    'lilac' => ['bg' => 'bg-[#E6DFF3]', 'text' => 'text-[#5B21B6]'],
 ];
 
 // 7 zile · apeluri (azi e ultimul)
@@ -113,15 +128,16 @@ tailwind.config = {
 };
 </script>
 <style>
-  body { font-family: 'Inter', system-ui, sans-serif; background: #F5F1E8; color: #1C1917; -webkit-font-smoothing: antialiased; }
+  body { font-family: 'Inter', system-ui, sans-serif; background: #FAF7EF; color: #1C1917; -webkit-font-smoothing: antialiased; }
   .display { font-family: 'Instrument Sans', 'Inter', sans-serif; letter-spacing: -0.02em; }
   .mono { font-family: 'JetBrains Mono', monospace; }
-  .nav-item { transition: background-color .12s ease; }
-  .nav-item:hover { background: rgba(28,25,23,0.05); }
-  .nav-item.active { background: #FAF7EF; box-shadow: 0 1px 0 rgba(28,25,23,0.04); }
+  .nav-item { transition: all .14s ease; }
+  .nav-item:hover { background: rgba(255,255,255,0.7); }
+  .nav-item.active { background: #FFFFFF; box-shadow: 0 1px 2px rgba(28,25,23,0.06), 0 0 0 1px rgba(231,224,206,0.6); }
   details > summary::-webkit-details-marker { display: none; }
   details[open] summary .chev { transform: rotate(90deg); }
-  .card { background: #FAF7EF; border: 1px solid #E7E0CE; border-radius: 24px; }
+  .card { background: #FFFFFF; border: 1px solid #EAE7E0; border-radius: 20px; box-shadow: 0 1px 2px rgba(28,25,23,0.03); }
+  .card:hover { box-shadow: 0 4px 12px -4px rgba(28,25,23,0.08); }
   .pulse-dot { animation: pulse 2s ease-in-out infinite; }
   @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .4 } }
 
@@ -146,7 +162,7 @@ tailwind.config = {
   <div id="backdrop" class="fixed inset-0 bg-ink/40 z-20 hidden lg:hidden" onclick="toggleSidebar()"></div>
 
   {{-- ───────────────────────── Sidebar ───────────────────────── --}}
-  <aside id="sidebar" class="fixed lg:relative inset-y-0 left-0 z-30 w-64 bg-sand border-r border-line flex flex-col shrink-0">
+  <aside id="sidebar" class="fixed lg:relative inset-y-0 left-0 z-30 w-64 bg-cream border-r border-line flex flex-col shrink-0">
 
     {{-- Sambla brand --}}
     <div class="px-4 py-3 border-b border-line flex items-center justify-between">
@@ -301,7 +317,7 @@ tailwind.config = {
   {{-- ───────────────────────── Main ───────────────────────── --}}
   <div class="flex-1 min-w-0 overflow-y-auto">
 
-    <header class="h-14 bg-cream/85 backdrop-blur border-b border-line flex items-center justify-between px-4 md:px-8 sticky top-0 z-10 gap-3">
+    <header class="h-14 bg-paper/85 backdrop-blur border-b border-line flex items-center justify-between px-4 md:px-8 sticky top-0 z-10 gap-3">
       <div class="flex items-center gap-3 text-sm min-w-0">
         {{-- Hamburger pe mobile --}}
         <button onclick="toggleSidebar()" class="lg:hidden w-9 h-9 -ml-1.5 rounded-lg hover:bg-paper text-inkSoft flex items-center justify-center transition shrink-0" aria-label="Deschide meniul">
@@ -369,9 +385,15 @@ tailwind.config = {
               'warn' => 'text-amber-700 bg-amber-50 border-amber-200',
               default => 'text-muted bg-cream border-line',
             };
+            $tint = $kpiTints[$k['tint']];
           @endphp
-          <div class="card p-5">
-            <div class="text-2xs uppercase tracking-wider text-muted font-medium mb-3">{{ $k['label'] }}</div>
+          <div class="card p-5 transition">
+            <div class="flex items-center justify-between mb-3">
+              <div class="text-2xs uppercase tracking-wider text-muted font-medium">{{ $k['label'] }}</div>
+              <div class="w-9 h-9 rounded-xl {{ $tint['bg'] }} {{ $tint['text'] }} flex items-center justify-center">
+                {!! $k['icon'] !!}
+              </div>
+            </div>
             <div class="flex items-end gap-2 mb-1.5">
               <div class="display text-3xl font-semibold leading-none">{{ $k['value'] }}</div>
               <div class="text-2xs px-1.5 py-0.5 rounded border font-medium {{ $deltaColor }}">{{ $k['delta'] }}</div>
@@ -490,11 +512,13 @@ tailwind.config = {
             @foreach($activity as $row)
               @php
                 $iconBg = match($row['icon']) {
-                  'gap' => 'bg-amber-50 text-amber-700',
-                  'escalate' => 'bg-coral/10 text-coralh',
-                  'wa' => 'bg-emerald-50 text-emerald-700',
-                  'doc' => 'bg-blue-50 text-blue-700',
-                  default => 'bg-cream text-inkSoft',
+                  'gap'      => 'bg-[#FAF1C2] text-[#854D0E]',
+                  'escalate' => 'bg-coralsoft text-coralh',
+                  'wa'       => 'bg-emerald-50 text-emerald-700',
+                  'doc'      => 'bg-[#E6DFF3] text-[#5B21B6]',
+                  'lead'     => 'bg-[#FFE4D2] text-[#9A3412]',
+                  'call'     => 'bg-[#E0EBF7] text-[#1E40AF]',
+                  default    => 'bg-cream text-inkSoft',
                 };
               @endphp
               <div class="px-2 py-2.5 flex items-start gap-3 hover:bg-cream rounded-lg transition">

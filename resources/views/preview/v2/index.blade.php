@@ -131,7 +131,7 @@ tailwind.config = {
 };
 </script>
 <style>
-  body { font-family: 'Inter', system-ui, sans-serif; background: #F5F1E8; color: #1C1917; -webkit-font-smoothing: antialiased; }
+  body { font-family: 'Inter', system-ui, sans-serif; background: #FAF7EF; color: #1C1917; -webkit-font-smoothing: antialiased; }
   .display { font-family: 'Instrument Sans', 'Inter', sans-serif; letter-spacing: -0.02em; }
   .thumb { aspect-ratio: 16/10; }
   .card-link:hover .thumb { transform: translateY(-2px); box-shadow: 0 12px 32px -12px rgba(28,25,23,0.18); }
@@ -144,7 +144,7 @@ tailwind.config = {
   Preview v2 · redesign integrat · <a href="/preview" class="underline">înapoi la sandbox</a> · date simulate, nu afectează prod
 </div>
 
-<header class="border-b border-line bg-cream/90 backdrop-blur sticky top-7 z-10">
+<header class="border-b border-line bg-paper/85 backdrop-blur sticky top-7 z-10">
   <div class="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
     <a href="/" class="flex items-center gap-2.5">
       <svg class="w-7 h-7" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="sgIdx" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#991b1b"/><stop offset="100%" stop-color="#dc2626"/></linearGradient></defs><rect x="0" y="0" width="80" height="80" rx="20" fill="url(#sgIdx)"/><rect x="18" y="28" width="44" height="24" rx="12" fill="#FAF7EF"/><circle cx="32" cy="40" r="4" fill="#991b1b"/><circle cx="48" cy="40" r="4" fill="#991b1b"/></svg>
@@ -165,13 +165,13 @@ tailwind.config = {
     <p class="text-lg text-inkSoft leading-relaxed">
       11 pagini statice care arată cum va arăta produsul după redesign.
       Bază vizuală Notion calm, density Linear pe paginile operator (inbox, apeluri, leads).
-      Zero impact pe app real — totul izolat la <code class="bg-paper border border-line rounded px-1.5 py-0.5 text-sm">/preview/v2/*</code>.
+      Zero impact pe app real — totul izolat la <code class="bg-white border border-line rounded px-1.5 py-0.5 text-sm">/preview/v2/*</code>.
     </p>
   </div>
 
   {{-- Tokens reminder --}}
   <section class="mb-14 grid md:grid-cols-2 gap-3">
-    <div class="rounded-card p-5 bg-paper border border-line">
+    <div class="rounded-card p-5 bg-white border border-line">
       <div class="text-xs font-semibold uppercase tracking-wider text-muted mb-3">Paletă</div>
       <div class="flex flex-wrap gap-2">
         @foreach([
@@ -194,7 +194,7 @@ tailwind.config = {
         @endforeach
       </div>
     </div>
-    <div class="rounded-card p-5 bg-paper border border-line">
+    <div class="rounded-card p-5 bg-white border border-line">
       <div class="text-xs font-semibold uppercase tracking-wider text-muted mb-3">Typography &amp; radius</div>
       <div class="space-y-1.5">
         <div class="display text-3xl font-semibold leading-none">Instrument Sans</div>
@@ -395,7 +395,7 @@ tailwind.config = {
     </div>
   </section>
 
-  <section class="mt-16 rounded-card p-6 bg-paper border border-line">
+  <section class="mt-16 rounded-card p-6 bg-white border border-line">
     <h3 class="display text-lg font-semibold tracking-tight mb-2">Cum citești preview-ul</h3>
     <ul class="text-sm text-inkSoft space-y-1.5 leading-relaxed">
       <li>· Fiecare pagină e <strong>self-contained</strong> (HTML + Tailwind CDN). Zero controllers, zero DB, zero JS framework.</li>

@@ -175,21 +175,21 @@ tailwind.config = {
 };
 </script>
 <style>
-  body { font-family: 'Inter', system-ui, sans-serif; background: #F5F1E8; color: #1C1917; -webkit-font-smoothing: antialiased; font-size: 13px; }
+  body { font-family: 'Inter', system-ui, sans-serif; background: #FAF7EF; color: #1C1917; -webkit-font-smoothing: antialiased; font-size: 13px; }
   .display { font-family: 'Instrument Sans', 'Inter', sans-serif; letter-spacing: -0.02em; }
   .mono { font-family: 'JetBrains Mono', monospace; }
 
   /* Linear-density list */
   .conv-list { font-size: 13px; }
   .conv-row { line-height: 1.35; }
-  .conv-row.selected { background: #FAF7EF; box-shadow: inset 3px 0 0 #DC2626; }
-  .conv-row:hover:not(.selected) { background: rgba(250,247,239,0.6); }
+  .conv-row.selected { background: #FFFFFF; box-shadow: inset 3px 0 0 #DC2626, 0 1px 2px rgba(28,25,23,0.04); }
+  .conv-row:hover:not(.selected) { background: rgba(255,255,255,0.7); }
 
   /* Thread comfortable */
   .thread-pane { font-size: 14px; }
 
   .icon-btn:hover { background: rgba(28,25,23,0.06); color: #1C1917; }
-  .icon-btn.active { background: #FAF7EF; color: #DC2626; }
+  .icon-btn.active { background: #FFFFFF; color: #DC2626; box-shadow: 0 1px 2px rgba(28,25,23,0.06); }
   .pulse-dot { animation: pulse 2s ease-in-out infinite; }
   @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .4 } }
   kbd { font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 1px 5px; border: 1px solid #E7E0CE; border-radius: 3px; background: #FAF7EF; color: #78716C; }
@@ -234,7 +234,7 @@ tailwind.config = {
   <div id="bd-customer" class="fixed inset-0 bg-ink/40 z-20 hidden lg:hidden" onclick="toggleCustomer()"></div>
 
   {{-- ───── Pane 1 · Icon nav (Linear-style compact) ───── --}}
-  <aside id="pane-icon" class="w-14 bg-sand border-r border-line flex flex-col items-center py-3 shrink-0 z-30">
+  <aside id="pane-icon" class="w-14 bg-cream border-r border-line flex flex-col items-center py-3 shrink-0 z-30">
     <a href="/" class="block w-9 h-9 mb-5" title="Sambla">
       <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="sgI" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#991b1b"/><stop offset="100%" stop-color="#dc2626"/></linearGradient></defs><rect x="0" y="0" width="80" height="80" rx="20" fill="url(#sgI)"/><rect x="18" y="28" width="44" height="24" rx="12" fill="#FAF7EF"/><circle cx="32" cy="40" r="4" fill="#991b1b"/><circle cx="48" cy="40" r="4" fill="#991b1b"/></svg>
     </a>
@@ -268,7 +268,7 @@ tailwind.config = {
   </aside>
 
   {{-- ───── Pane 2 · Conversation list (Linear-tight) ───── --}}
-  <aside id="pane-list" class="w-80 bg-cream border-r border-line flex flex-col shrink-0 conv-list">
+  <aside id="pane-list" class="w-80 bg-paper border-r border-line flex flex-col shrink-0 conv-list">
 
     {{-- Header --}}
     <div class="px-3.5 pt-3 pb-2 border-b border-line">
@@ -351,7 +351,7 @@ tailwind.config = {
   </aside>
 
   {{-- ───── Pane 3 · Thread (comfortable density) ───── --}}
-  <section id="pane-thread" class="flex-1 min-w-0 bg-paper flex flex-col thread-pane">
+  <section id="pane-thread" class="flex-1 min-w-0 bg-white flex flex-col thread-pane">
 
     {{-- Thread header --}}
     <header class="border-b border-line px-4 md:px-6 py-3 flex items-center gap-3 md:gap-4">
@@ -483,7 +483,7 @@ tailwind.config = {
   </section>
 
   {{-- ───── Pane 4 · Customer panel ───── --}}
-  <aside id="pane-customer" class="w-[340px] bg-cream border-l border-line shrink-0 overflow-y-auto scroll-y">
+  <aside id="pane-customer" class="w-[340px] bg-paper border-l border-line shrink-0 overflow-y-auto scroll-y">
 
     <div class="p-5 border-b border-line">
       <div class="flex items-center gap-3 mb-4">
