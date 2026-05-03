@@ -474,6 +474,11 @@ Route::middleware(['auth', 'tenant.role:tenant_admin,tenant_manager'])
     ->get('/dashboard/activitate', [\App\Http\Controllers\Dashboard\AuditController::class, 'index'])
     ->name('dashboard.audit.index');
 
+// Hub global pentru canale — toate canalele cross-bot, accesibil în 1 click din sidebar
+Route::middleware('auth')
+    ->get('/dashboard/canale', [\App\Http\Controllers\Dashboard\ChannelsHubController::class, 'index'])
+    ->name('dashboard.channels-hub.index');
+
 // Admin RAG analytics
 Route::middleware(['auth', 'super_admin'])
     ->get('/admin/rag', [\App\Http\Controllers\Admin\AdminRagAnalyticsController::class, 'index'])

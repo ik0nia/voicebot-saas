@@ -208,6 +208,11 @@
                         Canale
                     </summary>
                     <div class="mt-1 space-y-0.5">
+                        <a href="/dashboard/canale"
+                           class="nav-item flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg {{ request()->is('dashboard/canale*') ? 'active' : 'text-inkSoft' }}">
+                            <svg class="w-4 h-4 {{ request()->is('dashboard/canale*') ? 'text-coral' : '' }}" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
+                            Toate canalele
+                        </a>
                         <a href="/dashboard/sites"
                            class="nav-item flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg {{ request()->is('dashboard/sites*') ? 'active' : 'text-inkSoft' }}">
                             <svg class="w-4 h-4 {{ request()->is('dashboard/sites*') ? 'text-coral' : '' }}" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 010 20 15 15 0 010-20"/></svg>
