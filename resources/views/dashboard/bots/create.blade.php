@@ -9,13 +9,113 @@
     <span class="font-medium text-inkSoft">Creează agent AI nou</span>
 @endsection
 
+@php
+    // Galerie persona — pre-fill din config niche când userul alege un card.
+    // Featured 8 niches care acoperă majoritatea use-case-urilor RO.
+    $featuredPersonas = [
+        'stomatologie' => ['icon' => '🦷', 'label' => 'Stomatologie', 'desc' => 'Programări + întrebări frecvente cabinet'],
+        'beauty'       => ['icon' => '💅', 'label' => 'Salon beauty', 'desc' => 'Servicii, prețuri, programări'],
+        'medical'      => ['icon' => '⚕️', 'label' => 'Cabinet medical', 'desc' => 'Programări + triaj inițial'],
+        'magazin-online' => ['icon' => '🛍️', 'label' => 'Magazin online', 'desc' => 'Recomandări produse + comenzi'],
+        'restaurant'   => ['icon' => '🍽️', 'label' => 'Restaurant', 'desc' => 'Rezervări + meniu + livrări'],
+        'avocatura'    => ['icon' => '⚖️', 'label' => 'Birou avocatură', 'desc' => 'Consultații + programări'],
+        'imobiliare'   => ['icon' => '🏠', 'label' => 'Imobiliare', 'desc' => 'Vizionări + filtrare oferte'],
+        'service-auto' => ['icon' => '🔧', 'label' => 'Service auto', 'desc' => 'Programări + estimări preț'],
+    ];
+    $allNiches = config('niches', []);
+    // Construiește JS payload: doar prompt_addon (200 chars) + display_name + suggested voice
+    $personaData = [];
+    foreach ($featuredPersonas as $slug => $meta) {
+        $n = $allNiches[$slug] ?? null;
+        if (!$n) continue;
+        $personaData[$slug] = [
+            'name' => $meta['label'],
+            'prompt' => $n['prompt_addon'] ?? '',
+            'niche_slug' => $slug,
+        ];
+    }
+@endphp
+
 @section('content')
     <div class="max-w-3xl mx-auto">
         {{-- Header --}}
-        <div class="mb-8">
-            <h1 class="text-2xl font-bold text-ink">Creează agent AI nou</h1>
-            <p class="mt-1 text-sm text-muted">Configurează un nou agent AI în 3 pași simpli.</p>
+        <div class="mb-6">
+            <h1 class="display text-3xl md:text-4xl font-semibold tracking-tight text-ink leading-none">Creează agent AI nou</h1>
+            <p class="mt-2 text-sm text-muted">Începe de la zero sau alege un șablon pre-configurat.</p>
         </div>
+
+        {{-- Persona gallery — wow first-experience --}}
+        <div x-data="{ picked: null }" class="mb-8">
+            <div class="flex items-center justify-between mb-3">
+                <p class="text-2xs uppercase tracking-wider text-muted font-semibold">Șabloane românești</p>
+                <a href="{{ route('dashboard.setup-wow.start') }}" class="text-2xs text-coralh hover:underline">Wizard ghidat (toate cele 18 nișe) →</a>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                @foreach($featuredPersonas as $slug => $meta)
+                    <button type="button"
+                            @click="picked = '{{ $slug }}'; applyPersona('{{ $slug }}')"
+                            :class="picked === '{{ $slug }}' ? 'border-coral bg-coralsoft' : 'border-line bg-white hover:border-coral/40'"
+                            class="text-left p-3 rounded-xl border-2 transition-all">
+                        <div class="text-2xl mb-1">{{ $meta['icon'] }}</div>
+                        <div class="text-xs font-semibold text-ink leading-tight">{{ $meta['label'] }}</div>
+                        <div class="text-2xs text-muted leading-tight mt-0.5">{{ $meta['desc'] }}</div>
+                    </button>
+                @endforeach
+            </div>
+            <div x-show="picked" x-cloak class="mt-3 p-3 bg-coralsoft/40 border border-coral/20 rounded-lg flex items-center gap-2 text-2xs text-coralh">
+                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                Șablon aplicat — pre-am completat numele, prompt-ul și nișa. Modifică ce vrei mai jos.
+            </div>
+        </div>
+
+        {{-- Step indicators --}}
+        <div class="flex items-center justify-center mb-8">
+            <div class="flex items-center gap-0">
+                {{-- Step 1 --}}
+                <div id="step-indicator-1" class="flex items-center">
+                    <div class="flex items-center justify-center w-9 h-9 rounded-full bg-coral text-white text-sm font-semibold transition-colors">1</div>
+                    <span class="ml-2 text-sm font-medium text-coralh hidden sm:inline">Informații de bază</span>
+                </div>
+                <div class="w-10 sm:w-16 h-px bg-line mx-3"></div>
+                {{-- Step 2 --}}
+                <div id="step-indicator-2" class="flex items-center">
+                    <div class="flex items-center justify-center w-9 h-9 rounded-full bg-sand text-muted text-sm font-semibold transition-colors">2</div>
+                    <span class="ml-2 text-sm font-medium text-muted hidden sm:inline">Prompt sistem</span>
+                </div>
+                <div class="w-10 sm:w-16 h-px bg-line mx-3"></div>
+                {{-- Step 3 --}}
+                <div id="step-indicator-3" class="flex items-center">
+                    <div class="flex items-center justify-center w-9 h-9 rounded-full bg-sand text-muted text-sm font-semibold transition-colors">3</div>
+                    <span class="ml-2 text-sm font-medium text-muted hidden sm:inline">Configurări</span>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            window.__personas = @json($personaData);
+            function applyPersona(slug) {
+                const p = window.__personas[slug];
+                if (!p) return;
+                const nameInput = document.getElementById('name');
+                if (nameInput && !nameInput.value.trim()) {
+                    nameInput.value = 'Asistent ' + p.name;
+                }
+                // Try to find prompt textarea (might be in step 2)
+                const promptArea = document.querySelector('textarea[name="system_prompt"]');
+                if (promptArea && !promptArea.value.trim()) {
+                    promptArea.value = p.prompt.split('\n').slice(0, 30).join('\n');
+                }
+                // Set hidden niche_slug if exists, else create it
+                let nicheInput = document.querySelector('input[name="niche_slug"]');
+                if (!nicheInput) {
+                    nicheInput = document.createElement('input');
+                    nicheInput.type = 'hidden';
+                    nicheInput.name = 'niche_slug';
+                    document.getElementById('bot-create-form').appendChild(nicheInput);
+                }
+                nicheInput.value = p.niche_slug;
+            }
+        </script>
 
         {{-- Step indicators --}}
         <div class="flex items-center justify-center mb-8">
