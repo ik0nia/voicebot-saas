@@ -1,0 +1,95 @@
+            <section x-show="tab === 'baza'" x-cloak class="space-y-6">
+                <div class="bg-white rounded-xl border border-line shadow-sm p-6">
+                    <div class="flex items-start justify-between mb-1 gap-3">
+                        <div>
+                            <h2 class="text-lg font-semibold text-ink">Setup de bază</h2>
+                            <p class="text-sm text-muted">Strictul necesar ca agentul să fie funcțional. Restul setărilor pot fi ajustate mai târziu din celelalte secțiuni.</p>
+                        </div>
+                        <span class="hidden sm:inline-flex items-center gap-1 shrink-0 px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-medium">⚡ Rapid</span>
+                    </div>
+
+                    <div class="mt-5 space-y-5">
+                        {{-- Nume agent (canonical) --}}
+                        <div>
+                            <label for="baza_name" class="block text-sm font-medium text-inkSoft mb-1.5">Nume agent AI <span class="text-coral">*</span></label>
+                            <input type="text" name="name" id="baza_name" x-model="core.name" required
+                                   class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none" />
+                        </div>
+
+                        {{-- Voce (canonical) --}}
+                        <div>
+                            <label for="baza_voice" class="block text-sm font-medium text-inkSoft mb-1.5">Voce <span class="text-coral">*</span></label>
+                            <select name="voice" id="baza_voice" x-model="core.voice" required
+                                    class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">
+                                <option value="coral">Coral (feminin, cald)</option>
+                                <option value="sage">Sage (feminin, clar)</option>
+                                <option value="shimmer">Shimmer (feminin)</option>
+                                <option value="ballad">Ballad (masculin, blând)</option>
+                                <option value="verse">Verse (masculin, expresiv)</option>
+                                <option value="ash">Ash (masculin, neutru)</option>
+                                <option value="alloy">Alloy (neutru)</option>
+                                <option value="echo">Echo (masculin)</option>
+                                <option value="marin">Marin</option>
+                                <option value="cedar">Cedar</option>
+                            </select>
+                        </div>
+
+                        {{-- Greeting (canonical) --}}
+                        <div>
+                            <label for="baza_greeting" class="block text-sm font-medium text-inkSoft mb-1.5">Mesaj de întâmpinare</label>
+                            <p class="text-xs text-muted mb-2">Textul pe care îl spune agentul când răspunde. Lasă gol dacă preferi să aștepte clientul să vorbească primul.</p>
+                            <input type="text" name="greeting_message" id="baza_greeting" x-model="core.greeting"
+                                   placeholder="Bună ziua, sunt Greg de la Sambla. Cu ce vă pot ajuta?"
+                                   class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">
+                        </div>
+
+                        {{-- Adresă + Telefon + Email (canonical for business_info.address/phone/email) --}}
+                        <div>
+                            <label for="baza_address" class="block text-sm font-medium text-inkSoft mb-1.5">Adresă business</label>
+                            <textarea name="settings[business_info][address]" id="baza_address" rows="2" x-model="businessInfo.address"
+                                      placeholder="Str. Victoriei 10, Cluj-Napoca, jud. Cluj"
+                                      class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none resize-y"></textarea>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label for="baza_phone" class="block text-sm font-medium text-inkSoft mb-1.5">Telefon</label>
+                                <div class="flex rounded-lg border border-line overflow-hidden focus-within:border-coral focus-within:ring-2 focus-within:ring-coral/20 bg-white">
+                                    <span class="inline-flex items-center gap-1 px-3 text-sm text-muted bg-cream border-r border-line">🇷🇴 +40</span>
+                                    <input type="tel" name="settings[business_info][phone]" id="baza_phone" x-model="businessInfo.phone"
+                                           @blur="normalizePhone()"
+                                           placeholder="721 234 567" class="flex-1 px-3 py-2.5 text-sm outline-none bg-transparent">
+                                </div>
+                            </div>
+                            <div>
+                                <label for="baza_email" class="block text-sm font-medium text-inkSoft mb-1.5">Email</label>
+                                <input type="email" name="settings[business_info][email]" id="baza_email"
+                                       x-model="businessInfo.email"
+                                       placeholder="contact@exemplu.ro"
+                                       class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">
+                            </div>
+                        </div>
+
+                        {{-- Active toggle (canonical) --}}
+                        <div>
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="hidden" name="is_active" value="0" />
+                                <input type="checkbox" name="is_active" value="1" x-model="core.is_active"
+                                       class="w-5 h-5 rounded border-line text-coralh focus:ring-coral/20" />
+                                <div>
+                                    <span class="text-sm font-medium text-inkSoft">Agent AI activ</span>
+                                    <p class="text-xs text-muted">Poate primi și efectua apeluri / conversații.</p>
+                                </div>
+                            </label>
+                        </div>
+
+                        {{-- Marker that this save came from Bază tab — controller uses it for post-save CTA --}}
+                        <input type="hidden" name="origin" value="baza" x-bind:value="tab === 'baza' ? 'baza' : ''">
+
+                        <div class="pt-2 flex items-start gap-2 text-xs text-muted">
+                            <span>💡</span>
+                            <span>Pentru FAQ-uri, reguli sau ton, folosește secțiunile din stânga. Agentul merge și doar cu setările de aici.</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
