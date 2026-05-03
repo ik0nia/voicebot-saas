@@ -21,6 +21,9 @@
             <p class="mt-2 text-sm text-muted">Testează rapid <a href="{{ route('dashboard.workspace.show', $bot) }}" class="text-coralh hover:underline font-medium">{{ $bot->name }}</a> · chat live · preview voce · cod de instalare cu preview pe site simulat.</p>
         </div>
         <div class="flex items-center gap-2">
+            <a href="{{ route('dashboard.personality-wizard.show', $bot) }}" class="text-sm px-4 py-2 rounded-pill border border-line bg-white hover:bg-cream font-medium">
+                🎭 Personalitate
+            </a>
             <a href="{{ route('dashboard.ab-prompt.show', $bot) }}" class="text-sm px-4 py-2 rounded-pill border border-coral/30 bg-coralsoft text-coralh hover:bg-coral hover:text-cream font-medium transition">
                 A/B prompt
             </a>

@@ -512,6 +512,11 @@ Route::middleware('auth')->group(function () {
     $ab = \App\Http\Controllers\Dashboard\AbPromptController::class;
     Route::get('/dashboard/agenti/{bot}/ab-prompt', [$ab, 'show'])->name('dashboard.ab-prompt.show');
     Route::post('/dashboard/agenti/{bot}/ab-prompt/compare', [$ab, 'compare'])->name('dashboard.ab-prompt.compare');
+
+    // Personalitate wizard — 5 sliders pentru tone_guide cu preview live
+    $pw = \App\Http\Controllers\Dashboard\PersonalityWizardController::class;
+    Route::get('/dashboard/agenti/{bot}/personalitate', [$pw, 'show'])->name('dashboard.personality-wizard.show');
+    Route::post('/dashboard/agenti/{bot}/personalitate', [$pw, 'update'])->name('dashboard.personality-wizard.update');
 });
 
 // Admin RAG analytics
