@@ -9,7 +9,7 @@
 <div id="onboarding-banner" class="mb-8 bg-gradient-to-r from-primary-50 to-white rounded-2xl border border-primary-100 p-6 lg:p-8 relative">
     {{-- Buton de închidere --}}
     <button onclick="document.getElementById('onboarding-banner').style.display='none'"
-            class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition">
+            class="absolute top-4 right-4 text-muted hover:text-muted transition">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
         </svg>
@@ -17,16 +17,16 @@
 
     <div class="flex flex-col lg:flex-row lg:items-start gap-6">
         <div class="flex-1">
-            <h2 class="text-xl font-bold text-slate-900 mb-1">Bine ai venit! Hai să configurăm Sambla-ul tău</h2>
-            <p class="text-sm text-slate-500 mb-4">Completează pașii de mai jos pentru a începe să folosești platforma.</p>
+            <h2 class="text-xl font-bold text-ink mb-1">Bine ai venit! Hai să configurăm Sambla-ul tău</h2>
+            <p class="text-sm text-muted mb-4">Completează pașii de mai jos pentru a începe să folosești platforma.</p>
 
             {{-- Bară de progres --}}
             <div class="mb-6">
                 <div class="flex items-center justify-between text-sm mb-1.5">
-                    <span class="font-medium text-slate-700">Progres configurare</span>
+                    <span class="font-medium text-inkSoft">Progres configurare</span>
                     <span class="font-semibold text-primary-600">{{ $onboarding['percentage'] }}%</span>
                 </div>
-                <div class="w-full bg-slate-100 rounded-full h-2.5">
+                <div class="w-full bg-cream rounded-full h-2.5">
                     <div class="bg-primary-600 h-2.5 rounded-full transition-all duration-500"
                          style="width: {{ $onboarding['percentage'] }}%"></div>
                 </div>
@@ -43,15 +43,15 @@
                             </svg>
                         </div>
                         <div>
-                            <p class="text-sm font-medium text-slate-400 line-through">{{ $step['title'] }}</p>
+                            <p class="text-sm font-medium text-muted line-through">{{ $step['title'] }}</p>
                         </div>
                     @else
-                        <div class="w-6 h-6 rounded-full border-2 border-slate-200 flex-shrink-0 mt-0.5"></div>
+                        <div class="w-6 h-6 rounded-full border-2 border-line flex-shrink-0 mt-0.5"></div>
                         <div>
-                            <a href="{{ $step['url'] }}" class="text-sm font-medium text-slate-900 hover:text-primary-600 transition">
+                            <a href="{{ $step['url'] }}" class="text-sm font-medium text-ink hover:text-primary-600 transition">
                                 {{ $step['title'] }}
                             </a>
-                            <p class="text-xs text-slate-400 mt-0.5">{{ $step['description'] }}</p>
+                            <p class="text-xs text-muted mt-0.5">{{ $step['description'] }}</p>
                         </div>
                     @endif
                 </div>

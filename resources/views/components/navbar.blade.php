@@ -59,16 +59,16 @@
     </div>
 
     {{-- Mobile Menu --}}
-    <div id="mobile-menu" class="hidden lg:hidden bg-white border-t border-slate-100 shadow-lg">
+    <div id="mobile-menu" class="hidden lg:hidden bg-white border-t border-line shadow-lg">
         <div class="container-custom py-4 space-y-1">
             @foreach($navItems as $item)
-                <a href="{{ $item['href'] }}" class="block px-4 py-2.5 rounded-xl text-[15px] font-semibold transition-all {{ request()->is($item['match']) ? 'text-red-700 bg-red-50' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-50' }}">{{ $item['label'] }}</a>
+                <a href="{{ $item['href'] }}" class="block px-4 py-2.5 rounded-xl text-[15px] font-semibold transition-all {{ request()->is($item['match']) ? 'text-coralh bg-coralsoft' : 'text-inkSoft hover:text-ink hover:bg-cream' }}">{{ $item['label'] }}</a>
             @endforeach
-            <div class="pt-3 mt-2 border-t border-slate-100 space-y-2">
+            <div class="pt-3 mt-2 border-t border-line space-y-2">
                 @auth
                     <a href="/dashboard" class="block text-center px-4 py-3 bg-gradient-to-r from-red-700 to-red-600 text-white rounded-xl text-[15px] font-bold">Dashboard</a>
                 @else
-                    <a href="/login" class="block text-center px-4 py-2.5 text-[15px] font-medium text-slate-600">Autentificare</a>
+                    <a href="/login" class="block text-center px-4 py-2.5 text-[15px] font-medium text-muted">Autentificare</a>
                     <a href="/register" class="block text-center px-4 py-3 bg-gradient-to-r from-red-700 to-red-600 text-white rounded-xl text-[15px] font-bold">Începe gratuit</a>
                 @endauth
             </div>
