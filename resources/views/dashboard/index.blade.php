@@ -94,6 +94,9 @@
     {{-- AI Insights — analiză LLM a ultimei săptămâni --}}
     @include('partials.insights-widget')
 
+    {{-- Cost forecast — proiecție end-of-month bazată pe last 7d rate --}}
+    @include('partials.cost-forecast-widget')
+
     {{-- Action Items --}}
     @include('dashboard.partials.action-items')
 

@@ -494,6 +494,18 @@ Route::middleware('auth')
     ->get('/dashboard/heatmap', [\App\Http\Controllers\Dashboard\AnalyticsController::class, 'heatmap'])
     ->name('dashboard.analytics.heatmap');
 
+// Cost forecast — proiecție end-of-month bazată pe last 7d rate
+Route::middleware('auth')
+    ->get('/dashboard/cost-forecast', [\App\Http\Controllers\Dashboard\CostForecastController::class, 'snapshot'])
+    ->name('dashboard.cost-forecast');
+
+// Knowledge gaps — listă query-uri zero-result + AI suggester
+Route::middleware('auth')->group(function () {
+    $kg = \App\Http\Controllers\Dashboard\KnowledgeGapsController::class;
+    Route::get('/dashboard/agenti/{bot}/knowledge-gaps', [$kg, 'show'])->name('dashboard.knowledge-gaps.show');
+    Route::post('/dashboard/agenti/{bot}/knowledge-gaps/suggest', [$kg, 'suggestFaq'])->name('dashboard.knowledge-gaps.suggest');
+});
+
 // Playground per bot: chat tester + voice preview + embed live preview
 Route::middleware('auth')->group(function () {
     $pg = \App\Http\Controllers\Dashboard\PlaygroundController::class;
