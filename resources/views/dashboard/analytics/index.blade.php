@@ -241,6 +241,11 @@
     </div>
     @endif
 
+    {{-- Conversion funnel — visitor → conv → lead → callback → done --}}
+    <div class="mt-6">
+        @include('partials.funnel-widget')
+    </div>
+
     {{-- Conversation heatmap — hour x day-of-week, încărcat lazy via JS --}}
     <div x-data="conversationHeatmap()" x-init="load()" class="card overflow-hidden mt-6">
         <div class="px-5 py-3 border-b border-line bg-cream/40 flex items-center justify-between">

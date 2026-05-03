@@ -115,6 +115,67 @@ class AnalyticsController extends Controller
     }
 
     /**
+     * Conversion funnel — visitor → conversation → lead → callback → done
+     * cu dropoff % între fiecare etapă.
+     */
+    public function funnel(): \Illuminate\Http\JsonResponse
+    {
+        $tenantId = auth()->user()?->tenant_id ?? 0;
+        $cacheKey = "funnel:v1:{$tenantId}";
+
+        $payload = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($tenantId) {
+            $from = now()->subDays(30);
+
+            // Funnel: pornim de la conversation count (proxy pentru vizitator-ul
+            // care a deschis chat-ul). NU folosim distinct contact_identifier
+            // pentru că majoritatea sunt anonime/null și subestimează drastic.
+            $conversations = \App\Models\Conversation::where('created_at', '>=', $from)->count();
+
+            // Engaged (≥3 mesaje cu agentul = interacțiune reală)
+            $engaged = \App\Models\Conversation::where('created_at', '>=', $from)
+                ->where('messages_count', '>=', 3)
+                ->count();
+
+            // Hot (≥6 mesaje SAU lead_score ≥ 50)
+            $hot = \App\Models\Conversation::where('created_at', '>=', $from)
+                ->where(function ($q) {
+                    $q->where('messages_count', '>=', 6)
+                      ->orWhere('lead_score', '>=', 50);
+                })
+                ->count();
+
+            $leads = \App\Models\Lead::where('created_at', '>=', $from)->count();
+            $callbacks = \App\Models\CallbackRequest::where('created_at', '>=', $from)->count();
+
+            // Done = leads cu pipeline_stage 'won' SAU callbacks cu status completed
+            $wonLeads = \App\Models\Lead::where('created_at', '>=', $from)
+                ->where('pipeline_stage', 'won')
+                ->count();
+            $completedCallbacks = \App\Models\CallbackRequest::where('created_at', '>=', $from)
+                ->where('status', 'completed')
+                ->count();
+            $done = $wonLeads + $completedCallbacks;
+
+            $pct = fn ($num, $den) => $den > 0 ? round(($num / $den) * 100, 1) : 0;
+
+            return [
+                'period' => '30 zile',
+                'stages' => [
+                    ['key' => 'conversations', 'label' => 'Conversații deschise', 'count' => $conversations, 'pct' => 100],
+                    ['key' => 'engaged',       'label' => 'Engaged (≥3 msg)',     'count' => $engaged,       'pct' => $pct($engaged, $conversations)],
+                    ['key' => 'hot',           'label' => 'Hot (intent comercial)', 'count' => $hot,         'pct' => $pct($hot, $engaged)],
+                    ['key' => 'leads',         'label' => 'Lead capturat',        'count' => $leads,         'pct' => $pct($leads, $hot)],
+                    ['key' => 'callbacks',     'label' => 'Cerere callback',      'count' => $callbacks,     'pct' => $pct($callbacks, $leads)],
+                    ['key' => 'done',          'label' => 'Câștigat',             'count' => $done,          'pct' => $pct($done, max(1, $leads))],
+                ],
+                'overall_conversion_pct' => $pct($done, $conversations),
+            ];
+        });
+
+        return response()->json($payload);
+    }
+
+    /**
      * Conversation heatmap — JSON cu matrix [day_of_week 0=Mon][hour 0-23] = count.
      * Date din ultimele 30 zile. Cache 10 min/tenant.
      */

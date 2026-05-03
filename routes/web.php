@@ -494,6 +494,11 @@ Route::middleware('auth')
     ->get('/dashboard/heatmap', [\App\Http\Controllers\Dashboard\AnalyticsController::class, 'heatmap'])
     ->name('dashboard.analytics.heatmap');
 
+// Conversion funnel — visitors → conv → engaged → lead → callback → done
+Route::middleware('auth')
+    ->get('/dashboard/funnel', [\App\Http\Controllers\Dashboard\AnalyticsController::class, 'funnel'])
+    ->name('dashboard.analytics.funnel');
+
 // Cost forecast — proiecție end-of-month bazată pe last 7d rate
 Route::middleware('auth')
     ->get('/dashboard/cost-forecast', [\App\Http\Controllers\Dashboard\CostForecastController::class, 'snapshot'])
