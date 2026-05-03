@@ -536,6 +536,8 @@ Route::middleware(['auth', 'tenant.role:tenant_admin,tenant_manager'])
         Route::put('/{endpoint}', [$c, 'update'])->name('dashboard.webhooks.update');
         Route::delete('/{endpoint}', [$c, 'destroy'])->name('dashboard.webhooks.destroy');
         Route::post('/{endpoint}/test', [$c, 'testFire'])->name('dashboard.webhooks.testFire');
+        Route::get('/{endpoint}/playground', [$c, 'playground'])->name('dashboard.webhooks.playground');
+        Route::post('/{endpoint}/playground/fire', [$c, 'playgroundFire'])->name('dashboard.webhooks.playground.fire');
     });
 
 // Settings routes (dashboard)

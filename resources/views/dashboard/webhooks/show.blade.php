@@ -28,10 +28,14 @@
             <p class="text-sm text-muted font-mono mt-1 truncate">{{ $endpoint->url }}</p>
         </div>
         <div class="flex items-center gap-2 shrink-0">
+            <a href="{{ route('dashboard.webhooks.playground', $endpoint) }}"
+               class="px-4 py-2 rounded-pill border border-coral/30 bg-coralsoft text-coralh hover:bg-coral hover:text-cream text-sm font-medium transition">
+                ⚡ Playground
+            </a>
             <form method="POST" action="{{ route('dashboard.webhooks.testFire', $endpoint) }}">
                 @csrf
                 <button type="submit" class="px-4 py-2 rounded-pill border border-line bg-white text-sm hover:bg-cream">
-                    Trimite ping de test
+                    Ping de test
                 </button>
             </form>
             <a href="{{ route('dashboard.webhooks.edit', $endpoint) }}"
