@@ -1,0 +1,35 @@
+{
+    "name": "Sambla Operator",
+    "short_name": "Operator",
+    "description": "Preia conversații live de la agenții AI Sambla",
+    "start_url": "/dashboard/operator",
+    "scope": "/dashboard/operator",
+    "display": "standalone",
+    "orientation": "portrait",
+    "background_color": "#FAF7EF",
+    "theme_color": "#DC2626",
+    "lang": "ro",
+    "icons": [
+        {
+            "src": "/images/logo-icon.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/images/logo-icon.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Conversații neasignate",
+            "short_name": "Neasignate",
+            "url": "/dashboard/operator?filter=unassigned",
+            "icons": [{ "src": "/images/logo-icon.png", "sizes": "96x96" }]
+        }
+    ],
+    "categories": ["business", "productivity"]
+}

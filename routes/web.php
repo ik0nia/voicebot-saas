@@ -519,6 +519,19 @@ Route::middleware('auth')
     ->get('/dashboard/transcrieri/conversatie/{conversation}/replay', [\App\Http\Controllers\Dashboard\ConversationReplayController::class, 'show'])
     ->name('dashboard.conversations.replay');
 
+// Operator console PWA + Web Push — preluare live conversații
+Route::middleware('auth')->group(function () {
+    $op = \App\Http\Controllers\Dashboard\OperatorConsoleController::class;
+    Route::get('/dashboard/operator',                        [$op, 'show'])->name('dashboard.operator.show');
+    Route::get('/dashboard/operator/feed',                   [$op, 'feed'])->name('dashboard.operator.feed');
+    Route::get('/dashboard/operator/conv/{conversation}',    [$op, 'messages'])->name('dashboard.operator.messages');
+    Route::post('/dashboard/operator/conv/{conversation}/take',    [$op, 'take'])->name('dashboard.operator.take');
+    Route::post('/dashboard/operator/conv/{conversation}/release', [$op, 'release'])->name('dashboard.operator.release');
+    Route::post('/dashboard/operator/conv/{conversation}/reply',   [$op, 'reply'])->name('dashboard.operator.reply');
+    Route::post('/dashboard/operator/push/subscribe', [$op, 'pushSubscribe'])->name('dashboard.operator.push.subscribe');
+    Route::post('/dashboard/operator/push/test',      [$op, 'pushTest'])->name('dashboard.operator.push.test');
+});
+
 // Knowledge gaps — listă query-uri zero-result + AI suggester
 Route::middleware('auth')->group(function () {
     $kg = \App\Http\Controllers\Dashboard\KnowledgeGapsController::class;

@@ -133,4 +133,11 @@ return [
         'token' => env('LETTA_TOKEN'),     // bearer token configured on the sidecar
     ],
 
+    // VAPID keys pentru Web Push (operator console PWA)
+    'vapid' => [
+        'subject' => env('VAPID_SUBJECT', 'mailto:noreply@sambla.ro'),
+        'public'  => env('VAPID_PUBLIC_KEY'),
+        'private' => env('VAPID_PRIVATE_KEY'),
+    ],
+
 ];

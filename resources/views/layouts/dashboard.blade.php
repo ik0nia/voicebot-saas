@@ -138,6 +138,14 @@
                     Inbox
                 </a>
 
+                {{-- Operator console (PWA cu push) --}}
+                <a href="{{ route('dashboard.operator.show') }}"
+                   class="nav-item flex items-center gap-2.5 px-2.5 py-2 rounded-lg font-medium mt-0.5 {{ request()->is('dashboard/operator*') ? 'active' : 'text-inkSoft' }}">
+                    <svg class="w-4 h-4 {{ request()->is('dashboard/operator*') ? 'text-coral' : '' }}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.745 3.745 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"/></svg>
+                    Operator
+                    <span class="ml-auto text-2xs px-1.5 py-0.5 rounded bg-coralsoft text-coralh font-mono">PWA</span>
+                </a>
+
                 {{-- ── Workspace ── --}}
                 <details open class="mt-4">
                     <summary class="flex items-center gap-1 px-2 py-1 cursor-pointer text-2xs uppercase tracking-wider text-muted font-semibold list-none">
