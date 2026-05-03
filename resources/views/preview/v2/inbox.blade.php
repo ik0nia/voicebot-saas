@@ -200,12 +200,35 @@ tailwind.config = {
   .scroll-y::-webkit-scrollbar-track { background: transparent; }
   .scroll-y::-webkit-scrollbar-thumb { background: #E7E0CE; border-radius: 3px; }
 
+  /* Sidebar collapse (desktop) — userul alege */
+  #pane-nav { transition: width .18s ease, transform .22s ease; }
+  @media (min-width: 1024px) {
+    #pane-nav.collapsed { width: 3.5rem; }
+    #pane-nav.collapsed .nav-label,
+    #pane-nav.collapsed .nav-meta,
+    #pane-nav.collapsed .brand-text,
+    #pane-nav.collapsed .section-label,
+    #pane-nav.collapsed .tenant-meta,
+    #pane-nav.collapsed .search-text,
+    #pane-nav.collapsed .search-kbd,
+    #pane-nav.collapsed .plan-block,
+    #pane-nav.collapsed .tenant-chev,
+    #pane-nav.collapsed details > summary { display: none !important; }
+    #pane-nav.collapsed .tenant-block { padding-left: 0; padding-right: 0; }
+    #pane-nav.collapsed .tenant-block > button { padding: .5rem; justify-content: center; }
+    #pane-nav.collapsed .nav-item { justify-content: center; padding-left: .5rem; padding-right: .5rem; gap: 0; }
+    #pane-nav.collapsed details { margin-top: .5rem !important; }
+    #pane-nav.collapsed .brand-block { justify-content: center; padding-left: .5rem; padding-right: .5rem; }
+    #pane-nav.collapsed .search-block { padding-left: .5rem; padding-right: .5rem; }
+    #pane-nav.collapsed .search-block > button { padding: .5rem; justify-content: center; }
+    #pane-nav.collapsed .collapse-icon { transform: rotate(180deg); }
+  }
+
   /* Mobile pane navigation */
-  #pane-icon { transition: transform .22s ease; }
   #pane-customer { transition: transform .22s ease; }
   @media (max-width: 1023px) {
-    #pane-icon { position: fixed; inset-y: 22px 0; left: 0; top: 22px; bottom: 0; z-index: 30; transform: translateX(-100%); }
-    #pane-icon.open { transform: translateX(0); }
+    #pane-nav { position: fixed; left: 0; top: 22px; bottom: 0; z-index: 30; transform: translateX(-100%); width: 16rem; }
+    #pane-nav.open { transform: translateX(0); }
     #pane-list { width: 100%; }
     #pane-thread { display: none; }
     body.show-thread #pane-list { display: none; }
@@ -216,8 +239,6 @@ tailwind.config = {
       box-shadow: -10px 0 40px -10px rgba(28,25,23,0.18);
     }
     #pane-customer.open { transform: translateX(0); }
-    .show-on-mobile { display: flex !important; }
-    .hide-on-mobile { display: none !important; }
   }
 </style>
 </head>
@@ -233,37 +254,151 @@ tailwind.config = {
   <div id="bd-icon" class="fixed inset-0 bg-ink/40 z-20 hidden lg:hidden" onclick="toggleIconNav()"></div>
   <div id="bd-customer" class="fixed inset-0 bg-ink/40 z-20 hidden lg:hidden" onclick="toggleCustomer()"></div>
 
-  {{-- ───── Pane 1 · Icon nav (Linear-style compact) ───── --}}
-  <aside id="pane-icon" class="w-14 bg-cream border-r border-line flex flex-col items-center py-3 shrink-0 z-30">
-    <a href="/" class="block w-9 h-9 mb-5" title="Sambla">
-      <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="sgI" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#991b1b"/><stop offset="100%" stop-color="#dc2626"/></linearGradient></defs><rect x="0" y="0" width="80" height="80" rx="20" fill="url(#sgI)"/><rect x="18" y="28" width="44" height="24" rx="12" fill="#FAF7EF"/><circle cx="32" cy="40" r="4" fill="#991b1b"/><circle cx="48" cy="40" r="4" fill="#991b1b"/></svg>
-    </a>
-    <div class="flex flex-col gap-1 flex-1">
-      <a href="/preview/v2/dashboard" class="icon-btn w-9 h-9 rounded-lg flex items-center justify-center text-muted transition" title="Dashboard">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10"/></svg>
+  {{-- ───── Pane 1 · Sidebar (full · colapsibilă la cerere) ───── --}}
+  <aside id="pane-nav" class="w-64 bg-cream border-r border-line flex flex-col shrink-0 z-30">
+
+    {{-- Sambla brand --}}
+    <div class="px-4 py-3 border-b border-line flex items-center justify-between brand-block">
+      <a href="/" class="flex items-center gap-2.5">
+        <svg class="w-7 h-7 shrink-0" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="sgI" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#991b1b"/><stop offset="100%" stop-color="#dc2626"/></linearGradient></defs><rect x="0" y="0" width="80" height="80" rx="20" fill="url(#sgI)"/><rect x="18" y="28" width="44" height="24" rx="12" fill="#FAF7EF"/><circle cx="32" cy="40" r="4" fill="#991b1b"/><circle cx="48" cy="40" r="4" fill="#991b1b"/></svg>
+        <span class="display text-lg font-semibold tracking-tight brand-text">Sambla</span>
       </a>
-      <button class="icon-btn active w-9 h-9 rounded-lg flex items-center justify-center transition relative" title="Inbox">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
-        <span class="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-coral"></span>
-      </button>
-      <button class="icon-btn w-9 h-9 rounded-lg flex items-center justify-center text-muted transition" title="Agenți">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
-      </button>
-      <button class="icon-btn w-9 h-9 rounded-lg flex items-center justify-center text-muted transition" title="Apeluri">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 5a2 2 0 012-2h3l2 4-2 1a11 11 0 005 5l1-2 4 2v3a2 2 0 01-2 2A16 16 0 013 5z"/></svg>
-      </button>
-      <button class="icon-btn w-9 h-9 rounded-lg flex items-center justify-center text-muted transition" title="Leads">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 2v6M12 22v-6M2 12h6M22 12h-6"/><circle cx="12" cy="12" r="3"/></svg>
-      </button>
-      <button class="icon-btn w-9 h-9 rounded-lg flex items-center justify-center text-muted transition" title="Bază cunoștințe">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2zM22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+      <button onclick="toggleIconNav()" class="lg:hidden w-8 h-8 rounded-lg hover:bg-paper text-muted hover:text-ink flex items-center justify-center transition brand-text">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
-    <div class="flex flex-col gap-1">
-      <button class="icon-btn w-9 h-9 rounded-lg flex items-center justify-center text-muted transition" title="Setări">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.9 2.9l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 01-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.9-2.9l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 010-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.9-2.9l.1.1a1.7 1.7 0 001.8.3h0a1.7 1.7 0 001-1.5V3a2 2 0 014 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.9 2.9l-.1.1a1.7 1.7 0 00-.3 1.8v0a1.7 1.7 0 001.5 1H21a2 2 0 010 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
+
+    {{-- Tenant switcher --}}
+    <div class="px-3 py-3 border-b border-line tenant-block">
+      <button class="w-full nav-item flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left">
+        <div class="w-8 h-8 rounded-lg bg-paper border border-line flex items-center justify-center text-inkSoft font-semibold text-sm shrink-0">DP</div>
+        <div class="flex-1 min-w-0 tenant-meta">
+          <div class="font-semibold text-sm leading-tight truncate">Dental Pro</div>
+          <div class="text-2xs text-muted leading-tight mt-0.5">Codrut · Admin</div>
+        </div>
+        <svg class="w-3.5 h-3.5 text-muted tenant-chev" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 9l4-4 4 4M8 15l4 4 4-4"/></svg>
       </button>
-      <div class="w-8 h-8 rounded-full bg-gradient-to-br from-coral to-coralh text-paper text-2xs font-semibold flex items-center justify-center cursor-pointer">CD</div>
+    </div>
+
+    {{-- Search --}}
+    <div class="px-3 py-2 border-b border-line search-block">
+      <button class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-sm text-muted bg-paper border border-line hover:border-muted/50 transition">
+        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 21l-4.35-4.35M10 17a7 7 0 100-14 7 7 0 000 14z"/></svg>
+        <span class="flex-1 text-left search-text">Caută</span>
+        <span class="font-mono text-2xs search-kbd">⌘K</span>
+      </button>
+    </div>
+
+    {{-- Main nav --}}
+    <nav class="px-2 py-2 flex-1 overflow-y-auto text-sm">
+      <a href="/preview/v2/dashboard" class="nav-item flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-inkSoft" title="Dashboard">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10"/></svg>
+        <span class="nav-label">Dashboard</span>
+      </a>
+      <a href="#" class="nav-item active flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg font-medium mt-0.5" title="Inbox">
+        <svg class="w-4 h-4 shrink-0 text-coral" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
+        <span class="nav-label">Inbox</span>
+        <span class="ml-auto text-2xs font-mono px-1.5 py-0.5 rounded bg-coral/10 text-coralh nav-meta">12</span>
+      </a>
+
+      <details open class="mt-4">
+        <summary class="flex items-center gap-1 px-2 py-1 cursor-pointer text-2xs uppercase tracking-wider text-muted font-semibold list-none section-label">
+          <svg class="chev w-3 h-3 transition" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+          Workspace
+        </summary>
+        <div class="mt-1 space-y-0.5">
+          <a class="nav-item flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-inkSoft" title="Agenți AI">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
+            <span class="nav-label">Agenți AI</span>
+            <span class="ml-auto text-2xs text-muted nav-meta">4</span>
+          </a>
+          <a class="nav-item flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-inkSoft" title="Apeluri">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 5a2 2 0 012-2h3l2 4-2 1a11 11 0 005 5l1-2 4 2v3a2 2 0 01-2 2A16 16 0 013 5z"/></svg>
+            <span class="nav-label">Apeluri</span>
+          </a>
+          <a class="nav-item flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-inkSoft" title="Leads">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 2v6M12 22v-6M2 12h6M22 12h-6"/><circle cx="12" cy="12" r="3"/></svg>
+            <span class="nav-label">Leads</span>
+          </a>
+          <a class="nav-item flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-inkSoft" title="Transcrieri">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14l4-4h12a2 2 0 002-2zM7 8h10M7 12h6"/></svg>
+            <span class="nav-label">Transcrieri</span>
+          </a>
+        </div>
+      </details>
+
+      <details open class="mt-3">
+        <summary class="flex items-center gap-1 px-2 py-1 cursor-pointer text-2xs uppercase tracking-wider text-muted font-semibold list-none section-label">
+          <svg class="chev w-3 h-3 transition" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+          Canale
+        </summary>
+        <div class="mt-1 space-y-0.5">
+          <a class="nav-item flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-inkSoft" title="Site-uri">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 010 20 15 15 0 010-20"/></svg>
+            <span class="nav-label">Site-uri</span>
+          </a>
+          <a class="nav-item flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-inkSoft" title="Numere telefon">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.37 1.9.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.91.33 1.85.57 2.81.7A2 2 0 0122 16.92z"/></svg>
+            <span class="nav-label">Numere telefon</span>
+          </a>
+          <a class="nav-item flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-inkSoft" title="WhatsApp">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+            <span class="nav-label">WhatsApp</span>
+            <span class="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-500 nav-meta"></span>
+          </a>
+          <a class="nav-item flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-inkSoft" title="Facebook">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
+            <span class="nav-label">Facebook</span>
+          </a>
+          <a class="nav-item flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-inkSoft" title="Instagram">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".5" fill="currentColor"/></svg>
+            <span class="nav-label">Instagram</span>
+          </a>
+        </div>
+      </details>
+
+      <details class="mt-3">
+        <summary class="flex items-center gap-1 px-2 py-1 cursor-pointer text-2xs uppercase tracking-wider text-muted font-semibold list-none section-label">
+          <svg class="chev w-3 h-3 transition" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+          Cont
+        </summary>
+        <div class="mt-1 space-y-0.5">
+          <a class="nav-item flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-inkSoft" title="Echipă">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+            <span class="nav-label">Echipă</span>
+          </a>
+          <a class="nav-item flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-inkSoft" title="Facturare">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+            <span class="nav-label">Facturare</span>
+          </a>
+          <a class="nav-item flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-inkSoft" title="Setări">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.9 2.9l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 01-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.9-2.9l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 010-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.9-2.9l.1.1a1.7 1.7 0 001.8.3h0a1.7 1.7 0 001-1.5V3a2 2 0 014 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.9 2.9l-.1.1a1.7 1.7 0 00-.3 1.8v0a1.7 1.7 0 001.5 1H21a2 2 0 010 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
+            <span class="nav-label">Setări</span>
+          </a>
+        </div>
+      </details>
+    </nav>
+
+    {{-- Plan usage block + collapse toggle --}}
+    <div class="border-t border-line">
+      <div class="p-3 plan-block">
+        <div class="rounded-xl p-3 bg-paper border border-line">
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-semibold text-sm">Professional</span>
+            <span class="text-2xs text-muted mono">73%</span>
+          </div>
+          <div class="text-2xs text-muted mb-2">1.840 / 2.500 mesaje · luna mai</div>
+          <div class="h-1 bg-line rounded-full overflow-hidden mb-2.5">
+            <div class="h-full bg-coral rounded-full" style="width:73%"></div>
+          </div>
+          <button class="text-xs font-medium text-coralh hover:underline">Trecere la Business →</button>
+        </div>
+      </div>
+      {{-- Collapse toggle (desktop only) --}}
+      <button onclick="toggleCollapse()" class="hidden lg:flex w-full items-center justify-center gap-2 px-3 py-2 text-2xs text-muted hover:text-ink hover:bg-paper transition border-t border-line" title="Restrânge meniul">
+        <svg class="collapse-icon w-3.5 h-3.5 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 19l-7-7 7-7M19 19l-7-7 7-7"/></svg>
+        <span class="nav-label">Restrânge meniul</span>
+      </button>
     </div>
   </aside>
 
@@ -594,25 +729,39 @@ tailwind.config = {
 </div>
 
 <script>
+  // Sidebar drawer pe mobile
   function toggleIconNav() {
-    document.getElementById('pane-icon').classList.toggle('open');
+    document.getElementById('pane-nav').classList.toggle('open');
     document.getElementById('bd-icon').classList.toggle('hidden');
   }
+  // Customer drawer pe mobile
   function toggleCustomer() {
     document.getElementById('pane-customer').classList.toggle('open');
     document.getElementById('bd-customer').classList.toggle('hidden');
   }
+  // Mobile: schimbă între listă și thread
   function showThread() {
-    if (window.innerWidth < 1024) {
-      document.body.classList.add('show-thread');
-    }
+    if (window.innerWidth < 1024) document.body.classList.add('show-thread');
   }
   function showList() {
     document.body.classList.remove('show-thread');
   }
+  // Desktop: collapse sidebar (preferință salvată local)
+  function toggleCollapse() {
+    const nav = document.getElementById('pane-nav');
+    nav.classList.toggle('collapsed');
+    try { localStorage.setItem('inbox-nav-collapsed', nav.classList.contains('collapsed') ? '1' : '0'); } catch (e) {}
+  }
+  // Aplică preferința la load
+  try {
+    if (localStorage.getItem('inbox-nav-collapsed') === '1') {
+      document.getElementById('pane-nav').classList.add('collapsed');
+    }
+  } catch (e) {}
+  // Esc închide drawer-urile
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
-    document.getElementById('pane-icon').classList.remove('open');
+    document.getElementById('pane-nav').classList.remove('open');
     document.getElementById('bd-icon').classList.add('hidden');
     document.getElementById('pane-customer').classList.remove('open');
     document.getElementById('bd-customer').classList.add('hidden');
