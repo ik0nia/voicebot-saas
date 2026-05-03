@@ -499,6 +499,11 @@ Route::middleware('auth')
     ->get('/dashboard/cost-forecast', [\App\Http\Controllers\Dashboard\CostForecastController::class, 'snapshot'])
     ->name('dashboard.cost-forecast');
 
+// Smart reply suggestions — operator în conversație cere 3 sugestii LLM
+Route::middleware('auth')
+    ->post('/dashboard/conversatie/{conversation}/smart-reply', [\App\Http\Controllers\Dashboard\SmartReplyController::class, 'suggest'])
+    ->name('dashboard.conversation.smart-reply');
+
 // Knowledge gaps — listă query-uri zero-result + AI suggester
 Route::middleware('auth')->group(function () {
     $kg = \App\Http\Controllers\Dashboard\KnowledgeGapsController::class;

@@ -21,6 +21,50 @@
     <span class="font-medium text-inkSoft">Conversație #{{ $conversation->id }}</span>
 @endsection
 
+@push('scripts')
+<script>
+function smartReply(conversationId) {
+    return {
+        loading: false,
+        replies: [],
+        error: null,
+        copied: null,
+
+        async fetch() {
+            this.loading = true;
+            this.error = null;
+            try {
+                const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+                const r = await fetch('/dashboard/conversatie/' + conversationId + '/smart-reply', {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                });
+                const d = await r.json();
+                if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+                this.replies = d.replies || [];
+            } catch (e) {
+                this.error = e.message;
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        styleLabel(s) {
+            return { short: '⚡ Scurt', detailed: '📄 Detaliat', question: '❓ Clarificare' }[s] || s;
+        },
+
+        async copy(text, idx) {
+            try {
+                await navigator.clipboard.writeText(text);
+                this.copied = idx;
+                setTimeout(() => this.copied = null, 2000);
+            } catch (e) {}
+        },
+    };
+}
+</script>
+@endpush
+
 @section('content')
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -196,6 +240,46 @@
                         </svg>
                     </div>
                     <p class="text-sm text-muted">Niciun mesaj în această conversație.</p>
+                </div>
+            @endif
+
+            {{-- Smart reply: 3 sugestii LLM pentru operator --}}
+            @if($messages->count() > 0)
+                <div x-data="smartReply({{ $conversation->id }})" class="mt-6 pt-6 border-t border-line">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded-lg bg-coralsoft text-coralh flex items-center justify-center text-xs">✨</div>
+                            <h3 class="display text-sm font-semibold text-ink">Smart reply — 3 sugestii AI</h3>
+                        </div>
+                        <button @click="fetch()" :disabled="loading"
+                                class="text-2xs px-3 py-1.5 rounded-pill border border-line bg-white hover:bg-cream font-medium disabled:opacity-50">
+                            <span x-show="!loading && replies.length === 0">✨ Generează</span>
+                            <span x-show="!loading && replies.length > 0">↻ Regenerează</span>
+                            <span x-show="loading">așteaptă…</span>
+                        </button>
+                    </div>
+
+                    <template x-if="error">
+                        <div class="p-2 rounded-lg bg-coralsoft border border-coral/30 text-2xs text-coralh" x-text="error"></div>
+                    </template>
+
+                    <div x-show="replies.length > 0" class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <template x-for="(r, idx) in replies" :key="idx">
+                            <div class="p-3 rounded-lg border border-line hover:border-coral/40 bg-white transition">
+                                <div class="text-2xs font-semibold text-coralh mb-1.5" x-text="styleLabel(r.style)"></div>
+                                <div class="text-xs text-ink leading-relaxed mb-3" x-text="r.text"></div>
+                                <button @click="copy(r.text, idx)"
+                                        class="w-full text-2xs px-2 py-1 rounded bg-cream hover:bg-coralsoft text-inkSoft hover:text-coralh transition">
+                                    <span x-show="copied !== idx">📋 copiază</span>
+                                    <span x-show="copied === idx">✓ copiat</span>
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+
+                    <p x-show="replies.length === 0 && !loading && !error" class="text-2xs text-muted text-center py-4">
+                        Apasă „✨ Generează" pentru a primi 3 răspunsuri sugerate (scurt / detaliat / clarificare). Cost: ~0.001 RON / sugestie.
+                    </p>
                 </div>
             @endif
         </div>
