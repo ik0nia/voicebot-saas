@@ -504,6 +504,11 @@ Route::middleware('auth')->group(function () {
     $kg = \App\Http\Controllers\Dashboard\KnowledgeGapsController::class;
     Route::get('/dashboard/agenti/{bot}/knowledge-gaps', [$kg, 'show'])->name('dashboard.knowledge-gaps.show');
     Route::post('/dashboard/agenti/{bot}/knowledge-gaps/suggest', [$kg, 'suggestFaq'])->name('dashboard.knowledge-gaps.suggest');
+
+    // Mock customer simulator — AI joacă rol de client + raport de calitate
+    $mc = \App\Http\Controllers\Dashboard\MockCustomerController::class;
+    Route::get('/dashboard/agenti/{bot}/mock-customer', [$mc, 'show'])->name('dashboard.mock-customer.show');
+    Route::post('/dashboard/agenti/{bot}/mock-customer/run', [$mc, 'run'])->name('dashboard.mock-customer.run');
 });
 
 // Playground per bot: chat tester + voice preview + embed live preview
