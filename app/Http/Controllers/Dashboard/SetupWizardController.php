@@ -13,18 +13,24 @@ use OpenAI\Laravel\Facades\OpenAI;
 
 class SetupWizardController extends Controller
 {
+    /**
+     * Wizard de onboarding canonic = setup-wow.
+     *
+     * Vechiul flow business-type/preset (dashboard.setup.index) a fost
+     * superat de niche-driven setup-wow (4 pași: nișă · website · agent
+     * · test). Păstrăm /dashboard/setup ca redirect ca să nu murim
+     * link-urile din emails / docs vechi; POST endpoint-urile vechi
+     * rămân pentru API clients (rate-limited tot prin route group-ul
+     * lor original).
+     */
     public function index()
     {
-        $tenant = auth()->user()->tenant;
-
-        // If tenant already has bots, skip wizard
+        // Bot deja există → la dashboard, ca înainte.
         if (Bot::exists()) {
             return redirect()->route('dashboard');
         }
 
-        return view('dashboard.setup.index', [
-            'presets' => config('business-presets'),
-        ]);
+        return redirect()->route('dashboard.setup-wow.start');
     }
 
     public function storeBusinessType(Request $request)

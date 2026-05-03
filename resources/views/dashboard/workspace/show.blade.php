@@ -9,7 +9,7 @@
     $tabs = [
         'acum'        => '📊 Acum',
         'conversatii' => '💬 Conversații',
-        'agent'       => '🧠 Agent',
+        'agent'       => '⚙️ Setări',
         'cunostinte'  => '📚 Cunoștințe',
         'canale'      => '📡 Canale',
     ];
@@ -41,10 +41,10 @@
         </div>
         <div class="flex items-center gap-2">
             <a href="{{ route('dashboard.workspace.automations', $bot) }}" class="text-sm px-4 py-2 rounded-lg border border-line bg-white hover:bg-cream">
-                ⚙️ Automatizări
+                Automatizări
             </a>
-            <a href="{{ url('/dashboard/agenti/' . $bot->id) }}" class="text-sm px-4 py-2 rounded-lg border border-line bg-white hover:bg-cream">
-                Editare detaliată →
+            <a href="{{ route('dashboard.bots.edit', $bot) }}" class="text-sm px-4 py-2 rounded-lg btn-coral font-medium">
+                Editează agentul →
             </a>
         </div>
     </div>
@@ -246,7 +246,7 @@
             <div class="md:col-span-2 bg-white rounded-xl border border-line p-5">
                 <h2 class="font-semibold text-ink mb-3">Prompt de sistem</h2>
                 <pre class="text-xs text-inkSoft whitespace-pre-wrap font-mono bg-cream p-3 rounded-lg max-h-96 overflow-y-auto">{{ $bot->system_prompt ?: '(gol)' }}</pre>
-                <a href="{{ url('/dashboard/agenti/' . $bot->id) }}" class="mt-3 inline-block text-sm text-coralh hover:underline">Editează promptul →</a>
+                <a href="{{ route('dashboard.bots.edit', $bot) }}" class="mt-3 inline-block text-sm text-coralh hover:underline">Editează promptul și restul setărilor →</a>
             </div>
             <div class="space-y-3">
                 <div class="bg-white rounded-xl border border-line p-5">

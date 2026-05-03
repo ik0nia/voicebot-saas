@@ -6,7 +6,7 @@
     <span class="text-muted">/</span>
     <a href="{{ route('dashboard.bots.index') }}" class="text-muted hover:text-inkSoft transition-colors">Agenți AI</a>
     <span class="text-muted">/</span>
-    <a href="{{ route('dashboard.bots.show', $bot) }}" class="text-muted hover:text-inkSoft transition-colors">{{ $bot->name }}</a>
+    <a href="{{ route('dashboard.workspace.show', $bot) }}" class="text-muted hover:text-inkSoft transition-colors">{{ $bot->name }}</a>
     <span class="text-muted">/</span>
     <span class="font-medium text-inkSoft">Editează</span>
 @endsection

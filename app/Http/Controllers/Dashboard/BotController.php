@@ -121,92 +121,23 @@ class BotController extends Controller
             ->with('success', 'Agentul AI a fost creat cu succes!');
     }
 
-    public function show($botId)
+    /**
+     * Canonical bot-detail surface = WorkspaceController.
+     *
+     * /dashboard/agenti/{bot} ține URL-ul familiar (toate link-urile
+     * existente în view-uri și emails îl folosesc), dar redirectează
+     * la workspace/{bot} care e singurul detail-page rămas. Param-ul
+     * ?tab= e propagat ca să ?tab=agent etc. funcționeze direct din
+     * link-urile vechi.
+     */
+    public function show($botId, Request $request)
     {
         $bot = $this->resolveBot($botId);
-        $bot->loadCount('calls');
-        $bot->load('channels', 'phoneNumbers', 'site');
 
-        $recentCalls = $bot->calls()->latest()->take(5)->get();
-        $callsThisMonth = $bot->calls()->whereMonth('created_at', now()->month)->count();
-        $avgDuration = $bot->calls()->where('status', 'completed')->avg('duration_seconds');
+        $tab = $request->get('tab');
+        $params = $tab ? ['tab' => $tab] : [];
 
-        // Knowledge Base Health stats
-        $knowledgeQuery = $bot->knowledge()->where('status', 'ready');
-        $totalDocuments = (clone $knowledgeQuery)->distinct('title')->count('title');
-        $totalChunks = (clone $knowledgeQuery)->count();
-        $hasFaq = (clone $knowledgeQuery)->where('title', 'like', '%FAQ%')->exists();
-        $hasProducts = (clone $knowledgeQuery)->where('source_type', 'agent')
-            ->where('metadata->agent_slug', 'like', '%product%')->exists();
-        $hasPolicies = (clone $knowledgeQuery)->where('source_type', 'agent')
-            ->where('metadata->agent_slug', 'like', '%policy%')->exists();
-        $hasScan = (clone $knowledgeQuery)->where('source_type', 'scan')->exists();
-        $hasConnector = (clone $knowledgeQuery)->where('source_type', 'connector')->exists();
-        $hasAgent = (clone $knowledgeQuery)->where('source_type', 'agent')->exists();
-        $hasFiveDocuments = $totalDocuments >= 5;
-
-        // Calculate score (max 100%)
-        $criteria = [$totalDocuments > 0, $hasAgent, $hasFaq, $hasScan, $hasFiveDocuments];
-        $score = count(array_filter($criteria)) * 20;
-
-        $kbStats = [
-            'total_documents' => $totalDocuments,
-            'total_chunks' => $totalChunks,
-            'has_faq' => $hasFaq,
-            'has_products' => $hasProducts,
-            'has_policies' => $hasPolicies,
-            'has_scan' => $hasScan,
-            'has_connector' => $hasConnector,
-            'has_agent' => $hasAgent,
-            'has_five_documents' => $hasFiveDocuments,
-            'score' => $score,
-        ];
-
-        $bot->load('clonedVoice');
-        $clonedVoice = \App\Models\ClonedVoice::withoutGlobalScopes()
-            ->where('tenant_id', $bot->tenant_id)
-            ->latest()
-            ->first();
-
-        // API tokens for WordPress integration
-        $apiTokens = auth()->user()->tokens()->latest()->get();
-
-        // WooCommerce connector for this bot
-        $wcConnector = KnowledgeConnector::withoutGlobalScopes()
-            ->where('bot_id', $bot->id)
-            ->where('type', 'woocommerce')
-            ->first();
-
-        // Recent knowledge documents
-        $recentKnowledge = $bot->knowledge()->where('status', 'ready')->latest()->take(5)->get();
-
-        // Bot Health Score (adaptive intelligence)
-        $healthScore = app(\App\Services\BotHealthScoreService::class)->calculate($bot);
-
-        // Knowledge Gaps
-        $knowledgeGaps = app(\App\Services\KnowledgeGapService::class)->analyze($bot->id);
-
-        // Conversation Policy (personality settings) — bypass tenant scope since we already resolved the bot
-        // Use a blank model as fallback so views don't access properties on null
-        $policy = \App\Models\ConversationPolicy::withoutGlobalScopes()->where('bot_id', $bot->id)->first()
-            ?? new \App\Models\ConversationPolicy();
-
-        // Conversation stats for this bot
-        $conversationsThisMonth = \App\Models\Conversation::where('bot_id', $bot->id)
-            ->whereMonth('created_at', now()->month)
-            ->count();
-        $conversationsTotal = \App\Models\Conversation::where('bot_id', $bot->id)->count();
-        $recentConversations = \App\Models\Conversation::where('bot_id', $bot->id)
-            ->latest()
-            ->take(5)
-            ->get();
-
-        return view('dashboard.bots.show', compact(
-            'bot', 'recentCalls', 'callsThisMonth', 'avgDuration',
-            'kbStats', 'clonedVoice', 'apiTokens', 'wcConnector', 'recentKnowledge',
-            'healthScore', 'knowledgeGaps', 'policy',
-            'conversationsThisMonth', 'conversationsTotal', 'recentConversations'
-        ));
+        return redirect()->route('dashboard.workspace.show', array_merge(['bot' => $bot->id], $params));
     }
 
     public function edit($botId)

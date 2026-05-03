@@ -64,7 +64,7 @@
                         {{-- Top row: name + status --}}
                         <div class="flex items-start justify-between mb-3">
                             <div class="min-w-0 flex-1">
-                                <a href="{{ route('dashboard.bots.show', $bot) }}" class="text-lg font-semibold text-ink hover:text-coralh transition-colors truncate block">
+                                <a href="{{ route('dashboard.workspace.show', $bot) }}" class="text-lg font-semibold text-ink hover:text-coralh transition-colors truncate block">
                                     {{ $bot->name }}
                                 </a>
                             </div>
@@ -139,7 +139,7 @@
                                 </button>
                             </form>
 
-                            <a href="{{ route('dashboard.bots.show', $bot) }}" title="Vizualizează"
+                            <a href="{{ route('dashboard.workspace.show', $bot) }}" title="Vizualizează"
                                class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-line bg-white text-muted hover:bg-cream hover:text-inkSoft transition-colors">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
