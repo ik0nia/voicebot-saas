@@ -283,7 +283,7 @@ tailwind.config = {
       </div>
     </header>
 
-    <main class="px-8 py-10 max-w-6xl">
+    <main class="px-8 py-10">
 
       {{-- Greeting --}}
       <div class="mb-9">
