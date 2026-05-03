@@ -91,14 +91,20 @@ tailwind.config = {
       },
       colors: {
         cream:     '#F5F1E8',
-        paper:     '#FFFFFF',
+        paper:     '#FAF7EF',
+        sand:      '#EFE5D0',
+        sandy:     '#E5DCC4',
         ink:       '#1C1917',
         inkSoft:   '#3A3532',
-        muted:     '#7B6F55',
-        line:      '#E8E3D7',
-        sand:      '#F5F1E8',
+        muted:     '#78716C',
+        line:      '#E7E0CE',
         coral:     '#DC2626',
-        coralDark: '#991B1B',
+        coralh:    '#991B1B',
+        coralsoft: '#FEE2E2',
+        peach:     '#FDBA8C',
+        sun:       '#F2E59A',
+        lilac:     '#C7B8E8',
+        sky:       '#A7C7F0',
       },
       borderRadius: { card: '24px', primary: '48px', pill: '999px' },
       fontSize: { '2xs': '0.6875rem' },
@@ -111,13 +117,21 @@ tailwind.config = {
   .display { font-family: 'Instrument Sans', 'Inter', sans-serif; letter-spacing: -0.02em; }
   .mono { font-family: 'JetBrains Mono', monospace; }
   .nav-item { transition: background-color .12s ease; }
-  .nav-item:hover { background: rgba(28,25,23,0.04); }
-  .nav-item.active { background: #FFFFFF; box-shadow: 0 1px 0 rgba(28,25,23,0.04); }
+  .nav-item:hover { background: rgba(28,25,23,0.05); }
+  .nav-item.active { background: #FAF7EF; box-shadow: 0 1px 0 rgba(28,25,23,0.04); }
   details > summary::-webkit-details-marker { display: none; }
   details[open] summary .chev { transform: rotate(90deg); }
-  .card { background: #FFFFFF; border: 1px solid #E8E3D7; border-radius: 24px; }
+  .card { background: #FAF7EF; border: 1px solid #E7E0CE; border-radius: 24px; }
   .pulse-dot { animation: pulse 2s ease-in-out infinite; }
   @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .4 } }
+
+  /* Mobile drawer */
+  #sidebar { transform: translateX(-100%); transition: transform .22s ease; }
+  #sidebar.open { transform: translateX(0); }
+  @media (min-width: 1024px) {
+    #sidebar { transform: translateX(0) !important; position: relative !important; }
+    #backdrop { display: none !important; }
+  }
 </style>
 </head>
 <body class="antialiased">
@@ -126,15 +140,41 @@ tailwind.config = {
   Preview v2 · Dashboard · <a href="/preview/v2" class="underline">înapoi la index</a> · date simulate
 </div>
 
-<div class="flex h-[calc(100vh-29px)]">
+<div class="flex h-[calc(100vh-29px)] relative">
+
+  {{-- Backdrop pentru drawer pe mobile --}}
+  <div id="backdrop" class="fixed inset-0 bg-ink/40 z-20 hidden lg:hidden" onclick="toggleSidebar()"></div>
 
   {{-- ───────────────────────── Sidebar ───────────────────────── --}}
-  <aside class="w-64 bg-sand border-r border-line flex flex-col shrink-0">
+  <aside id="sidebar" class="fixed lg:relative inset-y-0 left-0 z-30 w-64 bg-sand border-r border-line flex flex-col shrink-0">
+
+    {{-- Sambla brand --}}
+    <div class="px-4 py-3 border-b border-line flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2.5 group">
+        <svg class="w-7 h-7" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="sgD" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#991b1b"/>
+              <stop offset="100%" stop-color="#dc2626"/>
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="80" height="80" rx="20" fill="url(#sgD)"/>
+          <rect x="18" y="28" width="44" height="24" rx="12" fill="#FAF7EF"/>
+          <circle cx="32" cy="40" r="4" fill="#991b1b"/>
+          <circle cx="48" cy="40" r="4" fill="#991b1b"/>
+        </svg>
+        <span class="display text-lg font-semibold tracking-tight">Sambla</span>
+      </a>
+      {{-- Close drawer pe mobile --}}
+      <button onclick="toggleSidebar()" class="lg:hidden w-8 h-8 rounded-lg hover:bg-paper text-muted hover:text-ink flex items-center justify-center transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
 
     {{-- Tenant switcher --}}
     <div class="px-3 py-3 border-b border-line">
       <button class="w-full nav-item flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left">
-        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-coral to-coralDark flex items-center justify-center text-paper font-semibold text-sm">DP</div>
+        <div class="w-8 h-8 rounded-lg bg-paper border border-line flex items-center justify-center text-inkSoft font-semibold text-sm">DP</div>
         <div class="flex-1 min-w-0">
           <div class="font-semibold text-sm leading-tight truncate">Dental Pro</div>
           <div class="text-2xs text-muted leading-tight mt-0.5">Codrut · Admin</div>
@@ -161,7 +201,7 @@ tailwind.config = {
       <a href="/preview/v2/inbox" class="nav-item flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-inkSoft mt-0.5">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
         Inbox
-        <span class="ml-auto text-2xs font-mono px-1.5 py-0.5 rounded bg-coral/10 text-coralDark">12</span>
+        <span class="ml-auto text-2xs font-mono px-1.5 py-0.5 rounded bg-coral/10 text-coralh">12</span>
       </a>
 
       <details open class="mt-4">
@@ -253,7 +293,7 @@ tailwind.config = {
         <div class="h-1 bg-line rounded-full overflow-hidden mb-2.5">
           <div class="h-full bg-coral rounded-full" style="width:73%"></div>
         </div>
-        <button class="text-xs font-medium text-coralDark hover:underline">Trecere la Business →</button>
+        <button class="text-xs font-medium text-coralh hover:underline">Trecere la Business →</button>
       </div>
     </div>
   </aside>
@@ -261,36 +301,44 @@ tailwind.config = {
   {{-- ───────────────────────── Main ───────────────────────── --}}
   <div class="flex-1 min-w-0 overflow-y-auto">
 
-    <header class="h-14 bg-cream/85 backdrop-blur border-b border-line flex items-center justify-between px-8 sticky top-0 z-10">
-      <div class="flex items-center gap-3 text-sm">
-        <span class="text-muted">Dental Pro</span>
-        <span class="text-line">/</span>
-        <span class="font-medium">Dashboard</span>
-
-        {{-- View-as super_admin chip — vizibil unde te-ai aștepta --}}
-        <div class="ml-3 flex items-center gap-2 px-2.5 py-1 rounded-pill bg-coral/10 border border-coral/20 text-2xs">
-          <svg class="w-3 h-3 text-coralDark" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/></svg>
-          <span class="text-coralDark font-medium">Vizualizezi ca <strong>Dental Pro</strong></span>
-          <button class="text-coralDark/70 hover:text-coralDark">Ieși ✕</button>
-        </div>
+    <header class="h-14 bg-cream/85 backdrop-blur border-b border-line flex items-center justify-between px-4 md:px-8 sticky top-0 z-10 gap-3">
+      <div class="flex items-center gap-3 text-sm min-w-0">
+        {{-- Hamburger pe mobile --}}
+        <button onclick="toggleSidebar()" class="lg:hidden w-9 h-9 -ml-1.5 rounded-lg hover:bg-paper text-inkSoft flex items-center justify-center transition shrink-0" aria-label="Deschide meniul">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+        </button>
+        <span class="text-muted truncate">Dental Pro</span>
+        <span class="text-line hidden sm:inline">/</span>
+        <span class="font-medium hidden sm:inline">Dashboard</span>
       </div>
-      <div class="flex items-center gap-2">
+
+      <div class="flex items-center gap-2 shrink-0">
+        {{-- View-as chip — vizibil pentru super_admin, lângă clopoțel --}}
+        <div class="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-pill bg-coralsoft border border-coral/20 text-2xs">
+          <svg class="w-3 h-3 text-coralh" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/></svg>
+          <span class="text-coralh font-medium">Vezi ca <strong>Dental Pro</strong></span>
+          <button class="text-coralh/70 hover:text-coralh ml-0.5" aria-label="Ieși din mod view-as">✕</button>
+        </div>
+        {{-- Compact view-as pe mobile (doar iconiță) --}}
+        <button class="md:hidden w-8 h-8 rounded-lg bg-coralsoft border border-coral/20 text-coralh flex items-center justify-center" title="Vezi ca Dental Pro">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/></svg>
+        </button>
         <button class="relative w-8 h-8 rounded-lg hover:bg-paper text-muted hover:text-ink flex items-center justify-center transition">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg>
           <span class="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-coral"></span>
         </button>
-        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-coral to-coralDark text-paper text-xs font-semibold flex items-center justify-center cursor-pointer">CD</div>
+        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-coral to-coralh text-paper text-xs font-semibold flex items-center justify-center cursor-pointer">CD</div>
       </div>
     </header>
 
-    <main class="px-8 py-10">
+    <main class="px-4 md:px-8 py-6 md:py-10">
 
       {{-- Greeting --}}
       <div class="mb-9">
         <h1 class="display text-4xl md:text-5xl font-semibold tracking-tight mb-2 leading-[1.05]">Bună, Codrut.</h1>
         <p class="text-inkSoft text-base">
           47 apeluri preluate azi. 12 conversații așteaptă răspuns în Inbox.
-          <a href="/preview/v2/inbox" class="text-coralDark underline underline-offset-2 hover:text-coral">Deschide →</a>
+          <a href="/preview/v2/inbox" class="text-coralh underline underline-offset-2 hover:text-coral">Deschide →</a>
         </p>
       </div>
 
@@ -317,7 +365,7 @@ tailwind.config = {
           @php
             $deltaColor = match($k['deltaDir']) {
               'up' => 'text-emerald-700 bg-emerald-50 border-emerald-200',
-              'down' => 'text-coralDark bg-coral/10 border-coral/20',
+              'down' => 'text-coralh bg-coral/10 border-coral/20',
               'warn' => 'text-amber-700 bg-amber-50 border-amber-200',
               default => 'text-muted bg-cream border-line',
             };
@@ -356,7 +404,7 @@ tailwind.config = {
               <div class="flex-1 flex flex-col items-center gap-2">
                 <div class="text-2xs mono text-muted">{{ $b[1] }}</div>
                 <div class="w-full rounded-md {{ $b[2] ? 'bg-coral' : 'bg-line' }}" style="height: {{ $h }}%; min-height: 6px;"></div>
-                <div class="text-2xs {{ $b[2] ? 'text-coralDark font-semibold' : 'text-muted' }}">{{ $b[0] }}</div>
+                <div class="text-2xs {{ $b[2] ? 'text-coralh font-semibold' : 'text-muted' }}">{{ $b[0] }}</div>
               </div>
             @endforeach
           </div>
@@ -366,7 +414,7 @@ tailwind.config = {
         <div class="card p-5">
           <div class="flex items-center justify-between mb-4">
             <h2 class="font-semibold tracking-tight">Agenți</h2>
-            <a class="text-xs text-coralDark hover:underline">Toți →</a>
+            <a class="text-xs text-coralh hover:underline">Toți →</a>
           </div>
 
           <div class="space-y-3">
@@ -384,7 +432,7 @@ tailwind.config = {
                 <div class="relative w-10 h-10 shrink-0">
                   {{-- Donut --}}
                   <svg class="w-10 h-10 -rotate-90" viewBox="0 0 36 36">
-                    <circle cx="18" cy="18" r="15" fill="none" stroke="#E8E3D7" stroke-width="3"></circle>
+                    <circle cx="18" cy="18" r="15" fill="none" stroke="#E7E0CE" stroke-width="3"></circle>
                     <circle cx="18" cy="18" r="15" fill="none" stroke="{{ $a['state'] === 'warn' ? '#D97706' : '#059669' }}" stroke-width="3" stroke-dasharray="{{ round($a['health'] * 0.94) }} 100"></circle>
                   </svg>
                   <div class="absolute inset-0 flex items-center justify-center text-2xs mono font-semibold">{{ $a['health'] }}</div>
@@ -411,7 +459,7 @@ tailwind.config = {
               <h2 class="font-semibold tracking-tight">Pipeline lead-uri</h2>
               <p class="text-xs text-muted mt-0.5">89 active · valoare estimată 14.200 RON</p>
             </div>
-            <a class="text-xs text-coralDark hover:underline">Detalii →</a>
+            <a class="text-xs text-coralh hover:underline">Detalii →</a>
           </div>
           <div class="space-y-3">
             @foreach($pipeline as $s)
@@ -443,7 +491,7 @@ tailwind.config = {
               @php
                 $iconBg = match($row['icon']) {
                   'gap' => 'bg-amber-50 text-amber-700',
-                  'escalate' => 'bg-coral/10 text-coralDark',
+                  'escalate' => 'bg-coral/10 text-coralh',
                   'wa' => 'bg-emerald-50 text-emerald-700',
                   'doc' => 'bg-blue-50 text-blue-700',
                   default => 'bg-cream text-inkSoft',
@@ -493,18 +541,35 @@ tailwind.config = {
           ['Invită coleg',      'Acces la workspace cu rol configurabil'],
         ] as $qa)
           <button class="card p-5 text-left hover:bg-cream transition group">
-            <div class="font-semibold text-sm mb-1 group-hover:text-coralDark transition">{{ $qa[0] }} →</div>
+            <div class="font-semibold text-sm mb-1 group-hover:text-coralh transition">{{ $qa[0] }} →</div>
             <div class="text-xs text-muted leading-snug">{{ $qa[1] }}</div>
           </button>
         @endforeach
       </div>
 
       <div class="text-center text-xs text-muted py-8 border-t border-line">
-        Ultimă actualizare · 2 mai 2026, 13:42 · servere RO online · preview v2
+        Ultimă actualizare · 3 mai 2026, 13:42 · servere RO online · preview v2
       </div>
     </main>
   </div>
 </div>
+
+<script>
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('backdrop').classList.toggle('hidden');
+  }
+  // Esc închide drawer-ul
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      const sb = document.getElementById('sidebar');
+      if (sb.classList.contains('open')) {
+        sb.classList.remove('open');
+        document.getElementById('backdrop').classList.add('hidden');
+      }
+    }
+  });
+</script>
 
 </body>
 </html>

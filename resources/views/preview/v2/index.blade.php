@@ -106,14 +106,20 @@ tailwind.config = {
       },
       colors: {
         cream:     '#F5F1E8',
-        paper:     '#FFFFFF',
+        paper:     '#FAF7EF',
+        sand:      '#EFE5D0',
+        sandy:     '#E5DCC4',
         ink:       '#1C1917',
         inkSoft:   '#3A3532',
-        muted:     '#7B6F55',
-        line:      '#E8E3D7',
-        sand:      '#F5F1E8',
+        muted:     '#78716C',
+        line:      '#E7E0CE',
         coral:     '#DC2626',
-        coralDark: '#991B1B',
+        coralh:    '#991B1B',
+        coralsoft: '#FEE2E2',
+        peach:     '#FDBA8C',
+        sun:       '#F2E59A',
+        lilac:     '#C7B8E8',
+        sky:       '#A7C7F0',
       },
       borderRadius: {
         card:    '24px',
@@ -140,10 +146,10 @@ tailwind.config = {
 
 <header class="border-b border-line bg-cream/90 backdrop-blur sticky top-7 z-10">
   <div class="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-    <div class="flex items-center gap-2.5">
-      <div class="w-7 h-7 rounded-pill bg-coral flex items-center justify-center text-paper font-bold text-sm">S</div>
-      <span class="font-semibold tracking-tight">Sambla · preview v2</span>
-    </div>
+    <a href="/" class="flex items-center gap-2.5">
+      <svg class="w-7 h-7" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="sgIdx" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#991b1b"/><stop offset="100%" stop-color="#dc2626"/></linearGradient></defs><rect x="0" y="0" width="80" height="80" rx="20" fill="url(#sgIdx)"/><rect x="18" y="28" width="44" height="24" rx="12" fill="#FAF7EF"/><circle cx="32" cy="40" r="4" fill="#991b1b"/><circle cx="48" cy="40" r="4" fill="#991b1b"/></svg>
+      <span class="font-semibold tracking-tight">Sambla <span class="text-muted font-normal">· preview v2</span></span>
+    </a>
     <a href="/" class="text-sm text-muted hover:text-ink transition">↩ site live</a>
   </div>
 </header>
@@ -170,12 +176,13 @@ tailwind.config = {
       <div class="flex flex-wrap gap-2">
         @foreach([
           ['cream','#F5F1E8','ink-on-cream'],
-          ['paper','#FFFFFF','ink-on-paper'],
+          ['paper','#FAF7EF','ink-on-paper'],
           ['ink','#1C1917','cream-on-ink'],
           ['coral','#DC2626','paper-on-coral'],
-          ['coralDark','#991B1B','paper-on-coralDark'],
-          ['muted','#7B6F55','paper-on-muted'],
-          ['line','#E8E3D7','ink-on-line'],
+          ['coralh','#991B1B','paper-on-coralh'],
+          ['sand','#EFE5D0','ink-on-sand'],
+          ['muted','#78716C','paper-on-muted'],
+          ['line','#E7E0CE','ink-on-line'],
         ] as $sw)
           <div class="flex items-center gap-2 text-xs">
             <div class="w-7 h-7 rounded-md border border-line" style="background: {{ $sw[1] }}"></div>

@@ -153,14 +153,20 @@ tailwind.config = {
       },
       colors: {
         cream:     '#F5F1E8',
-        paper:     '#FFFFFF',
+        paper:     '#FAF7EF',
+        sand:      '#EFE5D0',
+        sandy:     '#E5DCC4',
         ink:       '#1C1917',
         inkSoft:   '#3A3532',
-        muted:     '#7B6F55',
-        line:      '#E8E3D7',
-        sand:      '#F5F1E8',
+        muted:     '#78716C',
+        line:      '#E7E0CE',
         coral:     '#DC2626',
-        coralDark: '#991B1B',
+        coralh:    '#991B1B',
+        coralsoft: '#FEE2E2',
+        peach:     '#FDBA8C',
+        sun:       '#F2E59A',
+        lilac:     '#C7B8E8',
+        sky:       '#A7C7F0',
       },
       borderRadius: { card: '24px', primary: '48px', pill: '999px' },
       fontSize: { '2xs': '0.6875rem' },
@@ -176,23 +182,43 @@ tailwind.config = {
   /* Linear-density list */
   .conv-list { font-size: 13px; }
   .conv-row { line-height: 1.35; }
-  .conv-row.selected { background: #FFFFFF; box-shadow: inset 3px 0 0 #DC2626; }
-  .conv-row:hover:not(.selected) { background: rgba(255,255,255,0.6); }
+  .conv-row.selected { background: #FAF7EF; box-shadow: inset 3px 0 0 #DC2626; }
+  .conv-row:hover:not(.selected) { background: rgba(250,247,239,0.6); }
 
   /* Thread comfortable */
   .thread-pane { font-size: 14px; }
 
   .icon-btn:hover { background: rgba(28,25,23,0.06); color: #1C1917; }
-  .icon-btn.active { background: #FFFFFF; color: #DC2626; }
+  .icon-btn.active { background: #FAF7EF; color: #DC2626; }
   .pulse-dot { animation: pulse 2s ease-in-out infinite; }
   @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .4 } }
-  kbd { font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 1px 5px; border: 1px solid #E8E3D7; border-radius: 3px; background: #FFFFFF; color: #7B6F55; }
+  kbd { font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 1px 5px; border: 1px solid #E7E0CE; border-radius: 3px; background: #FAF7EF; color: #78716C; }
 
   /* Hide scrollbars but keep scroll */
-  .scroll-y { scrollbar-width: thin; scrollbar-color: #E8E3D7 transparent; }
+  .scroll-y { scrollbar-width: thin; scrollbar-color: #E7E0CE transparent; }
   .scroll-y::-webkit-scrollbar { width: 6px; }
   .scroll-y::-webkit-scrollbar-track { background: transparent; }
-  .scroll-y::-webkit-scrollbar-thumb { background: #E8E3D7; border-radius: 3px; }
+  .scroll-y::-webkit-scrollbar-thumb { background: #E7E0CE; border-radius: 3px; }
+
+  /* Mobile pane navigation */
+  #pane-icon { transition: transform .22s ease; }
+  #pane-customer { transition: transform .22s ease; }
+  @media (max-width: 1023px) {
+    #pane-icon { position: fixed; inset-y: 22px 0; left: 0; top: 22px; bottom: 0; z-index: 30; transform: translateX(-100%); }
+    #pane-icon.open { transform: translateX(0); }
+    #pane-list { width: 100%; }
+    #pane-thread { display: none; }
+    body.show-thread #pane-list { display: none; }
+    body.show-thread #pane-thread { display: flex; }
+    #pane-customer {
+      position: fixed; top: 22px; right: 0; bottom: 0; z-index: 30;
+      transform: translateX(100%); width: 90%; max-width: 380px;
+      box-shadow: -10px 0 40px -10px rgba(28,25,23,0.18);
+    }
+    #pane-customer.open { transform: translateX(0); }
+    .show-on-mobile { display: flex !important; }
+    .hide-on-mobile { display: none !important; }
+  }
 </style>
 </head>
 <body class="antialiased">
@@ -203,9 +229,15 @@ tailwind.config = {
 
 <div class="flex h-[calc(100vh-22px)]">
 
+  {{-- Backdrops pentru drawers pe mobile --}}
+  <div id="bd-icon" class="fixed inset-0 bg-ink/40 z-20 hidden lg:hidden" onclick="toggleIconNav()"></div>
+  <div id="bd-customer" class="fixed inset-0 bg-ink/40 z-20 hidden lg:hidden" onclick="toggleCustomer()"></div>
+
   {{-- ───── Pane 1 · Icon nav (Linear-style compact) ───── --}}
-  <aside class="w-14 bg-sand border-r border-line flex flex-col items-center py-3 shrink-0">
-    <div class="w-8 h-8 rounded-pill bg-coral flex items-center justify-center text-paper font-bold text-sm mb-5">S</div>
+  <aside id="pane-icon" class="w-14 bg-sand border-r border-line flex flex-col items-center py-3 shrink-0 z-30">
+    <a href="/" class="block w-9 h-9 mb-5" title="Sambla">
+      <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="sgI" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#991b1b"/><stop offset="100%" stop-color="#dc2626"/></linearGradient></defs><rect x="0" y="0" width="80" height="80" rx="20" fill="url(#sgI)"/><rect x="18" y="28" width="44" height="24" rx="12" fill="#FAF7EF"/><circle cx="32" cy="40" r="4" fill="#991b1b"/><circle cx="48" cy="40" r="4" fill="#991b1b"/></svg>
+    </a>
     <div class="flex flex-col gap-1 flex-1">
       <a href="/preview/v2/dashboard" class="icon-btn w-9 h-9 rounded-lg flex items-center justify-center text-muted transition" title="Dashboard">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10"/></svg>
@@ -231,17 +263,20 @@ tailwind.config = {
       <button class="icon-btn w-9 h-9 rounded-lg flex items-center justify-center text-muted transition" title="Setări">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.9 2.9l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 01-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.9-2.9l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 010-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.9-2.9l.1.1a1.7 1.7 0 001.8.3h0a1.7 1.7 0 001-1.5V3a2 2 0 014 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.9 2.9l-.1.1a1.7 1.7 0 00-.3 1.8v0a1.7 1.7 0 001.5 1H21a2 2 0 010 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
       </button>
-      <div class="w-8 h-8 rounded-full bg-gradient-to-br from-coral to-coralDark text-paper text-2xs font-semibold flex items-center justify-center cursor-pointer">CD</div>
+      <div class="w-8 h-8 rounded-full bg-gradient-to-br from-coral to-coralh text-paper text-2xs font-semibold flex items-center justify-center cursor-pointer">CD</div>
     </div>
   </aside>
 
   {{-- ───── Pane 2 · Conversation list (Linear-tight) ───── --}}
-  <aside class="w-80 bg-cream border-r border-line flex flex-col shrink-0 conv-list">
+  <aside id="pane-list" class="w-80 bg-cream border-r border-line flex flex-col shrink-0 conv-list">
 
     {{-- Header --}}
     <div class="px-3.5 pt-3 pb-2 border-b border-line">
-      <div class="flex items-center justify-between mb-2.5">
-        <h2 class="display text-lg font-semibold tracking-tight">Inbox</h2>
+      <div class="flex items-center justify-between mb-2.5 gap-2">
+        <button onclick="toggleIconNav()" class="lg:hidden w-8 h-8 -ml-1.5 rounded-lg hover:bg-paper text-inkSoft flex items-center justify-center transition" aria-label="Meniu">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+        </button>
+        <h2 class="display text-lg font-semibold tracking-tight flex-1">Inbox</h2>
         <div class="flex items-center gap-1">
           <button class="w-7 h-7 rounded-lg hover:bg-paper text-muted hover:text-ink flex items-center justify-center transition" title="Caută">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 21l-4.35-4.35M10 17a7 7 0 100-14 7 7 0 000 14z"/></svg>
@@ -267,7 +302,7 @@ tailwind.config = {
         @php
           $statusBadge = match($c['status']) {
             'waiting' => '<span class="text-2xs text-amber-700 bg-amber-50 border border-amber-200 px-1 rounded">așteaptă</span>',
-            'human'   => '<span class="text-2xs text-coralDark bg-coral/10 border border-coral/20 px-1 rounded">operator</span>',
+            'human'   => '<span class="text-2xs text-coralh bg-coral/10 border border-coral/20 px-1 rounded">operator</span>',
             'closed'  => '<span class="text-2xs text-muted bg-cream border border-line px-1 rounded">închis</span>',
             default   => '',
           };
@@ -277,7 +312,7 @@ tailwind.config = {
             default => 'text-inkSoft bg-cream',
           };
         @endphp
-        <div class="conv-row {{ $c['selected'] ? 'selected' : '' }} px-3.5 py-2.5 cursor-pointer transition flex gap-2.5">
+        <div onclick="showThread()" class="conv-row {{ $c['selected'] ? 'selected' : '' }} px-3.5 py-2.5 cursor-pointer transition flex gap-2.5">
           {{-- Avatar --}}
           <div class="relative shrink-0">
             <div class="w-8 h-8 rounded-full bg-gradient-to-br from-cream to-line border border-line text-2xs font-semibold flex items-center justify-center text-inkSoft">
@@ -316,12 +351,16 @@ tailwind.config = {
   </aside>
 
   {{-- ───── Pane 3 · Thread (comfortable density) ───── --}}
-  <section class="flex-1 min-w-0 bg-paper flex flex-col thread-pane">
+  <section id="pane-thread" class="flex-1 min-w-0 bg-paper flex flex-col thread-pane">
 
     {{-- Thread header --}}
-    <header class="border-b border-line px-6 py-3 flex items-center gap-4">
+    <header class="border-b border-line px-4 md:px-6 py-3 flex items-center gap-3 md:gap-4">
+      <button onclick="showList()" class="lg:hidden w-9 h-9 -ml-1.5 rounded-lg hover:bg-cream text-inkSoft flex items-center justify-center transition shrink-0" aria-label="Înapoi la inbox">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+
       <div class="flex items-center gap-3 flex-1 min-w-0">
-        <div class="relative">
+        <div class="relative shrink-0">
           <div class="w-10 h-10 rounded-full bg-gradient-to-br from-cream to-line border border-line text-sm font-semibold flex items-center justify-center text-inkSoft">MS</div>
           <div class="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-paper border border-line flex items-center justify-center text-blue-700 bg-blue-50">
             {!! channelIcon('voice') !!}
@@ -329,25 +368,29 @@ tailwind.config = {
         </div>
         <div class="min-w-0">
           <div class="flex items-center gap-2">
-            <h2 class="display text-lg font-semibold tracking-tight truncate">Mihaela Stoica</h2>
-            <span class="text-2xs px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">așteaptă</span>
+            <h2 class="display text-base md:text-lg font-semibold tracking-tight truncate">Mihaela Stoica</h2>
+            <span class="text-2xs px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 hidden sm:inline">așteaptă</span>
           </div>
-          <div class="text-2xs text-muted mt-0.5 flex items-center gap-2">
-            <span>+40 731 ··· 089</span>
-            <span class="text-line">·</span>
+          <div class="text-2xs text-muted mt-0.5 flex items-center gap-2 truncate">
+            <span class="hidden sm:inline">+40 731 ··· 089</span>
+            <span class="text-line hidden sm:inline">·</span>
             <span>Voce · Recepție</span>
             <span class="text-line">·</span>
-            <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 pulse-dot"></span>apel activ · 03:42</span>
+            <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 pulse-dot"></span>03:42</span>
           </div>
         </div>
       </div>
 
-      <div class="flex items-center gap-2 shrink-0">
-        <button class="px-3 py-1.5 rounded-pill text-xs text-inkSoft hover:bg-cream border border-line transition flex items-center gap-1.5">
+      <div class="flex items-center gap-1.5 md:gap-2 shrink-0">
+        {{-- Detalii client (drawer pe mobile) --}}
+        <button onclick="toggleCustomer()" class="lg:hidden w-9 h-9 rounded-lg hover:bg-cream text-inkSoft flex items-center justify-center transition" aria-label="Detalii client">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
+        </button>
+        <button class="hidden md:flex px-3 py-1.5 rounded-pill text-xs text-inkSoft hover:bg-cream border border-line transition items-center gap-1.5">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
           Atribuie operator
         </button>
-        <button class="px-3 py-1.5 rounded-pill text-xs bg-ink text-cream font-medium hover:bg-coralDark transition">
+        <button class="hidden md:flex px-3 py-1.5 rounded-pill text-xs bg-ink text-cream font-medium hover:bg-coralh transition items-center">
           Închide
         </button>
         <button class="w-8 h-8 rounded-lg hover:bg-cream text-muted hover:text-ink flex items-center justify-center transition">
@@ -417,10 +460,10 @@ tailwind.config = {
       <div class="rounded-2xl bg-paper border border-line shadow-sm">
         {{-- AI suggest banner --}}
         <div class="px-4 py-2 border-b border-line bg-cream/60 flex items-center gap-2 text-2xs">
-          <svg class="w-3.5 h-3.5 text-coralDark" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6.2 4.5L18.2 22 12 17.5 5.8 22l2.4-8.1L2 9.4h7.6z"/></svg>
+          <svg class="w-3.5 h-3.5 text-coralh" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6.2 4.5L18.2 22 12 17.5 5.8 22l2.4-8.1L2 9.4h7.6z"/></svg>
           <span class="text-muted">Răspuns sugerat:</span>
           <span class="text-inkSoft truncate flex-1">„Avem disponibilitate marți la 9:30 sau joi la 10:00. Care vi se potrivește?"</span>
-          <button class="text-coralDark font-medium hover:underline whitespace-nowrap">Folosește</button>
+          <button class="text-coralh font-medium hover:underline whitespace-nowrap">Folosește</button>
         </div>
         <textarea rows="2" placeholder="Scrie un mesaj sau intervine peste agent…" class="w-full px-4 py-3 bg-transparent text-[14px] resize-none focus:outline-none placeholder:text-muted"></textarea>
         <div class="px-3 py-2 flex items-center justify-between border-t border-line">
@@ -433,22 +476,26 @@ tailwind.config = {
             </button>
             <span class="text-2xs ml-1">Apasă <kbd>⌘</kbd>+<kbd>↵</kbd> pentru trimitere</span>
           </div>
-          <button class="px-4 py-1.5 rounded-pill bg-coral text-paper text-xs font-medium hover:bg-coralDark transition">Trimite</button>
+          <button class="px-4 py-1.5 rounded-pill bg-coral text-paper text-xs font-medium hover:bg-coralh transition">Trimite</button>
         </div>
       </div>
     </div>
   </section>
 
   {{-- ───── Pane 4 · Customer panel ───── --}}
-  <aside class="w-[340px] bg-cream border-l border-line shrink-0 overflow-y-auto scroll-y">
+  <aside id="pane-customer" class="w-[340px] bg-cream border-l border-line shrink-0 overflow-y-auto scroll-y">
 
     <div class="p-5 border-b border-line">
       <div class="flex items-center gap-3 mb-4">
         <div class="w-12 h-12 rounded-full bg-gradient-to-br from-cream to-line border border-line text-base font-semibold flex items-center justify-center text-inkSoft">MS</div>
-        <div class="min-w-0">
+        <div class="min-w-0 flex-1">
           <h3 class="display text-lg font-semibold tracking-tight">Mihaela Stoica</h3>
           <div class="text-2xs text-muted">Client de 2 luni · 3 interacțiuni</div>
         </div>
+        {{-- Close pe mobile --}}
+        <button onclick="toggleCustomer()" class="lg:hidden w-8 h-8 rounded-lg hover:bg-paper text-muted hover:text-ink flex items-center justify-center transition shrink-0" aria-label="Închide">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
       </div>
 
       <div class="space-y-1.5 text-[12.5px]">
@@ -483,7 +530,7 @@ tailwind.config = {
     <div class="p-5 border-b border-line">
       <div class="flex items-center justify-between mb-3">
         <h4 class="text-2xs uppercase tracking-wider text-muted font-semibold">Istoric · 3 interacțiuni</h4>
-        <a class="text-2xs text-coralDark hover:underline">Toate</a>
+        <a class="text-2xs text-coralh hover:underline">Toate</a>
       </div>
       <div class="space-y-2">
         @foreach($customerCalls as $i => $call)
@@ -535,7 +582,7 @@ tailwind.config = {
     <div class="p-5">
       <div class="flex items-center justify-between mb-3">
         <h4 class="text-2xs uppercase tracking-wider text-muted font-semibold">Note interne</h4>
-        <button class="text-2xs text-coralDark hover:underline">+ Notă</button>
+        <button class="text-2xs text-coralh hover:underline">+ Notă</button>
       </div>
       <div class="rounded-lg bg-paper border border-line p-3 text-[12.5px]">
         <div class="text-inkSoft leading-relaxed">Pacientă nouă, recomandare de la familia Stoica (deja clienți). De propus și plan de igienizare.</div>
@@ -545,6 +592,32 @@ tailwind.config = {
 
   </aside>
 </div>
+
+<script>
+  function toggleIconNav() {
+    document.getElementById('pane-icon').classList.toggle('open');
+    document.getElementById('bd-icon').classList.toggle('hidden');
+  }
+  function toggleCustomer() {
+    document.getElementById('pane-customer').classList.toggle('open');
+    document.getElementById('bd-customer').classList.toggle('hidden');
+  }
+  function showThread() {
+    if (window.innerWidth < 1024) {
+      document.body.classList.add('show-thread');
+    }
+  }
+  function showList() {
+    document.body.classList.remove('show-thread');
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    document.getElementById('pane-icon').classList.remove('open');
+    document.getElementById('bd-icon').classList.add('hidden');
+    document.getElementById('pane-customer').classList.remove('open');
+    document.getElementById('bd-customer').classList.add('hidden');
+  });
+</script>
 
 </body>
 </html>
