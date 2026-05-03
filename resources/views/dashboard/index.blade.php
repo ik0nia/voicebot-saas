@@ -72,16 +72,19 @@
     </div>
     @endif
 
-    {{-- Welcome --}}
-    <div class="relative overflow-hidden rounded-xl bg-gradient-to-r from-red-800 via-red-700 to-red-900 px-6 py-5 shadow-md">
-        {{-- Romanian motif pattern overlay --}}
-        <div class="absolute inset-0 opacity-[0.07]" style="background-image: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22 viewBox=%220 0 40 40%22><path d=%22M20 0L40 20L20 40L0 20Z%22 fill=%22none%22 stroke=%22white%22 stroke-width=%221.5%22/><path d=%22M20 8L32 20L20 32L8 20Z%22 fill=%22none%22 stroke=%22white%22 stroke-width=%221%22/><circle cx=%2220%22 cy=%2220%22 r=%223%22 fill=%22white%22/></svg>'); background-size: 40px 40px;"></div>
-        <div class="relative">
-            <h1 class="text-2xl font-bold text-white">
+    {{-- Welcome — paleta v2: ink fundal cu coral accent, în loc de red gradient --}}
+    <div class="relative overflow-hidden rounded-card bg-ink px-6 py-6 shadow-md">
+        <div class="absolute inset-0 opacity-[0.06]" style="background-image: radial-gradient(rgba(255,255,255,0.7) 1px, transparent 1px); background-size: 6px 6px;"></div>
+        <div class="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-coral/15 blur-2xl"></div>
+        <div class="relative flex flex-wrap items-end justify-between gap-3">
+            <div>
                 @php $h = (int) now()->format('H'); @endphp
-                {{ $h < 12 ? 'Buna dimineata' : ($h < 18 ? 'Buna ziua' : 'Buna seara') }}, {{ Str::before(auth()->user()->name, ' ') }}
-            </h1>
-            <p class="mt-0.5 text-sm text-red-100/80">Iata ce se intampla cu platforma ta.</p>
+                <h1 class="display text-3xl md:text-4xl font-semibold tracking-tight text-cream leading-none">
+                    {{ $h < 12 ? 'Bună dimineața' : ($h < 18 ? 'Bună ziua' : 'Bună seara') }}, {{ Str::before(auth()->user()->name, ' ') }}.
+                </h1>
+                <p class="mt-2 text-sm text-cream/70">Iată ce se întâmplă cu platforma ta.</p>
+            </div>
+            <span class="text-2xs uppercase tracking-wider text-cream/50 font-mono">{{ now()->translatedFormat('l, j F') }}</span>
         </div>
     </div>
 
@@ -127,11 +130,11 @@
 
     {{-- Plan Usage --}}
     @if($planUsage)
-    <div class="rounded-xl border border-line bg-white p-5 shadow-sm">
+    <div class="card p-5">
         <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-2">
-                <h3 class="text-sm font-semibold text-ink">Utilizare plan</h3>
-                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-red-100 to-red-50 text-coralh ring-1 ring-red-200/50">{{ $planUsage['plan']['name'] }}</span>
+                <h3 class="display text-base font-semibold text-ink">Utilizare plan</h3>
+                <span class="inline-flex items-center rounded-pill px-2.5 py-0.5 text-2xs font-semibold bg-coralsoft text-coralh ring-1 ring-coral/20">{{ $planUsage['plan']['name'] }}</span>
             </div>
             <a href="{{ route('dashboard.billing.index') }}" class="text-xs font-medium text-coralh hover:underline">Upgrade &rarr;</a>
         </div>
@@ -167,15 +170,15 @@
 
     {{-- Chart + Lead Pipeline --}}
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div class="lg:col-span-2 rounded-xl border border-line bg-white shadow-sm overflow-hidden">
-            <div class="bg-coralsoft border-b border-coralsoft px-5 py-3">
-                <h3 class="text-sm font-semibold text-coralh">Activitate &mdash; 7 zile</h3>
+        <div class="lg:col-span-2 card overflow-hidden">
+            <div class="bg-coralsoft border-b border-coral/15 px-5 py-3">
+                <h3 class="display text-base font-semibold text-coralh">Activitate · 7 zile</h3>
             </div>
             <div class="p-5" style="height: 240px;"><canvas id="activityChart"></canvas></div>
         </div>
-        <div class="rounded-xl border border-line bg-white p-5 shadow-sm">
+        <div class="card p-5">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-sm font-semibold text-ink">Pipeline Leads</h3>
+                <h3 class="display text-base font-semibold text-ink">Pipeline Leads</h3>
                 <a href="/dashboard/leads" class="text-xs text-coralh hover:underline">Toate &rarr;</a>
             </div>
             @php $stages = ['new'=>['Noi','bg-blue-500'],'contacted'=>['Contactati','bg-sky-500'],'scheduled'=>['Programati','bg-amber-500'],'met'=>['Intalnire','bg-orange-500'],'quoted'=>['Oferta','bg-purple-500'],'won'=>['Castigati','bg-emerald-500'],'lost'=>['Pierduti','bg-red-500']]; @endphp
@@ -198,10 +201,10 @@
     {{-- Recent Activity: Conversations + Leads --}}
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {{-- Conversations --}}
-        <div class="rounded-xl border border-line bg-white shadow-sm overflow-hidden">
+        <div class="card overflow-hidden">
             <div class="flex items-center justify-between bg-cream border-b border-line px-5 py-3">
-                <h3 class="text-sm font-semibold text-ink">Ultimele conversatii</h3>
-                <span class="text-[11px] text-muted">{{ number_format($totalConversations) }} total</span>
+                <h3 class="display text-base font-semibold text-ink">Ultimele conversații</h3>
+                <span class="text-2xs text-muted mono">{{ number_format($totalConversations) }} total</span>
             </div>
             @forelse($recentConversations as $conv)
             <a href="{{ route('dashboard.conversations.show', $conv) }}" class="flex items-center gap-3 px-5 py-2.5 hover:bg-cream transition-colors border-b border-slate-50 last:border-b-0">
@@ -220,10 +223,10 @@
         </div>
 
         {{-- Leads --}}
-        <div class="rounded-xl border border-line bg-white shadow-sm overflow-hidden">
+        <div class="card overflow-hidden">
             <div class="flex items-center justify-between bg-cream border-b border-line px-5 py-3">
-                <h3 class="text-sm font-semibold text-ink">Ultimele leads</h3>
-                <a href="/dashboard/leads" class="text-[11px] text-coralh hover:underline">Toate &rarr;</a>
+                <h3 class="display text-base font-semibold text-ink">Ultimele leads</h3>
+                <a href="/dashboard/leads" class="text-2xs text-coralh hover:underline">Toate &rarr;</a>
             </div>
             @forelse($recentLeads as $lead)
             <a href="{{ route('dashboard.leads.show', $lead) }}" class="flex items-center gap-3 px-5 py-2.5 hover:bg-cream transition-colors border-b border-slate-50 last:border-b-0">

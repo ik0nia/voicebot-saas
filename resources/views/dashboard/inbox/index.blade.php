@@ -23,23 +23,23 @@
 
     <div class="flex items-start justify-between mb-6 gap-6">
         <div>
-            <h1 class="text-2xl font-bold text-ink">Inbox</h1>
-            <p class="text-sm text-muted mt-1">Toate conversațiile, pe toate canalele.</p>
+            <h1 class="display text-3xl md:text-4xl font-semibold tracking-tight text-ink leading-none">Inbox</h1>
+            <p class="text-sm text-muted mt-2">Toate conversațiile, pe toate canalele.</p>
         </div>
         <form method="GET" class="flex items-center gap-2">
             @foreach(['status', 'channel_type'] as $k)
                 @if(request($k))<input type="hidden" name="{{ $k }}" value="{{ request($k) }}">@endif
             @endforeach
             <input type="text" name="q" value="{{ request('q') }}" placeholder="Caută după nume sau identificator..."
-                   class="rounded-lg border border-line px-3 py-2 text-sm w-72">
-            <button class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white">Caută</button>
+                   class="rounded-lg border border-line bg-paper px-3 py-2 text-sm w-72 focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">
+            <button class="rounded-pill bg-ink hover:bg-inkSoft px-4 py-2 text-sm font-medium text-cream transition">Caută</button>
         </form>
     </div>
 
     {{-- Quick filters --}}
     <div class="flex items-center gap-2 mb-4 flex-wrap">
         <a href="{{ route('dashboard.inbox', $params) }}"
-           class="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm transition-colors {{ $isAll ? 'bg-slate-900 text-white' : 'bg-white border border-line text-inkSoft hover:bg-cream' }}">
+           class="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm transition-colors {{ $isAll ? 'bg-ink text-cream' : 'bg-white border border-line text-inkSoft hover:bg-cream' }}">
             Toate <span class="text-xs opacity-70">{{ number_format($stats['total']) }}</span>
         </a>
         <a href="{{ route('dashboard.inbox', array_merge($params, ['mine' => 1])) }}"

@@ -39,7 +39,7 @@
     @else
 
     {{-- Current Plan Card --}}
-    <div class="rounded-xl border border-line bg-white p-6 shadow-sm">
+    <div class="card p-6">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div class="flex items-center gap-4">
                 <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-coralsoft text-coralh">
@@ -158,7 +158,7 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 
         {{-- Messages Usage --}}
-        <div class="rounded-xl border border-line bg-white p-5 shadow-sm">
+        <div class="card p-5">
             <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-2">
                     <div class="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
@@ -189,7 +189,7 @@
         </div>
 
         {{-- Bots Usage --}}
-        <div class="rounded-xl border border-line bg-white p-5 shadow-sm">
+        <div class="card p-5">
             <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-2">
                     <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -220,7 +220,7 @@
         </div>
 
         {{-- Voice Minutes --}}
-        <div class="rounded-xl border border-line bg-white p-5 shadow-sm">
+        <div class="card p-5">
             <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-2">
                     <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">

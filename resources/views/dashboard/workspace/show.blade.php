@@ -20,7 +20,7 @@
     <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
             <div class="flex items-center gap-2 mb-1">
-                <h1 class="text-2xl font-bold text-ink">{{ $bot->name }}</h1>
+                <h1 class="display text-3xl md:text-4xl font-semibold tracking-tight text-ink leading-none">{{ $bot->name }}</h1>
                 @if($bot->is_active)
                     <span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">Activ</span>
                 @else
@@ -90,7 +90,7 @@
 
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-2">
             @if(in_array($archetype, ['booking', 'hybrid']))
-                <div class="bg-white p-4 rounded-xl border border-line">
+                <div class="card p-4">
                     <p class="text-xs text-muted uppercase font-semibold">{{ $labels['kpi_today'] ?? 'Programări azi' }}</p>
                     <p class="mt-1 text-2xl font-bold text-ink">{{ $outcomes['bookings_requested'] }}</p>
                     <p class="text-xs text-emerald-600 mt-0.5">{{ $outcomes['bookings_confirmed'] }} confirmate</p>
@@ -98,7 +98,7 @@
                 </div>
             @endif
             @if(in_array($archetype, ['lead', 'hybrid', 'none']))
-                <div class="bg-white p-4 rounded-xl border border-line">
+                <div class="card p-4">
                     <p class="text-xs text-muted uppercase font-semibold">Lead-uri azi</p>
                     <p class="mt-1 text-2xl font-bold text-ink">{{ $outcomes['leads_generated'] }}</p>
                     <p class="text-xs text-muted mt-0.5">{{ $outcomes['callbacks_requested'] }} cereri callback</p>
@@ -106,14 +106,14 @@
                 </div>
             @endif
             @if(in_array($archetype, ['ecommerce', 'hybrid']))
-                <div class="bg-white p-4 rounded-xl border border-line">
+                <div class="card p-4">
                     <p class="text-xs text-muted uppercase font-semibold">Venit atribuit azi</p>
                     <p class="mt-1 text-2xl font-bold text-ink">{{ number_format(($outcomes['revenue_booked_cents'] ?? 0) / 100 * $bnrRate, 0, ',', '.') }}<span class="text-sm text-muted font-medium ml-1">lei</span></p>
                     <p class="text-xs text-muted mt-0.5">{{ $outcomes['orders_influenced'] }} comenzi</p>
                     <div class="mt-2">{!! $spark($trend, 'revenue_ron', '#059669') !!}</div>
                 </div>
             @endif
-            <div class="bg-white p-4 rounded-xl border border-line">
+            <div class="card p-4">
                 <p class="text-xs text-muted uppercase font-semibold">Conversații azi</p>
                 <p class="mt-1 text-2xl font-bold text-ink">{{ $outcomes['conversations_count'] }}</p>
                 <p class="text-xs text-muted mt-0.5">{{ $outcomes['voice_calls_count'] }} apeluri voce</p>
@@ -132,7 +132,7 @@
 
     {{-- Tab: Conversații --}}
     @if($tab === 'conversatii')
-        <div class="bg-white rounded-xl border border-line overflow-hidden">
+        <div class="card overflow-hidden">
             <div class="flex items-center justify-between px-5 py-3 border-b border-line">
                 <h2 class="font-semibold text-ink">Ultimele 10 conversații</h2>
                 <a href="{{ route('dashboard.conversations.index', ['channelType' => 'web_chatbot', 'bot' => $bot->id]) }}" class="text-sm text-coralh hover:underline">Vezi toate →</a>
@@ -174,7 +174,7 @@
                 $attributing = $ec['attributions_30d'] > 0;
                 $stateColor = $attributing ? 'emerald' : ($ec['connector_configured'] ? 'amber' : 'slate');
             @endphp
-            <div class="bg-white rounded-xl border border-line p-5 mb-4">
+            <div class="card p-5 mb-4">
                 <div class="flex items-start justify-between">
                     <div>
                         <p class="text-xs font-semibold uppercase text-muted">Integrare WooCommerce</p>
@@ -243,22 +243,22 @@
             </div>
         @endif
         <div class="grid md:grid-cols-3 gap-4">
-            <div class="md:col-span-2 bg-white rounded-xl border border-line p-5">
+            <div class="md:col-span-2 card p-5">
                 <h2 class="font-semibold text-ink mb-3">Prompt de sistem</h2>
                 <pre class="text-xs text-inkSoft whitespace-pre-wrap font-mono bg-cream p-3 rounded-lg max-h-96 overflow-y-auto">{{ $bot->system_prompt ?: '(gol)' }}</pre>
                 <a href="{{ route('dashboard.bots.edit', $bot) }}" class="mt-3 inline-block text-sm text-coralh hover:underline">Editează promptul și restul setărilor →</a>
             </div>
             <div class="space-y-3">
-                <div class="bg-white rounded-xl border border-line p-5">
+                <div class="card p-5">
                     <p class="text-xs text-muted uppercase font-semibold">Nișă</p>
                     <p class="mt-1 font-semibold text-ink">{{ $nichConfig['display_name'] ?? '—' }}</p>
                 </div>
-                <div class="bg-white rounded-xl border border-line p-5">
+                <div class="card p-5">
                     <p class="text-xs text-muted uppercase font-semibold">Engine</p>
                     <p class="mt-1 font-semibold text-ink">{{ $engine->displayName() }}</p>
                     <p class="text-xs text-muted mt-0.5">{{ implode(', ', $engine->capabilities($bot)) ?: 'Fără capabilități active' }}</p>
                 </div>
-                <div class="bg-white rounded-xl border border-line p-5">
+                <div class="card p-5">
                     <p class="text-xs text-muted uppercase font-semibold">Voce</p>
                     <p class="mt-1 font-semibold text-ink">{{ $bot->voice ?? 'Default' }}</p>
                     @if($bot->cloned_voice_id)
@@ -272,15 +272,15 @@
     {{-- Tab: Cunoștințe --}}
     @if($tab === 'cunostinte')
         <div class="grid md:grid-cols-3 gap-3 mb-4">
-            <div class="bg-white p-4 rounded-xl border border-line">
+            <div class="card p-4">
                 <p class="text-xs text-muted uppercase font-semibold">Documente</p>
                 <p class="mt-1 text-2xl font-bold text-ink">{{ $kbStats['total_documents'] }}</p>
             </div>
-            <div class="bg-white p-4 rounded-xl border border-line">
+            <div class="card p-4">
                 <p class="text-xs text-muted uppercase font-semibold">Chunks indexate</p>
                 <p class="mt-1 text-2xl font-bold text-ink">{{ $kbStats['total_chunks'] }}</p>
             </div>
-            <div class="bg-white p-4 rounded-xl border border-line">
+            <div class="card p-4">
                 <p class="text-xs text-muted uppercase font-semibold">Embeddings OK</p>
                 <p class="mt-1 text-2xl font-bold {{ $kbStats['has_embeddings'] ? 'text-emerald-600' : 'text-muted' }}">
                     {{ $kbStats['has_embeddings'] ? 'Da' : 'Nu' }}
@@ -292,7 +292,7 @@
 
     {{-- Tab: Canale --}}
     @if($tab === 'canale')
-        <div class="bg-white rounded-xl border border-line overflow-hidden">
+        <div class="card overflow-hidden">
             <div class="flex items-center justify-between px-5 py-3 border-b border-line">
                 <h2 class="font-semibold text-ink">Canale conectate</h2>
                 <a href="{{ route('dashboard.bots.channels.index', $bot) }}" class="text-sm text-coralh hover:underline">Configurează →</a>
