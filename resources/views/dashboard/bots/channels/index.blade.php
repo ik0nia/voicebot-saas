@@ -34,21 +34,26 @@
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-            <h1 class="text-2xl font-bold text-ink">Canale - {{ $bot->name }}</h1>
-            <p class="text-sm text-muted mt-1">Gestionează canalele de comunicare ale agentului AI</p>
+            <h1 class="display text-3xl md:text-4xl font-semibold tracking-tight text-ink leading-none">Canale</h1>
+            <p class="text-sm text-muted mt-2">Pentru <a href="{{ route('dashboard.workspace.show', $bot) }}" class="text-coralh hover:underline font-medium">{{ $bot->name }}</a> · gestionează WhatsApp, Facebook, Instagram și widget-ul web</p>
         </div>
-        <a href="{{ route('dashboard.bots.show', $bot) }}"
-           class="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-4 py-2 text-sm font-medium text-inkSoft hover:bg-cream transition-colors">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Înapoi la bot
-        </a>
+        <div class="flex items-center gap-2">
+            <a href="{{ route('dashboard.channels-hub.index') }}"
+               class="inline-flex items-center gap-2 rounded-pill border border-line bg-white px-4 py-2 text-sm font-medium text-inkSoft hover:bg-cream transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+                Toate canalele
+            </a>
+            <a href="{{ route('dashboard.workspace.show', $bot) }}"
+               class="inline-flex items-center gap-2 rounded-pill border border-line bg-white px-4 py-2 text-sm font-medium text-inkSoft hover:bg-cream transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                Înapoi la agent
+            </a>
+        </div>
     </div>
 
     @php
         $tenant = auth()->user()->tenant;
-        $allowedChannels = $tenant->settings['allowed_channels'] ?? ['voice'];
+        $allowedChannels = data_get($tenant, 'settings.allowed_channels', ['voice']);
         $connectedTypes = $channels->pluck('type')->toArray();
 
         $channelMeta = [
