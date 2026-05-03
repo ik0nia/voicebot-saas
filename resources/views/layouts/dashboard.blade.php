@@ -243,6 +243,11 @@
                             <svg class="w-4 h-4 {{ request()->is('dashboard/activitate*') ? 'text-coral' : '' }}" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 8v4l3 3M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             Activitate
                         </a>
+                        <a href="/dashboard/webhooks"
+                           class="nav-item flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg {{ request()->is('dashboard/webhooks*') ? 'active' : 'text-inkSoft' }}">
+                            <svg class="w-4 h-4 {{ request()->is('dashboard/webhooks*') ? 'text-coral' : '' }}" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            Webhooks
+                        </a>
                         <a href="/dashboard/facturare"
                            class="nav-item flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg {{ request()->is('dashboard/facturare*') ? 'active' : 'text-inkSoft' }}">
                             <svg class="w-4 h-4 {{ request()->is('dashboard/facturare*') ? 'text-coral' : '' }}" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>

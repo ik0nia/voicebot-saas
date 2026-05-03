@@ -59,6 +59,15 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\Channel::observe(\App\Observers\ChannelCacheObserver::class);
         \App\Models\Bot::observe(\App\Observers\BotChannelCacheObserver::class);
 
+        // Outbound webhooks pentru tenants — un singur observer fan-out la
+        // 5 modele. Toate dispatch-uri merg pe queue (sync-safe).
+        $webhookObserver = \App\Observers\WebhookEventObserver::class;
+        \App\Models\Lead::observe($webhookObserver);
+        \App\Models\CallbackRequest::observe($webhookObserver);
+        \App\Models\Appointment::observe($webhookObserver);
+        \App\Models\Call::observe($webhookObserver);
+        \App\Models\Conversation::observe($webhookObserver);
+
         // Super-admin bypasses every policy. Matches the dashboard behaviour
         // where super_admin already gets withoutGlobalScopes on tenant-scoped
         // queries (see BotController::resolveBot) — without this bypass, the

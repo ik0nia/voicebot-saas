@@ -474,6 +474,20 @@ Route::middleware(['auth', 'tenant.role:tenant_admin,tenant_manager'])
     ->get('/dashboard/activitate', [\App\Http\Controllers\Dashboard\AuditController::class, 'index'])
     ->name('dashboard.audit.index');
 
+// Outbound webhooks tenant — CRUD + delivery log
+Route::middleware(['auth', 'tenant.role:tenant_admin,tenant_manager'])
+    ->prefix('dashboard/webhooks')->group(function () {
+        $c = \App\Http\Controllers\Dashboard\WebhookEndpointController::class;
+        Route::get('/', [$c, 'index'])->name('dashboard.webhooks.index');
+        Route::get('/nou', [$c, 'create'])->name('dashboard.webhooks.create');
+        Route::post('/', [$c, 'store'])->name('dashboard.webhooks.store');
+        Route::get('/{endpoint}', [$c, 'show'])->name('dashboard.webhooks.show');
+        Route::get('/{endpoint}/edit', [$c, 'edit'])->name('dashboard.webhooks.edit');
+        Route::put('/{endpoint}', [$c, 'update'])->name('dashboard.webhooks.update');
+        Route::delete('/{endpoint}', [$c, 'destroy'])->name('dashboard.webhooks.destroy');
+        Route::post('/{endpoint}/test', [$c, 'testFire'])->name('dashboard.webhooks.testFire');
+    });
+
 // Settings routes (dashboard)
 Route::middleware('auth')->prefix('dashboard/setari')->group(function () {
     Route::get('/', [SettingsController::class, 'index'])->name('dashboard.settings.index');
