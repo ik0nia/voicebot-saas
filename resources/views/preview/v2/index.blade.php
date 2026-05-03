@@ -134,8 +134,12 @@ tailwind.config = {
   body { font-family: 'Inter', system-ui, sans-serif; background: #FAF7EF; color: #1C1917; -webkit-font-smoothing: antialiased; }
   .display { font-family: 'Instrument Sans', 'Inter', sans-serif; letter-spacing: -0.02em; }
   .thumb { aspect-ratio: 16/10; }
-  .card-link:hover .thumb { transform: translateY(-2px); box-shadow: 0 12px 32px -12px rgba(28,25,23,0.18); }
-  .thumb { transition: transform .18s ease, box-shadow .18s ease; }
+  .card-link { transition: transform .18s ease; }
+  .card-link:hover .thumb { transform: translateY(-3px); box-shadow: 0 14px 36px -12px rgba(28,25,23,0.20); border-color: #D9D2BD; }
+  .card-link:hover h3 { color: #991B1B; }
+  .card-link h3 { transition: color .14s ease; }
+  .card-link:focus-visible .thumb { outline: 2px solid #DC2626; outline-offset: 4px; }
+  .thumb { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
 </style>
 </head>
 <body class="antialiased">
@@ -222,7 +226,7 @@ tailwind.config = {
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
       @foreach($pages as $p)
         @php [$label, $cls] = $statusStyles[$p['status']]; @endphp
-        <a href="{{ $p['status'] === 'todo' ? '#' : $p['href'] }}" class="card-link group block {{ $p['status'] === 'todo' ? 'pointer-events-none' : '' }}">
+        <a href="{{ $p['status'] === 'todo' ? '#' : $p['href'] }}" @if($p['status'] === 'todo') aria-disabled="true" tabindex="-1" @endif class="card-link group block {{ $p['status'] === 'todo' ? 'opacity-70 pointer-events-none' : '' }}">
           <div class="thumb rounded-card overflow-hidden border border-line bg-paper relative">
             {{-- Pseudo browser chrome --}}
             <div class="h-6 border-b border-line bg-cream flex items-center px-2.5 gap-1.5">
@@ -386,7 +390,7 @@ tailwind.config = {
           </div>
 
           <div class="mt-3 flex items-start gap-2">
-            <h3 class="font-semibold tracking-tight flex-1 leading-tight">{{ $p['title'] }}</h3>
+            <h3 class="display text-base font-semibold tracking-tight flex-1 leading-tight">{{ $p['title'] }}</h3>
             <span class="text-[10px] font-medium px-2 py-0.5 rounded-pill border {{ $cls }}">{{ $label }}</span>
           </div>
           <p class="text-sm text-inkSoft/80 leading-snug mt-1">{{ $p['desc'] }}</p>

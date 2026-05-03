@@ -24,8 +24,8 @@ $kpis = [
         'delta' => '1 atenție',
         'deltaDir' => 'warn',
         'sub' => 'Estetică Ploiești · health 71%',
-        'tint' => 'sun',
-        'icon' => '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a3 3 0 00-3 3v6a3 3 0 006 0V5a3 3 0 00-3-3z"/><path d="M19 11a7 7 0 11-14 0M12 18v3"/></svg>',
+        'tint' => 'mint',
+        'icon' => '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>',
     ],
     [
         'label' => 'Următoarea factură',
@@ -39,9 +39,9 @@ $kpis = [
 ];
 
 $kpiTints = [
-    'sky'   => ['bg' => 'bg-[#E0EBF7]', 'text' => 'text-[#1E40AF]'],
-    'peach' => ['bg' => 'bg-[#FFE4D2]', 'text' => 'text-[#9A3412]'],
-    'sun'   => ['bg' => 'bg-[#FAF1C2]', 'text' => 'text-[#854D0E]'],
+    'sky'   => ['bg' => 'bg-[#DCEBFA]', 'text' => 'text-[#1E40AF]'],
+    'peach' => ['bg' => 'bg-[#FDE2D0]', 'text' => 'text-[#9A3412]'],
+    'mint'  => ['bg' => 'bg-[#D7EFE0]', 'text' => 'text-[#047857]'],
     'lilac' => ['bg' => 'bg-[#E6DFF3]', 'text' => 'text-[#5B21B6]'],
 ];
 
@@ -65,13 +65,13 @@ $agents = [
 ];
 
 $pipeline = [
-    ['Noi',         34, 'bg-stone-300'],
-    ['Contactați',  21, 'bg-blue-400'],
-    ['Programați',  12, 'bg-indigo-400'],
-    ['Întâlniți',    9, 'bg-violet-400'],
-    ['Ofertați',     7, 'bg-amber-400'],
+    ['Noi',         34, 'bg-line'],
+    ['Contactați',  21, 'bg-sky'],
+    ['Programați',  12, 'bg-[#7FA8D9]'],
+    ['Întâlniți',    9, 'bg-lilac'],
+    ['Ofertați',     7, 'bg-peach'],
     ['Câștigați',    4, 'bg-emerald-500'],
-    ['Pierduți',     2, 'bg-stone-400'],
+    ['Pierduți',     2, 'bg-muted/40'],
 ];
 $pipelineMax = max(array_column($pipeline, 1));
 
@@ -80,7 +80,7 @@ $activity = [
     ['icon' => 'lead',     'title' => 'Lead nou',           'meta' => 'Andrei M. · scor 74 · sursă WebChat',        'time' => 'acum 12 min'],
     ['icon' => 'gap',      'title' => 'Întrebare fără răspuns', 'meta' => '„retur produs” · 12 ocurențe',          'time' => 'acum 47 min'],
     ['icon' => 'wa',       'title' => 'Mesaj WhatsApp',     'meta' => '+40 744 ··· 089 · solicitare programare',   'time' => 'acum 1h'],
-    ['icon' => 'doc',      'title' => 'Document indexat',   'meta' => 'Politică retur.pdf · 14 fragmente',         'time' => 'acum 3h'],
+    ['icon' => 'doc',      'title' => 'Document adăugat',   'meta' => 'Politică retur.pdf · disponibil pentru agent',  'time' => 'acum 3h'],
     ['icon' => 'escalate', 'title' => 'Apel escaladat',     'meta' => 'frustrare detectată · transferat operator', 'time' => 'acum 4h'],
 ];
 @endphp
@@ -130,19 +130,33 @@ tailwind.config = {
 <style>
   body { font-family: 'Inter', system-ui, sans-serif; background: #FAF7EF; color: #1C1917; -webkit-font-smoothing: antialiased; }
   .display { font-family: 'Instrument Sans', 'Inter', sans-serif; letter-spacing: -0.02em; }
-  .mono { font-family: 'JetBrains Mono', monospace; }
-  .nav-item { transition: all .14s ease; }
-  .nav-item:hover { background: rgba(255,255,255,0.7); }
-  .nav-item.active { background: #FFFFFF; box-shadow: 0 1px 2px rgba(28,25,23,0.06), 0 0 0 1px rgba(231,224,206,0.6); }
+  .mono { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
+  .nav-item { position: relative; transition: all .14s ease; }
+  .nav-item:hover { background: rgba(255,255,255,0.85); }
+  .nav-item.active { background: #FFFFFF; box-shadow: inset 3px 0 0 #DC2626, 0 1px 2px rgba(28,25,23,0.06), 0 0 0 1px rgba(231,224,206,0.6); }
+  .nav-item:focus-visible { outline: 2px solid #DC2626; outline-offset: -2px; background: #FFFFFF; }
   details > summary::-webkit-details-marker { display: none; }
   details[open] summary .chev { transform: rotate(90deg); }
-  .card { background: #FFFFFF; border: 1px solid #EAE7E0; border-radius: 20px; box-shadow: 0 1px 2px rgba(28,25,23,0.03); }
-  .card:hover { box-shadow: 0 4px 12px -4px rgba(28,25,23,0.08); }
+  .card { background: #FFFFFF; border: 1px solid #EAE7E0; border-radius: 20px; box-shadow: 0 1px 2px rgba(28,25,23,0.03); transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease; }
+  .card:hover { transform: translateY(-2px); box-shadow: 0 12px 28px -12px rgba(28,25,23,0.14); border-color: #D9D2BD; }
+  button.card:active, a.card:active { transform: translateY(0); transition-duration: .05s; }
   .pulse-dot { animation: pulse 2s ease-in-out infinite; }
   @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .4 } }
 
+  /* Marketing-style primary pill button */
+  .btn-pill-primary { transition: all .18s ease; }
+  .btn-pill-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 20px -6px rgba(28,25,23,0.35); }
+  .btn-pill-primary:active { transform: translateY(0); transition-duration: .05s; }
+  .btn-coral { background: #DC2626; color: #FAF7EF; transition: all .18s ease; }
+  .btn-coral:hover { background: #991B1B; transform: translateY(-1px); box-shadow: 0 10px 24px -6px rgba(220,38,38,0.45); }
+  .btn-coral:active { transform: translateY(0); transition-duration: .05s; }
+
+  /* Subtle warm grain on body — adăugă viață, nu distrage */
+  body::before { content:''; position:fixed; inset:0; pointer-events:none; opacity:.35; z-index:0;
+    background-image: radial-gradient(rgba(28,25,23,0.04) 1px, transparent 1px); background-size: 4px 4px; }
+
   /* Mobile drawer */
-  #sidebar { transform: translateX(-100%); transition: transform .22s ease; }
+  #sidebar { transform: translateX(-100%); transition: transform .22s ease; background: #F7F4EC; }
   #sidebar.open { transform: translateX(0); }
   @media (min-width: 1024px) {
     #sidebar { transform: translateX(0) !important; position: relative !important; }
@@ -359,24 +373,25 @@ tailwind.config = {
       </div>
 
       {{-- Insight callout (gap detectat) --}}
-      <div class="rounded-card p-5 mb-10 flex items-start gap-4" style="background:#FEF7E0; border:1px solid #FAE8B0;">
-        <div class="w-10 h-10 rounded-lg bg-paper border border-amber-200 flex items-center justify-center text-amber-700 shrink-0">
+      <div class="card p-5 mb-10 flex items-start gap-4 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-32 h-32 -mr-12 -mt-12 rounded-full bg-[#DCEBFA] opacity-60"></div>
+        <div class="relative w-10 h-10 rounded-xl bg-[#DCEBFA] text-[#1E40AF] flex items-center justify-center shrink-0">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18h6M10 22h4M12 2a7 7 0 00-4 12.7c.6.5 1 1.2 1 2v.3h6V17c0-.8.4-1.5 1-2A7 7 0 0012 2z"/></svg>
         </div>
-        <div class="flex-1">
-          <div class="font-semibold mb-1">12 întrebări recurente fără răspuns clar</div>
+        <div class="relative flex-1">
+          <div class="display text-base font-semibold mb-1">12 întrebări recurente fără răspuns clar</div>
           <p class="text-sm text-inkSoft/85 leading-relaxed">
-            Clienții întreabă frecvent despre <strong>politica de retur</strong>. Agentul a pregătit un draft de răspuns bazat pe întrebările reale și e gata de adăugat în baza de cunoștințe.
+            Clienții întreabă frecvent despre <strong>politica de retur</strong>. Agentul a pregătit un draft bazat pe întrebările reale, gata de adăugat în baza de cunoștințe.
           </p>
         </div>
-        <div class="flex flex-col gap-2 shrink-0">
-          <button class="px-4 py-1.5 rounded-pill bg-ink text-cream text-xs font-medium">Vezi draft</button>
-          <button class="px-4 py-1.5 rounded-pill text-muted text-xs hover:text-ink">Mai târziu</button>
+        <div class="relative flex flex-col gap-2 shrink-0">
+          <button class="btn-pill-primary px-4 py-1.5 rounded-pill bg-ink text-cream text-xs font-medium">Vezi draft</button>
+          <button class="px-4 py-1.5 rounded-pill text-muted text-xs hover:text-ink hover:bg-cream transition">Mai târziu</button>
         </div>
       </div>
 
       {{-- KPI tiles --}}
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-10">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
         @foreach($kpis as $k)
           @php
             $deltaColor = match($k['deltaDir']) {
@@ -394,23 +409,23 @@ tailwind.config = {
                 {!! $k['icon'] !!}
               </div>
             </div>
-            <div class="flex items-end gap-2 mb-1.5">
-              <div class="display text-3xl font-semibold leading-none">{{ $k['value'] }}</div>
+            <div class="flex items-end gap-2 mb-1.5 flex-wrap min-h-[42px]">
+              <div class="display text-4xl font-semibold leading-none tracking-tight mono">{{ $k['value'] }}</div>
               <div class="text-2xs px-1.5 py-0.5 rounded border font-medium {{ $deltaColor }}">{{ $k['delta'] }}</div>
             </div>
-            <div class="text-2xs text-muted">{{ $k['sub'] }}</div>
+            <div class="text-xs text-inkSoft/70">{{ $k['sub'] }}</div>
           </div>
         @endforeach
       </div>
 
       {{-- Chart + agents row --}}
-      <div class="grid lg:grid-cols-3 gap-3 mb-10">
+      <div class="grid lg:grid-cols-3 gap-4 mb-10">
 
         {{-- Chart --}}
         <div class="card p-5 lg:col-span-2">
           <div class="flex items-center justify-between mb-5">
             <div>
-              <h2 class="font-semibold tracking-tight">Apeluri · ultimele 7 zile</h2>
+              <h2 class="display text-base font-semibold tracking-tight">Apeluri · ultimele 7 zile</h2>
               <p class="text-xs text-muted mt-0.5">Total 262 · medie 37/zi · pic vineri</p>
             </div>
             <div class="flex items-center gap-1 text-xs">
@@ -435,7 +450,7 @@ tailwind.config = {
         {{-- Agent health panel --}}
         <div class="card p-5">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="font-semibold tracking-tight">Agenți</h2>
+            <h2 class="display text-base font-semibold tracking-tight">Agenți</h2>
             <a class="text-xs text-coralh hover:underline">Toți →</a>
           </div>
 
@@ -473,12 +488,12 @@ tailwind.config = {
       </div>
 
       {{-- Pipeline + activity --}}
-      <div class="grid lg:grid-cols-2 gap-3 mb-10">
+      <div class="grid lg:grid-cols-2 gap-4 mb-10">
 
         <div class="card p-5">
           <div class="flex items-center justify-between mb-5">
             <div>
-              <h2 class="font-semibold tracking-tight">Pipeline lead-uri</h2>
+              <h2 class="display text-base font-semibold tracking-tight">Pipeline lead-uri</h2>
               <p class="text-xs text-muted mt-0.5">89 active · valoare estimată 14.200 RON</p>
             </div>
             <a class="text-xs text-coralh hover:underline">Detalii →</a>
@@ -500,7 +515,7 @@ tailwind.config = {
         <div class="card p-5">
           <div class="flex items-center justify-between mb-5">
             <div>
-              <h2 class="font-semibold tracking-tight">Activitate</h2>
+              <h2 class="display text-base font-semibold tracking-tight">Activitate</h2>
               <p class="text-xs text-muted mt-0.5">Ultimele 24 ore</p>
             </div>
             <span class="text-xs flex items-center gap-1.5 text-muted">
@@ -512,12 +527,12 @@ tailwind.config = {
             @foreach($activity as $row)
               @php
                 $iconBg = match($row['icon']) {
-                  'gap'      => 'bg-[#FAF1C2] text-[#854D0E]',
+                  'gap'      => 'bg-[#FCEEC8] text-[#854D0E]',
                   'escalate' => 'bg-coralsoft text-coralh',
-                  'wa'       => 'bg-emerald-50 text-emerald-700',
+                  'wa'       => 'bg-[#D7EFE0] text-[#047857]',
                   'doc'      => 'bg-[#E6DFF3] text-[#5B21B6]',
-                  'lead'     => 'bg-[#FFE4D2] text-[#9A3412]',
-                  'call'     => 'bg-[#E0EBF7] text-[#1E40AF]',
+                  'lead'     => 'bg-[#FDE2D0] text-[#9A3412]',
+                  'call'     => 'bg-[#DCEBFA] text-[#1E40AF]',
                   default    => 'bg-cream text-inkSoft',
                 };
               @endphp
@@ -556,8 +571,8 @@ tailwind.config = {
       </div>
 
       {{-- Quick actions --}}
-      <h2 class="display text-lg font-semibold tracking-tight mb-4">Acțiuni rapide</h2>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-16">
+      <h2 class="display text-base font-semibold tracking-tight mb-4">Acțiuni rapide</h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
         @foreach([
           ['Adaugă document',   'PDF, DOCX sau CSV pentru baza de cunoștințe'],
           ['Conectează canal',  'WhatsApp, Facebook, Instagram, WooCommerce'],

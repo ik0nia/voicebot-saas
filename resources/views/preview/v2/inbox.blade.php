@@ -168,31 +168,50 @@ tailwind.config = {
         lilac:     '#C7B8E8',
         sky:       '#A7C7F0',
       },
-      borderRadius: { card: '24px', primary: '48px', pill: '999px' },
+      borderRadius: { card: '20px', primary: '48px', pill: '999px' },
       fontSize: { '2xs': '0.6875rem' },
     },
   },
 };
 </script>
 <style>
-  body { font-family: 'Inter', system-ui, sans-serif; background: #FAF7EF; color: #1C1917; -webkit-font-smoothing: antialiased; font-size: 13px; }
+  body { font-family: 'Inter', system-ui, sans-serif; background: #FAF7EF; color: #1C1917; -webkit-font-smoothing: antialiased; font-size: 14px; line-height: 1.5; }
   .display { font-family: 'Instrument Sans', 'Inter', sans-serif; letter-spacing: -0.02em; }
-  .mono { font-family: 'JetBrains Mono', monospace; }
+  .mono { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
 
-  /* Linear-density list */
+  /* Linear-tight list (lift cu transition pe hover) */
   .conv-list { font-size: 13px; }
-  .conv-row { line-height: 1.35; }
-  .conv-row.selected { background: #FFFFFF; box-shadow: inset 3px 0 0 #DC2626, 0 1px 2px rgba(28,25,23,0.04); }
-  .conv-row:hover:not(.selected) { background: rgba(255,255,255,0.7); }
+  .conv-row { line-height: 1.35; transition: background .14s ease, box-shadow .14s ease, transform .14s ease; }
+  .conv-row.selected { background: #FFFFFF; box-shadow: inset 3px 0 0 #DC2626, 0 2px 6px -2px rgba(28,25,23,0.08); }
+  .conv-row:hover:not(.selected) { background: #FFFFFF; box-shadow: 0 2px 8px -3px rgba(28,25,23,0.10); transform: translateX(2px); }
+  .conv-row:focus-visible { outline: 2px solid #DC2626; outline-offset: -2px; }
 
   /* Thread comfortable */
   .thread-pane { font-size: 14px; }
+
+  /* Nav-item în sidebar */
+  .nav-item { position: relative; transition: all .14s ease; }
+  .nav-item:hover { background: rgba(255,255,255,0.85); }
+  .nav-item.active { background: #FFFFFF; box-shadow: inset 3px 0 0 #DC2626, 0 1px 2px rgba(28,25,23,0.06), 0 0 0 1px rgba(231,224,206,0.6); }
+
+  /* Card hover (insight, etc) */
+  .card { background: #FFFFFF; border: 1px solid #EAE7E0; border-radius: 20px; transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease; }
+  .card:hover { transform: translateY(-2px); box-shadow: 0 12px 28px -12px rgba(28,25,23,0.14); border-color: #D9D2BD; }
 
   .icon-btn:hover { background: rgba(28,25,23,0.06); color: #1C1917; }
   .icon-btn.active { background: #FFFFFF; color: #DC2626; box-shadow: 0 1px 2px rgba(28,25,23,0.06); }
   .pulse-dot { animation: pulse 2s ease-in-out infinite; }
   @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .4 } }
   kbd { font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 1px 5px; border: 1px solid #E7E0CE; border-radius: 3px; background: #FAF7EF; color: #78716C; }
+
+  /* Buttons: marketing-style */
+  .btn-coral { background: #DC2626; color: #FAF7EF; transition: all .18s ease; }
+  .btn-coral:hover { background: #991B1B; transform: translateY(-1px); box-shadow: 0 10px 24px -6px rgba(220,38,38,0.45); }
+  .btn-coral:active { transform: translateY(0); transition-duration: .05s; }
+
+  /* Composer focus ring */
+  .composer-wrap { transition: border-color .18s ease, box-shadow .18s ease; }
+  .composer-wrap:focus-within { border-color: rgba(220,38,38,0.5); box-shadow: 0 0 0 3px rgba(220,38,38,0.10); }
 
   /* Hide scrollbars but keep scroll */
   .scroll-y { scrollbar-width: thin; scrollbar-color: #E7E0CE transparent; }
@@ -201,7 +220,7 @@ tailwind.config = {
   .scroll-y::-webkit-scrollbar-thumb { background: #E7E0CE; border-radius: 3px; }
 
   /* Sidebar collapse (desktop) — userul alege */
-  #pane-nav { transition: width .18s ease, transform .22s ease; }
+  #pane-nav { transition: width .18s ease, transform .22s ease; background: #F7F4EC; }
   @media (min-width: 1024px) {
     #pane-nav.collapsed { width: 3.5rem; }
     #pane-nav.collapsed .nav-label,
@@ -460,10 +479,10 @@ tailwind.config = {
 
           <div class="flex-1 min-w-0">
             <div class="flex items-baseline gap-2 mb-0.5">
-              <span class="font-semibold text-[13px] truncate">{{ $c['name'] }}</span>
+              <span class="font-semibold text-sm truncate">{{ $c['name'] }}</span>
               <span class="ml-auto text-2xs text-muted whitespace-nowrap">{{ $c['time'] }}</span>
             </div>
-            <div class="text-[12.5px] text-inkSoft/85 line-clamp-2 leading-tight pr-2">{{ $c['last'] }}</div>
+            <div class="text-xs text-inkSoft/80 line-clamp-2 leading-snug pr-2">{{ $c['last'] }}</div>
             @if($statusBadge)
               <div class="mt-1">{!! $statusBadge !!}</div>
             @endif
@@ -525,7 +544,7 @@ tailwind.config = {
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
           Atribuie operator
         </button>
-        <button class="hidden md:flex px-3 py-1.5 rounded-pill text-xs bg-ink text-cream font-medium hover:bg-coralh transition items-center">
+        <button class="hidden md:flex px-3 py-1.5 rounded-pill text-xs bg-ink text-cream font-medium hover:bg-inkSoft transition items-center">
           Închide
         </button>
         <button class="w-8 h-8 rounded-lg hover:bg-cream text-muted hover:text-ink flex items-center justify-center transition">
@@ -592,7 +611,7 @@ tailwind.config = {
 
     {{-- Composer --}}
     <div class="border-t border-line px-6 py-4 bg-cream/40">
-      <div class="rounded-2xl bg-paper border border-line shadow-sm">
+      <div class="composer-wrap rounded-2xl bg-paper border border-line shadow-sm">
         {{-- AI suggest banner --}}
         <div class="px-4 py-2 border-b border-line bg-cream/60 flex items-center gap-2 text-2xs">
           <svg class="w-3.5 h-3.5 text-coralh" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6.2 4.5L18.2 22 12 17.5 5.8 22l2.4-8.1L2 9.4h7.6z"/></svg>
@@ -600,7 +619,7 @@ tailwind.config = {
           <span class="text-inkSoft truncate flex-1">„Avem disponibilitate marți la 9:30 sau joi la 10:00. Care vi se potrivește?"</span>
           <button class="text-coralh font-medium hover:underline whitespace-nowrap">Folosește</button>
         </div>
-        <textarea rows="2" placeholder="Scrie un mesaj sau intervine peste agent…" class="w-full px-4 py-3 bg-transparent text-[14px] resize-none focus:outline-none placeholder:text-muted"></textarea>
+        <textarea rows="2" placeholder="Scrie un mesaj sau intervine peste agent…" class="w-full px-4 py-3 bg-transparent text-[14px] resize-none focus:outline-none placeholder:text-muted/70 caret-coral"></textarea>
         <div class="px-3 py-2 flex items-center justify-between border-t border-line">
           <div class="flex items-center gap-1 text-muted">
             <button class="w-7 h-7 rounded-lg hover:bg-cream flex items-center justify-center transition" title="Atașează fișier">
@@ -611,7 +630,7 @@ tailwind.config = {
             </button>
             <span class="text-2xs ml-1">Apasă <kbd>⌘</kbd>+<kbd>↵</kbd> pentru trimitere</span>
           </div>
-          <button class="px-4 py-1.5 rounded-pill bg-coral text-paper text-xs font-medium hover:bg-coralh transition">Trimite</button>
+          <button class="btn-coral px-4 py-1.5 rounded-pill text-xs font-medium">Trimite</button>
         </div>
       </div>
     </div>
@@ -633,7 +652,7 @@ tailwind.config = {
         </button>
       </div>
 
-      <div class="space-y-1.5 text-[12.5px]">
+      <div class="space-y-1.5 text-xs">
         <div class="flex items-center gap-2">
           <span class="text-muted w-16 text-2xs uppercase tracking-wider">Telefon</span>
           <span class="font-medium mono">+40 731 ··· 089</span>
@@ -675,7 +694,7 @@ tailwind.config = {
               default => 'text-inkSoft bg-cream',
             };
           @endphp
-          <div class="flex items-center gap-2.5 text-[12.5px] {{ $i === 0 ? 'opacity-100' : '' }}">
+          <div class="flex items-center gap-2.5 text-xs {{ $i === 0 ? 'opacity-100' : '' }}">
             <div class="w-7 h-7 rounded-lg flex items-center justify-center {{ $chBg }} border border-line">
               {!! channelIcon($call['channel']) !!}
             </div>
@@ -698,7 +717,7 @@ tailwind.config = {
       </div>
       <div class="space-y-1.5">
         @foreach($kbHits as $kb)
-          <div class="flex items-start gap-2 text-[12.5px] p-2 rounded-lg hover:bg-paper transition cursor-pointer">
+          <div class="flex items-start gap-2 text-xs p-2 rounded-lg hover:bg-paper transition cursor-pointer">
             <svg class="w-3.5 h-3.5 text-muted shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
             <div class="flex-1 min-w-0">
               <div class="font-medium truncate">{{ $kb['title'] }}</div>
@@ -719,7 +738,7 @@ tailwind.config = {
         <h4 class="text-2xs uppercase tracking-wider text-muted font-semibold">Note interne</h4>
         <button class="text-2xs text-coralh hover:underline">+ Notă</button>
       </div>
-      <div class="rounded-lg bg-paper border border-line p-3 text-[12.5px]">
+      <div class="rounded-lg bg-paper border border-line p-3 text-xs">
         <div class="text-inkSoft leading-relaxed">Pacientă nouă, recomandare de la familia Stoica (deja clienți). De propus și plan de igienizare.</div>
         <div class="text-2xs text-muted mt-2">Codrut · acum 2 zile</div>
       </div>
