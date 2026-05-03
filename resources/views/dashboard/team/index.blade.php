@@ -32,8 +32,8 @@
     {{-- Page Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-ink">Echipă</h1>
-            <p class="mt-1 text-sm text-muted">{{ $members->count() }} {{ $members->count() === 1 ? 'membru' : 'membri' }} în echipă</p>
+            <h1 class="display text-3xl md:text-4xl font-semibold tracking-tight text-ink leading-none">Echipă</h1>
+            <p class="mt-2 text-sm text-muted">{{ $members->count() }} {{ $members->count() === 1 ? 'membru' : 'membri' }} în echipă</p>
         </div>
         <button onclick="toggleInviteForm()"
                 id="invite-toggle-btn"
