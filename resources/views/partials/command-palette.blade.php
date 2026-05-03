@@ -112,6 +112,9 @@ function commandPalette() {
               tint: 'bg-cream text-inkSoft', icon: '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' },
             { id: 'p_webhooks', title: 'Webhooks', subtitle: 'Integrări outbound', href: '/dashboard/webhooks',
               tint: 'bg-coralsoft text-coralh', icon: '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>' },
+            { id: 'p_canale', title: 'Toate canalele', subtitle: 'WhatsApp · Facebook · Instagram per agent', href: '/dashboard/canale',
+              tint: 'bg-[#D7EFE0] text-emerald-700', icon: '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/></svg>',
+              keywords: 'canal channel whatsapp facebook instagram meta connect conecta' },
             // Acțiuni
             { id: 'a_new_agent', title: 'Creează agent AI nou', subtitle: 'Configurează un agent vocal/chat', href: '/dashboard/agenti/nou',
               tint: 'bg-coral text-cream', icon: '<svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"/></svg>',

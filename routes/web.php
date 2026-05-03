@@ -479,6 +479,14 @@ Route::middleware('auth')
     ->get('/dashboard/canale', [\App\Http\Controllers\Dashboard\ChannelsHubController::class, 'index'])
     ->name('dashboard.channels-hub.index');
 
+// Playground per bot: chat tester + voice preview + embed live preview
+Route::middleware('auth')->group(function () {
+    $pg = \App\Http\Controllers\Dashboard\PlaygroundController::class;
+    Route::get('/dashboard/agenti/{bot}/playground', [$pg, 'show'])->name('dashboard.playground.show');
+    Route::get('/dashboard/agenti/{bot}/playground/preview', [$pg, 'previewFrame'])->name('dashboard.playground.preview');
+    Route::post('/dashboard/agenti/{bot}/playground/tts', [$pg, 'tts'])->name('dashboard.playground.tts');
+});
+
 // Admin RAG analytics
 Route::middleware(['auth', 'super_admin'])
     ->get('/admin/rag', [\App\Http\Controllers\Admin\AdminRagAnalyticsController::class, 'index'])
