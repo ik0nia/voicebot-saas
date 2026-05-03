@@ -490,6 +490,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/agenti/{bot}/playground', [$pg, 'show'])->name('dashboard.playground.show');
     Route::get('/dashboard/agenti/{bot}/playground/preview', [$pg, 'previewFrame'])->name('dashboard.playground.preview');
     Route::post('/dashboard/agenti/{bot}/playground/tts', [$pg, 'tts'])->name('dashboard.playground.tts');
+
+    // A/B prompt comparison — 2 variante side by side, model raw fără RAG
+    $ab = \App\Http\Controllers\Dashboard\AbPromptController::class;
+    Route::get('/dashboard/agenti/{bot}/ab-prompt', [$ab, 'show'])->name('dashboard.ab-prompt.show');
+    Route::post('/dashboard/agenti/{bot}/ab-prompt/compare', [$ab, 'compare'])->name('dashboard.ab-prompt.compare');
 });
 
 // Admin RAG analytics
