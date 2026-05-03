@@ -13,6 +13,11 @@ use Illuminate\Support\Facades\Log;
  */
 class BlockedTest extends Command
 {
+    // Note: NU declarăm --ansi / --no-ansi aici; Symfony Console le
+    // înregistrează deja global. Re-declararea în signature aruncă
+    // „An option named 'ansi' already exists" și blochează ÎNTREAGA
+    // execuție artisan test, înainte ca handle() să poată decide
+    // dacă blochează sau delegă.
     protected $signature = 'test
         {--without-tty : Ignored}
         {--compact : Ignored}
@@ -22,8 +27,6 @@ class BlockedTest extends Command
         {--profile : Ignored}
         {--recreate-databases : Ignored}
         {--drop-databases : Ignored}
-        {--ansi : Ignored}
-        {--no-ansi : Ignored}
         {--filter= : Ignored}
         {--testsuite= : Ignored}
         {--group= : Ignored}
