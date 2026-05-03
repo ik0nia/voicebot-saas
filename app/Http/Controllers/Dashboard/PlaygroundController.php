@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Bot;
 use App\Models\Channel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 use OpenAI\Laravel\Facades\OpenAI;
 
 /**
@@ -83,10 +84,50 @@ class PlaygroundController extends Controller
         // Preview iframe URL — direct render-uit cu widget injectat
         $previewIframeUrl = route('dashboard.playground.preview', ['bot' => $bot->id]);
 
+        // Signed URL valabil 1h pentru preview MOBILE — userul scanează QR
+        // cu telefonul, deschide widget-ul în browser mobil REAL fără să
+        // fie nevoie de login. URL-ul expiră, deci nu poate fi share-uit
+        // permanent în public.
+        $mobileUrl = URL::temporarySignedRoute(
+            'dashboard.playground.public',
+            now()->addHour(),
+            ['bot' => $bot->id],
+        );
+        $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=10&data='
+            . urlencode($mobileUrl);
+
         return view('dashboard.playground.show', compact(
             'bot', 'webChannel', 'voices', 'sampleText',
             'snippets', 'previewIframeUrl', 'color',
+            'mobileUrl', 'qrUrl',
         ));
+    }
+
+    /**
+     * Public mobile preview — protejat doar prin signed URL (1h validity).
+     * Render acelaşi frame ca preview-ul normal, dar fără auth check.
+     */
+    public function publicPreview(Request $request, Bot $bot)
+    {
+        // Laravel's signed middleware verifică oricum, dar dublăm guard
+        // explicit aici pentru siguranță (o tipărire greşită în routes/web
+        // putea omite middleware-ul).
+        abort_unless($request->hasValidSignature(), 403, 'Link expirat sau invalid');
+
+        // Folosim withoutGlobalScopes — nu avem auth context, deci
+        // TenantScope ne-ar bloca. Acceptabil pentru că signed URL e
+        // dovada de autorizare.
+        $bot = Bot::withoutGlobalScopes()->findOrFail($bot->id);
+        $webChannel = $bot->channels()->where('type', Channel::TYPE_WEB_CHATBOT)->first();
+        abort_unless($webChannel, 404);
+
+        return response()
+            ->view('dashboard.playground.preview-frame', [
+                'bot' => $bot,
+                'channel' => $webChannel,
+                'color' => $bot->settings['color'] ?? '#991b1b',
+            ])
+            ->header('X-Robots-Tag', 'noindex, nofollow');
     }
 
     /**

@@ -187,6 +187,25 @@
         </div>
     </div>
 
+    {{-- Mobile preview QR — scan cu telefonul, deschide widget pe mobil real --}}
+    <div class="card p-5">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+            <div class="shrink-0 bg-white p-2 rounded-lg border border-line">
+                <img src="{{ $qrUrl }}" alt="QR mobile preview" class="w-32 h-32 block" loading="lazy">
+            </div>
+            <div class="flex-1 min-w-0">
+                <h3 class="display text-base font-semibold text-ink mb-1">📱 Testează pe telefonul tău</h3>
+                <p class="text-sm text-muted mb-3">Scanează QR-ul cu camera telefonului → se deschide widget-ul exact cum îl vor vedea vizitatorii pe mobil. Link-ul e valabil 1 oră, fără login.</p>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <input type="text" readonly value="{{ $mobileUrl }}"
+                           class="flex-1 min-w-[200px] rounded-lg border border-line bg-cream px-3 py-1.5 text-2xs font-mono text-inkSoft" onclick="this.select()">
+                    <button type="button" onclick="navigator.clipboard.writeText('{{ $mobileUrl }}'); this.innerText='✓ copiat'; setTimeout(()=>this.innerText='copiază link',2000)" class="px-3 py-1.5 rounded-pill border border-line bg-white hover:bg-cream text-2xs font-medium">copiază link</button>
+                    <a href="{{ $mobileUrl }}" target="_blank" class="px-3 py-1.5 rounded-pill bg-coralsoft text-coralh hover:bg-coral hover:text-cream text-2xs font-medium transition">deschide ↗</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- Notă subsol --}}
     <div class="card p-4 bg-cream/40 border-dashed">
         <div class="flex items-start gap-3">
