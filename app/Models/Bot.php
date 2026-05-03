@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Traits\Auditable;
 use App\Models\Traits\BelongsToTenant;
 use App\Models\Channel;
 use Illuminate\Database\Eloquent\Builder;
@@ -13,7 +14,16 @@ use Illuminate\Support\Str;
 
 class Bot extends Model
 {
-    use HasFactory, BelongsToTenant;
+    use HasFactory, BelongsToTenant, Auditable;
+
+    /**
+     * Câmpuri excluse din audit (counters/timestamps care se updatează
+     * des fără semnificație semantică pentru tenant).
+     */
+    public function auditExcludedAttributes(): array
+    {
+        return ['last_call_at', 'last_conversation_at'];
+    }
 
     protected $fillable = [
         'tenant_id',

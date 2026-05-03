@@ -238,6 +238,11 @@
                             <svg class="w-4 h-4 {{ request()->is('dashboard/echipa*') ? 'text-coral' : '' }}" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
                             Echipă
                         </a>
+                        <a href="/dashboard/activitate"
+                           class="nav-item flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg {{ request()->is('dashboard/activitate*') ? 'active' : 'text-inkSoft' }}">
+                            <svg class="w-4 h-4 {{ request()->is('dashboard/activitate*') ? 'text-coral' : '' }}" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 8v4l3 3M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            Activitate
+                        </a>
                         <a href="/dashboard/facturare"
                            class="nav-item flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg {{ request()->is('dashboard/facturare*') ? 'active' : 'text-inkSoft' }}">
                             <svg class="w-4 h-4 {{ request()->is('dashboard/facturare*') ? 'text-coral' : '' }}" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>

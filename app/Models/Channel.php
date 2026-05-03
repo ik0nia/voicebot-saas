@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Traits\Auditable;
 use App\Models\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,7 +12,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Channel extends Model
 {
-    use BelongsToTenant, HasFactory;
+    use BelongsToTenant, HasFactory, Auditable;
+
+    public function auditExcludedAttributes(): array
+    {
+        return ['last_activity_at', 'message_count'];
+    }
 
     const TYPE_VOICE = 'voice';
     const TYPE_WHATSAPP = 'whatsapp';

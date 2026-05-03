@@ -468,6 +468,12 @@ Route::middleware('auth')->prefix('dashboard/echipa')->group(function () {
         ->name('dashboard.team.remove');
 });
 
+// Tenant audit log — read-only, vizibil tenant_admin/manager
+// Listează cine a editat ce, când, de unde, cu diff complet.
+Route::middleware(['auth', 'tenant.role:tenant_admin,tenant_manager'])
+    ->get('/dashboard/activitate', [\App\Http\Controllers\Dashboard\AuditController::class, 'index'])
+    ->name('dashboard.audit.index');
+
 // Settings routes (dashboard)
 Route::middleware('auth')->prefix('dashboard/setari')->group(function () {
     Route::get('/', [SettingsController::class, 'index'])->name('dashboard.settings.index');
