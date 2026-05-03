@@ -43,3 +43,6 @@ docker-compose.override.yml
 # Live status page — runtime artifact while Claude lucrează la redesign
 /public/sambla-status.html
 /tmp/sambla-status-state.json
+# Email-on-stop hook artifacts (Stop hook script + log)
+/services/sambla-email-response.sh
+/services/sambla-email-response.log
