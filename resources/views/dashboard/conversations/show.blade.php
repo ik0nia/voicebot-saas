@@ -130,6 +130,10 @@ function smartReply(conversationId) {
             @endif
         </div>
         <div class="flex items-center gap-2">
+            <a href="{{ route('dashboard.conversations.replay', $conversation) }}"
+               class="inline-flex items-center gap-2 rounded-pill border border-coral/30 bg-coralsoft text-coralh hover:bg-coral hover:text-cream px-4 py-2 text-sm font-medium transition">
+                ⏯ Replay
+            </a>
             <a href="{{ route('dashboard.conversations.index', ['channelType' => $chType]) }}"
                class="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-4 py-2.5 text-sm font-medium text-inkSoft hover:bg-cream transition-colors">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

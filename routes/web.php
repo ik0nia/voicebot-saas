@@ -514,6 +514,11 @@ Route::middleware('auth')
     ->post('/dashboard/conversatie/{conversation}/auto-tag', [\App\Http\Controllers\Dashboard\AutoTagController::class, 'tag'])
     ->name('dashboard.conversation.auto-tag');
 
+// Replay conversație — playback timing-aware cu speed control 1x..16x
+Route::middleware('auth')
+    ->get('/dashboard/transcrieri/conversatie/{conversation}/replay', [\App\Http\Controllers\Dashboard\ConversationReplayController::class, 'show'])
+    ->name('dashboard.conversations.replay');
+
 // Knowledge gaps — listă query-uri zero-result + AI suggester
 Route::middleware('auth')->group(function () {
     $kg = \App\Http\Controllers\Dashboard\KnowledgeGapsController::class;
