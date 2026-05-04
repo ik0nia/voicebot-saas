@@ -54,10 +54,13 @@
         </ul>
 
         <h2 class="display text-2xl font-semibold text-ink mt-8">Ce păstrăm și de ce</h2>
-        <p>Conversațiile pe care bot-ul le-a avut cu clienții pe pagina ta rămân în spațiul de lucru al business-ului tău (tenant-ul Sambla), pentru că aparțin business-ului, nu administratorului care a făcut conectarea. Dacă vrei să le ștergi și pe acelea, scrie la <a href="mailto:contact@sambla.ro" class="text-coral">contact@sambla.ro</a> și le procesăm în maxim 30 de zile.</p>
+        <p>Conversațiile pe care bot-ul le-a avut cu clienții pe pagina ta rămân în spațiul de lucru al business-ului tău (tenant-ul Sambla), pentru că aparțin business-ului, nu administratorului care a făcut conectarea. Dacă vrei să le ștergi și pe acelea, scrie la <a href="mailto:{{ config('company.contact.dpo_email') }}" class="text-coral">{{ config('company.contact.dpo_email') }}</a> și le procesăm în maxim 30 de zile.</p>
+
+        <h2 class="display text-2xl font-semibold text-ink mt-8">Operatorul datelor</h2>
+        <p>Sambla este operată de <strong>{{ config('company.legal_name') }}</strong>, cu sediul în {{ config('company.address.street') }}, {{ config('company.address.city') }}, județul {{ config('company.address.county') }}, {{ config('company.address.postal_code') }}, înregistrată la Registrul Comerțului sub <span class="font-mono">{{ config('company.reg_com') }}</span>, CUI <span class="font-mono">{{ config('company.vat_prefix') }}{{ config('company.cui') }}</span>.</p>
 
         <h2 class="display text-2xl font-semibold text-ink mt-8">Cerere manuală de ștergere</h2>
-        <p>Dacă nu mai ai acces la contul de Facebook prin care ai conectat Sambla, poți cere ștergerea trimițând un email la <a href="mailto:contact@sambla.ro" class="text-coral">contact@sambla.ro</a> cu:</p>
+        <p>Dacă nu mai ai acces la contul de Facebook prin care ai conectat Sambla, poți cere ștergerea trimițând un email la <a href="mailto:{{ config('company.contact.dpo_email') }}" class="text-coral">{{ config('company.contact.dpo_email') }}</a> cu:</p>
         <ul>
             <li>Adresa de email cu care te-ai înregistrat la Sambla</li>
             <li>Numele paginii Facebook sau contului Instagram</li>

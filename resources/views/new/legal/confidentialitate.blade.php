@@ -13,7 +13,8 @@
 
     <div class="prose prose-lg">
         <h2 class="display text-2xl font-semibold mt-8 mb-3">Cine este operatorul datelor</h2>
-        <p>Sambla SRL, România, procesează datele în calitate de operator pentru datele proprii clienților noștri (numele firmei, e-mail-ul de contact, facturare) și ca împuternicit pentru datele clienților finali pe care îi procesează agentul AI configurat de tine.</p>
+        <p>Platforma Sambla este operată de <strong>{{ config('company.legal_name') }}</strong>, persoană juridică română cu sediul în {{ config('company.address.street') }}, {{ config('company.address.city') }}, județul {{ config('company.address.county') }}, cod poștal {{ config('company.address.postal_code') }}, înregistrată la Oficiul Registrului Comerțului sub nr. <span class="mono">{{ config('company.reg_com') }}</span>, cod fiscal <span class="mono">{{ config('company.vat_prefix') }}{{ config('company.cui') }}</span>.</p>
+        <p>{{ config('company.legal_name') }} procesează datele în calitate de operator pentru datele proprii clienților noștri (numele firmei, e-mail-ul de contact, facturare) și ca împuternicit pentru datele clienților finali pe care îi procesează agentul AI configurat de tine.</p>
 
         <h2 class="display text-2xl font-semibold mt-8 mb-3">Ce date colectăm</h2>
         <ul class="list-disc ml-6 space-y-2">
@@ -49,7 +50,19 @@
         <p>Criptare TLS 1.2+ pentru date în tranzit, criptare la rest pentru date sensibile, acces rolebazat intern, audit trail, backup zilnic. Incidente de securitate notificate în 72 de ore.</p>
 
         <h2 class="display text-2xl font-semibold mt-8 mb-3">Contact DPO</h2>
-        <p>Pentru orice solicitare privind datele: <a href="mailto:dpo@sambla.ro" class="accent-text underline">dpo@sambla.ro</a>.</p>
+        <p>Pentru orice solicitare privind datele personale (acces, rectificare, ștergere, portabilitate, opoziție): <a href="mailto:{{ config('company.contact.dpo_email') }}" class="accent-text underline">{{ config('company.contact.dpo_email') }}</a>. Răspundem în maxim 30 de zile calendaristice.</p>
+
+        <h2 class="display text-2xl font-semibold mt-8 mb-3">Date de identificare ale operatorului</h2>
+        <div class="rounded-2xl border p-5 text-sm" style="border-color: var(--line); background: var(--paper);">
+            <dl class="grid grid-cols-1 sm:grid-cols-[max-content_1fr] gap-x-6 gap-y-1.5">
+                <dt class="text-muted">Denumire</dt>           <dd class="font-medium">{{ config('company.legal_name') }}</dd>
+                <dt class="text-muted">Cod fiscal</dt>          <dd class="mono">{{ config('company.vat_prefix') }}{{ config('company.cui') }}</dd>
+                <dt class="text-muted">Reg. Com.</dt>           <dd class="mono">{{ config('company.reg_com') }}</dd>
+                <dt class="text-muted">EUID</dt>                <dd class="mono">{{ config('company.euid') }}</dd>
+                <dt class="text-muted">Sediu social</dt>        <dd>{{ config('company.address.street') }}, {{ config('company.address.city') }}, {{ config('company.address.county') }}, {{ config('company.address.postal_code') }}, {{ config('company.address.country') }}</dd>
+                <dt class="text-muted">Email contact</dt>       <dd><a href="mailto:{{ config('company.contact.email') }}" class="accent-text">{{ config('company.contact.email') }}</a></dd>
+            </dl>
+        </div>
     </div>
 </section>
 

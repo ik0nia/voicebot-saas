@@ -318,9 +318,13 @@
             </div>
             <div class="flex flex-wrap items-center justify-between gap-3 pt-6 text-xs mono text-muted">
                 <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <span>© {{ date('Y') }} Sambla</span>
+                    <span>© {{ date('Y') }} {{ config('company.legal_name') }}</span>
                     <span aria-hidden="true">·</span>
-                    <a href="mailto:servus@sambla.ro" class="hover:text-ink">servus@sambla.ro</a>
+                    <span class="whitespace-nowrap">CUI {{ config('company.vat_prefix') }}{{ config('company.cui') }}</span>
+                    <span aria-hidden="true">·</span>
+                    <span class="whitespace-nowrap">{{ config('company.reg_com') }}</span>
+                    <span aria-hidden="true">·</span>
+                    <a href="mailto:{{ config('company.contact.email') }}" class="hover:text-ink">{{ config('company.contact.email') }}</a>
                     <span aria-hidden="true">·</span>
                     <a href="tel:+40775222333" class="hover:text-ink">0775 222 333</a>
                     <span aria-hidden="true">·</span>
