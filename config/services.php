@@ -98,12 +98,37 @@ return [
         'kb_folder_name' => env('GOOGLE_KB_FOLDER_NAME', 'Sambla Knowledge Base'),
     ],
 
-    // Meta (Facebook/WhatsApp/Instagram) webhook signing secret. Must exist
-    // in config/ so `php artisan config:cache` captures it — otherwise
-    // callers resort to env() which returns null after caching and the
-    // webhook middleware loses its fail-closed guarantee.
+    // Meta (Facebook/WhatsApp/Instagram) — single tenant-facing app
+    // identity. app_id/app_secret authenticate Sambla as the OAuth
+    // client when tenants connect their FB pages or IG accounts; the
+    // verify_token is the App-level webhook handshake string Meta
+    // sends once at "Verify and Save" in App Dashboard. Must live in
+    // config/ so `php artisan config:cache` captures these — direct
+    // env() calls return null after caching and break OAuth + webhook.
     'meta' => [
+        'app_id' => env('META_APP_ID'),
         'app_secret' => env('META_APP_SECRET'),
+        'verify_token' => env('META_WEBHOOK_VERIFY_TOKEN'),
+        // Graph API version we pin against. Bumping is a deliberate
+        // op — newer versions occasionally remove fields we depend on
+        // (e.g. ig_id removed in v18). Keep behind config so we can
+        // canary one tenant before rolling forward.
+        'graph_version' => env('META_GRAPH_VERSION', 'v21.0'),
+        // Default scopes asked at OAuth time. Keep aligned with what
+        // we requested at App Review — asking for an unapproved scope
+        // returns an error to the user mid-flow.
+        'scopes' => [
+            'pages_messaging',
+            'pages_manage_metadata',
+            'pages_show_list',
+            'pages_read_engagement',
+            'pages_utility_messaging',
+            'instagram_basic',
+            'instagram_manage_messages',
+            'business_management',
+            'email',
+            'public_profile',
+        ],
     ],
 
     'whatsapp' => [

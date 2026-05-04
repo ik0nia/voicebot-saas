@@ -977,6 +977,27 @@ Route::prefix('webhook/instagram')
             ->middleware(\App\Http\Middleware\VerifyMetaWebhookSignature::class);
     });
 
+// Meta data-deletion callback (mandatory for App Review). Meta POSTs a
+// signed_request when a Facebook/Instagram user revokes the Sambla app
+// from their FB Settings → Apps and Websites. Signature verified inside
+// the controller using META_APP_SECRET, so no shared middleware path.
+// CSRF off (Meta doesn't speak Laravel session); rate limited to soak
+// up any rogue probes.
+Route::post('/webhook/meta/data-deletion', [\App\Http\Controllers\Webhook\MetaDataDeletionController::class, 'callback'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->middleware('throttle:60,1')
+    ->name('webhook.meta.data-deletion');
+
+// Public status page Meta sends the user to after revocation. Users
+// (and Meta itself) read this to confirm the deletion completed.
+Route::get('/legal/data-deletion', function (\Illuminate\Http\Request $request) {
+    $code = (string) $request->query('id', '');
+    $status = $code !== ''
+        ? app(\App\Http\Controllers\Webhook\MetaDataDeletionController::class)->status($code)
+        : null;
+    return view('legal.data-deletion', compact('code', 'status'));
+})->name('legal.data-deletion');
+
 // Telnyx webhooks (no CSRF, no auth - signature verified by middleware).
 // Kept live during the Twilio migration for existing Telnyx numbers.
 Route::prefix('webhook/telnyx')

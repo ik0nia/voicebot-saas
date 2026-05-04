@@ -29,14 +29,28 @@ class FacebookWebhookController extends Controller
         $challenge = $request->query('hub_challenge');
 
         if ($mode === 'subscribe' && $token) {
-            // Find a Facebook Messenger channel with a matching webhook_secret
+            // App-level verify token (Sambla's unified Meta App). Meta
+            // calls this endpoint exactly once when the App admin clicks
+            // "Verify and Save" in App Dashboard → Webhooks, OR when we
+            // call POST /{app-id}/subscriptions via Graph API. This is
+            // the path the unified-app architecture uses; the legacy
+            // per-channel branch below stays only for tenants still on
+            // their own Meta App (pre-migration).
+            $appLevelToken = (string) config('services.meta.verify_token');
+            if ($appLevelToken !== '' && hash_equals($appLevelToken, $token)) {
+                Log::info('Facebook webhook verified (app-level)');
+                return response($challenge, 200)->header('Content-Type', 'text/plain');
+            }
+
+            // Legacy per-channel verify (each tenant brought their own
+            // Meta App + verify token stored on the Channel row).
             $channel = Channel::where('type', Channel::TYPE_FACEBOOK_MESSENGER)
                 ->where('webhook_secret', $token)
                 ->where('is_active', true)
                 ->first();
 
             if ($channel) {
-                Log::info('Facebook webhook verified', ['channel_id' => $channel->id]);
+                Log::info('Facebook webhook verified (per-channel)', ['channel_id' => $channel->id]);
                 return response($challenge, 200)->header('Content-Type', 'text/plain');
             }
         }

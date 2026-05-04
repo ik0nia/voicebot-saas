@@ -29,14 +29,25 @@ class InstagramWebhookController extends Controller
         $challenge = $request->query('hub_challenge');
 
         if ($mode === 'subscribe' && $token) {
-            // Find an Instagram DM channel with a matching webhook_secret
+            // App-level verify (unified Sambla Meta App). Same handshake
+            // shape as Facebook — Meta sends the token exactly once when
+            // we POST /{app-id}/subscriptions or the admin clicks "Verify
+            // and Save" in Console.
+            $appLevelToken = (string) config('services.meta.verify_token');
+            if ($appLevelToken !== '' && hash_equals($appLevelToken, $token)) {
+                Log::info('Instagram webhook verified (app-level)');
+                return response($challenge, 200)->header('Content-Type', 'text/plain');
+            }
+
+            // Legacy: per-channel webhook_secret for tenants still on
+            // their own Meta App (pre-migration).
             $channel = Channel::where('type', Channel::TYPE_INSTAGRAM_DM)
                 ->where('webhook_secret', $token)
                 ->where('is_active', true)
                 ->first();
 
             if ($channel) {
-                Log::info('Instagram webhook verified', ['channel_id' => $channel->id]);
+                Log::info('Instagram webhook verified (per-channel)', ['channel_id' => $channel->id]);
                 return response($challenge, 200)->header('Content-Type', 'text/plain');
             }
         }
