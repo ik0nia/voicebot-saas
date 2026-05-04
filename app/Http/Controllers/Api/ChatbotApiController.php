@@ -123,6 +123,19 @@ class ChatbotApiController extends Controller
         // quick_replies are consistent between /message and /message-stream.
         $pageContext = $preResult['page_context'] ?? [];
 
+        // Auto-escalate când user TIPĂREȘTE explicit cererea de operator
+        // („vreau să vorbesc cu un om", „live agent", etc.). Înainte, bot-ul
+        // răspundea politicos „Am notat cererea ta..." dar metadata
+        // needs_human nu se seta → push n-ajungea la operator → conversația
+        // continuă fără ca echipa să știe. Detect frază înainte de orice
+        // generare AI; dacă match, fire same flow ca butonul din widget.
+        $isOperatorRequest = $this->detectOperatorRequest((string) $userMessage);
+        if ($isOperatorRequest && !($conversation->metadata['needs_human'] ?? false)) {
+            $this->triggerEscalation($conversation, $channel, 'visitor_text_request');
+            // Reload conversation cu noile metadata + cleared bot_id
+            $conversation->refresh();
+        }
+
         // Bot OFF gate — dacă vizitatorul a cerut operator (needs_human)
         // sau un operator a preluat conversația (assignee_user_id), bot-ul
         // NU mai răspunde. Mesajul vizitatorului e deja salvat în
@@ -675,6 +688,15 @@ class ChatbotApiController extends Controller
         $prechatName = $preResult['prechat_name'];
         $prechatEmail = $preResult['prechat_email'];
         $prechatPhone = $preResult['prechat_phone'];
+
+        // Auto-escalate pe text: aceeași logică ca în message(). Dacă
+        // user a tipărit explicit „vreau operator" / „live agent" etc.,
+        // fire escalation flow înainte să intrăm pe AI generation.
+        $isOperatorRequest = $this->detectOperatorRequest((string) $userMessage);
+        if ($isOperatorRequest && !($conversation->metadata['needs_human'] ?? false)) {
+            $this->triggerEscalation($conversation, $channel, 'visitor_text_request');
+            $conversation->refresh();
+        }
 
         // Bot OFF gate (mirror al celui din message()) — pe SSE returnăm
         // un singur event 'done' cu marker bot_paused ca să închidem
@@ -1233,6 +1255,97 @@ class ChatbotApiController extends Controller
         ]);
 
         return response()->json(['success' => true, 'rating_id' => $rating->id]);
+    }
+
+    /**
+     * Detect whether a visitor message is a direct request to talk to a
+     * human operator. Returns true on phrases like:
+     *   - „vreau să vorbesc cu un operator / om / agent uman"
+     *   - „live agent" / „real person" / „human help"
+     *   - „talk to a human"
+     *
+     * Conservative — must contain a clear human-request signal. We don't
+     * fire on „operator" alone (could be discussing CFR, smart home,
+     * arithmetic) or „live" alone (live music, etc.).
+     */
+    private function detectOperatorRequest(string $message): bool
+    {
+        $m = mb_strtolower(trim($message));
+        if ($m === '') return false;
+
+        $patterns = [
+            '/\b(vreau|doresc|as vrea|aș vrea|pot|imi trebuie|îmi trebuie)\s+(sa|să)\s+(vorbesc|comunic|discut)\s+(cu|cu un)?\s*(operator|om|persoan|agent|coleg|cineva\s+real)/u',
+            '/\b(operator|om|persoan|agent|coleg)\s+(real|uman|adevarat|adevărat|în\s+carne|in\s+carne)/u',
+            '/\b(speak|talk|chat)\s+(to|with)\s+(a\s+)?(human|real\s+person|operator|agent|live)/i',
+            '/\blive\s+(agent|chat|operator|support|person)/i',
+            '/\b(human|real)\s+(operator|agent|support|help|person)/i',
+            '/\bagent\s+uman\b/u',
+            '/\bvreau\s+(un\s+)?(operator|om|coleg|agent|persoan|cineva)/u',
+            '/\b(transfer|connect)\s+(me\s+)?(to\s+)?(an?\s+)?(human|operator|agent)/i',
+        ];
+
+        foreach ($patterns as $p) {
+            if (preg_match($p, $m)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Fire the same escalation flow as the widget's "talk to operator"
+     * button: set metadata.needs_human, clear assignee_bot_id, push to
+     * tenant operators, insert system acknowledge message. Used when we
+     * detect the request from text content rather than the explicit
+     * button click — visitors who type their request out should get the
+     * same treatment.
+     */
+    private function triggerEscalation(\App\Models\Conversation $conv, \App\Models\Channel $channel, string $reason): void
+    {
+        $metadata = $conv->metadata ?? [];
+        $metadata['needs_human'] = true;
+        $metadata['escalated_at'] = now()->toIso8601String();
+        $metadata['escalation_reason'] = $reason;
+
+        $conv->metadata = $metadata;
+        $conv->assignee_bot_id = null;
+        $conv->save();
+
+        // Acknowledge la visitor — același mesaj ca pe butonul widget.
+        \App\Models\Message::create([
+            'conversation_id' => $conv->id,
+            'direction' => 'outbound',
+            'content' => 'Am chemat un coleg, ajunge în câteva momente.',
+            'content_type' => 'text',
+            'metadata' => ['sender_type' => 'system', 'system_event' => 'escalation_acknowledged'],
+            'sent_at' => now(),
+        ]);
+        $conv->increment('messages_count');
+
+        // Push la operatori. Try/catch ca să nu rupem flow-ul de chat.
+        try {
+            app(\App\Services\PushNotificationService::class)->sendToTenantUsers((int) $conv->tenant_id, [
+                'title' => '🆘 Vizitator cere operator',
+                'body' => ($conv->contact_name ?: 'Vizitator anonim')
+                    . ' din chat ' . ($channel->name ?: 'web')
+                    . ' vrea să vorbească cu un om.',
+                'url' => '/dashboard/operator?focus=' . $conv->id,
+                'tag' => 'escalation-' . $conv->id,
+                'icon' => '/images/logo-icon.png',
+                'requireInteraction' => true,
+            ]);
+        } catch (\Throwable $e) {
+            \Log::warning('Auto-escalation push failed (text trigger)', [
+                'conversation_id' => $conv->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        \Log::info('Conversation escalated via text trigger', [
+            'conversation_id' => $conv->id,
+            'tenant_id' => $conv->tenant_id,
+            'reason' => $reason,
+        ]);
     }
 
     /**
