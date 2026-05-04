@@ -150,18 +150,21 @@
                      scroll-ul intern. Asta lăsa form-ul de input să iasă
                      sub fold când conversația era lungă. --}}
                 <div class="flex flex-col flex-1 min-h-0">
-                    <div class="px-4 py-3 border-b border-line bg-cream/40 flex items-center gap-3">
+                    {{-- Header: doar info contact + bot. Acțiunile (Preia/
+                         Înapoi la bot) au coborât deasupra input-ului ca să
+                         fie la îndemână când scrii, nu sus unde se scroll-ează
+                         out-of-sight. Pattern Slack/Intercom. --}}
+                    <div class="px-4 py-3 border-b border-line bg-white flex items-center gap-3 flex-shrink-0">
                         <button @click="activeId = null" class="sm:hidden text-muted hover:text-ink">←</button>
                         <div class="min-w-0 flex-1">
                             <div class="text-sm font-semibold text-ink truncate" x-text="activeConv?.contact"></div>
-                            <div class="text-2xs text-muted truncate" x-text="activeConv?.bot_name"></div>
+                            <div class="text-2xs text-muted truncate flex items-center gap-1">
+                                <span x-text="activeConv?.bot_name"></span>
+                                <template x-if="activeConv?.needs_human">
+                                    <span class="text-coral font-semibold">· 🙋 cere operator</span>
+                                </template>
+                            </div>
                         </div>
-                        <template x-if="activeConv?.is_mine">
-                            <button @click="release()" class="text-2xs px-3 py-1.5 rounded-pill border border-line bg-white hover:bg-cream font-medium">↩ Înapoi la bot</button>
-                        </template>
-                        <template x-if="!activeConv?.is_mine">
-                            <button @click="takeOver()" class="text-2xs px-3 py-1.5 rounded-pill btn-coral font-medium">⚡ Preia conversația</button>
-                        </template>
                     </div>
 
                     <div class="flex-1 overflow-y-auto min-h-0 px-3 py-2 space-y-0.5" x-ref="msgPane">
@@ -240,10 +243,55 @@
                         </template>
                     </div>
 
+                    {{-- Status bar: Slack/Intercom pattern. Stă lipit deasupra
+                         input-ului. 3 stări vizuale clare:
+                           - is_mine        → verde, „Răspunzi tu" + Înapoi la bot
+                           - needs_human    → coral, „Vizitatorul cere operator" + Răspund eu
+                           - bot only       → neutru, „Bot răspunde" + Răspund eu --}}
+                    <div class="flex-shrink-0 px-3 py-2 border-t border-line"
+                         :class="[
+                             activeConv?.is_mine ? 'bg-emerald-50' :
+                             (activeConv?.needs_human ? 'bg-coralsoft' : 'bg-cream')
+                         ]">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="text-2xs flex items-center gap-1.5 min-w-0 flex-1">
+                                <template x-if="activeConv?.is_mine">
+                                    <span class="text-emerald-700 font-medium flex items-center gap-1.5">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 pulse-dot"></span>
+                                        Răspunzi tu acum
+                                    </span>
+                                </template>
+                                <template x-if="!activeConv?.is_mine && activeConv?.needs_human">
+                                    <span class="text-coralh font-semibold flex items-center gap-1.5">
+                                        🙋 Vizitatorul așteaptă operator
+                                    </span>
+                                </template>
+                                <template x-if="!activeConv?.is_mine && !activeConv?.needs_human">
+                                    <span class="text-muted flex items-center gap-1.5">
+                                        🤖 Bot răspunde
+                                    </span>
+                                </template>
+                            </div>
+                            <template x-if="activeConv?.is_mine">
+                                <button @click="release()"
+                                        class="text-2xs px-3 py-1 rounded-pill border border-emerald-200 bg-white hover:bg-emerald-50 font-medium text-emerald-800 transition flex-shrink-0">
+                                    ↩ Înapoi la bot
+                                </button>
+                            </template>
+                            <template x-if="!activeConv?.is_mine">
+                                <button @click="takeOver()"
+                                        class="text-2xs px-3 py-1 rounded-pill font-semibold transition flex-shrink-0"
+                                        :class="activeConv?.needs_human ? 'bg-coral hover:bg-coralh text-white' : 'bg-ink hover:bg-inkSoft text-cream'">
+                                    🙋 Răspund eu
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+
                     <form @submit.prevent="sendReply()" class="flex-shrink-0 p-3 border-t border-line bg-paper">
                         <div class="flex items-end gap-2">
                             <textarea x-model="replyText" rows="2" :disabled="!activeConv?.is_mine || sending"
-                                      :placeholder="activeConv?.is_mine ? 'Tastează un răspuns…' : 'Preia conversația ca să poți răspunde'"
+                                      :placeholder="activeConv?.is_mine ? 'Tastează un răspuns…' : 'Apasă „Răspund eu" ca să preiei'"
                                       class="flex-1 rounded-lg border border-line bg-white px-3 py-2 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none resize-none disabled:bg-cream disabled:cursor-not-allowed"></textarea>
                             <button type="submit" :disabled="!activeConv?.is_mine || sending || !replyText.trim()"
                                     class="btn-coral rounded-pill px-4 py-2.5 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
