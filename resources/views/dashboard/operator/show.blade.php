@@ -45,21 +45,21 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-1 text-2xs">
-                    <button @click="filter = 'all'" :class="filter === 'all' ? 'bg-ink text-cream' : 'bg-cream text-inkSoft'"
+                    {{-- „Cer ajutor" e prima și defaultă — operatorul intră
+                         și vede DOAR conversațiile care chiar au nevoie de el.
+                         „Toate" rămâne accesibil pentru triage / cunoaștere
+                         context, dar nu mai e prima opțiune zgomotoasă. --}}
+                    <button @click="filter = 'needs_human'" :class="filter === 'needs_human' ? 'bg-coral text-cream' : 'bg-cream text-inkSoft'"
                             class="px-2.5 py-1 rounded-pill font-medium">
-                        Toate <span class="ml-1 mono" x-text="conversations.length"></span>
+                        🙋 Cer ajutor <span class="ml-1 mono" x-text="counters.needs_human"></span>
                     </button>
                     <button @click="filter = 'mine'" :class="filter === 'mine' ? 'bg-ink text-cream' : 'bg-cream text-inkSoft'"
                             class="px-2.5 py-1 rounded-pill font-medium">
                         Mie <span class="ml-1 mono" x-text="counters.mine"></span>
                     </button>
-                    <button @click="filter = 'unassigned'" :class="filter === 'unassigned' ? 'bg-ink text-cream' : 'bg-cream text-inkSoft'"
+                    <button @click="filter = 'all'" :class="filter === 'all' ? 'bg-ink text-cream' : 'bg-cream text-inkSoft'"
                             class="px-2.5 py-1 rounded-pill font-medium">
-                        Libere <span class="ml-1 mono" x-text="counters.unassigned"></span>
-                    </button>
-                    <button @click="filter = 'needs_human'" :class="filter === 'needs_human' ? 'bg-coral text-cream' : 'bg-cream text-inkSoft'"
-                            class="px-2.5 py-1 rounded-pill font-medium">
-                        Cer ajutor <span class="ml-1 mono" x-text="counters.needs_human"></span>
+                        Toate <span class="ml-1 mono" x-text="conversations.length"></span>
                     </button>
                 </div>
 
@@ -278,7 +278,7 @@ function operatorConsole() {
     return {
         conversations: [],
         counters: { mine: 0, unassigned: 0, needs_human: 0 },
-        filter: 'all',
+        filter: 'needs_human',
         activeId: null,
         messages: [],
         loadingMsgs: false,
