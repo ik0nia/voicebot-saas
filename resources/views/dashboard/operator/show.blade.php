@@ -13,19 +13,26 @@
 @endpush
 
 @section('content')
-{{-- Operator console e o app full-bleed: vrem să umplem exact spațiul
-     din <main> (layout-ul dashboard) FĂRĂ să respectăm padding-ul
-     sau overflow-y-auto-ul lui (ar fi produs scroll de pagină în loc
-     de scroll intern al panoului de mesaje). Soluția: position
-     absolute pe <main> (care e deja `relative`), inset-0 ca să
-     umplem totul, overflow-hidden pe noi ca să forțăm flex-children
-     să-și gestioneze propriul scroll. --}}
-<div x-data="operatorConsole()" x-init="init()" class="absolute inset-0 overflow-hidden">
+{{-- Operator console — full-bleed PWA în interiorul layout-ului dashboard.
+     Două probleme de rezolvat simultan:
+       1. <main> al layout-ului are overflow-y-auto + padding — vrem să-l
+          ignorăm aici ca să avem scroll intern, nu de pagină.
+       2. Lanțul flex columns trebuie să aibă min-h-0 la fiecare nivel
+          ca overflow-y-auto pe copilul terminal (panoul de mesaje) să
+          poată shrink-ui sub conținut, în loc să crească parentul.
 
-    <div class="flex h-full">
+     Soluția: înălțime explicită pe wrapper (calc viewport - topbar),
+     overflow-hidden ca să tăiem orice scroll de pagină, negative margins
+     ca să cancelăm padding-ul main-ului, iar inside chain-ul flex
+     poartă min-h-0 până la copilul cu overflow auto. --}}
+<div x-data="operatorConsole()" x-init="init()"
+     class="flex flex-col -mt-6 lg:-mt-10 -mx-4 lg:-mx-8 -mb-6 lg:-mb-10 overflow-hidden"
+     style="height: calc(100vh - 64px);">
+
+    <div class="flex flex-1 min-h-0">
 
         {{-- Left: conversation list --}}
-        <aside class="w-full sm:w-80 md:w-96 lg:w-[28rem] border-r border-line bg-paper flex flex-col"
+        <aside class="w-full sm:w-80 md:w-96 lg:w-[28rem] border-r border-line bg-paper flex flex-col min-h-0"
                :class="activeId ? 'hidden sm:flex' : 'flex'">
 
             {{-- Top filter bar --}}
@@ -124,7 +131,7 @@
         </aside>
 
         {{-- Right: active conversation --}}
-        <main class="flex-1 flex flex-col bg-paper" :class="activeId ? 'flex' : 'hidden sm:flex'">
+        <main class="flex-1 flex flex-col bg-paper min-h-0 min-w-0" :class="activeId ? 'flex' : 'hidden sm:flex'">
             <template x-if="!activeId">
                 <div class="flex-1 flex items-center justify-center text-center px-6">
                     <div>
@@ -157,13 +164,13 @@
                         </template>
                     </div>
 
-                    <div class="flex-1 overflow-y-auto min-h-0 p-4 space-y-3" x-ref="msgPane">
+                    <div class="flex-1 overflow-y-auto min-h-0 px-4 py-3 space-y-1.5" x-ref="msgPane">
                         <template x-if="loadingMsgs">
                             <p class="text-2xs text-muted text-center py-4">se încarcă mesaje…</p>
                         </template>
                         <template x-for="m in messages" :key="m.id">
                             <div :class="m.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
-                                <div class="max-w-[85%] flex flex-col gap-1.5"
+                                <div class="max-w-[85%] flex flex-col gap-0.5"
                                      :class="m.role === 'user' ? 'items-end' : 'items-start'">
                                     {{-- main bubble --}}
                                     <div :class="m.role === 'user' ? 'bg-coral text-cream' : (m.role === 'operator' ? 'bg-emerald-100 text-emerald-900 border border-emerald-200' : 'bg-cream text-ink')"
