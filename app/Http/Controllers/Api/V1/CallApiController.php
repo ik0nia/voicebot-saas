@@ -56,9 +56,8 @@ class CallApiController extends Controller
         $bot = Bot::where('tenant_id', $request->user()->tenant_id)
             ->findOrFail($validated['bot_id']);
 
-        // Prefer a number owned by the caller's tenant, and route the
-        // outbound call through whatever provider owns it — Twilio for
-        // newly provisioned lines, Telnyx for any pre-migration holdovers.
+        // Prefer a number owned by the caller's tenant, route the call
+        // through the provider that owns it.
         $phoneNumber = $validated['from']
             ? PhoneNumber::where('tenant_id', $request->user()->tenant_id)
                 ->where('number', $validated['from'])->first()
@@ -73,9 +72,7 @@ class CallApiController extends Controller
             $telephony = app(TelephonyManager::class);
             $provider = $telephony->forNumber($phoneNumber);
 
-            $webhookRoute = $provider->name() === 'twilio'
-                ? route('webhook.twilio.voice')
-                : route('webhook.telnyx.voice');
+            $webhookRoute = route('webhook.twilio.voice');
 
             $providerCall = $provider->makeCall(
                 $validated['to'],
@@ -92,10 +89,6 @@ class CallApiController extends Controller
                 'metadata' => [
                     'provider' => $provider->name(),
                     'provider_call_id' => $providerCall->id ?? null,
-                    // Legacy key preserved so existing observability
-                    // dashboards that filter on telnyx_call_control_id
-                    // keep lighting up for Telnyx calls during cutover.
-                    'telnyx_call_control_id' => $providerCall->call_control_id ?? null,
                 ],
                 'started_at' => now(),
             ]);

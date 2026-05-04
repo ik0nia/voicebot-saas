@@ -35,7 +35,7 @@ class ReportFailedJob
         ]);
 
         // Rate-limit Sentry dispatch per job class. When a dependency
-        // goes hard-down (OpenAI 500s, Telnyx API outage, DB pool
+        // goes hard-down (LLM 500s, carrier API outage, DB pool
         // exhaustion) the queue will fail the same job class in a loop
         // and Sentry's per-project quota can be exhausted in minutes.
         // Cache::add is atomic: first failure in the window fires,

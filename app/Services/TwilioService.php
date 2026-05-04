@@ -9,10 +9,7 @@ use Twilio\Exceptions\RestException;
 use Twilio\Rest\Client;
 
 /**
- * Twilio implementation of TelephonyProvider. Built as the successor
- * to TelnyxService once Telnyx number approval started blocking
- * customer onboarding and contract issues made the migration
- * mandatory.
+ * Twilio implementation of TelephonyProvider — the active carrier.
  *
  * The public interface matches TelephonyProvider so call-sites
  * (PhoneNumberController, CallApiController, webhook handlers) can
@@ -20,9 +17,9 @@ use Twilio\Rest\Client;
  * differences smoothed over here:
  *
  *  - Twilio provisioning is synchronous; getOrderStatus() always
- *    returns 'completed'. Telnyx surfaces a real pending/approved
+ *    returns 'completed'.
  *    lifecycle. The interface keeps `pending` as a meaningful state
- *    because the platform UI still shows "Se activează" for Telnyx
+ *    (legacy comment kept for clarity on lifecycle states)
  *    carry-overs.
  *  - Twilio has no native tags; updateNumberTags writes a joined
  *    string to friendly_name, which is Twilio's closest equivalent
@@ -181,7 +178,7 @@ class TwilioService implements TelephonyProvider
             ]);
 
             // Shape the response to match the TelephonyProvider contract's
-            // "has ->id" guarantee. Telnyx returns a uuid; Twilio returns
+            // "has ->id" guarantee. Twilio returns
             // the CallSid (CAxxxx…).
             return (object) [
                 'id' => $call->sid,
@@ -369,7 +366,7 @@ class TwilioService implements TelephonyProvider
     {
         // Twilio provisioning is synchronous — there is no async order.
         // Returning 'completed' keeps the UI happy for code paths that
-        // were written against Telnyx's pending lifecycle.
+        // were written for a pending lifecycle.
         return 'completed';
     }
 
@@ -441,9 +438,9 @@ class TwilioService implements TelephonyProvider
         $host = config('telephony.media_stream_host', 'ms.sambla.ro');
         $wsUrl = "wss://{$host}/ws/media-stream";
 
-        // TwiML grammar — same shape as Telnyx TeXML with one important
+        // TwiML grammar with one important
         // difference: Twilio's <Stream> uses `<Parameter>` nested inside
-        // `<Stream>` (not `<Connect>` like Telnyx), and the attribute is
+        // `<Stream>` and the attribute is
         // `url`, not `track`. The media-stream bridge reads bot_id /
         // call_id from the custom parameters on the first message.
         $xml = '<?xml version="1.0" encoding="UTF-8"?>';

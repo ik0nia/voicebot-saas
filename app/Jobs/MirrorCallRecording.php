@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Download a Twilio/Telnyx call recording to local storage.
+ * Download a Twilio call recording to local storage.
  *
  * Why: the carrier holds the recording on their CDN and can purge it
  * at any time per their retention policy (Twilio's default keeps
@@ -62,10 +62,9 @@ class MirrorCallRecording implements ShouldQueue
         $relativePath = sprintf('recordings/%d/%d.mp3', $call->tenant_id, $call->id);
 
         // Stream-download. Twilio recording URLs require Basic Auth with
-        // their Account SID + Auth Token; Telnyx uses a Bearer token in
-        // their public URL or none for the redirect. We try with both
-        // auth strategies — first plain (signed URL case), then carrier
-        // creds if HTTP 401/403.
+        // the account SID + auth token; pre-signed URLs work without auth.
+        // We try unauthenticated first; if HTTP 401/403 and host matches
+        // api.twilio.com, retry with Basic Auth.
         $bytes = $this->downloadWithFallback($call->recording_url);
         if ($bytes === null) {
             Log::warning('MirrorCallRecording: download failed', [

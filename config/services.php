@@ -35,12 +35,6 @@ return [
         ],
     ],
 
-    'telnyx' => [
-        'api_key' => env('TELNYX_API_KEY'),
-        'connection_id' => env('TELNYX_CONNECTION_ID'),
-        'public_key' => env('TELNYX_PUBLIC_KEY'),
-    ],
-
     'twilio' => [
         'account_sid' => env('TWILIO_ACCOUNT_SID'),
         'auth_token' => env('TWILIO_AUTH_TOKEN'),

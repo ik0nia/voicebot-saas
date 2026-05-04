@@ -136,7 +136,7 @@ class WhatsAppWebhookController extends Controller
                         }
 
                         // Per-message idempotency: Meta signs payloads without a
-                        // timestamp (unlike Telnyx), so we can't bound replays
+                        // timestamp on its own headers, so we can't bound replays
                         // with a skew window. Instead we dedupe on the
                         // Cloud-API-issued wamid — globally unique per message.
                         // Blocks replay attacks (captured payload resent later

@@ -21,7 +21,6 @@ class PhoneNumber extends Model
         'monthly_cost_cents',
         'is_active',
         'status',
-        'telnyx_order_id',
     ];
 
     public const STATUS_PENDING = 'pending';

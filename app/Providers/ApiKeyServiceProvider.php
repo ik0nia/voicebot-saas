@@ -60,11 +60,6 @@ class ApiKeyServiceProvider extends ServiceProvider
             'anthropic_api_key' => ['services.anthropic.api_key'],
             'elevenlabs_api_key' => ['services.elevenlabs.api_key'],
 
-            // Telnyx
-            'telnyx_api_key' => ['services.telnyx.api_key'],
-            'telnyx_connection_id' => ['services.telnyx.connection_id'],
-            'telnyx_public_key' => ['services.telnyx.public_key'],
-
             // Stripe currency (mode-independent)
             'stripe_currency' => ['cashier.currency'],
 

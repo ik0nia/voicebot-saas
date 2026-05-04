@@ -39,7 +39,7 @@ class GenerateDailyBatch extends Command
             'pgvector în PostgreSQL pentru embeddings: căutare vectorială rapidă, fără infrastructură externă suplimentară.',
             '10 straturi de verificare per răspuns: base prompt, politica conversației, context produse, reguli comenzi, stil, query intelligence, strategia conversației, nivel de confidență, detector de frustrare, anti-halucinare.',
             'Pipeline cu 4 etape: înțelege intenția, caută în baza de cunoștințe, adaptează strategia conversației, răspunde verificat — totul în sub 2 secunde.',
-            'Voicebot pe OpenAI Realtime API (GPT-4o voice) cu telefonie Telnyx: latență mică, transcriere live, audio bidirecțional fără lag.',
+            'Voicebot cu LLM Realtime și telefonie Twilio: latență mică, transcriere live, audio bidirecțional fără lag.',
             'Conversation Strategy adaptivă: începutul conversației înțelege nevoia, mijlocul recomandă, finalul cere lead/escaladare — diferit per etapă.',
             'Query Intelligence: clasifică automat fiecare întrebare ca informațională, tranzacțională sau reclamație și schimbă strategia.',
             'Embeddings + full-text într-o singură interogare hibridă: nu pierzi nici sensul, nici cuvintele exacte.',
@@ -62,7 +62,7 @@ class GenerateDailyBatch extends Command
             'De ce am ales PostgreSQL + pgvector în loc de o bază vectorială dedicată (Pinecone, Weaviate): un singur sistem, ACID, joins.',
             'Cum tratăm întrebări ambigue: agentul AI cere clarificare în loc să ghicească — o decizie de design conștientă.',
             'OpenAI GPT-4o vs alternative: de ce am ales-o pentru agentul vocal (latență, calitate voce română, suport conversație continuă).',
-            'Telnyx ca furnizor de telefonie: numere RO native, SIP la nivel de carrier, webhook-uri în timp real pentru evenimentele de apel.',
+            'Twilio ca furnizor de telefonie: numere RO native, SIP la nivel de carrier, webhook-uri în timp real pentru evenimentele de apel.',
         ],
         'tehnologie_explicativ' => [
             'Cum funcționează un RAG (Retrieval-Augmented Generation) la nivel conceptual: explicat în 30 de secunde fără jargon.',

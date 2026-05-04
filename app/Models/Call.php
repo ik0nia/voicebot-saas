@@ -16,7 +16,7 @@ class Call extends Model
 
     /**
      * Auto-dispatch the recording mirror job when a recording URL appears.
-     * Webhook handlers (Twilio + Telnyx) write `recording_url` after the
+     * Webhook handlers (Twilio) write `recording_url` after the
      * call ends; we observe the change and queue a job to download the
      * audio to local storage. Idempotent — fires only on null → set
      * transitions, and the job itself early-returns if already mirrored.

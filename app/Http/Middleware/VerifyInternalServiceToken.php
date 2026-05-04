@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\Response;
  * The token lives in env only (never PlatformSetting — this isn't a
  * customer-facing setting, and leaking it into the DB widens its
  * exposure). Fail-closed if unset, same shape as the Meta / Twilio /
- * Telnyx signature middlewares.
+ * carrier signature middlewares.
  */
 class VerifyInternalServiceToken
 {

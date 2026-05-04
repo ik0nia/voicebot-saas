@@ -35,23 +35,4 @@ class WebhookSignatureMiddlewareTest extends TestCase
         }
     }
 
-    public function test_telnyx_webhook_post_route_has_signature_middleware(): void
-    {
-        $route = collect(Route::getRoutes())->first(function ($r) {
-            return in_array('POST', $r->methods(), true)
-                && str_contains($r->uri(), 'webhook/telnyx');
-        });
-        $this->assertNotNull($route, 'Telnyx webhook POST route not registered');
-
-        // gatherMiddleware() returns the resolved FQN; fall back to the
-        // alias string used in the route group if the resolver is not
-        // configured in the test container.
-        $middleware = $route->gatherMiddleware();
-        $hasSignatureGuard = in_array(\App\Http\Middleware\VerifyTelnyxSignature::class, $middleware, true)
-            || in_array('telnyx.verify', $middleware, true);
-        $this->assertTrue(
-            $hasSignatureGuard,
-            'Telnyx webhook POST route missing VerifyTelnyxSignature middleware.'
-        );
-    }
 }

@@ -99,28 +99,6 @@ class AdminSettingsController extends Controller
         return back()->with('success', 'Setările OpenAI au fost actualizate.');
     }
 
-    public function updateTelnyx(Request $request)
-    {
-        $validated = $request->validate([
-            'telnyx_api_key' => 'required|string|max:255',
-            'telnyx_connection_id' => 'required|string|max:255',
-            'telnyx_public_key' => 'required|string|max:255',
-            'telnyx_webhook_url' => 'required|url|max:255',
-            'phone_number_monthly_cost_lei' => 'required|numeric|min:0',
-        ]);
-
-        $costLei = $validated['phone_number_monthly_cost_lei'];
-        unset($validated['phone_number_monthly_cost_lei']);
-
-        foreach ($validated as $key => $value) {
-            PlatformSetting::set($key, $value, 'string', 'telnyx');
-        }
-
-        PlatformSetting::set('phone_number_monthly_cost_lei', $costLei, 'float', 'telnyx');
-
-        return back()->with('success', 'Setările Telnyx au fost actualizate.');
-    }
-
     public function updateTwilio(Request $request)
     {
         $validated = $request->validate([
@@ -218,7 +196,7 @@ class AdminSettingsController extends Controller
     public function updateWhatsapp(Request $request)
     {
         $validated = $request->validate([
-            'whatsapp_provider' => 'required|string|in:telnyx_whatsapp,meta_cloud_api',
+            'whatsapp_provider' => 'required|string|in:meta_cloud_api',
             'whatsapp_api_key' => 'required|string',
             'whatsapp_phone_number_id' => 'nullable|string|max:255',
             'whatsapp_business_account_id' => 'nullable|string|max:255',

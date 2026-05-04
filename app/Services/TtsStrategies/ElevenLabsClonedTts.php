@@ -55,7 +55,7 @@ class ElevenLabsClonedTts implements TtsOutputStrategy
             }
 
             return [
-                'action' => 'send_audio_to_telnyx',
+                'action' => 'send_audio_to_stream',
                 'data' => [
                     'event' => 'media',
                     'streamSid' => $streamSid,
@@ -80,7 +80,7 @@ class ElevenLabsClonedTts implements TtsOutputStrategy
      * time-to-first-audio. Remaining sentences are synthesized and yielded
      * as they complete.
      *
-     * @return \Generator<array> Telnyx-compatible audio actions
+     * @return \Generator<array> Carrier-compatible audio actions
      */
     public function handleTextResponseStreaming(string $text, string $streamSid): \Generator
     {
@@ -109,7 +109,7 @@ class ElevenLabsClonedTts implements TtsOutputStrategy
 
                 if ($audioBase64) {
                     yield [
-                        'action' => 'send_audio_to_telnyx',
+                        'action' => 'send_audio_to_stream',
                         'data' => [
                             'event' => 'media',
                             'streamSid' => $streamSid,

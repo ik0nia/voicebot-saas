@@ -11,12 +11,12 @@ interface TtsOutputStrategy
     public function getModalities(): array;
 
     /**
-     * Whether OpenAI audio delta events should be forwarded to Telnyx.
+     * Whether OpenAI audio delta events should be forwarded to the carrier stream.
      */
     public function shouldPassthroughAudio(): bool;
 
     /**
-     * Convert text response to audio and return Telnyx-compatible action.
+     * Convert text response to audio and return carrier-compatible action.
      */
     public function handleTextResponse(string $text, string $streamSid): ?array;
 
@@ -27,8 +27,8 @@ interface TtsOutputStrategy
     public function supportsStreaming(): bool;
 
     /**
-     * Stream audio chunks progressively. Returns a Generator of Telnyx-compatible actions.
-     * Each yielded action is sent to Telnyx immediately as it's produced.
+     * Stream audio chunks progressively. Returns a Generator of carrier-compatible actions.
+     * Each yielded action is sent to the carrier stream immediately as it is produced.
      *
      * @return \Generator<array>
      */

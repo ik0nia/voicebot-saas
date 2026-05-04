@@ -223,12 +223,12 @@ class FillingAudioCacheService
     }
 
     /**
-     * Build a Telnyx-compatible audio action from cached audio.
+     * Build a carrier-compatible audio action from cached audio.
      */
-    public function buildTelnyxAudioAction(string $audioBase64, string $streamSid): array
+    public function buildStreamAudioAction(string $audioBase64, string $streamSid): array
     {
         return [
-            'action' => 'send_audio_to_telnyx',
+            'action' => 'send_audio_to_stream',
             'data' => [
                 'event' => 'media',
                 'streamSid' => $streamSid,

@@ -8,7 +8,7 @@ use Tests\TestCase;
 
 /**
  * Mirror of VerifyMetaWebhookSignatureTest (iter 16) but for the
- * Twilio middleware added during the Telnyx → Twilio migration
+ * Twilio webhook signature verification middleware
  * (Phase 1). Twilio's signature is HMAC-SHA1 over the absolute URL
  * plus POST params sorted alphabetically and concatenated key+value
  * with no separator, keyed with the Auth Token.

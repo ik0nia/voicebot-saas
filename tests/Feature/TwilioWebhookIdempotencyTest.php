@@ -102,7 +102,7 @@ class TwilioWebhookIdempotencyTest extends TestCase
     public function test_status_state_machine_rejects_regressions(): void
     {
         // A late "ringing" after "completed" must not resurrect the
-        // call. Ported invariant from the Telnyx controller.
+        // call. Same invariant across all carrier webhooks.
         $number = $this->makeTwilioNumber();
         $this->post('/webhook/twilio/voice', [
             'CallSid' => 'CAregress',

@@ -4,7 +4,6 @@ namespace App\Services\Telephony;
 
 use App\Models\PhoneNumber;
 use App\Models\Tenant;
-use App\Services\TelnyxService;
 use App\Services\TwilioService;
 
 /**
@@ -18,14 +17,10 @@ use App\Services\TwilioService;
  *     the provider that owns the number (column `phone_numbers.provider`),
  *     otherwise the call fails at the provider API. Same for webhooks:
  *     the webhook URL is registered against the owning provider.
- *
- * During the Telnyx → Twilio migration, default is 'twilio' for new
- * numbers; existing Telnyx numbers keep working until they're cut over.
  */
 class TelephonyManager
 {
     public function __construct(
-        private TelnyxService $telnyx,
         private TwilioService $twilio,
     ) {}
 
@@ -37,7 +32,6 @@ class TelephonyManager
     public function for(string $name): TelephonyProvider
     {
         return match ($name) {
-            'telnyx' => $this->telnyx,
             'twilio' => $this->twilio,
             default => throw new \InvalidArgumentException("Unknown telephony provider: {$name}"),
         };
@@ -45,10 +39,10 @@ class TelephonyManager
 
     public function forNumber(PhoneNumber $number): TelephonyProvider
     {
-        // provider column is 'telnyx' | 'twilio' | 'manual'. 'manual'
-        // means the number was added without an API integration and has
-        // no API-side operations; we fall back to default for any call
-        // attempt, but mutations should 404 at the controller.
+        // provider column is 'twilio' | 'manual'. 'manual' means the
+        // number was added without an API integration and has no API-side
+        // operations; we fall back to default for any call attempt, but
+        // mutations should 404 at the controller.
         $name = $number->provider ?: config('telephony.default', 'twilio');
         if ($name === 'manual') {
             return $this->default();
@@ -75,12 +69,6 @@ class TelephonyManager
      */
     public function forTenant(Tenant $tenant): TelephonyProvider
     {
-        $defaultName = config('telephony.default', 'twilio');
-
-        if ($defaultName !== 'twilio') {
-            return $this->for($defaultName);
-        }
-
         if ($tenant->telephony_subaccount_sid && $tenant->telephony_subaccount_auth_token) {
             return new TwilioService(
                 $tenant->telephony_subaccount_sid,

@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Twilio voice webhooks. Unlike Telnyx (JSON bodies, rich event types
+ * Twilio voice webhooks. Provider-specific notes:
  * with full state transition metadata), Twilio posts form-encoded
  * params with a CallStatus string and expects TwiML XML back for
  * answer / call-progress callbacks.
@@ -22,18 +22,18 @@ use Illuminate\Support\Facades\Log;
  *  - Per-CallSid idempotency on both routes. Twilio retries the status
  *    callback on any non-2xx / timeout and an attacker with a captured
  *    payload can replay freely (X-Twilio-Signature has no timestamp,
- *    unlike Telnyx's ed25519 + ts — iter 10). Cache::add on the
+ *    Cache::add on the
  *    CallSid+event tuple short-circuits replays and legitimate
  *    duplicates alike, mirroring the Meta dedupe pattern (iter 11).
  *
- *  - State-machine guard ported from TelnyxWebhookController so a
+ *  - State-machine guard so a
  *    "completed" call doesn't get shoved back into "in_progress" by a
  *    late or replayed status update.
  */
 class TwilioWebhookController extends Controller
 {
     /**
-     * Same terminal / transition matrix as the Telnyx controller — our
+     * Terminal / transition matrix — our
      * calls.status column is the single source of truth, normalised
      * from whatever the provider uses.
      */
@@ -53,7 +53,7 @@ class TwilioWebhookController extends Controller
     /**
      * Inbound-voice answer URL. Twilio POSTs with CallSid / From / To
      * and expects TwiML back that bridges the call leg into our media
-     * stream — same intent as Telnyx's generateMediaStreamTexml but
+     * stream — bridges PSTN into our media-stream sidecar
      * wired for Twilio's `<Connect><Stream>` grammar.
      */
     public function handleVoice(Request $request)

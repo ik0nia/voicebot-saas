@@ -62,7 +62,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'tenant' => \App\Http\Middleware\TenantAccess::class,
             'tenant.role' => \App\Http\Middleware\EnsureTenantRole::class,
-            'telnyx.verify' => \App\Http\Middleware\VerifyTelnyxSignature::class,
             'twilio.verify' => \App\Http\Middleware\VerifyTwilioSignature::class,
             'internal.service' => \App\Http\Middleware\VerifyInternalServiceToken::class,
             'api.rate' => \App\Http\Middleware\ApiRateLimit::class,

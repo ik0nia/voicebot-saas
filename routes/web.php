@@ -24,7 +24,6 @@ use App\Http\Controllers\Admin\AdminSocialController;
 use App\Http\Controllers\SwipeController;
 use App\Http\Controllers\Webhook\FacebookWebhookController;
 use App\Http\Controllers\Webhook\InstagramWebhookController;
-use App\Http\Controllers\Webhook\TelnyxWebhookController;
 use App\Http\Controllers\Webhook\TwilioWebhookController;
 use App\Http\Controllers\Webhook\WhatsAppWebhookController;
 use Illuminate\Support\Facades\Route;
@@ -442,7 +441,7 @@ Route::middleware('auth')->prefix('dashboard/numere')->group(function () {
     Route::get('/available', [PhoneNumberController::class, 'availableNumbers'])->name('dashboard.numbers.available');
 
     // Mutation surface — admin or manager only. Previously a tenant_viewer
-    // could provision numbers (billable Telnyx orders) or toggle/delete the
+    // could provision numbers (billable carrier orders) or toggle/delete the
     // tenant's telephony inventory.
     Route::middleware('tenant.role:tenant_admin,tenant_manager')->group(function () {
         Route::post('/', [PhoneNumberController::class, 'store'])->name('dashboard.numbers.store');
@@ -839,7 +838,6 @@ Route::middleware(['auth', 'super_admin'])->prefix('admin')->group(function () {
     Route::get('/setari', [AdminSettingsController::class, 'index'])->name('admin.settings.index');
     Route::put('/setari/general', [AdminSettingsController::class, 'updateGeneral'])->name('admin.settings.updateGeneral');
     Route::put('/setari/openai', [AdminSettingsController::class, 'updateOpenai'])->name('admin.settings.updateOpenai');
-    Route::put('/setari/telnyx', [AdminSettingsController::class, 'updateTelnyx'])->name('admin.settings.updateTelnyx');
     Route::put('/setari/twilio', [AdminSettingsController::class, 'updateTwilio'])->name('admin.settings.updateTwilio');
     Route::get('/twilio/consum', [\App\Http\Controllers\Admin\TwilioUsageController::class, 'index'])->name('admin.twilio.usage');
     Route::put('/setari/stripe', [AdminSettingsController::class, 'updateStripe'])->name('admin.settings.updateStripe');
@@ -1017,17 +1015,6 @@ Route::get('/legal/data-deletion', function (\Illuminate\Http\Request $request) 
         : null;
     return view('legal.data-deletion', compact('code', 'status'));
 })->name('legal.data-deletion');
-
-// Telnyx webhooks (no CSRF, no auth - signature verified by middleware).
-// Kept live during the Twilio migration for existing Telnyx numbers.
-Route::prefix('webhook/telnyx')
-    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
-    ->middleware('telnyx.verify')
-    ->group(function () {
-        Route::post('/voice', [TelnyxWebhookController::class, 'handleVoice'])->name('webhook.telnyx.voice');
-        Route::post('/status', [TelnyxWebhookController::class, 'handleStatus'])->name('webhook.telnyx.status');
-        Route::post('/number-order', [TelnyxWebhookController::class, 'handleNumberOrder'])->name('webhook.telnyx.numberOrder');
-    });
 
 // Twilio webhooks (no CSRF, no auth - signature verified by middleware).
 Route::prefix('webhook/twilio')

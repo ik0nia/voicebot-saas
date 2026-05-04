@@ -18,11 +18,9 @@ class PhoneNumberController extends Controller
 
     public function index()
     {
-        // Auto-sync pending numbers on page load. Routes to the owning
-        // provider per number so the page works while Telnyx and Twilio
-        // co-exist during the migration.
+        // Auto-sync pending numbers on page load.
         $pendingNumbers = PhoneNumber::where('status', PhoneNumber::STATUS_PENDING)
-            ->whereIn('provider', ['telnyx', 'twilio'])
+            ->where('provider', 'twilio')
             ->get();
 
         foreach ($pendingNumbers as $number) {
@@ -44,9 +42,6 @@ class PhoneNumberController extends Controller
 
     public function availableNumbers(Request $request)
     {
-        // New numbers always go through the default provider — the
-        // migration target. Existing Telnyx numbers keep working via
-        // forNumber() on the individual resources.
         try {
             $numbers = $this->telephony->default()->getAvailableNumbers(
                 $request->get('country', 'RO'),
@@ -67,7 +62,7 @@ class PhoneNumberController extends Controller
             'number' => 'required|string|unique:phone_numbers,number',
             'friendly_name' => 'nullable|string|max:255',
             'bot_id' => 'nullable|exists:bots,id',
-            'provider' => 'string|in:telnyx,twilio,manual',
+            'provider' => 'string|in:twilio,manual',
         ]);
 
         if (!empty($validated['bot_id'])) {
@@ -87,20 +82,14 @@ class PhoneNumberController extends Controller
 
         if ($validated['provider'] !== 'manual') {
             try {
-                // For Twilio, ensure the tenant has a subaccount before
-                // purchase so the number lands on the subaccount
-                // directly (avoiding a later transfer, which Twilio
-                // charges and sometimes refuses). Telnyx has no
-                // subaccount concept; we use the direct provider.
-                if ($validated['provider'] === 'twilio') {
-                    $twilio = $this->telephony->for('twilio');
-                    if ($twilio instanceof \App\Services\TwilioService) {
-                        $twilio->ensureSubaccount($tenant);
-                    }
-                    $provider = $this->telephony->forTenant($tenant);
-                } else {
-                    $provider = $this->telephony->for($validated['provider']);
+                // Ensure the tenant has a subaccount before purchase so the
+                // number lands on the subaccount directly (avoiding a later
+                // transfer, which Twilio charges and sometimes refuses).
+                $twilio = $this->telephony->for('twilio');
+                if ($twilio instanceof \App\Services\TwilioService) {
+                    $twilio->ensureSubaccount($tenant);
                 }
+                $provider = $this->telephony->forTenant($tenant);
 
                 $result = $provider->purchaseNumber($validated['number']);
 
@@ -109,13 +98,7 @@ class PhoneNumberController extends Controller
                 }
 
                 // Twilio provisioning is synchronous → active immediately.
-                // Telnyx provisioning opens a number_order that may sit in
-                // 'pending' for 1-2 days while regulatory verification runs.
-                if ($validated['provider'] === 'telnyx') {
-                    $validated['status'] = PhoneNumber::STATUS_PENDING;
-                    $validated['is_active'] = false;
-                    $validated['telnyx_order_id'] = $result->id ?? null;
-                } else {
+                {
                     $validated['status'] = PhoneNumber::STATUS_ACTIVE;
                     $validated['is_active'] = true;
                 }
@@ -190,7 +173,7 @@ class PhoneNumberController extends Controller
 
     public function syncStatuses()
     {
-        $numbers = PhoneNumber::whereIn('provider', ['telnyx', 'twilio'])->get();
+        $numbers = PhoneNumber::where('provider', 'twilio')->get();
         $synced = 0;
 
         foreach ($numbers as $number) {

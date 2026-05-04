@@ -9,7 +9,7 @@ namespace App\Services;
  * handling of follow-up utterances like "da", "primul", "cât costă ăla?"
  * without relying solely on OpenAI's session memory.
  *
- * State is held in-memory (per MediaStreamHandler process lifetime)
+ * State is held in-memory (per media stream worker lifetime)
  * and is lightweight — no DB or cache writes needed.
  */
 class ConversationStateService

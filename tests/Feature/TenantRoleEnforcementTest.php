@@ -152,7 +152,7 @@ class TenantRoleEnforcementTest extends TestCase
 
     public function test_manager_can_mutate_phone_numbers_route_is_reachable(): void
     {
-        // We can't actually test full happy path without stubbing Telnyx,
+        // We can't actually test full happy path without stubbing the carrier,
         // but the route-level gate must not 403 a manager. The controller
         // will then do its own validation — any status other than 403
         // proves the middleware allowed the request through.

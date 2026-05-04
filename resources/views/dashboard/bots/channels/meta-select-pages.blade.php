@@ -74,7 +74,7 @@
                                         <span class="text-inkSoft">
                                             Conectează <strong>Instagram</strong>
                                             @if(!empty($iga['username']))
-                                                <span class="text-muted">— @{{ $iga['username'] }}</span>
+                                                <span class="text-muted">— &commat;{{ $iga['username'] }}</span>
                                             @endif
                                         </span>
                                     </label>

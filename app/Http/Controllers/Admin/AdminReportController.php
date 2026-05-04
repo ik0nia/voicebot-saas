@@ -197,7 +197,7 @@ class AdminReportController extends Controller
             $lastMonthStart = $now->copy()->subMonth()->startOfMonth();
             $lastMonthEnd = $now->copy()->subMonth()->endOfMonth();
 
-            // ── Phone number recurring costs (Telnyx) ──
+            // ── Phone number recurring costs ──
             $activePhoneNumbers = PhoneNumber::withoutGlobalScopes()->get();
             $phoneNumberCostMonthly = (int) $activePhoneNumbers->sum('monthly_cost_cents');
             $phoneNumberCount = $activePhoneNumbers->count();
@@ -258,7 +258,7 @@ class AdminReportController extends Controller
                 'friendly_name' => $p->friendly_name,
                 'monthly_cost_cents' => $p->monthly_cost_cents,
                 'status' => $p->status,
-                'provider' => $p->provider ?? 'telnyx',
+                'provider' => $p->provider ?? 'twilio',
             ])->toArray();
             $data['phone_monthly_total'] = $phoneNumberCostMonthly;
 
