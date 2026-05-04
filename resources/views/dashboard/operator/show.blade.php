@@ -13,7 +13,14 @@
 @endpush
 
 @section('content')
-<div x-data="operatorConsole()" x-init="init()" class="-mt-4 -mx-4 lg:-mx-8 -mb-10 lg:-mb-10" style="height: calc(100vh - 56px);">
+{{-- Operator console e o app full-bleed: vrem să umplem exact spațiul
+     din <main> (layout-ul dashboard) FĂRĂ să respectăm padding-ul
+     sau overflow-y-auto-ul lui (ar fi produs scroll de pagină în loc
+     de scroll intern al panoului de mesaje). Soluția: position
+     absolute pe <main> (care e deja `relative`), inset-0 ca să
+     umplem totul, overflow-hidden pe noi ca să forțăm flex-children
+     să-și gestioneze propriul scroll. --}}
+<div x-data="operatorConsole()" x-init="init()" class="absolute inset-0 overflow-hidden">
 
     <div class="flex h-full">
 
