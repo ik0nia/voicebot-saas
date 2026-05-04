@@ -183,10 +183,27 @@ class ChannelMessageService
                 }
             }
 
-            // Use contactName as name if available
-            $name = ($contactName && $contactName !== 'Unknown') ? $contactName : null;
+            // Use contactName as name only if it's a real human-given
+            // name. Reject auto-generated platform IDs ("Instagram User
+            // 7151", "Facebook User 1188", "WhatsApp Contact +407...")
+            // which the webhooks fabricate when no real name is on the
+            // sender profile — counting those as "lead identification"
+            // produced junk leads with status=partial and no contact
+            // info, polluting the leads dashboard.
+            $isSyntheticName = $contactName
+                && (str_starts_with($contactName, 'Instagram User ')
+                    || str_starts_with($contactName, 'Facebook User ')
+                    || str_starts_with($contactName, 'WhatsApp Contact ')
+                    || str_starts_with($contactName, 'Web Visitor '));
+            $name = ($contactName && $contactName !== 'Unknown' && !$isSyntheticName)
+                ? $contactName
+                : null;
 
-            if (!$email && !$phone && !$name) return;
+            // Hard rule: a lead requires actual reachability (email or
+            // phone). A name alone — even a real one — isn't a lead;
+            // it's just a chat where someone said hello. The web-widget
+            // ChatLeadExtractor already enforces this; we align here.
+            if (!$email && !$phone) return;
 
             if ($existingLead) {
                 $updates = [];
@@ -204,6 +221,9 @@ class ChannelMessageService
 
             $qualificationScore = ($email ? 30 : 0) + ($phone ? 20 : 0) + ($name ? 10 : 0);
 
+            // Branch above guarantees email OR phone is set; status
+            // simplifies to 'qualified'. Removed the 'partial' branch
+            // since a lead without contact reachability is not a lead.
             \App\Models\Lead::create([
                 'tenant_id' => $bot->tenant_id,
                 'bot_id' => $bot->id,
@@ -211,7 +231,7 @@ class ChannelMessageService
                 'name' => $name,
                 'email' => $email,
                 'phone' => $phone,
-                'status' => ($email || $phone) ? 'qualified' : 'partial',
+                'status' => 'qualified',
                 'qualification_score' => $qualificationScore,
                 'capture_source' => 'chat',
                 'capture_reason' => 'channel_auto_extract',
