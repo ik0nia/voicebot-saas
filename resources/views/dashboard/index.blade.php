@@ -190,9 +190,6 @@
 
     {{-- Stat cards row eliminat — toate metricile sunt acum în HERO BRIEFING (sus). --}}
 
-    {{-- Bot Health Cards --}}
-    @include('dashboard.partials.bot-health')
-
     {{-- Plan usage — strip cu gauges circulare, gradient cream→coral, CTA mare --}}
     @if($planUsage)
     @php
@@ -383,6 +380,9 @@
             </div>
         </div>
     </div>
+
+    {{-- Bot Health Cards — la final, după activitate (drill-in pe agenți, nu summary) --}}
+    @include('dashboard.partials.bot-health')
 
     {{-- Quick Actions — afișate doar dacă onboarding incomplet (filler dacă e gata). --}}
     @if(!$onboardingComplete)
