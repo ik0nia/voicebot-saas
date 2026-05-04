@@ -229,20 +229,12 @@
                                         </div>
                                     </template>
 
-                                    {{-- timestamp + page context: ascuns by default
-                                         (timestamp absolut e în title attribute pe
-                                         bubble). Apare doar pe group-hover ca să
-                                         nu spargă densitatea verticală. --}}
-                                    <div class="text-2xs opacity-0 group-hover:opacity-50 transition-opacity mono flex items-center gap-1.5"
-                                         :class="m.role === 'user' ? 'flex-row-reverse' : ''">
-                                        <span x-text="m.at_relative"></span>
-                                        <template x-if="m.page_context && m.page_context.page_title">
-                                            <span class="text-line"
-                                                  :title="m.page_context.page_url || ''">
-                                                · <span x-text="m.page_context.page_title.slice(0, 30)"></span>
-                                            </span>
-                                        </template>
-                                    </div>
+                                    {{-- timestamp ascuns complet din layout.
+                                         Tooltip-ul pe bulă afișează „X minute în
+                                         urmă" la hover; nu mai adăugăm un rând
+                                         dedicat care ocupă verticală chiar și
+                                         transparent. Page context tot tooltip
+                                         pe bulă (vezi update mai sus). --}}
                                 </div>
                             </div>
                         </template>
