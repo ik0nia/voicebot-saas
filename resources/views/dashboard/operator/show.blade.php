@@ -68,11 +68,19 @@
                     <p class="text-sm text-muted text-center py-8 px-4">Nicio conversație în filtrul curent.</p>
                 </template>
                 <template x-for="c in filteredConvs" :key="c.id">
+                    {{-- needs_human → highlight major: bg coral pal +
+                         border-l coral 4px + pulse pe „cer operator" badge.
+                         Imposibil de ratat la o privire pe lista de
+                         conversații, ceea ce e exact intenția. --}}
                     <button @click="open(c.id)"
-                            :class="activeId === c.id ? 'bg-coralsoft border-l-coral' : 'border-l-transparent'"
+                            :class="[
+                                activeId === c.id ? 'bg-coralsoft border-l-coral' : (c.needs_human && !c.is_mine ? 'bg-coralsoft/40 border-l-coral animate-needs-pulse' : 'border-l-transparent')
+                            ]"
                             class="w-full text-left px-4 py-3 border-b border-line border-l-4 hover:bg-cream/50 transition-colors">
                         <div class="flex items-start justify-between gap-2 mb-1">
-                            <span class="text-sm font-semibold text-ink truncate flex-1" x-text="c.contact"></span>
+                            <span class="text-sm font-semibold truncate flex-1"
+                                  :class="c.needs_human && !c.is_mine ? 'text-coralh' : 'text-ink'"
+                                  x-text="c.contact"></span>
                             <span class="text-2xs text-muted mono shrink-0" x-text="c.last_activity_relative"></span>
                         </div>
                         <div class="flex items-center gap-1.5 mb-1.5 text-2xs">
@@ -84,14 +92,17 @@
                             </template>
                         </div>
                         <div class="flex items-center gap-1 flex-wrap">
+                            {{-- needs_human badge primul, mai mare, cu emoji RGB --}}
+                            <template x-if="c.needs_human && !c.is_mine">
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill text-2xs font-bold bg-coral text-cream">
+                                    🙋 cere operator
+                                </span>
+                            </template>
                             <template x-if="c.is_mine">
                                 <span class="inline-flex items-center px-1.5 py-0.5 rounded-pill text-2xs bg-emerald-100 text-emerald-700">la mine</span>
                             </template>
-                            <template x-if="c.is_unassigned">
+                            <template x-if="c.is_unassigned && !c.needs_human">
                                 <span class="inline-flex items-center px-1.5 py-0.5 rounded-pill text-2xs bg-amber-100 text-amber-800">liberă</span>
-                            </template>
-                            <template x-if="c.needs_human">
-                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-pill text-2xs bg-coralsoft text-coralh">⚠ cer operator</span>
                             </template>
                             <template x-if="c.urgency === 'critical' || c.urgency === 'high'">
                                 <span class="inline-flex items-center px-1.5 py-0.5 rounded-pill text-2xs bg-coralsoft text-coralh" x-text="c.urgency"></span>
@@ -120,7 +131,11 @@
             </template>
 
             <template x-if="activeId">
-                <div class="flex flex-col flex-1">
+                {{-- min-h-0 critic în flex column: fără el, copilul cu
+                     overflow-y-auto crește container-ul în loc să activeze
+                     scroll-ul intern. Asta lăsa form-ul de input să iasă
+                     sub fold când conversația era lungă. --}}
+                <div class="flex flex-col flex-1 min-h-0">
                     <div class="px-4 py-3 border-b border-line bg-cream/40 flex items-center gap-3">
                         <button @click="activeId = null" class="sm:hidden text-muted hover:text-ink">←</button>
                         <div class="min-w-0 flex-1">
@@ -135,7 +150,7 @@
                         </template>
                     </div>
 
-                    <div class="flex-1 overflow-y-auto p-4 space-y-3" x-ref="msgPane">
+                    <div class="flex-1 overflow-y-auto min-h-0 p-4 space-y-3" x-ref="msgPane">
                         <template x-if="loadingMsgs">
                             <p class="text-2xs text-muted text-center py-4">se încarcă mesaje…</p>
                         </template>
@@ -208,7 +223,7 @@
                         </template>
                     </div>
 
-                    <form @submit.prevent="sendReply()" class="p-3 border-t border-line bg-paper">
+                    <form @submit.prevent="sendReply()" class="flex-shrink-0 p-3 border-t border-line bg-paper">
                         <div class="flex items-end gap-2">
                             <textarea x-model="replyText" rows="2" :disabled="!activeConv?.is_mine || sending"
                                       :placeholder="activeConv?.is_mine ? 'Tastează un răspuns…' : 'Preia conversația ca să poți răspunde'"
@@ -228,6 +243,13 @@
     <style>
         .pulse-dot { animation: pulse 1.6s ease-in-out infinite; }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+        /* Pulse subtil pe rândurile needs_human ca să atragă privirea. */
+        .animate-needs-pulse { animation: needs-pulse 2s ease-in-out infinite; }
+        @keyframes needs-pulse {
+            0%, 100% { background-color: rgba(220, 38, 38, 0.06); }
+            50%      { background-color: rgba(220, 38, 38, 0.14); }
+        }
     </style>
 </div>
 
@@ -259,10 +281,22 @@ function operatorConsole() {
         },
 
         get filteredConvs() {
-            if (this.filter === 'mine') return this.conversations.filter(c => c.is_mine);
-            if (this.filter === 'unassigned') return this.conversations.filter(c => c.is_unassigned);
-            if (this.filter === 'needs_human') return this.conversations.filter(c => c.needs_human);
-            return this.conversations;
+            let list;
+            if (this.filter === 'mine') list = this.conversations.filter(c => c.is_mine);
+            else if (this.filter === 'unassigned') list = this.conversations.filter(c => c.is_unassigned);
+            else if (this.filter === 'needs_human') list = this.conversations.filter(c => c.needs_human);
+            else list = [...this.conversations];
+
+            // Sort: needs_human (unclaimed) primii, apoi după activitate.
+            // Operatorul vede instant ce trebuie atins ACUM, fără să
+            // caute prin listă; comparable nu schimbă ordinea când nimic
+            // nu cere atenție urgentă.
+            return list.sort((a, b) => {
+                const aPriority = (a.needs_human && !a.is_mine) ? 1 : 0;
+                const bPriority = (b.needs_human && !b.is_mine) ? 1 : 0;
+                if (aPriority !== bPriority) return bPriority - aPriority;
+                return new Date(b.last_activity || 0) - new Date(a.last_activity || 0);
+            });
         },
 
         get activeConv() {
