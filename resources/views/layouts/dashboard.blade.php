@@ -454,7 +454,7 @@
     @include('partials.command-palette')
 
     {{-- Sambla AI agent widget (bot #66, channel #2) --}}
-    <script src="{{ rtrim(config('app.url'), '/') }}/widget/sambla-chat.min.js" data-channel-id="2" data-bot-name="Sambla Assistant" data-color="#991b1b" data-lang="ro" data-greeting="Salut! 👋 Sunt aici să te ajut cu configurarea platformei. Ce ai nevoie?" async defer></script>
+    <script src="@samblaWidgetUrl" data-channel-id="2" data-bot-name="Sambla Assistant" data-color="#991b1b" data-lang="ro" data-greeting="Salut! 👋 Sunt aici să te ajut cu configurarea platformei. Ce ai nevoie?" async defer></script>
 
     @stack('scripts')
 

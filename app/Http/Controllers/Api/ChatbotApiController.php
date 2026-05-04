@@ -1369,12 +1369,22 @@ class ChatbotApiController extends Controller
     {
         $validated = $request->validate([
             'session_id' => 'required|string|max:64',
+            'session_token' => 'required|string|max:255',
             'since_id' => 'nullable|integer|min:0',
         ]);
 
         $ch = \App\Models\Channel::withoutGlobalScopes()->find($channel);
         if (!$ch || !$ch->is_active) {
             return response()->json(['error' => 'Canal indisponibil'], 404);
+        }
+
+        // HMAC verification — fără asta, oricine cu session_id (UUID) poate
+        // citi mesajele operatorului. Token-ul e generat de server la prima
+        // creare de sesiune (vezi resolveConversation) și salvat în
+        // localStorage de widget.
+        $expectedToken = hash_hmac('sha256', $validated['session_id'] . $channel, config('app.key'));
+        if (!hash_equals($expectedToken, $validated['session_token'])) {
+            return response()->json(['error' => 'Sesiune invalidă.'], 403);
         }
 
         $conv = \App\Models\Conversation::withoutGlobalScopes()

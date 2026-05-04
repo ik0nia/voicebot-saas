@@ -43,7 +43,7 @@
 </section>
 
 {{-- Widget-ul cu config-ul nou --}}
-<script src="{{ rtrim(config('app.url'), '/') }}/widget/sambla-chat.min.js"
+<script src="@samblaWidgetUrl"
         data-channel-id="{{ $channel->id }}"
         data-color="{{ $color }}"
         data-position="{{ $position }}"

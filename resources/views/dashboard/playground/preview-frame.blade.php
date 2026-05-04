@@ -80,7 +80,7 @@
 </footer>
 
 {{-- Widget-ul real al bot-ului --}}
-<script src="{{ rtrim(config('app.url'), '/') }}/widget/sambla-chat.min.js"
+<script src="@samblaWidgetUrl"
         data-channel-id="{{ $channel->id }}"
         data-color="{{ $color }}"
         data-lang="ro"

@@ -72,12 +72,17 @@ final class ChatLeadExtractor
                 return;
             }
 
-            $existingLead = Lead::where('conversation_id', $conversation->id)
-                ->where('status', 'qualified')
-                ->first();
+            // Dedup în ordine de specificitate: conversație curentă →
+            // același vizitator (visitor_id, ultimele 30 zile) → email
+            // canonic → phone canonic. Dacă găsim, enrich + re-asociem
+            // lead-ul cu conversația curentă.
+            $existingLead = $this->findExistingLead($bot->id, $conversation, $email, $phone);
 
             if ($existingLead !== null) {
                 $this->enrichExistingLead($existingLead, $conversation, $name, $email, $phone);
+                if ((int) $existingLead->conversation_id !== (int) $conversation->id) {
+                    $existingLead->update(['conversation_id' => $conversation->id]);
+                }
                 return;
             }
 
@@ -175,6 +180,42 @@ final class ChatLeadExtractor
         if (preg_match($pattern, $userMessage, $m)) {
             return trim($m[1]);
         }
+        return null;
+    }
+
+    /**
+     * Găsește lead duplicat cross-conversation pentru același vizitator.
+     * Ordinea: conversație curentă → visitor_id (30d) → email → phone.
+     * Aceeași logică ca PrechatLeadCreator::findExistingLead.
+     */
+    private function findExistingLead(int $botId, Conversation $conversation, ?string $email, ?string $phone): ?Lead
+    {
+        $byConv = Lead::where('conversation_id', $conversation->id)
+            ->where('status', 'qualified')
+            ->first();
+        if ($byConv) return $byConv;
+
+        if ($conversation->visitor_id) {
+            $byVisitor = Lead::where('bot_id', $botId)
+                ->whereHas('conversation', function ($q) use ($conversation) {
+                    $q->where('visitor_id', $conversation->visitor_id);
+                })
+                ->where('created_at', '>=', now()->subDays(30))
+                ->orderByDesc('id')
+                ->first();
+            if ($byVisitor) return $byVisitor;
+        }
+
+        if ($email) {
+            $byEmail = Lead::where('bot_id', $botId)->where('email', $email)->orderByDesc('id')->first();
+            if ($byEmail) return $byEmail;
+        }
+
+        if ($phone) {
+            $byPhone = Lead::where('bot_id', $botId)->where('phone', $phone)->orderByDesc('id')->first();
+            if ($byPhone) return $byPhone;
+        }
+
         return null;
     }
 

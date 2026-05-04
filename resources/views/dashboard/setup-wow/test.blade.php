@@ -78,7 +78,7 @@
     <div class="bg-white p-6 rounded-xl border border-line min-h-[520px]">
         <p class="text-sm text-muted mb-3">Widget-ul se va deschide în colțul din dreapta-jos. Apasă pe iconul de chat.</p>
         @if($channelId)
-            <script src="{{ rtrim(config('app.cdn_url') ?: config('app.url'), '/') }}/widget/sambla-chat.min.js"
+            <script src="@samblaWidgetUrl"
                     data-channel-id="{{ $channelId }}"
                     data-bot-name="{{ $bot?->name ?? 'Asistent' }}"
                     data-color="#991b1b"

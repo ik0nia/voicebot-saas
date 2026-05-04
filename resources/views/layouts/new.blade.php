@@ -398,7 +398,7 @@
     {{-- Chat widget (consent-gated, same as live site) --}}
     <script>
     (function () {
-        var widgetUrl = '{{ rtrim(config('app.cdn_url') ?: config('app.url'), '/') }}/widget/sambla-chat.min.js';
+        var widgetUrl = '@samblaWidgetUrl';
         function loadChatWidget() {
             if (window.__samblaChatLoaded) return;
             window.__samblaChatLoaded = true;

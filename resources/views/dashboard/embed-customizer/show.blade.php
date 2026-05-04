@@ -127,7 +127,7 @@ function embedCustomizer() {
         previewKey: 0,
         botId: {{ $bot->id }},
         channelId: {{ $channel->id }},
-        widgetUrl: '{{ rtrim(config('app.url'), '/') }}/widget/sambla-chat.min.js',
+        widgetUrl: '@samblaWidgetUrl',
 
         colorPresets: ['#DC2626', '#991B1B', '#1E40AF', '#047857', '#5B21B6', '#9A3412', '#1F2937'],
 

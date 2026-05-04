@@ -14,7 +14,10 @@ Schedule::command('knowledge:process --batch=100 --max-batches=5')->everyMinute(
 Schedule::command('knowledge:retry-failed')->everyFifteenMinutes()->withoutOverlapping();
 
 Schedule::command('calls:cleanup-stale --minutes=30')->everyThirtyMinutes();
-Schedule::command('conversations:cleanup-stale --minutes=15')->everyFiveMinutes()->withoutOverlapping();
+// Aliniat cu ChatRequestResolver::SESSION_INACTIVE_MINUTES (6h). La fiecare
+// 30min e suficient — nu mai e nevoie de cleanup la fiecare 5min când
+// pragul e 6h.
+Schedule::command('conversations:cleanup-stale --minutes=360')->everyThirtyMinutes()->withoutOverlapping();
 
 // Daily prune of locally-mirrored call recordings past 14-day retention.
 // Audio bytes go; transcript + metadata stay forever (analytics, not

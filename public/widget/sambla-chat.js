@@ -1749,11 +1749,13 @@
 
         function pollOperatorMessages() {
             var sid = getSessionId();
-            if (!sid) return; // niciun session creat încă, n-avem ce poll-ui
+            var stk = getSessionToken();
+            if (!sid || !stk) return; // niciun session creat încă sau lipsă token, n-avem ce poll-ui
 
             var url = config.apiBase
                 + '/api/v1/chatbot/' + config.channelId + '/poll'
                 + '?session_id=' + encodeURIComponent(sid)
+                + '&session_token=' + encodeURIComponent(stk)
                 + '&since_id=' + (lastSeenMessageId || 0);
 
             fetch(url, { headers: { 'Accept': 'application/json' } })

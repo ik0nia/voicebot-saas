@@ -47,9 +47,17 @@ final class PrechatLeadCreator
                 return;
             }
 
-            $existingLead = Lead::where('conversation_id', $conversation->id)->first();
+            // Dedup în ordine de specificitate: conversație curentă →
+            // același vizitator (visitor_id, ultimele 30 zile pe același bot)
+            // → email canonic → phone canonic. Reduce duplicate masive
+            // pentru retail unde același vizitator are 5+ conversații.
+            $existingLead = $this->findExistingLead($bot->id, $conversation, $email, $phone);
             if ($existingLead !== null) {
                 $this->enrichExistingLead($existingLead, $name, $email, $phone);
+                // Re-asociază lead-ul cu conversația curentă dacă era pe alta veche
+                if ((int) $existingLead->conversation_id !== (int) $conversation->id) {
+                    $existingLead->update(['conversation_id' => $conversation->id]);
+                }
                 return;
             }
 
@@ -85,6 +93,43 @@ final class PrechatLeadCreator
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    /**
+     * Găsește lead duplicat cross-conversation pentru același vizitator.
+     * Ordinea de match contează: cea mai specifică prima.
+     */
+    private function findExistingLead(int $botId, Conversation $conversation, ?string $email, ?string $phone): ?Lead
+    {
+        // 1. Lead deja asociat cu conversația curentă
+        $byConv = Lead::where('conversation_id', $conversation->id)->first();
+        if ($byConv) return $byConv;
+
+        // 2. Același visitor_id pe același bot, ultimele 30 zile
+        if ($conversation->visitor_id) {
+            $byVisitor = Lead::where('bot_id', $botId)
+                ->whereHas('conversation', function ($q) use ($conversation) {
+                    $q->where('visitor_id', $conversation->visitor_id);
+                })
+                ->where('created_at', '>=', now()->subDays(30))
+                ->orderByDesc('id')
+                ->first();
+            if ($byVisitor) return $byVisitor;
+        }
+
+        // 3. Email match (canonic, lowercase) pe același bot
+        if ($email) {
+            $byEmail = Lead::where('bot_id', $botId)->where('email', $email)->orderByDesc('id')->first();
+            if ($byEmail) return $byEmail;
+        }
+
+        // 4. Phone match (canonic 07xxxxxxxx) pe același bot
+        if ($phone) {
+            $byPhone = Lead::where('bot_id', $botId)->where('phone', $phone)->orderByDesc('id')->first();
+            if ($byPhone) return $byPhone;
+        }
+
+        return null;
     }
 
     private function enrichExistingLead(Lead $lead, ?string $name, ?string $email, ?string $phone): void

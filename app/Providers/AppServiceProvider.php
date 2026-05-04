@@ -59,6 +59,16 @@ class AppServiceProvider extends ServiceProvider
         \Carbon\Carbon::setLocale('ro');
         setlocale(LC_TIME, 'ro_RO.UTF-8', 'ro_RO', 'ro');
 
+        // @samblaWidgetUrl — URL canonic pentru widget cu cache-bust pe
+        // ultimele 6 cifre din filemtime. Fără asta, browserele care au
+        // descărcat widget-ul cu Cache-Control max-age=14400 (din nginx
+        // vechi) păstrează versiunea veche până la expirare → hotfix-uri
+        // nu ajung pe site-urile clientilor. Folosit în toate blade-urile
+        // care embed-uiesc widget-ul.
+        \Illuminate\Support\Facades\Blade::directive('samblaWidgetUrl', function () {
+            return "<?php echo rtrim(config('app.cdn_url') ?: config('app.url'), '/') . '/widget/sambla-chat.min.js?v=' . substr((string) (@filemtime(public_path('widget/sambla-chat.min.js')) ?: time()), -6); ?>";
+        });
+
         \Laravel\Cashier\Cashier::useCustomerModel(\App\Models\Tenant::class);
 
         \App\Models\Plan::observe(\App\Observers\PlanObserver::class);

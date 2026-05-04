@@ -9,7 +9,11 @@ use Illuminate\Support\Facades\Log;
 
 class CleanupStaleConversations extends Command
 {
-    protected $signature = 'conversations:cleanup-stale {--minutes=15 : Minutes after which active conversations with no messages are considered stale}';
+    // Default 360 = 6h, aliniat cu ChatRequestResolver::SESSION_INACTIVE_MINUTES.
+    // Înainte era 15min; cron-ul închidea sesiuni mult mai repede decât
+    // logica lazy-evict din resolver, forțând conversații duplicate când
+    // user-ul revenea între min 15-360.
+    protected $signature = 'conversations:cleanup-stale {--minutes=360 : Minutes after which active conversations with no messages are considered stale}';
     protected $description = 'Mark stale active conversations as completed and derive their outcomes';
 
     public function handle(): int
