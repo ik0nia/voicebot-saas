@@ -92,11 +92,32 @@ class EscalationController extends Controller
             'requireInteraction' => true,
         ]);
 
+        // Email fallback: operatori cu tab-ul închis pică pe mail. Queued
+        // (Notification implements ShouldQueue) ca să nu blocăm răspunsul
+        // HTTP cu un SMTP roundtrip.
+        $emailedCount = 0;
+        try {
+            $operators = \App\Models\User::where('tenant_id', $conv->tenant_id)->get();
+            foreach ($operators as $op) {
+                $op->notify(new \App\Notifications\OperatorEscalationNotification(
+                    $conv,
+                    $metadata['escalation_reason'],
+                ));
+                $emailedCount++;
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('Escalation email queue failed', [
+                'conversation_id' => $conv->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
         \Log::info('Conversation escalated to human', [
             'conversation_id' => $conv->id,
             'tenant_id' => $conv->tenant_id,
             'reason' => $metadata['escalation_reason'],
             'pushed_to_devices' => $sentTo,
+            'emailed_operators' => $emailedCount,
         ]);
 
         return response()->json([

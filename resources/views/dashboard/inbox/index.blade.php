@@ -16,9 +16,8 @@
     @php
         $params = request()->only('status', 'channel_type', 'q');
         $isMine = request()->boolean('mine');
-        $isUnassigned = request()->boolean('unassigned');
-        $isBot = request()->boolean('bot_only');
-        $isAll = !$isMine && !$isUnassigned && !$isBot;
+        $needsHuman = request()->boolean('needs_human');
+        $isAll = !$isMine && !$needsHuman;
     @endphp
 
     <div class="flex items-start justify-between mb-6 gap-6">
@@ -36,29 +35,32 @@
         </form>
     </div>
 
-    {{-- Quick filters --}}
+    {{-- Quick filters: 3 chip-uri principale + filtre canal --}}
     <div class="flex items-center gap-2 mb-4 flex-wrap">
+        {{-- Cer ajutor — acțiune-prim. Roșu/coral ca să fie evident
+             că trebuie atenție; arată conv flag-uite needs_human și
+             neclaim-uite încă. La 0, chip-ul rămâne dar fără count
+             ca să nu bage operatorul în panică inutilă. --}}
+        <a href="{{ route('dashboard.inbox', array_merge($params, ['needs_human' => 1])) }}"
+           class="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm transition-colors {{ $needsHuman ? 'bg-coral text-white' : 'bg-white border-2 border-coral/40 text-coral hover:bg-coral/5' }}">
+            🙋 Cer ajutor
+            @if($stats['needs_human'] > 0)
+                <span class="text-xs font-bold {{ $needsHuman ? 'opacity-80' : '' }}">{{ number_format($stats['needs_human']) }}</span>
+            @endif
+        </a>
+        <a href="{{ route('dashboard.inbox', array_merge($params, ['mine' => 1])) }}"
+           class="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm transition-colors {{ $isMine ? 'bg-amber-600 text-white' : 'bg-white border border-line text-inkSoft hover:bg-cream' }}">
+            👤 Răspund eu <span class="text-xs opacity-70">{{ number_format($stats['mine']) }}</span>
+        </a>
         <a href="{{ route('dashboard.inbox', $params) }}"
            class="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm transition-colors {{ $isAll ? 'bg-ink text-cream' : 'bg-white border border-line text-inkSoft hover:bg-cream' }}">
             Toate <span class="text-xs opacity-70">{{ number_format($stats['total']) }}</span>
-        </a>
-        <a href="{{ route('dashboard.inbox', array_merge($params, ['mine' => 1])) }}"
-           class="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm transition-colors {{ $isMine ? 'bg-coral text-white' : 'bg-white border border-line text-inkSoft hover:bg-cream' }}">
-            Ale mele <span class="text-xs opacity-70">{{ number_format($stats['mine']) }}</span>
-        </a>
-        <a href="{{ route('dashboard.inbox', array_merge($params, ['unassigned' => 1])) }}"
-           class="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm transition-colors {{ $isUnassigned ? 'bg-amber-600 text-white' : 'bg-white border border-line text-inkSoft hover:bg-cream' }}">
-            Neatribuite <span class="text-xs opacity-70">{{ number_format($stats['unassigned']) }}</span>
-        </a>
-        <a href="{{ route('dashboard.inbox', array_merge($params, ['bot_only' => 1])) }}"
-           class="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm transition-colors {{ $isBot ? 'bg-emerald-700 text-white' : 'bg-white border border-line text-inkSoft hover:bg-cream' }}">
-            La bot <span class="text-xs opacity-70">{{ number_format($stats['bot']) }}</span>
         </a>
 
         <span class="border-l border-line h-5 mx-1"></span>
 
         @foreach([
-            'voice' => ['Voice', 'red'],
+            'voice' => ['Voce', 'red'],
             'whatsapp' => ['WhatsApp', 'green'],
             'facebook_messenger' => ['Facebook', 'blue'],
             'instagram_dm' => ['Instagram', 'pink'],
@@ -68,8 +70,7 @@
             <a href="{{ route('dashboard.inbox', array_filter([
                 'channel_type' => $active ? null : $type,
                 'mine' => $isMine ? 1 : null,
-                'unassigned' => $isUnassigned ? 1 : null,
-                'bot_only' => $isBot ? 1 : null,
+                'needs_human' => $needsHuman ? 1 : null,
                 'q' => request('q'),
             ])) }}"
                class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs transition-colors {{ $active ? 'bg-' . $color . '-600 text-white' : 'bg-white border border-line text-inkSoft hover:bg-cream' }}">
@@ -182,7 +183,8 @@
                             <a href="{{ $h['href'] }}" class="inline-flex items-center gap-1 hover:text-ink">{{ $h['label'] }} <span class="text-coral">{{ $h['arrow'] }}</span></a>
                         </th>
                         <th class="px-4 py-3 text-left text-xs font-semibold text-muted uppercase">Canal</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-muted uppercase">Atribuit</th>
+                        <th class="px-2 py-3 text-center text-xs font-semibold text-muted uppercase" title="Cine răspunde acum">Cine</th>
+                        <th class="px-2 py-3 text-center text-xs font-semibold text-muted uppercase" title="Sentiment detectat din ultimele mesaje">Sentiment</th>
                         @php $h = $sortLink('messages_count', 'Volum'); @endphp
                         <th title="Mesaje pentru text, durată pentru voce" class="px-4 py-3 text-left text-xs font-semibold uppercase {{ $h['active'] ? 'text-ink' : 'text-muted' }}">
                             <a href="{{ $h['href'] }}" class="inline-flex items-center gap-1 hover:text-ink">{{ $h['label'] }} <span class="text-coral">{{ $h['arrow'] }}</span></a>
@@ -229,21 +231,33 @@
                                     {{ $item->channel_label }}
                                 </span>
                             </td>
-                            <td class="px-4 py-3 text-sm">
-                                <span data-assignee-badge data-assignee-type="{{ $assignType }}"
-                                      class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium
-                                      @if($assignType === 'user') bg-amber-50 text-amber-700
-                                      @elseif($assignType === 'bot') bg-emerald-50 text-emerald-700
-                                      @else bg-cream text-muted
-                                      @endif">
-                                    @if($assignType === 'user')
-                                        Operator: {{ $item->assignee_user_name ?? '?' }}
-                                    @elseif($assignType === 'bot')
-                                        Bot: {{ $item->bot_name ?? '?' }}
-                                    @else
-                                        Neatribuit
-                                    @endif
-                                </span>
+                            {{-- Cine răspunde: icon compact cu tooltip detaliat --}}
+                            <td class="px-2 py-3 text-center">
+                                @if($item->needs_human ?? false)
+                                    <span class="text-lg" title="Așteaptă operator (visitor a cerut)">🙋</span>
+                                @elseif($assignType === 'user')
+                                    <span class="text-lg" title="Răspunde {{ $item->assignee_user_name ?? '?' }}">👤</span>
+                                @elseif($assignType === 'bot')
+                                    <span class="text-lg" title="Bot: {{ $item->bot_name ?? '?' }}">🤖</span>
+                                @else
+                                    <span class="text-lg opacity-40" title="Inactiv">—</span>
+                                @endif
+                            </td>
+                            {{-- Sentiment cu emoji + tooltip nume RO --}}
+                            <td class="px-2 py-3 text-center">
+                                @php
+                                    $s = $item->sentiment ?? null;
+                                    $sentimentMap = [
+                                        'positive' => ['😊', 'Pozitiv'],
+                                        'neutral'  => ['😐', 'Neutru'],
+                                        'negative' => ['😟', 'Negativ'],
+                                    ];
+                                @endphp
+                                @if(isset($sentimentMap[$s]))
+                                    <span class="text-base" title="{{ $sentimentMap[$s][1] }}">{{ $sentimentMap[$s][0] }}</span>
+                                @else
+                                    <span class="text-line">—</span>
+                                @endif
                             </td>
                             <td class="px-4 py-3 text-sm text-inkSoft">
                                 @if($isCall)
@@ -279,7 +293,7 @@
                                         @if($assignType !== 'user')
                                             <form method="POST" action="{{ route('dashboard.conversations.take-over', $item->id) }}" class="inline">
                                                 @csrf
-                                                <button type="submit" class="text-emerald-700 hover:text-emerald-900 font-medium">Preia</button>
+                                                <button type="submit" class="font-medium {{ ($item->needs_human ?? false) ? 'text-coral hover:text-coralh' : 'text-emerald-700 hover:text-emerald-900' }}">{{ ($item->needs_human ?? false) ? '🙋 Răspund eu' : 'Răspund eu' }}</button>
                                             </form>
                                         @elseif($item->assignee_user_id === auth()->id())
                                             <form method="POST" action="{{ route('dashboard.conversations.hand-back', $item->id) }}" class="inline">

@@ -67,11 +67,12 @@ class InboxController extends Controller
         if ($request->boolean('mine')) {
             $query->where('assignee_user_id', auth()->id());
         }
-        if ($request->boolean('bot_only')) {
-            $query->whereNotNull('assignee_bot_id');
-        }
-        if ($request->boolean('unassigned')) {
-            $query->whereNull('assignee_user_id')->whereNull('assignee_bot_id');
+        // needs_human: vizitatorul a cerut explicit operator (sau frustrare
+        // detectată). Filtrul "Cer ajutor" arată exact aceste rânduri —
+        // primul lucru pe care un operator vrea să-l vadă la login.
+        if ($request->boolean('needs_human')) {
+            $query->whereJsonContains('metadata->needs_human', true)
+                  ->whereNull('assignee_user_id');
         }
         if ($search = $request->get('q')) {
             $query->where(function ($q) use ($search) {
@@ -124,9 +125,9 @@ class InboxController extends Controller
         $stats = [
             'total' => Conversation::count() + Call::count(),
             'mine' => Conversation::where('assignee_user_id', auth()->id())->count(),
-            'unassigned' => Conversation::whereNull('assignee_user_id')->whereNull('assignee_bot_id')->count()
-                + Call::count(), // calls have no assignee column today
-            'bot' => Conversation::whereNotNull('assignee_bot_id')->count(),
+            'needs_human' => Conversation::whereJsonContains('metadata->needs_human', true)
+                ->whereNull('assignee_user_id')
+                ->count(),
         ];
 
         $bots = Bot::orderBy('name')->get(['id', 'name']);
@@ -139,28 +140,33 @@ class InboxController extends Controller
      */
     private function fetchConversationItems($query): Collection
     {
-        return $query->limit(200)->get()->map(fn (Conversation $c) => (object) [
-            '_type' => 'conv',
-            'id' => $c->id,
-            'route_name' => 'dashboard.conversations.show',
-            'route_params' => ['conversation' => $c->id],
-            'contact_name' => $c->contact_name,
-            'contact_identifier' => $c->contact_identifier,
-            'channel_type' => $c->channel?->type ?? 'unknown',
-            'channel_label' => $c->channel?->getDisplayName() ?? '—',
-            'messages_count' => $c->messages_count ?? 0,
-            'duration_seconds' => null,
-            'cost_cents' => null,
-            'direction' => null,
-            'recording_url' => null,
-            'last_activity_at' => $c->last_activity_at,
-            'is_human_assigned' => $c->isHumanAssigned(),
-            'is_bot_assigned' => $c->isBotAssigned(),
-            'assignee_user_id' => $c->assignee_user_id,
-            'assignee_user_name' => $c->assigneeUser?->name,
-            'bot_name' => $c->bot?->name,
-            'raw' => $c,
-        ]);
+        return $query->limit(200)->get()->map(function (Conversation $c) {
+            $meta = $c->metadata ?? [];
+            return (object) [
+                '_type' => 'conv',
+                'id' => $c->id,
+                'route_name' => 'dashboard.conversations.show',
+                'route_params' => ['conversation' => $c->id],
+                'contact_name' => $c->contact_name,
+                'contact_identifier' => $c->contact_identifier,
+                'channel_type' => $c->channel?->type ?? 'unknown',
+                'channel_label' => $c->channel?->getDisplayName() ?? '—',
+                'messages_count' => $c->messages_count ?? 0,
+                'duration_seconds' => null,
+                'cost_cents' => null,
+                'direction' => null,
+                'recording_url' => null,
+                'last_activity_at' => $c->last_activity_at,
+                'is_human_assigned' => $c->isHumanAssigned(),
+                'is_bot_assigned' => $c->isBotAssigned(),
+                'assignee_user_id' => $c->assignee_user_id,
+                'assignee_user_name' => $c->assigneeUser?->name,
+                'bot_name' => $c->bot?->name,
+                'needs_human' => (bool) ($meta['needs_human'] ?? false),
+                'sentiment' => $meta['auto_tags']['sentiment'] ?? null,
+                'raw' => $c,
+            ];
+        });
     }
 
     /**
@@ -192,10 +198,10 @@ class InboxController extends Controller
             $q->whereDate('started_at', '<=', $dateTo);
         }
 
-        // If user filtered to "mine" or "unassigned", calls have no
-        // assignee column → exclude them so the chip count matches what
-        // appears in the list.
-        if ($request->boolean('mine') || $request->boolean('unassigned')) {
+        // Calls don't carry per-user assignee or needs_human — exclude
+        // them from these filters so the chip count matches what
+        // actually shows up in the list.
+        if ($request->boolean('mine') || $request->boolean('needs_human')) {
             return collect();
         }
 
@@ -219,6 +225,8 @@ class InboxController extends Controller
             'assignee_user_id' => null,
             'assignee_user_name' => null,
             'bot_name' => $call->bot?->name,
+            'needs_human' => false, // calls don't carry this flag
+            'sentiment' => $call->sentiment_label, // direct column on calls
             'raw' => $call,
         ]);
     }

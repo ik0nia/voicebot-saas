@@ -443,5 +443,22 @@ class ChannelMessageService
                 'error' => $e->getMessage(),
             ]);
         }
+
+        // Email companion (queued). Same flow as the manual button — push
+        // catches operators with a tab open, email picks up the rest.
+        try {
+            $operators = \App\Models\User::where('tenant_id', $conversation->tenant_id)->get();
+            foreach ($operators as $op) {
+                $op->notify(new \App\Notifications\OperatorEscalationNotification(
+                    $conversation,
+                    $metadata['escalation_reason'] ?? 'frustration_auto',
+                ));
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Auto-escalation email queue failed', [
+                'conversation_id' => $conversation->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }
