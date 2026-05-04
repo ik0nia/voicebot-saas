@@ -410,6 +410,9 @@ Route::middleware('auth')->prefix('dashboard/apeluri')->group(function () {
     Route::get('/{call}', [CallController::class, 'show'])->name('dashboard.calls.show');
     Route::delete('/{call}', [CallController::class, 'destroy'])->name('dashboard.calls.destroy');
     Route::get('/{call}/export/{format?}', [CallController::class, 'exportTranscript'])->name('dashboard.calls.export-transcript');
+    // Auth-gated audio stream — replaces direct carrier CDN URLs in
+    // dashboard.calls.show so we control retention and credentials.
+    Route::get('/{call}/audio', [CallController::class, 'audio'])->name('dashboard.calls.audio');
 });
 
 // Conversations routes (dashboard) — text-based channels

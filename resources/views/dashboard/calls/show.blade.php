@@ -256,25 +256,52 @@
     </div>
 
     {{-- Audio Player --}}
-    @if($call->recording_url)
+    @if($call->recording_url || $call->local_recording_path || $call->recording_purged_at)
+        @php
+            // Prefer the local mirror — it survives carrier purges and is
+            // served through our auth-gated route. Fall back to the raw
+            // carrier URL if the mirror job hasn't run yet (rare; runs
+            // within seconds of call.completed). Audio is retired after
+            // 14 days; show a clear empty state in that case.
+            $hasLocal = !empty($call->local_recording_path) && empty($call->recording_purged_at);
+            $audioSrc = $hasLocal ? route('dashboard.calls.audio', $call) : $call->recording_url;
+            $isPurged = !empty($call->recording_purged_at);
+        @endphp
+
         <div class="rounded-xl border border-line bg-white shadow-sm mb-8">
-            <div class="border-b border-line px-5 py-4">
+            <div class="border-b border-line px-5 py-4 flex items-center justify-between">
                 <h3 class="text-base font-semibold text-ink">Înregistrare audio</h3>
+                @if($call->recording_mirrored_at && !$isPurged)
+                    @php
+                        $purgeDate = $call->recording_mirrored_at->copy()->addDays(14);
+                        $daysLeft = max(0, (int) now()->diffInDays($purgeDate, false));
+                    @endphp
+                    <span class="text-xs text-muted" title="Înregistrările se șterg automat după 14 zile pentru conformitate GDPR. Transcriptul rămâne pentru totdeauna.">
+                        Disponibilă încă {{ $daysLeft }} {{ $daysLeft === 1 ? 'zi' : 'zile' }}
+                    </span>
+                @endif
             </div>
             <div class="p-5">
-                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                    <audio controls class="w-full sm:flex-1" preload="metadata">
-                        <source src="{{ $call->recording_url }}" type="audio/mpeg">
-                        Browserul tău nu suportă redarea audio.
-                    </audio>
-                    <a href="{{ $call->recording_url }}" download
-                       class="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-4 py-2.5 text-sm font-medium text-inkSoft hover:bg-cream transition-colors shrink-0">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                        Descarcă
-                    </a>
-                </div>
+                @if($isPurged)
+                    <div class="text-sm text-muted py-3 px-4 rounded-lg bg-cream border border-line">
+                        🗑️ Înregistrarea a fost ștearsă automat după 14 zile (politica de retenție).
+                        <span class="text-line">Transcriptul de mai jos rămâne disponibil pentru totdeauna.</span>
+                    </div>
+                @else
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                        <audio controls class="w-full sm:flex-1" preload="metadata">
+                            <source src="{{ $audioSrc }}" type="audio/mpeg">
+                            Browserul tău nu suportă redarea audio.
+                        </audio>
+                        <a href="{{ $audioSrc }}" download="apel-{{ $call->id }}.mp3"
+                           class="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-4 py-2.5 text-sm font-medium text-inkSoft hover:bg-cream transition-colors shrink-0">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Descarcă
+                        </a>
+                    </div>
+                @endif
             </div>
         </div>
     @endif

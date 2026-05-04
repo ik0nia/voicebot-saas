@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Jobs\MirrorCallRecording;
 use App\Models\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,6 +13,29 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Call extends Model
 {
     use HasFactory, BelongsToTenant;
+
+    /**
+     * Auto-dispatch the recording mirror job when a recording URL appears.
+     * Webhook handlers (Twilio + Telnyx) write `recording_url` after the
+     * call ends; we observe the change and queue a job to download the
+     * audio to local storage. Idempotent — fires only on null → set
+     * transitions, and the job itself early-returns if already mirrored.
+     */
+    protected static function booted(): void
+    {
+        static::saved(function (Call $call) {
+            if (!$call->wasChanged('recording_url')) {
+                return;
+            }
+            if (empty($call->recording_url)) {
+                return;
+            }
+            if (!empty($call->local_recording_path) || !empty($call->recording_purged_at)) {
+                return;
+            }
+            MirrorCallRecording::dispatch($call->id)->onQueue('default');
+        });
+    }
 
     // Status constants
     public const STATUS_INITIATED = 'initiated';
@@ -42,6 +66,10 @@ class Call extends Model
         'sentiment_score',
         'sentiment_label',
         'recording_url',
+        'local_recording_path',
+        'local_recording_size',
+        'recording_mirrored_at',
+        'recording_purged_at',
         'metadata',
         'summary',
         'started_at',
@@ -54,7 +82,10 @@ class Call extends Model
             'metadata' => 'array',
             'started_at' => 'datetime',
             'ended_at' => 'datetime',
+            'recording_mirrored_at' => 'datetime',
+            'recording_purged_at' => 'datetime',
             'duration_seconds' => 'integer',
+            'local_recording_size' => 'integer',
             // Stored numeric(12,4) — preserve sub-cent precision
             // (RO Twilio inbound ≈ 0.34c for a short call).
             'cost_cents' => 'float',
