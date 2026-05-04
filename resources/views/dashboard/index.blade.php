@@ -233,84 +233,133 @@
     </div>
     @endif
 
-    {{-- Chart + Lead Pipeline --}}
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div class="lg:col-span-2 card overflow-hidden">
-            <div class="bg-coralsoft border-b border-coral/15 px-5 py-3">
-                <h3 class="display text-base font-semibold text-coralh">Activitate · 7 zile</h3>
+    {{-- ACTIVITY CHART — full-width gradient area, fără card-wrapper banal --}}
+    <section class="rounded-card border border-line bg-white shadow-sm overflow-hidden">
+        <div class="flex items-center justify-between px-6 pt-5 pb-2">
+            <div>
+                <h3 class="display text-lg font-semibold text-ink">Activitate · ultimele 7 zile</h3>
+                <p class="text-xs text-muted mt-0.5">Conversații, mesaje și leads pe zi</p>
             </div>
-            <div class="p-5" style="height: 240px;"><canvas id="activityChart"></canvas></div>
+            <div class="hidden sm:flex items-center gap-4 text-2xs text-muted">
+                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-coral"></span> Conversații</span>
+                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Leads</span>
+                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-ink/40"></span> Mesaje</span>
+            </div>
         </div>
-        <div class="card p-5">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="display text-base font-semibold text-ink">Pipeline Leads</h3>
-                <a href="/dashboard/leads" class="text-xs text-coralh hover:underline">Toate &rarr;</a>
-            </div>
-            @php $stages = ['new'=>['Noi','bg-blue-500'],'contacted'=>['Contactati','bg-sky-500'],'scheduled'=>['Programati','bg-amber-500'],'met'=>['Intalnire','bg-orange-500'],'quoted'=>['Oferta','bg-purple-500'],'won'=>['Castigati','bg-emerald-500'],'lost'=>['Pierduti','bg-red-500']]; @endphp
-            <div class="space-y-2.5">
-                @foreach($stages as $key => [$label, $color])
-                @php $c = $leadPipeline[$key] ?? 0; @endphp
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2.5"><div class="w-2.5 h-2.5 rounded-full {{ $color }} ring-2 ring-offset-1 {{ str_replace('bg-', 'ring-', $color) }}/30"></div><span class="text-xs text-muted font-medium">{{ $label }}</span></div>
-                    <span class="text-xs font-bold {{ $c > 0 ? 'text-ink' : 'text-line' }}">{{ $c }}</span>
+        <div class="px-4 pb-4" style="height: 280px;"><canvas id="activityChart"></canvas></div>
+    </section>
+
+    {{-- Pipeline funnel + Activity timeline — 2 col, accent = timeline (story) --}}
+    @php
+        $timeline = $recentConversations->map(fn($c) => [
+            'type' => 'conversation',
+            'at' => $c->created_at,
+            'href' => route('dashboard.conversations.show', $c),
+            'name' => $c->contact_name ?: ($c->contact_identifier ?: 'Vizitator'),
+            'sub' => ($c->bot?->name ?: 'Agent') . ' · ' . $c->messages_count . ' mesaje',
+            'badge' => null,
+        ])->concat($recentLeads->map(fn($l) => [
+            'type' => 'lead',
+            'at' => $l->created_at,
+            'href' => route('dashboard.leads.show', $l),
+            'name' => $l->name ?: ($l->email ?: ($l->phone ?: 'Lead #'.$l->id)),
+            'sub' => $l->email ?: $l->phone ?: 'Lead capturat',
+            'badge' => \App\Models\Lead::STAGES[$l->pipeline_stage] ?? $l->pipeline_stage,
+            'badgeStage' => $l->pipeline_stage,
+        ]))->sortByDesc('at')->take(10)->values();
+
+        $stages = [
+            'new'=>['Noi','#3b82f6'], 'contacted'=>['Contactați','#0ea5e9'],
+            'scheduled'=>['Programați','#f59e0b'], 'met'=>['Întâlnire','#f97316'],
+            'quoted'=>['Ofertă','#8b5cf6'], 'won'=>['Câștigați','#10b981'],
+            'lost'=>['Pierduți','#ef4444'],
+        ];
+        $pipelineTotal = array_sum(array_map(fn($k) => $leadPipeline[$k] ?? 0, array_keys($stages)));
+    @endphp
+
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {{-- LEFT: Activity timeline (2/3) --}}
+        <div class="lg:col-span-2 rounded-card border border-line bg-white shadow-sm overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-line">
+                <div>
+                    <h3 class="display text-base font-semibold text-ink">Activitate recentă</h3>
+                    <p class="text-2xs text-muted mt-0.5 mono">{{ number_format($totalConversations) }} conversații · {{ number_format($leadsTotal) }} leads total</p>
                 </div>
+                <a href="/dashboard/inbox" class="text-xs font-medium text-coralh hover:underline">Toate &rarr;</a>
+            </div>
+            @forelse($timeline as $event)
+            <a href="{{ $event['href'] }}" class="group flex items-center gap-4 px-6 py-3 hover:bg-cream/50 transition-colors border-b border-line/50 last:border-b-0">
+                {{-- Type indicator --}}
+                <div class="relative shrink-0">
+                    <div class="w-9 h-9 rounded-full {{ $event['type'] === 'conversation' ? 'bg-coralsoft text-coralh' : 'bg-emerald-50 text-emerald-700' }} flex items-center justify-center font-bold text-xs">
+                        {{ mb_strtoupper(mb_substr($event['name'], 0, 1)) }}
+                    </div>
+                    <span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full {{ $event['type'] === 'conversation' ? 'bg-coral' : 'bg-emerald-500' }} ring-2 ring-white flex items-center justify-center">
+                        @if($event['type'] === 'conversation')
+                            <svg class="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3"/></svg>
+                        @else
+                            <svg class="w-2 h-2 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg>
+                        @endif
+                    </span>
+                </div>
+                {{-- Body --}}
+                <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-semibold text-ink truncate">{{ $event['name'] }}</span>
+                        @if($event['type'] === 'lead' && !empty($event['badge']))
+                            @php $bs = ['new'=>'bg-blue-50 text-blue-700 ring-blue-200','contacted'=>'bg-sky-50 text-sky-700 ring-sky-200','won'=>'bg-emerald-50 text-emerald-700 ring-emerald-200','lost'=>'bg-coralsoft text-coralh ring-coral/30']; @endphp
+                            <span class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ring-1 {{ $bs[$event['badgeStage']] ?? 'bg-cream text-muted ring-line' }}">{{ $event['badge'] }}</span>
+                        @endif
+                    </div>
+                    <p class="text-xs text-muted truncate">
+                        {{ $event['type'] === 'conversation' ? 'Conversație' : 'Lead nou' }} · {{ $event['sub'] }}
+                    </p>
+                </div>
+                {{-- Time + arrow --}}
+                <div class="shrink-0 flex items-center gap-2">
+                    <span class="text-2xs text-muted mono whitespace-nowrap">{{ $event['at']->diffForHumans(null, true) }}</span>
+                    <svg class="w-4 h-4 text-line group-hover:text-coralh group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                </div>
+            </a>
+            @empty
+            <div class="px-6 py-12 text-center">
+                <p class="text-sm text-muted">Nicio activitate încă.</p>
+                <p class="text-xs text-muted mt-1">Conversațiile și lead-urile capturate apar aici în timp real.</p>
+            </div>
+            @endforelse
+        </div>
+
+        {{-- RIGHT: Pipeline funnel (1/3) — vertical stages with gradient bars --}}
+        <div class="rounded-card border border-line bg-white shadow-sm overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-line">
+                <div>
+                    <h3 class="display text-base font-semibold text-ink">Pipeline leads</h3>
+                    <p class="text-2xs text-muted mt-0.5 mono">{{ $pipelineTotal }} în pipeline · {{ $leadsTotal }} total</p>
+                </div>
+                <a href="/dashboard/leads" class="text-xs font-medium text-coralh hover:underline">Vezi &rarr;</a>
+            </div>
+            <div class="p-5 space-y-3">
+                @foreach($stages as $key => [$label, $hex])
+                    @php
+                        $c = $leadPipeline[$key] ?? 0;
+                        $maxStage = max(1, ...array_map(fn($k) => $leadPipeline[$k] ?? 0, array_keys($stages)));
+                        $barPct = $maxStage > 0 ? min(100, ($c / $maxStage) * 100) : 0;
+                    @endphp
+                    <div class="group">
+                        <div class="flex items-center justify-between text-xs mb-1">
+                            <div class="flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full" style="background:{{ $hex }}"></span>
+                                <span class="font-medium text-ink">{{ $label }}</span>
+                            </div>
+                            <span class="font-mono font-semibold {{ $c > 0 ? 'text-ink' : 'text-line' }}">{{ $c }}</span>
+                        </div>
+                        <div class="h-1.5 rounded-full bg-cream overflow-hidden">
+                            <div class="h-full rounded-full transition-all duration-700 ease-out"
+                                 style="width: {{ $barPct }}%; background: linear-gradient(90deg, {{ $hex }}66 0%, {{ $hex }} 100%);"></div>
+                        </div>
+                    </div>
                 @endforeach
             </div>
-            <div class="mt-3 pt-3 border-t border-line flex items-center justify-between">
-                <span class="text-xs font-medium text-muted">Total</span>
-                <span class="text-base font-bold text-ink">{{ $leadsTotal }}</span>
-            </div>
-        </div>
-    </div>
-
-    {{-- Recent Activity: Conversations + Leads --}}
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {{-- Conversations --}}
-        <div class="card overflow-hidden">
-            <div class="flex items-center justify-between bg-cream border-b border-line px-5 py-3">
-                <h3 class="display text-base font-semibold text-ink">Ultimele conversații</h3>
-                <span class="text-2xs text-muted mono">{{ number_format($totalConversations) }} total</span>
-            </div>
-            @forelse($recentConversations as $conv)
-            <a href="{{ route('dashboard.conversations.show', $conv) }}" class="flex items-center gap-3 px-5 py-2.5 hover:bg-cream transition-colors border-b border-slate-50 last:border-b-0">
-                <div class="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-red-100 to-red-200 flex items-center justify-center">
-                    <span class="text-xs font-bold text-coralh">{{ mb_strtoupper(mb_substr($conv->contact_name ?: ($conv->contact_identifier ?: 'V'), 0, 1)) }}</span>
-                </div>
-                <div class="min-w-0 flex-1">
-                    <span class="text-sm font-medium text-ink truncate block">{{ $conv->contact_name ?: ($conv->contact_identifier ?: 'Vizitator') }}</span>
-                    <span class="text-[11px] text-muted">{{ $conv->bot?->name }} &middot; {{ $conv->messages_count }} msg</span>
-                </div>
-                <span class="text-[10px] text-muted ml-3 whitespace-nowrap">{{ $conv->created_at->diffForHumans() }}</span>
-            </a>
-            @empty
-            <div class="px-5 py-6 text-center text-xs text-muted">Nicio conversatie inca.</div>
-            @endforelse
-        </div>
-
-        {{-- Leads --}}
-        <div class="card overflow-hidden">
-            <div class="flex items-center justify-between bg-cream border-b border-line px-5 py-3">
-                <h3 class="display text-base font-semibold text-ink">Ultimele leads</h3>
-                <a href="/dashboard/leads" class="text-2xs text-coralh hover:underline">Toate &rarr;</a>
-            </div>
-            @forelse($recentLeads as $lead)
-            <a href="{{ route('dashboard.leads.show', $lead) }}" class="flex items-center gap-3 px-5 py-2.5 hover:bg-cream transition-colors border-b border-slate-50 last:border-b-0">
-                <div class="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-red-100 to-red-200 flex items-center justify-center">
-                    <span class="text-xs font-bold text-coralh">{{ mb_strtoupper(mb_substr($lead->name ?: ($lead->email ?: ($lead->phone ?: 'L')), 0, 1)) }}</span>
-                </div>
-                <div class="min-w-0 flex-1">
-                    <span class="text-sm font-medium text-ink truncate block">{{ $lead->name ?: ($lead->email ?: ($lead->phone ?: 'Lead #'.$lead->id)) }}</span>
-                    <span class="text-[11px] text-muted">{{ $lead->email ?: $lead->phone ?: '-' }}</span>
-                </div>
-                <div class="text-right ml-3">
-                    @php $sc = ['new'=>'bg-blue-100 text-blue-700','contacted'=>'bg-sky-100 text-sky-700','won'=>'bg-emerald-100 text-emerald-700','lost'=>'bg-coralsoft text-coralh']; @endphp
-                    <span class="inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-medium {{ $sc[$lead->pipeline_stage] ?? 'bg-cream text-muted' }}">{{ \App\Models\Lead::STAGES[$lead->pipeline_stage] ?? $lead->pipeline_stage }}</span>
-                    <div class="text-[10px] text-muted mt-0.5">{{ $lead->created_at->diffForHumans() }}</div>
-                </div>
-            </a>
-            @empty
-            <div class="px-5 py-6 text-center text-xs text-muted">Lead-urile sunt capturate automat din conversatii.</div>
-            @endforelse
         </div>
     </div>
 
@@ -421,25 +470,44 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var ctx = document.getElementById('activityChart');
     if (!ctx) return;
+    var c2d = ctx.getContext('2d');
+    var convGrad = c2d.createLinearGradient(0, 0, 0, 280);
+    convGrad.addColorStop(0, 'rgba(220, 38, 38, 0.40)');
+    convGrad.addColorStop(1, 'rgba(220, 38, 38, 0.02)');
+    var leadGrad = c2d.createLinearGradient(0, 0, 0, 280);
+    leadGrad.addColorStop(0, 'rgba(16, 185, 129, 0.30)');
+    leadGrad.addColorStop(1, 'rgba(16, 185, 129, 0.02)');
     new Chart(ctx, {
-        type: 'bar',
+        type: 'line',
         data: {
             labels: @json($chartData->pluck('date')),
             datasets: [
-                { label: 'Conversatii', data: @json($chartData->pluck('conversations')), backgroundColor: '#3b82f6', borderRadius: 4, maxBarThickness: 20, order: 2 },
-                { label: 'Leads', data: @json($chartData->pluck('leads')), backgroundColor: '#10b981', borderRadius: 4, maxBarThickness: 20, order: 3 },
-                { label: 'Mesaje', data: @json($chartData->pluck('messages')), type: 'line', borderColor: '#94a3b8', borderWidth: 2, pointRadius: 2, tension: 0.3, fill: false, order: 1, yAxisID: 'y1' },
+                { label: 'Conversații', data: @json($chartData->pluck('conversations')), borderColor: '#dc2626', borderWidth: 2.5, backgroundColor: convGrad, fill: true, tension: 0.4, pointRadius: 0, pointHoverRadius: 5, pointHoverBackgroundColor: '#fff', pointHoverBorderColor: '#dc2626', pointHoverBorderWidth: 2, order: 2 },
+                { label: 'Leads', data: @json($chartData->pluck('leads')), borderColor: '#10b981', borderWidth: 2.5, backgroundColor: leadGrad, fill: true, tension: 0.4, pointRadius: 0, pointHoverRadius: 5, pointHoverBackgroundColor: '#fff', pointHoverBorderColor: '#10b981', pointHoverBorderWidth: 2, order: 3 },
+                { label: 'Mesaje', data: @json($chartData->pluck('messages')), borderColor: 'rgba(28,25,23,0.35)', borderWidth: 1.5, borderDash: [4, 4], pointRadius: 0, tension: 0.3, fill: false, order: 1, yAxisID: 'y1' },
             ],
         },
         options: {
             responsive: true, maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
-            plugins: { legend: { position: 'top', align: 'end', labels: { boxWidth: 10, usePointStyle: true, pointStyle: 'circle', padding: 12, font: { size: 10 } } }, tooltip: { backgroundColor: '#1e293b', cornerRadius: 6, padding: 8, titleFont: { size: 11 }, bodyFont: { size: 11 } } },
-            scales: {
-                x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10 } }, border: { display: false } },
-                y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { color: '#94a3b8', font: { size: 10 }, stepSize: 1, precision: 0 }, border: { display: false } },
-                y1: { beginAtZero: true, position: 'right', grid: { display: false }, ticks: { color: '#cbd5e1', font: { size: 9 } }, border: { display: false } },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#1c1917',
+                    titleColor: '#fff', bodyColor: '#fff',
+                    cornerRadius: 8, padding: 12,
+                    titleFont: { size: 11, weight: '600' }, bodyFont: { size: 12 },
+                    boxPadding: 6,
+                    displayColors: true,
+                    usePointStyle: true,
+                },
             },
+            scales: {
+                x: { grid: { display: false }, ticks: { color: '#a8a29e', font: { size: 11, weight: '500' } }, border: { display: false } },
+                y: { beginAtZero: true, grid: { color: '#f5f5f4', drawTicks: false }, ticks: { color: '#a8a29e', font: { size: 10 }, stepSize: 1, precision: 0, padding: 8 }, border: { display: false } },
+                y1: { beginAtZero: true, position: 'right', grid: { display: false }, ticks: { color: '#d6d3d1', font: { size: 9 } }, border: { display: false } },
+            },
+            animation: { duration: 1000, easing: 'easeOutQuart' },
         },
     });
 });
