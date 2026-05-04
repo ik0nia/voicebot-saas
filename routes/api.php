@@ -107,6 +107,14 @@ Route::post('/v1/chatbot/{channel}/lead', [\App\Http\Controllers\Api\EventTracki
 Route::post('/v1/chatbot/{channel}/callback', [\App\Http\Controllers\Api\CallbackController::class, 'store'])->middleware(['force.json', 'throttle:5,1']);
 Route::get('/v1/chatbot/{channel}/callback/services', [\App\Http\Controllers\Api\CallbackController::class, 'services'])->middleware(['force.json', 'throttle:60,1']);
 
+// Visitor → operator escalation. Public widget endpoint: marks the live
+// conversation as `needs_human` and pushes a Web Push to all operators in
+// the tenant. Throttle is intentionally tight (5/min) — controller also
+// dedupes per session_id with a 60s rate limiter.
+Route::post('/v1/chatbot/{channel}/escalate', [\App\Http\Controllers\Api\EscalationController::class, 'request'])
+    ->middleware(['force.json', 'throttle:5,1'])
+    ->name('chatbot.escalate');
+
 // V2 Purchase webhook from WordPress companion plugin (signed, no auth)
 Route::post('/v1/webhooks/woocommerce/{bot}/purchase', [\App\Http\Controllers\Api\PurchaseWebhookController::class, 'handle']);
 

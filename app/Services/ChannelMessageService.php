@@ -249,6 +249,17 @@ class ChannelMessageService
                 $conversation, $bot, $messageText, $queryIntelligence, $frustration, $recentMessages
             );
 
+            // Auto-escalate to operator on high frustration. The detector
+            // already gates noisy signals (caps, repeats, frustration words);
+            // by the time it returns "escalate" the bot prompt is already
+            // being modified to soften tone — but operators should also be
+            // notified so a human can pick up before the user bounces.
+            // Dedupe via metadata.escalated_at so we don't push every turn
+            // once the conversation gets hot.
+            if (($frustration['recommendation'] ?? null) === 'escalate') {
+                $this->autoEscalateIfNeeded($conversation, $channel, $frustration['signals'] ?? []);
+            }
+
             // Save last intent for context continuity
             $meta = $conversation->metadata ?? [];
             $meta['last_intent'] = $queryIntelligence['type'];
@@ -338,6 +349,51 @@ class ChannelMessageService
                 Log::error('ChannelMessage: total fallback failed', ['error' => $e2->getMessage()]);
                 return 'Îmi cer scuze, am întâmpinat o eroare tehnică. Vă rog să încercați din nou.';
             }
+        }
+    }
+
+    /**
+     * Flag a conversation as needing a human operator and push-notify the
+     * tenant's operator team. Idempotent per 10-minute window so a
+     * sustained-frustration session doesn't spam pushes every turn.
+     */
+    private function autoEscalateIfNeeded(Conversation $conversation, Channel $channel, array $signals): void
+    {
+        $metadata = $conversation->metadata ?? [];
+
+        // Already escalated recently? Skip — operators have been notified.
+        $lastEscalated = $metadata['escalated_at'] ?? null;
+        if ($lastEscalated) {
+            try {
+                if (now()->diffInMinutes(\Carbon\Carbon::parse($lastEscalated)) < 10) {
+                    return;
+                }
+            } catch (\Throwable $e) {
+                // Bad timestamp — fall through and re-flag.
+            }
+        }
+
+        $metadata['needs_human'] = true;
+        $metadata['escalated_at'] = now()->toIso8601String();
+        $metadata['escalation_reason'] = 'frustration_auto:' . implode(',', array_slice($signals, 0, 3));
+        $conversation->updateQuietly(['metadata' => $metadata]);
+
+        try {
+            app(PushNotificationService::class)->sendToTenantUsers((int) $conversation->tenant_id, [
+                'title' => '⚠️ Vizitator frustrat',
+                'body' => ($conversation->contact_name ?: 'Vizitator anonim')
+                    . ' din chat ' . ($channel->name ?: 'web')
+                    . ' arată semnale de frustrare. Preluare recomandată.',
+                'url' => '/dashboard/operator?focus=' . $conversation->id,
+                'tag' => 'auto-escalation-' . $conversation->id,
+                'icon' => '/images/logo-icon.png',
+                'requireInteraction' => true,
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Auto-escalation push failed', [
+                'conversation_id' => $conversation->id,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 }

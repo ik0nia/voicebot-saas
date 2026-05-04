@@ -1,0 +1,90 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\Channel;
+use App\Models\Conversation;
+use App\Services\PushNotificationService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
+
+/**
+ * Public API: vizitatorul cere operator uman.
+ * Apelat de widget când:
+ *   - User dă click pe „👤 Vorbește cu un operator"
+ *   - Sau scrie ceva de tip „vreau să vorbesc cu cineva real" (detect server-side)
+ *
+ * Flag-ează conversation.metadata['needs_human'] = true → apare în feed-ul
+ * operator console + trimite Web Push la toți operatorii tenantului.
+ *
+ * Public route — verificare prin channel_id (nu cere auth tenant).
+ */
+class EscalationController extends Controller
+{
+    public function request(Request $request, int $channel, PushNotificationService $push): JsonResponse
+    {
+        $validated = $request->validate([
+            'session_id' => 'required|string|max:64',
+            'reason' => 'nullable|string|max:200',
+        ]);
+
+        // Throttle 5 escalări / minut / channel (anti-abuse)
+        $key = "escalation:{$channel}:{$validated['session_id']}";
+        if (RateLimiter::tooManyAttempts($key, 3)) {
+            return response()->json(['error' => 'Solicitare deja înregistrată'], 429);
+        }
+        RateLimiter::hit($key, 60);
+
+        $ch = Channel::withoutGlobalScopes()->find($channel);
+        if (!$ch || !$ch->is_active) {
+            return response()->json(['error' => 'Canal indisponibil'], 404);
+        }
+
+        // Caută conversația activă pentru această sesiune
+        $conv = Conversation::withoutGlobalScopes()
+            ->where('channel_id', $channel)
+            ->where(function ($q) use ($validated) {
+                $q->where('external_conversation_id', $validated['session_id'])
+                  ->orWhere('contact_identifier', $validated['session_id']);
+            })
+            ->orderByDesc('id')
+            ->first();
+
+        if (!$conv) {
+            return response()->json(['error' => 'Conversație negăsită'], 404);
+        }
+
+        // Set flag + reason
+        $metadata = $conv->metadata ?? [];
+        $metadata['needs_human'] = true;
+        $metadata['escalated_at'] = now()->toIso8601String();
+        $metadata['escalation_reason'] = $validated['reason'] ?? 'visitor_request';
+        $conv->metadata = $metadata;
+        $conv->save();
+
+        // Push la toți operatorii tenantului (excludem nimeni — toată echipa află)
+        $sentTo = $push->sendToTenantUsers((int) $conv->tenant_id, [
+            'title' => '🆘 Vizitator cere operator',
+            'body' => ($conv->contact_name ?: 'Vizitator anonim') . ' din chat ' . ($ch->name ?: 'web') . ' vrea să vorbească cu un om.',
+            'url' => '/dashboard/operator?focus=' . $conv->id,
+            'tag' => 'escalation-' . $conv->id,
+            'icon' => '/images/logo-icon.png',
+            'requireInteraction' => true,
+        ]);
+
+        \Log::info('Conversation escalated to human', [
+            'conversation_id' => $conv->id,
+            'tenant_id' => $conv->tenant_id,
+            'reason' => $metadata['escalation_reason'],
+            'pushed_to_devices' => $sentTo,
+        ]);
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Echipa a fost notificată. Cineva va prelua conversația în câteva momente.',
+            'devices_notified' => $sentTo,
+        ]);
+    }
+}

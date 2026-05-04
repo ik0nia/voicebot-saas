@@ -83,7 +83,10 @@
             sent: 'Trimis',
             delivered: 'Livrat',
             messageLog: 'Mesaje chat',
-            linkPreview: 'Previzualizare link'
+            linkPreview: 'Previzualizare link',
+            talkToHuman: 'Vorbește cu un operator',
+            humanRequested: 'Echipa a fost notificată. Cineva preia conversația în câteva momente.',
+            humanRequestFailed: 'Nu am putut notifica echipa. Încearcă din nou în câteva secunde.'
         },
         en: {
             openChat: 'Open chat',
@@ -110,7 +113,10 @@
             sent: 'Sent',
             delivered: 'Delivered',
             messageLog: 'Chat messages',
-            linkPreview: 'Link preview'
+            linkPreview: 'Link preview',
+            talkToHuman: 'Talk to a human operator',
+            humanRequested: 'The team has been notified. Someone will pick up shortly.',
+            humanRequestFailed: 'Could not notify the team. Try again in a few seconds.'
         }
     };
 
@@ -507,6 +513,24 @@
                 position: relative; z-index: 2; -webkit-tap-highlight-color: transparent;\
             }\
             .sambla-header-close:hover, .sambla-header-close:active { background: rgba(255,255,255,0.3); }\
+            .sambla-header-human {\
+                background: rgba(255,255,255,0.15); border: none; color: #fff; width: 32px; height: 32px;\
+                border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;\
+                transition: background 0.2s, opacity 0.2s; flex-shrink: 0; padding: 0; margin-left: 6px;\
+                position: relative; z-index: 2; -webkit-tap-highlight-color: transparent;\
+            }\
+            .sambla-header-human:hover, .sambla-header-human:active { background: rgba(255,255,255,0.3); }\
+            .sambla-header-human[disabled] { opacity: 0.45; cursor: default; }\
+            .sambla-header-human svg { width: 18px; height: 18px; }\
+            .sambla-escalation-banner {\
+                margin: 8px 14px 0; padding: 10px 12px; border-radius: 10px;\
+                background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46;\
+                font-size: 13px; line-height: 1.45; display: flex; align-items: flex-start; gap: 8px;\
+                animation: sambla-fade-in 0.25s ease-out;\
+            }\
+            .sambla-escalation-banner.error { background: #fef2f2; border-color: #fecaca; color: #991b1b; }\
+            .sambla-escalation-banner svg { flex-shrink: 0; width: 18px; height: 18px; margin-top: 1px; }\
+            @keyframes sambla-fade-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }\
             .sambla-powered {\
                 font-size: 10px; text-align: center; padding: 2px 0;\
                 color: rgba(255,255,255,0.7); background: ' + config.color + ';\
@@ -787,6 +811,12 @@
                         <div class="sambla-header-name">' + sanitizeHtml(config.botName) + '</div>\
                         <div class="sambla-header-status">' + t('online') + '</div>\
                     </div>\
+                    <button class="sambla-header-human" aria-label="' + t('talkToHuman') + '" title="' + t('talkToHuman') + '">\
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">\
+                            <path d="M12 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/>\
+                            <path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>\
+                        </svg>\
+                    </button>\
                     <button class="sambla-header-close" aria-label="' + t('closeChat') + '">\
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">\
                             <path d="M18 6L6 18M6 6l12 12"/>\
@@ -819,7 +849,15 @@
         var sendBtn = root.querySelector('.sambla-send');
         var headerName = root.querySelector('.sambla-header-name');
         var headerStatus = root.querySelector('.sambla-header-status');
+        var humanBtn = root.querySelector('.sambla-header-human');
         var offlineBanner = root.querySelector('.sambla-offline-banner');
+
+        // Escalation cooldown — once visitor asks for an operator we don't
+        // want them spamming the button (the API throttles it server-side
+        // too, but UX should reflect the success). 5 min is enough for an
+        // operator to pick up; afterwards user can re-ask if still ignored.
+        var ESCALATED_KEY = 'sambla_chat_escalated_' + config.channelId;
+        var ESCALATION_COOLDOWN_MS = 5 * 60 * 1000;
 
         var mobileOverlay = null; // reserved for future use
 
@@ -2622,6 +2660,104 @@
             }
         }
         root.addEventListener('click', handleCloseClick);
+
+        // Visitor → operator escalation. Posts to public escalate endpoint
+        // which flags `metadata.needs_human` on the conversation and Web
+        // Push-es every operator in the tenant. Server enforces a 60s
+        // dedupe per session_id; client adds a 5-min UI cooldown so the
+        // button reflects "we heard you" instead of looking idle.
+        function showEscalationBanner(text, isError) {
+            if (!chatWindow) return;
+            // Remove any prior banner so we don't stack repeats.
+            var existing = chatWindow.querySelector('.sambla-escalation-banner');
+            if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+
+            var banner = document.createElement('div');
+            banner.className = 'sambla-escalation-banner' + (isError ? ' error' : '');
+            banner.setAttribute('role', isError ? 'alert' : 'status');
+            banner.innerHTML = (isError
+                ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+                : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+            ) + '<span></span>';
+            banner.querySelector('span').textContent = text;
+
+            // Insert directly under the header so it sits above the
+            // powered-by strip and is visible without scrolling.
+            var header = chatWindow.querySelector('.sambla-header');
+            if (header && header.nextSibling) {
+                chatWindow.insertBefore(banner, header.nextSibling);
+            } else {
+                chatWindow.insertBefore(banner, chatWindow.firstChild);
+            }
+
+            // Auto-dismiss the success banner after 12s; keep errors longer.
+            setTimeout(function() {
+                if (banner && banner.parentNode) banner.parentNode.removeChild(banner);
+            }, isError ? 6000 : 12000);
+        }
+
+        function isEscalationOnCooldown() {
+            try {
+                var ts = parseInt(localStorage.getItem(ESCALATED_KEY) || '0', 10);
+                return ts && (Date.now() - ts) < ESCALATION_COOLDOWN_MS;
+            } catch(e) { return false; }
+        }
+
+        function applyEscalationCooldownUi() {
+            if (!humanBtn) return;
+            humanBtn.setAttribute('disabled', 'disabled');
+            humanBtn.setAttribute('aria-disabled', 'true');
+        }
+
+        function requestEscalation(reason) {
+            if (!humanBtn) return;
+            if (isEscalationOnCooldown()) {
+                showEscalationBanner(t('humanRequested'), false);
+                return;
+            }
+            humanBtn.setAttribute('disabled', 'disabled');
+
+            fetch(config.apiBase + '/api/v1/chatbot/' + config.channelId + '/escalate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({
+                    session_id: getSessionId(),
+                    reason: (reason || 'visitor_request').substring(0, 200)
+                })
+            }).then(function(resp) {
+                return resp.json().then(function(data) { return { ok: resp.ok, data: data }; });
+            }).then(function(result) {
+                if (result.ok) {
+                    try { localStorage.setItem(ESCALATED_KEY, String(Date.now())); } catch(e) {}
+                    showEscalationBanner(t('humanRequested'), false);
+                    applyEscalationCooldownUi();
+                    trackEvent('escalation_requested', { reason: reason || 'visitor_request' });
+                } else {
+                    // 429 from server-side dedupe still means "the team knows" —
+                    // mirror the cooldown UI rather than scaring the user with
+                    // an error toast.
+                    if (result.data && result.data.error && /deja|already/i.test(String(result.data.error))) {
+                        try { localStorage.setItem(ESCALATED_KEY, String(Date.now())); } catch(e) {}
+                        showEscalationBanner(t('humanRequested'), false);
+                        applyEscalationCooldownUi();
+                    } else {
+                        showEscalationBanner(t('humanRequestFailed'), true);
+                        humanBtn.removeAttribute('disabled');
+                    }
+                }
+            }).catch(function() {
+                showEscalationBanner(t('humanRequestFailed'), true);
+                if (humanBtn) humanBtn.removeAttribute('disabled');
+            });
+        }
+
+        if (humanBtn) {
+            if (isEscalationOnCooldown()) applyEscalationCooldownUi();
+            humanBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                requestEscalation('visitor_button');
+            });
+        }
 
         sendBtn.addEventListener('click', sendMessage);
 
