@@ -100,7 +100,13 @@
                         @if($todayConv === 0)
                             Nicio conversație azi încă. Agenții așteaptă vizitatori.
                         @else
-                            <span class="text-cream font-medium">{{ $todayConv }}</span> {{ $todayConv === 1 ? 'conversație' : 'conversații' }} azi@if($delta !== 0 && $yesterdayConv > 0)<span class="{{ $delta > 0 ? 'text-emerald-300' : 'text-coral' }}"> ({{ $delta > 0 ? '+' : '' }}{{ $delta }}% vs ieri)</span>@endif@if($leadsToday > 0), <span class="text-cream font-medium">{{ $leadsToday }}</span> {{ $leadsToday === 1 ? 'lead nou' : 'leads noi' }}@endif.
+                            <span class="text-cream font-medium">{{ $todayConv }}</span> {{ $todayConv === 1 ? 'conversație' : 'conversații' }} azi
+                            @if($delta !== 0 && $yesterdayConv > 0)
+                                <span class="{{ $delta > 0 ? 'text-emerald-300' : 'text-coral' }}">({{ $delta > 0 ? '+' : '' }}{{ $delta }}% vs ieri)</span>
+                            @endif
+                            @if($leadsToday > 0)
+                                · <span class="text-cream font-medium">{{ $leadsToday }}</span> {{ $leadsToday === 1 ? 'lead nou' : 'leads noi' }}
+                            @endif.
                         @endif
                     </p>
                 </div>
