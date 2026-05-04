@@ -79,6 +79,25 @@
         @endforeach
     </div>
 
+    @php
+        // Helper for sortable headers — preserves all current filters,
+        // toggles direction when clicking the same column twice. The
+        // controller whitelists which sort keys are allowed, so an
+        // operator pasting a weird ?sort= won't fall back to a SQL error.
+        $sortLink = function (string $col, string $label) use ($sort, $dir) {
+            $nextDir = ($sort === $col && $dir === 'desc') ? 'asc' : 'desc';
+            $arrow = $sort === $col ? ($dir === 'desc' ? '↓' : '↑') : '';
+            $url = request()->fullUrlWithQuery(['sort' => $col, 'dir' => $nextDir]);
+            $active = $sort === $col;
+            return [
+                'href' => $url,
+                'label' => $label,
+                'arrow' => $arrow,
+                'active' => $active,
+            ];
+        };
+    @endphp
+
     {{-- Conversations list --}}
     @if($conversations->isEmpty())
         <div class="rounded-xl border-2 border-dashed border-line px-8 py-16 text-center">
@@ -90,33 +109,56 @@
             <table class="min-w-full divide-y divide-line">
                 <thead class="bg-cream">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-muted uppercase">Contact</th>
+                        @php $h = $sortLink('contact_name', 'Contact'); @endphp
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase {{ $h['active'] ? 'text-ink' : 'text-muted' }}">
+                            <a href="{{ $h['href'] }}" class="inline-flex items-center gap-1 hover:text-ink">{{ $h['label'] }} <span class="text-coral">{{ $h['arrow'] }}</span></a>
+                        </th>
                         <th class="px-4 py-3 text-left text-xs font-semibold text-muted uppercase">Canal</th>
                         <th class="px-4 py-3 text-left text-xs font-semibold text-muted uppercase">Atribuit</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-muted uppercase">Mesaje</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-muted uppercase">Activitate</th>
+                        @php $h = $sortLink('messages_count', 'Volum'); @endphp
+                        <th title="Mesaje pentru text, durată pentru voce" class="px-4 py-3 text-left text-xs font-semibold uppercase {{ $h['active'] ? 'text-ink' : 'text-muted' }}">
+                            <a href="{{ $h['href'] }}" class="inline-flex items-center gap-1 hover:text-ink">{{ $h['label'] }} <span class="text-coral">{{ $h['arrow'] }}</span></a>
+                        </th>
+                        @php $h = $sortLink('last_activity_at', 'Activitate'); @endphp
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase {{ $h['active'] ? 'text-ink' : 'text-muted' }}">
+                            <a href="{{ $h['href'] }}" class="inline-flex items-center gap-1 hover:text-ink">{{ $h['label'] }} <span class="text-coral">{{ $h['arrow'] }}</span></a>
+                        </th>
                         <th class="px-4 py-3 text-right text-xs font-semibold text-muted uppercase">Acțiuni</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-line">
-                    @foreach($conversations as $convo)
+                    @foreach($conversations as $item)
                         @php
-                            $assignType = $convo->isHumanAssigned() ? 'user' : ($convo->isBotAssigned() ? 'bot' : 'none');
-                            $channelType = $convo->channel?->type ?? 'unknown';
+                            $isCall = $item->_type === 'call';
+                            $assignType = $item->is_human_assigned ? 'user' : ($item->is_bot_assigned ? 'bot' : 'none');
+                            $channelType = $item->channel_type;
                             $channelColor = [
                                 'voice' => 'red', 'whatsapp' => 'green', 'facebook_messenger' => 'blue',
                                 'instagram_dm' => 'pink', 'web_chatbot' => 'slate',
                             ][$channelType] ?? 'slate';
+                            $duration = null;
+                            if ($isCall && $item->duration_seconds !== null) {
+                                $m = intdiv($item->duration_seconds, 60);
+                                $s = $item->duration_seconds % 60;
+                                $duration = $m > 0 ? sprintf('%dm %ds', $m, $s) : sprintf('%ds', $s);
+                            }
                         @endphp
-                        <tr data-conversation-id="{{ $convo->id }}" class="hover:bg-cream">
+                        <tr data-item-type="{{ $item->_type }}" data-item-id="{{ $item->id }}" class="hover:bg-cream">
                             <td class="px-4 py-3">
-                                <div class="text-sm font-medium text-ink">{{ $convo->contact_name ?: $convo->contact_identifier ?: '—' }}</div>
-                                <div class="text-xs text-muted font-mono truncate max-w-xs">{{ $convo->contact_identifier }}</div>
+                                <div class="text-sm font-medium text-ink flex items-center gap-1.5">
+                                    {{ $item->contact_name ?: $item->contact_identifier ?: '—' }}
+                                    @if($isCall && $item->direction === 'inbound')
+                                        <span title="Apel primit" class="text-emerald-600 text-xs">↓</span>
+                                    @elseif($isCall && $item->direction === 'outbound')
+                                        <span title="Apel ieșit" class="text-blue-600 text-xs">↑</span>
+                                    @endif
+                                </div>
+                                <div class="text-xs text-muted font-mono truncate max-w-xs">{{ $item->contact_identifier }}</div>
                             </td>
                             <td class="px-4 py-3 text-sm">
                                 <span class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium bg-{{ $channelColor }}-50 text-{{ $channelColor }}-700">
                                     <span class="w-1.5 h-1.5 rounded-full bg-{{ $channelColor }}-500"></span>
-                                    {{ $convo->channel?->getDisplayName() ?? '—' }}
+                                    {{ $item->channel_label }}
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-sm">
@@ -127,31 +169,56 @@
                                       @else bg-cream text-muted
                                       @endif">
                                     @if($assignType === 'user')
-                                        Operator: {{ $convo->assigneeUser?->name ?? '?' }}
+                                        Operator: {{ $item->assignee_user_name ?? '?' }}
                                     @elseif($assignType === 'bot')
-                                        Bot: {{ $convo->bot?->name ?? '?' }}
+                                        Bot: {{ $item->bot_name ?? '?' }}
                                     @else
                                         Neatribuit
                                     @endif
                                 </span>
                             </td>
-                            <td class="px-4 py-3 text-sm text-inkSoft">{{ $convo->messages_count }}</td>
+                            <td class="px-4 py-3 text-sm text-inkSoft">
+                                @if($isCall)
+                                    <span class="text-xs">
+                                        {{ $duration ?? '—' }}
+                                        @if($item->cost_cents !== null && $item->cost_cents > 0)
+                                            <span class="text-line ml-1">· {{ number_format($item->cost_cents / 100, 2) }} EUR</span>
+                                        @endif
+                                        @if($item->recording_url)
+                                            <span title="Are recording" class="text-coral ml-1">●</span>
+                                        @endif
+                                    </span>
+                                @else
+                                    {{ $item->messages_count }}
+                                @endif
+                            </td>
                             <td class="px-4 py-3 text-xs text-muted">
-                                {{ ($convo->last_activity_at ?? $convo->created_at)?->diffForHumans() }}
+                                @php
+                                    $when = $item->last_activity_at;
+                                @endphp
+                                @if($when)
+                                    <span title="{{ $when->locale('ro')->isoFormat('DD MMM YYYY, HH:mm') }}" class="cursor-help">
+                                        {{ $when->locale('ro')->diffForHumans() }}
+                                    </span>
+                                @else
+                                    <span class="text-line">—</span>
+                                @endif
                             </td>
                             <td class="px-4 py-3 text-right text-sm">
                                 <div class="flex items-center justify-end gap-2">
-                                    <a href="{{ route('dashboard.conversations.show', $convo) }}" class="text-muted hover:text-inkSoft">Vezi</a>
-                                    @if($assignType !== 'user')
-                                        <form method="POST" action="{{ route('dashboard.conversations.take-over', $convo) }}" class="inline">
-                                            @csrf
-                                            <button type="submit" class="text-emerald-700 hover:text-emerald-900 font-medium">Preia</button>
-                                        </form>
-                                    @elseif($convo->assignee_user_id === auth()->id())
-                                        <form method="POST" action="{{ route('dashboard.conversations.hand-back', $convo) }}" class="inline">
-                                            @csrf
-                                            <button type="submit" class="text-muted hover:text-inkSoft">Înapoi la bot</button>
-                                        </form>
+                                    <a href="{{ route($item->route_name, $item->route_params) }}" class="text-muted hover:text-inkSoft">Vezi</a>
+                                    @if(!$isCall)
+                                        @if($assignType !== 'user')
+                                            <form method="POST" action="{{ route('dashboard.conversations.take-over', $item->id) }}" class="inline">
+                                                @csrf
+                                                <button type="submit" class="text-emerald-700 hover:text-emerald-900 font-medium">Preia</button>
+                                            </form>
+                                        @elseif($item->assignee_user_id === auth()->id())
+                                            <form method="POST" action="{{ route('dashboard.conversations.hand-back', $item->id) }}" class="inline">
+                                                @csrf
+                                                <button type="submit" class="text-muted hover:text-inkSoft">Înapoi la bot</button>
+                                            </form>
+                                        @endif
                                     @endif
                                 </div>
                             </td>

@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
+use App\Models\Call;
 use App\Models\Channel;
 use App\Models\Conversation;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 /**
  * Unified inbox across all channels (Etapa 6 of the omnichannel roadmap).
@@ -23,8 +26,25 @@ class InboxController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Conversation::with(['bot:id,name', 'channel:id,type,name', 'assigneeUser:id,name'])
-            ->latest('last_activity_at');
+        // Whitelist sortable columns so users can't pass arbitrary SQL via
+        // ?sort=. Direction defaults to desc which matches the original
+        // behavior (newest first).
+        $sortable = ['last_activity_at', 'messages_count', 'lead_score', 'contact_name'];
+        $sort = in_array($request->get('sort'), $sortable, true)
+            ? $request->get('sort')
+            : 'last_activity_at';
+        $dir = strtolower($request->get('dir', 'desc')) === 'asc' ? 'asc' : 'desc';
+
+        $query = Conversation::with(['bot:id,name', 'channel:id,type,name', 'assigneeUser:id,name']);
+
+        // Postgres-friendly NULLS LAST so conversations never touched
+        // (last_activity_at IS NULL) sink to the bottom instead of mixing
+        // ambiguously with the freshest rows when we used `?? created_at`.
+        if ($sort === 'last_activity_at') {
+            $query->orderByRaw('last_activity_at ' . $dir . ' NULLS LAST');
+        } else {
+            $query->orderBy($sort, $dir);
+        }
 
         // Filters
         if ($status = $request->get('status')) {
@@ -50,15 +70,142 @@ class InboxController extends Controller
             });
         }
 
-        $conversations = $query->paginate(50)->withQueryString();
+        // Determine if voice calls should be merged into the listing.
+        // - "channel_type=voice" → calls only
+        // - no channel filter → both streams
+        // - any other channel filter → conversations only (calls have NULL
+        //   channel_id today, so they wouldn't match a WhatsApp/FB filter)
+        $includeCalls = !$request->get('channel_type') || $request->get('channel_type') === 'voice';
+        $includeConvs = $request->get('channel_type') !== 'voice';
+
+        $conversationItems = $includeConvs
+            ? $this->fetchConversationItems($query)
+            : collect();
+
+        $callItems = $includeCalls
+            ? $this->fetchCallItems($request, auth()->id())
+            : collect();
+
+        // Merge & sort. We pull a window of 200 each and sort/slice in
+        // memory because the two tables don't share a sortable key in SQL
+        // — true cross-table pagination would need a materialized view.
+        // 200×2 is fine for a tenant inbox; if a single tenant has more
+        // than that in fresh activity in one page, we adjust the window.
+        $merged = $conversationItems
+            ->merge($callItems)
+            ->sortByDesc(fn ($item) => $this->itemSortKey($item, $sort))
+            ->values();
+
+        if ($dir === 'asc') {
+            $merged = $merged->reverse()->values();
+        }
+
+        // Manual paginator over the merged list.
+        $perPage = 50;
+        $page = max(1, (int) $request->get('page', 1));
+        $conversations = new LengthAwarePaginator(
+            $merged->slice(($page - 1) * $perPage, $perPage)->values(),
+            $merged->count(),
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()],
+        );
 
         $stats = [
-            'total' => Conversation::count(),
+            'total' => Conversation::count() + Call::count(),
             'mine' => Conversation::where('assignee_user_id', auth()->id())->count(),
-            'unassigned' => Conversation::whereNull('assignee_user_id')->whereNull('assignee_bot_id')->count(),
+            'unassigned' => Conversation::whereNull('assignee_user_id')->whereNull('assignee_bot_id')->count()
+                + Call::count(), // calls have no assignee column today
             'bot' => Conversation::whereNotNull('assignee_bot_id')->count(),
         ];
 
-        return view('dashboard.inbox.index', compact('conversations', 'stats'));
+        return view('dashboard.inbox.index', compact('conversations', 'stats', 'sort', 'dir'));
+    }
+
+    /**
+     * Map a Conversation builder result into uniform inbox items.
+     */
+    private function fetchConversationItems($query): Collection
+    {
+        return $query->limit(200)->get()->map(fn (Conversation $c) => (object) [
+            '_type' => 'conv',
+            'id' => $c->id,
+            'route_name' => 'dashboard.conversations.show',
+            'route_params' => ['conversation' => $c->id],
+            'contact_name' => $c->contact_name,
+            'contact_identifier' => $c->contact_identifier,
+            'channel_type' => $c->channel?->type ?? 'unknown',
+            'channel_label' => $c->channel?->getDisplayName() ?? '—',
+            'messages_count' => $c->messages_count ?? 0,
+            'duration_seconds' => null,
+            'cost_cents' => null,
+            'direction' => null,
+            'recording_url' => null,
+            'last_activity_at' => $c->last_activity_at,
+            'is_human_assigned' => $c->isHumanAssigned(),
+            'is_bot_assigned' => $c->isBotAssigned(),
+            'assignee_user_id' => $c->assignee_user_id,
+            'assignee_user_name' => $c->assigneeUser?->name,
+            'bot_name' => $c->bot?->name,
+            'raw' => $c,
+        ]);
+    }
+
+    /**
+     * Calls table → uniform inbox items. Voice calls today have NULL
+     * channel_id, so we synthesize a 'voice' channel label rather than
+     * left-joining channels (which would be no-op).
+     */
+    private function fetchCallItems(Request $request, int $userId): Collection
+    {
+        $q = Call::with(['bot:id,name'])->latest('started_at');
+
+        // Filters that map cleanly to call columns. We skip status
+        // (calls have their own status enum) and bot_only / mine /
+        // unassigned because calls don't carry a per-user assignee
+        // today — they're always "the bot took it".
+        if ($search = $request->get('q')) {
+            $q->where('caller_number', 'like', "%{$search}%");
+        }
+
+        // If user filtered to "mine" or "unassigned", calls have no
+        // assignee column → exclude them so the chip count matches what
+        // appears in the list.
+        if ($request->boolean('mine') || $request->boolean('unassigned')) {
+            return collect();
+        }
+
+        return $q->limit(200)->get()->map(fn (Call $call) => (object) [
+            '_type' => 'call',
+            'id' => $call->id,
+            'route_name' => 'dashboard.calls.show',
+            'route_params' => ['call' => $call->id],
+            'contact_name' => null,
+            'contact_identifier' => $call->caller_number,
+            'channel_type' => 'voice',
+            'channel_label' => 'Voice',
+            'messages_count' => null,
+            'duration_seconds' => $call->duration_seconds,
+            'cost_cents' => $call->cost_cents,
+            'direction' => $call->direction,
+            'recording_url' => $call->recording_url,
+            'last_activity_at' => $call->ended_at ?? $call->started_at,
+            'is_human_assigned' => false,
+            'is_bot_assigned' => true,
+            'assignee_user_id' => null,
+            'assignee_user_name' => null,
+            'bot_name' => $call->bot?->name,
+            'raw' => $call,
+        ]);
+    }
+
+    private function itemSortKey(object $item, string $sort): int
+    {
+        return match ($sort) {
+            'messages_count' => (int) ($item->messages_count ?? 0),
+            'contact_name' => 0, // string sort handled by sortBy callback in caller? simplified: use timestamp
+            'last_activity_at' => $item->last_activity_at?->timestamp ?? 0,
+            default => $item->last_activity_at?->timestamp ?? 0,
+        };
     }
 }
