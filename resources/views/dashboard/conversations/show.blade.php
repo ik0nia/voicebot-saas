@@ -200,10 +200,14 @@ function smartReply(conversationId) {
                 <div class="space-y-4 max-w-2xl mx-auto">
                     @foreach($messages as $msg)
                         @if($msg->direction === 'outbound')
-                            {{-- Bot message - left aligned --}}
+                            @php
+                                $isOperator = ($msg->metadata['sender_type'] ?? null) === 'operator';
+                                $operatorName = $msg->metadata['operator_name'] ?? null;
+                            @endphp
+                            {{-- Bot/Operator message - left aligned --}}
                             <div class="flex justify-start">
                                 <div class="max-w-[80%]">
-                                    <div class="rounded-2xl rounded-tl-sm bg-cream px-4 py-3 text-sm text-ink">
+                                    <div class="rounded-2xl rounded-tl-sm px-4 py-3 text-sm @if($isOperator) bg-emerald-50 text-emerald-900 border border-emerald-100 @else bg-cream text-ink @endif">
                                         {{ $msg->content }}
                                     </div>
                                     @if(!empty($msg->metadata['products']))
@@ -225,15 +229,39 @@ function smartReply(conversationId) {
                                             @endforeach
                                         </div>
                                     @endif
+                                    @if(!empty($msg->metadata['quick_replies']))
+                                        <div class="flex flex-wrap gap-1.5 mt-2" title="Sugestii afișate vizitatorului">
+                                            @foreach(array_slice($msg->metadata['quick_replies'], 0, 6) as $chip)
+                                                @php
+                                                    $isAction = !empty($chip['action']);
+                                                    $label = $chip['label'] ?? $chip['text'] ?? '';
+                                                @endphp
+                                                @if($label !== '')
+                                                    <span class="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px]
+                                                        @if($isAction) bg-emerald-50 border-emerald-200 text-emerald-800 @else bg-white border-line text-inkSoft @endif">
+                                                        @if($isAction)<span class="text-emerald-600">✓</span>@endif
+                                                        {{ \Illuminate\Support\Str::limit($label, 60) }}
+                                                    </span>
+                                                @endif
+                                            @endforeach
+                                        </div>
+                                    @endif
                                     <p class="mt-1 text-[11px] text-muted ml-1">
-                                        Bot
+                                        @if($isOperator)
+                                            <span class="inline-flex items-center gap-1 font-medium text-emerald-700">
+                                                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                                Operator{{ $operatorName ? ': '.$operatorName : '' }}
+                                            </span>
+                                        @else
+                                            Bot
+                                        @endif
                                         @if($msg->sent_at)
                                             &middot; {{ $msg->sent_at->format('H:i') }}
                                         @endif
-                                        @if($msg->ai_model)
+                                        @if($msg->ai_model && !$isOperator)
                                             &middot; <span class="text-line">{{ $msg->ai_model }}</span>
                                         @endif
-                                        @if($msg->cost_cents > 0)
+                                        @if($msg->cost_cents > 0 && !$isOperator)
                                             &middot; <span class="text-line">${{ number_format($msg->cost_cents / 100, 4) }}</span>
                                         @endif
                                     </p>

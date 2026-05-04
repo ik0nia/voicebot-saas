@@ -141,13 +141,68 @@
                         </template>
                         <template x-for="m in messages" :key="m.id">
                             <div :class="m.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
-                                <div :class="m.role === 'user' ? 'bg-coral text-cream' : (m.is_operator ? 'bg-emerald-100 text-emerald-900' : 'bg-cream text-ink')"
-                                     class="max-w-[80%] px-3 py-2 rounded-2xl text-sm whitespace-pre-wrap">
-                                    <template x-if="m.is_operator">
-                                        <div class="text-2xs opacity-70 mb-0.5 font-semibold">👨‍💼 Operator</div>
+                                <div class="max-w-[85%] flex flex-col gap-1.5"
+                                     :class="m.role === 'user' ? 'items-end' : 'items-start'">
+                                    {{-- main bubble --}}
+                                    <div :class="m.role === 'user' ? 'bg-coral text-cream' : (m.role === 'operator' ? 'bg-emerald-100 text-emerald-900 border border-emerald-200' : 'bg-cream text-ink')"
+                                         class="px-3 py-2 rounded-2xl text-sm whitespace-pre-wrap break-words">
+                                        <template x-if="m.role === 'operator'">
+                                            <div class="text-2xs opacity-70 mb-0.5 font-semibold">
+                                                👨‍💼 Operator<span x-show="m.operator_name" x-text="': ' + m.operator_name"></span>
+                                            </div>
+                                        </template>
+                                        <div x-text="m.content"></div>
+                                    </div>
+
+                                    {{-- product cards (read-only mirror of widget) --}}
+                                    <template x-if="m.products && m.products.length">
+                                        <div class="flex gap-2 overflow-x-auto pb-1 max-w-full" title="Produse afișate vizitatorului">
+                                            <template x-for="p in m.products.slice(0, 8)" :key="p.id || p.name">
+                                                <div class="flex-shrink-0 w-32 rounded-lg border border-line bg-white overflow-hidden shadow-sm">
+                                                    <template x-if="p.image_url">
+                                                        <img :src="p.image_url" :alt="p.name" class="w-full h-20 object-cover" loading="lazy">
+                                                    </template>
+                                                    <div class="p-1.5">
+                                                        <p class="text-2xs font-semibold text-ink leading-tight line-clamp-2" x-text="p.name"></p>
+                                                        <template x-if="p.sale_price && p.regular_price">
+                                                            <p class="mt-0.5 text-2xs font-bold text-coral">
+                                                                <span x-text="p.sale_price + ' ' + (p.currency || 'RON')"></span>
+                                                                <span class="text-[10px] text-muted line-through font-normal ml-1" x-text="p.regular_price"></span>
+                                                            </p>
+                                                        </template>
+                                                        <template x-if="!(p.sale_price && p.regular_price)">
+                                                            <p class="mt-0.5 text-2xs font-bold text-ink" x-text="(p.price || '') + ' ' + (p.currency || 'RON')"></p>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
                                     </template>
-                                    <div x-text="m.content"></div>
-                                    <div class="text-2xs opacity-50 mt-1 mono" x-text="m.at_relative"></div>
+
+                                    {{-- quick reply chips (read-only) --}}
+                                    <template x-if="m.quick_replies && m.quick_replies.length">
+                                        <div class="flex flex-wrap gap-1" title="Sugestii afișate vizitatorului">
+                                            <template x-for="(c, i) in m.quick_replies.slice(0, 6)" :key="i">
+                                                <span class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-2xs"
+                                                      :class="c.action ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-white border-line text-inkSoft'">
+                                                    <span x-show="c.action" class="text-emerald-600">✓</span>
+                                                    <span x-text="(c.label || c.text || '').slice(0, 60)"></span>
+                                                </span>
+                                            </template>
+                                        </div>
+                                    </template>
+
+                                    {{-- timestamp + page context (mirrors widget signal) --}}
+                                    <div class="text-2xs opacity-50 mono flex items-center gap-1.5"
+                                         :class="m.role === 'user' ? 'flex-row-reverse' : ''">
+                                        <span x-text="m.at_relative"></span>
+                                        <template x-if="m.page_context && m.page_context.page_title">
+                                            <span class="text-line"
+                                                  :title="m.page_context.page_url || ''">
+                                                · <span x-text="m.page_context.page_title.slice(0, 30)"></span>
+                                            </span>
+                                        </template>
+                                    </div>
                                 </div>
                             </div>
                         </template>

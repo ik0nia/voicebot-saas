@@ -105,14 +105,27 @@ class OperatorConsoleController extends Controller
         $messages = $conversation->messages()
             ->orderBy('created_at')
             ->limit(100)
-            ->get(['id', 'direction', 'content', 'created_at', 'sent_at'])
-            ->map(fn ($m) => [
-                'id' => $m->id,
-                'role' => ($m->direction ?? 'inbound') === 'inbound' ? 'user' : 'bot',
-                'content' => $m->content,
-                'at' => $m->created_at->toIso8601String(),
-                'at_relative' => $m->created_at->diffForHumans(),
-            ]);
+            ->get(['id', 'direction', 'content', 'created_at', 'sent_at', 'metadata'])
+            ->map(function ($m) {
+                $meta = $m->metadata ?? [];
+                $direction = $m->direction ?? 'inbound';
+                $senderType = $meta['sender_type'] ?? null;
+
+                // Whitelist what we expose to the UI: anything operators
+                // need to see exactly the surface the visitor saw, but
+                // nothing AI-debug-only (intents/pipelines stay internal).
+                return [
+                    'id' => $m->id,
+                    'role' => $direction === 'inbound' ? 'user' : ($senderType === 'operator' ? 'operator' : 'bot'),
+                    'content' => $m->content,
+                    'at' => $m->created_at->toIso8601String(),
+                    'at_relative' => $m->created_at->diffForHumans(),
+                    'products' => $meta['products'] ?? null,
+                    'quick_replies' => $meta['quick_replies'] ?? null,
+                    'page_context' => $meta['page_context'] ?? null,
+                    'operator_name' => $meta['operator_name'] ?? null,
+                ];
+            });
 
         return response()->json([
             'conversation' => [

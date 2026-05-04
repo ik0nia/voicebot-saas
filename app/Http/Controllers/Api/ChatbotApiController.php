@@ -333,6 +333,20 @@ class ChatbotApiController extends Controller
             Log::debug('followup quick_replies skipped (non-stream)', ['err' => $e->getMessage()]);
         }
 
+        // Persist chips on the bot message so the operator inbox shows
+        // the same surface the visitor saw. Without this, only the live
+        // tab knows what was offered — operators reviewing yesterday's
+        // conversation see plain text.
+        if (!empty($quickReplies) && isset($botMessage)) {
+            try {
+                $existingMeta = $botMessage->metadata ?? [];
+                $existingMeta['quick_replies'] = $quickReplies;
+                $botMessage->update(['metadata' => $existingMeta]);
+            } catch (\Throwable $eMeta) {
+                // Don't fail a successful response over fidelity persistence.
+            }
+        }
+
         // P5.3: chip_shown event for conversion analytics (sync path).
         // Stream path fires its own; this keeps both in lockstep so
         // the admin chip-analytics dashboard isn't empty for tenants
@@ -860,6 +874,21 @@ class ChatbotApiController extends Controller
                     );
                     if (!empty($followups)) {
                         $this->sendSSE('quick_replies', ['replies' => $followups]);
+
+                        // Persist on the bot message so operators (and the
+                        // conversation detail view) see exactly the chips
+                        // the visitor was offered. SSE alone is ephemeral —
+                        // only the live tab knows what was shown.
+                        try {
+                            if (isset($botMessage)) {
+                                $existingMeta = $botMessage->metadata ?? [];
+                                $existingMeta['quick_replies'] = $followups;
+                                $botMessage->update(['metadata' => $existingMeta]);
+                            }
+                        } catch (\Throwable $eMeta) {
+                            // Stream success > analytics fidelity.
+                        }
+
                         // P5.3: chip_shown event for conversion analytics.
                         // One row per render, with state + labels; the click
                         // counterpart (quick_reply_clicked) fires from the
