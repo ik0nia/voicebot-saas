@@ -170,11 +170,17 @@
                         </template>
                         <template x-for="m in messages" :key="m.id">
                             <div :class="m.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
-                                <div class="max-w-[85%] flex flex-col gap-0.5"
+                                <div class="max-w-[70%] md:max-w-[60%] flex flex-col gap-0.5"
                                      :class="m.role === 'user' ? 'items-end' : 'items-start'">
-                                    {{-- main bubble --}}
-                                    <div :class="m.role === 'user' ? 'bg-coral text-cream' : (m.role === 'operator' ? 'bg-emerald-100 text-emerald-900 border border-emerald-200' : 'bg-cream text-ink')"
-                                         class="px-3 py-2 rounded-2xl text-sm whitespace-pre-wrap break-words">
+                                    {{-- main bubble — păstrăm rotunjirea
+                                         chat-style (rounded-2xl) doar pe
+                                         3 colțuri, al patrulea rămâne mai
+                                         pătrat pentru a sugera direcția
+                                         (cum e în Messenger/WhatsApp). --}}
+                                    <div :class="[
+                                            m.role === 'user' ? 'bg-coral text-cream rounded-tr-sm' : (m.role === 'operator' ? 'bg-emerald-100 text-emerald-900 border border-emerald-200 rounded-tl-sm' : 'bg-cream text-ink rounded-tl-sm')
+                                         ]"
+                                         class="px-3 py-1.5 rounded-2xl text-sm leading-snug whitespace-pre-wrap break-words">
                                         <template x-if="m.role === 'operator'">
                                             <div class="text-2xs opacity-70 mb-0.5 font-semibold">
                                                 👨‍💼 Operator<span x-show="m.operator_name" x-text="': ' + m.operator_name"></span>
