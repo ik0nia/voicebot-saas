@@ -56,13 +56,31 @@ class EscalationController extends Controller
             return response()->json(['error' => 'Conversație negăsită'], 404);
         }
 
-        // Set flag + reason
+        // Set flag + reason. Stop the bot immediately — the next inbound
+        // message must reach the operator queue without bot interleaving.
+        // Clearing assignee_bot_id is the canonical signal that the bot
+        // is "off duty" for this conversation; the chat pipeline checks
+        // needs_human + assignee_user_id and short-circuits AI generation.
         $metadata = $conv->metadata ?? [];
         $metadata['needs_human'] = true;
         $metadata['escalated_at'] = now()->toIso8601String();
         $metadata['escalation_reason'] = $validated['reason'] ?? 'visitor_request';
         $conv->metadata = $metadata;
+        $conv->assignee_bot_id = null;
         $conv->save();
+
+        // Insert a system message so the visitor immediately sees that
+        // their request was received — silence after pressing "talk to
+        // human" feels broken, even when the push went out 200ms ago.
+        \App\Models\Message::create([
+            'conversation_id' => $conv->id,
+            'direction' => 'outbound',
+            'content' => 'Am chemat un coleg, ajunge în câteva momente.',
+            'content_type' => 'text',
+            'metadata' => ['sender_type' => 'system', 'system_event' => 'escalation_acknowledged'],
+            'sent_at' => now(),
+        ]);
+        $conv->increment('messages_count');
 
         // Push la toți operatorii tenantului (excludem nimeni — toată echipa află)
         $sentTo = $push->sendToTenantUsers((int) $conv->tenant_id, [

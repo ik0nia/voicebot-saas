@@ -80,6 +80,29 @@ class ChannelMessageService
             'sent_at' => now(),
         ]);
 
+        // Bot pause when a human is expected. Two cases:
+        //   1. needs_human=true (visitor pressed "talk to operator" or
+        //      frustration auto-flagged) → bot stays silent so the
+        //      visitor's message gets through to the operator queue
+        //      without bot interleaving.
+        //   2. assignee_user_id set (an operator already took it) →
+        //      bot must NOT reply or it talks over the human.
+        // In both cases we insert a placeholder outbound message so the
+        // visitor sees activity ("Echipa vine în câteva momente" if
+        // pending; nothing if a human is already typing).
+        $conversation->refresh();
+        $needsHuman = (bool) (($conversation->metadata ?? [])['needs_human'] ?? false);
+        $hasOperator = !empty($conversation->assignee_user_id);
+
+        if ($needsHuman || $hasOperator) {
+            return [
+                'response' => '',
+                'conversation' => $conversation,
+                'bot_paused' => true,
+                'reason' => $hasOperator ? 'operator_active' : 'awaiting_operator',
+            ];
+        }
+
         // Generate AI response
         $response = $this->generateAiResponse($bot, $conversation, $messageText);
 
@@ -396,7 +419,12 @@ class ChannelMessageService
         $metadata['needs_human'] = true;
         $metadata['escalated_at'] = now()->toIso8601String();
         $metadata['escalation_reason'] = 'frustration_auto:' . implode(',', array_slice($signals, 0, 3));
-        $conversation->updateQuietly(['metadata' => $metadata]);
+        $conversation->updateQuietly([
+            'metadata' => $metadata,
+            // Bot off-duty so the next inbound goes to the operator queue
+            // without an AI reply layered on top.
+            'assignee_bot_id' => null,
+        ]);
 
         try {
             app(PushNotificationService::class)->sendToTenantUsers((int) $conversation->tenant_id, [
