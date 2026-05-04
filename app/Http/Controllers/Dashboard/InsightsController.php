@@ -28,6 +28,29 @@ use OpenAI\Laravel\Facades\OpenAI;
  */
 class InsightsController extends Controller
 {
+    /**
+     * GET — întoarce DOAR cache-ul existent, fără să genereze.
+     * Widget-ul îl apelează la load ca să afișeze insights anterioare
+     * fără să facă cost OpenAI la fiecare refresh.
+     */
+    public function peek(Request $request): JsonResponse
+    {
+        $tenant = auth()->user()->tenant;
+        if (!$tenant) {
+            return response()->json(['cached' => false, 'insights' => []]);
+        }
+        $cacheKey = 'tenant-insights:' . $tenant->id;
+        $cached = Cache::get($cacheKey);
+        if (!$cached) {
+            return response()->json(['cached' => false, 'insights' => []]);
+        }
+        return response()->json([
+            'cached' => true,
+            'generated_at' => $cached['generated_at'] ?? null,
+            'insights' => $cached['insights'] ?? [],
+        ]);
+    }
+
     public function generate(Request $request): JsonResponse
     {
         $tenant = auth()->user()->tenant;
@@ -82,7 +105,9 @@ class InsightsController extends Controller
                 'insights' => $insights,
                 'context_stats' => $context['totals'],
             ];
-            Cache::put($cacheKey, $payload, now()->addMinutes(30));
+            // Cache 6h — insights pe 7 zile nu se schimbă substanțial la 30min,
+            // și utilizatorii deschid dashboard-ul de mai multe ori pe zi.
+            Cache::put($cacheKey, $payload, now()->addHours(6));
             return response()->json(array_merge(['cached' => false], $payload));
         } catch (\Throwable $e) {
             \Log::warning('InsightsController failed', [

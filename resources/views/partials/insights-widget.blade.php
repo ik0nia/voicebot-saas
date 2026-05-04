@@ -81,10 +81,22 @@ function aiInsights() {
         relativeTime: '',
         error: null,
 
-        loadIfFresh() {
-            // Auto-load doar dacă există cache (cache HEAD check) — altfel
-            // userul apasă manual ca să nu burnem OpenAI la fiecare load.
-            // Skip auto-load: arătăm CTA „Generează" inițial.
+        async loadIfFresh() {
+            // Auto-load DOAR din cache prin GET — nu burnem OpenAI.
+            // Dacă e cache (6h), arătăm direct insights-urile; altfel CTA „Generează".
+            try {
+                const r = await fetch('/dashboard/insights', { headers: { 'Accept': 'application/json' } });
+                if (!r.ok) return;
+                const d = await r.json();
+                if (d.cached && Array.isArray(d.insights) && d.insights.length > 0) {
+                    this.insights = d.insights;
+                    this.cached = true;
+                    this.generatedAt = d.generated_at;
+                    this.computeRelative();
+                    this.loaded = true;
+                    setInterval(() => this.computeRelative(), 30000);
+                }
+            } catch (e) {}
         },
 
         async generate(force) {

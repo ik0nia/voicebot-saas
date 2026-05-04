@@ -505,7 +505,10 @@ Route::middleware('auth')
     ->get('/dashboard/live-activity', [\App\Http\Controllers\Dashboard\LiveActivityController::class, 'snapshot'])
     ->name('dashboard.live-activity');
 
-// AI Insights — POST endpoint, cache 30 min/tenant, force=1 pentru regenerare
+// AI Insights — GET peek (cache only), POST generate (cache 6h, force=1 pentru regenerare)
+Route::middleware('auth')
+    ->get('/dashboard/insights', [\App\Http\Controllers\Dashboard\InsightsController::class, 'peek'])
+    ->name('dashboard.insights.peek');
 Route::middleware('auth')
     ->post('/dashboard/insights', [\App\Http\Controllers\Dashboard\InsightsController::class, 'generate'])
     ->name('dashboard.insights.generate');
