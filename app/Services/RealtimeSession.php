@@ -961,8 +961,12 @@ class RealtimeSession
                 $name = trim($m[1]);
             }
 
-            // Only create lead if we have at least phone OR name
-            if (!$phone && !$name) return;
+            // Hard rule: voice lead needs a callback number. A name
+            // alone (regex matching „Sunt..." mid-sentence) was producing
+            // junk leads that no operator could call back; the leads
+            // dashboard ended up cluttered. Voice has no email column,
+            // so phone is the only reachability signal we have here.
+            if (!$phone) return;
 
             // Check for buying intent — includes direct intent AND confirmation after bot asked
             $buyingSignals = preg_match('/\b(comand|cumpăr|cumpar|vreau|doresc|interesat|intereseaz|ofert[aă]|livrare|livr[aă]m)\b/ui', $userText);
@@ -1006,8 +1010,10 @@ class RealtimeSession
                 'session_id' => $this->call->metadata['session_id'] ?? null,
                 'name' => $name,
                 'phone' => $phone,
-                'status' => $phone ? 'qualified' : 'partial',
-                'qualification_score' => ($phone ? 40 : 0) + ($name ? 20 : 0) + ($buyingSignals ? 20 : 0),
+                // Status simplifies to qualified — guard above guarantees
+                // $phone is set, so we always have reachability.
+                'status' => 'qualified',
+                'qualification_score' => 40 + ($name ? 20 : 0) + ($buyingSignals ? 20 : 0),
                 'capture_source' => 'voice',
                 'capture_reason' => 'voice_buying_intent',
                 'products_shown' => !empty($productsOfInterest) ? $productsOfInterest : null,

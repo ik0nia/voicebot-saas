@@ -81,21 +81,22 @@ final class ChatLeadExtractor
                 return;
             }
 
-            // Only-a-name requires context — either the bot was asking
-            // for contact info or the conversation already earned some
-            // lead score. Contact info alone is always enough.
+            // Hard rule: a lead requires actual reachability (email or
+            // phone). A name alone — even matched against a "mă numesc"
+            // pattern — isn't a lead; it's just a chat where someone
+            // said hello. Previously we created status=partial leads
+            // for name-only matches when the bot had asked for contact
+            // or lead_score was high; that produced unreachable junk
+            // ("cuie", "costyrile", "convins" — words mid-sentence that
+            // happened to follow a trigger word like "Sunt").
             $hasContact = $email !== null || $phone !== null;
-            $botAskedForContact = $hasContact
-                ? true
-                : $this->recentBotMessagesAskedForContact($conversation);
-
-            if (!$hasContact && !$botAskedForContact && ($conversation->lead_score ?? 0) < self::LEAD_SCORE_THRESHOLD_NAME_ONLY) {
+            if (!$hasContact) {
                 return;
             }
 
-            $score = ($email !== null ? self::SCORE_EMAIL : 0)
-                + ($phone !== null ? self::SCORE_PHONE : 0)
-                + ($name !== null ? self::SCORE_NAME : 0);
+            $score = self::SCORE_EMAIL * ($email !== null ? 1 : 0)
+                + self::SCORE_PHONE * ($phone !== null ? 1 : 0)
+                + self::SCORE_NAME * ($name !== null ? 1 : 0);
 
             $lead = Lead::create([
                 'tenant_id' => $bot->tenant_id,
@@ -104,12 +105,10 @@ final class ChatLeadExtractor
                 'name' => $name,
                 'email' => $email,
                 'phone' => $phone,
-                'status' => $hasContact ? 'qualified' : 'partial',
+                'status' => 'qualified',
                 'qualification_score' => $score,
                 'capture_source' => 'chat',
-                'capture_reason' => $hasContact
-                    ? 'contact_info_provided'
-                    : ($botAskedForContact ? 'bot_asked_contact' : 'high_lead_score'),
+                'capture_reason' => 'contact_info_provided',
                 'products_shown' => $this->productsShownFromMemory($conversation),
             ]);
 
