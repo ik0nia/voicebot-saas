@@ -72,24 +72,108 @@
     </div>
     @endif
 
-    {{-- Welcome — paleta v2: ink fundal cu coral accent, în loc de red gradient --}}
-    <div class="relative overflow-hidden rounded-card bg-ink px-6 py-6 shadow-md">
-        <div class="absolute inset-0 opacity-[0.06]" style="background-image: radial-gradient(rgba(255,255,255,0.7) 1px, transparent 1px); background-size: 6px 6px;"></div>
-        <div class="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-coral/15 blur-2xl"></div>
-        <div class="relative flex flex-wrap items-end justify-between gap-3">
-            <div>
-                @php $h = (int) now()->format('H'); @endphp
-                <h1 class="display text-3xl md:text-4xl font-semibold tracking-tight text-cream leading-none">
-                    {{ $h < 12 ? 'Bună dimineața' : ($h < 18 ? 'Bună ziua' : 'Bună seara') }}, {{ Str::before(auth()->user()->name, ' ') }}.
-                </h1>
-                <p class="mt-2 text-sm text-cream/70">Iată ce se întâmplă cu platforma ta.</p>
-            </div>
-            <span class="text-2xs uppercase tracking-wider text-cream/50 font-mono">{{ now()->translatedFormat('l, j F') }}</span>
-        </div>
-    </div>
+    {{-- HERO BRIEFING — element dominant. Ink + coral glow + grain.
+         Înlocuiește welcome + live-activity-widget + stat cards row.
+         Live counter & deltas se actualizează la 5s prin /dashboard/live-activity. --}}
+    @php
+        $todayConv = $chartData->get(6)['conversations'] ?? $conversationsToday;
+        $yesterdayConv = $chartData->get(5)['conversations'] ?? 0;
+        $delta = $yesterdayConv > 0 ? (int) round((($todayConv - $yesterdayConv) / $yesterdayConv) * 100) : ($todayConv > 0 ? 100 : 0);
+        $h = (int) now()->format('H');
+        $greeting = $h < 12 ? 'Bună dimineața' : ($h < 18 ? 'Bună ziua' : 'Bună seara');
+    @endphp
+    <section x-data="dashHero()" x-init="start()" class="relative overflow-hidden rounded-card bg-ink shadow-md">
+        <div class="absolute inset-0 opacity-[0.06] pointer-events-none" style="background-image: radial-gradient(rgba(255,255,255,0.7) 1px, transparent 1px); background-size: 6px 6px;"></div>
+        <div class="absolute -top-32 -right-24 w-[28rem] h-[28rem] rounded-full bg-coral/20 blur-3xl pointer-events-none"></div>
+        <div x-show="flash" x-transition.opacity.duration.700ms class="absolute inset-0 bg-coral/10 pointer-events-none"></div>
 
-    {{-- Live activity widget — pulse-update la 5s --}}
-    @include('partials.live-activity-widget')
+        <div class="relative grid lg:grid-cols-12 gap-6 lg:gap-8 p-6 md:p-8">
+            {{-- LEFT: greeting + narrative + live pill --}}
+            <div class="lg:col-span-5 flex flex-col justify-between">
+                <div>
+                    <p class="text-2xs uppercase tracking-widest text-cream/40 font-mono">{{ now()->translatedFormat('l, j F Y') }}</p>
+                    <h1 class="display text-3xl md:text-4xl font-semibold text-cream mt-3 leading-[1.1]">
+                        {{ $greeting }},<br>
+                        <span class="text-coral">{{ Str::before(auth()->user()->name, ' ') }}</span>.
+                    </h1>
+                    <p class="mt-3 text-sm text-cream/70 leading-relaxed max-w-md">
+                        @if($todayConv === 0)
+                            Nicio conversație azi încă. Agenții așteaptă vizitatori.
+                        @else
+                            <span class="text-cream font-medium">{{ $todayConv }}</span> {{ $todayConv === 1 ? 'conversație' : 'conversații' }} azi@if($delta !== 0 && $yesterdayConv > 0)<span class="{{ $delta > 0 ? 'text-emerald-300' : 'text-coral' }}"> ({{ $delta > 0 ? '+' : '' }}{{ $delta }}% vs ieri)</span>@endif@if($leadsToday > 0), <span class="text-cream font-medium">{{ $leadsToday }}</span> {{ $leadsToday === 1 ? 'lead nou' : 'leads noi' }}@endif.
+                        @endif
+                    </p>
+                </div>
+
+                <div class="mt-6 inline-flex items-center gap-3 rounded-full bg-cream/5 ring-1 ring-cream/10 px-4 py-2 self-start">
+                    <span class="relative flex h-2.5 w-2.5">
+                        <span class="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping"></span>
+                        <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400"></span>
+                    </span>
+                    <span class="text-xs text-cream/80 font-medium">
+                        Acum: <span class="text-cream font-semibold tabular-nums" x-text="liveActive">—</span> conv. active · <span class="text-cream font-semibold tabular-nums" x-text="liveMessages">—</span> mesaje/h
+                    </span>
+                </div>
+            </div>
+
+            {{-- CENTER: hero metric + sparkline --}}
+            <div class="lg:col-span-4 lg:border-l lg:border-cream/10 lg:pl-8">
+                <p class="text-2xs uppercase tracking-widest text-cream/50 font-semibold">Conversații azi</p>
+                <div class="flex items-baseline gap-3 mt-2 flex-wrap">
+                    <span class="display text-6xl md:text-7xl font-semibold text-cream tabular-nums leading-none">{{ $todayConv }}</span>
+                    @if($delta !== 0 && $yesterdayConv > 0)
+                        <span class="inline-flex items-center gap-1 text-sm font-medium {{ $delta > 0 ? 'text-emerald-300' : 'text-coral' }}">
+                            @if($delta > 0)
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 17l6-6 4 4 8-8m0 0v6m0-6h-6"/></svg>
+                            @else
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7l6 6 4-4 8 8m0 0v-6m0 6h-6"/></svg>
+                            @endif
+                            {{ abs($delta) }}%
+                        </span>
+                    @endif
+                </div>
+                <p class="text-xs text-cream/50 mt-1.5 mono">{{ $messagesToday }} mesaje · ultimele 7 zile</p>
+                <canvas id="heroSparkline" class="mt-4 w-full" style="height: 72px;"></canvas>
+            </div>
+
+            {{-- RIGHT: secondary metrics --}}
+            <div class="lg:col-span-3 grid grid-cols-2 gap-3 content-start">
+                <div class="rounded-xl bg-cream/5 ring-1 ring-cream/10 p-3 hover:bg-cream/10 transition-colors">
+                    <p class="text-2xs uppercase tracking-wider text-cream/50 font-medium">Leads</p>
+                    <p class="display text-2xl font-semibold text-cream mt-1 tabular-nums">{{ $leadsToday }}</p>
+                    <p class="text-2xs text-cream/40 mt-0.5">{{ $leadsNew }} necontactate</p>
+                </div>
+                <div class="rounded-xl bg-cream/5 ring-1 ring-cream/10 p-3 hover:bg-cream/10 transition-colors">
+                    <p class="text-2xs uppercase tracking-wider text-cream/50 font-medium">Programări</p>
+                    <p class="display text-2xl font-semibold text-cream mt-1 tabular-nums" x-text="liveCallbacks">—</p>
+                    <p class="text-2xs text-cream/40 mt-0.5">azi</p>
+                </div>
+                @if($hasVoice)
+                <div class="rounded-xl bg-cream/5 ring-1 ring-cream/10 p-3 hover:bg-cream/10 transition-colors">
+                    <p class="text-2xs uppercase tracking-wider text-cream/50 font-medium">Apeluri</p>
+                    <p class="display text-2xl font-semibold text-cream mt-1 tabular-nums">{{ $callsToday }}</p>
+                    <p class="text-2xs text-cream/40 mt-0.5">{{ number_format(round($minutesToday)) }} min</p>
+                </div>
+                <div class="rounded-xl bg-cream/5 ring-1 ring-cream/10 p-3 hover:bg-cream/10 transition-colors">
+                    <p class="text-2xs uppercase tracking-wider text-cream/50 font-medium">Agenți</p>
+                    <p class="display text-2xl font-semibold text-cream mt-1 tabular-nums">{{ $activeBots }}</p>
+                    <p class="text-2xs text-cream/40 mt-0.5">activi</p>
+                </div>
+                @else
+                <div class="rounded-xl bg-cream/5 ring-1 ring-cream/10 p-3 hover:bg-cream/10 transition-colors">
+                    <p class="text-2xs uppercase tracking-wider text-cream/50 font-medium">Agenți</p>
+                    <p class="display text-2xl font-semibold text-cream mt-1 tabular-nums">{{ $activeBots }}</p>
+                    <p class="text-2xs text-cream/40 mt-0.5">activi</p>
+                </div>
+                <div class="rounded-xl bg-cream/5 ring-1 ring-cream/10 p-3 hover:bg-cream/10 transition-colors">
+                    <p class="text-2xs uppercase tracking-wider text-cream/50 font-medium">Coș</p>
+                    <p class="display text-2xl font-semibold text-cream mt-1 tabular-nums">{{ $addToCartToday }}</p>
+                    <p class="text-2xs text-cream/40 mt-0.5">{{ $productClicksToday }} click-uri</p>
+                </div>
+                @endif
+            </div>
+        </div>
+    </section>
 
     {{-- AI Insights — analiză LLM a ultimei săptămâni --}}
     @include('partials.insights-widget')
@@ -104,39 +188,7 @@
     {{-- Action Items --}}
     @include('dashboard.partials.action-items')
 
-    {{-- Stat Cards --}}
-    @if($hasVoice)
-    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-    @else
-    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-    @endif
-        @php
-            $stats = [
-                ['label' => 'Agenți activi', 'value' => $activeBots, 'sub' => null, 'icon' => 'M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25zm.75-12h9v9h-9v-9z', 'cardBg' => 'bg-coralsoft border-coralsoft', 'iconBg' => 'bg-coralsoft text-coralh', 'valueColor' => 'text-coralh'],
-                ['label' => 'Conversatii', 'value' => $conversationsToday, 'sub' => $messagesToday . ' mesaje azi', 'icon' => 'M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z', 'cardBg' => 'bg-blue-50 border-blue-100', 'iconBg' => 'bg-blue-100 text-blue-700', 'valueColor' => 'text-blue-700'],
-                ['label' => 'Leads noi', 'value' => $leadsToday, 'sub' => $leadsNew . ' necontactate', 'icon' => 'M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z', 'cardBg' => 'bg-emerald-50 border-emerald-100', 'iconBg' => 'bg-emerald-100 text-emerald-700', 'valueColor' => 'text-emerald-700'],
-                ['label' => 'Adaugari cos', 'value' => $addToCartToday, 'sub' => $productClicksToday . ' clickuri', 'icon' => 'M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121 0 2.09-.773 2.34-1.87l1.5-6.69a1.5 1.5 0 00-1.467-1.837H5.106l-.382-1.428A1.5 1.5 0 003.636 1.5H2.25', 'cardBg' => 'bg-purple-50 border-purple-100', 'iconBg' => 'bg-purple-100 text-purple-700', 'valueColor' => 'text-purple-700'],
-            ];
-            if ($hasVoice) {
-                $stats[] = ['label' => 'Apeluri', 'value' => $callsToday, 'sub' => null, 'icon' => 'M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z', 'cardBg' => 'bg-amber-50 border-amber-100', 'iconBg' => 'bg-amber-100 text-amber-700', 'valueColor' => 'text-amber-700'];
-                $stats[] = ['label' => 'Minute', 'value' => number_format(round($minutesToday)), 'sub' => null, 'icon' => 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z', 'cardBg' => 'bg-sky-50 border-sky-100', 'iconBg' => 'bg-sky-100 text-sky-700', 'valueColor' => 'text-sky-700'];
-            }
-        @endphp
-        @foreach($stats as $stat)
-        <div class="rounded-xl border {{ $stat['cardBg'] }} p-4 shadow-sm transition-all hover:shadow-md">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-[11px] font-medium text-muted uppercase tracking-wider">{{ $stat['label'] }}</p>
-                    <p class="mt-1 text-3xl font-bold {{ $stat['valueColor'] }}">{{ $stat['value'] }}</p>
-                    @if($stat['sub'])<p class="text-[11px] text-muted mt-0.5">{{ $stat['sub'] }}</p>@endif
-                </div>
-                <div class="flex h-10 w-10 items-center justify-center rounded-lg {{ $stat['iconBg'] }}">
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $stat['icon'] }}" /></svg>
-                </div>
-            </div>
-        </div>
-        @endforeach
-    </div>
+    {{-- Stat cards row eliminat — toate metricile sunt acum în HERO BRIEFING (sus). --}}
 
     {{-- Bot Health Cards --}}
     @include('dashboard.partials.bot-health')
@@ -295,7 +347,78 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script>
+// Hero sparkline + live counters (Alpine component)
+function dashHero() {
+    return {
+        liveActive: '—',
+        liveMessages: '—',
+        liveCallbacks: '—',
+        liveCalls: '—',
+        flash: false,
+        prev: {},
+        timer: null,
+        start() {
+            this.refresh();
+            this.timer = setInterval(() => this.refresh(), 5000);
+        },
+        async refresh() {
+            try {
+                const r = await fetch('/dashboard/live-activity', { headers: { 'Accept': 'application/json' } });
+                if (!r.ok) return;
+                const d = await r.json();
+                const map = {
+                    liveActive:   d.active_conversations ?? 0,
+                    liveMessages: d.messages_last_hour   ?? 0,
+                    liveCallbacks:d.callbacks_today      ?? 0,
+                    liveCalls:    d.calls_in_progress    ?? 0,
+                };
+                let changed = false;
+                for (const k in map) {
+                    if (this.prev[k] !== undefined && this.prev[k] !== map[k]) changed = true;
+                    this.prev[k] = map[k];
+                    this[k] = String(map[k]);
+                }
+                if (changed) { this.flash = true; setTimeout(() => this.flash = false, 700); }
+            } catch (e) {}
+        },
+    };
+}
+
 document.addEventListener('DOMContentLoaded', function () {
+    // Hero sparkline — gradient area chart, minimal axes
+    var sparkCtx = document.getElementById('heroSparkline');
+    if (sparkCtx) {
+        var sparkData = @json($chartData->pluck('conversations'));
+        var grad = sparkCtx.getContext('2d').createLinearGradient(0, 0, 0, 72);
+        grad.addColorStop(0, 'rgba(220, 38, 38, 0.55)');
+        grad.addColorStop(1, 'rgba(220, 38, 38, 0)');
+        new Chart(sparkCtx, {
+            type: 'line',
+            data: {
+                labels: sparkData.map(function(_, i) { return i; }),
+                datasets: [{
+                    data: sparkData,
+                    borderColor: '#fda4af',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#fda4af',
+                    tension: 0.4,
+                    fill: true,
+                    backgroundColor: grad,
+                }],
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                scales: { x: { display: false }, y: { display: false, beginAtZero: true } },
+                animation: { duration: 800 },
+                elements: { line: { capBezierPoints: true } },
+            },
+        });
+    }
+
     var ctx = document.getElementById('activityChart');
     if (!ctx) return;
     new Chart(ctx, {
