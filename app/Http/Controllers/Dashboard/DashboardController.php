@@ -243,8 +243,19 @@ class DashboardController extends Controller
 
     private function tenantDashboard(Request $request)
     {
-        $tenant = auth()->user()->tenant;
-        $tenantId = $tenant?->id;
+        // Tenantul EFECTIV — respectă view-as (admin_as_tenant_id), altfel
+        // tenantul real al user-ului. Toate query-urile prin Eloquent care
+        // au TenantScope filtrează automat după sesiune; aici e doar pentru
+        // codul care lucrează cu raw DB::table sau care are nevoie de
+        // tenant_id explicit (chat_events, planUsage, onboarding.invite_team).
+        $user = auth()->user();
+        $isViewAll = $user->isSuperAdmin() && session('admin_view_all', false);
+        $impersonatedTenantId = (int) session('admin_as_tenant_id') ?: null;
+        $effectiveTenantId = $impersonatedTenantId ?: $user->tenant?->id;
+        $tenant = $impersonatedTenantId
+            ? \App\Models\Tenant::withoutGlobalScopes()->find($impersonatedTenantId)
+            : $user->tenant;
+        $tenantId = $effectiveTenantId;
 
         // TenantScope handles filtering automatically (including super admin toggle)
         // No need for manual withoutGlobalScopes — scope respects session('admin_view_all')
@@ -264,10 +275,11 @@ class DashboardController extends Controller
         $callsToday = Call::whereDate('created_at', today())->count();
         $minutesToday = Call::whereDate('created_at', today())->sum('duration_seconds') / 60;
 
-        // Commerce stats
+        // Commerce stats — chat_events nu are TenantScope (raw table),
+        // filtrăm explicit cu tenantul EFECTIV. View-all = fără filtru.
         $commerceBase = DB::table('chat_events');
-        if (!(auth()->user()->isSuperAdmin() && session('admin_view_all', false))) {
-            $commerceBase->where('tenant_id', $tenantId);
+        if (!$isViewAll && $effectiveTenantId) {
+            $commerceBase->where('tenant_id', $effectiveTenantId);
         }
         $addToCartToday = (clone $commerceBase)->where('event_name', 'add_to_cart_success')->whereDate('created_at', today())->count();
         $productClicksToday = (clone $commerceBase)->where('event_name', 'product_click')->whereDate('created_at', today())->count();
@@ -375,18 +387,22 @@ class DashboardController extends Controller
             ->pluck('count', 'pipeline_stage')
             ->toArray();
 
-        // ── Onboarding ──
+        // ── Onboarding ── (User nu are TenantScope global → filtrăm explicit pe tenantul efectiv)
         $onboarding = [
             'account' => true,
             'first_bot' => Bot::exists(),
             'phone_number' => PhoneNumber::exists(),
             'test_call' => Call::exists(),
-            'invite_team' => User::where('tenant_id', $tenant?->id)->count() > 1,
+            'invite_team' => $effectiveTenantId
+                ? User::where('tenant_id', $effectiveTenantId)->count() > 1
+                : false,
         ];
         $onboardingComplete = !in_array(false, $onboarding);
 
-        // ── Plan usage ──
-        $planUsage = $tenant ? app(PlanLimitService::class)->getUsageSummary($tenant) : null;
+        // ── Plan usage ── (când super-admin face view-as, arată planul tenantului impersonat, nu al lui)
+        $planUsage = ($tenant && !$isViewAll)
+            ? app(PlanLimitService::class)->getUsageSummary($tenant)
+            : null;
         $hasVoice = false;
         if ($planUsage) {
             $voiceLimit = $planUsage['voice_minutes']['limit'] ?? 0;

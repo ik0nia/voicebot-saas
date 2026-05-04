@@ -29,17 +29,47 @@ use OpenAI\Laravel\Facades\OpenAI;
 class InsightsController extends Controller
 {
     /**
+     * Cheia de cache trebuie să reflecte CONTEXTUL EFECTIV de vizualizare:
+     *  - super-admin cu admin_as_tenant_id → folosește acel tenant
+     *  - super-admin cu admin_view_all → cheie globală „all"
+     *  - altfel → tenantul user-ului
+     * Altfel insights pentru tenant X se cache-uiesc sub cheia user-ului
+     * și se afișează greșit când acesta schimbă view-as.
+     */
+    private function effectiveCacheKey(): ?string
+    {
+        if (session('admin_as_tenant_id')) {
+            return 'tenant-insights:' . (int) session('admin_as_tenant_id');
+        }
+        if (auth()->user()->isSuperAdmin() && session('admin_view_all', false)) {
+            return 'tenant-insights:all';
+        }
+        $tenant = auth()->user()->tenant;
+        return $tenant ? 'tenant-insights:' . $tenant->id : null;
+    }
+
+    private function effectiveTenantId(): ?int
+    {
+        if (session('admin_as_tenant_id')) {
+            return (int) session('admin_as_tenant_id');
+        }
+        if (auth()->user()->isSuperAdmin() && session('admin_view_all', false)) {
+            return null; // toate tenant-urile
+        }
+        return auth()->user()->tenant?->id;
+    }
+
+    /**
      * GET — întoarce DOAR cache-ul existent, fără să genereze.
      * Widget-ul îl apelează la load ca să afișeze insights anterioare
      * fără să facă cost OpenAI la fiecare refresh.
      */
     public function peek(Request $request): JsonResponse
     {
-        $tenant = auth()->user()->tenant;
-        if (!$tenant) {
+        $cacheKey = $this->effectiveCacheKey();
+        if (!$cacheKey) {
             return response()->json(['cached' => false, 'insights' => []]);
         }
-        $cacheKey = 'tenant-insights:' . $tenant->id;
         $cached = Cache::get($cacheKey);
         if (!$cached) {
             return response()->json(['cached' => false, 'insights' => []]);
@@ -53,13 +83,13 @@ class InsightsController extends Controller
 
     public function generate(Request $request): JsonResponse
     {
-        $tenant = auth()->user()->tenant;
-        if (!$tenant) {
-            return response()->json(['error' => 'Fără tenant — folosește view-as.'], 422);
+        $cacheKey = $this->effectiveCacheKey();
+        if (!$cacheKey) {
+            return response()->json(['error' => 'Fără context de tenant — folosește view-as.'], 422);
         }
+        $tenantIdForContext = $this->effectiveTenantId();
 
         $force = $request->boolean('force');
-        $cacheKey = 'tenant-insights:' . $tenant->id;
 
         if (!$force && ($cached = Cache::get($cacheKey))) {
             return response()->json([
@@ -69,8 +99,8 @@ class InsightsController extends Controller
             ]);
         }
 
-        // Throttle (suplimentar peste cache) — max 5 force/min/tenant
-        $rateKey = 'insights-force:' . $tenant->id;
+        // Throttle (suplimentar peste cache) — max 5 force/min/context
+        $rateKey = 'insights-force:' . $cacheKey;
         if ($force && RateLimiter::tooManyAttempts($rateKey, 5)) {
             return response()->json([
                 'error' => 'Prea multe regenerări — așteaptă un minut.',
@@ -80,7 +110,7 @@ class InsightsController extends Controller
             RateLimiter::hit($rateKey, 60);
         }
 
-        $context = $this->collectContext($tenant->id);
+        $context = $this->collectContext($tenantIdForContext);
 
         // Skip OpenAI complet dacă nu avem date suficiente
         if ($context['totals']['conversations'] < 3 && $context['totals']['leads'] < 1) {
@@ -111,7 +141,8 @@ class InsightsController extends Controller
             return response()->json(array_merge(['cached' => false], $payload));
         } catch (\Throwable $e) {
             \Log::warning('InsightsController failed', [
-                'tenant_id' => $tenant->id,
+                'cache_key' => $cacheKey,
+                'tenant_id' => $tenantIdForContext,
                 'error' => $e->getMessage(),
             ]);
             return response()->json([
@@ -122,8 +153,11 @@ class InsightsController extends Controller
 
     /**
      * Adună context numeric + samples pentru LLM.
+     * Nu folosim explicit $tenantId — toate query-urile aici trec prin
+     * TenantScope care citește session (admin_as_tenant_id / admin_view_all).
+     * Parametrul rămâne pentru telemetrie/log, nu pentru filtrare.
      */
-    private function collectContext(int $tenantId): array
+    private function collectContext(?int $tenantId): array
     {
         $from = now()->subDays(7);
 

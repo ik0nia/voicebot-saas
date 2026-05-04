@@ -21,9 +21,14 @@ class LiveActivityController extends Controller
 {
     public function snapshot(): JsonResponse
     {
-        $tenant = auth()->user()->tenant;
+        // Avem context de tenant dacă: user are tenant propriu, super-admin
+        // face view-as un tenant, sau super-admin e în view-all (agregat).
+        $user = auth()->user();
+        $hasTenantContext = $user->tenant
+            || session('admin_as_tenant_id')
+            || ($user->isSuperAdmin() && session('admin_view_all', false));
 
-        if (!$tenant) {
+        if (!$hasTenantContext) {
             return response()->json([
                 'no_tenant' => true,
                 'now' => now()->toIso8601String(),
