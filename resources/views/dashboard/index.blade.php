@@ -193,44 +193,65 @@
     {{-- Bot Health Cards --}}
     @include('dashboard.partials.bot-health')
 
-    {{-- Plan Usage --}}
+    {{-- Plan usage — strip cu gauges circulare, gradient cream→coral, CTA mare --}}
     @if($planUsage)
-    <div class="card p-5">
-        <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center gap-2">
-                <h3 class="display text-base font-semibold text-ink">Utilizare plan</h3>
-                <span class="inline-flex items-center rounded-pill px-2.5 py-0.5 text-2xs font-semibold bg-coralsoft text-coralh ring-1 ring-coral/20">{{ $planUsage['plan']['name'] }}</span>
-            </div>
-            <a href="{{ route('dashboard.billing.index') }}" class="text-xs font-medium text-coralh hover:underline">Upgrade &rarr;</a>
-        </div>
-        @if($hasVoice)
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        @else
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        @endif
-            @foreach([
-                ['label' => 'Mesaje', 'data' => $planUsage['messages'], 'barColor' => 'bg-blue-500'],
-                ['label' => 'Agenți AI', 'data' => $planUsage['bots'], 'barColor' => 'bg-red-500'],
-            ] as $usage)
-            <div>
-                <div class="flex items-center justify-between text-xs mb-1.5">
-                    <span class="text-muted font-medium">{{ $usage['label'] }}</span>
-                    <span class="{{ $usage['data']['percent'] >= 90 ? 'text-coral font-bold' : 'text-muted font-medium' }}">{{ number_format($usage['data']['used']) }}/{{ number_format($usage['data']['limit']) }}</span>
+    @php
+        $usageItems = [
+            ['label' => 'Mesaje', 'data' => $planUsage['messages']],
+            ['label' => 'Agenți', 'data' => $planUsage['bots']],
+        ];
+        if ($hasVoice) {
+            $usageItems[] = ['label' => 'Min. voce', 'data' => $planUsage['voice_minutes']];
+        }
+    @endphp
+    <section class="relative overflow-hidden rounded-card border border-coral/20 bg-gradient-to-br from-coralsoft via-cream to-white p-5 md:p-6 shadow-sm">
+        <div class="absolute -bottom-16 -right-16 w-56 h-56 rounded-full bg-coral/8 blur-3xl pointer-events-none"></div>
+        <div class="relative flex flex-col lg:flex-row lg:items-center gap-5 lg:gap-8">
+            {{-- Plan label --}}
+            <div class="flex items-center gap-3 lg:shrink-0">
+                <div class="hidden md:flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-coral/15">
+                    <svg class="w-5 h-5 text-coralh" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                 </div>
-                <div class="h-2.5 w-full rounded-full bg-cream"><div class="h-2.5 rounded-full transition-all {{ $usage['data']['percent'] >= 90 ? 'bg-red-500' : ($usage['data']['percent'] >= 70 ? 'bg-amber-500' : 'bg-emerald-500') }}" style="width: {{ min($usage['data']['percent'], 100) }}%"></div></div>
-            </div>
-            @endforeach
-            @if($hasVoice)
-            <div>
-                <div class="flex items-center justify-between text-xs mb-1.5">
-                    <span class="text-muted font-medium">Minute voce</span>
-                    <span class="text-muted font-medium">{{ number_format($planUsage['voice_minutes']['used']) }}/{{ $planUsage['voice_minutes']['limit'] == -1 ? '&infin;' : number_format($planUsage['voice_minutes']['limit']) }}</span>
+                <div>
+                    <p class="text-2xs uppercase tracking-widest text-muted font-semibold">Plan curent</p>
+                    <h3 class="display text-xl md:text-2xl font-semibold text-ink leading-tight mt-0.5">{{ $planUsage['plan']['name'] }}</h3>
                 </div>
-                <div class="h-2.5 w-full rounded-full bg-cream"><div class="h-2.5 rounded-full bg-purple-500 transition-all" style="width: {{ min($planUsage['voice_minutes']['percent'], 100) }}%"></div></div>
             </div>
-            @endif
+
+            {{-- Gauges --}}
+            <div class="grid grid-cols-{{ count($usageItems) }} gap-4 md:gap-6 flex-1 lg:border-l lg:border-coral/15 lg:pl-8">
+                @foreach($usageItems as $u)
+                @php
+                    $pct = (int) min(100, $u['data']['percent']);
+                    $isInf = ($u['data']['limit'] ?? 0) === -1;
+                    $col = $isInf ? 'text-emerald-600' : ($pct >= 90 ? 'text-coral' : ($pct >= 70 ? 'text-amber-600' : 'text-emerald-600'));
+                @endphp
+                <div class="flex items-center gap-3">
+                    <div class="relative w-12 h-12 shrink-0">
+                        <svg class="w-12 h-12 -rotate-90" viewBox="0 0 36 36">
+                            <circle cx="18" cy="18" r="15.5" fill="none" stroke="#e7e5e4" stroke-width="3"/>
+                            <circle cx="18" cy="18" r="15.5" fill="none" stroke="currentColor" class="{{ $col }} transition-all" stroke-width="3"
+                                    stroke-dasharray="{{ $isInf ? 100 : $pct }} {{ $isInf ? 0 : 100 - $pct }}" stroke-linecap="round"/>
+                        </svg>
+                        <span class="absolute inset-0 flex items-center justify-center text-[10px] font-bold {{ $col }} font-mono">{{ $isInf ? '∞' : $pct.'%' }}</span>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-2xs uppercase tracking-wider text-muted font-medium">{{ $u['label'] }}</p>
+                        <p class="text-sm font-semibold text-ink mt-0.5 font-mono whitespace-nowrap">
+                            {{ number_format($u['data']['used']) }}<span class="text-muted">/{{ $isInf ? '∞' : number_format($u['data']['limit']) }}</span>
+                        </p>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+
+            {{-- Upgrade CTA --}}
+            <a href="{{ route('dashboard.billing.index') }}" class="inline-flex items-center justify-center gap-2 rounded-pill px-5 py-2.5 bg-ink text-cream text-sm font-semibold shadow-sm hover:bg-ink/85 transition-colors lg:shrink-0">
+                Upgrade plan
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+            </a>
         </div>
-    </div>
+    </section>
     @endif
 
     {{-- ACTIVITY CHART — full-width gradient area, fără card-wrapper banal --}}
@@ -363,12 +384,13 @@
         </div>
     </div>
 
-    {{-- Quick Actions --}}
+    {{-- Quick Actions — afișate doar dacă onboarding incomplet (filler dacă e gata). --}}
+    @if(!$onboardingComplete)
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
         @foreach([
-            ['href' => '/dashboard/boti/create', 'title' => 'Creeaza un agent AI', 'desc' => 'Agent AI nou cu personalitate custom.', 'color' => 'primary', 'icon' => 'M12 4.5v15m7.5-7.5h-15'],
-            ['href' => '/dashboard/leads', 'title' => 'Gestioneaza leads', 'desc' => 'Lead-uri capturate din conversatii.', 'color' => 'emerald', 'icon' => 'M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z'],
-            ['href' => '/dashboard/echipa', 'title' => 'Invita un coleg', 'desc' => 'Adauga membri in echipa.', 'color' => 'sky', 'icon' => 'M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z'],
+            ['href' => '/dashboard/boti/create', 'title' => 'Creează un agent AI', 'desc' => 'Agent AI nou cu personalitate custom.', 'color' => 'primary', 'icon' => 'M12 4.5v15m7.5-7.5h-15'],
+            ['href' => '/dashboard/leads', 'title' => 'Gestionează leads', 'desc' => 'Lead-uri capturate din conversații.', 'color' => 'emerald', 'icon' => 'M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z'],
+            ['href' => '/dashboard/echipa', 'title' => 'Invită un coleg', 'desc' => 'Adaugă membri în echipă.', 'color' => 'sky', 'icon' => 'M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z'],
         ] as $action)
         @php
             $cardStyles = [
@@ -390,6 +412,7 @@
         </a>
         @endforeach
     </div>
+    @endif
 </div>
 @endsection
 
