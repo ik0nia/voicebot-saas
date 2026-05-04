@@ -157,14 +157,20 @@
                                         };
                                         $ctaLabel = 'Setări';
                                     } elseif ($allowed) {
+                                        // FB Messenger + Instagram DM share the same Meta OAuth flow.
+                                        // The new flow lists pages, lets user pick which to attach,
+                                        // and exchanges tokens server-side — no more manual page_id +
+                                        // access_token paste from Meta Business Manager.
                                         $cta = match($type) {
                                             Channel::TYPE_WHATSAPP => route('dashboard.bots.channels.whatsapp.connect', $bot),
-                                            Channel::TYPE_FACEBOOK_MESSENGER => route('dashboard.bots.channels.facebook.connect', $bot),
-                                            Channel::TYPE_INSTAGRAM_DM => route('dashboard.bots.channels.instagram.connect', $bot),
+                                            Channel::TYPE_FACEBOOK_MESSENGER,
+                                            Channel::TYPE_INSTAGRAM_DM => route('dashboard.bots.channels.meta.connect', $bot),
                                             Channel::TYPE_VOICE => route('dashboard.numbers.index'),
                                             default => route('dashboard.bots.channels.index', $bot),
                                         };
-                                        $ctaLabel = 'Conectează →';
+                                        $ctaLabel = in_array($type, [Channel::TYPE_FACEBOOK_MESSENGER, Channel::TYPE_INSTAGRAM_DM], true)
+                                            ? 'Conectează cu Facebook →'
+                                            : 'Conectează →';
                                     } else {
                                         $cta = route('dashboard.billing.index');
                                         $ctaLabel = 'Upgrade plan';

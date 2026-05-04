@@ -988,6 +988,23 @@ Route::post('/webhook/meta/data-deletion', [\App\Http\Controllers\Webhook\MetaDa
     ->middleware('throttle:60,1')
     ->name('webhook.meta.data-deletion');
 
+// OAuth callback Meta hits after the user authorizes. Stays outside
+// the auth middleware briefly so the redirect from Meta lands cleanly
+// even if the session cookie is borderline; the controller pulls the
+// state nonce from cache and re-verifies user_id before doing anything.
+Route::get('/oauth/meta/callback', [\App\Http\Controllers\Auth\MetaOAuthController::class, 'callback'])
+    ->middleware('auth')
+    ->name('oauth.meta.callback');
+
+// Per-bot OAuth init + page-pick attach. Auth + tenant guard inside
+// the controller (via Bot route binding which respects BelongsToTenant).
+Route::middleware('auth')->prefix('dashboard/agenti/{bot}/canale/meta')->group(function () {
+    Route::get('/connect', [\App\Http\Controllers\Auth\MetaOAuthController::class, 'connect'])
+        ->name('dashboard.bots.channels.meta.connect');
+    Route::post('/attach', [\App\Http\Controllers\Auth\MetaOAuthController::class, 'attach'])
+        ->name('dashboard.bots.channels.meta.attach');
+});
+
 // Public status page Meta sends the user to after revocation. Users
 // (and Meta itself) read this to confirm the deletion completed.
 Route::get('/legal/data-deletion', function (\Illuminate\Http\Request $request) {
