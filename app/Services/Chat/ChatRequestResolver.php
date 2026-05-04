@@ -44,6 +44,10 @@ final class ChatRequestResolver
         'message' => 'required|string|max:2000',
         'session_id' => 'nullable|string|max:255',
         'session_token' => 'nullable|string|max:255',
+        // visitor_id: UUID persistent în localStorage (cross-session identity).
+        // Widget-ul îl generează la prima vizită și NU expiră. Folosit pentru
+        // a lega conversații multiple ale aceluiași vizitator în analytics.
+        'visitor_id' => 'nullable|string|max:64',
         'prechat_name' => 'nullable|string|max:255',
         'prechat_email' => 'nullable|string|max:255',
         'prechat_phone' => 'nullable|string|max:255',
@@ -81,7 +85,11 @@ final class ChatRequestResolver
 
     private const RATE_LIMIT_MAX = 30;
     private const RATE_LIMIT_DECAY = 60;
-    private const SESSION_INACTIVE_MINUTES = 10;
+    // 6h: dimineața + după-amiaza = aceeași conversație, separat de „azi vs ieri".
+    // Înainte era 10min — caz real #668 (35min user-thinking) → expirat
+    // și creată conversație nouă fără context. Industrie: Intercom/Drift 30min,
+    // Chatwoot 60min, Crisp 24h, Tidio 7 zile.
+    private const SESSION_INACTIVE_MINUTES = 360;
     private const CHANNEL_CACHE_TTL = 1800;
 
     public function __construct(
@@ -270,12 +278,23 @@ final class ChatRequestResolver
 
         $sessionId = Str::uuid()->toString();
         $sessionToken = hash_hmac('sha256', $sessionId . $channelId, config('app.key'));
+        // contact_identifier: prioritizează headerul real al Cloudflare,
+        // apoi primul IP din X-Forwarded-For, apoi $request->ip() ca fallback.
+        // $request->ip() singur întoarce IP-ul Cloudflare (162.158.x.x) care
+        // variază între request-uri pentru același user → inutil pentru
+        // identificare/abuse-detection.
+        $cfIp = $request->header('CF-Connecting-IP');
+        $xff = $request->header('X-Forwarded-For');
+        $realIp = $cfIp
+            ?: ($xff ? trim(explode(',', $xff)[0]) : null)
+            ?: $request->ip();
+
         $conversation = Conversation::create([
             'tenant_id' => $bot->tenant_id,
             'bot_id' => $bot->id,
             'channel_id' => $channel->id,
             'external_conversation_id' => $sessionId,
-            'contact_identifier' => $request->ip(),
+            'contact_identifier' => $realIp,
             'visitor_id' => $request->input('visitor_id'),
             'status' => 'active',
             'metadata' => [

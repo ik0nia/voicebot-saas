@@ -261,8 +261,35 @@
     var LAST_ACTIVITY_KEY = 'sambla_chat_activity_' + config.channelId;
     var OFFLINE_QUEUE_KEY = 'sambla_chat_offline_' + config.channelId;
     var OPEN_STATE_KEY = 'sambla_chat_open_' + config.channelId;
-    var SESSION_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
+    var VISITOR_ID_KEY = 'sambla_visitor_id_' + config.channelId;
+    var SESSION_TIMEOUT_MS = 6 * 60 * 60 * 1000; // 6 hours — match server SESSION_INACTIVE_MINUTES
     var PRECHAT_KEY = 'sambla_prechat_' + config.channelId;
+
+    // Visitor ID: UUID persistent fără TTL. Generat la prima vizită,
+    // păstrat peste sesiuni. Permite analytics „același vizitator a avut
+    // N conversații" și identitate stabilă cross-session pentru web widget
+    // (echivalent cu psid pe Meta).
+    function generateUuid() {
+        if (window.crypto && window.crypto.randomUUID) {
+            try { return window.crypto.randomUUID(); } catch(e) {}
+        }
+        // RFC4122 v4 fallback
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0;
+            var v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+    function getVisitorId() {
+        try {
+            var id = localStorage.getItem(VISITOR_ID_KEY);
+            if (!id) {
+                id = generateUuid();
+                localStorage.setItem(VISITOR_ID_KEY, id);
+            }
+            return id;
+        } catch(e) { return ''; }
+    }
 
     function getSessionId() {
         try { return localStorage.getItem(SESSION_KEY) || ''; } catch(e) { return ''; }
@@ -1135,7 +1162,7 @@
                                 message_id: messageId,
                                 conversation_id: getConversationId(),
                                 rating: rating,
-                                session_id: getSessionId(),
+                                session_id: getSessionId(), visitor_id: getVisitorId(),
                                 session_token: getSessionToken()
                             })
                         });
@@ -1305,7 +1332,7 @@
                                 message_id: messageId,
                                 conversation_id: getConversationId(),
                                 rating: 1,
-                                session_id: getSessionId(),
+                                session_id: getSessionId(), visitor_id: getVisitorId(),
                                 session_token: getSessionToken()
                             })
                         });
@@ -1327,7 +1354,7 @@
                                 message_id: messageId,
                                 conversation_id: getConversationId(),
                                 rating: -1,
-                                session_id: getSessionId(),
+                                session_id: getSessionId(), visitor_id: getVisitorId(),
                                 session_token: getSessionToken()
                             })
                         });
@@ -1382,7 +1409,7 @@
                 _eventQueue.push({
                     event_name: eventName,
                     properties: props,
-                    session_id: getSessionId(),
+                    session_id: getSessionId(), visitor_id: getVisitorId(),
                     visitor_id: _getVisitorId(),
                     conversation_id: getConversationId(),
                     idempotency_key: getSessionId() + ':' + eventName + ':' + (productId || '') + ':' + Math.floor(Date.now() / 60000),
@@ -1531,7 +1558,7 @@
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         rating: ratingValue,
-                        session_id: getSessionId(),
+                        session_id: getSessionId(), visitor_id: getVisitorId(),
                         conversation_id: getConversationId()
                     })
                 }).catch(function() {});
@@ -1927,7 +1954,7 @@
 
             var payload = {
                 message: text,
-                session_id: getSessionId(),
+                session_id: getSessionId(), visitor_id: getVisitorId(),
                 session_token: getSessionToken(),
                 page_context: getPageContext()
             };
@@ -2008,7 +2035,7 @@
 
             var payload = {
                 message: text,
-                session_id: getSessionId(),
+                session_id: getSessionId(), visitor_id: getVisitorId(),
                 session_token: getSessionToken(),
                 page_context: getPageContext()
             };
@@ -2732,7 +2759,7 @@
                 request_id: requestId,
                 product_id: product.id,
                 quantity: 1,
-                session_id: getSessionId(),
+                session_id: getSessionId(), visitor_id: getVisitorId(),
                 bot_id: undefined, // will be resolved by plugin from config
                 visitor_id: _getVisitorId()
             };
@@ -2847,7 +2874,7 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                 body: JSON.stringify({
-                    session_id: getSessionId(),
+                    session_id: getSessionId(), visitor_id: getVisitorId(),
                     reason: (reason || 'visitor_request').substring(0, 200)
                 })
             }).then(function(resp) {
