@@ -139,7 +139,9 @@
                     @endif
                 </div>
                 <p class="text-xs text-cream/50 mt-1.5 mono">{{ $messagesToday }} mesaje · ultimele 7 zile</p>
-                <canvas id="heroSparkline" class="mt-4 w-full" style="height: 72px;"></canvas>
+                <div class="mt-4 w-full" style="height: 72px; max-height: 72px;">
+                    <canvas id="heroSparkline"></canvas>
+                </div>
             </div>
 
             {{-- RIGHT: secondary metrics --}}
