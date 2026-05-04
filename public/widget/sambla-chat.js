@@ -522,6 +522,14 @@
             .sambla-header-human:hover, .sambla-header-human:active { background: rgba(255,255,255,0.3); }\
             .sambla-header-human[disabled] { opacity: 0.45; cursor: default; }\
             .sambla-header-human svg { width: 18px; height: 18px; }\
+            .sambla-header-newchat {\
+                background: rgba(255,255,255,0.15); border: none; color: #fff; width: 32px; height: 32px;\
+                border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;\
+                transition: background 0.2s; flex-shrink: 0; padding: 0; margin-left: 6px;\
+                position: relative; z-index: 2; -webkit-tap-highlight-color: transparent;\
+            }\
+            .sambla-header-newchat:hover, .sambla-header-newchat:active { background: rgba(255,255,255,0.3); }\
+            .sambla-header-newchat svg { width: 16px; height: 16px; }\
             .sambla-escalation-banner {\
                 margin: 8px 14px 0; padding: 10px 12px; border-radius: 10px;\
                 background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46;\
@@ -817,6 +825,13 @@
                             <path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>\
                         </svg>\
                     </button>\
+                    <button class="sambla-header-newchat" aria-label="' + t('newChat') + '" title="' + t('newChat') + '">\
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">\
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h10"/>\
+                            <line x1="18" y1="3" x2="18" y2="9"/>\
+                            <line x1="15" y1="6" x2="21" y2="6"/>\
+                        </svg>\
+                    </button>\
                     <button class="sambla-header-close" aria-label="' + t('closeChat') + '">\
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">\
                             <path d="M18 6L6 18M6 6l12 12"/>\
@@ -850,6 +865,7 @@
         var headerName = root.querySelector('.sambla-header-name');
         var headerStatus = root.querySelector('.sambla-header-status');
         var humanBtn = root.querySelector('.sambla-header-human');
+        var newChatBtn = root.querySelector('.sambla-header-newchat');
         var offlineBanner = root.querySelector('.sambla-offline-banner');
 
         // Escalation cooldown — once visitor asks for an operator we don't
@@ -2866,6 +2882,22 @@
             humanBtn.addEventListener('click', function(e) {
                 e.stopPropagation();
                 requestEscalation('visitor_button');
+            });
+        }
+
+        // „Conversație nouă" — accesibil oricând din header. Util pentru
+        // vizitatori care vor să schimbe subiectul curat sau care au
+        // semnat in/out și vor să nu rămână cu istoric vechi. Click →
+        // confirm minim, apoi clearSession + greeting fresh.
+        if (newChatBtn) {
+            newChatBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (messages.length > 1) {
+                    if (!confirm('Începi o conversație nouă? Mesajele anterioare vor fi șterse din chat.')) {
+                        return;
+                    }
+                }
+                startNewChat();
             });
         }
 
