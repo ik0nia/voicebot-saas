@@ -4,7 +4,7 @@
 //   - /dashboard/operator nav: network-first cu fallback la cache
 //   - Push notifications: handle push event + click → focus tab existent
 
-const VERSION = 'sambla-operator-v8';
+const VERSION = 'sambla-operator-v9';
 const STATIC_CACHE = `${VERSION}-static`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 

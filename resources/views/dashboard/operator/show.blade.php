@@ -182,7 +182,7 @@
                                             m.role === 'user' ? 'bg-coral text-cream rounded-tr-sm' : (m.role === 'operator' ? 'bg-emerald-100 text-emerald-900 border border-emerald-200 rounded-tl-sm' : 'bg-cream text-ink rounded-tl-sm')
                                          ]"
                                          :title="m.at_relative"
-                                         class="px-3 py-1.5 rounded-2xl text-sm leading-snug whitespace-pre-wrap break-words">
+                                         class="px-3 py-1.5 rounded-2xl text-sm leading-snug whitespace-pre-line break-words">
                                         <template x-if="m.role === 'operator'">
                                             <div class="text-2xs opacity-70 mb-0.5 font-semibold">
                                                 👨‍💼 Operator<span x-show="m.operator_name" x-text="': ' + m.operator_name"></span>
