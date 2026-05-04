@@ -124,8 +124,22 @@
                 <label class="block text-xs font-medium text-muted mb-1">Status</label>
                 <select name="status" class="w-full rounded-lg border border-line px-3 py-2 text-sm">
                     <option value="">— oricare —</option>
-                    @foreach(['active', 'completed', 'failed', 'busy', 'no_answer', 'canceled', 'abandoned'] as $s)
-                        <option value="{{ $s }}" {{ request('status') === $s ? 'selected' : '' }}>{{ ucfirst(str_replace('_', ' ', $s)) }}</option>
+                    @php
+                        // Status enum este același pe Conversation și Call.
+                        // Eticheta rămâne în RO pe UI; valoarea trimisă e
+                        // canonică (engleză) ca să meargă cu where('status').
+                        $statusLabels = [
+                            'active'    => 'Activă',
+                            'completed' => 'Finalizată',
+                            'failed'    => 'Eșuată',
+                            'busy'      => 'Ocupat',
+                            'no_answer' => 'Fără răspuns',
+                            'canceled'  => 'Anulată',
+                            'abandoned' => 'Abandonată',
+                        ];
+                    @endphp
+                    @foreach($statusLabels as $value => $label)
+                        <option value="{{ $value }}" {{ request('status') === $value ? 'selected' : '' }}>{{ $label }}</option>
                     @endforeach
                 </select>
             </div>
