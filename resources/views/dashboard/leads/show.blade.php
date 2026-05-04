@@ -9,7 +9,7 @@
 @section('content')
 @if(session('success'))<div class="mb-4 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 text-sm text-emerald-800">✓ {{ session('success') }}</div>@endif
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
     {{-- Left column --}}
     <div class="lg:col-span-1 space-y-4">
 

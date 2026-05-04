@@ -124,7 +124,7 @@
                 <div class="mt-2">{!! $spark($trend, 'conversations', '#6366f1') !!}</div>
             </div>
         </div>
-        <p class="text-xs text-muted mb-6">Linia arată tendința ultimele 7 zile; cifra mare e de azi.</p>
+        <p class="text-xs text-muted mb-4">Linia arată tendința ultimele 7 zile; cifra mare e de azi.</p>
 
         @if($archetype === 'none')
             <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-900">

@@ -5,7 +5,7 @@
 @endsection
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-4">
 
     {{-- Pipeline vizual --}}
     <div class="bg-white rounded-xl border border-line p-5">
@@ -118,7 +118,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="9" class="px-4 py-12">
+                    <td colspan="9" class="px-4 py-8">
                         <div class="text-center max-w-md mx-auto">
                             <div class="w-12 h-12 rounded-2xl bg-coralsoft text-coralh mx-auto mb-3 flex items-center justify-center">
                                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>

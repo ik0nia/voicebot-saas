@@ -2,7 +2,7 @@
 @section('title', 'Programări')
 @section('breadcrumb')<span class="text-ink font-medium">Programări Callback</span>@endsection
 @section('content')
-<div class="space-y-6">
+<div class="space-y-4">
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div class="bg-amber-50 rounded-xl border border-amber-200 p-4">
             <p class="text-xs text-amber-600">În așteptare</p>
@@ -56,7 +56,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="9" class="px-4 py-12">
+                    <td colspan="9" class="px-4 py-8">
                         <div class="text-center max-w-md mx-auto">
                             <div class="w-12 h-12 rounded-2xl bg-coralsoft text-coralh mx-auto mb-3 flex items-center justify-center">
                                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path d="M8 7V3m8 4V3M5 11h14M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>

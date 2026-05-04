@@ -63,11 +63,11 @@
 @endphp
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-5">
 
     <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
-            <h1 class="display text-3xl md:text-4xl font-semibold tracking-tight text-ink leading-none">Canale</h1>
+            <h1 class="display text-3xl font-semibold tracking-tight text-ink leading-none">Canale</h1>
             <p class="mt-2 text-sm text-muted">Fiecare canal se conectează la <strong>un agent anume</strong> — un agent poate avea WhatsApp, alt agent Facebook, etc. Aici vezi statusul tuturor într-un singur loc.</p>
         </div>
     </div>

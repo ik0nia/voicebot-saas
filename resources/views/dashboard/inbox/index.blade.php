@@ -268,7 +268,7 @@
                                 @if($isCall)
                                     <span class="text-xs">
                                         {{ $duration ?? '—' }}
-                                        @if($item->cost_cents !== null && $item->cost_cents > 0)
+                                        @if($item->cost_cents !== null && $item->cost_cents > 0 && auth()->user()->isSuperAdmin())
                                             <span class="text-line ml-1">· {{ number_format($item->cost_cents / 100, 2) }} EUR</span>
                                         @endif
                                         @if($item->recording_url)

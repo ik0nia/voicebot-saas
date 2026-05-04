@@ -8,7 +8,7 @@
 @endsection
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-4">
 
     {{-- Page Header --}}
     <div>
@@ -33,13 +33,13 @@
     @endif
 
     @if(!$tenant || !$usage)
-        <div class="rounded-xl border border-line bg-white p-8 text-center">
+        <div class="rounded-xl border border-line bg-white p-4 text-center">
             <p class="text-muted">Nu există informații de facturare disponibile.</p>
         </div>
     @else
 
     {{-- Current Plan Card --}}
-    <div class="card p-6">
+    <div class="card p-5">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div class="flex items-center gap-4">
                 <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-coralsoft text-coralh">
@@ -133,7 +133,7 @@
                 </div>
                 <span class="text-xs text-muted">Pentru pachetul: {{ $currentPlan->name }}</span>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 p-5">
                 @foreach($topups as $idx => $bundle)
                     <div class="rounded-xl border border-line p-5 flex flex-col">
                         <div class="text-sm font-bold text-ink">{{ $bundle['name'] }}</div>
@@ -365,7 +365,7 @@
                 <h3 class="text-base font-semibold text-ink">Schimbă pachetul</h3>
                 <p class="text-xs text-muted mt-0.5">Apasă "Abonează-te" și vei fi redirecționat la Stripe Checkout.</p>
             </div>
-            <div class="p-6 space-y-6">
+            <div class="p-5 space-y-4">
                 @foreach(['Webchat' => $webchatPlans, 'Voce' => $voicePlans] as $section => $list)
                     @if($list->isNotEmpty())
                         <div>

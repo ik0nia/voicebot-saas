@@ -258,10 +258,10 @@ function smartReply(conversationId) {
                                         @if($msg->sent_at)
                                             &middot; {{ $msg->sent_at->format('H:i') }}
                                         @endif
-                                        @if($msg->ai_model && !$isOperator)
+                                        @if($msg->ai_model && !$isOperator && auth()->user()->isSuperAdmin())
                                             &middot; <span class="text-line">{{ $msg->ai_model }}</span>
                                         @endif
-                                        @if($msg->cost_cents > 0 && !$isOperator)
+                                        @if($msg->cost_cents > 0 && !$isOperator && auth()->user()->isSuperAdmin())
                                             &middot; <span class="text-line">${{ number_format($msg->cost_cents / 100, 4) }}</span>
                                         @endif
                                     </p>

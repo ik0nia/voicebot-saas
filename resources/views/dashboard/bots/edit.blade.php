@@ -283,7 +283,10 @@
             <div class="hidden sm:flex items-center justify-between gap-3 mt-6 pb-2">
                 <div class="text-xs text-muted flex items-center gap-3 flex-wrap">
                     <span>
-                        AI folosit azi: <span x-text="aiCost.count"></span> (<span x-text="aiCost.cost_ron.toFixed(4)"></span> lei)
+                        Mesaje azi: <span x-text="aiCost.count"></span>
+                        @if(auth()->user()->isSuperAdmin())
+                            <span class="text-line">· <span x-text="aiCost.cost_ron.toFixed(4)"></span> lei</span>
+                        @endif
                     </span>
                     {{-- Iteration B: tenant-wide spend progress --}}
                     <span x-show="tenantUsage.limit_ron > 0" class="flex items-center gap-2">

@@ -94,8 +94,12 @@
     {{-- AI Insights — analiză LLM a ultimei săptămâni --}}
     @include('partials.insights-widget')
 
-    {{-- Cost forecast — proiecție end-of-month bazată pe last 7d rate --}}
-    @include('partials.cost-forecast-widget')
+    {{-- Cost forecast — DOAR super-admin. Tenanții văd consumul lor în
+         /dashboard/billing (mesaje folosite din plan + overage), nu costul
+         nostru intern de infrastructură. Aici e dashboard-ul de margin. --}}
+    @if(auth()->user()->isSuperAdmin())
+        @include('partials.cost-forecast-widget')
+    @endif
 
     {{-- Action Items --}}
     @include('dashboard.partials.action-items')
