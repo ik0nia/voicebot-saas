@@ -296,6 +296,40 @@
 
     {{-- Tab: Canale --}}
     @if($tab === 'canale')
+        @php
+            $hasFb = $channels->contains(fn ($c) => $c->type === \App\Models\Channel::TYPE_FACEBOOK_MESSENGER && $c->is_active);
+            $hasIg = $channels->contains(fn ($c) => $c->type === \App\Models\Channel::TYPE_INSTAGRAM_DM && $c->is_active);
+            $hasMeta = $hasFb || $hasIg;
+        @endphp
+
+        @unless($hasMeta)
+            {{-- Quick-connect card. Shown only when neither Messenger nor
+                 Instagram is wired yet — once at least one is, the tabel
+                 de mai jos preia rolul și butonul devine zgomot. UX
+                 feedback explicit: 1 click pentru cel mai uzual scenariu. --}}
+            <div class="card mb-4 overflow-hidden border-2 border-coral/20 bg-gradient-to-br from-coral/5 to-cream">
+                <div class="px-6 py-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div class="flex items-start gap-4">
+                        <div class="flex -space-x-1.5 flex-shrink-0">
+                            <div class="w-11 h-11 rounded-full bg-blue-500 ring-2 ring-white flex items-center justify-center text-white font-bold text-lg">f</div>
+                            <div class="w-11 h-11 rounded-full ring-2 ring-white flex items-center justify-center text-white" style="background:linear-gradient(45deg,#fdcb6e,#e84393,#6c5ce7);">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.42.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.42.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41-.56-.22-.96-.48-1.38-.9-.42-.42-.68-.82-.9-1.38-.16-.42-.36-1.06-.41-2.23-.06-1.27-.07-1.65-.07-4.85s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.16 1.06-.36 2.23-.41 1.27-.06 1.65-.07 4.85-.07M12 0C8.74 0 8.33.01 7.05.07 5.78.13 4.9.33 4.14.63c-.79.31-1.47.72-2.13 1.39C1.34 2.69.93 3.36.62 4.14.32 4.9.13 5.78.07 7.05.01 8.33 0 8.74 0 12s.01 3.67.07 4.95c.06 1.27.26 2.15.56 2.91.31.79.72 1.47 1.39 2.13.66.66 1.34 1.07 2.13 1.39.76.3 1.64.5 2.91.56C8.33 23.99 8.74 24 12 24s3.67-.01 4.95-.07c1.27-.06 2.15-.26 2.91-.56.79-.31 1.47-.72 2.13-1.39.66-.66 1.07-1.34 1.39-2.13.3-.76.5-1.64.56-2.91.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95c-.06-1.27-.26-2.15-.56-2.91-.31-.79-.72-1.47-1.39-2.13C21.31 1.34 20.64.93 19.86.62c-.76-.3-1.64-.5-2.91-.56C15.67.01 15.26 0 12 0zm0 5.84c-3.4 0-6.16 2.76-6.16 6.16S8.6 18.16 12 18.16s6.16-2.76 6.16-6.16S15.4 5.84 12 5.84zm0 10.16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm6.41-11.85c0 .79-.64 1.44-1.44 1.44-.79 0-1.44-.64-1.44-1.44 0-.79.64-1.44 1.44-1.44.79 0 1.44.64 1.44 1.44z"/></svg>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="display text-lg font-semibold text-ink leading-tight">Conectează Facebook & Instagram</h3>
+                            <p class="text-sm text-muted mt-0.5">Un singur click — bot-ul răspunde la mesaje pe Messenger și DM-uri Instagram pentru pagina ta.</p>
+                        </div>
+                    </div>
+                    <a href="{{ route('dashboard.bots.channels.meta.connect', $bot) }}"
+                       class="inline-flex items-center gap-2 rounded-pill bg-[#1877F2] hover:bg-[#1565d8] px-5 py-2.5 text-sm font-semibold text-white transition flex-shrink-0">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                        Conectează cu Facebook
+                    </a>
+                </div>
+            </div>
+        @endunless
+
         <div class="card overflow-hidden">
             <div class="flex items-center justify-between px-5 py-3 border-b border-line">
                 <h2 class="font-semibold text-ink">Canale conectate</h2>
@@ -327,7 +361,10 @@
                             <td class="px-4 py-2 text-xs text-muted">{{ $ch->last_activity_at?->diffForHumans() ?? '—' }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="4" class="px-4 py-8 text-center text-sm text-muted">Niciun canal conectat.</td></tr>
+                        <tr><td colspan="4" class="px-4 py-8 text-center text-sm text-muted">
+                            Niciun canal conectat încă.
+                            <a href="{{ route('dashboard.bots.channels.meta.connect', $bot) }}" class="text-coralh hover:underline ml-1">Conectează Facebook & Instagram →</a>
+                        </td></tr>
                     @endforelse
                 </tbody>
             </table>
