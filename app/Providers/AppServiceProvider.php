@@ -51,6 +51,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Forțează Carbon să returneze RO peste tot — diffForHumans pe
+        // orice timestamp dă „acum 5 minute" în loc de „5 minutes ago".
+        // Singura sursă de adevăr; fără asta, fiecare view trebuia să
+        // facă ->locale('ro') explicit, ceea ce sărea peste fișiere
+        // moștenite de la versiuni anterioare.
+        \Carbon\Carbon::setLocale('ro');
+        setlocale(LC_TIME, 'ro_RO.UTF-8', 'ro_RO', 'ro');
+
         \Laravel\Cashier\Cashier::useCustomerModel(\App\Models\Tenant::class);
 
         \App\Models\Plan::observe(\App\Observers\PlanObserver::class);
