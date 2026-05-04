@@ -164,23 +164,25 @@
                         </template>
                     </div>
 
-                    <div class="flex-1 overflow-y-auto min-h-0 px-4 py-3 space-y-1.5" x-ref="msgPane">
+                    <div class="flex-1 overflow-y-auto min-h-0 px-3 py-2 space-y-0.5" x-ref="msgPane">
                         <template x-if="loadingMsgs">
                             <p class="text-2xs text-muted text-center py-4">se încarcă mesaje…</p>
                         </template>
                         <template x-for="m in messages" :key="m.id">
-                            <div :class="m.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
-                                <div class="max-w-[70%] md:max-w-[60%] flex flex-col gap-0.5"
+                            {{-- Group context: timestamp ascuns by default, apare
+                                 doar la hover pe rând. Stil iMessage / WhatsApp
+                                 — chat dens, fără zgomot temporal repetat. --}}
+                            <div class="group" :class="m.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
+                                <div class="max-w-[70%] md:max-w-[55%] flex flex-col gap-px"
                                      :class="m.role === 'user' ? 'items-end' : 'items-start'">
-                                    {{-- main bubble — păstrăm rotunjirea
-                                         chat-style (rounded-2xl) doar pe
-                                         3 colțuri, al patrulea rămâne mai
-                                         pătrat pentru a sugera direcția
-                                         (cum e în Messenger/WhatsApp). --}}
+                                    {{-- main bubble. Tooltip cu timestamp absolut
+                                         pe hover; nu scoatem timestamp-ul de tot,
+                                         îl punem în title attribute. --}}
                                     <div :class="[
                                             m.role === 'user' ? 'bg-coral text-cream rounded-tr-sm' : (m.role === 'operator' ? 'bg-emerald-100 text-emerald-900 border border-emerald-200 rounded-tl-sm' : 'bg-cream text-ink rounded-tl-sm')
                                          ]"
-                                         class="px-3 py-2 rounded-2xl text-sm whitespace-pre-wrap break-words">
+                                         :title="m.at_relative"
+                                         class="px-3 py-1.5 rounded-2xl text-sm leading-snug whitespace-pre-wrap break-words">
                                         <template x-if="m.role === 'operator'">
                                             <div class="text-2xs opacity-70 mb-0.5 font-semibold">
                                                 👨‍💼 Operator<span x-show="m.operator_name" x-text="': ' + m.operator_name"></span>
@@ -227,8 +229,11 @@
                                         </div>
                                     </template>
 
-                                    {{-- timestamp + page context (mirrors widget signal) --}}
-                                    <div class="text-2xs opacity-50 mono flex items-center gap-1.5"
+                                    {{-- timestamp + page context: ascuns by default
+                                         (timestamp absolut e în title attribute pe
+                                         bubble). Apare doar pe group-hover ca să
+                                         nu spargă densitatea verticală. --}}
+                                    <div class="text-2xs opacity-0 group-hover:opacity-50 transition-opacity mono flex items-center gap-1.5"
                                          :class="m.role === 'user' ? 'flex-row-reverse' : ''">
                                         <span x-text="m.at_relative"></span>
                                         <template x-if="m.page_context && m.page_context.page_title">
