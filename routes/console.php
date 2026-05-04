@@ -22,6 +22,13 @@ Schedule::command('conversations:cleanup-stale --minutes=15')->everyFiveMinutes(
 Schedule::command('recordings:purge-old --days=14')
     ->dailyAt('03:30')
     ->withoutOverlapping();
+
+// Resume bot control on conversations where no operator claimed the
+// handoff within 10 minutes — better degraded service than a stuck
+// "echipa vine imediat" forever. System message offers email fallback.
+Schedule::command('handoffs:resume-stale --minutes=10')
+    ->everyTwoMinutes()
+    ->withoutOverlapping();
 Schedule::command('voicebot:onboarding-emails')->dailyAt('09:00');
 Schedule::command('voicebot:weekly-report')->weeklyOn(1, '08:00');
 Schedule::command('queue:autoscale --max-workers=6 --scale-threshold=100 --jobs-per-worker=200 --queue=high,default,knowledge')->everyMinute()->withoutOverlapping();
