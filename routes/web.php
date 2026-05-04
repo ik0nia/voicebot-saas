@@ -1023,6 +1023,7 @@ Route::prefix('webhook/twilio')
     ->group(function () {
         Route::post('/voice', [TwilioWebhookController::class, 'handleVoice'])->name('webhook.twilio.voice');
         Route::post('/status', [TwilioWebhookController::class, 'handleStatus'])->name('webhook.twilio.status');
+        Route::post('/recording-status', [TwilioWebhookController::class, 'handleRecordingStatus'])->name('webhook.twilio.recording-status');
 
         // Warm-transfer flow. {callSid} is the INBOUND caller leg (not
         // the operator leg) so the conference name stays stable across

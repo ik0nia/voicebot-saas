@@ -429,7 +429,7 @@ class TwilioService implements TelephonyProvider
         }
     }
 
-    public function generateMediaStreamTexml(string $botId, string $callId): string
+    public function generateMediaStreamTexml(string $botId, string $callId, bool $recordingEnabled = false): string
     {
         // The media-stream bridge lives on its own subdomain so the cert
         // / sticky-session policy is independent of the main app. Fall
@@ -438,13 +438,35 @@ class TwilioService implements TelephonyProvider
         $host = config('telephony.media_stream_host', 'ms.sambla.ro');
         $wsUrl = "wss://{$host}/ws/media-stream";
 
-        // TwiML grammar with one important
-        // difference: Twilio's <Stream> uses `<Parameter>` nested inside
-        // `<Stream>` and the attribute is
-        // `url`, not `track`. The media-stream bridge reads bot_id /
-        // call_id from the custom parameters on the first message.
+        // TwiML grammar — the media-stream bridge reads bot_id / call_id
+        // from the <Parameter> elements nested inside <Stream> on the
+        // first message it receives.
         $xml = '<?xml version="1.0" encoding="UTF-8"?>';
         $xml .= '<Response>';
+
+        // GDPR disclaimer comes BEFORE recording starts so the disclaimer
+        // itself isn't on the recording (legally required: the consent
+        // needs to be voluntary, not part of the captured material). Then
+        // <Start><Record> begins the dual-channel recording in parallel
+        // with the media stream — Twilio uploads the MP3 to their CDN and
+        // POSTs the URL to recording_status_callback when the call ends.
+        if ($recordingEnabled) {
+            $xml .= '<Say language="ro-RO" voice="Polly.Carmen-Neural">'
+                . 'Această conversație este înregistrată în scopuri de calitate și asistență. '
+                . 'Continuarea apelului implică acceptul.'
+                . '</Say>';
+
+            $callbackUrl = url('/webhook/twilio/recording-status');
+            $xml .= '<Start>';
+            $xml .= '<Record '
+                . 'recordingChannels="dual" '
+                . 'recordingStatusCallback="' . htmlspecialchars($callbackUrl, ENT_XML1) . '" '
+                . 'recordingStatusCallbackEvent="completed" '
+                . 'recordingStatusCallbackMethod="POST"'
+                . '/>';
+            $xml .= '</Start>';
+        }
+
         $xml .= '<Say language="ro-RO">Bună ziua! Vă conectăm cu asistentul nostru virtual.</Say>';
         $xml .= '<Connect>';
         $xml .= '<Stream url="' . htmlspecialchars($wsUrl, ENT_XML1) . '">';

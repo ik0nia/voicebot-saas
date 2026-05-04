@@ -35,6 +35,7 @@ class Bot extends Model
         'voice',
         'cloned_voice_id',
         'language',
+        'recording_enabled',
         'engine_type',
         'niche_slug',
         'archetype_config',
@@ -53,6 +54,7 @@ class Bot extends Model
             'woocommerce_capabilities' => 'array',
             'archetype_config' => 'array',
             'is_active' => 'boolean',
+            'recording_enabled' => 'boolean',
             'calls_count' => 'integer',
         ];
     }

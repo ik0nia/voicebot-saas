@@ -179,6 +179,7 @@ class BotController extends Controller
             'is_active' => 'boolean',
             'knowledge_search_limit' => 'nullable|integer|min:1|max:20',
             'max_call_duration_minutes' => 'nullable|integer|min:5|max:60',
+            'recording_enabled' => 'nullable|boolean',
             // New: separate chat vs voice language settings.
             // chat_languages is multi-select (LLM handles any of them
             // at no extra cost). voice_language is single — ASR needs

@@ -77,6 +77,7 @@ class TwilioWebhookController extends Controller
                 $twiml = $this->twilio->generateMediaStreamTexml(
                     (string) $call->bot_id,
                     (string) $call->id,
+                    (bool) ($call->bot?->recording_enabled ?? false),
                 );
                 return response($twiml, 200)->header('Content-Type', 'text/xml');
             }
@@ -113,9 +114,87 @@ class TwilioWebhookController extends Controller
         $twiml = $this->twilio->generateMediaStreamTexml(
             (string) $phoneNumber->bot_id,
             (string) $call->id,
+            (bool) ($phoneNumber->bot?->recording_enabled ?? false),
         );
 
         return response($twiml, 200)->header('Content-Type', 'text/xml');
+    }
+
+    /**
+     * Twilio recording-status callback. Fired when a `<Start><Record>`
+     * recording finishes — payload includes RecordingSid, RecordingUrl,
+     * RecordingDuration, RecordingChannels, RecordingStatus.
+     *
+     * Path: writes RecordingUrl onto the matching Call (looked up via
+     * CallSid). The Call::saved() observer dispatches MirrorCallRecording
+     * which downloads the MP3 to local storage and (eventually) deletes
+     * the Twilio-hosted copy so we don't double-pay storage.
+     *
+     * Twilio retries on non-2xx; we always return 200 even for
+     * unmatched CallSid (logged + warning) so retries don't pile up
+     * for orphaned recordings.
+     */
+    public function handleRecordingStatus(Request $request)
+    {
+        $callSid = $request->input('CallSid');
+        $recordingUrl = $request->input('RecordingUrl');
+        $recordingStatus = $request->input('RecordingStatus');
+        $recordingChannels = (int) $request->input('RecordingChannels', 1);
+        $recordingDuration = (int) $request->input('RecordingDuration', 0);
+
+        if (!$callSid || !$recordingUrl) {
+            Log::warning('Twilio recording-status: missing CallSid or RecordingUrl', [
+                'call_sid' => $callSid,
+                'status' => $recordingStatus,
+            ]);
+            return response('OK', 200);
+        }
+
+        if ($recordingStatus !== 'completed') {
+            // Twilio sometimes calls back with 'failed' or 'absent' — we
+            // log and move on; nothing to mirror.
+            Log::info('Twilio recording-status: non-completed', [
+                'call_sid' => $callSid,
+                'status' => $recordingStatus,
+            ]);
+            return response('OK', 200);
+        }
+
+        // Map CallSid → call.id via the same cache the voice webhook
+        // populated. Falls back to a metadata lookup if the cache TTL
+        // (24h) lapsed for unusually long-running calls.
+        $callId = Cache::get("twilio_webhook:voice:{$callSid}");
+        $call = $callId ? Call::find($callId) : null;
+        if (!$call) {
+            $call = Call::where('metadata->provider_call_id', $callSid)->first();
+        }
+
+        if (!$call) {
+            Log::warning('Twilio recording-status: no matching Call row', [
+                'call_sid' => $callSid,
+            ]);
+            return response('OK', 200);
+        }
+
+        // Append .mp3 — Twilio's RecordingUrl is the resource URL; the
+        // .mp3 suffix tells their CDN which encoding to serve. Without
+        // it the CDN returns Content-Type application/json (the
+        // resource metadata) instead of the audio bytes.
+        $audioUrl = $recordingUrl . '.mp3';
+
+        // Setting recording_url here triggers Call::saved → dispatches
+        // MirrorCallRecording job which downloads to local storage.
+        $call->update([
+            'recording_url' => $audioUrl,
+        ]);
+
+        Log::info('Twilio recording captured', [
+            'call_id' => $call->id,
+            'duration_s' => $recordingDuration,
+            'channels' => $recordingChannels,
+        ]);
+
+        return response('OK', 200);
     }
 
     /**
