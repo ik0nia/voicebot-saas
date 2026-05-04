@@ -197,7 +197,6 @@
                             <a href="{{ $h['href'] }}" class="inline-flex items-center gap-1 hover:text-ink">{{ $h['label'] }} <span class="text-coral">{{ $h['arrow'] }}</span></a>
                         </th>
                         <th class="px-4 py-3 text-left text-xs font-semibold text-muted uppercase">Canal</th>
-                        <th class="px-2 py-3 text-center text-xs font-semibold text-muted uppercase" title="Cine răspunde acum">Cine</th>
                         <th class="px-2 py-3 text-center text-xs font-semibold text-muted uppercase" title="Sentiment detectat din ultimele mesaje">Sentiment</th>
                         @php $h = $sortLink('messages_count', 'Volum'); @endphp
                         <th title="Mesaje pentru text, durată pentru voce" class="px-4 py-3 text-left text-xs font-semibold uppercase {{ $h['active'] ? 'text-ink' : 'text-muted' }}">
@@ -207,7 +206,6 @@
                         <th class="px-4 py-3 text-left text-xs font-semibold uppercase {{ $h['active'] ? 'text-ink' : 'text-muted' }}">
                             <a href="{{ $h['href'] }}" class="inline-flex items-center gap-1 hover:text-ink">{{ $h['label'] }} <span class="text-coral">{{ $h['arrow'] }}</span></a>
                         </th>
-                        <th class="px-4 py-3 text-right text-xs font-semibold text-muted uppercase">Acțiuni</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-line">
@@ -227,11 +225,16 @@
                                 $duration = $m > 0 ? sprintf('%dm %ds', $m, $s) : sprintf('%ds', $s);
                             }
                         @endphp
-                        <tr data-item-type="{{ $item->_type }}" data-item-id="{{ $item->id }}" class="hover:bg-cream">
+                        @php $rowHref = route($item->route_name, $item->route_params); @endphp
+                        <tr data-item-type="{{ $item->_type }}" data-item-id="{{ $item->id }}"
+                            data-href="{{ $rowHref }}" tabindex="0"
+                            class="hover:bg-cream cursor-pointer focus:outline-none focus:bg-cream transition-colors js-row-link">
                             <td class="px-4 py-3">
                                 <div class="text-sm font-medium text-ink flex items-center gap-1.5">
                                     {{ $item->contact_name ?: $item->contact_identifier ?: '—' }}
-                                    @if($isCall && $item->direction === 'inbound')
+                                    @if($item->needs_human ?? false)
+                                        <span title="Așteaptă operator" class="text-coral text-xs">🙋</span>
+                                    @elseif($isCall && $item->direction === 'inbound')
                                         <span title="Apel primit" class="text-emerald-600 text-xs">↓</span>
                                     @elseif($isCall && $item->direction === 'outbound')
                                         <span title="Apel ieșit" class="text-blue-600 text-xs">↑</span>
@@ -244,18 +247,6 @@
                                     <span class="w-1.5 h-1.5 rounded-full bg-{{ $channelColor }}-500"></span>
                                     {{ $item->channel_label }}
                                 </span>
-                            </td>
-                            {{-- Cine răspunde: icon compact cu tooltip detaliat --}}
-                            <td class="px-2 py-3 text-center">
-                                @if($item->needs_human ?? false)
-                                    <span class="text-lg" title="Așteaptă operator (visitor a cerut)">🙋</span>
-                                @elseif($assignType === 'user')
-                                    <span class="text-lg" title="Răspunde {{ $item->assignee_user_name ?? '?' }}">👤</span>
-                                @elseif($assignType === 'bot')
-                                    <span class="text-lg" title="Bot: {{ $item->bot_name ?? '?' }}">🤖</span>
-                                @else
-                                    <span class="text-lg opacity-40" title="Inactiv">—</span>
-                                @endif
                             </td>
                             {{-- Sentiment cu emoji + tooltip nume RO --}}
                             <td class="px-2 py-3 text-center">
@@ -300,29 +291,36 @@
                                     <span class="text-line">—</span>
                                 @endif
                             </td>
-                            <td class="px-4 py-3 text-right text-sm">
-                                <div class="flex items-center justify-end gap-2">
-                                    <a href="{{ route($item->route_name, $item->route_params) }}" class="text-muted hover:text-inkSoft">Vezi</a>
-                                    @if(!$isCall)
-                                        @if($assignType !== 'user')
-                                            <form method="POST" action="{{ route('dashboard.conversations.take-over', $item->id) }}" class="inline">
-                                                @csrf
-                                                <button type="submit" class="font-medium {{ ($item->needs_human ?? false) ? 'text-coral hover:text-coralh' : 'text-emerald-700 hover:text-emerald-900' }}">{{ ($item->needs_human ?? false) ? '🙋 Răspund eu' : 'Răspund eu' }}</button>
-                                            </form>
-                                        @elseif($item->assignee_user_id === auth()->id())
-                                            <form method="POST" action="{{ route('dashboard.conversations.hand-back', $item->id) }}" class="inline">
-                                                @csrf
-                                                <button type="submit" class="text-muted hover:text-inkSoft">Înapoi la bot</button>
-                                            </form>
-                                        @endif
-                                    @endif
-                                </div>
-                            </td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
         </div>
+
+        {{-- Click-to-open: rândul întreg navigă la conversație. Ignoră
+             click pe link-uri/butoane interioare (none acum, dar safe pentru
+             viitor) și pe selecție de text (când userul drag-uieste să copieze
+             nu vrea redirect). Enter/Space funcționează pe rândul focused
+             (tabindex=0). --}}
+        <script>
+            (function() {
+                document.querySelectorAll('tr.js-row-link').forEach(function(tr) {
+                    tr.addEventListener('click', function(e) {
+                        if (e.target.closest('a, button, form, input')) return;
+                        if (window.getSelection && window.getSelection().toString()) return;
+                        var href = this.dataset.href;
+                        if (href) window.location.href = href;
+                    });
+                    tr.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            var href = this.dataset.href;
+                            if (href) window.location.href = href;
+                        }
+                    });
+                });
+            })();
+        </script>
 
         <div class="mt-4">
             {{ $conversations->links() }}
