@@ -166,7 +166,7 @@
         <div class="bg-white rounded-xl border border-line p-5">
             <h3 class="text-xs font-semibold text-muted uppercase mb-3">💬 Conversație Chat</h3>
             <div class="space-y-3 max-h-96 overflow-y-auto">
-                @foreach($lead->conversation->messages as $msg)
+                @foreach($lead->conversation->orderedMessages as $msg)
                 <div class="{{ $msg->direction === 'inbound' ? 'text-right' : 'text-left' }}">
                     <div class="inline-block max-w-[80%] px-3 py-2 rounded-lg text-sm {{ $msg->direction === 'inbound' ? 'bg-blue-600 text-white' : 'bg-cream text-ink' }}">
                         {{ $msg->content }}

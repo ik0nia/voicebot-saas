@@ -104,6 +104,21 @@ class Conversation extends Model
         return $this->hasMany(Message::class);
     }
 
+    /**
+     * Chronological alias used by views that iterate the relation directly
+     * (e.g. `@foreach($conv->orderedMessages as $m)`). Without this,
+     * `$conversation->messages` returned rows in Postgres storage order,
+     * which on production clustered them by direction (all inbound first,
+     * then all outbound) — confusing in lead views and operator inbox.
+     * Use this in views; use `messages()` in services that need raw control.
+     */
+    public function orderedMessages(): HasMany
+    {
+        return $this->hasMany(Message::class)
+            ->orderBy('created_at')
+            ->orderBy('id');
+    }
+
     // Scopes
 
     public function scopeActive(Builder $query): Builder

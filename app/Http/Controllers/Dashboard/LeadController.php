@@ -44,7 +44,10 @@ class LeadController extends Controller
     public function show(Lead $lead)
     {
         $this->authorizeAccess($lead);
-        $lead->load('bot', 'conversation.messages', 'contact');
+        // Use the orderedMessages alias so messages render chronologically
+        // in the timeline view (eager loading via `messages` would have
+        // come back grouped by direction on Postgres).
+        $lead->load('bot', 'conversation.orderedMessages', 'contact');
 
         $events = \App\Models\ChatEvent::where('conversation_id', $lead->conversation_id)
             ->orderBy('occurred_at')

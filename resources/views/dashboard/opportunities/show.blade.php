@@ -49,7 +49,7 @@
         <div class="bg-white rounded-xl border border-line p-5">
             <h3 class="font-semibold text-ink mb-3">Conversație completă</h3>
             <div class="space-y-3 max-h-[600px] overflow-y-auto">
-                @foreach($conversation->messages as $msg)
+                @foreach($conversation->orderedMessages as $msg)
                 <div class="{{ $msg->direction === 'inbound' ? 'text-right' : 'text-left' }}">
                     <div class="inline-block max-w-[80%] px-3 py-2 rounded-lg text-sm {{ $msg->direction === 'inbound' ? 'bg-blue-600 text-white' : 'bg-cream text-ink' }}">
                         {{ $msg->content }}
