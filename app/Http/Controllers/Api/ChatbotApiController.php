@@ -123,6 +123,26 @@ class ChatbotApiController extends Controller
         // quick_replies are consistent between /message and /message-stream.
         $pageContext = $preResult['page_context'] ?? [];
 
+        // Bot OFF gate — dacă vizitatorul a cerut operator (needs_human)
+        // sau un operator a preluat conversația (assignee_user_id), bot-ul
+        // NU mai răspunde. Mesajul vizitatorului e deja salvat în
+        // preprocessMessage; răspundem cu 200 + un acknowledge minimal,
+        // dar fără reply AI. Operatorul răspunde manual din /dashboard/operator.
+        $needsHuman = (bool) (($conversation->metadata ?? [])['needs_human'] ?? false);
+        $hasOperator = !empty($conversation->assignee_user_id);
+        if ($needsHuman || $hasOperator) {
+            return response()->json([
+                'response' => '',
+                'reply' => '',
+                'session_id' => $sessionId,
+                'session_token' => $sessionToken,
+                'session_expired' => false,
+                'conversation_id' => $conversation->id,
+                'bot_paused' => true,
+                'paused_reason' => $hasOperator ? 'operator_active' : 'awaiting_operator',
+            ]);
+        }
+
         // A/B Testing: apply an active variant's overrides to the bot
         // (mutates in place). Variant metadata comes back for logging.
         $abVariant = app(\App\Services\Chat\AbVariantApplier::class)->apply($bot, $conversation);
@@ -655,6 +675,21 @@ class ChatbotApiController extends Controller
         $prechatName = $preResult['prechat_name'];
         $prechatEmail = $preResult['prechat_email'];
         $prechatPhone = $preResult['prechat_phone'];
+
+        // Bot OFF gate (mirror al celui din message()) — pe SSE returnăm
+        // un singur event 'done' cu marker bot_paused ca să închidem
+        // streamul curat fără să generăm o replică AI.
+        $needsHuman = (bool) (($conversation->metadata ?? [])['needs_human'] ?? false);
+        $hasOperator = !empty($conversation->assignee_user_id);
+        if ($needsHuman || $hasOperator) {
+            return new StreamedResponse(function () use ($conversation, $hasOperator) {
+                $this->sendSSE('bot_paused', [
+                    'conversation_id' => $conversation->id,
+                    'reason' => $hasOperator ? 'operator_active' : 'awaiting_operator',
+                ]);
+                $this->sendSSE('done', ['message_id' => null, 'bot_paused' => true]);
+            }, 200, $this->sseHeaders());
+        }
 
         // A/B Testing: apply an active variant's overrides to the bot
         // (mutates in place). Variant metadata comes back for logging.
@@ -1198,5 +1233,75 @@ class ChatbotApiController extends Controller
         ]);
 
         return response()->json(['success' => true, 'rating_id' => $rating->id]);
+    }
+
+    /**
+     * Poll for new operator/system messages on a session.
+     *
+     * The widget calls this every ~5s while the chat is open and renders
+     * any outbound message it hasn't seen yet (id > since_id) where the
+     * sender is operator or system. Bot messages are NOT returned — the
+     * widget already received those via SSE during the active turn, so
+     * including them here would double-render.
+     *
+     * Inputs (query string):
+     *   - session_id  (required) the widget's HMAC-signed session UUID
+     *   - since_id    (optional) last message id rendered by the widget
+     *
+     * Tenant scope: channel is the route binding; we look up conversation
+     * via channel + session_id, so a leaked session_id only exposes that
+     * one conversation's operator messages.
+     */
+    public function pollMessages(Request $request, int $channel): JsonResponse
+    {
+        $validated = $request->validate([
+            'session_id' => 'required|string|max:64',
+            'since_id' => 'nullable|integer|min:0',
+        ]);
+
+        $ch = \App\Models\Channel::withoutGlobalScopes()->find($channel);
+        if (!$ch || !$ch->is_active) {
+            return response()->json(['error' => 'Canal indisponibil'], 404);
+        }
+
+        $conv = \App\Models\Conversation::withoutGlobalScopes()
+            ->where('channel_id', $channel)
+            ->where('external_conversation_id', $validated['session_id'])
+            ->first();
+
+        if (!$conv) {
+            return response()->json([
+                'messages' => [],
+                'bot_paused' => false,
+            ]);
+        }
+
+        $sinceId = (int) ($validated['since_id'] ?? 0);
+
+        $messages = \App\Models\Message::where('conversation_id', $conv->id)
+            ->where('direction', 'outbound')
+            ->where('id', '>', $sinceId)
+            ->orderBy('id')
+            ->limit(20)
+            ->get(['id', 'content', 'metadata', 'created_at'])
+            ->filter(function ($m) {
+                $sender = $m->metadata['sender_type'] ?? null;
+                return in_array($sender, ['operator', 'system'], true);
+            })
+            ->map(fn ($m) => [
+                'id' => $m->id,
+                'content' => $m->content,
+                'sender_type' => $m->metadata['sender_type'] ?? 'bot',
+                'operator_name' => $m->metadata['operator_name'] ?? null,
+                'at' => $m->created_at->toIso8601String(),
+            ])
+            ->values();
+
+        return response()->json([
+            'messages' => $messages,
+            'bot_paused' => (bool) (($conv->metadata ?? [])['needs_human'] ?? false)
+                || !empty($conv->assignee_user_id),
+            'has_operator' => !empty($conv->assignee_user_id),
+        ]);
     }
 }

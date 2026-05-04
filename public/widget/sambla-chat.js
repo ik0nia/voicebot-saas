@@ -1656,6 +1656,13 @@
                 // Flush offline queue
                 flushOfflineQueue();
 
+                // Start polling for operator/system messages while chat is
+                // open. Fără asta, dacă un operator scrie în /dashboard/operator,
+                // mesajul ajunge în DB dar vizitatorul nu-l vede niciodată
+                // (widget-ul nu primește push). Polling la 4s e un compromis
+                // între responsivitate și încărcare server.
+                startOperatorPolling();
+
                 // Mobile: scroll to top
                 if (window.innerWidth <= 440) {
                     chatWindow._scrollY = window.scrollY;
@@ -1663,11 +1670,114 @@
                 }
             } else {
                 bubble.focus();
+                // Stop polling on close
+                stopOperatorPolling();
                 // Mobile: restore scroll
                 if (chatWindow._scrollY !== undefined) {
                     window.scrollTo(0, chatWindow._scrollY);
                     chatWindow._scrollY = undefined;
                 }
+            }
+        }
+
+        // === Polling pentru mesaje operator/system ==========================
+        // Strategie: SSE/WebSocket era opțiunea ideală, dar ar adăuga
+        // infrastructură (Reverb deja există dar nu e wired pentru widget
+        // public). Polling HTTP simplu, throttled, e suficient pentru cazul
+        // operator-rar-intervine. Dacă scaling devine problemă, swap pe
+        // Reverb fără să schimbe semantica externă.
+        var operatorPollTimer = null;
+        var lastSeenMessageId = 0;
+
+        function startOperatorPolling() {
+            if (operatorPollTimer) return;
+            // First poll fires after 1s ca să prindem rapid mesaje deja
+            // existente (operator types timp ce widget-ul era închis).
+            setTimeout(pollOperatorMessages, 1000);
+            operatorPollTimer = setInterval(pollOperatorMessages, 4000);
+        }
+
+        function stopOperatorPolling() {
+            if (operatorPollTimer) {
+                clearInterval(operatorPollTimer);
+                operatorPollTimer = null;
+            }
+        }
+
+        function pollOperatorMessages() {
+            var sid = getSessionId();
+            if (!sid) return; // niciun session creat încă, n-avem ce poll-ui
+
+            var url = config.apiBase
+                + '/api/v1/chatbot/' + config.channelId + '/poll'
+                + '?session_id=' + encodeURIComponent(sid)
+                + '&since_id=' + (lastSeenMessageId || 0);
+
+            fetch(url, { headers: { 'Accept': 'application/json' } })
+                .then(function (r) { return r.ok ? r.json() : null; })
+                .then(function (d) {
+                    if (!d) return;
+
+                    if (d.messages && d.messages.length) {
+                        d.messages.forEach(function (m) {
+                            if (m.id <= lastSeenMessageId) return;
+                            lastSeenMessageId = m.id;
+
+                            var senderType = m.sender_type || 'bot';
+                            var label = senderType === 'operator'
+                                ? (m.operator_name ? '👨‍💼 ' + m.operator_name : '👨‍💼 Operator')
+                                : (senderType === 'system' ? 'ℹ' : null);
+
+                            var content = label ? label + ': ' + m.content : m.content;
+                            addMessage(content, 'bot', null, null, null, m.id);
+                        });
+                    }
+
+                    // Banner persistent care afișează starea de handoff:
+                    //   - has_operator=true     → „Vorbiți cu un coleg" (verde stabil)
+                    //   - awaiting (bot_paused) → „Echipa a fost notificată" (galben)
+                    //   - none                  → ascunde banner-ul
+                    updateOperatorBanner({
+                        hasOperator: !!d.has_operator,
+                        botPaused: !!d.bot_paused,
+                    });
+                })
+                .catch(function () { /* silent — next tick retries */ });
+        }
+
+        // Banner persistent pentru starea handoff. Reutilizează stilul
+        // sambla-escalation-banner adăugat anterior dar îl ține vizibil
+        // (fără auto-dismiss) cât timp un operator e activ.
+        var lastBannerState = '';
+        function updateOperatorBanner(state) {
+            if (!chatWindow) return;
+            var stateKey = state.hasOperator ? 'connected'
+                         : state.botPaused ? 'pending'
+                         : 'none';
+            if (stateKey === lastBannerState) return;
+            lastBannerState = stateKey;
+
+            var existing = chatWindow.querySelector('.sambla-handoff-banner');
+            if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+
+            if (stateKey === 'none') return;
+
+            var banner = document.createElement('div');
+            banner.className = 'sambla-handoff-banner sambla-escalation-banner';
+            if (stateKey === 'connected') {
+                banner.style.background = '#ecfdf5';
+                banner.style.borderColor = '#a7f3d0';
+                banner.style.color = '#065f46';
+                banner.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0113 0"/></svg><span>Acum vorbiți cu un coleg din echipă.</span>';
+            } else {
+                banner.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Echipa a fost notificată. Cineva preia conversația în câteva momente.</span>';
+            }
+
+            var header = chatWindow.querySelector('.sambla-header');
+            if (header && header.nextSibling) {
+                chatWindow.insertBefore(banner, header.nextSibling);
+            } else {
+                chatWindow.insertBefore(banner, chatWindow.firstChild);
             }
         }
 

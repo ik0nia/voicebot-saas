@@ -115,6 +115,15 @@ Route::post('/v1/chatbot/{channel}/escalate', [\App\Http\Controllers\Api\Escalat
     ->middleware(['force.json', 'throttle:5,1'])
     ->name('chatbot.escalate');
 
+// Widget polling for operator/system messages. Without this, an operator
+// types a reply in /dashboard/operator → DB insert → visitor never sees
+// it. Polled every ~5s by the widget while chat is open. Returns
+// outbound messages newer than `since_id` filtered to operator/system
+// senders so the widget doesn't echo back its own bot replies twice.
+Route::get('/v1/chatbot/{channel}/poll', [\App\Http\Controllers\Api\ChatbotApiController::class, 'pollMessages'])
+    ->middleware(['force.json', 'throttle:120,1'])
+    ->name('chatbot.poll');
+
 // V2 Purchase webhook from WordPress companion plugin (signed, no auth)
 Route::post('/v1/webhooks/woocommerce/{bot}/purchase', [\App\Http\Controllers\Api\PurchaseWebhookController::class, 'handle']);
 
