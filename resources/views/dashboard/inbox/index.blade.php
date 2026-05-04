@@ -79,6 +79,74 @@
         @endforeach
     </div>
 
+    {{-- Advanced filters: collapsed by default, opens to date range, bot, status, direction.
+         Mutually-exclusive doesn't apply (calls and convs share the same params); when a
+         filter doesn't apply to one stream it's just ignored there (e.g., direction is
+         meaningful only for calls). --}}
+    @php
+        $hasAdvanced = request()->hasAny(['date_from', 'date_to', 'bot', 'status', 'direction']);
+    @endphp
+    <details class="mb-4 rounded-xl border border-line bg-white" {{ $hasAdvanced ? 'open' : '' }}>
+        <summary class="px-4 py-2.5 cursor-pointer text-sm font-medium text-inkSoft hover:bg-cream transition select-none flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+            Filtre avansate
+            @if($hasAdvanced)
+                <span class="text-xs text-coral">●</span>
+            @endif
+        </summary>
+        <form method="GET" class="px-4 pb-4 pt-2 grid grid-cols-2 md:grid-cols-5 gap-3">
+            {{-- Preserve current chip + sort state --}}
+            @foreach(['mine', 'unassigned', 'bot_only', 'channel_type', 'q', 'sort', 'dir'] as $k)
+                @if(request($k))<input type="hidden" name="{{ $k }}" value="{{ request($k) }}">@endif
+            @endforeach
+
+            <div>
+                <label class="block text-xs font-medium text-muted mb-1">De la</label>
+                <input type="date" name="date_from" value="{{ request('date_from') }}"
+                       class="w-full rounded-lg border border-line px-3 py-2 text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-muted mb-1">Până la</label>
+                <input type="date" name="date_to" value="{{ request('date_to') }}"
+                       class="w-full rounded-lg border border-line px-3 py-2 text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-muted mb-1">Agent</label>
+                <select name="bot" class="w-full rounded-lg border border-line px-3 py-2 text-sm">
+                    <option value="">— toți —</option>
+                    @foreach(($bots ?? collect()) as $b)
+                        <option value="{{ $b->id }}" {{ request('bot') == $b->id ? 'selected' : '' }}>{{ $b->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-muted mb-1">Status</label>
+                <select name="status" class="w-full rounded-lg border border-line px-3 py-2 text-sm">
+                    <option value="">— oricare —</option>
+                    @foreach(['active', 'completed', 'failed', 'busy', 'no_answer', 'canceled', 'abandoned'] as $s)
+                        <option value="{{ $s }}" {{ request('status') === $s ? 'selected' : '' }}>{{ ucfirst(str_replace('_', ' ', $s)) }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-muted mb-1">Direcție (apel)</label>
+                <select name="direction" class="w-full rounded-lg border border-line px-3 py-2 text-sm">
+                    <option value="">— ambele —</option>
+                    <option value="inbound" {{ request('direction') === 'inbound' ? 'selected' : '' }}>Primit</option>
+                    <option value="outbound" {{ request('direction') === 'outbound' ? 'selected' : '' }}>Ieșit</option>
+                </select>
+            </div>
+
+            <div class="col-span-2 md:col-span-5 flex items-center justify-end gap-2 pt-1">
+                @if($hasAdvanced)
+                    <a href="{{ route('dashboard.inbox', request()->except(['date_from', 'date_to', 'bot', 'status', 'direction', 'page'])) }}"
+                       class="text-xs text-muted hover:text-inkSoft">Resetează filtrele</a>
+                @endif
+                <button class="rounded-pill bg-ink hover:bg-inkSoft px-4 py-2 text-sm font-medium text-cream transition">Aplică</button>
+            </div>
+        </form>
+    </details>
+
     @php
         // Helper for sortable headers — preserves all current filters,
         // toggles direction when clicking the same column twice. The

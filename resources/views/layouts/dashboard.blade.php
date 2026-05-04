@@ -158,29 +158,11 @@
                             <svg class="w-4 h-4 {{ request()->is('dashboard/agenti*') || request()->is('dashboard/workspace*') ? 'text-coral' : '' }}" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
                             Agenți AI
                         </a>
-                        <a href="/dashboard/apeluri"
-                           class="nav-item flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg {{ request()->is('dashboard/apeluri*') ? 'active' : 'text-inkSoft' }}">
-                            <svg class="w-4 h-4 {{ request()->is('dashboard/apeluri*') ? 'text-coral' : '' }}" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 5a2 2 0 012-2h3l2 4-2 1a11 11 0 005 5l1-2 4 2v3a2 2 0 01-2 2A16 16 0 013 5z"/></svg>
-                            Apeluri
-                        </a>
-                        @if(!empty($sidebarTranscriptChannels) && count($sidebarTranscriptChannels) > 0)
-                            @php $transcriptActive = request()->is('dashboard/transcrieri*'); @endphp
-                            <details {{ $transcriptActive ? 'open' : '' }}>
-                                <summary class="nav-item flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg cursor-pointer list-none {{ $transcriptActive ? 'active' : 'text-inkSoft' }}">
-                                    <svg class="w-4 h-4 {{ $transcriptActive ? 'text-coral' : '' }}" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14l4-4h12a2 2 0 002-2zM7 8h10M7 12h6"/></svg>
-                                    Transcrieri
-                                    <svg class="chev w-3 h-3 ml-auto transition" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-                                </summary>
-                                <div class="ml-5 mt-0.5 space-y-0.5 border-l border-line pl-3">
-                                    @foreach($sidebarTranscriptChannels as $ch)
-                                        <a href="{{ $ch['url'] }}"
-                                           class="nav-item flex items-center gap-2 px-2 py-1.5 rounded-lg text-2xs {{ request()->is($ch['route_match']) ? 'active' : 'text-inkSoft' }}">
-                                            {{ $ch['label'] }}
-                                        </a>
-                                    @endforeach
-                                </div>
-                            </details>
-                        @endif
+                        {{-- "Apeluri" și "Transcrieri" au fost consolidate în Inbox.
+                             Inbox-ul are filtre canal (Voce, WhatsApp, FB, IG, Web) +
+                             toate filtrele anterioare (date range, agent, status,
+                             direcție). Vechile URL-uri redirectează spre Inbox cu
+                             channel_type aplicat ca să nu se rupă bookmark-urile. --}}
                         <a href="/dashboard/leads"
                            class="nav-item flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg {{ request()->is('dashboard/leads*') ? 'active' : 'text-inkSoft' }}">
                             <svg class="w-4 h-4 {{ request()->is('dashboard/leads*') ? 'text-coral' : '' }}" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 2v6M12 22v-6M2 12h6M22 12h-6"/><circle cx="12" cy="12" r="3"/></svg>

@@ -403,9 +403,19 @@ Route::middleware('auth')->prefix('dashboard/agenti/{bot}/programari')->group(fu
     Route::post('/advanced-mode',                    [BookingAdminController::class, 'toggleAdvanced'])->name('dashboard.bots.booking.advancedMode');
 });
 
-// Calls routes (dashboard)
+// Calls routes (dashboard). The list page (`/dashboard/apeluri`)
+// redirects to the unified Inbox with channel_type=voice — the dedicated
+// listing was retired once Inbox got date / bot / direction / status
+// filters. Detail / audio / export endpoints stay on these URLs so
+// existing bookmarks and external links keep resolving.
 Route::middleware('auth')->prefix('dashboard/apeluri')->group(function () {
-    Route::get('/', [CallController::class, 'index'])->name('dashboard.calls.index');
+    Route::get('/', function (\Illuminate\Http\Request $request) {
+        return redirect()->route('dashboard.inbox', array_merge(
+            $request->except(['page']),
+            ['channel_type' => 'voice'],
+        ), 301);
+    })->name('dashboard.calls.index');
+
     Route::get('/{call}', [CallController::class, 'show'])->name('dashboard.calls.show');
     Route::delete('/{call}', [CallController::class, 'destroy'])->name('dashboard.calls.destroy');
     Route::get('/{call}/export/{format?}', [CallController::class, 'exportTranscript'])->name('dashboard.calls.export-transcript');
@@ -426,7 +436,16 @@ Route::middleware('auth')->prefix('dashboard/transcrieri')->group(function () {
     Route::delete('/conversatie/{conversation}', [ConversationController::class, 'destroy'])
         ->middleware('tenant.role:tenant_admin,tenant_manager')
         ->name('dashboard.conversations.destroy');
-    Route::get('/{channelType}', [ConversationController::class, 'index'])->name('dashboard.conversations.index');
+    // Per-channel listing redirects to unified Inbox — the dedicated
+    // /dashboard/transcrieri/{type} page was retired once Inbox channel
+    // chips covered the same flow. Detail / take-over / hand-back stay
+    // on /dashboard/transcrieri/conversatie/{id}.
+    Route::get('/{channelType}', function (string $channelType, \Illuminate\Http\Request $request) {
+        return redirect()->route('dashboard.inbox', array_merge(
+            $request->except(['page']),
+            ['channel_type' => $channelType],
+        ), 301);
+    })->name('dashboard.conversations.index');
 });
 
 // Analytics routes (dashboard)

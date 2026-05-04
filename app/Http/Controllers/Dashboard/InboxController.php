@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
+use App\Models\Bot;
 use App\Models\Call;
 use App\Models\Channel;
 use App\Models\Conversation;
@@ -53,6 +54,15 @@ class InboxController extends Controller
         if ($channelType = $request->get('channel_type')) {
             $channelIds = Channel::where('type', $channelType)->pluck('id');
             $query->whereIn('channel_id', $channelIds);
+        }
+        if ($botId = $request->get('bot')) {
+            $query->where('bot_id', $botId);
+        }
+        if ($dateFrom = $request->get('date_from')) {
+            $query->whereDate('last_activity_at', '>=', $dateFrom);
+        }
+        if ($dateTo = $request->get('date_to')) {
+            $query->whereDate('last_activity_at', '<=', $dateTo);
         }
         if ($request->boolean('mine')) {
             $query->where('assignee_user_id', auth()->id());
@@ -119,7 +129,9 @@ class InboxController extends Controller
             'bot' => Conversation::whereNotNull('assignee_bot_id')->count(),
         ];
 
-        return view('dashboard.inbox.index', compact('conversations', 'stats', 'sort', 'dir'));
+        $bots = Bot::orderBy('name')->get(['id', 'name']);
+
+        return view('dashboard.inbox.index', compact('conversations', 'stats', 'sort', 'dir', 'bots'));
     }
 
     /**
@@ -160,12 +172,24 @@ class InboxController extends Controller
     {
         $q = Call::with(['bot:id,name'])->latest('started_at');
 
-        // Filters that map cleanly to call columns. We skip status
-        // (calls have their own status enum) and bot_only / mine /
-        // unassigned because calls don't carry a per-user assignee
-        // today — they're always "the bot took it".
+        // Filters that map cleanly to call columns.
         if ($search = $request->get('q')) {
             $q->where('caller_number', 'like', "%{$search}%");
+        }
+        if ($status = $request->get('status')) {
+            $q->where('status', $status);
+        }
+        if ($direction = $request->get('direction')) {
+            $q->where('direction', $direction);
+        }
+        if ($botId = $request->get('bot')) {
+            $q->where('bot_id', $botId);
+        }
+        if ($dateFrom = $request->get('date_from')) {
+            $q->whereDate('started_at', '>=', $dateFrom);
+        }
+        if ($dateTo = $request->get('date_to')) {
+            $q->whereDate('started_at', '<=', $dateTo);
         }
 
         // If user filtered to "mine" or "unassigned", calls have no
