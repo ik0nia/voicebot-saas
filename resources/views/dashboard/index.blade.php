@@ -72,17 +72,24 @@
     </div>
     @endif
 
-    {{-- Welcome — paleta v2: ink fundal cu coral accent, în loc de red gradient --}}
+    {{-- Welcome — paleta v2: ink fundal cu coral accent. Stats inline sub
+         subtitlu ca să ai un rezumat de o privire fără să mai cobori. --}}
     <div class="relative overflow-hidden rounded-card bg-ink px-6 py-6 shadow-md">
         <div class="absolute inset-0 opacity-[0.06]" style="background-image: radial-gradient(rgba(255,255,255,0.7) 1px, transparent 1px); background-size: 6px 6px;"></div>
         <div class="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-coral/15 blur-2xl"></div>
         <div class="relative flex flex-wrap items-end justify-between gap-3">
-            <div>
+            <div class="min-w-0">
                 @php $h = (int) now()->format('H'); @endphp
                 <h1 class="display text-3xl md:text-4xl font-semibold tracking-tight text-cream leading-none">
                     {{ $h < 12 ? 'Bună dimineața' : ($h < 18 ? 'Bună ziua' : 'Bună seara') }}, {{ Str::before(auth()->user()->name, ' ') }}.
                 </h1>
-                <p class="mt-2 text-sm text-cream/70">Iată ce se întâmplă cu platforma ta.</p>
+                <p class="mt-2 text-sm text-cream/70">
+                    @if($conversationsToday === 0 && $leadsToday === 0)
+                        Iată ce se întâmplă cu platforma ta.
+                    @else
+                        <span class="text-cream font-medium">{{ $conversationsToday }}</span> {{ $conversationsToday === 1 ? 'conversație' : 'conversații' }} azi · <span class="text-cream font-medium">{{ $messagesToday }}</span> mesaje · <span class="text-cream font-medium">{{ $leadsToday }}</span> {{ $leadsToday === 1 ? 'lead' : 'leads' }}@if($hasVoice && $callsToday > 0) · <span class="text-cream font-medium">{{ $callsToday }}</span> apeluri ({{ number_format(round($minutesToday)) }} min)@endif.
+                    @endif
+                </p>
             </div>
             <span class="text-2xs uppercase tracking-wider text-cream/50 font-mono">{{ now()->translatedFormat('l, j F') }}</span>
         </div>
