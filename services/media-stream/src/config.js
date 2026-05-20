@@ -20,7 +20,14 @@ export function loadConfig() {
 
         // OpenAI Realtime.
         openaiApiKey: process.env.OPENAI_API_KEY,
-        openaiRealtimeModel: process.env.OPENAI_REALTIME_MODEL || 'gpt-realtime-2',
+        // Forțăm upgrade automat la gpt-realtime-2 dacă env-ul moștenit din
+        // Coolify pointează încă spre snapshot-ul gpt-4o-realtime preview.
+        // Asta evită nevoia de a edita env-vars în Coolify UI după restart.
+        // Override real prin OPENAI_REALTIME_MODEL=<altceva> rămâne respectat.
+        openaiRealtimeModel: ((m) =>
+            (!m || m === 'gpt-4o-realtime-preview-2024-12-17' || m === 'gpt-4o-realtime-preview')
+                ? 'gpt-realtime-2' : m
+        )(process.env.OPENAI_REALTIME_MODEL),
         // Reasoning effort la nivelul sesiunii — „low" e safe default pentru voice
         // (latency-friendly, suficient pentru programări/produse). Pentru cazuri
         // complexe se poate ridica la medium/high via env per deploy.
