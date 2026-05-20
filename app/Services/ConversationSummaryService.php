@@ -29,12 +29,14 @@ class ConversationSummaryService
         $messages = [['role' => 'system', 'content' => $systemPrompt]];
 
         if ($preloadedHistory !== null) {
-            // Use pre-loaded messages — they come in desc order, take 30, reverse to chronological
-            $history = $preloadedHistory->take(30)->reverse()->values();
+            // gpt-realtime-2 has 128k context window (up from 32k on previous gen).
+            // We keep 60 most recent messages — still summarize older ones above
+            // SUMMARIZE_AFTER threshold, but window allows ~2× more history before that.
+            $history = $preloadedHistory->take(60)->reverse()->values();
         } else {
             $history = Message::where('conversation_id', $conversation->id)
                 ->orderByDesc('id')
-                ->limit(30)
+                ->limit(60)
                 ->get()
                 ->reverse()
                 ->values();

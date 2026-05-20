@@ -61,7 +61,8 @@ return [
     'openai' => [
         'api_key' => env('OPENAI_API_KEY'),
         'organization' => env('OPENAI_ORGANIZATION'),
-        'realtime_model' => env('OPENAI_REALTIME_MODEL', 'gpt-4o-realtime-preview'),
+        'realtime_model' => env('OPENAI_REALTIME_MODEL', 'gpt-realtime-2'),
+        'realtime_reasoning_effort' => env('OPENAI_REASONING_EFFORT', 'low'),
     ],
 
     'elevenlabs' => [

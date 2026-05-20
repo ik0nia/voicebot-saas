@@ -20,7 +20,11 @@ export function loadConfig() {
 
         // OpenAI Realtime.
         openaiApiKey: process.env.OPENAI_API_KEY,
-        openaiRealtimeModel: process.env.OPENAI_REALTIME_MODEL || 'gpt-4o-realtime-preview-2024-12-17',
+        openaiRealtimeModel: process.env.OPENAI_REALTIME_MODEL || 'gpt-realtime-2',
+        // Reasoning effort la nivelul sesiunii — „low" e safe default pentru voice
+        // (latency-friendly, suficient pentru programări/produse). Pentru cazuri
+        // complexe se poate ridica la medium/high via env per deploy.
+        openaiReasoningEffort: process.env.OPENAI_REASONING_EFFORT || 'low',
 
         // Hard cap on concurrent streams per tenant. Prevents a single
         // buggy agent loop from draining the platform's OpenAI quota.

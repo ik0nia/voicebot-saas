@@ -67,37 +67,43 @@ class RealtimeClient
      */
     public function buildSessionConfig(array $options = []): array
     {
-        return [
-            'type' => 'session.update',
-            'session' => [
-                'modalities' => $options['modalities'] ?? ['text', 'audio'],
-                'instructions' => $options['instructions'] ?? '',
-                'voice' => $options['voice'] ?? 'alloy',
-                'input_audio_format' => 'g711_ulaw',
-                'output_audio_format' => 'g711_ulaw',
-                'input_audio_transcription' => [
-                    // gpt-4o-mini-transcribe > whisper-1 on narrowband
-                    // (phone) audio and stays accurate on Romanian
-                    // accent — adopted 2026-04-16 after production
-                    // calls surfaced language drift (RO → ES / PT / PL)
-                    // with auto-detect whisper-1.
-                    'model' => $options['transcribe_model'] ?? 'gpt-4o-mini-transcribe',
-                    // Lock the ASR language when known — callers pass
-                    // the bot's language ISO code. Omitting the key
-                    // restores whisper auto-detect behaviour.
-                    'language' => $options['transcribe_language'] ?? null,
-                    'prompt' => $options['transcribe_prompt'] ?? null,
-                ],
-                'turn_detection' => [
-                    'type' => $options['vad_type'] ?? 'semantic_vad',
-                    'eagerness' => $options['vad_eagerness'] ?? 'low',
-                ],
-                'tools' => $options['tools'] ?? [],
-                'tool_choice' => 'auto',
-                'temperature' => $options['temperature'] ?? 0.7,
-                'max_response_output_tokens' => $options['max_tokens'] ?? 1024,
+        $session = [
+            'modalities' => $options['modalities'] ?? ['text', 'audio'],
+            'instructions' => $options['instructions'] ?? '',
+            'voice' => $options['voice'] ?? 'alloy',
+            'input_audio_format' => 'g711_ulaw',
+            'output_audio_format' => 'g711_ulaw',
+            'input_audio_transcription' => [
+                // gpt-4o-mini-transcribe > whisper-1 on narrowband
+                // (phone) audio and stays accurate on Romanian
+                // accent — adopted 2026-04-16 after production
+                // calls surfaced language drift (RO → ES / PT / PL)
+                // with auto-detect whisper-1.
+                'model' => $options['transcribe_model'] ?? 'gpt-4o-mini-transcribe',
+                // Lock the ASR language when known — callers pass
+                // the bot's language ISO code. Omitting the key
+                // restores whisper auto-detect behaviour.
+                'language' => $options['transcribe_language'] ?? null,
+                'prompt' => $options['transcribe_prompt'] ?? null,
             ],
+            'turn_detection' => [
+                'type' => $options['vad_type'] ?? 'semantic_vad',
+                'eagerness' => $options['vad_eagerness'] ?? 'low',
+            ],
+            'tools' => $options['tools'] ?? [],
+            'tool_choice' => 'auto',
+            'temperature' => $options['temperature'] ?? 0.7,
+            'max_response_output_tokens' => $options['max_tokens'] ?? 1024,
         ];
+
+        // gpt-realtime-2: reasoning intern. „low" = safe default voice (latency).
+        // Cheia se trimite doar dacă e setată — gpt-4o-realtime și mai vechi
+        // o ignoră inofensiv, dar îi lăsăm să rămână compatibili.
+        if (!empty($options['reasoning_effort'])) {
+            $session['reasoning'] = ['effort' => $options['reasoning_effort']];
+        }
+
+        return ['type' => 'session.update', 'session' => $session];
     }
 
     // -----------------------------------------------------------------

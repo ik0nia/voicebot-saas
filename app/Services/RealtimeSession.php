@@ -119,6 +119,10 @@ class RealtimeSession
             'vad_eagerness' => $settings['vad_eagerness'] ?? 'low',
             'temperature' => $settings['temperature'] ?? 0.7,
             'max_tokens' => $settings['max_tokens'] ?? 1024,
+            // gpt-realtime-2: reasoning intern înainte de speech.
+            // „low" = default safe pentru voice (latency mic, suficient pentru
+            // programări/lookup-uri simple). Doar cazuri complexe escalează.
+            'reasoning_effort' => $settings['reasoning_effort'] ?? config('services.openai.realtime_reasoning_effort', 'low'),
             // Lock ASR to the bot's configured voice language — fixes
             // narrowband-phone drift (RO → ES / PT / PL) and keeps
             // web-demo transcripts aligned with what the bot actually
@@ -344,10 +348,51 @@ class RealtimeSession
             . "\nPropune doar DUPĂ ce ai oferit prețuri, recomandări sau informații tehnice relevante."
             . "\n=== SFÂRȘIT CAPTARE DATE ===";
 
+        // gpt-realtime-2: secțiuni labeled per docs OpenAI Realtime Prompting.
+        $base = $this->appendRealtimeV2Guidance($base, $language);
+
         // Apply centralized guardrails (voice mode)
         $base = PromptGuardrails::apply($base, isVoice: true);
 
         return $base;
+    }
+
+    /**
+     * Append gpt-realtime-2 prompting guidance (per docs OpenAI Realtime Prompting).
+     * Forțează RO, limitează verbozitate, ghidează preambles, entity capture și tools.
+     * Inofensiv pe modele mai vechi (gpt-4o-realtime) — doar text suplimentar.
+     */
+    private function appendRealtimeV2Guidance(string $base, string $language): string
+    {
+        return $base
+            . "\n\n=== gpt-realtime-2 (reguli vocale) ==="
+            . "\n# Limbă"
+            . "\n- Răspunde DOAR în {$language}. NU comuta limba după accent sau câteva cuvinte străine."
+            . "\n- Comutarea limbii doar dacă clientul cere EXPLICIT."
+            . "\n"
+            . "\n# Verbozitate"
+            . "\n- Răspunsuri directe: 1–2 propoziții scurte."
+            . "\n- După rezultate de tool: sumarizează scurt, apoi propune un singur pas următor."
+            . "\n- Troubleshooting: un singur pas la rândul lui."
+            . "\n"
+            . "\n# Preambles"
+            . "\n- Tool care durează (căutare, lookup, programare): spune întâi „O clipă, verific\" / „Caut acum\" apoi apelează tool-ul."
+            . "\n- Răspuns imediat: NU folosi preamble."
+            . "\n"
+            . "\n# Tools"
+            . "\n- Read-only (căutare produse, lookup info): apelează când intenția e clară."
+            . "\n- Write / acțiuni (booking, callback, modificare): rezumă acțiunea ÎNAINTE și cere confirmare orală scurtă."
+            . "\n- NU inventa tool-uri care nu există."
+            . "\n"
+            . "\n# Entity capture"
+            . "\n- Numere de telefon: repetă DIGIT CU DIGIT pentru confirmare."
+            . "\n- Email: cere repetare CARACTER CU CARACTER dacă e neclar."
+            . "\n- ID / nr. comandă: repetă-le înainte de tool call."
+            . "\n"
+            . "\n# Recuperare erori"
+            . "\n- Tool eșuat: explică în limbaj uman scurt."
+            . "\n- Suspect identificator greșit: recită valoarea folosită și cere corectare."
+            . "\n=== SFÂRȘIT gpt-realtime-2 ===";
     }
 
     /**
@@ -397,6 +442,9 @@ class RealtimeSession
             . "\n4. CONFIRMĂ cu datele: 'Deci [nume], la [telefon], vă sunăm [interval]. E corect?'"
             . "\n⚠️ NU confirma până nu ai NUME + TELEFON. Dacă lipsește unul, insistă politicos."
             . "\n=== SFÂRȘIT CAPTARE DATE ===";
+
+        // gpt-realtime-2: secțiuni labeled per docs OpenAI Realtime Prompting.
+        $base = $this->appendRealtimeV2Guidance($base, $language);
 
         // Apply centralized guardrails (voice mode)
         $base = PromptGuardrails::apply($base, isVoice: true);
@@ -1140,7 +1188,7 @@ class RealtimeSession
 
             \App\Models\AiApiMetric::create([
                 'provider' => 'openai',
-                'model' => 'gpt-4o-realtime',
+                'model' => config('services.openai.realtime_model', 'gpt-realtime-2'),
                 'input_tokens' => $inputTokens,
                 'output_tokens' => $outputTokens,
                 'cost_cents' => $costCents,
