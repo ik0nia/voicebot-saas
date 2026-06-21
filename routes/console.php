@@ -39,6 +39,12 @@ Schedule::command('conversations:populate-intents --limit=300')
     ->everyThirtyMinutes()
     ->withoutOverlapping();
 
+// Backfill outcomes pentru conv care s-au închis dar n-au generat outcomes
+// (event listener pierdut sau dispatch eșuat). Rulează la 6h.
+Schedule::command('conversations:backfill-outcomes --days=7 --limit=300')
+    ->everySixHours()
+    ->withoutOverlapping();
+
 // Reminder email la tenant admins/operators când o escalare a stat fără
 // răspuns peste pragul SLA (5 min default). Rulează ÎNAINTE de
 // resume-stale, ca operatorul să mai poată prelua la timp.
