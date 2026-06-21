@@ -311,7 +311,142 @@
         </div>
     </div>
 
+    {{-- Bot KPI comparativ (per bot 30 zile) --}}
+    <div class="bg-white rounded-2xl border border-line p-6 mt-6"
+         x-data="botKpiWidget()" x-init="load()">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h2 class="text-lg font-semibold text-ink">📊 Comparativ per bot (30 zile)</h2>
+                <p class="text-xs text-muted mt-0.5">Conv, mesaje medie, abandons %, leads — identifică care bot convertește mai bine.</p>
+            </div>
+            <button @click="load()" class="text-xs text-muted hover:text-ink" :disabled="loading">⟳</button>
+        </div>
+        <div x-show="loading" class="text-sm text-muted py-8 text-center">Se încarcă…</div>
+        <div x-show="!loading" class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="text-xs text-muted">
+                    <tr>
+                        <th class="text-left py-2">Bot</th>
+                        <th class="text-right py-2">Conv</th>
+                        <th class="text-right py-2">Mesaje/conv</th>
+                        <th class="text-right py-2">Abandon %</th>
+                        <th class="text-right py-2">Leads</th>
+                        <th class="text-right py-2">Cost €</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template x-for="b in bots" :key="b.bot_id">
+                        <tr class="border-t border-line">
+                            <td class="py-2 font-medium" x-text="b.name"></td>
+                            <td class="text-right" x-text="b.conversations"></td>
+                            <td class="text-right" x-text="b.avg_messages"></td>
+                            <td class="text-right" :class="b.abandoned_pct > 40 ? 'text-coralh font-semibold' : ''" x-text="b.abandoned_pct + '%'"></td>
+                            <td class="text-right" x-text="b.leads"></td>
+                            <td class="text-right text-muted" x-text="(costMap[b.bot_id] || 0).toFixed(2)"></td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+            <p x-show="bots.length === 0" class="text-sm text-muted py-6 text-center">Nu există date pentru ultimele 30 zile.</p>
+        </div>
+    </div>
+
+    {{-- Voice KPI --}}
+    <div class="bg-white rounded-2xl border border-line p-6 mt-6"
+         x-data="voiceKpiWidget()" x-init="load()">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h2 class="text-lg font-semibold text-ink">📞 Voice KPI (30 zile)</h2>
+                <p class="text-xs text-muted mt-0.5">Completion rate + drop-off pe minute — identifică unde abandonează clienții.</p>
+            </div>
+            <button @click="load()" class="text-xs text-muted hover:text-ink" :disabled="loading">⟳</button>
+        </div>
+        <div x-show="loading" class="text-sm text-muted py-6 text-center">Se încarcă…</div>
+        <template x-if="!loading && data && data.total_calls > 0">
+            <div>
+                <div class="grid sm:grid-cols-4 gap-3 mb-4">
+                    <div class="bg-cream rounded-lg p-3">
+                        <div class="text-xs text-muted">Apeluri</div>
+                        <div class="text-xl font-semibold text-ink" x-text="data.total_calls"></div>
+                    </div>
+                    <div class="bg-cream rounded-lg p-3">
+                        <div class="text-xs text-muted">Completion %</div>
+                        <div class="text-xl font-semibold" :class="data.completion_rate_pct < 60 ? 'text-coralh' : 'text-emerald-700'" x-text="data.completion_rate_pct + '%'"></div>
+                    </div>
+                    <div class="bg-cream rounded-lg p-3">
+                        <div class="text-xs text-muted">Durată medie</div>
+                        <div class="text-xl font-semibold text-ink" x-text="Math.round(data.avg_duration_seconds) + 's'"></div>
+                    </div>
+                    <div class="bg-cream rounded-lg p-3">
+                        <div class="text-xs text-muted">Total minute</div>
+                        <div class="text-xl font-semibold text-ink" x-text="data.total_minutes"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="text-xs font-medium text-inkSoft mb-2">Distribuție durată (drop-off)</div>
+                    <div class="space-y-1.5">
+                        <template x-for="(cnt, bucket) in data.duration_buckets" :key="bucket">
+                            <div class="flex items-center gap-2 text-xs">
+                                <div class="w-20 text-muted" x-text="bucket"></div>
+                                <div class="flex-1 bg-cream rounded-full h-2 overflow-hidden">
+                                    <div class="h-full bg-coral rounded-full" :style="'width: ' + (cnt / Math.max(...Object.values(data.duration_buckets)) * 100) + '%'"></div>
+                                </div>
+                                <div class="w-10 text-right text-inkSoft font-medium" x-text="cnt"></div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </template>
+        <p x-show="!loading && (!data || data.total_calls === 0)" class="text-sm text-muted py-6 text-center">Nu există apeluri în ultimele 30 zile.</p>
+    </div>
+
 </div>
+
+@push('scripts')
+<script>
+function botKpiWidget() {
+    return {
+        loading: true,
+        bots: [],
+        costMap: {},
+        async load() {
+            this.loading = true;
+            try {
+                const [kpi, cost] = await Promise.all([
+                    fetch('/dashboard/bot-kpi?days=30').then(r => r.json()),
+                    fetch('/dashboard/bot-cost?days=30').then(r => r.json()),
+                ]);
+                this.bots = kpi.bots || [];
+                this.costMap = {};
+                (cost.bots || []).forEach(b => { this.costMap[b.bot_id] = (b.total_cost_cents || 0) / 100; });
+            } catch (e) {
+                console.warn('bot-kpi load failed', e);
+            } finally {
+                this.loading = false;
+            }
+        },
+    };
+}
+function voiceKpiWidget() {
+    return {
+        loading: true,
+        data: null,
+        async load() {
+            this.loading = true;
+            try {
+                const r = await fetch('/dashboard/voice-kpi?days=30');
+                this.data = await r.json();
+            } catch (e) {
+                console.warn('voice-kpi load failed', e);
+            } finally {
+                this.loading = false;
+            }
+        },
+    };
+}
+</script>
+@endpush
 @endsection
 
 @push('scripts')
