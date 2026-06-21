@@ -199,6 +199,69 @@ class KnowledgeController extends Controller
     }
 
     /**
+     * Export complet al knowledge chunks ale unui bot ca JSON.
+     * Permite migrare între bots / backup manual.
+     */
+    public function exportJson(Bot $bot)
+    {
+        $this->authorize('view', $bot);
+        $rows = $bot->knowledge()->get([
+            'id', 'type', 'source_type', 'source_id', 'title', 'content',
+            'chunk_index', 'content_hash', 'content_language', 'metadata', 'created_at',
+        ]);
+        return response()->streamDownload(function () use ($rows, $bot) {
+            echo json_encode([
+                'bot_id' => $bot->id,
+                'bot_slug' => $bot->slug,
+                'exported_at' => now()->toIso8601String(),
+                'count' => $rows->count(),
+                'chunks' => $rows,
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        }, "knowledge-bot-{$bot->id}-" . now()->format('Ymd-His') . '.json', [
+            'Content-Type' => 'application/json',
+        ]);
+    }
+
+    /**
+     * Clonează knowledge de la un bot sursă la bot-ul curent (același tenant).
+     * Marchează clone-urile ca status=pending pentru re-embedding cu modelul
+     * bot-ului destinație.
+     */
+    public function cloneFrom(Request $request, Bot $bot)
+    {
+        $this->authorize('update', $bot);
+        $validated = $request->validate(['source_bot_id' => 'required|integer|exists:bots,id']);
+        $source = \App\Models\Bot::findOrFail($validated['source_bot_id']);
+        if ($source->tenant_id !== $bot->tenant_id) {
+            abort(403, 'cross-tenant clone refuzat');
+        }
+        if ($source->id === $bot->id) {
+            return back()->with('error', 'Sursa și destinația sunt același bot.');
+        }
+
+        $copied = 0;
+        $source->knowledge()->chunk(200, function ($rows) use ($bot, &$copied) {
+            foreach ($rows as $r) {
+                $bot->knowledge()->create([
+                    'type' => $r->type,
+                    'source_type' => $r->source_type,
+                    'source_id' => $r->source_id,
+                    'title' => $r->title,
+                    'content' => $r->content,
+                    'chunk_index' => $r->chunk_index,
+                    'content_hash' => $r->content_hash,
+                    'content_language' => $r->content_language,
+                    'metadata' => $r->metadata,
+                    'status' => 'pending', // re-embed cu modelul destinației
+                ]);
+                $copied++;
+            }
+        });
+        app(\App\Services\KnowledgeSearchService::class)->invalidateCache($bot->id);
+        return back()->with('success', "{$copied} chunks clonate. Vor fi re-embedded în background.");
+    }
+
+    /**
      * Stats embedding per bot — util în UI progress bar la re-embedding,
      * sau pentru debug când search returnează rezultate slabe.
      */

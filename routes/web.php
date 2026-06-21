@@ -838,6 +838,11 @@ Route::middleware('auth')->prefix('dashboard/agenti/{bot}')->group(function () {
         ->name('dashboard.bots.knowledge.topChunks');
     Route::get('/knowledge/embedding-stats', [KnowledgeController::class, 'embeddingStats'])
         ->name('dashboard.bots.knowledge.embeddingStats');
+    Route::get('/knowledge/export-json', [KnowledgeController::class, 'exportJson'])
+        ->name('dashboard.bots.knowledge.exportJson');
+    Route::post('/knowledge/clone-from', [KnowledgeController::class, 'cloneFrom'])
+        ->middleware('tenant.role:tenant_admin')
+        ->name('dashboard.bots.knowledge.cloneFrom');
 
     // Rate-limited mutation routes (10 requests per minute per user)
     Route::middleware(['throttle:10,1', 'tenant.role:tenant_admin,tenant_manager'])->group(function () {
