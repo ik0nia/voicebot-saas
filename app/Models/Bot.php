@@ -269,6 +269,39 @@ class Bot extends Model
     }
 
     /**
+     * Voice-specific settings (fallback message la error, retention recording,
+     * sentiment toggle, keyword alerts).
+     *
+     * @return array{
+     *   fallback_message:?string,
+     *   recording_retention_days:int,
+     *   recording_enabled_override:?bool,
+     *   sentiment_enabled:bool,
+     *   keyword_alerts:array
+     * }
+     */
+    public function voiceSettings(): array
+    {
+        $v = is_array($this->settings['voice'] ?? null) ? $this->settings['voice'] : [];
+        return [
+            'fallback_message' => isset($v['fallback_message']) && is_string($v['fallback_message'])
+                && trim($v['fallback_message']) !== '' ? $v['fallback_message'] : null,
+            'recording_retention_days' => is_numeric($v['recording_retention_days'] ?? null)
+                ? max(1, min(3650, (int) $v['recording_retention_days']))
+                : (int) env('RETENTION_RECORDING_PURGE_DAYS', 30),
+            'recording_enabled_override' => array_key_exists('recording_enabled_override', $v)
+                ? (bool) $v['recording_enabled_override'] : null,
+            'sentiment_enabled' => (bool) ($v['sentiment_enabled'] ?? false),
+            'keyword_alerts' => is_array($v['keyword_alerts'] ?? null)
+                ? array_values(array_filter(array_map(
+                    fn($k) => is_string($k) ? mb_strtolower(trim($k)) : null,
+                    $v['keyword_alerts']
+                )))
+                : [],
+        ];
+    }
+
+    /**
      * @return array{enabled:bool,operator_number:?string,max_ring_seconds:int}
      */
     public function transferSettings(): array

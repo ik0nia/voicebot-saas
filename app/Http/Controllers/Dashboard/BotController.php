@@ -301,6 +301,12 @@ class BotController extends Controller
             // Voice-specific prompt override (separat de system_prompt pentru chat).
             'settings.voice' => 'nullable|array',
             'settings.voice.system_prompt' => 'nullable|string|max:10000',
+            'settings.voice.fallback_message' => 'nullable|string|max:500',
+            'settings.voice.recording_retention_days' => 'nullable|integer|min:1|max:3650',
+            'settings.voice.recording_enabled_override' => 'nullable|boolean',
+            'settings.voice.sentiment_enabled' => 'nullable|boolean',
+            'settings.voice.keyword_alerts' => 'nullable|array|max:20',
+            'settings.voice.keyword_alerts.*' => 'string|max:50',
         ]);
 
         // Persist chat_languages + voice_language into bot.settings

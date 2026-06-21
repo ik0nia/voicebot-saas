@@ -1137,6 +1137,19 @@ class RealtimeSession
             Log::warning("RealtimeSession: failed to persist error event for call {$this->call->id}", ['error' => $e->getMessage()]);
         }
 
+        // Fallback message: dacă bot-ul are configurat un mesaj de fallback,
+        // îl spunem prin TTS înainte ca utilizatorul să rămână în liniște.
+        $fallback = $this->bot->voiceSettings()['fallback_message']
+            ?? 'Ne pare rău, am întâmpinat o problemă tehnică. Vă rugăm să sunați din nou într-un moment.';
+        if (!empty($fallback)) {
+            return [
+                'type' => 'response.create',
+                'response' => [
+                    'output_modalities' => ['audio'],
+                    'instructions' => 'Spune exact: "' . str_replace('"', '\\"', $fallback) . '". Apoi încheie apelul.',
+                ],
+            ];
+        }
         return null;
     }
 
