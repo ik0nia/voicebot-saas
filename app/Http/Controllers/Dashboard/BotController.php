@@ -276,6 +276,8 @@ class BotController extends Controller
             'settings.compliance.ai_disclosure_enabled' => 'nullable|boolean',
             'settings.compliance.ai_disclosure_text' => 'nullable|string|max:300',
             'settings.compliance.ai_voice_disclosure_text' => 'nullable|string|max:300',
+            'settings.compliance.topic_opt_out' => 'nullable|array|max:20',
+            'settings.compliance.topic_opt_out.*' => 'string|max:50',
 
             // Operator escalation SLA (minute) — citite de cron-uri.
             'settings.escalation_sla_notify_minutes' => 'nullable|integer|min:1|max:1440',

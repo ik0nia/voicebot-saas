@@ -114,6 +114,14 @@ final class ChatPromptAssembler
             . "\n- NU repeta același mesaj de două ori la rând. Dacă utilizatorul reformulează cererea, schimbă unghiul: cere o clarificare specifică, dă o alternativă concretă, sau escaladează."
             . "\n- Când clientul spune 'vreau să comand', 'mă ajuți să comand', 'ghidează-mă' sau echivalent: treci direct la lead capture (nume, telefon, adresă) — fără a mai propune oferte alternative.";
 
+        // Topic opt-out — bot nu răspunde pe anumite subiecte (compliance).
+        $optOut = $bot->topicOptOut();
+        if (!empty($optOut)) {
+            $systemPrompt .= "\n\nSUBIECTE INTERZISE: nu răspunde și nu da sfaturi pe: "
+                . implode(', ', $optOut)
+                . ". Dacă utilizatorul aduce aceste subiecte, spune: 'Pentru întrebări pe acest subiect, te rugăm să consulți un specialist autorizat' și redirecționează spre subiectul principal al business-ului.";
+        }
+
         [$systemPrompt, $policyApplied, $policyTone] = $this->applyConversationPolicy($systemPrompt, $bot, $channel);
 
         $systemPrompt = PromptGuardrails::apply($systemPrompt);

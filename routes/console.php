@@ -33,6 +33,10 @@ Schedule::command('push:cleanup-stale --days=60')->weeklyOn(0, '03:30')->without
 // Săptămânal: digest lead-uri dormante (>7 zile fără update) la tenant admins.
 Schedule::command('leads:alert-inactive --days=7')->weeklyOn(1, '09:00')->withoutOverlapping();
 
+// Săptămânal: rescan website-urile connectorilor — detectează pagini noi
+// sau modificate fără să mai necesite click manual la fiecare 7 zile.
+Schedule::command('websites:rescan --days=7 --limit=50')->weeklyOn(0, '04:00')->withoutOverlapping();
+
 // Agregă detected_intents per mesaj în primary_intent pe conversation.
 // Rulează la 30 min — agregarea nu trebuie să fie instant.
 Schedule::command('conversations:populate-intents --limit=300')

@@ -269,6 +269,23 @@ class Bot extends Model
     }
 
     /**
+     * Lista de topicuri pentru care bot-ul NU răspunde. Util pentru compliance
+     * (politică, religie, sănătate, advocacy) — bot redirectionează la operator
+     * uman sau oferă răspuns generic. Configurabil per bot prin
+     * settings.compliance.topic_opt_out (array de string-uri).
+     */
+    public function topicOptOut(): array
+    {
+        $c = is_array($this->settings['compliance'] ?? null) ? $this->settings['compliance'] : [];
+        $list = $c['topic_opt_out'] ?? [];
+        if (!is_array($list)) return [];
+        return array_values(array_filter(array_map(
+            fn($t) => is_string($t) ? mb_strtolower(trim($t)) : null,
+            $list
+        )));
+    }
+
+    /**
      * Voice-specific settings (fallback message la error, retention recording,
      * sentiment toggle, keyword alerts).
      *
