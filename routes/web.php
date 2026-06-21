@@ -576,6 +576,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/operator/canned',                       [$op, 'cannedResponses'])->name('dashboard.operator.canned');
     Route::get('/dashboard/operator/search-messages',              [$op, 'searchMessages'])->name('dashboard.operator.searchMessages');
     Route::post('/dashboard/operator/conv/{conversation}/typing',  [$op, 'typing'])->name('dashboard.operator.typing');
+    Route::post('/dashboard/operator/conv/{conversation}/read',    [$op, 'markRead'])->name('dashboard.operator.read');
     Route::post('/dashboard/operator/push/subscribe', [$op, 'pushSubscribe'])->name('dashboard.operator.push.subscribe');
     Route::post('/dashboard/operator/push/test',      [$op, 'pushTest'])->name('dashboard.operator.push.test');
 });
@@ -849,6 +850,9 @@ Route::middleware('auth')->prefix('dashboard/agenti/{bot}')->group(function () {
     Route::post('/knowledge/clone-from', [KnowledgeController::class, 'cloneFrom'])
         ->middleware('tenant.role:tenant_admin')
         ->name('dashboard.bots.knowledge.cloneFrom');
+    Route::post('/knowledge/{knowledgeId}/tags', [KnowledgeController::class, 'setTags'])
+        ->middleware('tenant.role:tenant_admin,tenant_manager')
+        ->name('dashboard.bots.knowledge.setTags');
 
     // Rate-limited mutation routes (10 requests per minute per user)
     Route::middleware(['throttle:10,1', 'tenant.role:tenant_admin,tenant_manager'])->group(function () {

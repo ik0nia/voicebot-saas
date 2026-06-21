@@ -299,6 +299,29 @@ class OperatorConsoleController extends Controller
     }
 
     /**
+     * Operator marchează mesajele citite pană la `up_to_message_id`.
+     * Update messages.read_at + broadcast pentru widget.
+     */
+    public function markRead(Request $request, Conversation $conversation): JsonResponse
+    {
+        $this->authorize('view', $conversation);
+        $validated = $request->validate(['up_to_message_id' => 'required|integer']);
+        $upTo = $validated['up_to_message_id'];
+
+        \App\Models\Message::where('conversation_id', $conversation->id)
+            ->where('id', '<=', $upTo)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+
+        try {
+            \App\Events\MessageRead::dispatch($conversation, $upTo, 'operator');
+        } catch (\Throwable $e) {
+            \Log::debug('read broadcast failed', ['error' => $e->getMessage()]);
+        }
+        return response()->json(['ok' => true]);
+    }
+
+    /**
      * Broadcast typing indicator de la operator → widget vizitator.
      * Idempotent — debouncing happens client-side.
      */

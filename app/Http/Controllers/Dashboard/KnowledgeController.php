@@ -199,6 +199,28 @@ class KnowledgeController extends Controller
     }
 
     /**
+     * Setează/actualizează tags pe un knowledge chunk. Stocate în
+     * metadata.tags[]. Útile pentru filtrarea ulterioară per categorie.
+     */
+    public function setTags(Request $request, Bot $bot, $knowledgeId)
+    {
+        $this->authorize('update', $bot);
+        $validated = $request->validate([
+            'tags' => 'nullable|array|max:10',
+            'tags.*' => 'string|max:32',
+        ]);
+        $row = $bot->knowledge()->findOrFail($knowledgeId);
+        $tags = array_values(array_unique(array_filter(array_map(
+            fn($t) => mb_strtolower(trim((string) $t)),
+            $validated['tags'] ?? []
+        ))));
+        $meta = is_array($row->metadata) ? $row->metadata : [];
+        $meta['tags'] = $tags;
+        $row->update(['metadata' => $meta]);
+        return response()->json(['ok' => true, 'tags' => $tags]);
+    }
+
+    /**
      * Export complet al knowledge chunks ale unui bot ca JSON.
      * Permite migrare între bots / backup manual.
      */
