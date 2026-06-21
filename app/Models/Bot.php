@@ -269,6 +269,29 @@ class Bot extends Model
     }
 
     /**
+     * Pipeline stages configurabile per bot. Default = standard:
+     * new → contacted → scheduled → met → quoted → won/lost.
+     * Tenant cu nișă diferită (ex. service appointments) poate vrea
+     * stages diferite: new → booked → arrived → completed.
+     *
+     * @return array<int, string>
+     */
+    public function pipelineStages(): array
+    {
+        $s = $this->settings['lead_capture']['pipeline_stages'] ?? null;
+        if (is_array($s) && !empty($s)) {
+            $clean = array_values(array_filter(array_map(
+                fn($v) => is_string($v) ? mb_strtolower(trim($v)) : null,
+                $s
+            )));
+            if (!empty($clean)) {
+                return array_slice($clean, 0, 20);
+            }
+        }
+        return ['new', 'contacted', 'scheduled', 'met', 'quoted', 'won', 'lost'];
+    }
+
+    /**
      * Lista de topicuri pentru care bot-ul NU răspunde. Util pentru compliance
      * (politică, religie, sănătate, advocacy) — bot redirectionează la operator
      * uman sau oferă răspuns generic. Configurabil per bot prin

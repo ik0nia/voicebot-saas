@@ -265,6 +265,8 @@ class BotController extends Controller
             // Lead capture per-bot — vezi LeadOpportunityScorer.
             'settings.lead_capture' => 'nullable|array',
             'settings.lead_capture.threshold' => 'nullable|integer|min:5|max:95',
+            'settings.lead_capture.pipeline_stages' => 'nullable|array|max:20',
+            'settings.lead_capture.pipeline_stages.*' => 'string|max:30',
 
             // Behavior controls — semantic dedup pe outbound
             // (ChatbotApiController::dedupOutboundOrFallback).
