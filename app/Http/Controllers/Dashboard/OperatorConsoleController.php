@@ -299,6 +299,22 @@ class OperatorConsoleController extends Controller
     }
 
     /**
+     * Broadcast typing indicator de la operator → widget vizitator.
+     * Idempotent — debouncing happens client-side.
+     */
+    public function typing(Request $request, Conversation $conversation): JsonResponse
+    {
+        $this->authorize('view', $conversation);
+        $validated = $request->validate(['is_typing' => 'required|boolean']);
+        try {
+            \App\Events\TypingIndicator::dispatch($conversation, 'operator', $validated['is_typing']);
+        } catch (\Throwable $e) {
+            \Log::debug('typing broadcast failed', ['error' => $e->getMessage()]);
+        }
+        return response()->json(['ok' => true]);
+    }
+
+    /**
      * Returnează canned responses (snippet-uri) pentru tenantul curent.
      * UI-ul operator console le folosește ca dropdown rapid de inserare.
      */
