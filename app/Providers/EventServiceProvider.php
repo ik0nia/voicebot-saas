@@ -34,6 +34,9 @@ class EventServiceProvider extends ServiceProvider
             \App\Listeners\SendNewLeadCapturedEmail::class,
             \App\Listeners\SendLeadCapturedWebhook::class,
         ],
+        \App\Events\BotStatusChanged::class => [
+            \App\Listeners\GrantFirstBotBonus::class,
+        ],
     ];
 
     protected $subscribe = [
