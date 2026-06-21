@@ -26,6 +26,14 @@ class SendNewLeadCapturedEmail implements ShouldQueue
             return;
         }
 
+        // Auto-assign la operator pe baza skills (dacă bot are
+        // preferred_skills configurate). Best-effort, fără să blocăm email.
+        try {
+            app(\App\Services\LeadAutoAssignService::class)->assignToOperator($lead);
+        } catch (\Throwable $e) {
+            Log::debug('LeadAutoAssign in listener failed', ['error' => $e->getMessage()]);
+        }
+
         try {
             $recipients = User::query()
                 ->withoutGlobalScopes()
