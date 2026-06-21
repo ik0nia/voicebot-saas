@@ -272,19 +272,72 @@
                                     </span>
                                 </template>
                             </div>
-                            <template x-if="activeConv?.is_mine">
-                                <button @click="release()"
-                                        class="text-2xs px-3 py-1 rounded-pill border border-emerald-200 bg-white hover:bg-emerald-50 font-medium text-emerald-800 transition flex-shrink-0">
-                                    ↩ Înapoi la bot
+                            <div class="flex flex-wrap items-center gap-1.5 flex-shrink-0">
+                                <template x-if="activeConv?.is_mine">
+                                    <button @click="release()"
+                                            class="text-2xs px-3 py-1 rounded-pill border border-emerald-200 bg-white hover:bg-emerald-50 font-medium text-emerald-800 transition">
+                                        ↩ Înapoi la bot
+                                    </button>
+                                </template>
+                                <template x-if="!activeConv?.is_mine">
+                                    <button @click="takeOver()"
+                                            class="text-2xs px-3 py-1 rounded-pill font-semibold transition"
+                                            :class="activeConv?.needs_human ? 'bg-coral hover:bg-coralh text-white' : 'bg-ink hover:bg-inkSoft text-cream'">
+                                        🙋 Răspund eu
+                                    </button>
+                                </template>
+                                <button @click="showOpsMenu = !showOpsMenu"
+                                        class="text-2xs px-2.5 py-1 rounded-pill border border-line bg-white hover:bg-cream text-inkSoft transition">
+                                    ⋯
                                 </button>
-                            </template>
-                            <template x-if="!activeConv?.is_mine">
-                                <button @click="takeOver()"
-                                        class="text-2xs px-3 py-1 rounded-pill font-semibold transition flex-shrink-0"
-                                        :class="activeConv?.needs_human ? 'bg-coral hover:bg-coralh text-white' : 'bg-ink hover:bg-inkSoft text-cream'">
-                                    🙋 Răspund eu
+                            </div>
+                        </div>
+
+                        {{-- Operations menu — note, tags, close, reassign --}}
+                        <div x-show="showOpsMenu" x-cloak x-transition class="mt-3 pt-3 border-t border-line space-y-3">
+                            {{-- Note adder --}}
+                            <div>
+                                <label class="block text-xs font-medium text-inkSoft mb-1">📝 Adaugă notă internă</label>
+                                <div class="flex gap-2">
+                                    <input type="text" x-model="noteText" placeholder="Vizibil doar pentru echipă"
+                                           class="flex-1 rounded border border-line px-3 py-2 text-sm">
+                                    <button @click="addNote()" :disabled="!noteText.trim()"
+                                            class="rounded bg-ink text-cream px-3 py-2 text-sm disabled:opacity-50">
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+                            {{-- Tags --}}
+                            <div>
+                                <label class="block text-xs font-medium text-inkSoft mb-1">🏷️ Tags (comma-separated)</label>
+                                <div class="flex gap-2">
+                                    <input type="text" x-model="tagsInput" placeholder="ex: lead, billing, urgent"
+                                           class="flex-1 rounded border border-line px-3 py-2 text-sm">
+                                    <button @click="saveTags()" class="rounded bg-ink text-cream px-3 py-2 text-sm">
+                                        Salvează
+                                    </button>
+                                </div>
+                            </div>
+                            {{-- Reassign + Close --}}
+                            <div class="grid grid-cols-2 gap-2">
+                                <button @click="reassignConv()" class="rounded border border-line bg-white px-3 py-2 text-sm hover:bg-cream">
+                                    👥 Reassign la coleg
                                 </button>
-                            </template>
+                                <button @click="closeConv()" class="rounded border border-coral/30 bg-coralsoft px-3 py-2 text-sm text-coralh hover:bg-coral hover:text-white transition">
+                                    ✓ Marchează închisă
+                                </button>
+                            </div>
+                            {{-- Canned dropdown --}}
+                            <div x-show="cannedList.length > 0">
+                                <label class="block text-xs font-medium text-inkSoft mb-1">⚡ Răspuns rapid</label>
+                                <select @change="insertCanned($event.target.value); $event.target.value=''"
+                                        class="w-full rounded border border-line px-3 py-2 text-sm bg-white">
+                                    <option value="">— alege snippet —</option>
+                                    <template x-for="c in cannedList" :key="c.label">
+                                        <option :value="c.body" x-text="c.label"></option>
+                                    </template>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
@@ -337,12 +390,92 @@ function operatorConsole() {
         feedTimer: null,
         msgsTimer: null,
         pushStatus: 'default',
+        // Ops menu state (note/tags/close/reassign/canned).
+        showOpsMenu: false,
+        noteText: '',
+        tagsInput: '',
+        cannedList: [],
 
         async init() {
             await this.loadFeed();
             this.feedTimer = setInterval(() => this.loadFeed(), 5000);
             this.checkPush();
             await this.registerSW();
+            this.loadCanned();
+        },
+
+        async loadCanned() {
+            try {
+                const r = await fetch('/dashboard/operator/canned', { headers: { 'Accept': 'application/json' } });
+                if (r.ok) {
+                    const d = await r.json();
+                    this.cannedList = d.responses || [];
+                }
+            } catch (e) { /* silent */ }
+        },
+
+        insertCanned(body) {
+            if (!body) return;
+            this.replyText = (this.replyText ? this.replyText + '\n\n' : '') + body;
+        },
+
+        async addNote() {
+            const txt = this.noteText.trim();
+            if (!txt || !this.activeId) return;
+            try {
+                const r = await fetch(`/dashboard/operator/conv/${this.activeId}/note`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                    body: JSON.stringify({ body: txt }),
+                });
+                if (r.ok) { this.noteText = ''; }
+            } catch (e) { /* silent */ }
+        },
+
+        async saveTags() {
+            if (!this.activeId) return;
+            const tags = this.tagsInput.split(',').map(t => t.trim()).filter(Boolean);
+            try {
+                await fetch(`/dashboard/operator/conv/${this.activeId}/tags`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                    body: JSON.stringify({ tags }),
+                });
+            } catch (e) { /* silent */ }
+        },
+
+        async closeConv() {
+            if (!this.activeId) return;
+            if (!confirm('Marchezi conversația ca închisă?')) return;
+            try {
+                await fetch(`/dashboard/operator/conv/${this.activeId}/close`, {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                });
+                this.activeId = null;
+                this.showOpsMenu = false;
+                await this.loadFeed();
+            } catch (e) { /* silent */ }
+        },
+
+        async reassignConv() {
+            if (!this.activeId) return;
+            const uid = prompt('User ID al colegului care preia:');
+            if (!uid) return;
+            try {
+                const r = await fetch(`/dashboard/operator/conv/${this.activeId}/reassign`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                    body: JSON.stringify({ assignee_user_id: parseInt(uid, 10) }),
+                });
+                if (r.ok) {
+                    alert('Reassigned.');
+                    this.showOpsMenu = false;
+                    await this.loadFeed();
+                } else {
+                    alert('Eroare reassign — verifică user ID');
+                }
+            } catch (e) { /* silent */ }
         },
 
         get filteredConvs() {
