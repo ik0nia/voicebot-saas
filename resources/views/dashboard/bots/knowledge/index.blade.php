@@ -13,6 +13,36 @@
 @section('content')
 <div class="max-w-5xl mx-auto">
 
+    {{-- Embedding stats widget — vizualizare rapidă stare RAG --}}
+    <div class="mb-6 bg-white rounded-xl border border-line p-5"
+         x-data="kbStats({{ $bot->id }})" x-init="load()">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-medium text-ink">📈 Stare embedding</h3>
+            <button @click="load()" class="text-xs text-muted hover:text-ink">⟳</button>
+        </div>
+        <div x-show="loading" class="text-xs text-muted">Se încarcă…</div>
+        <template x-if="!loading && stats">
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-sm">
+                <div><div class="text-xs text-muted">Total</div><div class="font-semibold text-ink" x-text="stats.total"></div></div>
+                <div><div class="text-xs text-muted">Ready</div><div class="font-semibold text-emerald-700" x-text="stats.ready"></div></div>
+                <div><div class="text-xs text-muted">Pending</div><div class="font-semibold text-amber-700" x-text="stats.pending"></div></div>
+                <div><div class="text-xs text-muted">Failed</div><div class="font-semibold text-coralh" x-text="stats.failed"></div></div>
+                <div><div class="text-xs text-muted">Fără embedding</div><div class="font-semibold text-inkSoft" x-text="stats.no_embedding"></div></div>
+            </div>
+        </template>
+        <div class="mt-3 flex flex-wrap gap-2 text-xs">
+            <a href="{{ route('dashboard.bots.knowledge.exportJson', $bot) }}"
+               class="rounded-full border border-line px-3 py-1 hover:bg-cream">📤 Export JSON</a>
+            <a href="{{ route('dashboard.bots.knowledge.topChunks', $bot) }}" target="_blank"
+               class="rounded-full border border-line px-3 py-1 hover:bg-cream">📊 Top chunks</a>
+            <form method="POST" action="{{ route('dashboard.bots.knowledge.reembedAll', $bot) }}"
+                  onsubmit="return confirm('Marchezi toate chunks ca pending pentru re-embedding?');">
+                @csrf
+                <button type="submit" class="rounded-full border border-coral/30 bg-coralsoft text-coralh px-3 py-1 hover:bg-coral hover:text-white transition">🔄 Re-embed all</button>
+            </form>
+        </div>
+    </div>
+
     {{-- Flash messages --}}
     @if(session('success'))
         <div class="mb-6 rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800">
@@ -261,6 +291,20 @@
 
 @push('scripts')
 <script>
+    function kbStats(botId) {
+        return {
+            loading: true,
+            stats: null,
+            async load() {
+                this.loading = true;
+                try {
+                    const r = await fetch(`/dashboard/agenti/${botId}/knowledge/embedding-stats`);
+                    if (r.ok) this.stats = await r.json();
+                } catch (e) { console.warn('kbStats load failed', e); }
+                finally { this.loading = false; }
+            },
+        };
+    }
     function toggleAddForm() {
         var form = document.getElementById('add-form');
         form.classList.toggle('hidden');
