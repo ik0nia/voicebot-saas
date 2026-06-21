@@ -30,6 +30,10 @@ class EventServiceProvider extends ServiceProvider
         KnowledgeSearchCompleted::class => [
             PersistKnowledgeSearchLog::class,
         ],
+        \App\Events\LeadCaptured::class => [
+            \App\Listeners\SendNewLeadCapturedEmail::class,
+            \App\Listeners\SendLeadCapturedWebhook::class,
+        ],
     ];
 
     protected $subscribe = [

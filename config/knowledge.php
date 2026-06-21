@@ -7,6 +7,19 @@ return [
     'embedding_model' => env('KNOWLEDGE_EMBEDDING_MODEL', 'text-embedding-3-small'),
     'cache_ttl_hours' => (int) env('KNOWLEDGE_CACHE_TTL_HOURS', 24),
 
+    // Pattern-uri prin care se extrag brand-uri din content (detectBrandFromQuery).
+    // WooCommerce default: "Brand: X". Alți connectori pot folosi "Marcă:",
+    // "Producător:", "Vendor:", etc.
+    'brand_patterns' => [
+        'Brand:\s*([A-Za-z0-9]+)',
+        'Marcă:\s*([A-Za-z0-9]+)',
+        'Marca:\s*([A-Za-z0-9]+)',
+        'Producător:\s*([A-Za-z0-9]+)',
+        'Producator:\s*([A-Za-z0-9]+)',
+        'Vendor:\s*([A-Za-z0-9]+)',
+        'Manufacturer:\s*([A-Za-z0-9]+)',
+    ],
+
     'query_expansion' => [
         'enabled' => (bool) env('KNOWLEDGE_QUERY_EXPANSION', true),
         'max_variants' => 3,

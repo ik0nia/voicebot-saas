@@ -22,11 +22,24 @@ class BotController extends Controller
         $viewingAll = $isSuperAdmin && session('admin_view_all', false) && !session('admin_as_tenant_id');
 
         // Super-admin: bypass tenant scope ONLY in aggregate "toți tenanții" mode.
-        // While impersonating (admin_as_tenant_id set) the scope filters to that
-        // tenant, so we must NOT use withoutGlobalScopes there.
         $query = $viewingAll
             ? Bot::withoutGlobalScopes()->withCount('calls')->with(['site', 'tenant'])
             : Bot::query()->withCount('calls')->with($isSuperAdmin ? ['site', 'tenant'] : 'site');
+
+        // Subquery: ultima activitate (conversație) pe bot — coloană utilă în UI
+        // pentru a vedea rapid care boți sunt „vii". Folosim withCount pe
+        // conversation cu where last_activity_at recent + select max pentru ts.
+        $query->addSelect([
+            'last_conversation_at' => \App\Models\Conversation::query()
+                ->withoutGlobalScopes()
+                ->selectRaw('MAX(last_activity_at)')
+                ->whereColumn('bot_id', 'bots.id'),
+            'conversations_count_30d' => \App\Models\Conversation::query()
+                ->withoutGlobalScopes()
+                ->selectRaw('COUNT(*)')
+                ->whereColumn('bot_id', 'bots.id')
+                ->where('created_at', '>=', now()->subDays(30)),
+        ]);
 
         if ($search = $request->get('search')) {
             $query->where('name', 'like', "%{$search}%");
@@ -38,7 +51,24 @@ class BotController extends Controller
             $query->where('is_active', false);
         }
 
-        $bots = $query->latest()->paginate(12);
+        if ($lang = $request->get('language')) {
+            $query->where('language', $lang);
+        }
+
+        if ($niche = $request->get('niche')) {
+            $query->where('niche_slug', $niche);
+        }
+
+        $sort = in_array($request->get('sort'), ['name', 'last_conversation_at', 'conversations_count_30d', 'calls_count', 'created_at'], true)
+            ? $request->get('sort') : 'created_at';
+        $dir = strtolower($request->get('dir', 'desc')) === 'asc' ? 'asc' : 'desc';
+        if ($sort === 'last_conversation_at') {
+            $query->orderByRaw("last_conversation_at {$dir} NULLS LAST");
+        } else {
+            $query->orderBy($sort, $dir);
+        }
+
+        $bots = $query->paginate(12)->withQueryString();
 
         return view('dashboard.bots.index', compact('bots', 'isSuperAdmin'));
     }
@@ -223,6 +253,54 @@ class BotController extends Controller
             'transfer_enabled' => 'nullable|boolean',
             'transfer_operator_number' => 'nullable|string|max:32',
             'transfer_max_ring_seconds' => 'nullable|integer|min:10|max:60',
+
+            // RAG behavior per-bot — vezi KnowledgeSearchService::ragSettingsForBot.
+            'settings.rag' => 'nullable|array',
+            'settings.rag.similarity_threshold' => 'nullable|numeric|min:0|max:1',
+            'settings.rag.fts_weight' => 'nullable|numeric|min:0.1|max:10',
+            'settings.rag.brand_aware_enabled' => 'nullable|boolean',
+            'settings.rag.query_expansion_enabled' => 'nullable|boolean',
+            'settings.rag.sibling_chunks_enabled' => 'nullable|boolean',
+
+            // Lead capture per-bot — vezi LeadOpportunityScorer.
+            'settings.lead_capture' => 'nullable|array',
+            'settings.lead_capture.threshold' => 'nullable|integer|min:5|max:95',
+
+            // Behavior controls — semantic dedup pe outbound
+            // (ChatbotApiController::dedupOutboundOrFallback).
+            'settings.behavior' => 'nullable|array',
+            'settings.behavior.dedup_threshold' => 'nullable|numeric|min:0.5|max:1.0',
+
+            // EU AI Act compliance — disclosure per chat/voice.
+            'settings.compliance' => 'nullable|array',
+            'settings.compliance.ai_disclosure_enabled' => 'nullable|boolean',
+            'settings.compliance.ai_disclosure_text' => 'nullable|string|max:300',
+            'settings.compliance.ai_voice_disclosure_text' => 'nullable|string|max:300',
+
+            // Operator escalation SLA (minute) — citite de cron-uri.
+            'settings.escalation_sla_notify_minutes' => 'nullable|integer|min:1|max:1440',
+            'settings.escalation_sla_resume_minutes' => 'nullable|integer|min:1|max:1440',
+
+            // Custom handoff messages — Bot::handoffMessages().
+            'settings.handoff' => 'nullable|array',
+            'settings.handoff.escalated' => 'nullable|string|max:300',
+            'settings.handoff.reminded' => 'nullable|string|max:300',
+            'settings.handoff.timed_out' => 'nullable|string|max:300',
+
+            // LLM tuning per-bot — citite prin Bot accessor helpers.
+            'settings.temperature' => 'nullable|numeric|min:0|max:2',
+            'settings.max_tokens' => 'nullable|integer|min:64|max:4096',
+            'settings.reasoning_effort' => 'nullable|string|in:minimal,low,medium,high,xhigh',
+            'settings.timezone' => 'nullable|string|max:64',
+
+            // Voice fine-tuning.
+            'settings.vad_threshold' => 'nullable|numeric|min:0.1|max:1.0',
+            'settings.silence_duration_ms' => 'nullable|integer|min:100|max:3000',
+            'settings.prefix_padding_ms' => 'nullable|integer|min:0|max:1500',
+
+            // Voice-specific prompt override (separat de system_prompt pentru chat).
+            'settings.voice' => 'nullable|array',
+            'settings.voice.system_prompt' => 'nullable|string|max:10000',
         ]);
 
         // Persist chat_languages + voice_language into bot.settings
@@ -253,6 +331,13 @@ class BotController extends Controller
         }
         if (isset($incoming['tone_guide']) && array_key_exists('emoji_ok', $incoming['tone_guide'])) {
             $incoming['tone_guide']['emoji_ok'] = (bool) $incoming['tone_guide']['emoji_ok'];
+        }
+        // Normalize the new per-bot toggle booleans (RAG, compliance).
+        foreach (['rag.brand_aware_enabled', 'rag.query_expansion_enabled', 'compliance.ai_disclosure_enabled'] as $path) {
+            [$group, $key] = explode('.', $path, 2);
+            if (isset($incoming[$group]) && array_key_exists($key, $incoming[$group])) {
+                $incoming[$group][$key] = (bool) $incoming[$group][$key];
+            }
         }
 
         // Drop empty FAQ rows (user added a repeater item but never
@@ -378,6 +463,62 @@ class BotController extends Controller
             ->with('success', 'Agentul AI a fost actualizat!');
     }
 
+    /**
+     * Returnează un snippet `<script>` de embed pentru widget chat-bot,
+     * personalizat per-bot + channel web. UI poate afișa direct cu copy
+     * button — fără client cant complica setup-ul.
+     */
+    public function embedCode(Bot $bot)
+    {
+        $this->authorize('view', $bot);
+        $channel = $bot->channels()->where('type', 'web_chatbot')->first();
+        if (!$channel) {
+            return response()->json(['error' => 'No web_chatbot channel'], 404);
+        }
+
+        $baseUrl = config('app.url', 'https://sambla.ro');
+        $token = $channel->config['embed_token'] ?? $channel->id;
+        $primary = $channel->config['theme']['primary'] ?? '#DC2626';
+
+        $snippet = <<<HTML
+<!-- Sambla AI Agent — {$bot->name} -->
+<script>
+  window.SAMBLA_CONFIG = {
+    botSlug: "{$bot->slug}",
+    channelToken: "{$token}",
+    primary: "{$primary}"
+  };
+</script>
+<script src="{$baseUrl}/widget/sambla-chat.min.js" async defer></script>
+HTML;
+
+        return response()->json([
+            'snippet' => $snippet,
+            'preview_url' => $baseUrl . '/widget/test.html?bot=' . urlencode($bot->slug),
+        ]);
+    }
+
+    /**
+     * Duplică un bot existent: copy name + system_prompt + greeting + settings.
+     * Util pentru A/B testing pe prompt variants sau setup rapid multi-bot.
+     * Cloneul are slug nou + is_active=false (operatorul activează când e gata).
+     */
+    public function duplicate($botId)
+    {
+        $original = $this->resolveBot($botId);
+        $this->authorize('view', $original);
+        $this->authorize('create', Bot::class);
+
+        $copy = $original->replicate(['slug', 'created_at', 'updated_at']);
+        $copy->name = $original->name . ' (copie)';
+        $copy->slug = Str::slug($copy->name) . '-' . Str::random(6);
+        $copy->is_active = false;
+        $copy->save();
+
+        return redirect()->route('dashboard.bots.edit', $copy)
+            ->with('success', '✅ Bot duplicat. Editează și activează când ești gata.');
+    }
+
     public function destroy($botId)
     {
         $bot = $this->resolveBot($botId);
@@ -385,6 +526,38 @@ class BotController extends Controller
         $bot->delete();
         return redirect()->route('dashboard.bots.index')
             ->with('success', 'Agentul AI a fost șters.');
+    }
+
+    /**
+     * Bulk pauză/activare pentru o listă de bot-uri (form POST din index).
+     * Util pentru clienți cu portofoliu de 5+ bot-uri care vor să-i comute
+     * rapid în recesiune / week-end / vacanță.
+     */
+    public function bulkToggle(Request $request)
+    {
+        $validated = $request->validate([
+            'bot_ids' => 'required|array|min:1|max:100',
+            'bot_ids.*' => 'integer|exists:bots,id',
+            'action' => 'required|string|in:activate,pause',
+        ]);
+
+        $bots = Bot::whereIn('id', $validated['bot_ids'])->get();
+        $changed = 0;
+        foreach ($bots as $bot) {
+            if (!$request->user()->can('update', $bot)) {
+                continue;
+            }
+            $newState = $validated['action'] === 'activate';
+            if ((bool) $bot->is_active === $newState) {
+                continue;
+            }
+            $bot->update(['is_active' => $newState]);
+            $changed++;
+        }
+
+        $label = $validated['action'] === 'activate' ? 'activate' : 'puse pe pauză';
+        return redirect()->route('dashboard.bots.index')
+            ->with('success', "{$changed} agent(e) {$label}.");
     }
 
     /**

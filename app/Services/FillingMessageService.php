@@ -549,7 +549,7 @@ class FillingMessageService
         return [
             'type' => 'response.create',
             'response' => [
-                'modalities' => ['text', 'audio'],
+                'output_modalities' => ['audio'],
                 'instructions' => 'Spune exact următorul text, natural și calm, fără să adaugi nimic: "' . str_replace('"', '\\"', $message) . '"',
             ],
         ];
@@ -576,7 +576,7 @@ class FillingMessageService
         return [
             'type' => 'response.create',
             'response' => [
-                'modalities' => ['text', 'audio'],
+                'output_modalities' => ['audio'],
                 'instructions' => 'Spune exact următorul text, natural și calm, fără să adaugi nimic: "' . str_replace('"', '\\"', $message) . '"',
             ],
         ];

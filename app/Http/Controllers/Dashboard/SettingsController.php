@@ -69,6 +69,70 @@ class SettingsController extends Controller
         return back()->with('success', 'Datele companiei au fost actualizate.');
     }
 
+    /**
+     * Update retention policy per tenant (GDPR window-uri).
+     * Vezi Tenant::retentionSettings() pentru clamp + default fallback.
+     */
+    public function updateRetention(Request $request)
+    {
+        $tenant = auth()->user()->tenant;
+        $validated = $request->validate([
+            'retention.conversations_days' => 'nullable|integer|min:7|max:3650',
+            'retention.call_anonymise_days' => 'nullable|integer|min:7|max:3650',
+            'retention.recording_purge_days' => 'nullable|integer|min:1|max:3650',
+        ]);
+
+        $existing = $tenant->settings ?? [];
+        $existing['retention'] = array_merge($existing['retention'] ?? [], $validated['retention'] ?? []);
+        $existing['retention'] = array_filter($existing['retention'], fn($v) => $v !== null && $v !== '');
+        $tenant->update(['settings' => $existing]);
+
+        return back()->with('success', 'Politicile de retenție au fost salvate.');
+    }
+
+    /**
+     * Update webhook URL + secret pentru lead notifications externe (CRM).
+     */
+    public function updateWebhooks(Request $request)
+    {
+        $tenant = auth()->user()->tenant;
+        $validated = $request->validate([
+            'webhooks.lead_captured_url' => 'nullable|url|max:500',
+            'webhooks.lead_captured_secret' => 'nullable|string|min:8|max:200',
+        ]);
+
+        $existing = $tenant->settings ?? [];
+        $existing['webhooks'] = array_merge($existing['webhooks'] ?? [], $validated['webhooks'] ?? []);
+        $existing['webhooks'] = array_filter($existing['webhooks'], fn($v) => $v !== null && $v !== '');
+        $tenant->update(['settings' => $existing]);
+
+        return back()->with('success', 'Webhook-urile au fost salvate.');
+    }
+
+    /**
+     * Update canned responses (snippet-uri operator) la nivel de tenant.
+     */
+    public function updateCannedResponses(Request $request)
+    {
+        $tenant = auth()->user()->tenant;
+        $validated = $request->validate([
+            'canned_responses' => 'nullable|array|max:30',
+            'canned_responses.*.label' => 'required_with:canned_responses.*.body|string|max:100',
+            'canned_responses.*.body' => 'required_with:canned_responses.*.label|string|max:1000',
+        ]);
+
+        $list = collect($validated['canned_responses'] ?? [])
+            ->filter(fn($r) => !empty($r['label']) && !empty($r['body']))
+            ->values()
+            ->all();
+
+        $existing = $tenant->settings ?? [];
+        $existing['canned_responses'] = $list;
+        $tenant->update(['settings' => $existing]);
+
+        return back()->with('success', 'Răspunsurile pre-definite au fost salvate.');
+    }
+
     public function updateNotifications(Request $request)
     {
         $user = auth()->user();

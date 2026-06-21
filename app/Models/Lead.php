@@ -81,10 +81,33 @@ class Lead extends Model
     // ─── Pipeline methods ───
 
     /**
+     * Transiții permise între stages — forward-only după sealing (won/lost).
+     * Vrem să prevenim back-stepping accidental (operator click greșit care
+     * mută un lead won înapoi la contacted).
+     *
+     * Lăsăm permise: orice → orice atâta timp cât nu suntem deja în terminal,
+     * sau dacă forțăm via `$extra['force'] = true`.
+     */
+    private const TERMINAL_STAGES = ['won', 'lost'];
+
+    /**
      * Advance lead to next pipeline stage with automatic timestamp.
+     *
+     * @throws \InvalidArgumentException pentru transiție invalidă din stagiu terminal.
      */
     public function advanceTo(string $stage, array $extra = []): self
     {
+        $current = $this->pipeline_stage ?: $this->status;
+        $force = (bool) ($extra['force'] ?? false);
+        unset($extra['force']);
+
+        // Guard: din terminal (won/lost) nu mai mutăm înapoi decât cu force.
+        if (in_array($current, self::TERMINAL_STAGES, true) && $current !== $stage && !$force) {
+            throw new \InvalidArgumentException(
+                "Lead {$this->id} este în stagiu terminal '{$current}'; transiția spre '{$stage}' necesită force=true."
+            );
+        }
+
         $timestampField = match($stage) {
             'contacted' => 'contacted_at',
             'scheduled' => 'scheduled_at',

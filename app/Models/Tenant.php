@@ -71,6 +71,52 @@ class Tenant extends Model
         });
     }
 
+    /**
+     * Canned responses (snippet-uri pre-definite) la nivel de tenant — toți
+     * operatorii pot insera rapid în conversații. Stocate ca array de
+     * {label, body} în settings.canned_responses.
+     *
+     * @return array<int, array{label:string,body:string}>
+     */
+    public function cannedResponses(): array
+    {
+        $list = $this->settings['canned_responses'] ?? [];
+        if (!is_array($list)) {
+            return [];
+        }
+        return array_values(array_filter(array_map(
+            fn($r) => is_array($r) && !empty($r['label']) && !empty($r['body'])
+                ? ['label' => (string) $r['label'], 'body' => (string) $r['body']]
+                : null,
+            $list
+        )));
+    }
+
+    /**
+     * Politici de retenție GDPR per-tenant. Override din `tenant.settings.retention.*`
+     * cu fallback la env (RETENTION_*_DAYS), apoi la default-uri standard.
+     *
+     * @return array{conversations_days:int,call_anonymise_days:int,recording_purge_days:int}
+     */
+    public function retentionSettings(): array
+    {
+        $r = is_array($this->settings['retention'] ?? null) ? $this->settings['retention'] : [];
+        $convDays = is_numeric($r['conversations_days'] ?? null)
+            ? max(7, min(3650, (int) $r['conversations_days']))
+            : (int) env('RETENTION_CONVERSATIONS_DAYS', 90);
+        $callDays = is_numeric($r['call_anonymise_days'] ?? null)
+            ? max(7, min(3650, (int) $r['call_anonymise_days']))
+            : (int) env('RETENTION_CALL_ANONYMISE_DAYS', 30);
+        $recDays = is_numeric($r['recording_purge_days'] ?? null)
+            ? max(1, min(3650, (int) $r['recording_purge_days']))
+            : (int) env('RETENTION_RECORDING_PURGE_DAYS', 30);
+        return [
+            'conversations_days' => $convDays,
+            'call_anonymise_days' => $callDays,
+            'recording_purge_days' => $recDays,
+        ];
+    }
+
     // Relationships
 
     public function users(): HasMany

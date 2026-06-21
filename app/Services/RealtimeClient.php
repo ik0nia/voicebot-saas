@@ -67,38 +67,55 @@ class RealtimeClient
      */
     public function buildSessionConfig(array $options = []): array
     {
+        // GA Realtime API (post 2026-05-12, beta scos): formatul session
+        // s-a schimbat. Acum:
+        //   - session.type = 'realtime' (vs 'transcription')
+        //   - audio.input/output grupate cu format ca obiect, nu string
+        //   - output_modalities (în loc de modalities)
+        //   - input_audio_format → audio.input.format.type ('audio/pcmu' pt μ-law)
+        //   - input_audio_transcription → audio.input.transcription
+        //   - turn_detection → audio.input.turn_detection
+        //   - voice → audio.output.voice
+        $transcription = [
+            'model' => $options['transcribe_model'] ?? 'gpt-4o-mini-transcribe',
+        ];
+        if (!empty($options['transcribe_language'])) {
+            $transcription['language'] = $options['transcribe_language'];
+        }
+        if (!empty($options['transcribe_prompt'])) {
+            $transcription['prompt'] = $options['transcribe_prompt'];
+        }
+
+        // GA: output_modalities acceptă DOAR ['text'] sau ['audio'], NU combinația.
+        // Pentru voice path forțăm audio singur — transcript-ul text e oricum
+        // livrat via conversation.item.input_audio_transcription.* events.
+        $outputModalities = $options['modalities'] ?? ['audio'];
+        if (in_array('audio', $outputModalities, true)) {
+            $outputModalities = ['audio'];
+        }
         $session = [
-            'modalities' => $options['modalities'] ?? ['text', 'audio'],
+            'type' => 'realtime',
             'instructions' => $options['instructions'] ?? '',
-            'voice' => $options['voice'] ?? 'alloy',
-            'input_audio_format' => 'g711_ulaw',
-            'output_audio_format' => 'g711_ulaw',
-            'input_audio_transcription' => [
-                // gpt-4o-mini-transcribe > whisper-1 on narrowband
-                // (phone) audio and stays accurate on Romanian
-                // accent — adopted 2026-04-16 after production
-                // calls surfaced language drift (RO → ES / PT / PL)
-                // with auto-detect whisper-1.
-                'model' => $options['transcribe_model'] ?? 'gpt-4o-mini-transcribe',
-                // Lock the ASR language when known — callers pass
-                // the bot's language ISO code. Omitting the key
-                // restores whisper auto-detect behaviour.
-                'language' => $options['transcribe_language'] ?? null,
-                'prompt' => $options['transcribe_prompt'] ?? null,
-            ],
-            'turn_detection' => [
-                'type' => $options['vad_type'] ?? 'semantic_vad',
-                'eagerness' => $options['vad_eagerness'] ?? 'low',
+            'output_modalities' => $outputModalities,
+            'audio' => [
+                'input' => [
+                    'format' => ['type' => 'audio/pcmu'],
+                    'turn_detection' => [
+                        'type' => $options['vad_type'] ?? 'semantic_vad',
+                        'eagerness' => $options['vad_eagerness'] ?? 'low',
+                    ],
+                    'transcription' => $transcription,
+                ],
+                'output' => [
+                    'format' => ['type' => 'audio/pcmu'],
+                    'voice' => $options['voice'] ?? 'alloy',
+                ],
             ],
             'tools' => $options['tools'] ?? [],
             'tool_choice' => 'auto',
-            'temperature' => $options['temperature'] ?? 0.7,
-            'max_response_output_tokens' => $options['max_tokens'] ?? 1024,
         ];
 
-        // gpt-realtime-2: reasoning intern. „low" = safe default voice (latency).
-        // Cheia se trimite doar dacă e setată — gpt-4o-realtime și mai vechi
-        // o ignoră inofensiv, dar îi lăsăm să rămână compatibili.
+        // gpt-realtime-2: reasoning intern. „low" = safe default voice.
         if (!empty($options['reasoning_effort'])) {
             $session['reasoning'] = ['effort' => $options['reasoning_effort']];
         }

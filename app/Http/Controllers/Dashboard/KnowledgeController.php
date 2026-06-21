@@ -198,6 +198,106 @@ class KnowledgeController extends Controller
         return back()->with('success', 'Documentul a fost șters.');
     }
 
+    /**
+     * Top chunks folosite în răspunsurile bot-ului — semnal pentru ce e cel
+     * mai relevant în KB. Citește `messages.knowledge_chunks_used` (populat de
+     * KnowledgeSearchService::trackChunkIds) și agregă frecvențe.
+     */
+    public function topChunks(Request $request, Bot $bot)
+    {
+        $this->authorize('view', $bot);
+        $days = (int) max(1, min(180, $request->integer('days', 30)));
+        $limit = (int) max(5, min(100, $request->integer('limit', 20)));
+
+        $rows = \App\Models\Message::query()
+            ->whereHas('conversation', fn($q) => $q->where('bot_id', $bot->id))
+            ->where('direction', 'outbound')
+            ->where('created_at', '>=', now()->subDays($days))
+            ->whereNotNull('knowledge_chunks_used')
+            ->pluck('knowledge_chunks_used');
+
+        $counts = [];
+        foreach ($rows as $list) {
+            $ids = is_array($list) ? $list : (is_string($list) ? json_decode($list, true) : []);
+            if (!is_array($ids)) continue;
+            foreach ($ids as $id) {
+                $id = (int) $id;
+                if ($id > 0) {
+                    $counts[$id] = ($counts[$id] ?? 0) + 1;
+                }
+            }
+        }
+        arsort($counts);
+        $topIds = array_slice(array_keys($counts), 0, $limit);
+        if (empty($topIds)) {
+            return response()->json(['chunks' => []]);
+        }
+
+        $chunks = \App\Models\BotKnowledge::whereIn('id', $topIds)
+            ->get(['id', 'title', 'content', 'source_type', 'chunk_index'])
+            ->map(fn($c) => [
+                'id' => $c->id,
+                'title' => $c->title,
+                'snippet' => mb_substr((string) $c->content, 0, 200),
+                'source_type' => $c->source_type,
+                'chunk_index' => $c->chunk_index,
+                'used_count' => $counts[$c->id] ?? 0,
+            ])
+            ->sortByDesc('used_count')
+            ->values();
+
+        return response()->json([
+            'window_days' => $days,
+            'chunks' => $chunks,
+        ]);
+    }
+
+    /**
+     * Marchează toate chunks ale unui bot ca pending pentru re-embedding.
+     * Util la schimbare embedding_model sau dacă bănuim drift. Un job
+     * (separate) preia chunks pending și le re-embed.
+     */
+    public function requestReembedAll(Bot $bot)
+    {
+        $this->authorize('update', $bot);
+        $count = $bot->knowledge()->update([
+            'status' => 'pending',
+            'embedding' => null,
+        ]);
+        // Invalidează cache RAG.
+        app(\App\Services\KnowledgeSearchService::class)->invalidateCache($bot->id);
+        return back()->with('success', "{$count} chunks marcate pentru re-embedding. Procesarea rulează în background.");
+    }
+
+    /**
+     * Bulk delete pe knowledge după source_type (ex. toate „connector" sau
+     * toate „upload" sau toate „website"). Util la cleanup masiv.
+     */
+    public function bulkDestroy(Request $request, Bot $bot)
+    {
+        $validated = $request->validate([
+            'source_type' => 'required|string|in:upload,website,faq,connector,manual',
+            'confirm' => 'required|in:DELETE',
+        ]);
+
+        $count = $bot->knowledge()
+            ->where('source_type', $validated['source_type'])
+            ->count();
+
+        if ($count === 0) {
+            return back()->with('error', "Nu există documente cu source_type = {$validated['source_type']}.");
+        }
+
+        $bot->knowledge()
+            ->where('source_type', $validated['source_type'])
+            ->delete();
+
+        // Invalidează cache-ul de search pentru bot
+        app(\App\Services\KnowledgeSearchService::class)->invalidateCache($bot->id);
+
+        return back()->with('success', "{$count} documente șterse (source_type = {$validated['source_type']}).");
+    }
+
     // ─── AI Agents ───
 
     public function runAgent(Request $request, Bot $bot)

@@ -10,6 +10,10 @@ class ChatModelRouter
     /**
      * Decide which model tier to use based on query complexity, conversation context,
      * cost budget, voice channel, and circuit breaker state.
+     *
+     * @param \App\Models\Bot|null $bot Dacă e dat și are temperature/max_tokens în
+     *   settings, suprascriu default-urile per-tier. Asta evită discrepanța
+     *   anterioară între 0.6 (router default) și 0.7 (Bot model default).
      */
     public function route(
         string $userMessage,
@@ -17,6 +21,7 @@ class ChatModelRouter
         int $conversationCostCents = 0,
         bool $isVoiceChannel = false,
         string $language = 'ro',
+        ?\App\Models\Bot $bot = null,
     ): array {
         $message = mb_strtolower(trim($userMessage));
         $wordCount = str_word_count($message);
@@ -25,6 +30,23 @@ class ChatModelRouter
         $tiers = config('routing.tiers');
         $fast = $tiers['fast'];
         $smart = $tiers['smart'];
+
+        // Per-bot override pentru temperature/max_tokens — dacă bot-ul are
+        // valori explicite în settings, ele câștigă fără să schimbăm tier-ul.
+        // Asta elimină discrepanța observată în audit (router default 0.6,
+        // Bot model default 0.7, ChatResponder fallback 0.6).
+        if ($bot !== null) {
+            $botTemp = $bot->settings['temperature'] ?? null;
+            $botMax  = $bot->settings['max_tokens'] ?? null;
+            if (is_numeric($botTemp)) {
+                $fast['temperature']  = max(0.0, min(2.0, (float) $botTemp));
+                $smart['temperature'] = max(0.0, min(2.0, (float) $botTemp));
+            }
+            if (is_numeric($botMax)) {
+                $fast['max_tokens']  = max(64, min(4096, (int) $botMax));
+                $smart['max_tokens'] = max(64, min(4096, (int) $botMax));
+            }
+        }
 
         // 1. Cost-aware: force fast if conversation budget exceeded
         $budget = config('routing.cost_budget_cents', 15);

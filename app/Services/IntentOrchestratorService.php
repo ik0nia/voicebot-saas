@@ -323,8 +323,30 @@ class IntentOrchestratorService
                     }
                 }
 
+                // 3. Cap total prompt-uri per conversație (anti-spam). Default 2;
+                // configurabil per bot via lead_capture.max_prompts_per_conv.
+                if (!$alreadyAskedForLead && $bot !== null) {
+                    $maxPrompts = $bot->leadCaptureSettings()['max_prompts_per_conv'];
+                    $shown = (int) $conversation->messages()
+                        ->where('direction', 'outbound')
+                        ->where('metadata->lead_prompt', true)
+                        ->count();
+                    if ($shown >= $maxPrompts) {
+                        $alreadyAskedForLead = true;
+                    }
+                }
+
                 $sessionEvents = $this->events->getConversationEvents($conversation->id)->toArray();
                 $leadScore = $this->leadScorer->score($conversation, $plan->intents, $sessionEvents);
+
+                // Persist scor MEREU (păstrăm maximul observat), nu doar când
+                // declanșează capture. Asta repară conv.lead_score=0 pe toate
+                // conversațiile cu scor sub threshold. Înainte, scor=0 vs.
+                // scor=29 (sub threshold 30) erau indistinguibile în dashboard.
+                $newScore = max((int) ($conversation->lead_score ?? 0), $leadScore->value);
+                if ($newScore !== (int) ($conversation->lead_score ?? 0)) {
+                    $conversation->update(['lead_score' => $newScore]);
+                }
 
                 if ($leadScore->shouldCapture() && !$alreadyAskedForLead) {
                     $result->leadContext = "\n\n[INSTRUCȚIUNE LEAD CAPTURE — OBLIGATORIU în acest răspuns:"
@@ -349,8 +371,6 @@ class IntentOrchestratorService
                         'idempotency_key' => "lead_prompt:{$conversation->id}:{$conversation->messages_count}",
                     ]);
 
-                    // Update conversation lead score
-                    $conversation->update(['lead_score' => $leadScore->value]);
                 }
             } catch (\Throwable $e) {
                 Log::debug('Lead scoring failed', ['error' => $e->getMessage()]);

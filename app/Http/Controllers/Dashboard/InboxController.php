@@ -75,9 +75,16 @@ class InboxController extends Controller
                   ->whereNull('assignee_user_id');
         }
         if ($search = $request->get('q')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('contact_name', 'like', "%{$search}%")
-                    ->orWhere('contact_identifier', 'like', "%{$search}%");
+            $needle = trim((string) $search);
+            $query->where(function ($q) use ($needle) {
+                $q->where('contact_name', 'ilike', "%{$needle}%")
+                    ->orWhere('contact_identifier', 'ilike', "%{$needle}%")
+                    // Match și pe conținutul mesajelor — necesar pentru
+                    // operatori care vor să găsească o conversație după un
+                    // cuvânt cheie (ex. „livrare", „bolțar", număr comandă).
+                    ->orWhereHas('messages', function ($mq) use ($needle) {
+                        $mq->where('content', 'ilike', "%{$needle}%");
+                    });
             });
         }
 

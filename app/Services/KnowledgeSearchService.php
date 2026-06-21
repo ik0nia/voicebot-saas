@@ -12,6 +12,23 @@ use OpenAI\Laravel\Facades\OpenAI;
 class KnowledgeSearchService
 {
     /**
+     * IDs ale chunk-urilor returnate de toate căutările RAG dintr-un request
+     * (acumulate ca să poată fi atașate mesajului outbound generat).
+     * Resetat automat la fiecare apel de search() pe un bot nou — vezi search().
+     */
+    private array $lastSearchedChunkIds = [];
+
+    public function getLastSearchedChunkIds(): array
+    {
+        return array_values(array_unique($this->lastSearchedChunkIds));
+    }
+
+    public function resetLastSearchedChunkIds(): void
+    {
+        $this->lastSearchedChunkIds = [];
+    }
+
+    /**
      * Hybrid search: vector similarity + full-text search combined via RRF.
      *
      * Improvements over previous version:
@@ -40,11 +57,16 @@ class KnowledgeSearchService
             $cacheKey = "rag_search_{$botId}_{$version}_{$language}_" . md5($query . $limit . json_encode($filters));
             $cached = Cache::get($cacheKey);
             if ($cached !== null) {
+                $this->trackChunkIds($cached);
                 return $cached;
             }
 
-            $threshold = config('knowledge.similarity_threshold', 0.55);
-            $ftsWeight = config('knowledge.fts_weight', 1.5);
+            // RAG settings: per-bot override din bot.settings.rag.* cu fallback
+            // la config global. Permite tuning fără deploy: similarity, FTS
+            // weight, brand-aware on/off, query expansion on/off.
+            $ragSettings = $this->ragSettingsForBot($bot);
+            $threshold = $ragSettings['similarity_threshold'];
+            $ftsWeight = $ragSettings['fts_weight'];
 
             // Get query embedding (language-aware cache)
             $queryEmbedding = $this->getQueryEmbedding($query, $botId, $language);
@@ -58,8 +80,10 @@ class KnowledgeSearchService
 
             $embeddingStr = '[' . implode(',', $queryEmbedding) . ']';
 
-            // Language-aware query expansion
-            $expandedQuery = $this->expandQuery($query, $language);
+            // Language-aware query expansion (brand-aware skip, per-bot gate)
+            $expandedQuery = $ragSettings['query_expansion_enabled']
+                ? $this->expandQuery($query, $language, $botId)
+                : $query;
             $ftsConfig = config("knowledge.fts_languages.{$language}", config('knowledge.fts_default', 'romanian'));
             $words = array_filter(
                 preg_split('/\s+/', mb_strtolower(trim($expandedQuery))),
@@ -98,6 +122,29 @@ class KnowledgeSearchService
                 $filterSqlF .= ' AND source_date <= :f_filter_date_to';
                 $filterBindingsV['v_filter_date_to'] = $filters['date_to'];
                 $filterBindingsF['f_filter_date_to'] = $filters['date_to'];
+            }
+
+            // Brand-aware retrieval: când utilizatorul menționează un brand cunoscut
+            // (auto-discoverat din bot_knowledge prin patternul "Brand: X"), forțăm
+            // toate chunk-urile candidate să conțină brandul. Fixează cazul în care
+            // utilizatorul cere un brand X și RAG întoarce produse de la alt brand.
+            // Configurabil per-bot via bot.settings.rag.brand_aware_enabled.
+            $brandDetected = $ragSettings['brand_aware_enabled']
+                ? $this->detectBrandFromQuery($botId, $query)
+                : null;
+            if ($brandDetected !== null) {
+                $filterSqlV .= ' AND (LOWER(content) LIKE :v_brand OR LOWER(title) LIKE :v_brand_t)';
+                $filterSqlF .= ' AND (LOWER(content) LIKE :f_brand OR LOWER(title) LIKE :f_brand_t)';
+                $brandLike = '%' . $brandDetected . '%';
+                $filterBindingsV['v_brand'] = $brandLike;
+                $filterBindingsV['v_brand_t'] = $brandLike;
+                $filterBindingsF['f_brand'] = $brandLike;
+                $filterBindingsF['f_brand_t'] = $brandLike;
+                Log::info('KnowledgeSearch: brand filter applied', [
+                    'bot_id' => $botId,
+                    'brand' => $brandDetected,
+                    'query' => mb_substr($query, 0, 80),
+                ]);
             }
 
             $candidateLimit = config('knowledge.reranking.enabled', false)
@@ -252,12 +299,21 @@ class KnowledgeSearchService
             }
 
             // PARENT-CHILD RETRIEVAL: fetch adjacent sibling chunks for better context
-            if (config('knowledge.parent_child.enabled', true) && !empty($finalResults)) {
+            // Sibling chunks (parent-child): per-bot override prin
+            // bot.settings.rag.sibling_chunks_enabled. Default = config global.
+            $siblingEnabled = array_key_exists('sibling_chunks_enabled', $bot->settings['rag'] ?? [])
+                ? (bool) ($bot->settings['rag']['sibling_chunks_enabled'])
+                : (bool) config('knowledge.parent_child.enabled', true);
+            if ($siblingEnabled && !empty($finalResults)) {
                 $finalResults = $this->enrichWithSiblings($finalResults, $botId);
             }
 
             // Cache results for 5 minutes
             Cache::put($cacheKey, $finalResults, now()->addMinutes(5));
+
+            // Track chunk IDs returned so the outbound message can persist them
+            // in messages.knowledge_chunks_used for debugging RAG quality later.
+            $this->trackChunkIds($finalResults);
 
             // Structured RAG quality logging
             $this->logSearchMetrics($botId, $query, $results, $finalResults, [
@@ -440,9 +496,19 @@ class KnowledgeSearchService
      * Language-aware query expansion with synonyms.
      * Uses language-specific synonym dictionary, falls back to LLM rewrite.
      */
-    private function expandQuery(string $query, string $language = 'ro'): string
+    private function expandQuery(string $query, string $language = 'ro', int $botId = 0): string
     {
         if (!config('knowledge.query_expansion.enabled', true)) {
+            return $query;
+        }
+
+        // Guard: dacă query e foarte scurt (≤ 2 cuvinte) și conține un brand
+        // cunoscut, LLM rewrite tinde să interpreteze brandul ca un nume comun
+        // (un brand obscur poate fi rescris ca personaj anime sau termen comun
+        // omonim), umflând query-ul cu termeni irelevanți.
+        // Pentru aceste cazuri, retrieval-ul e mai precis pe forma originală.
+        $wordCount = count(preg_split('/\s+/', trim($query)) ?: []);
+        if ($botId > 0 && $wordCount <= 2 && $this->detectBrandFromQuery($botId, $query) !== null) {
             return $query;
         }
 
@@ -506,7 +572,7 @@ class KnowledgeSearchService
      */
     protected function searchFtsOnly(int $botId, string $query, int $limit, array $filters = [], string $language = 'ro'): array
     {
-        $expandedQuery = $this->expandQuery($query, $language);
+        $expandedQuery = $this->expandQuery($query, $language, $botId);
         $ftsConfig = config("knowledge.fts_languages.{$language}", config('knowledge.fts_default', 'romanian'));
         $words = array_filter(
             preg_split('/\s+/', mb_strtolower(trim($expandedQuery))),
@@ -558,10 +624,27 @@ class KnowledgeSearchService
                 'fts_config' => $ftsConfig,
             ]);
 
+            $this->trackChunkIds($results);
             return $results;
         } catch (\Exception $e) {
             Log::warning('KnowledgeSearch: FTS fallback failed', ['error' => $e->getMessage()]);
             return [];
+        }
+    }
+
+    /**
+     * Acumulează chunk IDs din rezultatele unei căutări în starea internă, pentru
+     * ca apelantul să le poată citi prin getLastSearchedChunkIds() și să le
+     * persisteze în messages.knowledge_chunks_used pentru debugging RAG quality.
+     * Acceptă array-uri sau stdClass (DB::select întoarce stdClass).
+     */
+    private function trackChunkIds(array $results): void
+    {
+        foreach ($results as $r) {
+            $id = is_array($r) ? ($r['id'] ?? null) : (is_object($r) ? ($r->id ?? null) : null);
+            if (is_numeric($id)) {
+                $this->lastSearchedChunkIds[] = (int) $id;
+            }
         }
     }
 
@@ -572,7 +655,104 @@ class KnowledgeSearchService
     {
         $newVersion = now()->timestamp;
         Cache::put("knowledge_version_{$botId}", $newVersion, now()->addDays(30));
+        Cache::forget("rag_brands_{$botId}");
         Log::info('KnowledgeSearch: cache invalidated', ['bot_id' => $botId, 'version' => $newVersion]);
+    }
+
+    /**
+     * Setări RAG efective pentru un bot: per-bot override din `bot.settings.rag.*`
+     * cu fallback la config global. Permite tuning fără deploy:
+     *   - similarity_threshold (default config knowledge.similarity_threshold = 0.55)
+     *   - fts_weight (default config knowledge.fts_weight = 1.5)
+     *   - brand_aware_enabled (default true)
+     *   - query_expansion_enabled (default config knowledge.query_expansion.enabled)
+     *
+     * Toate sunt clamp-uite la valori sane (similarity 0-1, fts_weight 0.1-10).
+     */
+    private function ragSettingsForBot(\App\Models\Bot $bot): array
+    {
+        $rag = is_array($bot->settings ?? null) ? ($bot->settings['rag'] ?? []) : [];
+
+        $similarity = $rag['similarity_threshold'] ?? null;
+        $similarity = is_numeric($similarity)
+            ? max(0.0, min(1.0, (float) $similarity))
+            : (float) config('knowledge.similarity_threshold', 0.55);
+
+        $ftsWeight = $rag['fts_weight'] ?? null;
+        $ftsWeight = is_numeric($ftsWeight)
+            ? max(0.1, min(10.0, (float) $ftsWeight))
+            : (float) config('knowledge.fts_weight', 1.5);
+
+        $brandAware = array_key_exists('brand_aware_enabled', $rag)
+            ? (bool) $rag['brand_aware_enabled']
+            : true;
+
+        $queryExp = array_key_exists('query_expansion_enabled', $rag)
+            ? (bool) $rag['query_expansion_enabled']
+            : (bool) config('knowledge.query_expansion.enabled', true);
+
+        return [
+            'similarity_threshold' => $similarity,
+            'fts_weight' => $ftsWeight,
+            'brand_aware_enabled' => $brandAware,
+            'query_expansion_enabled' => $queryExp,
+        ];
+    }
+
+    /**
+     * Returnează brandul prezent în query dacă match-uiește unul dintre brandurile
+     * cunoscute pentru bot (auto-extrase din patternul „Brand: X" din content).
+     * Întoarce primul match, lowercased. Folosit pentru a constrânge RAG retrieval
+     * la chunks care chiar conțin acel brand.
+     */
+    private function detectBrandFromQuery(int $botId, string $query): ?string
+    {
+        // Lista de pattern-uri prin care detectăm brand-uri în content. Configurabilă
+        // în config/knowledge.php → brand_patterns. WooCommerce default folosește
+        // "Brand: X" (plugin Sambla), dar alți connectori pot folosi „Marcă", etc.
+        $patterns = config('knowledge.brand_patterns', [
+            'Brand:\s*([A-Za-z0-9]+)',
+            'Marcă:\s*([A-Za-z0-9]+)',
+            'Marca:\s*([A-Za-z0-9]+)',
+            'Producător:\s*([A-Za-z0-9]+)',
+            'Producator:\s*([A-Za-z0-9]+)',
+            'Vendor:\s*([A-Za-z0-9]+)',
+        ]);
+
+        $cacheKey = 'rag_brands_' . $botId . '_' . md5(implode('|', $patterns));
+        $brands = Cache::remember($cacheKey, 3600, function () use ($botId, $patterns) {
+            $collected = [];
+            foreach ($patterns as $pattern) {
+                // PostgreSQL regex: extract first capture group; filter via SIMILAR pattern.
+                $rows = DB::select(
+                    "SELECT DISTINCT LOWER(TRIM(SUBSTRING(content FROM ?))) AS brand
+                     FROM bot_knowledge
+                     WHERE bot_id = ?
+                       AND status = 'ready'
+                       AND content ~ ?",
+                    [$pattern, $botId, $pattern]
+                );
+                foreach ($rows as $row) {
+                    if (is_string($row->brand) && mb_strlen($row->brand) >= 3) {
+                        $collected[$row->brand] = true;
+                    }
+                }
+            }
+            return array_keys($collected);
+        });
+
+        if (empty($brands)) {
+            return null;
+        }
+
+        // Match whole-word, case-insensitive, pe cuvintele din query (minim 3 chars).
+        $words = preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower($query, 'UTF-8'));
+        foreach ($words as $word) {
+            if (mb_strlen($word) >= 3 && in_array($word, $brands, true)) {
+                return $word;
+            }
+        }
+        return null;
     }
 
     public function validateDocumentTokens(string $content): bool

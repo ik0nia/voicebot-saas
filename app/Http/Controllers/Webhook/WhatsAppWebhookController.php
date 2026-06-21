@@ -122,16 +122,42 @@ class WhatsAppWebhookController extends Controller
                     }
 
                     foreach ($messages as $index => $message) {
-                        // Only handle text messages for now
-                        if (($message['type'] ?? '') !== 'text') {
+                        $msgType = $message['type'] ?? 'text';
+
+                        // Acceptăm text + interactive button reply (Meta UX);
+                        // image/document/audio/video sunt deocamdată trimise
+                        // ca placeholder text ca bot-ul să cunoască contextul.
+                        if (!in_array($msgType, ['text', 'interactive', 'image', 'document', 'audio', 'video', 'sticker'], true)) {
                             continue;
                         }
 
                         $contactPhone = $message['from'] ?? 'unknown';
                         $contactName = $contacts[$index]['profile']['name'] ?? $contactPhone;
-                        $messageText = $message['text']['body'] ?? '';
+                        $messageText = match ($msgType) {
+                            'text' => $message['text']['body'] ?? '',
+                            'interactive' => $message['interactive']['button_reply']['title']
+                                ?? $message['interactive']['list_reply']['title']
+                                ?? '',
+                            'image' => '[Imagine primită' . (isset($message['image']['caption']) && $message['image']['caption'] !== '' ? ': ' . $message['image']['caption'] : '') . ']',
+                            'document' => '[Document primit' . (isset($message['document']['filename']) ? ': ' . $message['document']['filename'] : '') . ']',
+                            'audio' => '[Mesaj vocal primit]',
+                            'video' => '[Video primit]',
+                            'sticker' => '[Sticker primit]',
+                            default => '',
+                        };
 
                         if (empty($messageText)) {
+                            continue;
+                        }
+
+                        // WhatsApp opt-out detection: cuvinte-cheie standard
+                        // STOP / UNSUBSCRIBE / CANCEL / SCOATE / RENUNȚ (RO).
+                        // Flag-ăm Conversation/Contact și NU mai răspundem cu bot.
+                        // Operator-ul poate decide manual să-l contacteze.
+                        $normalized = mb_strtolower(trim($messageText), 'UTF-8');
+                        $optOutPatterns = ['stop', 'unsubscribe', 'cancel', 'scoate-ma', 'scoate ma', 'renunt', 'renunț', 'nu mai vreau'];
+                        if (in_array($normalized, $optOutPatterns, true)) {
+                            $this->handleOptOut($channel, $contactPhone, $contactName);
                             continue;
                         }
 
@@ -176,5 +202,47 @@ class WhatsAppWebhookController extends Controller
 
         // Always return 200 to acknowledge receipt (Meta requires this)
         return response('OK', 200);
+    }
+
+    /**
+     * Marchează conversația ca opt-out (vizitatorul a cerut STOP/UNSUBSCRIBE).
+     * Bot-ul nu mai răspunde la mesajele lui ulterioare prin chat — operator-ul
+     * decide manual dacă revine sau nu. Idempotent prin flag-ul pe metadata.
+     */
+    private function handleOptOut(Channel $channel, string $contactPhone, string $contactName): void
+    {
+        try {
+            $conv = \App\Models\Conversation::query()
+                ->withoutGlobalScopes()
+                ->where('channel_id', $channel->id)
+                ->where('contact_identifier', $contactPhone)
+                ->latest('id')
+                ->first();
+
+            if (!$conv) {
+                Log::info('WhatsApp opt-out: no conversation to flag', [
+                    'channel_id' => $channel->id, 'phone' => $contactPhone,
+                ]);
+                return;
+            }
+
+            $meta = $conv->metadata ?? [];
+            if (!empty($meta['opt_out'])) {
+                return; // already flagged
+            }
+            $meta['opt_out'] = true;
+            $meta['opt_out_at'] = now()->toIso8601String();
+            // Stop bot processing — la fel cu needs_human flag, dar fără push.
+            $meta['needs_human'] = true;
+            $conv->metadata = $meta;
+            $conv->assignee_bot_id = null;
+            $conv->save();
+
+            Log::info('WhatsApp opt-out flagged', [
+                'channel_id' => $channel->id, 'conversation_id' => $conv->id,
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('WhatsApp opt-out handler failed', ['error' => $e->getMessage()]);
+        }
     }
 }

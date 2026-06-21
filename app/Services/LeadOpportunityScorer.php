@@ -9,6 +9,13 @@ class LeadOpportunityScorer
 {
     public function score(Conversation $conversation, array $intents, array $events): LeadScore
     {
+        // Threshold default 30; override per bot via `bot.settings.lead_capture.threshold`.
+        // Sub threshold, scorul tot se înregistrează (vezi IntentOrchestrator),
+        // dar nu se declanșează prompt-ul de lead capture.
+        $bot = $conversation->bot ?? null;
+        $perBotThreshold = is_array($bot?->settings ?? null)
+            ? ($bot->settings['lead_capture']['threshold'] ?? null)
+            : null;
         $score = 0;
         $signals = [];
         $triggerReason = null;
@@ -54,8 +61,11 @@ class LeadOpportunityScorer
         if (in_array('add_to_cart_success', $eventNames)) { $score -= 15; $signals[] = 'already_in_cart'; }
         if ($msgCount < 3) { $score -= 20; $signals[] = 'too_short'; }
 
-        // Threshold: 30 = moderate engagement sufficient for soft lead prompt
-        $threshold = 30;
+        // Threshold: 30 = moderate engagement sufficient for soft lead prompt.
+        // Per-bot override clamp-uit la [5, 95].
+        $threshold = is_numeric($perBotThreshold)
+            ? max(5, min(95, (int) $perBotThreshold))
+            : 30;
 
         if (!$triggerReason && $score >= $threshold) {
             $triggerReason = $msgCount >= 6 ? 'engaged_conversation' : 'product_interest';

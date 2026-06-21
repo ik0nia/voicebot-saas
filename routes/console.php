@@ -26,6 +26,26 @@ Schedule::command('recordings:purge-old --days=14')
     ->dailyAt('03:30')
     ->withoutOverlapping();
 
+// Curăță săptămânal subscripțiile push expirate (browser endpoints fără
+// activitate >60 zile). Evită 410 Gone la fiecare escalare.
+Schedule::command('push:cleanup-stale --days=60')->weeklyOn(0, '03:30')->withoutOverlapping();
+
+// Săptămânal: digest lead-uri dormante (>7 zile fără update) la tenant admins.
+Schedule::command('leads:alert-inactive --days=7')->weeklyOn(1, '09:00')->withoutOverlapping();
+
+// Agregă detected_intents per mesaj în primary_intent pe conversation.
+// Rulează la 30 min — agregarea nu trebuie să fie instant.
+Schedule::command('conversations:populate-intents --limit=300')
+    ->everyThirtyMinutes()
+    ->withoutOverlapping();
+
+// Reminder email la tenant admins/operators când o escalare a stat fără
+// răspuns peste pragul SLA (5 min default). Rulează ÎNAINTE de
+// resume-stale, ca operatorul să mai poată prelua la timp.
+Schedule::command('handoffs:notify-stale --minutes=5')
+    ->everyTwoMinutes()
+    ->withoutOverlapping();
+
 // Resume bot control on conversations where no operator claimed the
 // handoff within 10 minutes — better degraded service than a stuck
 // "echipa vine imediat" forever. System message offers email fallback.

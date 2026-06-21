@@ -35,6 +35,11 @@ COPY docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
 RUN echo '[www]' > /usr/local/etc/php-fpm.d/healthcheck.conf \
     && echo 'ping.path = /ping' >> /usr/local/etc/php-fpm.d/healthcheck.conf
 
+# Trust local Mailcow self-signed cert (mail.sambla.ro relays Laravel mail).
+# Without this, Symfony Mailer's STARTTLS verify fails on every outbound email.
+COPY docker/certs/mail-sambla.crt /usr/local/share/ca-certificates/mail-sambla.crt
+RUN apk add --no-cache ca-certificates && update-ca-certificates
+
 WORKDIR /var/www/html
 
 # Layer 1: Composer deps (cached if composer.lock unchanged)

@@ -56,15 +56,53 @@ class EscalationController extends Controller
             return response()->json(['error' => 'Conversație negăsită'], 404);
         }
 
+        $metadata = $conv->metadata ?? [];
+
+        // Dedup: dacă conv a fost deja escaladată în ultimele 24h și un
+        // operator încă nu a preluat-o, doar acknowledge scurt fără push
+        // duplicat. Altfel vizitatorul vede „Am chemat un coleg" de fiecare
+        // dată când apasă butonul / revine în chat.
+        $alreadyEscalatedRecently = false;
+        if (!empty($metadata['needs_human']) && !empty($metadata['escalated_at'])) {
+            try {
+                $prev = \Carbon\Carbon::parse($metadata['escalated_at']);
+                $alreadyEscalatedRecently = $prev->diffInHours(now()) < 24
+                    && empty($conv->assignee_user_id);
+            } catch (\Throwable $e) {
+                $alreadyEscalatedRecently = false;
+            }
+        }
+
+        if ($alreadyEscalatedRecently) {
+            $bot = $conv->bot ?? null;
+            $msg = $bot ? $bot->handoffMessages()['reminded']
+                : 'Un coleg a fost deja notificat și revine cu informații cât mai curând.';
+            \App\Models\Message::create([
+                'conversation_id' => $conv->id,
+                'direction' => 'outbound',
+                'content' => $msg,
+                'content_type' => 'text',
+                'metadata' => ['sender_type' => 'system', 'system_event' => 'escalation_reminded'],
+                'sent_at' => now(),
+            ]);
+            $conv->increment('messages_count');
+            \Log::info('Escalation dedup (widget): reminder only', [
+                'conversation_id' => $conv->id,
+                'previously_escalated_at' => $metadata['escalated_at'] ?? null,
+            ]);
+            return response()->json(['ok' => true, 'deduped' => true]);
+        }
+
         // Set flag + reason. Stop the bot immediately — the next inbound
         // message must reach the operator queue without bot interleaving.
         // Clearing assignee_bot_id is the canonical signal that the bot
         // is "off duty" for this conversation; the chat pipeline checks
         // needs_human + assignee_user_id and short-circuits AI generation.
-        $metadata = $conv->metadata ?? [];
         $metadata['needs_human'] = true;
         $metadata['escalated_at'] = now()->toIso8601String();
         $metadata['escalation_reason'] = $validated['reason'] ?? 'visitor_request';
+        // Reset SLA flags so cron poate re-evalua escalarea nouă.
+        unset($metadata['sla_warned'], $metadata['sla_fallback_sent']);
         $conv->metadata = $metadata;
         $conv->assignee_bot_id = null;
         $conv->save();
@@ -72,10 +110,13 @@ class EscalationController extends Controller
         // Insert a system message so the visitor immediately sees that
         // their request was received — silence after pressing "talk to
         // human" feels broken, even when the push went out 200ms ago.
+        $botModel = $conv->bot ?? null;
+        $ackMsg = $botModel ? $botModel->handoffMessages()['escalated']
+            : 'Am chemat un coleg, ajunge în câteva momente.';
         \App\Models\Message::create([
             'conversation_id' => $conv->id,
             'direction' => 'outbound',
-            'content' => 'Am chemat un coleg, ajunge în câteva momente.',
+            'content' => $ackMsg,
             'content_type' => 'text',
             'metadata' => ['sender_type' => 'system', 'system_event' => 'escalation_acknowledged'],
             'sent_at' => now(),

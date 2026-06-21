@@ -34,6 +34,13 @@ class PrivacyRetention extends Command
         $dry = (bool) $this->option('dry');
         $verb = $dry ? 'would' : 'did';
 
+        // Default retention windows — pot fi suprascrise global prin .env
+        // sau per-tenant prin `tenant.settings.retention.{conversations_days,
+        // call_anonymise_days,recording_purge_days}` (vezi accessor pe Tenant).
+        $convDays = (int) env('RETENTION_CONVERSATIONS_DAYS', 90);
+        $callAnonDays = (int) env('RETENTION_CALL_ANONYMISE_DAYS', 30);
+        $recPurgeDays = (int) env('RETENTION_RECORDING_PURGE_DAYS', 30);
+
         $stats = [
             'ip_anon_contact'     => $this->anonymiseIp(ContactMessage::class, 'ip', 24, $dry),
             'ip_anon_attribution' => $this->anonymiseIp(UserAttribution::class, 'ip', 24, $dry),
@@ -41,9 +48,12 @@ class PrivacyRetention extends Command
             // niche_leads model may not exist as Eloquent; touch via DB.
             'ip_anon_niche'       => $this->anonymiseIpRaw('niche_leads', 'ip', 24, $dry),
 
-            'conv_purge'          => $this->purgeConversations(90, $dry),
-            'call_anon'           => $this->anonymiseCalls(30, $dry),
-            'recording_purge'     => $this->purgeRecordings(30, $dry),
+            // Tenant-level overrides: pentru fiecare tenant cu setting custom,
+            // aplicăm valoarea proprie; restul iau valorile env-level.
+            'conv_purge_tenant'   => $this->perTenantConvPurge($convDays, $dry),
+            'conv_purge'          => $this->purgeConversations($convDays, $dry),
+            'call_anon'           => $this->anonymiseCalls($callAnonDays, $dry),
+            'recording_purge'     => $this->purgeRecordings($recPurgeDays, $dry),
         ];
 
         $this->info(sprintf(
@@ -186,5 +196,34 @@ class PrivacyRetention extends Command
         if ($dry) return $q->count();
 
         return $q->update(['recording_url' => null]);
+    }
+
+    /**
+     * Per-tenant purge când tenant.settings.retention.conversations_days
+     * diferă de fallback-ul global (env). Returnează numărul de rânduri
+     * șterse cumulat peste toți tenants cu setting custom.
+     */
+    private function perTenantConvPurge(int $envDays, bool $dry): int
+    {
+        $tenants = \App\Models\Tenant::query()
+            ->withoutGlobalScopes()
+            ->whereRaw("settings::text LIKE '%conversations_days%'")
+            ->get();
+
+        $touched = 0;
+        foreach ($tenants as $tenant) {
+            $days = (int) ($tenant->retentionSettings()['conversations_days'] ?? $envDays);
+            if ($days === $envDays) {
+                continue; // No-op — restul tenants vor fi tratați de purgeConversations global.
+            }
+            $cutoff = \Carbon\Carbon::now()->subDays($days);
+            $q = \App\Models\Conversation::query()
+                ->withoutGlobalScopes()
+                ->where('tenant_id', $tenant->id)
+                ->where('created_at', '<', $cutoff);
+            $count = $dry ? $q->count() : $q->delete();
+            $touched += $count;
+        }
+        return $touched;
     }
 }

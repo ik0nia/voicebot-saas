@@ -130,11 +130,30 @@ export async function handleTwilioConnection(ws, { config }) {
             case 'dtmf':
                 // Forward DTMF as conversation input text so the agent
                 // can react to "press 1 to talk to human" style prompts.
+                // Persistăm secvența de digit-uri în contextul streamului,
+                // ca să o putem expune ulterior (logare CallEvent, decizii
+                // per-bot — ex. operator dial pe 9).
                 if (!openai) return;
-                logger.info({ streamSid, digit: msg.dtmf.digit }, 'DTMF received');
-                // Intentionally a no-op for now; plumb into OpenAI via
-                // a follow-up iter once we see real traffic and have a
-                // UX decision on what DTMF should do per-bot.
+                {
+                    const digit = msg?.dtmf?.digit ?? '';
+                    if (digit) {
+                        // Buffer simplu pe runtime: ultima secvență ≤ 16 char.
+                        ws._dtmfBuffer = (ws._dtmfBuffer || '') + digit;
+                        if (ws._dtmfBuffer.length > 16) {
+                            ws._dtmfBuffer = ws._dtmfBuffer.slice(-16);
+                        }
+                        logger.info({ streamSid, callSid, digit, buffer: ws._dtmfBuffer }, 'DTMF received');
+
+                        // Plumb la OpenAI ca user input text — model-ul poate
+                        // reacționa la „1", „2", #, *, etc. Format minimal,
+                        // fără TTS request (continue să asculte).
+                        try {
+                            openai.sendUserText('[DTMF: ' + digit + ']');
+                        } catch (e) {
+                            logger.warn({ err: e.message }, 'DTMF forward to OpenAI failed');
+                        }
+                    }
+                }
                 break;
 
             case 'mark':

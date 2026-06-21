@@ -78,6 +78,8 @@ final class PrechatLeadCreator
                 'capture_reason' => 'prechat_form',
             ]);
 
+            \App\Events\LeadCaptured::dispatch($lead, 'prechat');
+
             Log::info("Prechat lead created for conversation {$conversation->id}", [
                 'lead_id' => $lead->id,
                 'has_email' => $email !== null,
@@ -185,12 +187,24 @@ final class PrechatLeadCreator
         if ($phone === null) {
             return null;
         }
-        $digitsOnly = preg_replace('/[^\d]/', '', trim($phone));
+        $raw = trim($phone);
+        $digitsOnly = preg_replace('/[^\d]/', '', $raw);
+        // RO mobile (07xxxxxxxx / 407xxxxxxxx) — canonic 07XXXXXXXX.
         if (preg_match('/^(07\d{8})$/', $digitsOnly)) {
             return $digitsOnly;
         }
         if (preg_match('/^(407\d{8})$/', $digitsOnly)) {
             return '0' . substr($digitsOnly, 2);
+        }
+        // International cu prefix +CC. Acceptăm 7-15 cifre după CC.
+        // Format canonic: +CC + restul cifrelor (E.164-like, fără spații).
+        if (preg_match('/^\+?(\d{1,3})(\d{6,14})$/', $digitsOnly, $m)) {
+            $cc = $m[1];
+            $rest = $m[2];
+            if ($cc === '40' && str_starts_with($rest, '7') && strlen($rest) === 9) {
+                return '0' . $rest;
+            }
+            return '+' . $cc . $rest;
         }
         return null;
     }

@@ -112,13 +112,29 @@
                         </div>
 
                         {{-- Stats --}}
-                        <div class="flex items-center gap-4 text-sm text-muted mb-4">
-                            <div class="flex items-center gap-1.5">
+                        <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted mb-4">
+                            <div class="flex items-center gap-1.5" title="Apeluri totale">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                                 </svg>
                                 {{ $bot->calls_count ?? 0 }} apeluri
                             </div>
+                            @if(!is_null($bot->conversations_count_30d ?? null))
+                                <div class="flex items-center gap-1.5" title="Conversații în ultimele 30 zile">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l1.3-3.6A7.94 7.94 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                    </svg>
+                                    {{ $bot->conversations_count_30d }} conv / 30z
+                                </div>
+                            @endif
+                            @if($bot->last_conversation_at ?? null)
+                                <div class="flex items-center gap-1.5" title="Ultima conversație">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    {{ \Carbon\Carbon::parse($bot->last_conversation_at)->diffForHumans() }}
+                                </div>
+                            @endif
                         </div>
 
                         {{-- Actions --}}

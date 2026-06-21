@@ -39,8 +39,16 @@
                             <label for="baza_greeting" class="block text-sm font-medium text-inkSoft mb-1.5">Mesaj de întâmpinare</label>
                             <p class="text-xs text-muted mb-2">Textul pe care îl spune agentul când răspunde. Lasă gol dacă preferi să aștepte clientul să vorbească primul.</p>
                             <input type="text" name="greeting_message" id="baza_greeting" x-model="core.greeting"
+                                   maxlength="500"
                                    placeholder="Bună ziua, sunt Greg de la Sambla. Cu ce vă pot ajuta?"
                                    class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">
+                            <div class="flex items-center justify-between mt-1">
+                                <p class="text-xs" :class="(core.greeting||'').length > 150 ? 'text-amber-600' : 'text-muted'"
+                                   x-text="(core.greeting||'').length > 150
+                                       ? 'Mai lung de 150 caractere — într-un widget mic poate părea wall-of-text. Recomandare: maxim 90.'
+                                       : 'Recomandare: 60–90 caractere pentru widget chat.'"></p>
+                                <p class="text-xs text-muted font-mono" x-text="(core.greeting||'').length + '/500'"></p>
+                            </div>
                         </div>
 
                         {{-- Adresă + Telefon + Email (canonical for business_info.address/phone/email) --}}

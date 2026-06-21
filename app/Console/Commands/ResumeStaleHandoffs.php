@@ -37,17 +37,24 @@ class ResumeStaleHandoffs extends Command
     {
         $minutes = max(1, (int) $this->option('minutes'));
         $dryRun = (bool) $this->option('dry-run');
-        $cutoff = now()->subMinutes($minutes);
 
         $stale = Conversation::query()
             ->withoutGlobalScopes()
+            ->with('bot:id,settings')
             ->whereJsonContains('metadata->needs_human', true)
             ->whereNull('assignee_user_id')
-            ->whereJsonLength('metadata->escalated_at', '>', 0)
             ->get()
-            ->filter(function (Conversation $c) use ($cutoff) {
+            ->filter(function (Conversation $c) use ($minutes) {
                 $escalatedAt = $c->metadata['escalated_at'] ?? null;
                 if (!$escalatedAt) return false;
+                // Per-bot override: bot.settings.escalation_sla_resume_minutes.
+                // Default-ul vine din --minutes (10).
+                $botSettings = $c->bot?->settings ?? [];
+                $perBot = $botSettings['escalation_sla_resume_minutes'] ?? null;
+                $effective = is_numeric($perBot)
+                    ? max(1, min(1440, (int) $perBot))
+                    : $minutes;
+                $cutoff = now()->subMinutes($effective);
                 try {
                     return \Carbon\Carbon::parse($escalatedAt)->lt($cutoff);
                 } catch (\Throwable $e) {
@@ -86,11 +93,15 @@ class ResumeStaleHandoffs extends Command
 
                 // System message la visitor — explică de ce continuăm fără
                 // operator și oferă alternative. Marker sender_type=system
-                // ca să-l deosebim de bot/operator în UI.
+                // ca să-l deosebim de bot/operator în UI. Mesajul e
+                // configurabil per bot via `settings.handoff.timed_out`.
+                $bot = $conv->bot;
+                $msg = $bot ? $bot->handoffMessages()['timed_out']
+                    : 'Operatorii sunt ocupați acum. Putem continua aici, sau dacă preferi, lasă-ne datele tale de contact și revenim.';
                 Message::create([
                     'conversation_id' => $conv->id,
                     'direction' => 'outbound',
-                    'content' => 'Operatorii sunt ocupați acum. Putem continua aici, sau dacă preferi, scrie-ne pe email la contact@sambla.ro.',
+                    'content' => $msg,
                     'content_type' => 'text',
                     'metadata' => [
                         'sender_type' => 'system',

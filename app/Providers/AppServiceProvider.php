@@ -59,6 +59,12 @@ class AppServiceProvider extends ServiceProvider
         \Carbon\Carbon::setLocale('ro');
         setlocale(LC_TIME, 'ro_RO.UTF-8', 'ro_RO', 'ro');
 
+        // MessageObserver: broadcast pe Reverb la fiecare mesaj nou (inbound +
+        // outbound) pentru ca operator console să nu mai trebuiască polling 5s.
+        \App\Models\Message::observe(\App\Observers\MessageObserver::class);
+        // ConversationObserver: broadcast la schimbare status (closed, etc.).
+        \App\Models\Conversation::observe(\App\Observers\ConversationObserver::class);
+
         // @samblaWidgetUrl — URL canonic pentru widget cu cache-bust pe
         // ultimele 6 cifre din filemtime. Fără asta, browserele care au
         // descărcat widget-ul cu Cache-Control max-age=14400 (din nginx

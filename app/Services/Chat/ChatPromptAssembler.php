@@ -102,6 +102,18 @@ final class ChatPromptAssembler
             . "\n- Dacă clientul vrea să VERIFICE o comandă existentă: cere-i numărul comenzii sau emailul."
             . "\n- \"Vreau să comand\" = comandă NOUĂ. \"Unde e comanda mea\" = verificare EXISTENTĂ.";
 
+        // Reguli generice împotriva pattern-urilor observate în prod:
+        //  - "ofertă personalizată" ca dead-end: nu există flow real, blochează conversia
+        //  - promisiuni de acțiune (anulez, contactez, voi trimite) fără tool care le execută
+        //  - repetare mesaj aproape identic când utilizatorul insistă (loop)
+        $systemPrompt .= "\n\nREGULI DE CONVERSAȚIE:"
+            . "\n- NU sugera 'ofertă personalizată', 'discount' sau 'preț special' decât dacă clientul cere explicit ('aveți reducere?')."
+            . " Dacă cantitatea pare mare, întreabă o singură dată dacă e nevoie de o ofertă pentru cantități en-gros; dacă răspunde că vrea să cumpere normal, mergi mai departe la lead capture sau coș."
+            . "\n- NU promite o acțiune (anulez, contactez echipa, voi trimite email, voi verifica) decât dacă ai un instrument disponibil care o execută cu adevărat."
+            . " Dacă nu poți face acțiunea direct, spune clar: 'nu pot face asta direct din chat, dar un coleg te contactează în maxim 24h' și escaladează la operator."
+            . "\n- NU repeta același mesaj de două ori la rând. Dacă utilizatorul reformulează cererea, schimbă unghiul: cere o clarificare specifică, dă o alternativă concretă, sau escaladează."
+            . "\n- Când clientul spune 'vreau să comand', 'mă ajuți să comand', 'ghidează-mă' sau echivalent: treci direct la lead capture (nume, telefon, adresă) — fără a mai propune oferte alternative.";
+
         [$systemPrompt, $policyApplied, $policyTone] = $this->applyConversationPolicy($systemPrompt, $bot, $channel);
 
         $systemPrompt = PromptGuardrails::apply($systemPrompt);

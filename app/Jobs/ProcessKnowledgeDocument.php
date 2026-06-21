@@ -114,8 +114,12 @@ class ProcessKnowledgeDocument implements ShouldQueue
                 foreach ($chunks as $index => $chunk) {
                     $embedding = $embeddings[$index];
 
-                    // Detect content language from bot setting
-                    $contentLanguage = $this->knowledge->bot?->language ?? 'ro';
+                    // Detect content language: prefer detect simplu pe chunk
+                    // (caracterele diacritice RO sunt semnal puternic), fallback
+                    // la limba bot-ului. Asta evită contaminarea FTS la documente
+                    // upload-ate în alt limbaj decât default-ul bot-ului.
+                    $contentLanguage = $this->detectLanguage($chunk)
+                        ?? ($this->knowledge->bot?->language ?? 'ro');
 
                     if ($index === 0) {
                         $this->knowledge->update([
@@ -131,6 +135,22 @@ class ProcessKnowledgeDocument implements ShouldQueue
                             ['[' . implode(',', $embedding) . ']', $this->knowledge->id]
                         );
                     } else {
+                        // Dedup: dacă există deja un chunk cu același content_hash
+                        // pentru același bot, evităm duplicarea (re-upload același
+                        // document). Hash-ul ignoră whitespace tail/head.
+                        $contentHash = hash('sha256', trim($chunk));
+                        $existing = BotKnowledge::where('bot_id', $this->knowledge->bot_id)
+                            ->where('content_hash', $contentHash)
+                            ->first();
+                        if ($existing) {
+                            Log::info('ProcessKnowledgeDocument: chunk deduplicated', [
+                                'knowledge_id' => $this->knowledge->id,
+                                'existing_chunk_id' => $existing->id,
+                                'content_hash' => substr($contentHash, 0, 12),
+                            ]);
+                            continue;
+                        }
+
                         $newChunk = BotKnowledge::create([
                             'bot_id' => $this->knowledge->bot_id,
                             'type' => $this->knowledge->type,
@@ -138,6 +158,7 @@ class ProcessKnowledgeDocument implements ShouldQueue
                             'source_id' => $this->knowledge->source_id,
                             'title' => $this->knowledge->title,
                             'content' => $chunk,
+                            'content_hash' => $contentHash,
                             'chunk_index' => $index,
                             'status' => 'ready',
                             'embedding_model' => $embeddingModel,
@@ -636,5 +657,29 @@ class ProcessKnowledgeDocument implements ShouldQueue
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    /**
+     * Detect heuristic limbaj content. Caracterele diacritice românești
+     * (ă/â/î/ș/ț) + cuvinte comune RO („și", „este", „pentru") indică RO;
+     * altfel încearcă EN/DE/FR pe semnale similare. Returnează null când e
+     * ambiguu — fallback la bot.language.
+     */
+    private function detectLanguage(string $text): ?string
+    {
+        $sample = mb_strtolower(mb_substr($text, 0, 2000), 'UTF-8');
+        if (preg_match('/[ăâîșț]/u', $sample) || preg_match('/\b(și|este|pentru|cum|sunt|aceasta|când)\b/u', $sample)) {
+            return 'ro';
+        }
+        if (preg_match('/[äöüß]/u', $sample) || preg_match('/\b(und|der|die|das|ist|mit|für|nicht)\b/u', $sample)) {
+            return 'de';
+        }
+        if (preg_match('/[éèêàçœ]/u', $sample) || preg_match('/\b(le|la|les|est|pour|avec|nous)\b/u', $sample)) {
+            return 'fr';
+        }
+        if (preg_match('/\b(the|and|for|with|this|that|from|have|been|will)\b/u', $sample)) {
+            return 'en';
+        }
+        return null;
     }
 }

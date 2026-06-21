@@ -29,6 +29,7 @@ class BotKnowledge extends Model
         'error_message',
         'embedding_model',
         'chunk_index',
+        'content_hash',
         'metadata',
     ];
 

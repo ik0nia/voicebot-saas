@@ -221,4 +221,50 @@ class AnalyticsController extends Controller
 
         return response()->json($payload);
     }
+
+    /**
+     * KPI voice — durată medie call, completion rate, drop-off pe minute.
+     * Ferestre: 30 zile default, override via ?days=N (max 365).
+     */
+    public function voiceKpi(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $tenantId = auth()->user()?->tenant_id ?? 0;
+        $days = (int) max(1, min(365, $request->integer('days', 30)));
+        $cacheKey = "voice_kpi:v1:{$tenantId}:{$days}";
+
+        $payload = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($days) {
+            $calls = \App\Models\Call::where('created_at', '>=', now()->subDays($days));
+
+            $totalCalls = (clone $calls)->count();
+            $completed = (clone $calls)->where('status', 'completed')->count();
+            $avgDuration = (int) round((clone $calls)->avg('duration_seconds') ?: 0);
+            $totalMinutes = (int) round(((clone $calls)->sum('duration_seconds') ?: 0) / 60);
+            $avgCostCents = (float) round((clone $calls)->avg('cost_cents') ?: 0, 2);
+
+            // Drop-off bucket-uri: distribuie durate în 0-30s, 30s-2m, 2-5m, 5-10m, 10m+.
+            $buckets = ['0-30s' => 0, '30s-2m' => 0, '2-5m' => 0, '5-10m' => 0, '10m+' => 0];
+            $rows = (clone $calls)->selectRaw('duration_seconds')->pluck('duration_seconds');
+            foreach ($rows as $d) {
+                $d = (int) $d;
+                if ($d < 30) $buckets['0-30s']++;
+                elseif ($d < 120) $buckets['30s-2m']++;
+                elseif ($d < 300) $buckets['2-5m']++;
+                elseif ($d < 600) $buckets['5-10m']++;
+                else $buckets['10m+']++;
+            }
+
+            return [
+                'window_days' => $days,
+                'total_calls' => $totalCalls,
+                'completed' => $completed,
+                'completion_rate_pct' => $totalCalls > 0 ? round($completed / $totalCalls * 100, 1) : 0,
+                'avg_duration_seconds' => $avgDuration,
+                'total_minutes' => $totalMinutes,
+                'avg_cost_cents' => $avgCostCents,
+                'duration_buckets' => $buckets,
+            ];
+        });
+
+        return response()->json($payload);
+    }
 }

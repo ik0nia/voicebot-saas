@@ -154,6 +154,7 @@ class OperatorConsoleController extends Controller
             'assignee_user_id' => auth()->id(),
             'assigned_at' => now(),
         ]);
+        $this->recordAccess($conversation);
 
         return response()->json(['ok' => true, 'assignee_user_id' => auth()->id()]);
     }
@@ -219,6 +220,122 @@ class OperatorConsoleController extends Controller
                 'is_operator' => true,
             ],
         ]);
+    }
+
+    /**
+     * Înregistrează acces operator pe conversație în metadata.access_log.
+     * Lightweight audit fără tabel nou. Util pentru investigații GDPR ulterioare.
+     * Cap 100 entries (FIFO) ca să nu balonăm metadata.
+     */
+    private function recordAccess(Conversation $conv): void
+    {
+        try {
+            $meta = $conv->metadata ?? [];
+            $log = is_array($meta['access_log'] ?? null) ? $meta['access_log'] : [];
+            $log[] = [
+                'user_id' => auth()->id(),
+                'at' => now()->toIso8601String(),
+                'ip' => request()->ip(),
+            ];
+            if (count($log) > 100) {
+                $log = array_slice($log, -100);
+            }
+            $meta['access_log'] = $log;
+            $conv->update(['metadata' => $meta]);
+        } catch (\Throwable $e) {
+            \Log::debug('recordAccess failed', ['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Închide manual o conversație (operator decide că s-a terminat).
+     * Setează status='closed', închide needs_human, clearează bot assignee.
+     */
+    public function closeConversation(Conversation $conversation): JsonResponse
+    {
+        $this->authorize('view', $conversation);
+
+        $meta = $conversation->metadata ?? [];
+        $meta['closed_by_operator_id'] = auth()->id();
+        $meta['closed_at'] = now()->toIso8601String();
+        unset($meta['needs_human']);
+
+        $conversation->update([
+            'status' => 'closed',
+            'metadata' => $meta,
+            'ended_at' => now(),
+        ]);
+
+        return response()->json(['ok' => true, 'status' => 'closed']);
+    }
+
+    /**
+     * Returnează canned responses (snippet-uri) pentru tenantul curent.
+     * UI-ul operator console le folosește ca dropdown rapid de inserare.
+     */
+    public function cannedResponses(Request $request): JsonResponse
+    {
+        $tenant = $request->user()?->tenant;
+        if (!$tenant) {
+            return response()->json(['responses' => []]);
+        }
+        return response()->json(['responses' => $tenant->cannedResponses()]);
+    }
+
+    /**
+     * Adaugă o notă internă pe conversation (vizibilă doar pentru echipă).
+     * Stocată în `metadata.operator_notes` ca array de {by, at, body}.
+     * Max 50 note per conversație ca să nu balonăm metadata.
+     */
+    public function addNote(Request $request, Conversation $conversation): JsonResponse
+    {
+        $this->authorize('view', $conversation);
+        $validated = $request->validate([
+            'body' => 'required|string|max:1000',
+        ]);
+
+        $meta = $conversation->metadata ?? [];
+        $notes = is_array($meta['operator_notes'] ?? null) ? $meta['operator_notes'] : [];
+        if (count($notes) >= 50) {
+            return response()->json(['error' => 'Limita de 50 note atinsă'], 422);
+        }
+        $notes[] = [
+            'by' => auth()->user()->name ?: auth()->user()->email,
+            'user_id' => auth()->id(),
+            'at' => now()->toIso8601String(),
+            'body' => trim($validated['body']),
+        ];
+        $meta['operator_notes'] = $notes;
+        $conversation->update(['metadata' => $meta]);
+
+        return response()->json([
+            'ok' => true,
+            'notes' => $notes,
+        ]);
+    }
+
+    /**
+     * Setează tag-uri pe conversație (lead/support/complaint/billing/etc.).
+     * Stocate în `metadata.tags[]`. Tag-urile sunt free-form (lowercase).
+     */
+    public function setTags(Request $request, Conversation $conversation): JsonResponse
+    {
+        $this->authorize('view', $conversation);
+        $validated = $request->validate([
+            'tags' => 'nullable|array|max:10',
+            'tags.*' => 'string|max:32',
+        ]);
+
+        $tags = array_values(array_unique(array_filter(array_map(
+            fn($t) => mb_strtolower(trim((string) $t), 'UTF-8'),
+            $validated['tags'] ?? []
+        ))));
+
+        $meta = $conversation->metadata ?? [];
+        $meta['tags'] = $tags;
+        $conversation->update(['metadata' => $meta]);
+
+        return response()->json(['ok' => true, 'tags' => $tags]);
     }
 
     // ─── Push subscription endpoints ─────────────────────────────────

@@ -61,23 +61,30 @@ class MediaStreamEventController extends Controller
         // field defensively before we ship it out.
         if (isset($payload['session'])) {
             $s = &$payload['session'];
-            if (isset($s['temperature']))                  $s['temperature'] = (float) $s['temperature'];
-            if (isset($s['max_response_output_tokens']))   $s['max_response_output_tokens'] = (int) $s['max_response_output_tokens'];
-            if (isset($s['turn_detection']['threshold']))  $s['turn_detection']['threshold'] = (float) $s['turn_detection']['threshold'];
-            if (isset($s['turn_detection']['prefix_padding_ms']))  $s['turn_detection']['prefix_padding_ms'] = (int) $s['turn_detection']['prefix_padding_ms'];
-            if (isset($s['turn_detection']['silence_duration_ms'])) $s['turn_detection']['silence_duration_ms'] = (int) $s['turn_detection']['silence_duration_ms'];
+            // GA API: nested audio.input/output structure (post 2026-05-12).
+            // Coerce numeric values to correct types so OpenAI's validator
+            // doesn't reject the session.update on Postgres jsonb string casts.
+            if (isset($s['audio']['input']['turn_detection']['threshold'])) {
+                $s['audio']['input']['turn_detection']['threshold'] = (float) $s['audio']['input']['turn_detection']['threshold'];
+            }
+            if (isset($s['audio']['input']['turn_detection']['prefix_padding_ms'])) {
+                $s['audio']['input']['turn_detection']['prefix_padding_ms'] = (int) $s['audio']['input']['turn_detection']['prefix_padding_ms'];
+            }
+            if (isset($s['audio']['input']['turn_detection']['silence_duration_ms'])) {
+                $s['audio']['input']['turn_detection']['silence_duration_ms'] = (int) $s['audio']['input']['turn_detection']['silence_duration_ms'];
+            }
 
-            // Force the ASR model + language for the phone path.
-            // Per-bot voice_language setting overrides the primary
-            // language — bots that serve mixed chat + phone can have
-            // chat in EN but phone calls locked to RO, matching how
-            // their customer base actually uses each channel.
+            // Force the ASR model + language for the phone path (GA format).
+            // Per-bot voice_language overrides the primary language — bots
+            // serving mixed chat+phone can have chat EN but calls locked RO.
             $voiceLang = $call->bot->settings['voice_language']
                 ?? $call->bot->language
                 ?? 'ro';
             $langLabelMap = ['ro' => 'română', 'en' => 'engleză', 'de' => 'germană', 'fr' => 'franceză', 'es' => 'spaniolă'];
             $langLabel = $langLabelMap[$voiceLang] ?? 'română';
-            $s['input_audio_transcription'] = [
+            $s['audio'] = $s['audio'] ?? ['input' => [], 'output' => []];
+            $s['audio']['input'] = $s['audio']['input'] ?? [];
+            $s['audio']['input']['transcription'] = [
                 'model' => 'gpt-4o-mini-transcribe',
                 'language' => $voiceLang,
                 'prompt' => "Conversație telefonică în limba {$langLabel} despre produse și servicii. Nume proprii de produse pot apărea.",
@@ -165,7 +172,7 @@ class MediaStreamEventController extends Controller
     {
         $validated = $request->validate([
             'events' => 'required|array|min:1|max:200',
-            'events.*.type' => 'required|string|in:transcript,usage',
+            'events.*.type' => 'required|string|in:transcript,usage,dtmf',
             'events.*.call_id' => 'required|integer',
             // Declared (optional) so $request->validate returns them
             // in the validated array. Without these keys listed,
@@ -176,6 +183,8 @@ class MediaStreamEventController extends Controller
             'events.*.content' => 'nullable|string',
             'events.*.timestamp_ms' => 'nullable|integer',
             'events.*.usage' => 'nullable|array',
+            'events.*.digit' => 'nullable|string|max:8',
+            'events.*.buffer' => 'nullable|string|max:32',
         ]);
 
         $accepted = 0;
@@ -192,6 +201,7 @@ class MediaStreamEventController extends Controller
                 match ($event['type']) {
                     'transcript' => $this->recordTranscript($call, $request, $event),
                     'usage' => $this->recordUsage($call, $request, $event),
+                    'dtmf' => $this->recordDtmf($call, $event),
                 };
                 $accepted++;
             } catch (\Throwable $e) {
@@ -356,5 +366,30 @@ class MediaStreamEventController extends Controller
             }
         }
         return $out;
+    }
+
+    /**
+     * DTMF event de la twilioBridge — log în CallEvent + actualizează
+     * `call.metadata.dtmf_buffer` cu ultimele cifre primite.
+     */
+    private function recordDtmf(Call $call, array $event): void
+    {
+        $digit = (string) ($event['digit'] ?? '');
+        $buffer = (string) ($event['buffer'] ?? '');
+        if ($digit === '') {
+            return;
+        }
+
+        \App\Models\CallEvent::create([
+            'call_id' => $call->id,
+            'type' => 'dtmf',
+            'metadata' => ['digit' => $digit, 'buffer' => $buffer],
+            'occurred_at' => now(),
+        ]);
+
+        $meta = $call->metadata ?? [];
+        $meta['dtmf_buffer'] = mb_substr($buffer, -16);
+        $call->metadata = $meta;
+        $call->save();
     }
 }

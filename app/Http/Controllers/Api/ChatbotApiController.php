@@ -218,6 +218,18 @@ class ChatbotApiController extends Controller
             }
         }
 
+        // RAG chunks used during reply generation — captured din KnowledgeSearchService,
+        // care le-a acumulat la fiecare apel search()/buildContext() din acest request.
+        $ragService = app(\App\Services\KnowledgeSearchService::class);
+        $ragChunkIds = $ragService->getLastSearchedChunkIds();
+        $ragService->resetLastSearchedChunkIds();
+
+        // Semantic dedup: dacă răspunsul curent e cvasi-identic cu ultimul mesaj
+        // outbound al bot-ului, înlocuim cu un fallback care cere clarificare —
+        // evită loop-uri de tipul „Pentru 25 buc recomand ofertă personalizată..."
+        // repetat 2× la rând (conv 730).
+        $botResponse = $this->dedupOutboundOrFallback($conversation, $botResponse);
+
         // Save bot response with AI metadata + product cards + V2 intent data
         // (saved AFTER post-response gate so content and products reflect final state)
         $botMessage = Message::create([
@@ -233,6 +245,7 @@ class ChatbotApiController extends Controller
             'metadata' => !empty($products) ? ['products' => $products] : null,
             'detected_intents' => $detectedIntents,
             'pipelines_executed' => $pipelinesExecuted,
+            'knowledge_chunks_used' => !empty($ragChunkIds) ? $ragChunkIds : null,
             'sent_at' => now(),
         ]);
 
@@ -483,6 +496,9 @@ class ChatbotApiController extends Controller
                 $userMessage,
                 min($recentHistory->count(), 20),
                 $conversation->cost_cents ?? 0,
+                false,
+                $bot->language ?? 'ro',
+                $bot,
             );
 
             $maxTokens = \App\Models\ModelPricing::getMaxTokens($modelConfig['model']);
@@ -797,6 +813,13 @@ class ChatbotApiController extends Controller
                     'cost_cents' => $streamCostCents,
                 ];
 
+                $ragService = app(\App\Services\KnowledgeSearchService::class);
+                $ragChunkIds = $ragService->getLastSearchedChunkIds();
+                $ragService->resetLastSearchedChunkIds();
+
+                // Semantic dedup vs ultimul outbound (vezi metoda pentru context).
+                $fullContent = $this->dedupOutboundOrFallback($conversation, $fullContent);
+
                 $botMessage = Message::create([
                     'conversation_id' => $conversation->id,
                     'direction' => 'outbound',
@@ -810,6 +833,7 @@ class ChatbotApiController extends Controller
                     'metadata' => !empty($products) ? ['products' => $products] : null,
                     'detected_intents' => $detectedIntents,
                     'pipelines_executed' => $pipelinesExecuted,
+                    'knowledge_chunks_used' => !empty($ragChunkIds) ? $ragChunkIds : null,
                     'sent_at' => now(),
                 ]);
 
@@ -1293,6 +1317,70 @@ class ChatbotApiController extends Controller
     }
 
     /**
+     * Semantic dedup pentru outbound: dacă răspunsul nou e cvasi-identic cu
+     * ultimul outbound al conversației (similar_text > 85% pe forme normalizate),
+     * înlocuim cu un fallback care cere clarificare. Fixează loop-uri în care
+     * LLM-ul reformulează aproape identic la cantitate / „ofertă personalizată".
+     *
+     * Folosește `similar_text` PHP (Levenshtein-like %, ASCII-stable) după
+     * normalizare cuvintele care variază doar prin diacritice/spații/punctuație.
+     *
+     * Threshold-ul (0.85 default) e configurabil per bot via
+     * `bot.settings.behavior.dedup_threshold` (clamp 0.5..1.0). Setarea la 1.0
+     * efectiv dezactivează feature-ul pe bot-ul respectiv.
+     */
+    private function dedupOutboundOrFallback(\App\Models\Conversation $conv, string $newContent): string
+    {
+        $trimmed = trim($newContent);
+        if (mb_strlen($trimmed) < 30) {
+            return $newContent;
+        }
+        $last = \App\Models\Message::query()
+            ->where('conversation_id', $conv->id)
+            ->where('direction', 'outbound')
+            ->orderByDesc('id')
+            ->limit(1)
+            ->value('content');
+        if (!is_string($last) || $last === '') {
+            return $newContent;
+        }
+        $a = $this->normalizeForDedup($last);
+        $b = $this->normalizeForDedup($trimmed);
+        if ($a === '' || $b === '') {
+            return $newContent;
+        }
+        similar_text($a, $b, $pct);
+
+        $threshold = 85.0;
+        $bot = $conv->bot ?? null;
+        if (is_array($bot?->settings ?? null)) {
+            $perBot = $bot->settings['behavior']['dedup_threshold'] ?? null;
+            if (is_numeric($perBot)) {
+                $threshold = max(50.0, min(100.0, (float) $perBot * 100));
+            }
+        }
+
+        if ($pct >= $threshold) {
+            \Log::info('Outbound dedup triggered', [
+                'conversation_id' => $conv->id,
+                'similarity_pct' => round($pct, 1),
+                'threshold' => $threshold,
+            ]);
+            return 'Văd că revin la același punct. Spune-mi exact cum vrei să continui: să trec la pasul următor (datele tale pentru comandă), să-ți recomand altă variantă, sau să te conectez cu un coleg?';
+        }
+        return $newContent;
+    }
+
+    private function normalizeForDedup(string $text): string
+    {
+        $text = mb_strtolower($text, 'UTF-8');
+        $text = preg_replace('/\[.*?\]\(.*?\)/', '', $text); // strip markdown links
+        $text = preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $text);
+        $text = preg_replace('/\s+/u', ' ', $text);
+        return trim($text);
+    }
+
+    /**
      * Fire the same escalation flow as the widget's "talk to operator"
      * button: set metadata.needs_human, clear assignee_bot_id, push to
      * tenant operators, insert system acknowledge message. Used when we
@@ -1303,19 +1391,60 @@ class ChatbotApiController extends Controller
     private function triggerEscalation(\App\Models\Conversation $conv, \App\Models\Channel $channel, string $reason): void
     {
         $metadata = $conv->metadata ?? [];
+
+        // Dedup: dacă conversația a fost deja escaladată în ultimele 24h și
+        // operatorul încă nu a preluat-o, nu re-trigerăm push + acknowledge —
+        // doar acknowledge scurt. Altfel utilizatorul vede „Am chemat un coleg"
+        // de fiecare dată când revine în chat (vezi conv 733: 2× la 3h distanță).
+        $alreadyEscalatedRecently = false;
+        if (!empty($metadata['needs_human']) && !empty($metadata['escalated_at'])) {
+            try {
+                $prev = \Carbon\Carbon::parse($metadata['escalated_at']);
+                $alreadyEscalatedRecently = $prev->diffInHours(now()) < 24
+                    && empty($conv->assignee_user_id);
+            } catch (\Throwable $e) {
+                $alreadyEscalatedRecently = false;
+            }
+        }
+
+        if ($alreadyEscalatedRecently) {
+            $bot = $conv->bot ?? null;
+            $msg = $bot ? $bot->handoffMessages()['reminded']
+                : 'Un coleg a fost deja notificat și revine cu informații cât mai curând.';
+            \App\Models\Message::create([
+                'conversation_id' => $conv->id,
+                'direction' => 'outbound',
+                'content' => $msg,
+                'content_type' => 'text',
+                'metadata' => ['sender_type' => 'system', 'system_event' => 'escalation_reminded'],
+                'sent_at' => now(),
+            ]);
+            $conv->increment('messages_count');
+            \Log::info('Escalation dedup: reminder only', [
+                'conversation_id' => $conv->id,
+                'previously_escalated_at' => $metadata['escalated_at'] ?? null,
+            ]);
+            return;
+        }
+
         $metadata['needs_human'] = true;
         $metadata['escalated_at'] = now()->toIso8601String();
         $metadata['escalation_reason'] = $reason;
+        // Reset SLA flags so cron poate re-evalua escalarea nouă.
+        unset($metadata['sla_warned'], $metadata['sla_fallback_sent']);
 
         $conv->metadata = $metadata;
         $conv->assignee_bot_id = null;
         $conv->save();
 
         // Acknowledge la visitor — același mesaj ca pe butonul widget.
+        $bot = $conv->bot ?? null;
+        $ackMsg = $bot ? $bot->handoffMessages()['escalated']
+            : 'Am chemat un coleg, ajunge în câteva momente.';
         \App\Models\Message::create([
             'conversation_id' => $conv->id,
             'direction' => 'outbound',
-            'content' => 'Am chemat un coleg, ajunge în câteva momente.',
+            'content' => $ackMsg,
             'content_type' => 'text',
             'metadata' => ['sender_type' => 'system', 'system_event' => 'escalation_acknowledged'],
             'sent_at' => now(),

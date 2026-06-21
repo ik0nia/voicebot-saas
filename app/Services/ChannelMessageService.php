@@ -126,6 +126,9 @@ class ChannelMessageService
             $deliveryMetadata['delivery_skipped'] = 'channel_type_not_dispatchable';
         }
 
+        $ragChunkIds = $this->knowledgeSearchService->getLastSearchedChunkIds();
+        $this->knowledgeSearchService->resetLastSearchedChunkIds();
+
         $outboundMessage = Message::create([
             'conversation_id' => $conversation->id,
             'direction' => 'outbound',
@@ -134,6 +137,7 @@ class ChannelMessageService
             'external_message_id' => $deliveryMetadata['provider_message_id'] ?? null,
             'metadata' => $deliveryMetadata,
             'sent_at' => now(),
+            'knowledge_chunks_used' => !empty($ragChunkIds) ? $ragChunkIds : null,
         ]);
 
         // Update conversation messages count
@@ -345,7 +349,7 @@ class ChannelMessageService
             // Route model — reuse pre-loaded history (already in desc order, take 20)
             $historyCount = min($recentMessages->count(), 20);
             $conversationCost = $conversation->cost_cents ?? 0;
-            $modelConfig = $this->chatModelRouter->route($messageText, $historyCount, $conversationCost);
+            $modelConfig = $this->chatModelRouter->route($messageText, $historyCount, $conversationCost, false, 'ro', $bot);
 
             // Truncate history
             $tokenCounter = app(\App\Services\TokenCounterService::class);
@@ -385,7 +389,7 @@ class ChannelMessageService
                     ['role' => 'system', 'content' => $basePrompt],
                     ['role' => 'user', 'content' => $messageText],
                 ];
-                $modelConfig = $this->chatModelRouter->route($messageText, 0, 0);
+                $modelConfig = $this->chatModelRouter->route($messageText, 0, 0, false, 'ro', $bot);
                 $result = $this->chatCompletionService->complete($messages, $modelConfig, $bot->id, $bot->tenant_id);
                 return $result['content'];
             } catch (\Exception $e2) {

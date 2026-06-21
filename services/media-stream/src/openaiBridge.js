@@ -78,10 +78,14 @@ export function connectOpenai(botCtx, twilioSink, config, callMeta = {}) {
     // cuts the agent's confirmation audio off mid-word.
     let pendingTransferAttemptId = null;
 
+    // Realtime API GA: nu mai folosim header-ul `OpenAI-Beta: realtime=v1`
+    // (beta-ul a fost scos 2026-05-12). Modelele noi (gpt-realtime-2, gpt-realtime-1.5)
+    // sunt accesibile DOAR pe path-ul GA. Pentru audit traceability,
+    // setăm OpenAI-Safety-Identifier la bot+call id.
     const ws = new WebSocket(url, {
         headers: {
             Authorization: `Bearer ${config.openaiApiKey}`,
-            'OpenAI-Beta': 'realtime=v1',
+            'OpenAI-Safety-Identifier': `bot-${botCtx.botId}-call-${callId || 'unknown'}`,
         },
     });
 
@@ -127,31 +131,38 @@ export function connectOpenai(botCtx, twilioSink, config, callMeta = {}) {
 
         if (!sessionPayload) {
             logger.warn({ botId: botCtx.botId, callId }, 'Falling back to minimal session config');
+            // Format GA (post 2026-05-12): audio.input/output cu format obiect,
+            // type:'realtime', output_modalities, transcription sub audio.input.
             sessionPayload = {
                 type: 'session.update',
                 session: {
-                    modalities: ['text', 'audio'],
+                    type: 'realtime',
                     instructions: botCtx.systemPrompt || 'Ești un asistent vocal prietenos. Răspunzi în limba română.',
-                    voice: 'alloy',
-                    input_audio_format: 'g711_ulaw',
-                    output_audio_format: 'g711_ulaw',
-                    input_audio_transcription: { model: 'whisper-1' },
-                    turn_detection: { type: 'semantic_vad', eagerness: 'low' },
-                    temperature: 0.7,
-                    max_response_output_tokens: 1024,
+                    output_modalities: ['audio'],
+                    audio: {
+                        input: {
+                            format: { type: 'audio/pcmu' },
+                            turn_detection: { type: 'semantic_vad', eagerness: 'low' },
+                            transcription: { model: 'gpt-4o-mini-transcribe', language: 'ro' },
+                        },
+                        output: {
+                            format: { type: 'audio/pcmu' },
+                            voice: 'alloy',
+                        },
+                    },
                 },
             };
             greeting = botCtx.greeting;
         } else {
-            // Laravel builds the payload assuming a WebRTC session
-            // (which uses its own audio codec). Force Twilio-native
-            // g711_ulaw on both directions here — the bridge does no
-            // local transcoding and Twilio sends / expects mulaw 8k.
-            sessionPayload.session.input_audio_format = 'g711_ulaw';
-            sessionPayload.session.output_audio_format = 'g711_ulaw';
-            // input_audio_transcription must be explicit — some paths
-            // omit it for WebRTC since the browser handles it client-side.
-            sessionPayload.session.input_audio_transcription ??= { model: 'whisper-1' };
+            // Force Twilio-native μ-law pe ambele direcții; bridge-ul nu
+            // face transcoding. Idempotent dacă Laravel a setat deja.
+            sessionPayload.session.audio = sessionPayload.session.audio || { input: {}, output: {} };
+            sessionPayload.session.audio.input = sessionPayload.session.audio.input || {};
+            sessionPayload.session.audio.output = sessionPayload.session.audio.output || {};
+            sessionPayload.session.audio.input.format = { type: 'audio/pcmu' };
+            sessionPayload.session.audio.output.format = { type: 'audio/pcmu' };
+            sessionPayload.session.audio.input.transcription = sessionPayload.session.audio.input.transcription
+                || { model: 'gpt-4o-mini-transcribe', language: 'ro' };
         }
 
         try {
@@ -285,7 +296,7 @@ export function connectOpenai(botCtx, twilioSink, config, callMeta = {}) {
                         ws.send(JSON.stringify({
                             type: 'response.create',
                             response: {
-                                modalities: ['text', 'audio'],
+                                output_modalities: ['audio'],
                                 instructions: `Spune exact: "${speak.replace(/"/g, '\\"')}". Nu adăuga altceva.`,
                             },
                         }));
@@ -366,6 +377,24 @@ export function connectOpenai(botCtx, twilioSink, config, callMeta = {}) {
                 }));
             } catch (err) {
                 logger.warn({ err: err.message }, 'Failed to forward input audio');
+            }
+        },
+        sendUserText: (text) => {
+            // Injectează text ca turn de user (folosit pentru DTMF: model
+            // primește „[DTMF: 1]" și poate reacționa). Nu cere TTS imediat —
+            // VAD-ul existent va decide când să răspundă.
+            if (ws.readyState !== WebSocket.OPEN || !sessionReady) return;
+            try {
+                ws.send(JSON.stringify({
+                    type: 'conversation.item.create',
+                    item: {
+                        type: 'message',
+                        role: 'user',
+                        content: [{ type: 'input_text', text: String(text) }],
+                    },
+                }));
+            } catch (err) {
+                logger.warn({ err: err.message }, 'Failed to forward user text (DTMF)');
             }
         },
         requestCancel: () => {

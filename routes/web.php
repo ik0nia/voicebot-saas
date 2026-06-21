@@ -343,6 +343,9 @@ Route::middleware('auth')->prefix('dashboard/agenti')->group(function () {
     Route::get('/{bot}', [BotController::class, 'show'])->name('dashboard.bots.show');
     Route::get('/{bot}/editare', [BotController::class, 'edit'])->name('dashboard.bots.edit');
     Route::put('/{bot}', [BotController::class, 'update'])->name('dashboard.bots.update');
+    Route::post('/bulk-toggle', [BotController::class, 'bulkToggle'])->name('dashboard.bots.bulkToggle');
+    Route::post('/{bot}/duplicate', [BotController::class, 'duplicate'])->name('dashboard.bots.duplicate');
+    Route::get('/{bot}/embed-code', [BotController::class, 'embedCode'])->name('dashboard.bots.embedCode');
 
     // Session-authenticated helpers for the structured-profile editor.
     // These wrap the Sanctum-gated /api/v1 endpoints so the dashboard
@@ -523,6 +526,11 @@ Route::middleware('auth')
     ->get('/dashboard/funnel', [\App\Http\Controllers\Dashboard\AnalyticsController::class, 'funnel'])
     ->name('dashboard.analytics.funnel');
 
+// Voice KPI — completion rate, avg duration, drop-off buckets
+Route::middleware('auth')
+    ->get('/dashboard/voice-kpi', [\App\Http\Controllers\Dashboard\AnalyticsController::class, 'voiceKpi'])
+    ->name('dashboard.analytics.voiceKpi');
+
 // Cost forecast — proiecție end-of-month bazată pe last 7d rate
 Route::middleware('auth')
     ->get('/dashboard/cost-forecast', [\App\Http\Controllers\Dashboard\CostForecastController::class, 'snapshot'])
@@ -552,6 +560,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/dashboard/operator/conv/{conversation}/take',    [$op, 'take'])->name('dashboard.operator.take');
     Route::post('/dashboard/operator/conv/{conversation}/release', [$op, 'release'])->name('dashboard.operator.release');
     Route::post('/dashboard/operator/conv/{conversation}/reply',   [$op, 'reply'])->name('dashboard.operator.reply');
+    Route::post('/dashboard/operator/conv/{conversation}/note',    [$op, 'addNote'])->name('dashboard.operator.note');
+    Route::post('/dashboard/operator/conv/{conversation}/tags',    [$op, 'setTags'])->name('dashboard.operator.tags');
+    Route::post('/dashboard/operator/conv/{conversation}/close',   [$op, 'closeConversation'])->name('dashboard.operator.close');
+    Route::get('/dashboard/operator/canned',                       [$op, 'cannedResponses'])->name('dashboard.operator.canned');
     Route::post('/dashboard/operator/push/subscribe', [$op, 'pushSubscribe'])->name('dashboard.operator.push.subscribe');
     Route::post('/dashboard/operator/push/test',      [$op, 'pushTest'])->name('dashboard.operator.push.test');
 });
@@ -629,6 +641,15 @@ Route::middleware('auth')->prefix('dashboard/setari')->group(function () {
         ->middleware('tenant.role:tenant_admin')
         ->name('dashboard.settings.updateCompany');
     Route::put('/notifications', [SettingsController::class, 'updateNotifications'])->name('dashboard.settings.updateNotifications');
+    Route::put('/retention', [SettingsController::class, 'updateRetention'])
+        ->middleware('tenant.role:tenant_admin')
+        ->name('dashboard.settings.updateRetention');
+    Route::put('/webhooks', [SettingsController::class, 'updateWebhooks'])
+        ->middleware('tenant.role:tenant_admin')
+        ->name('dashboard.settings.updateWebhooks');
+    Route::put('/canned-responses', [SettingsController::class, 'updateCannedResponses'])
+        ->middleware('tenant.role:tenant_admin,tenant_manager')
+        ->name('dashboard.settings.updateCannedResponses');
     // Rate-limit token mint to 5/min per user. Without it an account that
     // leaks session cookies once can mint hundreds of long-lived tokens
     // before the user notices and rotates the session.
@@ -794,6 +815,14 @@ Route::middleware('auth')->prefix('dashboard/agenti/{bot}')->group(function () {
     Route::delete('/knowledge/{title}', [KnowledgeController::class, 'destroy'])
         ->middleware('tenant.role:tenant_admin,tenant_manager')
         ->name('dashboard.bots.knowledge.destroy');
+    Route::post('/knowledge/bulk-destroy', [KnowledgeController::class, 'bulkDestroy'])
+        ->middleware('tenant.role:tenant_admin')
+        ->name('dashboard.bots.knowledge.bulkDestroy');
+    Route::post('/knowledge/reembed-all', [KnowledgeController::class, 'requestReembedAll'])
+        ->middleware('tenant.role:tenant_admin')
+        ->name('dashboard.bots.knowledge.reembedAll');
+    Route::get('/knowledge/top-chunks', [KnowledgeController::class, 'topChunks'])
+        ->name('dashboard.bots.knowledge.topChunks');
 
     // Rate-limited mutation routes (10 requests per minute per user)
     Route::middleware(['throttle:10,1', 'tenant.role:tenant_admin,tenant_manager'])->group(function () {

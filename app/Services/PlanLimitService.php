@@ -318,6 +318,23 @@ class PlanLimitService
             return LimitCheckResult::allowed();
         }
 
+        // Trial expiry — dacă tenant-ul are `trial_ends_at` în trecut și nu
+        // s-a abonat la un plan plătit (subscribed()/trial check), blocăm
+        // trimiterea cu un mesaj clar care îndrumă spre upgrade.
+        if (method_exists($tenant, 'onTrial') && $tenant->trial_ends_at !== null) {
+            $stillOnTrial = (bool) $tenant->onTrial();
+            $isSubscribed = method_exists($tenant, 'subscribed') ? (bool) $tenant->subscribed() : false;
+            if (!$stillOnTrial && !$isSubscribed) {
+                return LimitCheckResult::denied(
+                    'Perioada de probă a expirat. Activează un abonament pentru a continua.',
+                    [
+                        'limit_key' => 'trial_expired',
+                        'trial_ends_at' => optional($tenant->trial_ends_at)->toIso8601String(),
+                    ]
+                );
+            }
+        }
+
         $plan = $this->getPlanForTenant($tenant);
         $maxMessages = $plan->getLimit('messages_per_month', 100);
         $currentMessages = UsageTracking::getCurrentValue($tenant->id, UsageTracking::FEATURE_MESSAGES);

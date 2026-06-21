@@ -117,6 +117,9 @@ final class ChatLeadExtractor
                 'products_shown' => $this->productsShownFromMemory($conversation),
             ]);
 
+            // Dispatch event ca să trimitem email + să poată trigger CRM webhooks.
+            \App\Events\LeadCaptured::dispatch($lead, 'chat');
+
             Log::info("Chat lead auto-captured for conversation {$conversation->id}", [
                 'lead_id' => $lead->id,
                 'has_email' => $email !== null,
@@ -152,8 +155,20 @@ final class ChatLeadExtractor
 
     private function extractEmail(string $userMessage): ?string
     {
-        if (preg_match('/[\w.+-]+@[\w.-]+\.\w{2,}/', $userMessage, $m)) {
-            return mb_strtolower($m[0]);
+        // Prefilter cu regex larg (Unicode local part + IDN domain), apoi
+        // validare cu FILTER_VALIDATE_EMAIL (acceptă local part ASCII strict,
+        // dar prinde formele uzuale care erau ratate de pattern-ul vechi).
+        if (preg_match('/[\p{L}\p{N}.+_-]+@[\p{L}\p{N}.-]+\.[\p{L}]{2,}/u', $userMessage, $m)) {
+            $candidate = mb_strtolower($m[0], 'UTF-8');
+            if (filter_var($candidate, FILTER_VALIDATE_EMAIL)) {
+                return $candidate;
+            }
+            // Fallback: ASCII-only normalized form (IDN local part nu intră
+            // în FILTER_VALIDATE_EMAIL default).
+            $ascii = preg_replace('/[^\x20-\x7E]/', '', $candidate);
+            if ($ascii && filter_var($ascii, FILTER_VALIDATE_EMAIL)) {
+                return $ascii;
+            }
         }
         return null;
     }
@@ -161,16 +176,33 @@ final class ChatLeadExtractor
     private function extractPhone(string $userMessage): ?string
     {
         $digitsOnly = preg_replace('/[^\d]/', '', $userMessage);
+
+        // RO mobile (07xxxxxxxx / 407xxxxxxxx) — fast path, format canonic 07…
         if (preg_match('/(07\d{8})/', $digitsOnly, $m)) {
             return $m[1];
         }
         if (preg_match('/(407\d{8})/', $digitsOnly, $m)) {
-            return '0' . substr(preg_replace('/\D/', '', $m[1]), 2);
+            return '0' . substr($m[1], 2);
         }
-        // Tolerate spaced/punctuated layouts like "07xx xxx xxx".
+
+        // International cu prefix: +CC + 7-12 cifre (BG +359, HU +36, DE +49,
+        // UK +44, FR +33, IT +39, etc.). Acceptăm formate cu spațiu/punct.
+        if (preg_match('/\+(\d{1,3})[\s.-]?(\d[\d\s.-]{6,14}\d)/', $userMessage, $m)) {
+            $cc = $m[1];
+            $rest = preg_replace('/\D/', '', $m[2]);
+            $full = $cc . $rest;
+            // RO normalization: +40 7XXXXXXXX → 07XXXXXXXX.
+            if ($cc === '40' && str_starts_with($rest, '7') && strlen($rest) === 9) {
+                return '0' . $rest;
+            }
+            return '+' . $full;
+        }
+
+        // RO spaced fallback (07xx xxx xxx).
         if (preg_match('/0\s*7[\s.-]?\d[\s.-]?\d[\s.-]?\d[\s.-]?\d[\s.-]?\d[\s.-]?\d[\s.-]?\d[\s.-]?\d/', $userMessage, $m)) {
             return preg_replace('/[\s.-]/', '', $m[0]);
         }
+
         return null;
     }
 

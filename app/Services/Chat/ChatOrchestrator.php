@@ -90,6 +90,7 @@ final class ChatOrchestrator
         $extraContext .= $this->buildPageProductContextBlock($pageContext);
         $extraContext .= $this->buildPageCategoryContextBlock($pageContext);
         $extraContext .= $this->buildCartContextBlock($pageContext);
+        $extraContext .= $this->buildPageLocationBlock($pageContext);
 
         try {
             $this->focusService->updateFocus($conversation, $userMessage, $detectedIntents ?? []);
@@ -294,6 +295,33 @@ final class ChatOrchestrator
             . "1. Când clientul cere „alege-mi un produs\" / „recomandă-mi ceva\" / „ce e mai bun\" / „din categoria asta\" FĂRĂ să specifice alta, referința implicită ESTE această categorie — NU întreba „ce categorie?\".\n"
             . "2. Propune 2-3 produse concrete din această categorie folosind informațiile din catalog; dacă ai nevoie de criterii (buget, utilizare), cere-le scurt.\n"
             . "3. Dacă clientul schimbă explicit categoria („altceva\" / „vreau din X\"), urmează noua direcție.";
+    }
+
+    /**
+     * Light-weight context: dă LLM-ului URL-ul + titlul paginii curente.
+     * Util când utilizatorul spune „aici" / „pe pagina asta" / „acest produs"
+     * fără context anterior. Trunchiat la 200 char ca să nu inflăm prompt-ul.
+     */
+    private function buildPageLocationBlock(array $pageContext): string
+    {
+        $url = (string) ($pageContext['page_url'] ?? '');
+        $title = (string) ($pageContext['page_title'] ?? '');
+        $type = (string) ($pageContext['page_type'] ?? '');
+
+        $pieces = [];
+        if ($url !== '') {
+            $pieces[] = 'URL: ' . mb_substr($url, 0, 200);
+        }
+        if ($title !== '') {
+            $pieces[] = 'Titlu: ' . mb_substr($title, 0, 200);
+        }
+        if ($type !== '') {
+            $pieces[] = 'Tip: ' . mb_substr($type, 0, 40);
+        }
+        if (empty($pieces)) {
+            return '';
+        }
+        return "\n\nPAGINA CURENTĂ A VIZITATORULUI (folosește pentru context la \"aici\" / \"pe pagina asta\"):\n" . implode("\n", $pieces);
     }
 
     /**

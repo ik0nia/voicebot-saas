@@ -199,8 +199,13 @@ class RealtimeSession
      */
     private function buildInstructions(): string
     {
-        $base = $this->bot->system_prompt
-            ?? 'Ești un asistent vocal prietenos. Răspunzi în limba română.';
+        // Voice poate avea prompt distinct de chat (tones diferit, fără
+        // markdown, fără linkuri). Default fallback: prompt-ul de chat.
+        $voicePrompt = $this->bot->settings['voice']['system_prompt'] ?? null;
+        $base = (is_string($voicePrompt) && trim($voicePrompt) !== '')
+            ? $voicePrompt
+            : ($this->bot->system_prompt
+                ?? 'Ești un asistent vocal prietenos. Răspunzi în limba română.');
 
         if ($this->hasProducts) {
             $base .= "\n\n=== INSTRUCȚIUNI PRODUSE (PRIORITARE) ==="
@@ -525,8 +530,10 @@ class RealtimeSession
             $greeting = $this->bot->greeting_message
                 ?? 'Bună ziua! Sunt asistentul virtual. Vă pot ajuta cu informații despre produse, prețuri sau comenzi. Cu ce vă pot fi de folos?';
 
-            // Adjust greeting based on time of day
-            $hour = (int) now()->format('H');
+            // Adjust greeting based on time of day, în timezone-ul bot-ului
+            // (default Europe/Bucharest). Asta evită un client „Bună seara" la
+            // 9 dimineața dacă serverul rulează în UTC.
+            $hour = (int) now($this->bot->timezone())->format('H');
             $timeGreeting = match(true) {
                 $hour >= 5 && $hour < 12 => 'Bună dimineața',
                 $hour >= 12 && $hour < 18 => 'Bună ziua',
@@ -534,10 +541,22 @@ class RealtimeSession
             };
             $greeting = preg_replace('/^(Bun[aă]\s+(ziua|dimineata|diminea[tț]a|seara)!?|Bun[aă]!?|Salut!?|Hello!?|Hei!?)\s*/iu', $timeGreeting . '! ', $greeting);
 
+            // EU AI Act transparency pe voice: prepend disclosure scurt. Pentru
+            // voice e mai natural în greeting decât ca turn separat. Configurabil
+            // per bot via `bot.settings.compliance.ai_disclosure_enabled` (default
+            // true) și `compliance.ai_voice_disclosure_text` pentru text custom.
+            $botSettings = is_array($this->bot->settings ?? null) ? $this->bot->settings : [];
+            $disclosureEnabled = $botSettings['compliance']['ai_disclosure_enabled'] ?? true;
+            if ($disclosureEnabled) {
+                $voiceDisclosure = $botSettings['compliance']['ai_voice_disclosure_text']
+                    ?? 'Vă vorbește un asistent AI; spuneți „operator" oricând dacă doriți să vorbiți cu un coleg.';
+                $greeting = trim($voiceDisclosure) . ' ' . $greeting;
+            }
+
             return [
                 'type' => 'response.create',
                 'response' => [
-                    'modalities' => ['text', 'audio'],
+                    'output_modalities' => ['audio'],
                     'instructions' => 'Spune exact urmatorul text, fara sa adaugi sau sa schimbi nimic: "' . str_replace('"', '\\"', $greeting) . '"',
                 ],
             ];
@@ -928,7 +947,7 @@ class RealtimeSession
                     return [
                         'type' => 'response.create',
                         'response' => [
-                            'modalities' => $this->ttsStrategy->getModalities(),
+                            'output_modalities' => ['audio'],
                             'instructions' => $this->buildInstructionsWithContext($context)
                                 . "\n\n[CONTEXT ACTUALIZAT - Clientul a întrebat: \"" . str_replace('"', '\\"', $userTranscript ?? '') . "\""
                                 . "\nRăspunde ACUM cu informațiile din context. NU repeta mesajul de așteptare. Răspunde direct și concis.]",

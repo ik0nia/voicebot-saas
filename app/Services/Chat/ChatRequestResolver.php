@@ -327,6 +327,19 @@ final class ChatRequestResolver
 
         $channelConfig = $channel->config ?? [];
         $greetingText = $channelConfig['greeting'] ?? 'Bună! Cu ce te pot ajuta?';
+
+        // EU AI Act transparency: prepend la greeting o frază scurtă care
+        // declară că asistentul e AI și oferă opt-out la operator. Configurabil
+        // per bot prin `bot.settings.compliance.ai_disclosure_enabled`
+        // (default true) și `compliance.ai_disclosure_text` pentru text custom.
+        $botSettings = is_array($bot->settings ?? null) ? $bot->settings : [];
+        $disclosureEnabled = $botSettings['compliance']['ai_disclosure_enabled'] ?? true;
+        if ($disclosureEnabled) {
+            $disclosureText = $botSettings['compliance']['ai_disclosure_text']
+                ?? 'Sunt asistentul AI. Spune oricând „operator" dacă vrei să te conectez cu un coleg.';
+            $greetingText = trim($disclosureText) . "\n\n" . $greetingText;
+        }
+
         Message::create([
             'conversation_id' => $conversation->id,
             'direction' => 'outbound',
