@@ -223,6 +223,47 @@ class AnalyticsController extends Controller
     }
 
     /**
+     * Cost breakdown per bot — sum cost_cents pe ultimele N zile + media
+     * per conv. Util pentru a vedea care bot consumă cel mai mult LLM.
+     */
+    public function botCost(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $tenantId = auth()->user()?->tenant_id ?? 0;
+        $days = (int) max(1, min(365, $request->integer('days', 30)));
+        $cacheKey = "bot_cost:v1:{$tenantId}:{$days}";
+
+        $payload = Cache::remember($cacheKey, now()->addMinutes(15), function () use ($tenantId, $days) {
+            $cutoff = now()->subDays($days);
+            $rows = \DB::table('messages')
+                ->join('conversations', 'conversations.id', '=', 'messages.conversation_id')
+                ->join('bots', 'bots.id', '=', 'conversations.bot_id')
+                ->where('bots.tenant_id', $tenantId)
+                ->where('messages.created_at', '>=', $cutoff)
+                ->selectRaw('bots.id as bot_id, bots.name, SUM(messages.cost_cents) as total_cost_cents, COUNT(DISTINCT conversations.id) as convs')
+                ->groupBy('bots.id', 'bots.name')
+                ->orderByDesc('total_cost_cents')
+                ->get();
+
+            $totalAll = (float) $rows->sum('total_cost_cents');
+            return [
+                'window_days' => $days,
+                'total_cost_cents' => $totalAll,
+                'bots' => $rows->map(fn($r) => [
+                    'bot_id' => (int) $r->bot_id,
+                    'name' => $r->name,
+                    'total_cost_cents' => (float) $r->total_cost_cents,
+                    'conversations' => (int) $r->convs,
+                    'avg_cost_per_conv_cents' => $r->convs > 0
+                        ? round((float) $r->total_cost_cents / (int) $r->convs, 2) : 0,
+                    'share_pct' => $totalAll > 0 ? round((float) $r->total_cost_cents / $totalAll * 100, 1) : 0,
+                ]),
+            ];
+        });
+
+        return response()->json($payload);
+    }
+
+    /**
      * KPI per bot — conversation count, avg msg, abandoned rate, leads created,
      * avg time to first response. Util pentru tenant cu multi-bot pentru
      * a compara performanța A/B.
