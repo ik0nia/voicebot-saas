@@ -94,6 +94,38 @@ class Conversation extends Model
         return $this->assignee_user_id !== null;
     }
 
+    /**
+     * Durata conversației în secunde. Folosește ended_at dacă există,
+     * altfel last_activity_at, altfel updated_at. Returnează 0 pentru
+     * conv fără timestamp-uri valide.
+     */
+    public function durationSeconds(): int
+    {
+        if (!$this->started_at) {
+            return 0;
+        }
+        $end = $this->ended_at ?? $this->last_activity_at ?? $this->updated_at;
+        if (!$end) {
+            return 0;
+        }
+        try {
+            return max(0, $end->diffInSeconds($this->started_at));
+        } catch (\Throwable $e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Număr distinct de participanți (operator + visitor + bot dacă activ).
+     */
+    public function participantsCount(): int
+    {
+        $count = 1; // visitor
+        if ($this->assignee_user_id) $count++;
+        if ($this->assignee_bot_id) $count++;
+        return $count;
+    }
+
     public function isBotAssigned(): bool
     {
         return $this->assignee_bot_id !== null;
