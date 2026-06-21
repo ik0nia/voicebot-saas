@@ -4,13 +4,9 @@
 
 @section('content')
 <div class="max-w-2xl mx-auto py-8 px-4">
+    @include('dashboard.setup-wow._progress', ['step' => 'website'])
     <div class="mb-8">
-        <div class="flex items-center gap-2 text-xs font-semibold text-muted uppercase">
-            <span class="text-coralh">Pasul 2 din 4</span>
-            <span class="text-line">·</span>
-            <span>Site</span>
-        </div>
-        <h1 class="mt-2 text-3xl font-extrabold text-ink">Despre afacerea ta</h1>
+        <h1 class="text-3xl font-extrabold text-ink">Despre afacerea ta</h1>
         <p class="mt-2 text-muted">Dăm din site-ul tău o primă versiune a bazei de cunoștințe — automat, în fundal. Mai poți adăuga documente manual după.</p>
     </div>
 

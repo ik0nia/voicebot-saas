@@ -4,13 +4,9 @@
 
 @section('content')
 <div class="max-w-5xl mx-auto py-8 px-4">
+    @include('dashboard.setup-wow._progress', ['step' => 'niche'])
     <div class="mb-8">
-        <div class="flex items-center gap-2 text-xs font-semibold text-muted uppercase">
-            <span class="text-coralh">Pasul 1 din 4</span>
-            <span class="text-line">·</span>
-            <span>Nișă</span>
-        </div>
-        <h1 class="mt-2 text-3xl font-extrabold text-ink">Ce face afacerea ta?</h1>
+        <h1 class="text-3xl font-extrabold text-ink">Ce face afacerea ta?</h1>
         <p class="mt-2 text-muted">Alege nișa care se potrivește cel mai bine. Agentul tău vine cu flow-uri, vocabular și prompt-uri gata-configurate.</p>
     </div>
 

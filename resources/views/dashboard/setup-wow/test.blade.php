@@ -27,13 +27,9 @@
     }
 @endphp
 <div class="max-w-3xl mx-auto py-8 px-4">
+    @include('dashboard.setup-wow._progress', ['step' => 'test'])
     <div class="mb-6">
-        <div class="flex items-center gap-2 text-xs font-semibold text-muted uppercase">
-            <span class="text-coralh">Pasul 4 din 4</span>
-            <span class="text-line">·</span>
-            <span>Test live</span>
-        </div>
-        <h1 class="mt-2 text-3xl font-extrabold text-ink">Vorbește cu agentul tău 🎙️</h1>
+        <h1 class="text-3xl font-extrabold text-ink">Vorbește cu agentul tău 🎙️</h1>
         <p class="mt-2 text-muted">Agentul <strong>{{ $bot?->name ?? 'tău' }}</strong> e gata. Testează-l aici, pe site-ul tău de „staging", înainte să-l publici.</p>
     </div>
 

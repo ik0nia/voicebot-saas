@@ -101,11 +101,26 @@
             'voice'            => old('voice', $bot->voice),
             'greeting'         => old('greeting_message', $bot->greeting_message),
             'is_active'        => (bool) old('is_active', $bot->is_active),
+            'recording_enabled' => (bool) old('recording_enabled', $bot->recording_enabled ?? false),
         ],
         'transfer' => [
             'enabled'          => (bool) old('transfer_enabled', $bot->settings['transfer_config']['enabled'] ?? false),
             'operator_number'  => (string) old('transfer_operator_number', $bot->settings['transfer_config']['operator_number'] ?? ''),
             'max_ring_seconds' => (int) old('transfer_max_ring_seconds', $bot->settings['transfer_config']['max_ring_seconds'] ?? 25),
+        ],
+        // Snapshot pentru completeness widget — Alpine nu poate ști câte
+        // documente sunt în DB sau ce setări globale există fără un fetch.
+        'meta' => [
+            'knowledge_count'   => (int) ($knowledgeCount ?? 0),
+            'dont_rules_count'  => is_array($dontRules) ? count(array_filter(array_map('trim', $dontRules))) : 0,
+            'tone_configured'   => !empty($toneGuide) && (
+                ($toneGuide['length'] ?? null) !== ($defaultTone['length'] ?? null)
+                || ($toneGuide['register'] ?? null) !== ($defaultTone['register'] ?? null)
+                || (bool) ($toneGuide['emoji_ok'] ?? false) !== (bool) ($defaultTone['emoji_ok'] ?? false)
+            ),
+            'notifications_email' => (string) ($settings['notifications']['email'] ?? ''),
+            'after_hours_message' => (string) ($settings['business_info']['after_hours_message'] ?? ''),
+            'recording_decided'   => array_key_exists('voice', (array) $settings) && array_key_exists('recording_enabled_override', (array) ($settings['voice'] ?? [])),
         ],
     ];
 @endphp
@@ -159,7 +174,7 @@
                         <template x-for="(item, i) in completenessItems()" :key="'chk_' + i">
                             <li>
                                 <button type="button"
-                                        @click="item.done ? (checklistOpen = false) : (tab = item.tab, checklistOpen = false, $nextTick(() => focusFieldInTab(item.focus)))"
+                                        @click="item.done ? (checklistOpen = false) : (item.link ? (window.location.href = item.link) : (tab = item.tab, checklistOpen = false, $nextTick(() => focusFieldInTab(item.focus))))"
                                         class="w-full flex items-start gap-2 text-left px-2 py-1.5 rounded hover:bg-cream transition">
                                     <span class="mt-0.5 font-bold" x-text="item.done ? '✓' : '○'"
                                           :class="item.done ? 'text-green-600' : 'text-line'"></span>
@@ -208,6 +223,62 @@
             </a>
         </div>
     @endif
+
+    {{-- ============== SETUP COMPLETENESS CARD (Iter B 2026-06-21) ==============
+         Vizibil când profilul nu e ≥ 80% complet. Lista compactă cu next
+         actions, click → sare la tab + focusează câmp. Se ascunde după ce
+         completezi tot, ca să nu ocupe loc inutil pe agenții finiți. --}}
+    <div x-show="completenessPercent() < 80" x-cloak
+         x-data="{ expanded: completenessPercent() < 50 }"
+         class="mb-6 bg-white rounded-xl border border-coral/20 shadow-sm overflow-hidden">
+        <div class="px-5 py-4 flex items-center gap-4 cursor-pointer hover:bg-coralsoft/30"
+             @click="expanded = !expanded">
+            <div class="shrink-0 w-12 h-12 rounded-full bg-coralsoft flex items-center justify-center">
+                <span class="text-lg font-bold text-coralh" x-text="completenessPercent() + '%'"></span>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="text-sm font-semibold text-ink">Setup agent — în progres</div>
+                <div class="text-xs text-muted mt-0.5">
+                    <span x-text="completenessItems().filter(i => i.done).length"></span>
+                    din
+                    <span x-text="completenessItems().length"></span>
+                    secțiuni configurate.
+                    <span x-show="completenessPercent() < 50">Începe cu cele esențiale, restul pot aștepta.</span>
+                    <span x-show="completenessPercent() >= 50">Aproape gata — mai sunt câteva detalii.</span>
+                </div>
+                <div class="w-full h-1.5 bg-sand rounded-full overflow-hidden mt-2">
+                    <div class="h-full bg-gradient-to-r from-coral to-coralh transition-all duration-500"
+                         :style="'width: ' + completenessPercent() + '%'"></div>
+                </div>
+            </div>
+            <svg class="w-4 h-4 text-muted shrink-0 transition-transform" :class="expanded ? 'rotate-180' : ''"
+                 fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+        </div>
+        <div x-show="expanded" x-collapse class="px-5 pb-5 pt-1 border-t border-line">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
+                <template x-for="(item, i) in completenessItems()" :key="'card_chk_' + i">
+                    <button type="button"
+                            @click.prevent="item.done ? null : (item.link ? (window.location.href = item.link) : (tab = item.tab, $nextTick(() => focusFieldInTab(item.focus))))"
+                            :disabled="item.done"
+                            :class="item.done ? 'bg-emerald-50 border-emerald-200 cursor-default' : 'bg-cream border-line hover:border-coral/40 hover:shadow-sm cursor-pointer'"
+                            class="flex items-start gap-2.5 text-left px-3 py-2.5 rounded-lg border transition">
+                        <span class="mt-0.5 text-base shrink-0"
+                              x-text="item.done ? '✓' : '○'"
+                              :class="item.done ? 'text-emerald-600 font-bold' : 'text-line'"></span>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-xs font-semibold" :class="item.done ? 'text-emerald-900' : 'text-ink'" x-text="item.label"></div>
+                            <div x-show="item.hint" class="text-[11px] mt-0.5" :class="item.done ? 'text-emerald-700' : 'text-muted'" x-text="item.hint"></div>
+                        </div>
+                        <svg x-show="!item.done" class="w-3 h-3 text-muted shrink-0 mt-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                </template>
+            </div>
+        </div>
+    </div>
 
     {{-- ============== MAIN FORM ============== --}}
     <form method="POST" action="{{ route('dashboard.bots.update', $bot) }}" x-ref="editForm">
@@ -462,52 +533,73 @@ function botEditor(init) {
 
         // ---------- Completeness ----------
         completenessPercent() {
-            return this.completenessItems().filter(i => i.done).length * 20;
+            const items = this.completenessItems();
+            if (!items.length) return 0;
+            return Math.round(items.filter(i => i.done).length / items.length * 100);
         },
 
         // Iter A: list form of the completeness check — each item tracks
         // which tab to jump to and which DOM id to focus on.
+        // Iter B (2026-06-21): extended from 5 → 8 items + grouped into
+        // tiers (esențial / recomandat / avansat) for the new card UI.
         completenessItems() {
             const hasContact = (this.businessInfo.address || '').trim() !== ''
                 || (this.businessInfo.phone || '').trim() !== ''
                 || (this.businessInfo.email || '').trim() !== '';
             const greetingFilled = (this.core && (this.core.greeting || '').trim() !== '');
             const hasHours = Array.isArray(this.days) && this.days.some(d => !d.closed && d.open && d.close);
+            const m = this.meta || {};
+            const transferOk = !this.transfer.enabled
+                || (this.transfer.enabled && (this.transfer.operator_number || '').trim() !== '');
             return [
                 {
                     label: 'Nume + voce',
-                    hint: (this.core.name || '').trim() && this.core.voice ? '' : 'Dă-i un nume și alege vocea agentului',
+                    hint: (this.core.name || '').trim() && this.core.voice ? '' : 'Dă-i un nume și alege vocea',
                     done: !!(this.core.name && (this.core.name).trim() && this.core.voice),
-                    tab: 'baza',
-                    focus: 'baza_name',
+                    tab: 'baza', focus: 'baza_name', tier: 'essential',
                 },
                 {
                     label: 'Mesaj de întâmpinare',
                     hint: greetingFilled ? '' : 'Ce spune agentul când preia apelul',
                     done: greetingFilled,
-                    tab: 'baza',
-                    focus: 'baza_greeting',
+                    tab: 'baza', focus: 'baza_greeting', tier: 'essential',
                 },
                 {
-                    label: 'Contact (telefon, email sau adresă)',
-                    hint: hasContact ? '' : 'Cel puțin una: telefon, email sau adresă',
+                    label: 'Contact (telefon, email, adresă)',
+                    hint: hasContact ? '' : 'Cel puțin unul din ele',
                     done: hasContact,
-                    tab: 'baza',
-                    focus: 'baza_phone',
+                    tab: 'baza', focus: 'baza_phone', tier: 'essential',
                 },
                 {
                     label: 'Program de lucru',
-                    hint: hasHours ? '' : 'Definește orele și zilele în care agentul răspunde',
+                    hint: hasHours ? '' : 'Cel puțin o zi cu ore (Tab Business)',
                     done: hasHours,
-                    tab: 'business',
-                    focus: null,
+                    tab: 'business', focus: null, tier: 'essential',
                 },
                 {
-                    label: 'FAQ-uri (recomandat 3+)',
-                    hint: this.faqs.length >= 3 ? '' : `Ai ${this.faqs.length}/3 întrebări frecvente`,
+                    label: 'FAQ-uri (3+)',
+                    hint: this.faqs.length >= 3 ? '' : `Ai ${this.faqs.length}/3 — agentul învață rapid din ele`,
                     done: this.faqs.length >= 3,
-                    tab: 'faq',
-                    focus: null,
+                    tab: 'faq', focus: null, tier: 'recommended',
+                },
+                {
+                    label: 'Reguli stricte (3+)',
+                    hint: (m.dont_rules_count || 0) >= 3 ? '' : `Spune-i ce să NU facă (${m.dont_rules_count || 0}/3)`,
+                    done: (m.dont_rules_count || 0) >= 3,
+                    tab: 'reguli', focus: null, tier: 'recommended',
+                },
+                {
+                    label: 'Documente sau site indexat',
+                    hint: (m.knowledge_count || 0) > 0 ? `${m.knowledge_count} surse de cunoștințe` : 'Urcă PDF/DOCX sau indexează site-ul ca agentul să răspundă din ele',
+                    done: (m.knowledge_count || 0) > 0,
+                    tab: null, focus: null, tier: 'recommended',
+                    link: '/dashboard/agenti/{{ $bot->id }}/knowledge',
+                },
+                {
+                    label: 'Transfer la operator (voice)',
+                    hint: transferOk ? (this.transfer.enabled ? 'Operator configurat' : 'Dezactivat — agentul rezolvă singur') : 'Pune un număr sau dezactivează',
+                    done: transferOk,
+                    tab: 'transfer', focus: 'transfer_operator_number', tier: 'recommended',
                 },
             ];
         },

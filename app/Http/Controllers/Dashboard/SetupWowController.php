@@ -28,6 +28,27 @@ class SetupWowController extends Controller
     public function start(Request $request)
     {
         $request->session()->forget('wow_wizard');
+
+        // Adjust mode (Iter B, 2026-06-21): permite re-rularea wizard-ului
+        // pe un bot existent. ?bot=ID pre-completează state-ul cu nișa +
+        // numele + URL site, iar saveAgent() va updata bot-ul în loc să
+        // creeze altul. Authorization: bot.tenant_id trebuie să match-uiască
+        // tenant-ul utilizatorului.
+        $botId = $request->query('bot');
+        if ($botId) {
+            $bot = Bot::find($botId);
+            if ($bot && auth()->user()?->tenant_id === $bot->tenant_id) {
+                $site = $bot->site_id ? Site::find($bot->site_id) : null;
+                $request->session()->put('wow_wizard', [
+                    'adjust_mode'    => true,
+                    'adjust_bot_id'  => $bot->id,
+                    'niche_slug'     => $bot->niche_slug,
+                    'website_url'    => $site?->domain ? ('https://' . $site->domain) : '',
+                    'business_name'  => $site?->name ?? $bot->name,
+                ]);
+            }
+        }
+
         return redirect()->route('dashboard.setup-wow.step', ['step' => 'niche']);
     }
 
@@ -117,33 +138,58 @@ class SetupWowController extends Controller
             ]);
         }
 
-        $bot = Bot::create([
-            'tenant_id'        => $tenant->id,
-            'site_id'          => $site->id,
-            'name'             => $validated['agent_name'],
-            'slug'             => Str::slug($validated['agent_name']) . '-' . Str::random(4),
-            'voice'            => $this->voicePreset($validated['voice_style'] ?? 'professional'),
-            'language'         => 'ro',
-            'engine_type'      => $engine,
-            'niche_slug'       => $state['niche_slug'],
-            'greeting_message' => $validated['greeting'] ?: null,
-            'is_active'        => true,
-        ]);
+        // Adjust mode: update bot-ul existent în loc să creezi unul nou.
+        // Păstrăm setările deja personalizate (faqs/dont_rules/tone editate
+        // manual) — overwrite-uim DOAR câmpurile pe care le-a editat în wizard.
+        $adjustBot = !empty($state['adjust_bot_id']) ? Bot::find($state['adjust_bot_id']) : null;
+        $isAdjusting = $adjustBot && $adjustBot->tenant_id === $tenant->id;
 
-        // System prompt from niche template addon.
-        $bot->system_prompt = trim($niche['prompt_addon'] ?? '');
+        if ($isAdjusting) {
+            $bot = $adjustBot;
+            $bot->name             = $validated['agent_name'];
+            $bot->voice            = $this->voicePreset($validated['voice_style'] ?? 'professional');
+            $bot->niche_slug       = $state['niche_slug'];
+            $bot->engine_type      = $engine;
+            $bot->greeting_message = $validated['greeting'] ?: $bot->greeting_message;
+            $bot->site_id          = $site->id;
+            $bot->system_prompt    = trim($niche['prompt_addon'] ?? '') ?: $bot->system_prompt;
+        } else {
+            $bot = Bot::create([
+                'tenant_id'        => $tenant->id,
+                'site_id'          => $site->id,
+                'name'             => $validated['agent_name'],
+                'slug'             => Str::slug($validated['agent_name']) . '-' . Str::random(4),
+                'voice'            => $this->voicePreset($validated['voice_style'] ?? 'professional'),
+                'language'         => 'ro',
+                'engine_type'      => $engine,
+                'niche_slug'       => $state['niche_slug'],
+                'greeting_message' => $validated['greeting'] ?: null,
+                'is_active'        => true,
+            ]);
+            $bot->system_prompt = trim($niche['prompt_addon'] ?? '');
+        }
 
         // Copy niche defaults into structured settings so the tenant
         // lands on a fully-configured bot, not an empty shell. Without
         // this, the niche expansion (FAQ suggestions, standard rules,
         // tone) is invisible at runtime because the structured prompt
         // flag defaults off and settings.* are empty.
+        //
+        // În adjust mode păstrăm faqs/dont_rules/tone existente — useri
+        // care au investit timp în personalizare nu vor să le piardă
+        // doar pentru că au reluat wizard-ul.
         $settings = $bot->settings ?? [];
-        $settings['use_structured_prompt'] = true;
-        $settings['faqs'] = array_values(array_slice($niche['suggested_faqs'] ?? [], 0, 8));
-        $settings['dont_rules'] = array_values($niche['standard_rules'] ?? []);
-        $settings['tone_guide'] = $niche['default_tone']
-            ?? ($settings['tone_guide'] ?? ['length' => 'medium', 'register' => 'tu', 'emoji_ok' => false, 'languages' => ['ro']]);
+        $settings['use_structured_prompt'] = $settings['use_structured_prompt'] ?? true;
+        if (!$isAdjusting || empty($settings['faqs'])) {
+            $settings['faqs'] = array_values(array_slice($niche['suggested_faqs'] ?? [], 0, 8));
+        }
+        if (!$isAdjusting || empty($settings['dont_rules'])) {
+            $settings['dont_rules'] = array_values($niche['standard_rules'] ?? []);
+        }
+        if (!$isAdjusting || empty($settings['tone_guide'])) {
+            $settings['tone_guide'] = $niche['default_tone']
+                ?? ($settings['tone_guide'] ?? ['length' => 'medium', 'register' => 'tu', 'emoji_ok' => false, 'languages' => ['ro']]);
+        }
         $bot->settings = $settings;
 
         $bot->save();

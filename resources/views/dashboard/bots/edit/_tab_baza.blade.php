@@ -91,12 +91,54 @@
                             </label>
                         </div>
 
+                        {{-- Recording opt-in (canonical) — promovat în Bază
+                             pentru că e setare cu impact legal (GDPR consimțământ
+                             la fiecare apel). Tab Avansat oglindește această stare.
+                             Default OFF: clientul decide explicit să-l activeze. --}}
+                        <div class="border-t border-line pt-5">
+                            <label class="flex items-start gap-3 cursor-pointer">
+                                <input type="hidden" name="recording_enabled" value="0" />
+                                <input type="checkbox" name="recording_enabled" value="1"
+                                       x-model="core.recording_enabled"
+                                       class="mt-0.5 w-5 h-5 rounded border-line text-coralh focus:ring-coral/20">
+                                <div class="flex-1">
+                                    <span class="text-sm font-medium text-inkSoft">📞 Înregistrare apeluri voice</span>
+                                    <p class="text-xs text-muted mt-0.5">
+                                        Apelurile vor fi înregistrate stereo (caller + agent) și păstrate 14 zile pentru auditare.
+                                    </p>
+                                    <div x-show="core.recording_enabled" x-cloak
+                                         class="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                                        <strong>GDPR:</strong> la fiecare apel, agentul va spune automat:
+                                        <em class="block mt-1 not-italic text-amber-800 pl-2 border-l-2 border-amber-300">
+                                            „Această conversație este înregistrată în scopuri de calitate și asistență. Continuarea apelului implică acceptul."
+                                        </em>
+                                        Disclaimer-ul e obligatoriu legal — nu poate fi dezactivat separat.
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+
                         {{-- Marker that this save came from Bază tab — controller uses it for post-save CTA --}}
                         <input type="hidden" name="origin" value="baza" x-bind:value="tab === 'baza' ? 'baza' : ''">
 
                         <div class="pt-2 flex items-start gap-2 text-xs text-muted">
                             <span>💡</span>
                             <span>Pentru FAQ-uri, reguli sau ton, folosește secțiunile din stânga. Agentul merge și doar cu setările de aici.</span>
+                        </div>
+
+                        {{-- Re-rulează wizard-ul ghidat pe acest agent — păstrează
+                             FAQ-uri/reguli/ton existente, doar permite modificarea
+                             nișei, URL-ului site-ului și a numelui/vocii agentului. --}}
+                        <div class="pt-3 border-t border-line">
+                            <a href="{{ route('dashboard.setup-wow.start', ['bot' => $bot->id]) }}"
+                               class="inline-flex items-center gap-2 text-xs font-medium text-coralh hover:text-coral">
+                                <span>🪄</span>
+                                <span>Reia wizard-ul ghidat pentru acest agent</span>
+                                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </a>
+                            <p class="text-[11px] text-muted mt-1">Util dacă vrei să schimbi nișa sau să re-indexezi site-ul. FAQ-urile și regulile rămân.</p>
                         </div>
                     </div>
                 </div>

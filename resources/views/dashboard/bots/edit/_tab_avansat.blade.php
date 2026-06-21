@@ -95,29 +95,17 @@
                                 </div>
                             </div>
 
-                            {{-- Recording opt-in. GDPR-conform: când e ON, agentul
-                                 spune disclaimer-ul fix la începutul fiecărui apel
-                                 înainte ca recording-ul să pornească. Implicit OFF
-                                 — fiecare client decide explicit să-l activeze. --}}
+                            {{-- Recording opt-in mirror — canonical e în Tab Bază,
+                                 aici doar pentru transparență. Modificarea în orice tab
+                                 e reflectată în celălalt prin x-model partajat. --}}
                             <div class="mt-6 pt-5 border-t border-line">
                                 <label class="flex items-start gap-3 cursor-pointer">
-                                    <input type="hidden" name="recording_enabled" value="0">
-                                    <input type="checkbox" name="recording_enabled" id="recording_enabled" value="1"
-                                           {{ old('recording_enabled', $bot->recording_enabled) ? 'checked' : '' }}
+                                    <input type="checkbox" x-model="core.recording_enabled"
                                            class="mt-0.5 w-4 h-4 accent-coral rounded">
                                     <span class="text-sm">
-                                        <span class="font-medium text-ink">Înregistrare apeluri</span>
+                                        <span class="font-medium text-ink">Înregistrare apeluri (oglindă Tab Bază)</span>
                                         <span class="block text-xs text-muted mt-0.5">
-                                            Apelurile vor fi înregistrate stereo (separat caller + bot), stocate 14 zile
-                                            și disponibile la <span class="font-mono">/dashboard/apeluri/&#123;id&#125;</span>.
-                                            La activare, asistentul va spune automat la începutul fiecărui apel:
-                                            <em class="block mt-1 not-italic text-inkSoft pl-3 border-l-2 border-line">
-                                                „Această conversație este înregistrată în scopuri de calitate și asistență.
-                                                Continuarea apelului implică acceptul."
-                                            </em>
-                                            <span class="block mt-1.5">
-                                                Cost suplimentar: ~1.25 bani/min recording. Conform GDPR.
-                                            </span>
+                                            Setarea principală e în <button type="button" @click="tab = 'baza'" class="underline text-coralh hover:text-coral">Tab Bază</button>. Cost suplimentar: ~1.25 bani/min recording.
                                         </span>
                                     </span>
                                 </label>

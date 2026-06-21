@@ -189,8 +189,14 @@ class BotController extends Controller
         $niche = $bot->niche_slug ? config('niches.' . $bot->niche_slug) : null;
         $niches = config('niches', []);
 
+        // Knowledge doc count powers the completeness widget — Alpine
+        // doesn't have access to the DB so we resolve once server-side.
+        $knowledgeCount = \App\Models\BotKnowledge::withoutGlobalScopes()
+            ->where('bot_id', $bot->id)
+            ->count();
+
         return view('dashboard.bots.edit', compact(
-            'bot', 'sites', 'clonedVoice', 'niche', 'niches'
+            'bot', 'sites', 'clonedVoice', 'niche', 'niches', 'knowledgeCount'
         ));
     }
 
