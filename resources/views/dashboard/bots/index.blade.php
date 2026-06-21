@@ -139,6 +139,23 @@
 
                         {{-- Actions --}}
                         <div class="flex items-center gap-2 pt-4 border-t border-line">
+                            <div class="relative" x-data="{ open: false }">
+                                <button @click="open = !open" @click.outside="open = false"
+                                        class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-line bg-cream text-muted hover:bg-line transition-colors">
+                                    ⋯
+                                </button>
+                                <div x-show="open" x-cloak x-transition.opacity
+                                     class="absolute left-0 bottom-full mb-2 w-48 bg-white rounded-lg border border-line shadow-lg z-10 py-1 text-sm">
+                                    <form method="POST" action="{{ route('dashboard.bots.duplicate', $bot) }}">
+                                        @csrf
+                                        <button type="submit" class="w-full text-left px-3 py-2 hover:bg-cream">📋 Duplică</button>
+                                    </form>
+                                    <a href="{{ route('dashboard.bots.embedCode', $bot) }}" target="_blank"
+                                       class="block px-3 py-2 hover:bg-cream">&lt;/&gt; Embed code</a>
+                                    <a href="{{ route('dashboard.bots.knowledge.index', $bot) }}"
+                                       class="block px-3 py-2 hover:bg-cream">📚 Knowledge</a>
+                                </div>
+                            </div>
                             <form method="POST" action="{{ route('dashboard.bots.toggle', $bot) }}" class="shrink-0">
                                 @csrf
                                 @method('PATCH')
