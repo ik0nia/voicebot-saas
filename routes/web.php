@@ -1112,3 +1112,8 @@ Route::prefix('webhook/twilio')
 Route::post('/webhook/email/inbound', [\App\Http\Controllers\Webhook\EmailInboundWebhookController::class, 'handle'])
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
     ->name('webhook.email.inbound');
+
+// Detailed health — folosit de monitoring extern (Uptime Kuma, Grafana).
+// /up rămâne minimal pentru Coolify healthchecks.
+Route::get('/health/detailed', [\App\Http\Controllers\HealthController::class, 'detailed'])
+    ->name('health.detailed');
