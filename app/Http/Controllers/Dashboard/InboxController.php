@@ -74,6 +74,23 @@ class InboxController extends Controller
             $query->whereJsonContains('metadata->needs_human', true)
                   ->whereNull('assignee_user_id');
         }
+        // Filter by tag (din operator setTags). ?tag=billing pentru exact match,
+        // sau ?tags=foo,bar pentru OR multi-tag.
+        if ($tag = $request->get('tag')) {
+            $query->whereJsonContains('metadata->tags', mb_strtolower(trim($tag)));
+        } elseif ($tagList = $request->get('tags')) {
+            $tags = array_filter(array_map(
+                fn($t) => mb_strtolower(trim($t)),
+                explode(',', (string) $tagList)
+            ));
+            if (!empty($tags)) {
+                $query->where(function ($q) use ($tags) {
+                    foreach ($tags as $t) {
+                        $q->orWhereJsonContains('metadata->tags', $t);
+                    }
+                });
+            }
+        }
         if ($search = $request->get('q')) {
             $needle = trim((string) $search);
             $query->where(function ($q) use ($needle) {
@@ -81,7 +98,7 @@ class InboxController extends Controller
                     ->orWhere('contact_identifier', 'ilike', "%{$needle}%")
                     // Match și pe conținutul mesajelor — necesar pentru
                     // operatori care vor să găsească o conversație după un
-                    // cuvânt cheie (ex. „livrare", „bolțar", număr comandă).
+                    // cuvânt cheie (livrare, produs, număr comandă).
                     ->orWhereHas('messages', function ($mq) use ($needle) {
                         $mq->where('content', 'ilike', "%{$needle}%");
                     });

@@ -223,6 +223,35 @@ class OperatorConsoleController extends Controller
     }
 
     /**
+     * Search istoric mesaje peste toate conversațiile tenantului. ILIKE pe
+     * content cu paginare. Util pentru operator care caută context vechi.
+     */
+    public function searchMessages(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'q' => 'required|string|min:2|max:200',
+        ]);
+        $needle = '%' . $validated['q'] . '%';
+
+        $rows = \App\Models\Message::query()
+            ->whereHas('conversation', fn($q) => $q
+                ->where('tenant_id', auth()->user()->tenant_id))
+            ->where('content', 'ilike', $needle)
+            ->orderByDesc('id')
+            ->limit(50)
+            ->get(['id', 'conversation_id', 'direction', 'content', 'created_at'])
+            ->map(fn($m) => [
+                'id' => $m->id,
+                'conversation_id' => $m->conversation_id,
+                'direction' => $m->direction,
+                'snippet' => mb_substr((string) $m->content, 0, 220),
+                'created_at' => optional($m->created_at)->toIso8601String(),
+            ]);
+
+        return response()->json(['results' => $rows]);
+    }
+
+    /**
      * Înregistrează acces operator pe conversație în metadata.access_log.
      * Lightweight audit fără tabel nou. Util pentru investigații GDPR ulterioare.
      * Cap 100 entries (FIFO) ca să nu balonăm metadata.

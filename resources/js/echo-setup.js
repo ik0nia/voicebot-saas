@@ -145,6 +145,33 @@ function updateAssigneeBadge(conversationId, assigneeType, assigneeId) {
     });
 }
 
+/**
+ * ConversationMessageReceived broadcast — real-time pentru operator inbox.
+ * Backend: app/Events/ConversationMessageReceived.php (via MessageObserver).
+ * Frontend (operator/inbox views) ascultă custom events `sambla:conversation.*`.
+ */
+(function wireConversationListeners() {
+    if (typeof window.Echo === 'undefined') return;
+    const tid = document.querySelector('meta[name="tenant-id"]')?.content;
+    if (!tid) return;
+    try {
+        const ch = window.Echo.private('tenant.' + tid);
+        ch.listen('.conversation.message', (data) => {
+            window.dispatchEvent(new CustomEvent('sambla:conversation.message', { detail: data }));
+            if (data.direction === 'inbound' && data.needs_human) {
+                if (typeof showNotification === 'function') {
+                    showNotification('Vizitator cere operator: ' + (data.content || '').slice(0, 80), 'warn');
+                }
+            }
+        });
+        ch.listen('.conversation.status', (data) => {
+            window.dispatchEvent(new CustomEvent('sambla:conversation.status', { detail: data }));
+        });
+    } catch (e) {
+        console.warn('wireConversationListeners failed', e);
+    }
+})();
+
 function updateUsageBar(percentage) {
     const bar = document.getElementById('usage-bar');
     if (bar) {

@@ -199,6 +199,27 @@ class KnowledgeController extends Controller
     }
 
     /**
+     * Stats embedding per bot — util în UI progress bar la re-embedding,
+     * sau pentru debug când search returnează rezultate slabe.
+     */
+    public function embeddingStats(Bot $bot)
+    {
+        $this->authorize('view', $bot);
+        $base = $bot->knowledge();
+        return response()->json([
+            'total' => $base->count(),
+            'ready' => (clone $base)->where('status', 'ready')->count(),
+            'pending' => (clone $base)->where('status', 'pending')->count(),
+            'failed' => (clone $base)->where('status', 'failed')->count(),
+            'no_embedding' => (clone $base)->whereNull('embedding')->count(),
+            'embedding_models' => (clone $base)
+                ->selectRaw('embedding_model, COUNT(*) as c')
+                ->groupBy('embedding_model')
+                ->pluck('c', 'embedding_model'),
+        ]);
+    }
+
+    /**
      * Top chunks folosite în răspunsurile bot-ului — semnal pentru ce e cel
      * mai relevant în KB. Citește `messages.knowledge_chunks_used` (populat de
      * KnowledgeSearchService::trackChunkIds) și agregă frecvențe.
