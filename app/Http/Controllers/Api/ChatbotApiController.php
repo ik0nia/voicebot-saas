@@ -98,7 +98,25 @@ class ChatbotApiController extends Controller
             'cookie_consent_required' => (bool) ($channelConfig['cookie_consent_required'] ?? false),
             'privacy_policy_url' => $channelConfig['privacy_policy_url'] ?? null,
             'show_branding' => $channelConfig['show_branding'] ?? true,
+            'privacy' => $this->privacyForChannel($channelConfig, $bot),
         ]);
+    }
+
+    /**
+     * Resolve privacy/DPO info pentru widget — precedență: channel.config
+     * privacy_policy_url > tenant.settings.privacy.privacy_policy_url.
+     * DPO email vine doar din tenant.
+     */
+    private function privacyForChannel(array $channelConfig, ?\App\Models\Bot $bot): array
+    {
+        $tenant = $bot?->tenant;
+        $tenantPrivacy = $tenant?->privacyContact() ?? [];
+        return [
+            'privacy_policy_url' => $channelConfig['privacy_policy_url']
+                ?? $tenantPrivacy['privacy_policy_url'] ?? null,
+            'terms_url' => $tenantPrivacy['terms_url'] ?? null,
+            'dpo_email' => $tenantPrivacy['dpo_email'] ?? null,
+        ];
     }
 
     public function message(Request $request, $channelId): JsonResponse
