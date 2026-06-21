@@ -70,6 +70,64 @@ class SettingsController extends Controller
     }
 
     /**
+     * Export GDPR — vizitator/utilizator solicită toate datele despre el
+     * (email/phone). Returnează JSON streaming cu conversații + mesaje + leads
+     * + callbacks. Endpoint operator-only (auth necesar).
+     */
+    public function exportUserData(Request $request): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $validated = $request->validate([
+            'email' => 'nullable|email',
+            'phone' => 'nullable|string|max:20',
+        ]);
+        if (empty($validated['email']) && empty($validated['phone'])) {
+            abort(422, 'email sau phone obligatoriu');
+        }
+        $tenantId = auth()->user()->tenant_id;
+        $needles = array_filter([$validated['email'] ?? null, $validated['phone'] ?? null]);
+
+        return response()->streamDownload(function () use ($tenantId, $needles) {
+            $convs = \App\Models\Conversation::query()
+                ->where('tenant_id', $tenantId)
+                ->where(function ($q) use ($needles) {
+                    foreach ($needles as $n) {
+                        $q->orWhere('contact_identifier', $n)
+                            ->orWhere('contact_name', $n);
+                    }
+                })
+                ->limit(500)
+                ->get(['id', 'contact_name', 'contact_identifier', 'started_at', 'ended_at', 'metadata']);
+
+            $leads = \App\Models\Lead::query()
+                ->where('tenant_id', $tenantId)
+                ->where(function ($q) use ($validated) {
+                    if (!empty($validated['email'])) {
+                        $q->orWhere('email', $validated['email']);
+                    }
+                    if (!empty($validated['phone'])) {
+                        $q->orWhere('phone', $validated['phone']);
+                    }
+                })
+                ->get();
+
+            $convIds = $convs->pluck('id');
+            $messages = \App\Models\Message::whereIn('conversation_id', $convIds)
+                ->orderBy('id')
+                ->get(['id', 'conversation_id', 'direction', 'content', 'created_at']);
+
+            echo json_encode([
+                'export_at' => now()->toIso8601String(),
+                'query' => $needles,
+                'conversations' => $convs,
+                'messages' => $messages,
+                'leads' => $leads,
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        }, 'gdpr-export-' . now()->format('Ymd-His') . '.json', [
+            'Content-Type' => 'application/json',
+        ]);
+    }
+
+    /**
      * Update retention policy per tenant (GDPR window-uri).
      * Vezi Tenant::retentionSettings() pentru clamp + default fallback.
      */

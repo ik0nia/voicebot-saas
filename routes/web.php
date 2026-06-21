@@ -656,6 +656,9 @@ Route::middleware('auth')->prefix('dashboard/setari')->group(function () {
     Route::put('/canned-responses', [SettingsController::class, 'updateCannedResponses'])
         ->middleware('tenant.role:tenant_admin,tenant_manager')
         ->name('dashboard.settings.updateCannedResponses');
+    Route::get('/export-user-data', [SettingsController::class, 'exportUserData'])
+        ->middleware('tenant.role:tenant_admin')
+        ->name('dashboard.settings.exportUserData');
     // Rate-limit token mint to 5/min per user. Without it an account that
     // leaks session cookies once can mint hundreds of long-lived tokens
     // before the user notices and rotates the session.
