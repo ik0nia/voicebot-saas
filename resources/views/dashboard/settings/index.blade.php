@@ -49,6 +49,8 @@
                     'notifications' => 'Notificări',
                     'api' => 'Chei API',
                     'webhooks' => 'Webhooks',
+                    'privacy' => 'Privacy & GDPR',
+                    'canned' => 'Răspunsuri rapide',
                     'danger' => 'Pericol',
                 ];
             @endphp
@@ -612,6 +614,135 @@
             </div>
         </div>
 
+    @endif
+
+    {{-- ============================================================ --}}
+    {{-- TAB: Privacy & GDPR --}}
+    {{-- ============================================================ --}}
+    @if($tab === 'privacy')
+        @php $tenant = auth()->user()->tenant; $privacy = $tenant->privacyContact() ?? []; $retention = $tenant->retentionSettings() ?? []; @endphp
+
+        <div class="grid gap-6 lg:grid-cols-2">
+            {{-- Privacy contact --}}
+            <div class="bg-white rounded-xl border border-line p-6">
+                <h2 class="text-lg font-semibold text-ink mb-1">Contact privacy</h2>
+                <p class="text-sm text-muted mb-4">Afișate în footer-ul widget-ului. Obligatorii pentru GDPR Article 13 (transparență).</p>
+                <form method="POST" action="{{ route('dashboard.settings.updatePrivacy') }}" class="space-y-4">
+                    @csrf @method('PUT')
+                    <div>
+                        <label class="block text-xs font-medium text-inkSoft mb-1">DPO email</label>
+                        <input type="email" name="privacy[dpo_email]" value="{{ old('privacy.dpo_email', $privacy['dpo_email'] ?? '') }}"
+                               placeholder="dpo@compania-ta.ro"
+                               class="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-inkSoft mb-1">URL politică de confidențialitate</label>
+                        <input type="url" name="privacy[privacy_policy_url]" value="{{ old('privacy.privacy_policy_url', $privacy['privacy_policy_url'] ?? '') }}"
+                               placeholder="https://compania-ta.ro/privacy"
+                               class="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-inkSoft mb-1">URL Termeni și condiții</label>
+                        <input type="url" name="privacy[terms_url]" value="{{ old('privacy.terms_url', $privacy['terms_url'] ?? '') }}"
+                               placeholder="https://compania-ta.ro/termeni"
+                               class="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm">
+                    </div>
+                    <button type="submit" class="w-full rounded-lg bg-coral text-white px-4 py-2.5 text-sm font-medium hover:bg-coralh transition">
+                        Salvează
+                    </button>
+                </form>
+            </div>
+
+            {{-- Retention --}}
+            <div class="bg-white rounded-xl border border-line p-6">
+                <h2 class="text-lg font-semibold text-ink mb-1">Politici de retenție</h2>
+                <p class="text-sm text-muted mb-4">Câte zile păstrăm datele înainte de cleanup automat. Mai mic = compliance mai strict, dar mai puțin istoric.</p>
+                <form method="POST" action="{{ route('dashboard.settings.updateRetention') }}" class="space-y-4">
+                    @csrf @method('PUT')
+                    <div>
+                        <label class="block text-xs font-medium text-inkSoft mb-1">Conversații (7 – 3650 zile)</label>
+                        <input type="number" min="7" max="3650" name="retention[conversations_days]"
+                               value="{{ old('retention.conversations_days', $retention['conversations_days'] ?? '') }}"
+                               placeholder="default 90"
+                               class="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-inkSoft mb-1">Anonimizare apeluri (7 – 3650 zile)</label>
+                        <input type="number" min="7" max="3650" name="retention[call_anonymise_days]"
+                               value="{{ old('retention.call_anonymise_days', $retention['call_anonymise_days'] ?? '') }}"
+                               placeholder="default 30"
+                               class="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-inkSoft mb-1">Ștergere recordings (1 – 3650 zile)</label>
+                        <input type="number" min="1" max="3650" name="retention[recording_purge_days]"
+                               value="{{ old('retention.recording_purge_days', $retention['recording_purge_days'] ?? '') }}"
+                               placeholder="default 30"
+                               class="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm">
+                    </div>
+                    <button type="submit" class="w-full rounded-lg bg-coral text-white px-4 py-2.5 text-sm font-medium hover:bg-coralh transition">
+                        Salvează
+                    </button>
+                </form>
+            </div>
+
+            {{-- GDPR Tools --}}
+            <div class="bg-white rounded-xl border border-line p-6 lg:col-span-2">
+                <h2 class="text-lg font-semibold text-ink mb-1">GDPR — Drepturi vizitator</h2>
+                <p class="text-sm text-muted mb-4">Procesează cererile de export (Art. 15) și ștergere (Art. 17).</p>
+                <div class="grid sm:grid-cols-2 gap-4">
+                    <form method="GET" action="{{ route('dashboard.settings.exportUserData') }}" class="space-y-3 rounded-lg border border-line p-4">
+                        <h3 class="font-medium text-sm">📥 Export date utilizator</h3>
+                        <input type="email" name="email" placeholder="email vizitator" class="w-full rounded border border-line px-3 py-2 text-sm">
+                        <input type="text" name="phone" placeholder="telefon vizitator" class="w-full rounded border border-line px-3 py-2 text-sm">
+                        <button type="submit" class="w-full rounded bg-inkSoft text-white px-3 py-2 text-sm hover:bg-ink">Descarcă JSON</button>
+                    </form>
+                    <form method="POST" action="{{ route('dashboard.settings.deleteUserData') }}" class="space-y-3 rounded-lg border-2 border-coral/30 p-4"
+                          onsubmit="return confirm('Ștergere PERMANENTĂ a tuturor datelor acestui vizitator. Continui?');">
+                        @csrf
+                        <h3 class="font-medium text-sm text-coralh">🗑️ Ștergere date utilizator</h3>
+                        <input type="email" name="email" placeholder="email vizitator" class="w-full rounded border border-coral/30 px-3 py-2 text-sm">
+                        <input type="text" name="phone" placeholder="telefon vizitator" class="w-full rounded border border-coral/30 px-3 py-2 text-sm">
+                        <input type="hidden" name="confirm" value="DELETE">
+                        <button type="submit" class="w-full rounded bg-coral text-white px-3 py-2 text-sm hover:bg-coralh">Șterge definitiv</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- ============================================================ --}}
+    {{-- TAB: Canned Responses --}}
+    {{-- ============================================================ --}}
+    @if($tab === 'canned')
+        @php $canned = auth()->user()->tenant->cannedResponses() ?? []; @endphp
+        <div class="bg-white rounded-xl border border-line p-6">
+            <div class="flex items-center justify-between mb-1">
+                <h2 class="text-lg font-semibold text-ink">Răspunsuri rapide</h2>
+                <span class="text-xs text-muted">{{ count($canned) }}/30</span>
+            </div>
+            <p class="text-sm text-muted mb-4">Snippet-uri pe care operatorii le pot insera cu un click în chat. Max 30, fiecare cu label și body.</p>
+            <form method="POST" action="{{ route('dashboard.settings.updateCannedResponses') }}" x-data="{ items: {{ json_encode($canned ?: [['label' => '', 'body' => '']]) }} }">
+                @csrf @method('PUT')
+                <template x-for="(item, idx) in items" :key="idx">
+                    <div class="grid grid-cols-1 sm:grid-cols-[200px_1fr_auto] gap-2 mb-3 items-start">
+                        <input type="text" :name="'canned_responses['+idx+'][label]'" x-model="item.label"
+                               placeholder="ex: Mulțumiri" class="rounded border border-line px-3 py-2 text-sm">
+                        <textarea :name="'canned_responses['+idx+'][body]'" x-model="item.body" rows="2"
+                                  placeholder="Mulțumim pentru mesaj. Revenim cu un răspuns în maxim 24h."
+                                  class="rounded border border-line px-3 py-2 text-sm"></textarea>
+                        <button type="button" @click="items.splice(idx,1)" class="text-coral hover:bg-coralsoft rounded px-2 py-2 text-sm">✕</button>
+                    </div>
+                </template>
+                <button type="button" @click="items.push({label:'',body:''})"
+                        class="text-sm text-coral hover:text-coralh mb-4">+ Adaugă răspuns</button>
+                <div class="pt-4 border-t border-line">
+                    <button type="submit" class="rounded-lg bg-coral text-white px-4 py-2.5 text-sm font-medium hover:bg-coralh transition">
+                        Salvează lista
+                    </button>
+                </div>
+            </form>
+        </div>
     @endif
 
     {{-- ============================================================ --}}

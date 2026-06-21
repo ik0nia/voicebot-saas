@@ -387,5 +387,206 @@
                             </div>
                         </div>
                     </details>
+
+                    {{-- Welcome banner + skills + avatar --}}
+                    <details class="mt-4 pt-4 border-t border-line">
+                        <summary class="cursor-pointer text-sm font-medium text-ink py-1 select-none">
+                            🎯 Branding & Routing
+                        </summary>
+                        <div class="mt-4 space-y-4">
+                            <div>
+                                <label class="block text-xs font-medium text-inkSoft mb-1">Mesaj banner (prepend la greeting)</label>
+                                <input type="text" maxlength="300"
+                                       name="settings[welcome_banner]"
+                                       value="{{ old('settings.welcome_banner', data_get($bot->settings, 'welcome_banner')) }}"
+                                       placeholder='Ex: Reducere 20% la toate produsele Knauf până vineri!'
+                                       class="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm">
+                                <p class="text-xs text-muted mt-1">Anunț promoțional opțional, afișat o singură dată la deschiderea widget-ului. Max 300 caractere.</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-inkSoft mb-1">Avatar URL (afișat în header widget)</label>
+                                <input type="url" maxlength="500"
+                                       name="settings[avatar_url]"
+                                       value="{{ old('settings.avatar_url', data_get($bot->settings, 'avatar_url')) }}"
+                                       placeholder="https://cdn.exemplu.ro/avatar.png"
+                                       class="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-inkSoft mb-1">Skills preferate (auto-assignment leads)</label>
+                                <input type="text"
+                                       value="{{ implode(', ', (array) old('settings.preferred_skills', data_get($bot->settings, 'preferred_skills', []))) }}"
+                                       oninput="document.querySelectorAll('input[name=\'settings[preferred_skills][]\']').forEach(e=>e.remove()); this.value.split(',').forEach(t=>{t=t.trim();if(t){let i=document.createElement('input');i.type='hidden';i.name='settings[preferred_skills][]';i.value=t;this.parentNode.appendChild(i);}});"
+                                       placeholder="construcții, knauf, gips-carton"
+                                       class="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm">
+                                <p class="text-xs text-muted mt-1">Comma-separated. Lead-urile create se atribuie automat operatorului cu cele mai multe skills match (din User settings).</p>
+                            </div>
+                        </div>
+                    </details>
+
+                    {{-- Voice extras --}}
+                    <details class="mt-4 pt-4 border-t border-line">
+                        <summary class="cursor-pointer text-sm font-medium text-ink py-1 select-none">
+                            📞 Voice extras (fallback, keyword alerts, retention)
+                        </summary>
+                        <div class="mt-4 space-y-4">
+                            <div>
+                                <label class="block text-xs font-medium text-inkSoft mb-1">Mesaj fallback la eroare Realtime</label>
+                                <input type="text" maxlength="500"
+                                       name="settings[voice][fallback_message]"
+                                       value="{{ old('settings.voice.fallback_message', data_get($bot->settings, 'voice.fallback_message')) }}"
+                                       placeholder="Ne pare rău, am întâmpinat o problemă tehnică. Sunați din nou într-un moment."
+                                       class="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm">
+                                <p class="text-xs text-muted mt-1">TTS spune acest text și închide apelul dacă OpenAI Realtime întoarce eroare critică.</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-inkSoft mb-1">Keyword alerts (cuvinte care declanșează atenție operator)</label>
+                                <input type="text"
+                                       value="{{ implode(', ', (array) old('settings.voice.keyword_alerts', data_get($bot->settings, 'voice.keyword_alerts', []))) }}"
+                                       oninput="document.querySelectorAll('input[name=\'settings[voice][keyword_alerts][]\']').forEach(e=>e.remove()); this.value.split(',').forEach(t=>{t=t.trim();if(t){let i=document.createElement('input');i.type='hidden';i.name='settings[voice][keyword_alerts][]';i.value=t;this.parentNode.appendChild(i);}});"
+                                       placeholder="avocat, returnez, nemulțumit, plângere"
+                                       class="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm">
+                                <p class="text-xs text-muted mt-1">Cron-ul „alerts:detect-keywords" scanează ultimele mesaje la fiecare 5 minute și marchează conversațiile cu hit-uri.</p>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-inkSoft mb-1">Recording retention (zile)</label>
+                                    <input type="number" min="1" max="3650"
+                                           name="settings[voice][recording_retention_days]"
+                                           value="{{ old('settings.voice.recording_retention_days', data_get($bot->settings, 'voice.recording_retention_days')) }}"
+                                           placeholder="default tenant/env"
+                                           class="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="flex items-center gap-2 cursor-pointer mt-5">
+                                        <input type="hidden" name="settings[voice][sentiment_enabled]" value="0">
+                                        <input type="checkbox" name="settings[voice][sentiment_enabled]" value="1"
+                                               {{ old('settings.voice.sentiment_enabled', data_get($bot->settings, 'voice.sentiment_enabled')) ? 'checked' : '' }}
+                                               class="w-4 h-4 accent-coral rounded">
+                                        <span class="text-sm">Sentiment analysis post-call</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-inkSoft mb-1">System prompt pentru voce (separat de chat)</label>
+                                <textarea name="settings[voice][system_prompt]" rows="4" maxlength="10000"
+                                          placeholder="Las gol pentru a folosi prompt-ul de chat."
+                                          class="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm font-mono">{{ old('settings.voice.system_prompt', data_get($bot->settings, 'voice.system_prompt')) }}</textarea>
+                                <p class="text-xs text-muted mt-1">Util când voice are nevoie de ton diferit (fără markdown, fără linkuri, formulări mai scurte).</p>
+                            </div>
+                        </div>
+                    </details>
+
+                    {{-- Lead capture extra --}}
+                    <details class="mt-4 pt-4 border-t border-line">
+                        <summary class="cursor-pointer text-sm font-medium text-ink py-1 select-none">
+                            🎯 Lead capture avansat
+                        </summary>
+                        <div class="mt-4 space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-inkSoft mb-1">Max prompts per conversație</label>
+                                    <input type="number" min="1" max="10"
+                                           name="settings[lead_capture][max_prompts_per_conv]"
+                                           value="{{ old('settings.lead_capture.max_prompts_per_conv', data_get($bot->settings, 'lead_capture.max_prompts_per_conv')) }}"
+                                           placeholder="default 2"
+                                           class="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm">
+                                    <p class="text-xs text-muted mt-1">După N propuneri, bot nu mai cere date contact (anti-spam).</p>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-inkSoft mb-1">Pipeline stages (custom flow)</label>
+                                    <input type="text"
+                                           value="{{ implode(', ', (array) old('settings.lead_capture.pipeline_stages', data_get($bot->settings, 'lead_capture.pipeline_stages', []))) }}"
+                                           oninput="document.querySelectorAll('input[name=\'settings[lead_capture][pipeline_stages][]\']').forEach(e=>e.remove()); this.value.split(',').forEach(t=>{t=t.trim();if(t){let i=document.createElement('input');i.type='hidden';i.name='settings[lead_capture][pipeline_stages][]';i.value=t;this.parentNode.appendChild(i);}});"
+                                           placeholder="new, contacted, scheduled, met, quoted, won, lost"
+                                           class="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm">
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+
+                    {{-- Topic opt-out (compliance) --}}
+                    <details class="mt-4 pt-4 border-t border-line">
+                        <summary class="cursor-pointer text-sm font-medium text-ink py-1 select-none">
+                            🚫 Subiecte interzise (topic opt-out)
+                        </summary>
+                        <div class="mt-4">
+                            <label class="block text-xs font-medium text-inkSoft mb-1">Lista subiecte (comma-separated)</label>
+                            <input type="text"
+                                   value="{{ implode(', ', (array) old('settings.compliance.topic_opt_out', data_get($bot->settings, 'compliance.topic_opt_out', []))) }}"
+                                   oninput="document.querySelectorAll('input[name=\'settings[compliance][topic_opt_out][]\']').forEach(e=>e.remove()); this.value.split(',').forEach(t=>{t=t.trim();if(t){let i=document.createElement('input');i.type='hidden';i.name='settings[compliance][topic_opt_out][]';i.value=t;this.parentNode.appendChild(i);}});"
+                                   placeholder="politică, religie, sănătate, advocacy"
+                                   class="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm">
+                            <p class="text-xs text-muted mt-1">Bot redirecționează utilizatorul la specialist autorizat pentru aceste subiecte, fără să dea sfaturi pe care nu le poate susține legal.</p>
+                        </div>
+                    </details>
+
+                    {{-- Knowledge maintenance --}}
+                    <details class="mt-4 pt-4 border-t border-line">
+                        <summary class="cursor-pointer text-sm font-medium text-ink py-1 select-none">
+                            📚 Operațiuni knowledge
+                        </summary>
+                        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                            <a href="{{ route('dashboard.bots.knowledge.exportJson', $bot) }}"
+                               class="rounded-lg border border-line bg-white px-3 py-2.5 hover:bg-cream flex items-center justify-between">
+                                <span>📤 Export JSON</span>
+                                <span class="text-xs text-muted">download backup</span>
+                            </a>
+                            <form method="POST" action="{{ route('dashboard.bots.knowledge.reembedAll', $bot) }}"
+                                  onsubmit="return confirm('Marchezi toate chunks-urile ca pending pentru re-embedding. Continui?');">
+                                @csrf
+                                <button type="submit" class="w-full rounded-lg border border-line bg-white px-3 py-2.5 hover:bg-cream flex items-center justify-between">
+                                    <span>🔄 Re-embed all chunks</span>
+                                    <span class="text-xs text-muted">background job</span>
+                                </button>
+                            </form>
+                            <a href="{{ route('dashboard.bots.knowledge.topChunks', $bot) }}"
+                               target="_blank"
+                               class="rounded-lg border border-line bg-white px-3 py-2.5 hover:bg-cream flex items-center justify-between">
+                                <span>📊 Top chunks folosite</span>
+                                <span class="text-xs text-muted">JSON</span>
+                            </a>
+                            <a href="{{ route('dashboard.bots.knowledge.embeddingStats', $bot) }}"
+                               target="_blank"
+                               class="rounded-lg border border-line bg-white px-3 py-2.5 hover:bg-cream flex items-center justify-between">
+                                <span>📈 Embedding stats</span>
+                                <span class="text-xs text-muted">JSON</span>
+                            </a>
+                        </div>
+                    </details>
+
+                    {{-- Bot operations --}}
+                    @if($bot->id)
+                    <details class="mt-4 pt-4 border-t border-line">
+                        <summary class="cursor-pointer text-sm font-medium text-ink py-1 select-none">
+                            🤖 Operațiuni bot
+                        </summary>
+                        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                            <form method="POST" action="{{ route('dashboard.bots.duplicate', $bot) }}">
+                                @csrf
+                                <button type="submit" class="w-full rounded-lg border border-line bg-white px-3 py-2.5 hover:bg-cream flex items-center justify-between">
+                                    <span>📋 Duplică bot</span>
+                                    <span class="text-xs text-muted">clone settings</span>
+                                </button>
+                            </form>
+                            <a href="{{ route('dashboard.bots.embedCode', $bot) }}"
+                               target="_blank"
+                               class="rounded-lg border border-line bg-white px-3 py-2.5 hover:bg-cream flex items-center justify-between">
+                                <span>&lt;/&gt; Embed code</span>
+                                <span class="text-xs text-muted">JSON snippet</span>
+                            </a>
+                            @if(data_get($bot->settings, 'test_mode'))
+                            <form method="POST" action="{{ route('dashboard.bots.promote', $bot) }}" class="sm:col-span-2"
+                                  onsubmit="return confirm('Promovezi botul din test mode în producție. Mesajele vor consuma planul. Continui?');">
+                                @csrf
+                                <input type="hidden" name="confirm" value="PROMOTE">
+                                <button type="submit" class="w-full rounded-lg border-2 border-coral bg-coralsoft px-3 py-2.5 text-coralh hover:bg-coral hover:text-white font-medium transition flex items-center justify-between">
+                                    <span>🚀 Promovează din test mode în prod</span>
+                                    <span class="text-xs">scoate flag-ul test_mode</span>
+                                </button>
+                            </form>
+                            @endif
+                        </div>
+                    </details>
+                    @endif
                 </div>
             </section>
