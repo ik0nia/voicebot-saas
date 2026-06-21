@@ -299,6 +299,29 @@ class OperatorConsoleController extends Controller
     }
 
     /**
+     * Reassign conversație la alt operator din echipa tenantului.
+     * Util pentru transfer intern fără a pune conversația înapoi în coadă.
+     */
+    public function reassign(Request $request, Conversation $conversation): JsonResponse
+    {
+        $this->authorize('view', $conversation);
+        $validated = $request->validate([
+            'assignee_user_id' => 'required|integer|exists:users,id',
+        ]);
+        // Verifică același tenant — security guard.
+        $target = \App\Models\User::find($validated['assignee_user_id']);
+        if (!$target || $target->tenant_id !== auth()->user()->tenant_id) {
+            return response()->json(['error' => 'cross-tenant reassign refuzat'], 403);
+        }
+        $conversation->update([
+            'assignee_user_id' => $target->id,
+            'assigned_at' => now(),
+            'assigned_by_user_id' => auth()->id(),
+        ]);
+        return response()->json(['ok' => true, 'assignee' => ['id' => $target->id, 'name' => $target->name]]);
+    }
+
+    /**
      * Operator marchează mesajele citite pană la `up_to_message_id`.
      * Update messages.read_at + broadcast pentru widget.
      */

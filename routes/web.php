@@ -577,6 +577,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/operator/search-messages',              [$op, 'searchMessages'])->name('dashboard.operator.searchMessages');
     Route::post('/dashboard/operator/conv/{conversation}/typing',  [$op, 'typing'])->name('dashboard.operator.typing');
     Route::post('/dashboard/operator/conv/{conversation}/read',    [$op, 'markRead'])->name('dashboard.operator.read');
+    Route::post('/dashboard/operator/conv/{conversation}/reassign',[$op, 'reassign'])->name('dashboard.operator.reassign');
     Route::post('/dashboard/operator/push/subscribe', [$op, 'pushSubscribe'])->name('dashboard.operator.push.subscribe');
     Route::post('/dashboard/operator/push/test',      [$op, 'pushTest'])->name('dashboard.operator.push.test');
 });
