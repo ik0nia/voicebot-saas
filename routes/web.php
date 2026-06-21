@@ -346,6 +346,8 @@ Route::middleware('auth')->prefix('dashboard/agenti')->group(function () {
     Route::post('/bulk-toggle', [BotController::class, 'bulkToggle'])->name('dashboard.bots.bulkToggle');
     Route::post('/{bot}/duplicate', [BotController::class, 'duplicate'])->name('dashboard.bots.duplicate');
     Route::get('/{bot}/embed-code', [BotController::class, 'embedCode'])->name('dashboard.bots.embedCode');
+    Route::post('/{bot}/promote', [BotController::class, 'promote'])->name('dashboard.bots.promote');
+    Route::get('/{bot}/niche-defaults', [BotController::class, 'nicheDefaults'])->name('dashboard.bots.nicheDefaults');
 
     // Session-authenticated helpers for the structured-profile editor.
     // These wrap the Sanctum-gated /api/v1 endpoints so the dashboard

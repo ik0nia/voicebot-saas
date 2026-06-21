@@ -517,6 +517,44 @@ HTML;
     }
 
     /**
+     * Promovează bot din test_mode în prod (scoate flag-ul test_mode).
+     * Util pentru flow „testez 1 zi, apoi activez billing-ul" — explicit
+     * confirmation step ca să nu uite tenantul.
+     */
+    public function promote(Request $request, $botId)
+    {
+        $bot = $this->resolveBot($botId);
+        $this->authorize('update', $bot);
+        $request->validate(['confirm' => 'required|in:PROMOTE']);
+
+        $s = $bot->settings ?? [];
+        unset($s['test_mode'], $s['test_mode_warned_at']);
+        $s['promoted_at'] = now()->toIso8601String();
+        $bot->settings = $s;
+        $bot->is_active = true;
+        $bot->save();
+
+        return back()->with('success', '🚀 Agentul a fost promovat la producție. Mesajele vor consuma planul.');
+    }
+
+    /**
+     * Sugestii dont_rules + tone preset pentru niche-ul bot-ului. Citește
+     * config/niche-defaults.php. Returnează JSON pentru UI quick-fill.
+     */
+    public function nicheDefaults(Bot $bot)
+    {
+        $this->authorize('view', $bot);
+        $niche = $bot->niche_slug;
+        $rules = config("niche-defaults.dont_rules_per_niche.{$niche}", []);
+        $tone = config("niche-defaults.tone_presets.{$niche}", null);
+        return response()->json([
+            'niche' => $niche,
+            'suggested_dont_rules' => $rules,
+            'suggested_tone' => $tone,
+        ]);
+    }
+
+    /**
      * Duplică un bot existent: copy name + system_prompt + greeting + settings.
      * Util pentru A/B testing pe prompt variants sau setup rapid multi-bot.
      * Cloneul are slug nou + is_active=false (operatorul activează când e gata).
