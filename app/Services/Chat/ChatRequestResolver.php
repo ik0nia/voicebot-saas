@@ -357,6 +357,11 @@ final class ChatRequestResolver
             $greetingText = trim($disclosureText) . "\n\n" . $greetingText;
         }
 
+        // Welcome banner — anunț promoțional optional, înainte de greeting.
+        if ($banner = $bot->welcomeBanner()) {
+            $greetingText = trim($banner) . "\n\n" . $greetingText;
+        }
+
         Message::create([
             'conversation_id' => $conversation->id,
             'direction' => 'outbound',

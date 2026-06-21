@@ -269,6 +269,33 @@ class Bot extends Model
     }
 
     /**
+     * Mesaj custom afișat la prima conversație nouă (înainte de greeting).
+     * Util pentru promoții/anunțuri temporare per bot ("Reducere 20% până
+     * vineri!"). Default null = doar greeting standard.
+     */
+    public function welcomeBanner(): ?string
+    {
+        $v = $this->settings['welcome_banner'] ?? null;
+        return is_string($v) && trim($v) !== '' ? $v : null;
+    }
+
+    /**
+     * Skill list pentru auto-assignment lead. Operatorii cu user.settings.skills
+     * intersect cu bot.preferredSkills() devin candidați.
+     *
+     * @return array<int, string>
+     */
+    public function preferredSkills(): array
+    {
+        $v = $this->settings['preferred_skills'] ?? [];
+        if (!is_array($v)) return [];
+        return array_values(array_filter(array_map(
+            fn($s) => is_string($s) ? mb_strtolower(trim($s)) : null,
+            $v
+        )));
+    }
+
+    /**
      * Pipeline stages configurabile per bot. Default = standard:
      * new → contacted → scheduled → met → quoted → won/lost.
      * Tenant cu nișă diferită (ex. service appointments) poate vrea

@@ -224,6 +224,9 @@ class BotController extends Controller
             // prin flow file storage. Tenant care folosește CDN propriu poate
             // pune direct URL aici.
             'settings.avatar_url' => 'nullable|url|max:500',
+            'settings.welcome_banner' => 'nullable|string|max:300',
+            'settings.preferred_skills' => 'nullable|array|max:10',
+            'settings.preferred_skills.*' => 'string|max:32',
             'settings.business_info' => 'nullable|array',
             'settings.business_info.address' => 'nullable|string|max:500',
             'settings.business_info.hours_text' => 'nullable|string|max:500',
