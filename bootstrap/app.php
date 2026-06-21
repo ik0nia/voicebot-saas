@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // rows for campaign performance analysis.
         $middleware->web(append: [
             \App\Http\Middleware\CaptureUtmParams::class,
+            \App\Http\Middleware\SecurityHeaders::class,
         ]);
 
         // Trust the local container network (Coolify Traefik → nginx → app)

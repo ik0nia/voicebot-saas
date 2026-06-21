@@ -219,6 +219,11 @@ class BotController extends Controller
             'voice_language' => 'nullable|string|in:ro,en,de,fr,es',
             // Structured-profile editor (new).
             'settings.use_structured_prompt' => 'nullable|boolean',
+            // Avatar URL — afișat în widget header (channel preview).
+            // Validation URL + max length; pentru upload propriu vine separat
+            // prin flow file storage. Tenant care folosește CDN propriu poate
+            // pune direct URL aici.
+            'settings.avatar_url' => 'nullable|url|max:500',
             'settings.business_info' => 'nullable|array',
             'settings.business_info.address' => 'nullable|string|max:500',
             'settings.business_info.hours_text' => 'nullable|string|max:500',
