@@ -95,6 +95,28 @@ class LeadController extends Controller
         return back()->with('success', 'Notă adăugată.');
     }
 
+    /**
+     * Lead score breakdown — re-rulează LeadOpportunityScorer pe lead-ul
+     * existent + returnează signals + threshold + reason.
+     */
+    public function scoreBreakdown(Lead $lead)
+    {
+        $this->authorize('view', $lead);
+        $conv = $lead->conversation;
+        if (!$conv) {
+            return response()->json(['error' => 'no_conversation'], 404);
+        }
+        $events = app(\App\Services\ConversationEventService::class)
+            ->getConversationEvents($conv->id)->toArray();
+        $intents = [];
+        $score = app(\App\Services\LeadOpportunityScorer::class)->score($conv, $intents, $events);
+        return response()->json([
+            'lead_id' => $lead->id,
+            'persisted_score' => $conv->lead_score,
+            'recomputed' => $score->toArray(),
+        ]);
+    }
+
     public function export(Request $request): StreamedResponse
     {
         $leads = Lead::with('bot')->orderByDesc('created_at')->get();

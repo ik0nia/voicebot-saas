@@ -70,6 +70,24 @@ class SettingsController extends Controller
     }
 
     /**
+     * Update privacy contact info (DPO email, privacy policy URL, terms URL).
+     */
+    public function updatePrivacy(Request $request)
+    {
+        $tenant = auth()->user()->tenant;
+        $validated = $request->validate([
+            'privacy.dpo_email' => 'nullable|email|max:255',
+            'privacy.privacy_policy_url' => 'nullable|url|max:500',
+            'privacy.terms_url' => 'nullable|url|max:500',
+        ]);
+        $existing = $tenant->settings ?? [];
+        $existing['privacy'] = array_merge($existing['privacy'] ?? [], $validated['privacy'] ?? []);
+        $existing['privacy'] = array_filter($existing['privacy'], fn($v) => $v !== null && $v !== '');
+        $tenant->update(['settings' => $existing]);
+        return back()->with('success', 'Informațiile de privacy au fost salvate.');
+    }
+
+    /**
      * Export GDPR — vizitator/utilizator solicită toate datele despre el
      * (email/phone). Returnează JSON streaming cu conversații + mesaje + leads
      * + callbacks. Endpoint operator-only (auth necesar).

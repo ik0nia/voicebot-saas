@@ -93,6 +93,23 @@ class Tenant extends Model
     }
 
     /**
+     * Detalii GDPR/Privacy contact (DPO, privacy URL, etc.) — afișate în
+     * widget footer + în email-uri legale automate.
+     *
+     * @return array{dpo_email:?string,privacy_policy_url:?string,terms_url:?string}
+     */
+    public function privacyContact(): array
+    {
+        $p = is_array($this->settings['privacy'] ?? null) ? $this->settings['privacy'] : [];
+        $clean = fn($v) => is_string($v) && trim($v) !== '' ? $v : null;
+        return [
+            'dpo_email' => $clean($p['dpo_email'] ?? null),
+            'privacy_policy_url' => $clean($p['privacy_policy_url'] ?? null),
+            'terms_url' => $clean($p['terms_url'] ?? null),
+        ];
+    }
+
+    /**
      * Politici de retenție GDPR per-tenant. Override din `tenant.settings.retention.*`
      * cu fallback la env (RETENTION_*_DAYS), apoi la default-uri standard.
      *

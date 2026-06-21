@@ -659,6 +659,9 @@ Route::middleware('auth')->prefix('dashboard/setari')->group(function () {
     Route::get('/export-user-data', [SettingsController::class, 'exportUserData'])
         ->middleware('tenant.role:tenant_admin')
         ->name('dashboard.settings.exportUserData');
+    Route::put('/privacy', [SettingsController::class, 'updatePrivacy'])
+        ->middleware('tenant.role:tenant_admin')
+        ->name('dashboard.settings.updatePrivacy');
     // Rate-limit token mint to 5/min per user. Without it an account that
     // leaks session cookies once can mint hundreds of long-lived tokens
     // before the user notices and rotates the session.
@@ -789,6 +792,7 @@ Route::middleware('auth')->prefix('dashboard')->group(function () {
     Route::get('/leads/{lead}', [\App\Http\Controllers\Dashboard\LeadController::class, 'show'])->name('dashboard.leads.show');
     Route::post('/leads/{lead}/status', [\App\Http\Controllers\Dashboard\LeadController::class, 'updateStatus'])->name('dashboard.leads.status');
     Route::post('/leads/{lead}/notes', [\App\Http\Controllers\Dashboard\LeadController::class, 'addNote'])->name('dashboard.leads.notes');
+    Route::get('/leads/{lead}/score-breakdown', [\App\Http\Controllers\Dashboard\LeadController::class, 'scoreBreakdown'])->name('dashboard.leads.scoreBreakdown');
 
     // Opportunities
     Route::get('/opportunities', [\App\Http\Controllers\Dashboard\OpportunityController::class, 'index'])->name('dashboard.opportunities.index');
