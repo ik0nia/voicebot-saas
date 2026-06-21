@@ -1086,6 +1086,7 @@ Route::prefix('webhook/twilio')
         Route::post('/voice', [TwilioWebhookController::class, 'handleVoice'])->name('webhook.twilio.voice');
         Route::post('/status', [TwilioWebhookController::class, 'handleStatus'])->name('webhook.twilio.status');
         Route::post('/recording-status', [TwilioWebhookController::class, 'handleRecordingStatus'])->name('webhook.twilio.recording-status');
+        Route::post('/sms', [\App\Http\Controllers\Webhook\TwilioSmsWebhookController::class, 'handle'])->name('webhook.twilio.sms');
 
         // Warm-transfer flow. {callSid} is the INBOUND caller leg (not
         // the operator leg) so the conference name stays stable across
@@ -1096,3 +1097,9 @@ Route::prefix('webhook/twilio')
         Route::post('/transfer/no-answer/{callSid}',[\App\Http\Controllers\Webhook\TwilioTransferController::class, 'noAnswer'])->name('webhook.twilio.transfer.noAnswer');
         Route::post('/transfer/status/{callSid}',  [\App\Http\Controllers\Webhook\TwilioTransferController::class, 'status'])->name('webhook.twilio.transfer.status');
     });
+
+// Email inbound — provider-agnostic (Postmark/Mailgun/SendGrid). Auth prin
+// shared secret per-channel (channel.config.inbound_secret) sau bearer.
+Route::post('/webhook/email/inbound', [\App\Http\Controllers\Webhook\EmailInboundWebhookController::class, 'handle'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->name('webhook.email.inbound');

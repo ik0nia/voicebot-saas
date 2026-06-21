@@ -42,6 +42,13 @@ final class ChatRequestResolver
 {
     private const VALIDATION_RULES = [
         'message' => 'required|string|max:2000',
+        // Honeypot: câmp invizibil pe care doar bot-urile îl completează
+        // (autofill, scraper, etc.). Dacă vine cu valoare, request-ul e
+        // rejected. Inofensiv pentru utilizatori legitimi.
+        'hp_field' => 'nullable|string|max:0',
+        // Anti-bot delta: widget JS pune timestamp la load + timpul de
+        // umplere form. Sub 800ms = aproape sigur bot.
+        'ms_to_submit' => 'nullable|integer|min:0',
         'session_id' => 'nullable|string|max:255',
         'session_token' => 'nullable|string|max:255',
         // visitor_id: UUID persistent în localStorage (cross-session identity).
@@ -141,6 +148,16 @@ final class ChatRequestResolver
         }
 
         $validated = $request->validate(self::VALIDATION_RULES);
+
+        // Honeypot + min time guard. Răspundem cu 200 fals-pozitiv pentru a nu
+        // semnaliza bot-ul că am detectat — împiedicăm să trecem mai departe.
+        if (!empty($request->input('hp_field'))) {
+            return new ChatRequestRejection('OK', 200, ['accepted' => true]);
+        }
+        $msToSubmit = (int) ($validated['ms_to_submit'] ?? 9999);
+        if ($msToSubmit < 600) {
+            return new ChatRequestRejection('OK', 200, ['accepted' => true]);
+        }
 
         $userMessage = (string) $validated['message'];
         $sessionId = $validated['session_id'] ?? null;

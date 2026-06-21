@@ -24,6 +24,8 @@ class Channel extends Model
     const TYPE_FACEBOOK_MESSENGER = 'facebook_messenger';
     const TYPE_INSTAGRAM_DM = 'instagram_dm';
     const TYPE_WEB_CHATBOT = 'web_chatbot';
+    const TYPE_SMS = 'sms';
+    const TYPE_EMAIL = 'email';
 
     const TYPES = [
         self::TYPE_VOICE,
@@ -31,6 +33,8 @@ class Channel extends Model
         self::TYPE_FACEBOOK_MESSENGER,
         self::TYPE_INSTAGRAM_DM,
         self::TYPE_WEB_CHATBOT,
+        self::TYPE_SMS,
+        self::TYPE_EMAIL,
     ];
 
     // tenant_id intentionally omitted from $fillable — must be derived
