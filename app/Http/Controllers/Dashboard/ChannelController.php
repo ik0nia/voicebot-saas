@@ -573,7 +573,12 @@ class ChannelController extends Controller
             'theme_preset' => 'nullable|string|in:' . implode(',', array_merge($presetKeys, ['custom'])),
             'color' => 'nullable|regex:/^#[0-9a-fA-F]{6}$/',
             'greeting' => 'nullable|string|max:500',
-            'position' => 'nullable|in:bottom-right,bottom-left',
+            'position' => 'nullable|in:bottom-right,bottom-left,right,left',
+            'proactive_after_seconds' => 'nullable|integer|min:0|max:600',
+            'dark_mode' => 'nullable|boolean',
+            'cookie_consent_required' => 'nullable|boolean',
+            'privacy_policy_url' => 'nullable|url|max:500',
+            'show_branding' => 'nullable|boolean',
         ]);
 
         $config = $channel->config ?? [];
@@ -596,6 +601,15 @@ class ChannelController extends Controller
 
         if (array_key_exists('position', $validated) && $validated['position'] !== null) {
             $config['position'] = $validated['position'];
+        }
+
+        // Customization extra (proactive trigger, dark mode, cookie consent,
+        // privacy link, branding visibility) — toate citite de widget la
+        // /config endpoint și de chat-bot.js.
+        foreach (['proactive_after_seconds', 'dark_mode', 'cookie_consent_required', 'privacy_policy_url', 'show_branding'] as $k) {
+            if (array_key_exists($k, $validated) && $validated[$k] !== null) {
+                $config[$k] = $validated[$k];
+            }
         }
 
         $channel->update(['config' => $config]);

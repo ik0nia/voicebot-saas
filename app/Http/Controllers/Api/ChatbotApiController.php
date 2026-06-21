@@ -90,6 +90,14 @@ class ChatbotApiController extends Controller
             'language' => $bot?->language ?? 'ro',
             // Additive: older widgets ignore this key.
             'contexts' => $contexts,
+            // Widget customization per-channel (additive — sensible defaults
+            // dacă lipsesc, vechile widget-uri ignoră necunoscute).
+            'proactive_after_seconds' => (int) ($channelConfig['proactive_after_seconds'] ?? 0),
+            'dark_mode' => (bool) ($channelConfig['dark_mode'] ?? false),
+            'position' => $channelConfig['position'] ?? 'right',
+            'cookie_consent_required' => (bool) ($channelConfig['cookie_consent_required'] ?? false),
+            'privacy_policy_url' => $channelConfig['privacy_policy_url'] ?? null,
+            'show_branding' => $channelConfig['show_branding'] ?? true,
         ]);
     }
 

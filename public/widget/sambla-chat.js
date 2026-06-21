@@ -413,6 +413,27 @@
             if (data && data.contexts && typeof data.contexts === 'object') {
                 _contextsCache = data.contexts;
             }
+            // Customization extra (channel.config).
+            if (typeof data.proactive_after_seconds === 'number') config.proactiveAfterSeconds = data.proactive_after_seconds;
+            if (typeof data.dark_mode === 'boolean') config.darkMode = data.dark_mode;
+            if (typeof data.position === 'string') config.position = data.position;
+            if (typeof data.cookie_consent_required === 'boolean') config.cookieConsentRequired = data.cookie_consent_required;
+            if (typeof data.privacy_policy_url === 'string') config.privacyPolicyUrl = data.privacy_policy_url;
+            if (typeof data.show_branding === 'boolean') config.showBranding = data.show_branding;
+            try {
+                if (config.darkMode) document.documentElement.setAttribute('data-sambla-dark', '1');
+                if (config.position === 'left' || config.position === 'bottom-left') {
+                    document.documentElement.setAttribute('data-sambla-pos', 'left');
+                }
+                // Proactive trigger: după N sec deschide widgetul automat.
+                if (config.proactiveAfterSeconds > 0 && !sessionStorage.getItem('sambla-proactive-shown')) {
+                    setTimeout(function() {
+                        sessionStorage.setItem('sambla-proactive-shown', '1');
+                        var btn = document.querySelector('.sambla-launcher');
+                        if (btn) btn.click();
+                    }, config.proactiveAfterSeconds * 1000);
+                }
+            } catch (e) { /* silent */ }
             if (callback) callback(data);
         })
         .catch(function() {
