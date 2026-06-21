@@ -2,6 +2,13 @@
 (function() {
     'use strict';
 
+    // Anti-bot stopwatch: marcăm momentul load-ului pentru a calcula
+    // ms_to_submit la trimitere. Backend respinge sub 600ms (vezi
+    // ChatRequestResolver). Honeypot field e injectat în render().
+    if (!window.__samblaLoadTime) {
+        window.__samblaLoadTime = Date.now();
+    }
+
     // F2: clean manual context API for SPA and non-WordPress embeds.
     // Non-WP sites that can't rely on the WooCommerce plugin can
     // still feed the widget with page/product/cart context by calling
@@ -869,6 +876,7 @@
                 <div class="sambla-offline-banner" role="alert">' + t('offlineQueued') + '</div>\
                 <div class="sambla-messages" role="log" aria-live="polite" aria-label="' + t('messageLog') + '"></div>\
                 <div class="sambla-input-area">\
+                    <input type="text" name="hp_field" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;opacity:0;width:1px;height:1px;pointer-events:none">\
                     <textarea class="sambla-input" placeholder="' + t('typeMessage') + '" rows="1" aria-label="' + t('typeMessage') + '"></textarea>\
                     <button class="sambla-send" aria-label="' + t('send') + '" tabindex="0">\
                         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="transform:rotate(-45deg)">\
@@ -1958,7 +1966,12 @@
                 message: text,
                 session_id: getSessionId(), visitor_id: getVisitorId(),
                 session_token: getSessionToken(),
-                page_context: getPageContext()
+                page_context: getPageContext(),
+                // Anti-bot: hp_field e invizibil (CSS display:none), doar
+                // scraper-ele cu autofill îl completează. ms_to_submit = ms
+                // de la load. Backend respinge ambele cazuri silent (200 OK).
+                hp_field: (document.querySelector('input[name="hp_field"]') || {}).value || '',
+                ms_to_submit: window.__samblaLoadTime ? (Date.now() - window.__samblaLoadTime) : 9999,
             };
 
             try {
@@ -2039,7 +2052,12 @@
                 message: text,
                 session_id: getSessionId(), visitor_id: getVisitorId(),
                 session_token: getSessionToken(),
-                page_context: getPageContext()
+                page_context: getPageContext(),
+                // Anti-bot: hp_field e invizibil (CSS display:none), doar
+                // scraper-ele cu autofill îl completează. ms_to_submit = ms
+                // de la load. Backend respinge ambele cazuri silent (200 OK).
+                hp_field: (document.querySelector('input[name="hp_field"]') || {}).value || '',
+                ms_to_submit: window.__samblaLoadTime ? (Date.now() - window.__samblaLoadTime) : 9999,
             };
 
             try {
