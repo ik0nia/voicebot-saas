@@ -70,6 +70,56 @@ class SettingsController extends Controller
     }
 
     /**
+     * Data deletion request — vizitator/utilizator cere ștergerea datelor
+     * personale (GDPR Article 17 — right to be forgotten). Operator anchor
+     * pe email/phone, soft-delete conversațiile și leads asociate.
+     */
+    public function deleteUserData(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'nullable|email',
+            'phone' => 'nullable|string|max:20',
+            'confirm' => 'required|in:DELETE',
+        ]);
+        if (empty($validated['email']) && empty($validated['phone'])) {
+            abort(422, 'email sau phone obligatoriu');
+        }
+        $tenantId = auth()->user()->tenant_id;
+        $needles = array_filter([$validated['email'] ?? null, $validated['phone'] ?? null]);
+
+        $convs = \App\Models\Conversation::query()
+            ->where('tenant_id', $tenantId)
+            ->where(function ($q) use ($needles) {
+                foreach ($needles as $n) {
+                    $q->orWhere('contact_identifier', $n)->orWhere('contact_name', $n);
+                }
+            })
+            ->get();
+        $convIds = $convs->pluck('id');
+
+        $deletedMsgs = \App\Models\Message::whereIn('conversation_id', $convIds)->delete();
+        $deletedConvs = \App\Models\Conversation::whereIn('id', $convIds)->delete();
+        $deletedLeads = \App\Models\Lead::query()
+            ->where('tenant_id', $tenantId)
+            ->where(function ($q) use ($validated) {
+                if (!empty($validated['email'])) $q->orWhere('email', $validated['email']);
+                if (!empty($validated['phone'])) $q->orWhere('phone', $validated['phone']);
+            })
+            ->delete();
+
+        \Log::info('GDPR deletion executed', [
+            'tenant_id' => $tenantId,
+            'by_user_id' => auth()->id(),
+            'conv_deleted' => $deletedConvs,
+            'msg_deleted' => $deletedMsgs,
+            'lead_deleted' => $deletedLeads,
+        ]);
+
+        return back()->with('success',
+            "Datele au fost șterse: {$deletedConvs} conversații, {$deletedMsgs} mesaje, {$deletedLeads} leads.");
+    }
+
+    /**
      * Update privacy contact info (DPO email, privacy policy URL, terms URL).
      */
     public function updatePrivacy(Request $request)

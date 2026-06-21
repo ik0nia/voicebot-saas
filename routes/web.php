@@ -672,6 +672,9 @@ Route::middleware('auth')->prefix('dashboard/setari')->group(function () {
     Route::put('/privacy', [SettingsController::class, 'updatePrivacy'])
         ->middleware('tenant.role:tenant_admin')
         ->name('dashboard.settings.updatePrivacy');
+    Route::post('/delete-user-data', [SettingsController::class, 'deleteUserData'])
+        ->middleware('tenant.role:tenant_admin')
+        ->name('dashboard.settings.deleteUserData');
     // Rate-limit token mint to 5/min per user. Without it an account that
     // leaks session cookies once can mint hundreds of long-lived tokens
     // before the user notices and rotates the session.
