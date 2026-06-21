@@ -41,6 +41,10 @@ Schedule::command('websites:rescan --days=7 --limit=50')->weeklyOn(0, '04:00')->
 // `test_mode_pinned` flag explicit).
 Schedule::command('bots:warn-test-mode --days=7')->weeklyOn(1, '07:00')->withoutOverlapping();
 
+// Every 5 min: scanează transcripts pentru voice keyword alerts (avocat,
+// returnez, etc.) configurate per bot prin voice.keyword_alerts.
+Schedule::command('alerts:detect-keywords --minutes=10')->everyFiveMinutes()->withoutOverlapping();
+
 // Agregă detected_intents per mesaj în primary_intent pe conversation.
 // Rulează la 30 min — agregarea nu trebuie să fie instant.
 Schedule::command('conversations:populate-intents --limit=300')
