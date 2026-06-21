@@ -223,6 +223,58 @@ class AnalyticsController extends Controller
     }
 
     /**
+     * KPI per bot — conversation count, avg msg, abandoned rate, leads created,
+     * avg time to first response. Util pentru tenant cu multi-bot pentru
+     * a compara performanța A/B.
+     */
+    public function botKpi(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $tenantId = auth()->user()?->tenant_id ?? 0;
+        $days = (int) max(1, min(365, $request->integer('days', 30)));
+        $cacheKey = "bot_kpi:v1:{$tenantId}:{$days}";
+
+        $payload = Cache::remember($cacheKey, now()->addMinutes(15), function () use ($tenantId, $days) {
+            $bots = \App\Models\Bot::where('tenant_id', $tenantId)->get(['id', 'name']);
+            $cutoff = now()->subDays($days);
+
+            $result = [];
+            foreach ($bots as $bot) {
+                $convs = \App\Models\Conversation::where('bot_id', $bot->id)
+                    ->where('created_at', '>=', $cutoff);
+                $total = (clone $convs)->count();
+                if ($total === 0) {
+                    $result[] = [
+                        'bot_id' => $bot->id, 'name' => $bot->name,
+                        'conversations' => 0, 'avg_messages' => 0,
+                        'abandoned' => 0, 'leads' => 0, 'abandoned_pct' => 0,
+                    ];
+                    continue;
+                }
+                $avgMsg = (float) round((clone $convs)->avg('messages_count') ?? 0, 1);
+                $abandoned = (clone $convs)
+                    ->whereJsonContains('outcomes_summary', 'abandoned_after_products')
+                    ->count();
+                $leads = \App\Models\Lead::where('bot_id', $bot->id)
+                    ->where('created_at', '>=', $cutoff)
+                    ->count();
+
+                $result[] = [
+                    'bot_id' => $bot->id,
+                    'name' => $bot->name,
+                    'conversations' => $total,
+                    'avg_messages' => $avgMsg,
+                    'abandoned' => $abandoned,
+                    'leads' => $leads,
+                    'abandoned_pct' => $total > 0 ? round($abandoned / $total * 100, 1) : 0,
+                ];
+            }
+            return ['window_days' => $days, 'bots' => $result];
+        });
+
+        return response()->json($payload);
+    }
+
+    /**
      * KPI voice — durată medie call, completion rate, drop-off pe minute.
      * Ferestre: 30 zile default, override via ?days=N (max 365).
      */

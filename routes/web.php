@@ -531,6 +531,11 @@ Route::middleware('auth')
     ->get('/dashboard/voice-kpi', [\App\Http\Controllers\Dashboard\AnalyticsController::class, 'voiceKpi'])
     ->name('dashboard.analytics.voiceKpi');
 
+// Bot KPI — comparativ per-bot (conv, avg msg, abandoned %, leads)
+Route::middleware('auth')
+    ->get('/dashboard/bot-kpi', [\App\Http\Controllers\Dashboard\AnalyticsController::class, 'botKpi'])
+    ->name('dashboard.analytics.botKpi');
+
 // Cost forecast — proiecție end-of-month bazată pe last 7d rate
 Route::middleware('auth')
     ->get('/dashboard/cost-forecast', [\App\Http\Controllers\Dashboard\CostForecastController::class, 'snapshot'])
