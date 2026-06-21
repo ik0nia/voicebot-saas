@@ -284,14 +284,10 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-inkSoft mb-1">
-                                    Timezone (IANA)
-                                </label>
-                                <input type="text" name="settings[timezone]"
-                                       value="{{ old('settings.timezone', data_get($bot->settings, 'timezone')) }}"
-                                       placeholder="Europe/Bucharest"
-                                       class="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm">
-                                <p class="text-xs text-muted mt-1">Folosit pentru greeting time-of-day (Bună dimineața/ziua/seara).</p>
+                                <p class="text-xs text-muted">
+                                    Fusul orar și mesajul „suntem închiși acum" se setează în
+                                    <button type="button" @click="tab = 'business'" class="underline text-coralh hover:text-coral">Tab „Business"</button>.
+                                </p>
                             </div>
                         </div>
                     </details>

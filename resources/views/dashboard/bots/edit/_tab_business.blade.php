@@ -22,7 +22,38 @@
 
                         {{-- Program de lucru --}}
                         <div>
-                            <label class="block text-sm font-medium text-inkSoft mb-2">Program de lucru</label>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-sm font-medium text-inkSoft">Program de lucru</label>
+                                {{-- Live status pill — Alpine evaluates `days` against the current clock --}}
+                                <span x-data="{
+                                    get state() {
+                                        const now = new Date();
+                                        const keyMap = ['sun','mon','tue','wed','thu','fri','sat'];
+                                        const day = (this.days || []).find(d => d.key === keyMap[now.getDay()]);
+                                        if (!day) return { open: false, label: 'Închis (zi neconfigurată)' };
+                                        if (day.closed) return { open: false, label: day.label + ': închis azi' };
+                                        const [oh,om] = (day.open||'00:00').split(':').map(Number);
+                                        const [ch,cm] = (day.close||'00:00').split(':').map(Number);
+                                        const open  = new Date(now); open.setHours(oh,om,0,0);
+                                        const close = new Date(now); close.setHours(ch,cm,0,0);
+                                        if (now < open)  return { open: false, label: 'Închis până la ' + day.open };
+                                        if (now > close) return { open: false, label: 'Închis (s-a închis la ' + day.close + ')' };
+                                        if (day.break_start && day.break_end) {
+                                            const [bsh,bsm] = day.break_start.split(':').map(Number);
+                                            const [beh,bem] = day.break_end.split(':').map(Number);
+                                            const bs = new Date(now); bs.setHours(bsh,bsm,0,0);
+                                            const be = new Date(now); be.setHours(beh,bem,0,0);
+                                            if (now >= bs && now <= be) return { open: false, label: 'Pauză până la ' + day.break_end };
+                                        }
+                                        return { open: true, label: 'Deschis până la ' + day.close };
+                                    }
+                                }"
+                                      :class="state.open ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-amber-50 text-amber-800 border-amber-200'"
+                                      class="text-xs px-2.5 py-1 rounded-full border font-medium inline-flex items-center gap-1.5">
+                                    <span :class="state.open ? 'bg-emerald-500' : 'bg-amber-500'" class="w-1.5 h-1.5 rounded-full"></span>
+                                    <span x-text="state.label">Verifică program</span>
+                                </span>
+                            </div>
                             {{-- Iter A: stacked cards on mobile, 12-col grid on sm+ --}}
                             <div class="border border-line rounded-lg divide-y divide-line bg-cream/30">
                                 <template x-for="(day, idx) in days" :key="day.key">
@@ -77,6 +108,38 @@
                             <textarea name="settings[business_info][hours_text]" rows="2"
                                       placeholder="ex: În august închidem între 10-20 august."
                                       class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">{{ $businessInfo['hours_text'] ?? '' }}</textarea>
+                        </div>
+
+                        {{-- After-hours behavior + timezone --}}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-inkSoft mb-1.5">Fus orar</label>
+                                <select name="settings[timezone]"
+                                        class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">
+                                    @php $tz = $settings['timezone'] ?? config('app.timezone', 'Europe/Bucharest'); @endphp
+                                    @foreach (['Europe/Bucharest' => 'România (Europe/Bucharest)', 'Europe/Chisinau' => 'Republica Moldova (Europe/Chisinau)', 'Europe/London' => 'UK (Europe/London)', 'Europe/Berlin' => 'Germania (Europe/Berlin)', 'UTC' => 'UTC'] as $val => $label)
+                                        <option value="{{ $val }}" @selected($tz === $val)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                                <p class="text-xs text-muted mt-1">Folosit pentru a decide când suntem închiși/deschiși și pentru programări.</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-inkSoft mb-1.5">Mesaj automat când suntem închiși</label>
+                                <textarea name="settings[business_info][after_hours_message]" rows="2"
+                                          placeholder="ex: Mulțumim că ne-ai contactat. Suntem închiși acum — un coleg te va suna mâine dimineață."
+                                          class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">{{ $businessInfo['after_hours_message'] ?? '' }}</textarea>
+                                <p class="text-xs text-muted mt-1">Lasă gol pentru un mesaj implicit „suntem închiși, dorești să te sunăm la deschidere?".</p>
+                            </div>
+                        </div>
+
+                        {{-- Notifications email (lead + escalare) --}}
+                        <div>
+                            <label class="block text-sm font-medium text-inkSoft mb-1.5">Email pentru notificări (lead nou, escalare urgentă)</label>
+                            <input type="email" name="settings[notifications][email]"
+                                   value="{{ $settings['notifications']['email'] ?? '' }}"
+                                   placeholder="vanzari@exemplu.ro"
+                                   class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">
+                            <p class="text-xs text-muted mt-1">Dacă e gol, folosim email-ul contului. Poți pune un email diferit pe fiecare bot (de ex. recepție vs. vânzări).</p>
                         </div>
 
                         {{-- Contact fields --}}

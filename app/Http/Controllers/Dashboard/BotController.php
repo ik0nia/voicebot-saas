@@ -238,6 +238,9 @@ class BotController extends Controller
             'settings.business_info.facebook' => 'nullable|string|max:255',
             'settings.business_info.instagram' => 'nullable|string|max:255',
             'settings.business_info.extras' => 'nullable|string|max:2000',
+            'settings.business_info.after_hours_message' => 'nullable|string|max:500',
+            'settings.notifications' => 'nullable|array',
+            'settings.notifications.email' => 'nullable|email|max:255',
             'settings.faqs' => 'nullable|array|max:50',
             // `nullable` lets fully-empty rows through the validator
             // (Laravel's ConvertEmptyStringsToNull middleware turns ""

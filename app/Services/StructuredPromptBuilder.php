@@ -190,6 +190,11 @@ class StructuredPromptBuilder
                 'content' => $this->businessInfoBlock($settings['business_info'] ?? []),
             ],
             [
+                'name' => 'runtime_context',
+                'enabled' => true,
+                'content' => $this->runtimeContextBlock($bot, $settings),
+            ],
+            [
                 'name' => 'faqs',
                 'enabled' => true,
                 'content' => $this->faqBlock($settings['faqs'] ?? []),
@@ -217,6 +222,47 @@ class StructuredPromptBuilder
                 'content' => $this->escapeHatch($bot),
             ],
         ];
+    }
+
+    /**
+     * Injects the *current* business-hours status into the prompt so the
+     * bot can give honest answers about being open or closed without
+     * having to compute it from the schedule. The status is evaluated
+     * fresh on every build() — callers that cache prompts long-term will
+     * see stale hours, but chat/voice paths re-build per request.
+     *
+     * @param array<string, mixed> $settings
+     */
+    private function runtimeContextBlock(Bot $bot, array $settings): string
+    {
+        $schedule = $settings['business_info']['hours_schedule'] ?? null;
+        if (!is_array($schedule) || empty($schedule)) {
+            return '';
+        }
+
+        try {
+            $hours = app(BusinessHoursService::class)->status($bot);
+        } catch (\Throwable $e) {
+            return '';
+        }
+
+        $lines = [
+            'Data și ora locală: ' . now($hours['label'] ? config('app.timezone', 'Europe/Bucharest') : 'Europe/Bucharest')->format('l, d.m.Y H:i'),
+        ];
+        if ($hours['is_open']) {
+            $lines[] = 'STARE: DESCHIS acum. ' . ($hours['label'] ?? '');
+        } else {
+            $closedMsg = trim((string) ($settings['business_info']['after_hours_message'] ?? ''));
+            $lines[] = 'STARE: ÎNCHIS acum. ' . ($hours['label'] ?? '');
+            if ($closedMsg !== '') {
+                $lines[] = 'Mesaj pentru clienți când suntem închiși: ' . $this->sanitize($closedMsg);
+            } else {
+                $lines[] = 'Dacă clientul cere ceva ce necesită oameni (programare, ofertă, vorbit cu cineva), spune-i politicos că suntem închiși acum și oferă-i opțiunea să-l sunăm noi când deschidem ('
+                    . ($hours['next_open'] ?? 'în programul nostru') . ').';
+            }
+        }
+
+        return "=== CONTEXT RUNTIME ===\n" . implode("\n", $lines);
     }
 
     private function nicheAddon(Bot $bot): string
@@ -257,18 +303,42 @@ class StructuredPromptBuilder
             }
         }
 
-        // hours_schedule is an array — render as "Luni: 09-18" style lines.
+        // hours_schedule comes from the Business tab UI as an array of
+        // { key, label, closed, open, close, break_start, break_end }.
+        // Render as "Luni: 09:00-18:00 (pauză 13:00-14:00)" / "Sâmbătă: închis".
+        // Legacy { day, hours } records are still accepted for old payloads.
         $schedule = $info['hours_schedule'] ?? [];
         if (is_array($schedule) && !empty($schedule)) {
             foreach ($schedule as $entry) {
                 if (!is_array($entry)) {
                     continue;
                 }
-                $day = isset($entry['day']) ? trim((string) $entry['day']) : '';
-                $hours = isset($entry['hours']) ? trim((string) $entry['hours']) : '';
-                if ($day !== '' && $hours !== '') {
-                    $lines[] = $this->sanitize($day . ': ' . $hours);
+                $legacyDay = isset($entry['day']) ? trim((string) $entry['day']) : '';
+                $legacyHours = isset($entry['hours']) ? trim((string) $entry['hours']) : '';
+                if ($legacyDay !== '' && $legacyHours !== '') {
+                    $lines[] = $this->sanitize($legacyDay . ': ' . $legacyHours);
+                    continue;
                 }
+                $label = isset($entry['label']) ? trim((string) $entry['label']) : '';
+                if ($label === '') {
+                    continue;
+                }
+                if (!empty($entry['closed'])) {
+                    $lines[] = $this->sanitize($label . ': închis');
+                    continue;
+                }
+                $open  = isset($entry['open']) ? trim((string) $entry['open']) : '';
+                $close = isset($entry['close']) ? trim((string) $entry['close']) : '';
+                if ($open === '' || $close === '') {
+                    continue;
+                }
+                $line = $label . ': ' . $open . '-' . $close;
+                $bs = isset($entry['break_start']) ? trim((string) $entry['break_start']) : '';
+                $be = isset($entry['break_end']) ? trim((string) $entry['break_end']) : '';
+                if ($bs !== '' && $be !== '') {
+                    $line .= ' (pauză ' . $bs . '-' . $be . ')';
+                }
+                $lines[] = $this->sanitize($line);
             }
         }
 

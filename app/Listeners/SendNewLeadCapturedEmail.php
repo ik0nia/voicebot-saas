@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Listeners;
 
 use App\Events\LeadCaptured;
+use App\Models\Bot;
 use App\Models\User;
 use App\Notifications\NewLeadCapturedNotification;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 
@@ -47,12 +49,33 @@ class SendNewLeadCapturedEmail implements ShouldQueue
                 ->limit(5)
                 ->get();
 
-            if ($recipients->isEmpty()) {
+            // Per-bot override: settings.notifications.email permite ca
+            // fiecare bot să primească pe alt email (recepție vs. vânzări).
+            // Lead are bot_id direct când a fost capturat în chat/voice;
+            // dacă lipsește, sărim peste override.
+            $perBotEmail = null;
+            if (!empty($lead->bot_id)) {
+                $bot = Bot::withoutGlobalScopes()->find($lead->bot_id);
+                $candidate = $bot?->settings['notifications']['email'] ?? null;
+                if (is_string($candidate) && filter_var(trim($candidate), FILTER_VALIDATE_EMAIL)) {
+                    $perBotEmail = trim($candidate);
+                }
+            }
+
+            if ($recipients->isEmpty() && $perBotEmail === null) {
                 Log::info('SendNewLeadCapturedEmail: no recipients', ['lead_id' => $lead->id, 'tenant_id' => $lead->tenant_id]);
                 return;
             }
 
-            Notification::send($recipients, new NewLeadCapturedNotification($lead, $event->source));
+            $notification = new NewLeadCapturedNotification($lead, $event->source);
+
+            if ($recipients->isNotEmpty()) {
+                Notification::send($recipients, $notification);
+            }
+            if ($perBotEmail !== null) {
+                (new AnonymousNotifiable())->route('mail', $perBotEmail)->notify($notification);
+            }
+
             \Cache::put($cacheKey, true, now()->addHours(24));
         } catch (\Throwable $e) {
             Log::warning('SendNewLeadCapturedEmail: failed', ['lead_id' => $lead->id, 'error' => $e->getMessage()]);
