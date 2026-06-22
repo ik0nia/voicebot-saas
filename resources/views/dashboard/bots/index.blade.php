@@ -55,12 +55,21 @@
         </form>
     </div>
 
-    {{-- Bot grid or empty state --}}
+    {{-- Bot grid or empty state. Iter G (2026-06-22): wrap în x-data ca să
+         avem selecție bulk + action bar fix sub grid când există selecții. --}}
     @if($bots->count() > 0)
+        <div x-data="{ selected: [], get count() { return this.selected.length; }, toggle(id) { const i = this.selected.indexOf(id); i >= 0 ? this.selected.splice(i, 1) : this.selected.push(id); } }">
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
             @foreach($bots as $bot)
-                <div class="card">
-                    <div class="p-5">
+                <div class="card relative">
+                    {{-- Bulk select checkbox în colț — apare la hover ori când deja a selectat --}}
+                    <label class="absolute top-3 left-3 z-10 cursor-pointer">
+                        <input type="checkbox" :checked="selected.includes({{ $bot->id }})"
+                               @change="toggle({{ $bot->id }})"
+                               class="w-4 h-4 rounded border-line text-coralh focus:ring-coral/20 opacity-40 hover:opacity-100 transition"
+                               :class="selected.includes({{ $bot->id }}) ? 'opacity-100' : ''">
+                    </label>
+                    <div class="p-5 pl-10">
                         {{-- Top row: name + status --}}
                         <div class="flex items-start justify-between mb-3">
                             <div class="min-w-0 flex-1">
@@ -202,6 +211,29 @@
                     </div>
                 </div>
             @endforeach
+        </div>
+
+        {{-- Bulk action bar — fix bottom când există selecții --}}
+        <div x-show="count > 0" x-cloak x-transition
+             class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-ink text-cream rounded-2xl shadow-xl px-4 py-3 flex items-center gap-3">
+            <span class="text-sm font-medium" x-text="count + (count === 1 ? ' agent selectat' : ' agenți selectați')"></span>
+            <button @click="selected = []" class="text-2xs underline opacity-70 hover:opacity-100">Deselectează tot</button>
+            <div class="w-px h-5 bg-cream/20"></div>
+            <form method="POST" action="{{ route('dashboard.bots.bulkToggle') }}" class="inline-flex gap-2">
+                @csrf
+                <template x-for="id in selected" :key="id">
+                    <input type="hidden" name="bot_ids[]" :value="id">
+                </template>
+                <button type="submit" name="action" value="activate"
+                        class="rounded-pill bg-emerald-500 text-white px-3 py-1.5 text-xs font-semibold hover:bg-emerald-600 transition">
+                    ▶ Activează
+                </button>
+                <button type="submit" name="action" value="pause"
+                        class="rounded-pill bg-amber-500 text-white px-3 py-1.5 text-xs font-semibold hover:bg-amber-600 transition">
+                    ⏸ Pune pe pauză
+                </button>
+            </form>
+        </div>
         </div>
 
         {{-- Pagination --}}

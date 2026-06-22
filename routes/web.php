@@ -412,6 +412,17 @@ Route::middleware('auth')->prefix('dashboard/agenti/{bot}/programari')->group(fu
     Route::patch('/appointments/{appointment}',      [BookingAdminController::class, 'appointmentUpdate'])->name('dashboard.bots.booking.appointment.update');
 });
 
+// Product CRUD per-bot — manual add pentru catalogul de produse/servicii.
+// Folosește tabela woocommerce_products cu site_url = "manual:bot-{id}".
+Route::middleware('auth')->prefix('dashboard/agenti/{bot}/produse')->group(function () {
+    Route::get('/',                              [\App\Http\Controllers\Dashboard\ProductController::class, 'index'])->name('dashboard.bots.products.index');
+    Route::get('/nou',                           [\App\Http\Controllers\Dashboard\ProductController::class, 'create'])->name('dashboard.bots.products.create');
+    Route::post('/',                             [\App\Http\Controllers\Dashboard\ProductController::class, 'store'])->name('dashboard.bots.products.store');
+    Route::get('/{product}/edit',                [\App\Http\Controllers\Dashboard\ProductController::class, 'edit'])->name('dashboard.bots.products.edit');
+    Route::patch('/{product}',                   [\App\Http\Controllers\Dashboard\ProductController::class, 'update'])->name('dashboard.bots.products.update');
+    Route::delete('/{product}',                  [\App\Http\Controllers\Dashboard\ProductController::class, 'destroy'])->name('dashboard.bots.products.destroy');
+});
+
 // Calls routes (dashboard). The list page (`/dashboard/apeluri`)
 // redirects to the unified Inbox with channel_type=voice — the dedicated
 // listing was retired once Inbox got date / bot / direction / status

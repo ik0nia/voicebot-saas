@@ -291,7 +291,10 @@
                 </p>
             </div>
         </div>
-        <a href="{{ route('dashboard.bots.knowledge.index', $bot) }}" class="text-sm text-coralh hover:underline">Gestionează baza de cunoștințe →</a>
+        <div class="flex flex-wrap gap-4 mt-3">
+            <a href="{{ route('dashboard.bots.knowledge.index', $bot) }}" class="text-sm text-coralh hover:underline">📚 Gestionează baza de cunoștințe →</a>
+            <a href="{{ route('dashboard.bots.products.index', $bot) }}" class="text-sm text-coralh hover:underline">🛍 Produse / servicii →</a>
+        </div>
     @endif
 
     {{-- Tab: Canale --}}
