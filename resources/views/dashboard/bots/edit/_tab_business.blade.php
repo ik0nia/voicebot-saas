@@ -4,12 +4,31 @@
                     <p class="text-sm text-muted mb-6">Ce spune agentul când clienții întreabă despre program, adresă, contact etc.</p>
 
                     <div class="space-y-6">
-                        {{-- Adresă (Iter A: mirror only; canonical lives in Bază) --}}
-                        <div>
+                        {{-- Adresă cu Google Places autocomplete (audit 2026-06-22).
+                             Proxy /dashboard/api/places-autocomplete — keystroke
+                             debounced 300ms, max 5 sugestii. Click sugestie →
+                             populează textarea. Cache server-side 1 zi. --}}
+                        <div x-data="placesAutocomplete()" @click.outside="open = false">
                             <label class="block text-sm font-medium text-inkSoft mb-1.5">Adresă</label>
-                            <textarea rows="2" x-model="businessInfo.address"
-                                      placeholder="Str. Victoriei 10, Cluj-Napoca, jud. Cluj"
-                                      class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none resize-y"></textarea>
+                            <div class="relative">
+                                <textarea rows="2" x-model="businessInfo.address"
+                                          @input.debounce.300ms="search(businessInfo.address)"
+                                          @focus="if (suggestions.length) open = true"
+                                          placeholder="Începe să tastezi adresa…"
+                                          class="w-full rounded-lg border border-line bg-white px-4 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none resize-y"></textarea>
+                                <div x-show="open && suggestions.length" x-cloak
+                                     class="absolute z-20 mt-1 w-full bg-white border border-line rounded-lg shadow-lg max-h-72 overflow-y-auto">
+                                    <template x-for="s in suggestions" :key="s.place_id">
+                                        <button type="button"
+                                                @click="pick(s)"
+                                                class="w-full text-left px-3 py-2 hover:bg-cream text-sm border-b border-line last:border-b-0">
+                                            <div class="font-medium text-ink" x-text="s.primary"></div>
+                                            <div class="text-xs text-muted" x-text="s.secondary"></div>
+                                        </button>
+                                    </template>
+                                </div>
+                                <div x-show="loading" x-cloak class="absolute right-3 top-3 text-xs text-muted">…</div>
+                            </div>
                             <div class="mt-2">
                                 <a :href="businessInfo.address ? ('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(businessInfo.address)) : '#'"
                                    :class="businessInfo.address ? '' : 'pointer-events-none opacity-40'"

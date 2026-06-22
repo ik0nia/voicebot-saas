@@ -686,6 +686,23 @@
                 </form>
             </div>
 
+            {{-- SMS alerts pentru lead-uri (audit 2026-06-22) --}}
+            @php $smsRecipients = is_array($tenant->settings['notifications']['sms_recipients'] ?? null) ? implode(', ', $tenant->settings['notifications']['sms_recipients']) : ''; @endphp
+            <div class="bg-white rounded-xl border border-line p-6 lg:col-span-2">
+                <h2 class="text-lg font-semibold text-ink mb-1">📱 SMS alerts la lead nou</h2>
+                <p class="text-sm text-muted mb-4">Numere de telefon care primesc SMS scurt când vine un lead cu scor ≥ 50. Util pentru medici / retail care nu citesc email rapid. Maxim 5 numere, separate prin virgulă. Folosește numărul Twilio activ al contului ca sender.</p>
+                <form method="POST" action="{{ route('dashboard.settings.updateLeadAlerts') }}" class="space-y-3">
+                    @csrf @method('PUT')
+                    <input type="text" name="sms_recipients"
+                           value="{{ old('sms_recipients', $smsRecipients) }}"
+                           placeholder="+40742000001, +40742000002"
+                           class="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm">
+                    <button type="submit" class="rounded-lg bg-coral text-white px-4 py-2 text-sm font-medium hover:bg-coralh">
+                        Salvează numere
+                    </button>
+                </form>
+            </div>
+
             {{-- GDPR Tools --}}
             <div class="bg-white rounded-xl border border-line p-6 lg:col-span-2">
                 <h2 class="text-lg font-semibold text-ink mb-1">GDPR — Drepturi vizitator</h2>

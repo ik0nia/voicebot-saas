@@ -88,6 +88,10 @@ return [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'picker_api_key' => env('GOOGLE_PICKER_API_KEY'),
+        // Places (New) API key — server-side proxy pentru autocomplete adrese.
+        // Recomandare: cheie separată restrânsă la Places API + HTTP referrer
+        // restrictions (sambla.ro + *.sambla.ro). Fallback la picker_api_key.
+        'places_api_key' => env('GOOGLE_PLACES_API_KEY', env('GOOGLE_PICKER_API_KEY')),
         'redirect_uri' => env('GOOGLE_REDIRECT_URI', env('APP_URL') . '/oauth/google/callback'),
         // Drive folder name created on first connect (convention, not auto-watched)
         'kb_folder_name' => env('GOOGLE_KB_FOLDER_NAME', 'Sambla Knowledge Base'),

@@ -77,8 +77,43 @@ class SendNewLeadCapturedEmail implements ShouldQueue
             }
 
             \Cache::put($cacheKey, true, now()->addHours(24));
+
+            // SMS opt-in (audit 2026-06-22): tenant.settings.notifications.sms
+            // listează numere care primesc SMS scurt la lead nou. Util pentru
+            // medici/retail care nu citesc email-ul rapid. Skip dacă lead-ul
+            // are scor < 50 (filtru anti-spam) sau lipsesc numere.
+            $this->dispatchSmsAlert($lead);
         } catch (\Throwable $e) {
             Log::warning('SendNewLeadCapturedEmail: failed', ['lead_id' => $lead->id, 'error' => $e->getMessage()]);
+        }
+    }
+
+    private function dispatchSmsAlert(\App\Models\Lead $lead): void
+    {
+        try {
+            $tenant = $lead->tenant;
+            if (!$tenant) return;
+            // Doar lead-uri „warm" (scor ≥ 50) primesc SMS — restul vin doar pe email.
+            if ((int) $lead->qualification_score < 50) return;
+
+            $smsNumbers = $tenant->settings['notifications']['sms_recipients'] ?? null;
+            if (!is_array($smsNumbers) || empty($smsNumbers)) return;
+
+            $body = sprintf(
+                'Lead nou Sambla: %s · scor %d/100 · %s',
+                $lead->name ?: 'fără nume',
+                (int) $lead->qualification_score,
+                $lead->phone ?: ($lead->email ?: 'fără contact'),
+            );
+
+            $sms = app(\App\Services\Telephony\TwilioSmsService::class);
+            foreach ($smsNumbers as $to) {
+                $to = trim((string) $to);
+                if ($to === '') continue;
+                $sms->send($tenant, $to, $body);
+            }
+        } catch (\Throwable $e) {
+            Log::debug('SendNewLeadCapturedEmail: sms branch skipped', ['err' => $e->getMessage()]);
         }
     }
 }

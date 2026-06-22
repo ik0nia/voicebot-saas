@@ -74,6 +74,10 @@ class AppServiceProvider extends ServiceProvider
         // Best-effort, nu blochează salvarea locală dacă Google nu răspunde.
         \App\Models\Appointment::observe(\App\Observers\AppointmentObserver::class);
 
+        // LeadObserver: normalizează telefon la E.164 + flag invalid prin
+        // Twilio Lookup v2. Acoperă toate căile de creare lead.
+        \App\Models\Lead::observe(\App\Observers\LeadObserver::class);
+
         // @samblaWidgetUrl — URL canonic pentru widget cu cache-bust pe
         // ultimele 6 cifre din filemtime. Fără asta, browserele care au
         // descărcat widget-ul cu Cache-Control max-age=14400 (din nginx

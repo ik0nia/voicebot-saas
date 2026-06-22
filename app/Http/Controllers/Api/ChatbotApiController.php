@@ -1192,6 +1192,32 @@ class ChatbotApiController extends Controller
         ];
     }
 
+    /**
+     * Proxy server-side pentru Google Places autocomplete. Folosit de
+     * widget callback form + onboarding tenant address fields. Cheia API
+     * rămâne pe server (nu o expunem în JS).
+     */
+    public function placesAutocomplete(Request $request, $channelId): JsonResponse
+    {
+        $channel = Channel::withoutGlobalScopes()
+            ->where('id', $channelId)
+            ->where('is_active', true)
+            ->first();
+        if (!$channel) {
+            return response()->json(['suggestions' => []]);
+        }
+
+        $validated = $request->validate([
+            'q' => 'required|string|min:3|max:120',
+            'country' => 'nullable|string|size:2',
+        ]);
+
+        $results = app(\App\Services\Google\GooglePlacesService::class)
+            ->autocomplete($validated['q'], strtolower($validated['country'] ?? 'ro'));
+
+        return response()->json(['suggestions' => $results]);
+    }
+
     public function feedback(Request $request, $channelId): JsonResponse
     {
         $channel = Channel::withoutGlobalScopes()

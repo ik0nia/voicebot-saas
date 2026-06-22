@@ -51,6 +51,26 @@ class CallbackController extends Controller
             'conversation_id' => 'nullable|integer',
         ]);
 
+        // Twilio Lookup v2 — validare număr înainte să intre în pipeline.
+        // Blochează numere fictive (ex. „0700000000") pe care altfel le-am
+        // trimis la operator. Fail-open dacă Twilio e down — nu blocăm UX.
+        try {
+            $lookup = app(\App\Services\Telephony\TwilioLookupService::class)
+                ->validate($validated['phone'], 'RO', 'basic');
+            if (!$lookup['valid']) {
+                return response()->json([
+                    'error' => 'Numărul de telefon nu pare valid. Verifică prefixul și cifrele.',
+                ], 422);
+            }
+            // Normalizăm la E.164 ca toate sistemele downstream (SMS, dialer,
+            // lookup ulterior) să primească o formă canonică.
+            if (!empty($lookup['e164'])) {
+                $validated['phone'] = $lookup['e164'];
+            }
+        } catch (\Throwable $e) {
+            \Log::debug('TwilioLookup skipped on callback', ['err' => $e->getMessage()]);
+        }
+
         // Create or find lead
         // Create or update lead with pipeline stage
         $lead = Lead::updateOrCreate(

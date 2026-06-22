@@ -88,6 +88,10 @@ Route::get('/v1/chatbot/{channel}/booking-slots', [\App\Http\Controllers\Api\Cha
 // persisted with uniqueness guards and source='widget_action'.
 Route::post('/v1/chatbot/{channel}/booking-confirm', [\App\Http\Controllers\Api\ChatbotBookingConfirmController::class, 'store'])->middleware(['force.json', 'throttle:10,1']);
 Route::post('/v1/chatbot/{channel}/feedback', [ChatbotApiController::class, 'feedback'])->middleware(['force.json', 'throttle:30,1']);
+// Google Places autocomplete proxy — server-side ca să nu expunem API key.
+// 20/min/IP — autocomplete generează multe request-uri (keystroke debounce).
+Route::get('/v1/chatbot/{channel}/places-autocomplete', [ChatbotApiController::class, 'placesAutocomplete'])
+    ->middleware(['force.json', 'throttle:30,1']);
 Route::post('/v1/chatbot/{channel}/rate', [ChatbotApiController::class, 'rateConversation'])->middleware(['force.json', 'throttle:10,1']);
 
 // V2 Analytics, Capabilities & Lead capture (public, widget-facing).

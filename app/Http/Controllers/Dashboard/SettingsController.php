@@ -138,6 +138,32 @@ class SettingsController extends Controller
     }
 
     /**
+     * Lista numerelor care primesc SMS la lead nou (audit 2026-06-22).
+     * Folosit de TwilioSmsService prin listener-ul SendNewLeadCapturedEmail.
+     */
+    public function updateLeadAlerts(Request $request)
+    {
+        $tenant = auth()->user()->tenant;
+        $validated = $request->validate([
+            'sms_recipients' => 'nullable|string|max:500',
+        ]);
+        $numbers = array_values(array_filter(
+            array_map('trim', explode(',', $validated['sms_recipients'] ?? '')),
+            fn ($n) => $n !== ''
+        ));
+        // Cap 5 destinatari ca să nu transformăm într-un canal de spam.
+        $numbers = array_slice($numbers, 0, 5);
+
+        $existing = $tenant->settings ?? [];
+        $existing['notifications'] = array_merge(
+            $existing['notifications'] ?? [],
+            ['sms_recipients' => $numbers]
+        );
+        $tenant->update(['settings' => $existing]);
+        return back()->with('success', count($numbers) . ' numere salvate pentru alerte SMS.');
+    }
+
+    /**
      * Export GDPR — vizitator/utilizator solicită toate datele despre el
      * (email/phone). Returnează JSON streaming cu conversații + mesaje + leads
      * + callbacks. Endpoint operator-only (auth necesar).

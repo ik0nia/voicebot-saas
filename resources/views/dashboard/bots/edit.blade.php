@@ -999,6 +999,42 @@ function vcUpload() {
     }, 5000);
 })();
 @endif
+
+// Google Places autocomplete component (Iter audit 2026-06-22).
+// Proxy server-side la /dashboard/api/places-autocomplete. Cache hit pe
+// majoritatea queries → response ~50ms.
+function placesAutocomplete() {
+    return {
+        suggestions: [],
+        loading: false,
+        open: false,
+        lastQuery: '',
+        async search(text) {
+            const q = (text || '').trim();
+            if (q.length < 3 || q === this.lastQuery) return;
+            this.lastQuery = q;
+            this.loading = true;
+            try {
+                const r = await fetch('/dashboard/api/places-autocomplete?q=' + encodeURIComponent(q) + '&country=ro', {
+                    headers: { Accept: 'application/json' },
+                });
+                if (r.ok) {
+                    const d = await r.json();
+                    this.suggestions = d.suggestions || [];
+                    this.open = this.suggestions.length > 0;
+                }
+            } catch (e) { /* silent */ }
+            finally { this.loading = false; }
+        },
+        pick(suggestion) {
+            // Folosim contextul botEditor parent — businessInfo.address e
+            // în scope-ul lui.
+            this.$root.businessInfo.address = suggestion.full;
+            this.open = false;
+            this.suggestions = [];
+        },
+    };
+}
 </script>
 
 <style>[x-cloak]{display:none !important;}</style>

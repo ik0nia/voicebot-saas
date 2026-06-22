@@ -449,6 +449,19 @@ Route::middleware('auth')->prefix('dashboard/apeluri')->group(function () {
     Route::get('/{call}/audio', [CallController::class, 'audio'])->name('dashboard.calls.audio');
 });
 
+// Google Places autocomplete proxy pentru dashboard (auth-only).
+// Folosit din Tab Business + alte formulare cu adresa.
+Route::middleware('auth')->get('/dashboard/api/places-autocomplete', function (\Illuminate\Http\Request $request) {
+    $validated = $request->validate([
+        'q' => 'required|string|min:3|max:120',
+        'country' => 'nullable|string|size:2',
+    ]);
+    return response()->json([
+        'suggestions' => app(\App\Services\Google\GooglePlacesService::class)
+            ->autocomplete($validated['q'], strtolower($validated['country'] ?? 'ro')),
+    ]);
+})->name('dashboard.places.autocomplete')->middleware('throttle:60,1');
+
 // Conversations routes (dashboard) — text-based channels
 Route::middleware('auth')->prefix('dashboard/transcrieri')->group(function () {
     Route::get('/conversatie/{conversation}', [ConversationController::class, 'show'])->name('dashboard.conversations.show');
@@ -677,6 +690,9 @@ Route::middleware('auth')->prefix('dashboard/setari')->group(function () {
         ->middleware('tenant.role:tenant_admin')
         ->name('dashboard.settings.updateCompany');
     Route::put('/notifications', [SettingsController::class, 'updateNotifications'])->name('dashboard.settings.updateNotifications');
+    Route::put('/lead-alerts', [SettingsController::class, 'updateLeadAlerts'])
+        ->middleware('tenant.role:tenant_admin,tenant_manager')
+        ->name('dashboard.settings.updateLeadAlerts');
     Route::put('/retention', [SettingsController::class, 'updateRetention'])
         ->middleware('tenant.role:tenant_admin')
         ->name('dashboard.settings.updateRetention');
