@@ -124,6 +124,19 @@
                             <template x-if="c.sentiment === 'frustrated' || c.sentiment === 'negative'">
                                 <span class="inline-flex items-center px-1.5 py-0.5 rounded-pill text-2xs bg-amber-100 text-amber-800" x-text="c.sentiment"></span>
                             </template>
+                            {{-- Keyword alerts (voice): bot configurat să detecteze
+                                 cuvinte sensibile (ex: 'avocat', 'returnez',
+                                 'nemulțumit'). Cron alerts:detect-keywords scanează
+                                 transcripts și marchează conv. Operatorul vede
+                                 instant ce conv merită atenție prioritară. --}}
+                            <template x-if="c.keyword_alerts && c.keyword_alerts.length">
+                                <template x-for="kw in c.keyword_alerts.slice(0, 3)" :key="kw">
+                                    <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-pill text-2xs bg-coralh text-cream font-semibold"
+                                          title="Cuvânt-cheie detectat în conversație">
+                                        ⚠ <span x-text="kw"></span>
+                                    </span>
+                                </template>
+                            </template>
                         </div>
                     </button>
                 </template>

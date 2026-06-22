@@ -311,6 +311,102 @@ class BookingAdminController extends Controller
     }
 
     // ==============================================================
+    // Appointments listing + detail (Iter F — 2026-06-22)
+    // ==============================================================
+
+    /**
+     * Listă programări pentru un bot. Filtre: status, perioadă.
+     * Pagination simplă (50 / pagină); sortare descrescătoare după
+     * starts_at ca să apară primele cele apropiate.
+     */
+    public function appointments(Request $request, Bot $bot)
+    {
+        $this->authorizeBot($bot);
+        abort_unless($this->isBookingBot($bot), 404);
+
+        $status = $request->query('status', 'upcoming');
+        $q = Appointment::withoutGlobalScopes()
+            ->where('tenant_id', $bot->tenant_id)
+            ->where('bot_id', $bot->id)
+            ->with(['serviceType:id,name', 'staffMember:id,name'])
+            ->orderBy('starts_at', 'desc');
+
+        if ($status === 'upcoming') {
+            $q->whereIn('status', [Appointment::STATUS_REQUESTED, Appointment::STATUS_CONFIRMED, Appointment::STATUS_REMINDER_SENT])
+              ->where('starts_at', '>=', now()->subHours(2));
+        } elseif ($status === 'past') {
+            $q->where('starts_at', '<', now());
+        } elseif ($status === 'canceled') {
+            $q->whereIn('status', [Appointment::STATUS_CANCELED, Appointment::STATUS_NOSHOW]);
+        } elseif ($status === 'completed') {
+            $q->where('status', Appointment::STATUS_COMPLETED);
+        }
+
+        $appointments = $q->paginate(50)->withQueryString();
+
+        $counts = [
+            'upcoming' => Appointment::withoutGlobalScopes()
+                ->where('tenant_id', $bot->tenant_id)->where('bot_id', $bot->id)
+                ->whereIn('status', [Appointment::STATUS_REQUESTED, Appointment::STATUS_CONFIRMED, Appointment::STATUS_REMINDER_SENT])
+                ->where('starts_at', '>=', now()->subHours(2))->count(),
+            'past' => Appointment::withoutGlobalScopes()
+                ->where('tenant_id', $bot->tenant_id)->where('bot_id', $bot->id)
+                ->where('starts_at', '<', now())->count(),
+            'canceled' => Appointment::withoutGlobalScopes()
+                ->where('tenant_id', $bot->tenant_id)->where('bot_id', $bot->id)
+                ->whereIn('status', [Appointment::STATUS_CANCELED, Appointment::STATUS_NOSHOW])->count(),
+        ];
+
+        return view('dashboard.bots.booking.appointments', compact('bot', 'appointments', 'status', 'counts'));
+    }
+
+    /**
+     * Pagina de detail pentru o programare individuală. Permite: marcare
+     * completed/noshow/canceled + adăugare notă.
+     */
+    public function appointmentShow(Bot $bot, Appointment $appointment)
+    {
+        $this->authorizeBot($bot);
+        $this->authorizeChild($bot, $appointment);
+        $appointment->load(['serviceType', 'staffMember', 'lead', 'conversation', 'rescheduledFrom']);
+        return view('dashboard.bots.booking.appointment-show', compact('bot', 'appointment'));
+    }
+
+    /**
+     * Actualizează statusul unei programări (completed / canceled / noshow).
+     * Și permite adăugare/edit notes server-side ca tracking pentru staff.
+     */
+    public function appointmentUpdate(Request $request, Bot $bot, Appointment $appointment)
+    {
+        $this->authorizeBot($bot);
+        $this->authorizeChild($bot, $appointment);
+
+        $validated = $request->validate([
+            'status' => 'nullable|string|in:requested,confirmed,reminder_sent,completed,canceled,noshow',
+            'cancel_reason' => 'nullable|string|max:300',
+            'notes' => 'nullable|string|max:2000',
+        ]);
+
+        if (!empty($validated['status'])) {
+            $appointment->status = $validated['status'];
+            if (in_array($validated['status'], [Appointment::STATUS_CANCELED, Appointment::STATUS_NOSHOW], true)) {
+                $appointment->canceled_at = now();
+                if (!empty($validated['cancel_reason'])) {
+                    $appointment->cancel_reason = $validated['cancel_reason'];
+                }
+            }
+        }
+        if (array_key_exists('notes', $validated)) {
+            $appointment->notes = $validated['notes'];
+        }
+        $appointment->save();
+
+        return redirect()
+            ->route('dashboard.bots.booking.appointment', [$bot, $appointment])
+            ->with('success', 'Programare actualizată.');
+    }
+
+    // ==============================================================
     // helpers
     // ==============================================================
 

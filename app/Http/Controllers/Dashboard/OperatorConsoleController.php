@@ -61,6 +61,7 @@ class OperatorConsoleController extends Controller
             $isUnassigned = empty($c->assignee_user_id);
             $needsHuman = (bool) ($c->metadata['needs_human'] ?? false);
             $autoTags = $c->metadata['auto_tags'] ?? null;
+            $keywordAlerts = $c->metadata['keyword_alerts'] ?? null;
 
             return [
                 'id' => $c->id,
@@ -78,6 +79,7 @@ class OperatorConsoleController extends Controller
                 'needs_human' => $needsHuman,
                 'urgency' => $autoTags['urgency'] ?? null,
                 'sentiment' => $autoTags['sentiment'] ?? null,
+                'keyword_alerts' => is_array($keywordAlerts) && !empty($keywordAlerts) ? array_values($keywordAlerts) : null,
             ];
         })->all();
 

@@ -40,14 +40,17 @@ class DetectKeywordAlerts extends Command
         }
 
         $hits = 0;
+        // Per-conversation aggregate ca să nu re-deschidem conv de N ori.
+        $convoHits = [];
+
         foreach ($bots as $bot) {
-            $keywords = $bot->voiceSettings()['keyword_alerts'];
+            $keywords = array_filter(array_map(fn($k) => mb_strtolower(trim((string) $k)), $bot->voiceSettings()['keyword_alerts']));
 
             // Scanează mesaje recente pentru bot-ul ăsta.
             Message::query()
                 ->whereHas('conversation', fn($q) => $q->where('bot_id', $bot->id))
                 ->where('created_at', '>=', $cutoff)
-                ->chunk(200, function ($msgs) use ($keywords, &$hits) {
+                ->chunk(200, function ($msgs) use ($keywords, &$hits, &$convoHits) {
                     foreach ($msgs as $msg) {
                         $low = mb_strtolower((string) $msg->content);
                         foreach ($keywords as $k) {
@@ -60,13 +63,32 @@ class DetectKeywordAlerts extends Command
                                     $msg->update(['metadata' => $meta]);
                                     $hits++;
                                 }
+                                // Aggregate la conv pentru badge inbox.
+                                $convoHits[$msg->conversation_id] = array_values(array_unique(
+                                    array_merge($convoHits[$msg->conversation_id] ?? [], [$k])
+                                ));
                             }
                         }
                     }
                 });
         }
 
-        $this->info(sprintf('Keyword hits flagged: %d.', $hits));
+        // Propagă la Conversation.metadata.keyword_alerts ca operatorul să
+        // vadă badge-ul în feed fără să scaneze fiecare mesaj. Idempotent —
+        // merge keyword-uri nu duplica.
+        foreach ($convoHits as $convId => $kws) {
+            $conv = Conversation::withoutGlobalScopes()->find($convId);
+            if (!$conv) continue;
+            $meta = is_array($conv->metadata) ? $conv->metadata : [];
+            $current = $meta['keyword_alerts'] ?? [];
+            $merged = array_values(array_unique(array_merge($current, $kws)));
+            if (count($merged) !== count($current)) {
+                $meta['keyword_alerts'] = $merged;
+                $conv->update(['metadata' => $meta]);
+            }
+        }
+
+        $this->info(sprintf('Keyword hits flagged: %d (across %d conversations).', $hits, count($convoHits)));
         return self::SUCCESS;
     }
 }

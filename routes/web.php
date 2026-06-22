@@ -406,6 +406,10 @@ Route::middleware('auth')->prefix('dashboard/agenti/{bot}/programari')->group(fu
     Route::delete('/personal/{staff}',               [BookingAdminController::class, 'destroyStaff'])->name('dashboard.bots.booking.staff.destroy');
     Route::put('/program',                           [BookingAdminController::class, 'updateHours'])->name('dashboard.bots.booking.hours.update');
     Route::post('/advanced-mode',                    [BookingAdminController::class, 'toggleAdvanced'])->name('dashboard.bots.booking.advancedMode');
+    // Appointments listing + detail (Iter F, 2026-06-22).
+    Route::get('/appointments',                      [BookingAdminController::class, 'appointments'])->name('dashboard.bots.booking.appointments');
+    Route::get('/appointments/{appointment}',        [BookingAdminController::class, 'appointmentShow'])->name('dashboard.bots.booking.appointment');
+    Route::patch('/appointments/{appointment}',      [BookingAdminController::class, 'appointmentUpdate'])->name('dashboard.bots.booking.appointment.update');
 });
 
 // Calls routes (dashboard). The list page (`/dashboard/apeluri`)
