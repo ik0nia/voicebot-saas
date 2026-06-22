@@ -102,7 +102,11 @@ class RealtimeClient
                     'format' => ['type' => 'audio/pcmu'],
                     'turn_detection' => [
                         'type' => $options['vad_type'] ?? 'semantic_vad',
-                        'eagerness' => $options['vad_eagerness'] ?? 'low',
+                        // Audit latență 2026-06-22: default era 'low' (modelul
+                        // așteaptă mult până decide end-of-turn) → +200-500ms
+                        // percepție latență. „auto" lasă modelul să balanseze,
+                        // pentru conversații naturale e clar mai bun.
+                        'eagerness' => $options['vad_eagerness'] ?? 'auto',
                     ],
                     'transcription' => $transcription,
                 ],

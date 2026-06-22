@@ -4,6 +4,12 @@ namespace App\Services;
 
 class IntentDetectionService
 {
+    // Memoize per-request — același mesaj e analizat de 2-3 ori într-un
+    // singur turn (orchestrator + chat assembler + skipKnowledge). Pure
+    // pattern matching, fără side effects → memoization safe.
+    private array $detectCache = [];
+    private array $skipKnowledgeCache = [];
+
     /**
      * Detect intents from a user message and return intent flags.
      *
@@ -11,9 +17,13 @@ class IntentDetectionService
      */
     public function detect(string $message): array
     {
+        $key = md5($message);
+        if (isset($this->detectCache[$key])) {
+            return $this->detectCache[$key];
+        }
         $msg = mb_strtolower(trim($message));
 
-        return [
+        return $this->detectCache[$key] = [
             'is_order_query' => $this->isExistingOrderQuery($msg),
             'is_new_order_intent' => $this->isNewOrderIntent($msg),
             'is_product_search' => $this->isProductSearch($msg),

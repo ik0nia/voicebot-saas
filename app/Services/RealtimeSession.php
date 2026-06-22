@@ -116,7 +116,7 @@ class RealtimeSession
             'voice' => $this->bot->voice ?? 'alloy',
             'modalities' => $this->ttsStrategy->getModalities(),
             'vad_type' => $settings['vad_type'] ?? 'semantic_vad',
-            'vad_eagerness' => $settings['vad_eagerness'] ?? 'low',
+            'vad_eagerness' => $settings['vad_eagerness'] ?? 'auto',
             'temperature' => $settings['temperature'] ?? 0.7,
             'max_tokens' => $settings['max_tokens'] ?? 1024,
             // gpt-realtime-2: reasoning intern înainte de speech.
@@ -219,39 +219,43 @@ class RealtimeSession
                 . "\n=== SFÂRȘIT INSTRUCȚIUNI PRODUSE ===";
         }
 
-        // Augment with knowledge-base context + product search
+        // Augment with knowledge-base context + product search.
+        // Audit latență 2026-06-22: aceste 3 query-uri (KB embedding +
+        // pgvector + FTS pe Products + WooCategory tree) rulează la fiecare
+        // call WS open, blochează session.update → response.create. Costau
+        // 300-800ms per call. Acum cache 10 min, invalidat de
+        // `knowledge_version_{$botId}` la KB sync.
         try {
-            $query = $this->hasProducts
-                ? 'produse populare, categorii principale, informații magazin'
-                : 'informații generale despre companie și servicii';
+            $kbVersion = \Cache::get("knowledge_version_{$this->bot->id}", 0);
+            $cacheKey = "voice_init_ctx:{$this->bot->id}:v{$kbVersion}:" . ($this->hasProducts ? 'shop' : 'svc');
+            $extra = \Cache::remember($cacheKey, 600, function () {
+                $query = $this->hasProducts
+                    ? 'produse populare, categorii principale, informații magazin'
+                    : 'informații generale despre companie și servicii';
 
-            $knowledgeContext = $this->knowledgeService->buildContext(
-                $this->bot->id,
-                $query,
-                4, // Keep init context lean; mid-call updates fetch more
-                3500 // Max 3500 chars for initial voice prompt
-            );
-
-            if ($knowledgeContext) {
-                $base .= "\n\n" . $knowledgeContext;
-            }
-
-            // Add initial popular products for immediate availability
-            if ($this->hasProducts) {
-                try {
-                    $productSearch = app(ProductSearchService::class);
-                    $popular = $productSearch->search($this->bot->id, 'produse populare', 5);
-                    if (!empty($popular)) {
-                        $base .= "\n\nProduse populare din magazin:\n";
-                        foreach ($popular as $p) {
-                            $unit = $p->price_unit ? " / {$p->price_unit}" : '';
-                            $base .= "- {$p->name}: {$p->price} {$p->currency}{$unit}\n";
-                        }
-                    }
-                } catch (\Throwable $e) {
-                    // silently skip
+                $out = '';
+                $knowledgeContext = $this->knowledgeService->buildContext($this->bot->id, $query, 4, 3500);
+                if ($knowledgeContext) {
+                    $out .= "\n\n" . $knowledgeContext;
                 }
-            }
+                if ($this->hasProducts) {
+                    try {
+                        $productSearch = app(ProductSearchService::class);
+                        $popular = $productSearch->search($this->bot->id, 'produse populare', 5);
+                        if (!empty($popular)) {
+                            $out .= "\n\nProduse populare din magazin:\n";
+                            foreach ($popular as $p) {
+                                $unit = $p->price_unit ? " / {$p->price_unit}" : '';
+                                $out .= "- {$p->name}: {$p->price} {$p->currency}{$unit}\n";
+                            }
+                        }
+                    } catch (\Throwable $e) {
+                        // silently skip
+                    }
+                }
+                return $out;
+            });
+            $base .= $extra;
         } catch (\Throwable $e) {
             Log::warning("RealtimeSession: failed to load knowledge context for bot {$this->bot->id}", [
                 'error' => $e->getMessage(),
@@ -265,10 +269,15 @@ class RealtimeSession
             ?? $this->bot->language
             ?? 'română';
 
-        // Add category tree context for guided navigation
+        // Add category tree context for guided navigation. Cache 1h —
+        // categoriile se schimbă rar (audit latență: 20-80ms / call salvat).
         if ($this->hasProducts) {
             try {
-                $categoryContext = \App\Models\WooCommerceCategory::toChatContext($this->bot->id);
+                $categoryContext = \Cache::remember(
+                    "cat_tree_voice:{$this->bot->id}",
+                    3600,
+                    fn () => \App\Models\WooCommerceCategory::toChatContext($this->bot->id)
+                );
                 if ($categoryContext) {
                     $base .= "\n\n=== CATEGORII DISPONIBILE ===\n" . $categoryContext . "\n=== SFÂRȘIT CATEGORII ===";
                 }

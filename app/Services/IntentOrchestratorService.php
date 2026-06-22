@@ -290,6 +290,14 @@ class IntentOrchestratorService
         ?Conversation $conversation,
     ): OrchestratorResult {
         // ── Post-pipeline: Lead scoring ──
+        // Audit latență 2026-06-22: lead scoring rulează 3-4 query-uri DB
+        // serial pe path-ul critic înainte de stream. Pe conversațiile foarte
+        // scurte (< 3 mesaje) scorul oricum nu produce trigger semnificativ
+        // (threshold default = 30, msgCount-based signals încep la 3 msgs).
+        // Skip pentru turn-uri timpurii — economisim 30-100ms/turn la start.
+        if ($conversation && (int) ($conversation->messages_count ?? 0) < 3) {
+            return $result;
+        }
         if ($conversation) {
             try {
                 // Check if lead capture was already requested in recent messages

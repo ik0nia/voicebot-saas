@@ -83,7 +83,15 @@ final class ChatPromptAssembler
         $intents = $this->intentService->detect($userMessage);
         $skipKnowledge = $this->intentService->shouldSkipKnowledge($userMessage);
 
-        $knowledgeContext = $this->resolveKnowledgeContext($bot, $userMessage, $skipKnowledge);
+        // Audit latență 2026-06-22: dacă orchestratorul deja a populat KB
+        // în extraContext (marker generat de KnowledgeSearchService::buildContext),
+        // sărim peste al doilea apel RAG identic. Economie: 150-400ms / turn.
+        $orchestratorAlreadyDidRag = $extraContext !== ''
+            && str_contains($extraContext, 'Informații relevante din baza de cunoștințe');
+
+        $knowledgeContext = $orchestratorAlreadyDidRag
+            ? ''
+            : $this->resolveKnowledgeContext($bot, $userMessage, $skipKnowledge);
         if ($knowledgeContext !== '') {
             $systemPrompt .= "\n\n" . $knowledgeContext;
         }

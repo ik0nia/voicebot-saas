@@ -37,6 +37,11 @@ class AppServiceProvider extends ServiceProvider
         // TokenizerService — singleton to avoid re-loading encoding on every call
         $this->app->singleton(\App\Services\TokenizerService::class);
 
+        // IntentDetectionService — singleton ca memoization per-request să
+        // funcționeze cross-services (orchestrator + chat assembler).
+        // detect() e apelat de 3 ori în același turn pe același mesaj.
+        $this->app->singleton(\App\Services\IntentDetectionService::class);
+
         // Bind the ChatResponder contract to the concrete
         // implementation so tests can swap in a double without the
         // concrete class needing to drop `final`.
