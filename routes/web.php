@@ -408,6 +408,8 @@ Route::middleware('auth')->prefix('dashboard/agenti/{bot}/programari')->group(fu
     Route::post('/advanced-mode',                    [BookingAdminController::class, 'toggleAdvanced'])->name('dashboard.bots.booking.advancedMode');
     // Appointments listing + detail (Iter F, 2026-06-22).
     Route::get('/appointments',                      [BookingAdminController::class, 'appointments'])->name('dashboard.bots.booking.appointments');
+    Route::get('/appointments/nou',                  [BookingAdminController::class, 'appointmentCreate'])->name('dashboard.bots.booking.appointment.create');
+    Route::post('/appointments',                     [BookingAdminController::class, 'appointmentStore'])->name('dashboard.bots.booking.appointment.store');
     Route::get('/appointments/{appointment}',        [BookingAdminController::class, 'appointmentShow'])->name('dashboard.bots.booking.appointment');
     Route::patch('/appointments/{appointment}',      [BookingAdminController::class, 'appointmentUpdate'])->name('dashboard.bots.booking.appointment.update');
     // Google Calendar sync (Iter G).

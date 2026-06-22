@@ -119,20 +119,30 @@
                 @endif
             </div>
 
-            {{-- Notes editor + status change form --}}
-            <form method="POST" action="{{ route('dashboard.bots.booking.appointment.update', [$bot, $appointment]) }}"
-                  class="bg-white rounded-xl border border-line p-5 space-y-4">
-                @csrf
-                @method('PATCH')
-                <div>
+            {{-- 2 forme separate (audit fix 2026-06-22): note + status. Anterior
+                 într-un singur form, Enter în textarea apăsa primul submit găsit
+                 (Confirmată) și degrada statusul fără ca userul să intenționeze. --}}
+            <div class="bg-white rounded-xl border border-line p-5 space-y-5">
+                <form method="POST" action="{{ route('dashboard.bots.booking.appointment.update', [$bot, $appointment]) }}">
+                    @csrf
+                    @method('PATCH')
                     <label class="block text-xs font-semibold text-muted uppercase mb-2">Note interne</label>
                     <textarea name="notes" rows="4" maxlength="2000"
                               placeholder="Detalii vizibile doar pentru echipă (alergii, observații, etc.)"
                               class="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">{{ old('notes', $appointment->notes) }}</textarea>
-                </div>
+                    <div class="flex justify-end mt-3">
+                        <button type="submit"
+                                class="rounded-lg bg-ink text-cream px-4 py-2 text-sm font-medium hover:bg-inkSoft transition">
+                            Salvează note
+                        </button>
+                    </div>
+                </form>
 
                 @if($isActive)
-                    <div class="border-t border-line pt-4">
+                    <form method="POST" action="{{ route('dashboard.bots.booking.appointment.update', [$bot, $appointment]) }}"
+                          class="border-t border-line pt-4">
+                        @csrf
+                        @method('PATCH')
                         <label class="block text-xs font-semibold text-muted uppercase mb-2">Marchează status</label>
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                             <button type="submit" name="status" value="confirmed"
@@ -154,16 +164,9 @@
                                 ✗ Anulează
                             </button>
                         </div>
-                    </div>
+                    </form>
                 @endif
-
-                <div class="flex justify-end pt-2">
-                    <button type="submit"
-                            class="rounded-lg bg-ink text-cream px-4 py-2 text-sm font-medium hover:bg-inkSoft transition">
-                        Salvează note
-                    </button>
-                </div>
-            </form>
+            </div>
         </div>
 
         {{-- Side: meta + actions --}}
@@ -190,7 +193,7 @@
                         </a>
                     @endif
                     @if($appointment->conversation)
-                        <a href="{{ route('dashboard.inbox.show', $appointment->conversation) }}"
+                        <a href="{{ route('dashboard.conversations.show', $appointment->conversation) }}"
                            class="block text-center rounded-lg border border-line bg-cream px-3 py-2 text-sm text-ink hover:bg-coralsoft hover:text-coralh transition">
                             💬 Vezi conversația
                         </a>
@@ -225,7 +228,8 @@
                                    class="w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm">
                             <p class="text-xs text-muted mt-1">Lasă gol pentru a păstra durata actuală.</p>
                         </div>
-                        <input type="hidden" name="status" value="confirmed">
+                        {{-- Nu trimitem status — păstrează statusul curent
+                             (reminder_sent rămâne reminder_sent etc.). --}}
                         <div class="flex justify-end gap-2 pt-2">
                             <button type="button" @click="rescheduleOpen = false" class="text-sm text-muted hover:text-ink px-3 py-2">Renunță</button>
                             <button type="submit" class="rounded-lg bg-coral text-white px-4 py-2 text-sm font-semibold hover:bg-coralh">

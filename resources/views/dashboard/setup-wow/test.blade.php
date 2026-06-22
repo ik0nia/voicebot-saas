@@ -105,11 +105,43 @@
                 @csrf
                 <button type="submit"
                         class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-emerald-600 text-emerald-700 text-sm font-medium hover:bg-emerald-50 transition">
-                    Du-mă în dashboard →
+                    Termin onboarding →
                 </button>
             </form>
         </div>
     </div>
+
+    {{-- Next-step checklist (fix audit 2026-06-22): wizard-ul promitea „live"
+         dar nu spunea ce urmează. Acum afișează 3 acțiuni concrete. --}}
+    @if($bot)
+        <div class="mt-6 rounded-xl border border-line bg-white p-5">
+            <h3 class="text-sm font-semibold text-ink mb-3">✅ Agentul tău e gata pentru chat. Ce mai poți face:</h3>
+            <ul class="space-y-2 text-sm text-inkSoft">
+                <li class="flex items-start gap-2">
+                    <span class="mt-0.5">🌐</span>
+                    <div class="flex-1">
+                        <strong>Pune-l pe site-ul tău</strong> —
+                        <a href="{{ route('dashboard.bots.knowledge.index', $bot) }}#embed" class="text-coralh hover:underline">copiază codul de embed</a>
+                        și pune-l înainte de <code class="text-xs bg-cream px-1.5 py-0.5 rounded">&lt;/body&gt;</code>.
+                    </div>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="mt-0.5">📞</span>
+                    <div class="flex-1">
+                        <strong>Adaugă voice (telefon)</strong> — pentru ca agentul să răspundă și la apeluri, ai nevoie de un număr.
+                        <a href="{{ route('dashboard.numbers.index') }}" class="text-coralh hover:underline">Provizionează un număr</a>.
+                    </div>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="mt-0.5">📚</span>
+                    <div class="flex-1">
+                        <strong>Adaugă mai multe cunoștințe</strong> — urcă PDF-uri, prețuri, broșuri.
+                        <a href="{{ route('dashboard.bots.knowledge.index', $bot) }}" class="text-coralh hover:underline">Mergi în baza de cunoștințe</a>.
+                    </div>
+                </li>
+            </ul>
+        </div>
+    @endif
 
     <div class="mt-4 flex items-center justify-between gap-4">
         <a href="{{ route('dashboard.setup-wow.step', ['step' => 'agent']) }}" class="text-sm text-muted hover:text-ink">← Modifică agentul</a>

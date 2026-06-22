@@ -735,7 +735,10 @@ function operatorConsole() {
                 if (d.message) {
                     this.messages.push({
                         id: d.message.id,
-                        role: 'bot',
+                        // Fix audit 2026-06-22: era 'bot' și label „Operator" nu se
+                        // mai afișa până la următorul poll. Acum apare imediat corect.
+                        role: 'operator',
+                        operator_name: d.message.operator_name || 'tu',
                         content: d.message.content,
                         at_relative: 'acum',
                         is_operator: true,

@@ -13,6 +13,10 @@
             <p class="text-sm text-muted mt-1">Toate rezervările făcute de agentul AI sau direct prin widget.</p>
         </div>
         <div class="flex flex-wrap gap-2">
+            <a href="{{ route('dashboard.bots.booking.appointment.create', $bot) }}"
+               class="btn-coral text-xs font-semibold rounded-lg px-3 py-1.5">
+                + Programare nouă
+            </a>
             <a href="{{ route('dashboard.bots.booking.appointments', ['bot' => $bot, 'view' => 'calendar']) }}"
                class="text-xs font-medium text-coralh hover:text-coral border border-coral/30 bg-coralsoft rounded-lg px-3 py-1.5">
                 📅 Vedere calendar

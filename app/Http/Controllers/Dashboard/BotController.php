@@ -113,7 +113,7 @@ class BotController extends Controller
             'name' => 'required|string|max:255',
             'site_id' => 'nullable|exists:sites,id',
             'language' => 'required|string|in:ro,en,de,fr,es',
-            'voice' => 'required|string|in:alloy,echo,fable,onyx,nova,shimmer',
+            'voice' => 'required|string|in:alloy,echo,fable,onyx,nova,shimmer,coral,sage,ash,ballad,verse,marin,cedar',
             'system_prompt' => 'nullable|string|max:10000',
             'settings' => 'nullable|array',
         ]);
@@ -208,7 +208,7 @@ class BotController extends Controller
             'name' => 'required|string|max:255',
             'site_id' => 'nullable|exists:sites,id',
             'language' => 'required|string|in:ro,en,de,fr,es',
-            'voice' => 'required|string',
+            'voice' => 'required|string|in:alloy,echo,fable,onyx,nova,shimmer,coral,sage,ash,ballad,verse,marin,cedar',
             'system_prompt' => 'nullable|string|max:10000',
             'greeting_message' => 'nullable|string|max:500',
             'settings' => 'nullable|array',

@@ -228,34 +228,14 @@
                         </div>
                     </details>
 
-                    {{-- LLM tuning per-bot — temperature + max_tokens + reasoning_effort --}}
+                    {{-- LLM tuning per-bot — adăugări față de „Parametri tehnici" (sliders) de mai sus:
+                         reasoning_effort + prefix_padding_ms. Vad/silence/temperature/max_tokens
+                         sunt canonical sus, NU îi mai dublăm aici (audit 2026-06-22). --}}
                     <details class="mt-4 pt-4 border-t border-line">
                         <summary class="cursor-pointer text-sm font-medium text-ink py-1 select-none">
-                            🧠 Comportament LLM (temperature, max tokens, reasoning)
+                            🧠 Setări LLM extra (reasoning, prefix audio)
                         </summary>
                         <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs font-medium text-inkSoft mb-1">
-                                    Temperature (0 – 2)
-                                    <span class="text-muted font-normal">— creativitate vs predictibilitate</span>
-                                </label>
-                                <input type="number" step="0.05" min="0" max="2"
-                                       name="settings[temperature]"
-                                       value="{{ old('settings.temperature', data_get($bot->settings, 'temperature')) }}"
-                                       placeholder="default 0.7"
-                                       class="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm">
-                                <p class="text-xs text-muted mt-1">Sub 0.5 = factual; peste 1.0 = mai creativ. Lasă gol pentru 0.7.</p>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-inkSoft mb-1">
-                                    Max tokens reply (64 – 4096)
-                                </label>
-                                <input type="number" step="32" min="64" max="4096"
-                                       name="settings[max_tokens]"
-                                       value="{{ old('settings.max_tokens', data_get($bot->settings, 'max_tokens')) }}"
-                                       placeholder="default 1024"
-                                       class="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm">
-                            </div>
                             <div>
                                 <label class="block text-xs font-medium text-inkSoft mb-1">
                                     Reasoning effort (gpt-realtime / o4)
@@ -270,48 +250,23 @@
                                     <option value="high" {{ $current === 'high' ? 'selected' : '' }}>high</option>
                                     <option value="xhigh" {{ $current === 'xhigh' ? 'selected' : '' }}>xhigh</option>
                                 </select>
+                                <p class="text-xs text-muted mt-1">Cât „gândește" modelul înainte să răspundă. Higher = mai bun la situații complexe, dar latency mai mare.</p>
                             </div>
                             <div>
-                                <p class="text-xs text-muted">
-                                    Fusul orar și mesajul „suntem închiși acum" se setează în
-                                    <button type="button" @click="tab = 'business'" class="underline text-coralh hover:text-coral">Tab „Business"</button>.
-                                </p>
-                            </div>
-                        </div>
-                    </details>
-
-                    {{-- Voice fine-tuning per-bot --}}
-                    <details class="mt-4 pt-4 border-t border-line">
-                        <summary class="cursor-pointer text-sm font-medium text-ink py-1 select-none">
-                            🎙️ Setări voce (VAD, pauze)
-                        </summary>
-                        <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <div>
-                                <label class="block text-xs font-medium text-inkSoft mb-1">VAD threshold (0.1 – 1.0)</label>
-                                <input type="number" step="0.05" min="0.1" max="1.0"
-                                       name="settings[vad_threshold]"
-                                       value="{{ old('settings.vad_threshold', data_get($bot->settings, 'vad_threshold')) }}"
-                                       placeholder="default 0.9"
-                                       class="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-inkSoft mb-1">Silence duration (ms)</label>
-                                <input type="number" step="100" min="100" max="3000"
-                                       name="settings[silence_duration_ms]"
-                                       value="{{ old('settings.silence_duration_ms', data_get($bot->settings, 'silence_duration_ms')) }}"
-                                       placeholder="default 1000"
-                                       class="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-inkSoft mb-1">Prefix padding (ms)</label>
+                                <label class="block text-xs font-medium text-inkSoft mb-1">Prefix padding voice (ms)</label>
                                 <input type="number" step="50" min="0" max="1500"
                                        name="settings[prefix_padding_ms]"
                                        value="{{ old('settings.prefix_padding_ms', data_get($bot->settings, 'prefix_padding_ms')) }}"
                                        placeholder="default 500"
                                        class="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm">
+                                <p class="text-xs text-muted mt-1">Cât audio din pauza pre-vorbire e trimis la model (pentru cuvinte cu „intrare" lentă).</p>
                             </div>
                         </div>
-                        <p class="text-xs text-muted mt-2">VAD threshold mai mic = bot intervine la pauze mai scurte (mai rapid, dar poate întrerupe). Silence duration = câte ms trebuie să tacă utilizatorul ca bot-ul să răspundă.</p>
+                        <p class="text-xs text-muted mt-3">
+                            Fusul orar și mesajul „suntem închiși acum" se setează în
+                            <button type="button" @click="tab = 'business'" class="underline text-coralh hover:text-coral">Tab „Business"</button>.
+                        </p>
+                    </details>
                     </details>
 
                     {{-- Handoff text override --}}

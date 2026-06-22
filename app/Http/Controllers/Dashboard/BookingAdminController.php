@@ -391,6 +391,68 @@ class BookingAdminController extends Controller
     }
 
     /**
+     * Form de creare manuală appointment (recepționer adaugă programare
+     * pentru un client care a sunat direct, fără bot).
+     */
+    public function appointmentCreate(Bot $bot)
+    {
+        $this->authorizeBot($bot);
+        abort_unless($this->isBookingBot($bot), 404);
+
+        $services = ServiceType::withoutGlobalScopes()
+            ->where('bot_id', $bot->id)->orderBy('name')->get();
+        $staff = StaffMember::withoutGlobalScopes()
+            ->where('bot_id', $bot->id)->where('is_active', true)->orderBy('name')->get();
+
+        return view('dashboard.bots.booking.appointment-create', compact('bot', 'services', 'staff'));
+    }
+
+    public function appointmentStore(Request $request, Bot $bot)
+    {
+        $this->authorizeBot($bot);
+        abort_unless($this->isBookingBot($bot), 404);
+
+        $validated = $request->validate([
+            'customer_name' => 'required|string|max:120',
+            'customer_phone' => 'nullable|string|max:30',
+            'customer_email' => 'nullable|email|max:180',
+            'service_type_id' => 'nullable|integer|exists:service_types,id',
+            'staff_member_id' => 'nullable|integer|exists:staff_members,id',
+            'starts_at' => 'required|date|after_or_equal:now',
+            'ends_at' => 'nullable|date|after:starts_at',
+            'notes' => 'nullable|string|max:2000',
+        ]);
+
+        // Resolvă durata din ServiceType dacă ends_at nu vine.
+        $start = \Carbon\Carbon::parse($validated['starts_at']);
+        if (!empty($validated['ends_at'])) {
+            $end = \Carbon\Carbon::parse($validated['ends_at']);
+        } else {
+            $svc = !empty($validated['service_type_id']) ? ServiceType::find($validated['service_type_id']) : null;
+            $end = $start->copy()->addMinutes($svc?->duration_minutes ?? 30);
+        }
+
+        $appointment = Appointment::create([
+            'tenant_id' => $bot->tenant_id,
+            'bot_id' => $bot->id,
+            'service_type_id' => $validated['service_type_id'] ?? null,
+            'staff_member_id' => $validated['staff_member_id'] ?? null,
+            'customer_name' => $validated['customer_name'],
+            'customer_phone' => $validated['customer_phone'] ?? null,
+            'customer_email' => $validated['customer_email'] ?? null,
+            'starts_at' => $start,
+            'ends_at' => $end,
+            'status' => Appointment::STATUS_CONFIRMED,
+            'source' => 'manual_dashboard',
+            'notes' => $validated['notes'] ?? null,
+        ]);
+
+        return redirect()
+            ->route('dashboard.bots.booking.appointment', [$bot, $appointment])
+            ->with('success', 'Programare adăugată manual.');
+    }
+
+    /**
      * Pagina de detail pentru o programare individuală. Permite: marcare
      * completed/noshow/canceled + adăugare notă.
      */
