@@ -420,6 +420,13 @@
             if (typeof data.cookie_consent_required === 'boolean') config.cookieConsentRequired = data.cookie_consent_required;
             if (typeof data.privacy_policy_url === 'string') config.privacyPolicyUrl = data.privacy_policy_url;
             if (typeof data.show_branding === 'boolean') config.showBranding = data.show_branding;
+            // Branding bot (Iter audit 2026-06-22): welcome_banner + avatar.
+            if (typeof data.welcome_banner === 'string' && data.welcome_banner.trim().length > 0) {
+                config.welcomeBanner = data.welcome_banner.trim().slice(0, 300);
+            }
+            if (typeof data.avatar_url === 'string' && /^https?:\/\//.test(data.avatar_url)) {
+                config.avatarUrl = data.avatar_url;
+            }
             try {
                 if (config.darkMode) document.documentElement.setAttribute('data-sambla-dark', '1');
                 if (config.position === 'left' || config.position === 'bottom-left') {
@@ -432,6 +439,38 @@
                         var btn = document.querySelector('.sambla-launcher');
                         if (btn) btn.click();
                     }, config.proactiveAfterSeconds * 1000);
+                }
+                // Avatar URL: înlocuiește SVG-ul implicit din header cu imaginea
+                // configurată pe bot. Best-effort — eșec la load → revine la SVG.
+                if (config.avatarUrl) {
+                    var avatarSlot = document.querySelector('.sambla-header-avatar');
+                    if (avatarSlot) {
+                        var img = document.createElement('img');
+                        img.src = config.avatarUrl;
+                        img.alt = '';
+                        img.style.cssText = 'width:38px;height:38px;border-radius:50%;object-fit:cover;';
+                        img.onload = function() {
+                            avatarSlot.innerHTML = '';
+                            avatarSlot.appendChild(img);
+                        };
+                    }
+                }
+                // Welcome banner: bandă text deasupra primului mesaj al bot-ului.
+                // Adăugat la deschiderea widget-ului prima dată (după DOM mount).
+                if (config.welcomeBanner) {
+                    var insertBanner = function() {
+                        var msgs = document.querySelector('.sambla-messages');
+                        if (!msgs || msgs.querySelector('.sambla-welcome-banner')) return;
+                        var b = document.createElement('div');
+                        b.className = 'sambla-welcome-banner';
+                        b.style.cssText = 'margin:8px 12px;padding:8px 12px;background:rgba(0,0,0,0.04);border-left:3px solid currentColor;border-radius:6px;font-size:12px;line-height:1.4;color:#444;';
+                        b.textContent = config.welcomeBanner;
+                        msgs.insertBefore(b, msgs.firstChild);
+                    };
+                    // Rulează acum + la fiecare deschidere (banner-ul rămâne sus).
+                    setTimeout(insertBanner, 100);
+                    var launcher = document.querySelector('.sambla-launcher');
+                    if (launcher) launcher.addEventListener('click', function() { setTimeout(insertBanner, 50); });
                 }
             } catch (e) { /* silent */ }
             if (callback) callback(data);

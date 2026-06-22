@@ -360,7 +360,7 @@ class BotController extends Controller
             $incoming['tone_guide']['emoji_ok'] = (bool) $incoming['tone_guide']['emoji_ok'];
         }
         // Normalize the new per-bot toggle booleans (RAG, compliance).
-        foreach (['rag.brand_aware_enabled', 'rag.query_expansion_enabled', 'compliance.ai_disclosure_enabled'] as $path) {
+        foreach (['rag.brand_aware_enabled', 'rag.query_expansion_enabled', 'rag.sibling_chunks_enabled', 'compliance.ai_disclosure_enabled'] as $path) {
             [$group, $key] = explode('.', $path, 2);
             if (isset($incoming[$group]) && array_key_exists($key, $incoming[$group])) {
                 $incoming[$group][$key] = (bool) $incoming[$group][$key];

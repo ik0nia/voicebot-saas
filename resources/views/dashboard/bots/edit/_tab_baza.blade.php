@@ -78,12 +78,15 @@
                             </div>
                         </div>
 
-                        {{-- Active toggle (canonical) --}}
+                        {{-- Active toggle (canonical) — Iter audit 2026-06-22:
+                             folosim un singur hidden cuplat la Alpine state ca
+                             sursă unică, în loc de pattern-ul hidden+checkbox
+                             fragil. UI-ul e tot un checkbox dar fără name=. --}}
                         <div>
                             <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="hidden" name="is_active" value="0" />
-                                <input type="checkbox" name="is_active" value="1" x-model="core.is_active"
+                                <input type="checkbox" x-model="core.is_active"
                                        class="w-5 h-5 rounded border-line text-coralh focus:ring-coral/20" />
+                                <input type="hidden" name="is_active" :value="core.is_active ? '1' : '0'">
                                 <div>
                                     <span class="text-sm font-medium text-inkSoft">Agent AI activ</span>
                                     <p class="text-xs text-muted">Poate primi și efectua apeluri / conversații.</p>

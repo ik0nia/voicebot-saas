@@ -99,6 +99,12 @@ class ChatbotApiController extends Controller
             'privacy_policy_url' => $channelConfig['privacy_policy_url'] ?? null,
             'show_branding' => $channelConfig['show_branding'] ?? true,
             'privacy' => $this->privacyForChannel($channelConfig, $bot),
+            // Bot-level branding (Iter audit 2026-06-22): welcome_banner +
+            // avatar_url erau definite în Tab Avansat dar nu erau servite
+            // widget-ului. Acum widget-ul poate randa banner-ul + avatar
+            // (dacă bot le are setate). Channel.config câștigă dacă există.
+            'welcome_banner' => $channelConfig['welcome_banner'] ?? $bot?->welcomeBanner() ?: null,
+            'avatar_url' => $channelConfig['avatar_url'] ?? (data_get($bot?->settings, 'avatar_url') ?: null),
         ]);
     }
 

@@ -29,6 +29,13 @@
      class="flex flex-col -mt-6 lg:-mt-10 -mx-4 lg:-mx-8 -mb-6 lg:-mb-10 overflow-hidden"
      style="height: calc(100vh - 64px);">
 
+    {{-- Toast feedback (Iter audit 2026-06-22): note/tag-uri/canned aveau
+         POST silent, userul nu știa dacă s-au salvat. --}}
+    <div x-show="toastText" x-cloak x-transition.opacity
+         class="fixed bottom-4 right-4 z-50 rounded-lg shadow-lg px-4 py-2.5 text-sm font-medium"
+         :class="toastKind === 'error' ? 'bg-coralh text-white' : 'bg-emerald-600 text-white'"
+         x-text="toastText"></div>
+
     <div class="flex flex-1 min-h-0">
 
         {{-- Left: conversation list --}}
@@ -564,6 +571,18 @@ function operatorConsole() {
             this.replyText = (this.replyText ? this.replyText + '\n\n' : '') + body;
         },
 
+        // Toast lightweight pentru acțiuni operator (note/tags/etc).
+        // 2s persistență, slide-in din colț. Fără bibliotecă externă.
+        toastText: '',
+        toastKind: 'info',
+        toastTimer: null,
+        toast(msg, kind = 'success') {
+            this.toastText = msg;
+            this.toastKind = kind;
+            if (this.toastTimer) clearTimeout(this.toastTimer);
+            this.toastTimer = setTimeout(() => { this.toastText = ''; }, 2200);
+        },
+
         async addNote() {
             const txt = this.noteText.trim();
             if (!txt || !this.activeId) return;
@@ -573,20 +592,31 @@ function operatorConsole() {
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
                     body: JSON.stringify({ body: txt }),
                 });
-                if (r.ok) { this.noteText = ''; }
-            } catch (e) { /* silent */ }
+                if (r.ok) {
+                    this.noteText = '';
+                    this.toast('Notă adăugată');
+                } else {
+                    this.toast('Eroare la salvare notă', 'error');
+                }
+            } catch (e) {
+                this.toast('Server indisponibil', 'error');
+            }
         },
 
         async saveTags() {
             if (!this.activeId) return;
             const tags = this.tagsInput.split(',').map(t => t.trim()).filter(Boolean);
             try {
-                await fetch(`/dashboard/operator/conv/${this.activeId}/tags`, {
+                const r = await fetch(`/dashboard/operator/conv/${this.activeId}/tags`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
                     body: JSON.stringify({ tags }),
                 });
-            } catch (e) { /* silent */ }
+                if (r.ok) this.toast(tags.length ? `${tags.length} tag${tags.length === 1 ? '' : '-uri'} salvate` : 'Tag-uri șterse');
+                else this.toast('Eroare la salvare tag-uri', 'error');
+            } catch (e) {
+                this.toast('Server indisponibil', 'error');
+            }
         },
 
         async closeConv() {

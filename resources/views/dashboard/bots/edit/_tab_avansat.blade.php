@@ -150,6 +150,29 @@
                                     <span class="block text-xs text-muted mt-0.5">Rescrie întrebări scurte cu sinonime. Dezactivează dacă vezi rezultate „off-topic" la brand-uri ambigue.</span>
                                 </span>
                             </label>
+                            <label class="flex items-start gap-3 cursor-pointer">
+                                <input type="hidden" name="settings[rag][sibling_chunks_enabled]" value="0">
+                                <input type="checkbox" name="settings[rag][sibling_chunks_enabled]" value="1"
+                                       {{ old('settings.rag.sibling_chunks_enabled', data_get($bot->settings, 'rag.sibling_chunks_enabled', true)) ? 'checked' : '' }}
+                                       class="mt-0.5 w-4 h-4 accent-coral rounded">
+                                <span class="text-sm">
+                                    <span class="font-medium text-ink">Sibling chunks</span>
+                                    <span class="block text-xs text-muted mt-0.5">Când un chunk e găsit, adaugă și chunk-urile vecine (înainte/după) ca să nu pierdem context. Recomandă: ON.</span>
+                                </span>
+                            </label>
+                            <div>
+                                <label class="block text-xs font-medium text-inkSoft mb-1">
+                                    Pondere full-text (FTS) vs. semantic
+                                </label>
+                                <input type="number" step="0.1" min="0.1" max="10"
+                                       name="settings[rag][fts_weight]"
+                                       value="{{ old('settings.rag.fts_weight', data_get($bot->settings, 'rag.fts_weight')) }}"
+                                       placeholder="default 1.0"
+                                       class="w-full sm:w-32 rounded-lg border border-line bg-white px-3 py-2 text-sm">
+                                <p class="text-xs text-muted mt-1">
+                                    Sub 1.0 = preferă similaritate semantică (parafrazări). Peste 1.0 = preferă cuvinte exacte (SKU-uri, coduri).
+                                </p>
+                            </div>
                         </div>
                     </details>
 
