@@ -25,7 +25,8 @@ use Illuminate\Support\Facades\Log;
  */
 class ChannelMessageDispatcher
 {
-    private const META_GRAPH = 'https://graph.facebook.com/v18.0';
+    // Bump 2026-06-22 audit: aliniat la v21.0 (v18 e aproape EOL).
+    private const META_GRAPH = 'https://graph.facebook.com/v21.0';
 
     /**
      * Send a typed OutboundMessage and return the wire result.

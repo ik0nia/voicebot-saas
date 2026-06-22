@@ -19,7 +19,9 @@ use Illuminate\Support\Facades\Log;
  */
 class ChannelMessagingService
 {
-    private const META_GRAPH = 'https://graph.facebook.com/v18.0';
+    // Bump 2026-06-22 audit: v18 e aproape EOL, MetaPostingService folosea
+    // deja v21. Aliniem toate cele 3 servicii pe v21.0.
+    private const META_GRAPH = 'https://graph.facebook.com/v21.0';
 
     /**
      * Send a text/media message on a specific channel.
