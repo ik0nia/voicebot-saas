@@ -65,6 +65,10 @@ class AppServiceProvider extends ServiceProvider
         // ConversationObserver: broadcast la schimbare status (closed, etc.).
         \App\Models\Conversation::observe(\App\Observers\ConversationObserver::class);
 
+        // AppointmentObserver: sync transparent la Google Calendar (per-staff).
+        // Best-effort, nu blochează salvarea locală dacă Google nu răspunde.
+        \App\Models\Appointment::observe(\App\Observers\AppointmentObserver::class);
+
         // @samblaWidgetUrl — URL canonic pentru widget cu cache-bust pe
         // ultimele 6 cifre din filemtime. Fără asta, browserele care au
         // descărcat widget-ul cu Cache-Control max-age=14400 (din nginx

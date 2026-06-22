@@ -257,6 +257,32 @@
             </button>
         </div>
 
+        {{-- Google Calendar status banner --}}
+        <div class="mb-4 rounded-lg border border-line bg-cream/40 p-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="text-sm">
+                    <template x-if="!gCal.loaded">
+                        <span class="text-muted">📅 se verifică Google Calendar…</span>
+                    </template>
+                    <template x-if="gCal.loaded && !gCal.connected">
+                        <span><strong class="text-ink">Google Calendar</strong> <span class="text-muted">— neconectat. Programările nu se sincronizează automat.</span></span>
+                    </template>
+                    <template x-if="gCal.loaded && gCal.connected && gCal.needs_calendar_scope">
+                        <span><strong class="text-amber-700">⚠ Permisiune lipsă</strong> <span class="text-muted">— ai conectat Google dar fără scope-ul de Calendar.</span></span>
+                    </template>
+                    <template x-if="gCal.loaded && gCal.connected && !gCal.needs_calendar_scope">
+                        <span class="text-emerald-700">✓ <strong>Conectat</strong> <span class="text-muted" x-text="'(' + (gCal.account_email || '') + ', ' + gCal.calendars.length + ' calendare disponibile)'"></span></span>
+                    </template>
+                </div>
+                <template x-if="gCal.loaded && (!gCal.connected || gCal.needs_calendar_scope)">
+                    <a :href="googleConnectUrl()"
+                       class="text-xs font-medium text-coralh hover:text-coral border border-coral/30 bg-coralsoft rounded-lg px-3 py-1.5">
+                        🔗 Conectează Google Calendar
+                    </a>
+                </template>
+            </div>
+        </div>
+
         <template x-if="staff.length === 0">
             <div class="text-sm text-muted italic py-6 text-center border border-dashed border-line rounded-lg">
                 Încă nu ai personal. Apasă <strong>+ Adaugă persoană</strong>.
@@ -271,6 +297,7 @@
                             <th class="px-3 py-2 text-left">Nume</th>
                             <th class="px-3 py-2 text-left">Rol</th>
                             <th class="px-3 py-2 text-left">Servicii</th>
+                            <th class="px-3 py-2 text-left w-44">📅 Google Calendar</th>
                             <th class="px-3 py-2 text-left w-24">Activ</th>
                             <th class="px-3 py-2 w-24"></th>
                         </tr>
@@ -302,6 +329,17 @@
                                         </template>
                                     </div>
                                     <div class="text-xs text-muted mt-1" x-show="staffHandlesAll(p)">Toate serviciile (implicit)</div>
+                                </td>
+                                <td class="px-3 py-2">
+                                    <select x-model="p.google_calendar_id"
+                                            @change="saveStaffCalendar(p)"
+                                            :disabled="!gCal.connected || gCal.needs_calendar_scope"
+                                            class="w-full px-2 py-1 text-xs border border-line rounded outline-none focus:border-coral disabled:bg-cream disabled:cursor-not-allowed">
+                                        <option value="">— niciun calendar —</option>
+                                        <template x-for="cal in gCal.calendars" :key="cal.id">
+                                            <option :value="cal.id" x-text="cal.summary + (cal.primary ? ' (principal)' : '')"></option>
+                                        </template>
+                                    </select>
                                 </td>
                                 <td class="px-3 py-2">
                                     <input type="checkbox" x-model="p.is_active" @change="saveStaff(p)"
@@ -452,6 +490,28 @@ function bookingAdmin(init) {
         staffHours: init.staffHours || {},
         showServiceModal: false,
         showStaffModal: false,
+        // Google Calendar state — populat din /google-calendars endpoint la mount.
+        gCal: { loaded: false, connected: false, needs_calendar_scope: false, calendars: [], account_email: null },
+
+        async init() {
+            try {
+                const r = await fetch(`{{ route('dashboard.bots.booking.googleCalendars', $bot) }}`, {
+                    headers: { Accept: 'application/json' },
+                });
+                if (r.ok) {
+                    const d = await r.json();
+                    this.gCal = { loaded: true, ...d };
+                } else {
+                    this.gCal.loaded = true;
+                }
+            } catch (e) {
+                this.gCal.loaded = true;
+            }
+        },
+
+        googleConnectUrl() {
+            return `/oauth/google/connect?scope=calendar&return_to=${encodeURIComponent(window.location.pathname)}`;
+        },
 
         openServiceModal() { this.showServiceModal = true; },
         openStaffModal()   { this.showStaffModal = true; },
@@ -548,6 +608,23 @@ function bookingAdmin(init) {
             } catch (e) { console.warn(e); }
         },
 
+        // Save per-staff Google Calendar selection. Separat de saveStaff
+        // ca să nu trimitem tot payload-ul de fiecare dată când userul
+        // schimbă doar dropdown-ul de calendar.
+        async saveStaffCalendar(p) {
+            try {
+                await fetch(`{{ url('/dashboard/agenti/' . $bot->id . '/programari/staff') }}/${p.id}/calendar`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrf(),
+                        'X-HTTP-Method-Override': 'PATCH',
+                    },
+                    body: JSON.stringify({ google_calendar_id: p.google_calendar_id || null }),
+                });
+            } catch (e) { console.warn('saveStaffCalendar failed', e); }
+        },
+
         async deleteStaff(p) {
             const msg = `Șterg „${p.name}"? Dacă are programări viitoare, ștergerea va fi refuzată.`;
             if (!confirm(msg)) return;
@@ -618,5 +695,7 @@ function bookingAdmin(init) {
 function csrf() {
     return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 }
+
 </script>
+@endsection
 @endsection

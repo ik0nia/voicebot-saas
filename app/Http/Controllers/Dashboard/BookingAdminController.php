@@ -401,9 +401,72 @@ class BookingAdminController extends Controller
         }
         $appointment->save();
 
+        // Sync la Google Calendar dacă staff are calendar conectat. Best-effort
+        // — eșecul nu blochează update-ul local. Pentru cancel/noshow ștergem
+        // event-ul; pentru restul, upsert (create sau update).
+        try {
+            $calendar = app(\App\Services\Google\GoogleCalendarService::class);
+            if (in_array($appointment->status, [\App\Models\Appointment::STATUS_CANCELED, \App\Models\Appointment::STATUS_NOSHOW], true)) {
+                $calendar->deleteEvent($appointment);
+            } else {
+                $calendar->upsertEvent($appointment);
+            }
+        } catch (\Throwable $e) {
+            \Log::debug('Calendar sync skipped/failed', ['appointment_id' => $appointment->id, 'err' => $e->getMessage()]);
+        }
+
         return redirect()
             ->route('dashboard.bots.booking.appointment', [$bot, $appointment])
             ->with('success', 'Programare actualizată.');
+    }
+
+    // ==============================================================
+    // Google Calendar integration (Iter G — 2026-06-22)
+    // ==============================================================
+
+    /**
+     * Returnează calendarele disponibile pe contul Google al tenant-ului.
+     * Frontend îl folosește pentru a popula dropdown-ul per staff.
+     */
+    public function listGoogleCalendars(Bot $bot)
+    {
+        $this->authorizeBot($bot);
+        $token = \App\Models\GoogleOAuthToken::where('tenant_id', $bot->tenant_id)->first();
+        if (!$token) {
+            return response()->json(['connected' => false, 'calendars' => []]);
+        }
+        try {
+            $calendars = app(\App\Services\Google\GoogleCalendarService::class)->listCalendars($token);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'connected' => true,
+                'needs_calendar_scope' => true,
+                'calendars' => [],
+                'error' => $e->getMessage(),
+            ]);
+        }
+        return response()->json([
+            'connected' => true,
+            'account_email' => $token->google_email,
+            'needs_calendar_scope' => false,
+            'calendars' => $calendars,
+        ]);
+    }
+
+    /**
+     * Update per-staff Google Calendar selection.
+     */
+    public function updateStaffCalendar(Request $request, Bot $bot, StaffMember $staff)
+    {
+        $this->authorizeBot($bot);
+        $this->authorizeChild($bot, $staff);
+
+        $validated = $request->validate([
+            'google_calendar_id' => 'nullable|string|max:255',
+        ]);
+
+        $staff->update(['google_calendar_id' => $validated['google_calendar_id'] ?: null]);
+        return response()->json(['ok' => true, 'google_calendar_id' => $staff->google_calendar_id]);
     }
 
     // ==============================================================

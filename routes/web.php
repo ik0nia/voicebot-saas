@@ -410,6 +410,9 @@ Route::middleware('auth')->prefix('dashboard/agenti/{bot}/programari')->group(fu
     Route::get('/appointments',                      [BookingAdminController::class, 'appointments'])->name('dashboard.bots.booking.appointments');
     Route::get('/appointments/{appointment}',        [BookingAdminController::class, 'appointmentShow'])->name('dashboard.bots.booking.appointment');
     Route::patch('/appointments/{appointment}',      [BookingAdminController::class, 'appointmentUpdate'])->name('dashboard.bots.booking.appointment.update');
+    // Google Calendar sync (Iter G).
+    Route::get('/google-calendars',                  [BookingAdminController::class, 'listGoogleCalendars'])->name('dashboard.bots.booking.googleCalendars');
+    Route::patch('/staff/{staff}/calendar',          [BookingAdminController::class, 'updateStaffCalendar'])->name('dashboard.bots.booking.staff.calendar');
 });
 
 // Product CRUD per-bot — manual add pentru catalogul de produse/servicii.

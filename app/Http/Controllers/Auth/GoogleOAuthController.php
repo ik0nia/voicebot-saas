@@ -18,15 +18,24 @@ class GoogleOAuthController extends Controller
 
     /**
      * Step 1: redirect the user to Google's consent screen.
+     * `?scope=calendar` cere și scope-ul de calendar (folosit din UI booking).
+     * Fără param: default Drive (KB).
      */
     public function connect(Request $request)
     {
         $state = $this->oauth->generateState();
         $request->session()->put('google_oauth_state', $state);
-        // Where to send the user back after callback (e.g., the bot KB tab they came from)
         $request->session()->put('google_oauth_return_to', $request->query('return_to', '/dashboard'));
 
-        return redirect()->away($this->oauth->buildAuthUrl($state));
+        // Scope extra opțional — UI booking trimite ?scope=calendar pentru a
+        // adăuga acces la Google Calendar (events read/write).
+        $scopes = $this->oauth->defaultScopes();
+        if ($request->query('scope') === 'calendar') {
+            $scopes[] = GoogleOAuthService::SCOPE_CALENDAR_EVENTS;
+            $scopes[] = GoogleOAuthService::SCOPE_CALENDAR_READONLY;
+        }
+
+        return redirect()->away($this->oauth->buildAuthUrl($state, array_values(array_unique($scopes))));
     }
 
     /**

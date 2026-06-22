@@ -21,6 +21,8 @@ class GoogleOAuthService
 {
     public const SCOPE_DRIVE_FILE = 'https://www.googleapis.com/auth/drive.file';
     public const SCOPE_USERINFO_EMAIL = 'https://www.googleapis.com/auth/userinfo.email';
+    public const SCOPE_CALENDAR_EVENTS = 'https://www.googleapis.com/auth/calendar.events';
+    public const SCOPE_CALENDAR_READONLY = 'https://www.googleapis.com/auth/calendar.readonly';
 
     private const AUTH_ENDPOINT = 'https://accounts.google.com/o/oauth2/v2/auth';
     private const TOKEN_ENDPOINT = 'https://oauth2.googleapis.com/token';
