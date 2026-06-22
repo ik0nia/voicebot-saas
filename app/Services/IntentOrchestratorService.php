@@ -239,7 +239,7 @@ class IntentOrchestratorService
             match ($pipeline->name) {
                 'order_lookup' => $this->executeOrderLookup($bot->id, $pipeline, $result, $userMessage),
                 'new_order' => $this->executeNewOrder($pipeline, $result, $conversation),
-                'product_search' => $this->executeProductSearch($bot, $pipeline, $result),
+                'product_search' => $this->executeProductSearch($bot, $pipeline, $result, $conversation),
                 'category_browse' => $this->executeCategoryBrowse($bot->id, $pipeline, $result),
                 'recommendation' => $this->executeRecommendation($bot, $pipeline, $result),
                 'knowledge' => $this->executeKnowledge($bot->id, $pipeline, $result, $dataSources['rag_limit']),
@@ -665,7 +665,7 @@ class IntentOrchestratorService
         $task->resultsCount = !empty($result->orderContext) ? 1 : 0;
     }
 
-    private function executeProductSearch(Bot $bot, PipelineTask $task, OrchestratorResult $result): void
+    private function executeProductSearch(Bot $bot, PipelineTask $task, OrchestratorResult $result, ?Conversation $conversation = null): void
     {
         // Skip if products already populated (e.g. from new_order using conversation history)
         if (!empty($result->products)) {
@@ -676,6 +676,29 @@ class IntentOrchestratorService
         $botId = $bot->id;
         $botSettings = $bot->settings ?? null;
         $query = $task->params['query'] ?? '';
+
+        // ── Clarification context (audit fix 2026-06-22) ──
+        // Bug raportat la Malinco: user „aveti cuie de beton?" → 4 produse
+        // OK; user „as vrea de 45" → botul a căutat „45" prin FTS și a
+        // returnat pistoale pneumatice care au „45-70MM" în descriere.
+        //
+        // Heuristică: dacă mesajul curent e clarificare scurtă (≤ 4 cuvinte
+        // și conține un număr sau e doar adjectiv/stopwords), refolosim
+        // produsele afișate în ultimul mesaj bot, filtrate dacă găsim
+        // numărul ca match în nume.
+        if ($conversation && $this->looksLikeClarification($query)) {
+            $reused = $this->reuseLastProductsForClarification($conversation, $query);
+            if ($reused !== null) {
+                $result->products = $reused['products'];
+                $result->productContext = $reused['context'];
+                $task->resultsCount = count($reused['products']);
+                Log::info('IntentOrchestrator: clarification reused last products', [
+                    'bot_id' => $botId, 'query' => $query, 'reused_count' => count($reused['products']),
+                ]);
+                return;
+            }
+        }
+
         $products = $this->productSearch->search($botId, $query, 4);
         if (!empty($products)) {
             $cards = array_map(fn($r) => $this->productSearch->toCardArray($r), $products);
@@ -743,6 +766,119 @@ class IntentOrchestratorService
             $result->productContext = "\n\n[NU s-au găsit produse relevante. NU spune că ai găsit produse.]";
         }
         $task->resultsCount = count($products);
+    }
+
+    /**
+     * Heuristică: query e clarificare scurtă (răspuns la întrebare bot)?
+     *
+     * Reguli (în ordine):
+     * 1. Mai mult de 4 cuvinte → cerere nouă (returnează false).
+     * 2. Conține un substantiv-produs (cuvânt ≥ 5 chars care NU e clarificator)
+     *    → cerere nouă. „adeziv pentru gresie" are „adeziv" + „gresie".
+     * 3. Altfel: dacă conține număr SAU doar clarif tokens → e clarificare.
+     */
+    private function looksLikeClarification(string $query): bool
+    {
+        $q = trim(mb_strtolower($query));
+        if ($q === '') return false;
+        // Strip diacritice ca să match-uim atât „roșu" cât și „rosu".
+        $q = strtr($q, [
+            'ă' => 'a', 'â' => 'a', 'î' => 'i', 'ș' => 's', 'ş' => 's', 'ț' => 't', 'ţ' => 't',
+        ]);
+        $words = preg_split('/\s+/u', $q) ?: [];
+        if (count($words) > 4) return false;
+
+        static $clarifTokens = [
+            // adjective dimensionale
+            'mic', 'mare', 'mediu', 'gros', 'subtire', 'lung', 'scurt',
+            // culori
+            'rosu', 'verde', 'albastru', 'galben', 'negru', 'alb', 'maro',
+            // selectori
+            'ieftin', 'scump', 'primul', 'al', 'cel', 'mai', 'cu', 'fara',
+            'sus', 'jos', 'stanga', 'dreapta', 'asta', 'acesta', 'prima',
+            // accept/reject
+            'da', 'nu', 'ok', 'bine', 'merge', 'sigur',
+            // stopwords scurte uzuale
+            'as', 'de', 'la', 'in', 'pe', 'pentru', 'sau', 'si', 'sa',
+            'vreau', 'vrea', 'ai', 'aveti',
+        ];
+        // Detectează substantiv-produs (cuvânt ≥ 5 chars, nu clarif, nu pur cifre).
+        foreach ($words as $w) {
+            $w = trim($w, " .,;:!?\"'");
+            if (mb_strlen($w) < 5) continue;
+            if (in_array($w, $clarifTokens, true)) continue;
+            if (preg_match('/^\d+(?:[\.,]\d+)?$/u', $w)) continue;
+            // Cuvânt „greu" găsit → cerere nouă.
+            return false;
+        }
+
+        // Toate cuvintele sunt scurte / clarif / numere.
+        return true;
+    }
+
+    /**
+     * Refolosește produsele din ultimul mesaj bot (metadata.products).
+     * Dacă query conține un număr, filtrează produsele care au numărul în
+     * nume. Returnează null dacă nu există context utilizabil.
+     *
+     * @return array{products: array<int, array<string, mixed>>, context: string}|null
+     */
+    private function reuseLastProductsForClarification(Conversation $conversation, string $query): ?array
+    {
+        $lastBot = $conversation->messages()
+            ->where('direction', 'outbound')
+            ->whereNotNull('metadata')
+            ->orderByDesc('id')
+            ->first(['id', 'metadata']);
+
+        if (!$lastBot) return null;
+        $meta = $lastBot->metadata ?? [];
+        $previous = $meta['products'] ?? null;
+        if (!is_array($previous) || empty($previous)) return null;
+
+        // Filter prin numerele din query (4,5 / 45 / 70). Number matcher
+        // tolerant: pentru fiecare număr extras, generăm variante (cu și
+        // fără separator decimal) ca să prindem „45" → match la „4,5x70"
+        // sau „4,5" → match la „45x70". Numele produsului e păstrat ca
+        // original (cu virgulă) și încercăm toate variantele.
+        $nums = [];
+        if (preg_match_all('/\d+(?:[\.,]\d+)?/u', $query, $m)) {
+            foreach ($m[0] as $raw) {
+                $nums[] = $raw;
+                // „4,5" → adăugăm și „4.5" (engleză) + „45" (fără sep).
+                if (preg_match('/^(\d+)[\.,](\d+)$/', $raw, $parts)) {
+                    $nums[] = $parts[1] . '.' . $parts[2];
+                    $nums[] = $parts[1] . $parts[2];
+                } elseif (mb_strlen($raw) === 2 && ctype_digit($raw)) {
+                    // „45" → adăugăm și „4,5" + „4.5".
+                    $nums[] = $raw[0] . ',' . $raw[1];
+                    $nums[] = $raw[0] . '.' . $raw[1];
+                }
+            }
+            $nums = array_values(array_unique($nums));
+        }
+        $filtered = $previous;
+        if (!empty($nums)) {
+            $filtered = array_values(array_filter($previous, function ($p) use ($nums) {
+                $name = mb_strtolower((string) ($p['name'] ?? ''));
+                foreach ($nums as $n) {
+                    if (mb_strpos($name, $n) !== false) return true;
+                }
+                return false;
+            }));
+        }
+
+        // Dacă filtrarea a tăiat totul, păstrăm lista originală — userul
+        // a clarificat cu ceva ce nu e dimensiune (ex. „cel mai ieftin").
+        if (empty($filtered)) {
+            $filtered = $previous;
+        }
+
+        $context = "\n\n[CLARIFICARE: Clientul a răspuns scurt la oferta precedentă. "
+            . "Refolosim " . count($filtered) . " din " . count($previous) . " produse afișate anterior. "
+            . "NU căuta produse noi. Confirmă dacă vreuna din opțiunile rămase se potrivește.]";
+
+        return ['products' => $filtered, 'context' => $context];
     }
 
     private function executeRecommendation(Bot $bot, PipelineTask $task, OrchestratorResult $result): void
