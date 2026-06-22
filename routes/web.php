@@ -849,6 +849,8 @@ Route::middleware('auth')->prefix('dashboard/agenti/{bot}')->group(function () {
         ->name('dashboard.bots.knowledge.reembedAll');
     Route::get('/knowledge/top-chunks', [KnowledgeController::class, 'topChunks'])
         ->name('dashboard.bots.knowledge.topChunks');
+    Route::post('/knowledge/inspect-rag', [KnowledgeController::class, 'inspectRag'])
+        ->name('dashboard.bots.knowledge.inspectRag');
     Route::get('/knowledge/embedding-stats', [KnowledgeController::class, 'embeddingStats'])
         ->name('dashboard.bots.knowledge.embeddingStats');
     Route::get('/knowledge/export-json', [KnowledgeController::class, 'exportJson'])

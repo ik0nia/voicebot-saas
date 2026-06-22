@@ -305,6 +305,47 @@ class KnowledgeController extends Controller
     }
 
     /**
+     * Inspect RAG live: dă un query, primește chunks pe care RAG-ul le-ar
+     * întoarce ACUM (cu score-uri). Util pentru debugging — vezi de ce
+     * botul răspunde X în loc de Y pentru o întrebare anume.
+     *
+     * Nu cache-uim rezultatul în UI — fiecare query produce nou call la
+     * KnowledgeSearchService::search() care la rândul lui are cache propriu.
+     */
+    public function inspectRag(Request $request, Bot $bot)
+    {
+        $this->authorize('view', $bot);
+        $validated = $request->validate([
+            'query' => 'required|string|min:2|max:500',
+            'limit' => 'nullable|integer|min:1|max:20',
+        ]);
+
+        $limit = $validated['limit'] ?? 6;
+        $results = app(\App\Services\KnowledgeSearchService::class)
+            ->search($bot->id, $validated['query'], $limit);
+
+        $chunks = array_map(function ($r) {
+            return [
+                'id' => $r['id'] ?? null,
+                'title' => $r['title'] ?? null,
+                'snippet' => mb_substr((string) ($r['content'] ?? ''), 0, 350),
+                'source_type' => $r['source_type'] ?? null,
+                'chunk_index' => $r['chunk_index'] ?? null,
+                'similarity' => isset($r['similarity']) ? round((float) $r['similarity'], 3) : null,
+                'fts_score' => isset($r['fts_score']) ? round((float) $r['fts_score'], 3) : null,
+                'final_score' => isset($r['final_score']) ? round((float) $r['final_score'], 3) : null,
+                'rrf_score' => isset($r['rrf_score']) ? round((float) $r['rrf_score'], 3) : null,
+            ];
+        }, $results);
+
+        return response()->json([
+            'query' => $validated['query'],
+            'count' => count($chunks),
+            'chunks' => $chunks,
+        ]);
+    }
+
+    /**
      * Top chunks folosite în răspunsurile bot-ului — semnal pentru ce e cel
      * mai relevant în KB. Citește `messages.knowledge_chunks_used` (populat de
      * KnowledgeSearchService::trackChunkIds) și agregă frecvențe.

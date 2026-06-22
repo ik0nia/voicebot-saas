@@ -35,11 +35,108 @@
                class="rounded-full border border-line px-3 py-1 hover:bg-cream">📤 Export JSON</a>
             <a href="{{ route('dashboard.bots.knowledge.topChunks', $bot) }}" target="_blank"
                class="rounded-full border border-line px-3 py-1 hover:bg-cream">📊 Top chunks</a>
+            <button type="button" @click="$dispatch('open-rag-inspector')"
+                    class="rounded-full border border-ink bg-ink text-cream px-3 py-1 hover:bg-inkSoft transition">🔬 Testează RAG</button>
             <form method="POST" action="{{ route('dashboard.bots.knowledge.reembedAll', $bot) }}"
                   onsubmit="return confirm('Marchezi toate chunks ca pending pentru re-embedding?');">
                 @csrf
                 <button type="submit" class="rounded-full border border-coral/30 bg-coralsoft text-coralh px-3 py-1 hover:bg-coral hover:text-white transition">🔄 Re-embed all</button>
             </form>
+        </div>
+    </div>
+
+    {{-- RAG inspector modal: dă un query, vezi ce chunks ar returna RAG-ul
+         ACUM cu score-urile lor (similarity + fts + final RRF). Esențial
+         pentru debugging „de ce botul răspunde X în loc de Y". --}}
+    <div x-data="ragInspector({{ $bot->id }})"
+         @open-rag-inspector.window="open()"
+         x-show="visible" x-cloak
+         @click.self="visible = false"
+         class="fixed inset-0 z-50 bg-ink/50 flex items-start justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full my-8" @click.stop>
+            <div class="px-5 py-4 border-b border-line flex items-center justify-between">
+                <div>
+                    <h3 class="text-base font-semibold text-ink">🔬 Testează RAG live</h3>
+                    <p class="text-xs text-muted mt-0.5">Vezi ce chunks ar returna căutarea pentru o întrebare anume.</p>
+                </div>
+                <button @click="visible = false" class="text-muted hover:text-ink text-2xl leading-none">×</button>
+            </div>
+            <div class="p-5 space-y-4">
+                <form @submit.prevent="runQuery()">
+                    <div class="flex items-end gap-2">
+                        <div class="flex-1">
+                            <label class="block text-xs font-medium text-inkSoft mb-1">Întrebare client</label>
+                            <input type="text" x-model="query" required minlength="2" maxlength="500"
+                                   placeholder="ex: cât costă o operație de carii?"
+                                   class="w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-inkSoft mb-1">Limit</label>
+                            <select x-model.number="limit"
+                                    class="w-20 rounded-lg border border-line bg-white px-2 py-2.5 text-sm">
+                                <option :value="3">3</option>
+                                <option :value="6">6</option>
+                                <option :value="10">10</option>
+                                <option :value="15">15</option>
+                            </select>
+                        </div>
+                        <button type="submit" :disabled="loading || !query.trim()"
+                                class="rounded-lg bg-coral text-white px-4 py-2.5 text-sm font-semibold disabled:opacity-50">
+                            <span x-show="!loading">Caută</span>
+                            <span x-show="loading">…</span>
+                        </button>
+                    </div>
+                </form>
+
+                <template x-if="error">
+                    <div class="rounded-lg border border-coral/30 bg-coralsoft p-3 text-xs text-coralh" x-text="error"></div>
+                </template>
+
+                <template x-if="results !== null && !loading">
+                    <div>
+                        <div class="text-xs text-muted mb-2">
+                            <span x-text="results.count"></span> chunks returnate · sortate descrescător după scor final
+                        </div>
+                        <template x-if="results.count === 0">
+                            <div class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                                Niciun chunk găsit. Verifică dacă ai documente/site indexate sau scade threshold-ul de similarity din Tab Avansat → Calitate căutare.
+                            </div>
+                        </template>
+                        <div class="space-y-2.5">
+                            <template x-for="(c, idx) in results.chunks" :key="c.id">
+                                <div class="rounded-lg border border-line bg-white p-3">
+                                    <div class="flex items-start justify-between gap-2 mb-1.5">
+                                        <div class="flex items-center gap-2 min-w-0">
+                                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-coralsoft text-coralh text-xs font-bold shrink-0" x-text="idx + 1"></span>
+                                            <span class="text-xs font-semibold text-ink truncate" x-text="c.title || ('Chunk #' + c.id)"></span>
+                                        </div>
+                                        <div class="flex gap-1 shrink-0 text-2xs">
+                                            <template x-if="c.similarity !== null">
+                                                <span class="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 font-mono" :title="'Cosine similarity (vector match)'">sim <span x-text="c.similarity"></span></span>
+                                            </template>
+                                            <template x-if="c.fts_score !== null">
+                                                <span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-mono" :title="'Full-text search rank'">fts <span x-text="c.fts_score"></span></span>
+                                            </template>
+                                            <template x-if="c.final_score !== null || c.rrf_score !== null">
+                                                <span class="px-1.5 py-0.5 rounded bg-ink text-cream font-mono" :title="'Final score (RRF fusion sau weighted)'">
+                                                    <span x-text="c.final_score !== null ? c.final_score : c.rrf_score"></span>
+                                                </span>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-inkSoft leading-relaxed" x-text="c.snippet"></p>
+                                    <div class="mt-1.5 text-2xs text-muted">
+                                        <span x-text="c.source_type || 'manual'"></span>
+                                        <template x-if="c.chunk_index !== null">
+                                            <span> · chunk <span x-text="c.chunk_index"></span></span>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
         </div>
     </div>
 
@@ -302,6 +399,46 @@
                     if (r.ok) this.stats = await r.json();
                 } catch (e) { console.warn('kbStats load failed', e); }
                 finally { this.loading = false; }
+            },
+        };
+    }
+
+    // RAG inspector — modal cu query input + chunks returnate live.
+    function ragInspector(botId) {
+        return {
+            visible: false,
+            query: '',
+            limit: 6,
+            loading: false,
+            results: null,
+            error: '',
+            open() {
+                this.visible = true;
+                this.error = '';
+            },
+            async runQuery() {
+                const q = (this.query || '').trim();
+                if (q.length < 2) return;
+                this.loading = true;
+                this.error = '';
+                this.results = null;
+                try {
+                    const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+                    const r = await fetch(`/dashboard/agenti/${botId}/knowledge/inspect-rag`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, Accept: 'application/json' },
+                        body: JSON.stringify({ query: q, limit: this.limit }),
+                    });
+                    if (!r.ok) {
+                        this.error = 'Eroare HTTP ' + r.status;
+                    } else {
+                        this.results = await r.json();
+                    }
+                } catch (e) {
+                    this.error = 'Server indisponibil.';
+                } finally {
+                    this.loading = false;
+                }
             },
         };
     }

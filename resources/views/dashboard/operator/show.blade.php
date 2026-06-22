@@ -192,6 +192,22 @@
                                             </div>
                                         </template>
                                         <div x-text="m.content"></div>
+                                        {{-- Read receipts (WhatsApp-style):
+                                             ✓ unul = trimis, ✓✓ două = livrate la vizitator,
+                                             ✓✓ albastre = citite. Doar pe mesajele
+                                             outbound (operator sau bot) — un singur
+                                             ✓ când nu știm încă starea, ✓✓ verzi când
+                                             m.id <= readUpToByConv[activeId]. --}}
+                                        <template x-if="m.role === 'operator' || m.role === 'bot'">
+                                            <div class="flex justify-end mt-0.5">
+                                                <template x-if="(readUpToByConv[activeId] || 0) >= m.id">
+                                                    <span class="text-2xs text-emerald-600 font-bold" title="Citit de vizitator">✓✓</span>
+                                                </template>
+                                                <template x-if="(readUpToByConv[activeId] || 0) < m.id">
+                                                    <span class="text-2xs opacity-50" title="Trimis">✓</span>
+                                                </template>
+                                            </div>
+                                        </template>
                                     </div>
 
                                     {{-- product cards (read-only mirror of widget) --}}
@@ -241,6 +257,16 @@
                                 </div>
                             </div>
                         </template>
+                        {{-- Visitor typing indicator (Reverb live). Cu 3 dots animate
+                             stil iMessage / WhatsApp; auto-hide after 4s no signal. --}}
+                        <div x-show="visitorTyping" x-cloak class="flex justify-start py-1">
+                            <div class="bg-cream rounded-2xl rounded-tl-sm px-3 py-2 flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-muted animate-bounce" style="animation-delay:0s"></span>
+                                <span class="w-1.5 h-1.5 rounded-full bg-muted animate-bounce" style="animation-delay:0.15s"></span>
+                                <span class="w-1.5 h-1.5 rounded-full bg-muted animate-bounce" style="animation-delay:0.3s"></span>
+                                <span class="ml-1 text-2xs text-muted italic">vizitator scrie…</span>
+                            </div>
+                        </div>
                     </div>
 
                     {{-- Status bar: Slack/Intercom pattern. Stă lipit deasupra
@@ -344,6 +370,7 @@
                     <form @submit.prevent="sendReply()" class="flex-shrink-0 p-3 border-t border-line bg-paper">
                         <div class="flex items-end gap-2">
                             <textarea x-model="replyText" rows="2" :disabled="!activeConv?.is_mine || sending"
+                                      @input="emitTyping()"
                                       :placeholder="activeConv?.is_mine ? 'Tastează un răspuns…' : 'Apasă „Răspund eu" ca să preiei'"
                                       class="flex-1 rounded-lg border border-line bg-white px-3 py-2 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none resize-none disabled:bg-cream disabled:cursor-not-allowed"></textarea>
                             <button type="submit" :disabled="!activeConv?.is_mine || sending || !replyText.trim()"
@@ -395,6 +422,17 @@ function operatorConsole() {
         noteText: '',
         tagsInput: '',
         cannedList: [],
+        // Realtime state (Iter B 2026-06-22):
+        // - visitorTyping: vizitatorul scrie în conversația activă acum
+        // - visitorTypingTimer: auto-clear after 4s no signal (otherwise
+        //   indicator rămâne blocat când vizitatorul închide tab-ul)
+        // - readUpToByConv: ultimul msg id citit de vizitator pe convo X
+        // - operatorTypingTimer / typingEmitter: debounce pentru typing emit
+        visitorTyping: false,
+        visitorTypingTimer: null,
+        readUpToByConv: {},
+        typingEmitTimer: null,
+        typingEmitState: false,
 
         async init() {
             await this.loadFeed();
@@ -402,6 +440,100 @@ function operatorConsole() {
             this.checkPush();
             await this.registerSW();
             this.loadCanned();
+            this.wireRealtime();
+        },
+
+        // Reverb listener wiring — consume custom events dispatched de
+        // resources/js/echo-setup.js wireConversationListeners(). Nu mai
+        // facem polling pentru mesaje când Reverb e disponibil, dar
+        // păstrăm polling-ul ca fallback dacă socket-ul cade.
+        wireRealtime() {
+            window.addEventListener('sambla:conversation.message', (ev) => {
+                const d = ev.detail || {};
+                if (!d.conversation_id) return;
+                if (d.conversation_id !== this.activeId) {
+                    // Mesaj pe altă convo — pull feed să update unread badges.
+                    this.loadFeed();
+                    return;
+                }
+                // Mesaj pe convo activă — verifică dacă deja există (evită dublu
+                // după polling-ul de 5s) și append + scroll.
+                if (this.messages.some(m => m.id === d.message_id)) return;
+                this.messages.push({
+                    id: d.message_id,
+                    role: d.direction === 'inbound' ? 'user' : 'bot',
+                    content: d.content || '',
+                    at_relative: 'acum',
+                    is_operator: false,
+                });
+                this.scrollDown();
+                // Vizitatorul a scris → ascundem indicator typing dacă era pornit.
+                if (d.direction === 'inbound') {
+                    this.visitorTyping = false;
+                    if (this.visitorTypingTimer) clearTimeout(this.visitorTypingTimer);
+                    // Mark as read imediat — operatorul are conv deschisă, deci a văzut-o.
+                    this.markReadNow(d.message_id);
+                }
+            });
+
+            window.addEventListener('sambla:conversation.typing', (ev) => {
+                const d = ev.detail || {};
+                if (d.conversation_id !== this.activeId) return;
+                if (d.by !== 'visitor') return; // ignore self
+                this.visitorTyping = !!d.is_typing;
+                if (this.visitorTypingTimer) clearTimeout(this.visitorTypingTimer);
+                if (this.visitorTyping) {
+                    // Auto-clear după 4s în caz că ne pierdem signal-ul de stop.
+                    this.visitorTypingTimer = setTimeout(() => { this.visitorTyping = false; }, 4000);
+                }
+            });
+
+            window.addEventListener('sambla:conversation.read', (ev) => {
+                const d = ev.detail || {};
+                if (!d.conversation_id) return;
+                if (d.by !== 'visitor') return; // operator events oglindesc propriul nostru POST
+                this.readUpToByConv = {
+                    ...this.readUpToByConv,
+                    [d.conversation_id]: d.up_to_message_id,
+                };
+            });
+
+            window.addEventListener('sambla:conversation.status', () => {
+                // Status change pe orice convo → refresh feed pentru badge-uri.
+                this.loadFeed();
+            });
+        },
+
+        // POST către /read endpoint când operatorul deschide convo sau
+        // primește un mesaj nou. Idempotent server-side (whereNull read_at).
+        async markReadNow(upToMessageId) {
+            if (!this.activeId || !upToMessageId) return;
+            try {
+                const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+                await fetch(`/dashboard/operator/conv/${this.activeId}/read`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+                    body: JSON.stringify({ up_to_message_id: upToMessageId }),
+                });
+            } catch (e) { /* silent */ }
+        },
+
+        // Emit typing — debounced. Apelat din @input pe textarea reply.
+        // ON imediat (cu rate-limit), OFF după 2s inactivitate.
+        emitTyping() {
+            if (!this.activeId) return;
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+            const send = (state) => {
+                this.typingEmitState = state;
+                fetch(`/dashboard/operator/conv/${this.activeId}/typing`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+                    body: JSON.stringify({ is_typing: state }),
+                }).catch(() => {});
+            };
+            if (!this.typingEmitState) send(true);
+            if (this.typingEmitTimer) clearTimeout(this.typingEmitTimer);
+            this.typingEmitTimer = setTimeout(() => send(false), 2000);
         },
 
         async loadCanned() {
@@ -517,10 +649,16 @@ function operatorConsole() {
         async open(id) {
             this.activeId = id;
             this.messages = [];
+            this.visitorTyping = false;
+            if (this.visitorTypingTimer) clearTimeout(this.visitorTypingTimer);
             this.loadingMsgs = true;
             await this.loadMessages();
             this.loadingMsgs = false;
-            // Poll messages every 5s while active
+            // Mark conv as read până la ultimul mesaj inbound — operatorul
+            // a deschis-o, deci a văzut tot ce era acolo.
+            const lastInbound = [...this.messages].reverse().find(m => m.role === 'user');
+            if (lastInbound) this.markReadNow(lastInbound.id);
+            // Poll messages every 5s ca fallback când Reverb pierde mesaj.
             if (this.msgsTimer) clearInterval(this.msgsTimer);
             this.msgsTimer = setInterval(() => this.loadMessages(true), 5000);
         },

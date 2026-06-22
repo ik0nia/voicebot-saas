@@ -167,6 +167,12 @@ function updateAssigneeBadge(conversationId, assigneeType, assigneeId) {
         ch.listen('.conversation.status', (data) => {
             window.dispatchEvent(new CustomEvent('sambla:conversation.status', { detail: data }));
         });
+        ch.listen('.conversation.typing', (data) => {
+            window.dispatchEvent(new CustomEvent('sambla:conversation.typing', { detail: data }));
+        });
+        ch.listen('.conversation.read', (data) => {
+            window.dispatchEvent(new CustomEvent('sambla:conversation.read', { detail: data }));
+        });
     } catch (e) {
         console.warn('wireConversationListeners failed', e);
     }
