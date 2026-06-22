@@ -324,7 +324,37 @@ class BookingAdminController extends Controller
         $this->authorizeBot($bot);
         abort_unless($this->isBookingBot($bot), 404);
 
+        $view = $request->query('view', 'list');
         $status = $request->query('status', 'upcoming');
+
+        // Calendar mode: returnează toate appointments din luna selectată
+        // pentru render client-side pe grid lunar. Restul (paginare, filtre)
+        // sunt ignorate în calendar mode.
+        if ($view === 'calendar') {
+            $monthParam = (string) $request->query('month', now()->format('Y-m'));
+            try {
+                $cursor = \Carbon\Carbon::createFromFormat('Y-m', $monthParam)->startOfMonth();
+            } catch (\Throwable) {
+                $cursor = now()->startOfMonth();
+            }
+            $monthStart = $cursor->copy()->startOfMonth()->subDays(7);
+            $monthEnd = $cursor->copy()->endOfMonth()->addDays(7);
+
+            $apts = Appointment::withoutGlobalScopes()
+                ->where('tenant_id', $bot->tenant_id)
+                ->where('bot_id', $bot->id)
+                ->whereBetween('starts_at', [$monthStart, $monthEnd])
+                ->with(['serviceType:id,name', 'staffMember:id,name'])
+                ->orderBy('starts_at')
+                ->get();
+
+            return view('dashboard.bots.booking.appointments-calendar', [
+                'bot' => $bot,
+                'appointments' => $apts,
+                'cursor' => $cursor,
+            ]);
+        }
+
         $q = Appointment::withoutGlobalScopes()
             ->where('tenant_id', $bot->tenant_id)
             ->where('bot_id', $bot->id)
@@ -385,7 +415,23 @@ class BookingAdminController extends Controller
             'status' => 'nullable|string|in:requested,confirmed,reminder_sent,completed,canceled,noshow',
             'cancel_reason' => 'nullable|string|max:300',
             'notes' => 'nullable|string|max:2000',
+            'starts_at' => 'nullable|date',
+            'ends_at' => 'nullable|date|after:starts_at',
         ]);
+
+        // Reschedule (Iter G): permite mutarea programării la o nouă dată/oră
+        // direct din UI. Păstrăm durata existentă dacă ends_at nu vine explicit.
+        if (!empty($validated['starts_at'])) {
+            $newStart = \Carbon\Carbon::parse($validated['starts_at']);
+            $originalDuration = $appointment->ends_at && $appointment->starts_at
+                ? $appointment->starts_at->diffInMinutes($appointment->ends_at)
+                : ($appointment->serviceType?->duration_minutes ?? 30);
+            $newEnd = !empty($validated['ends_at'])
+                ? \Carbon\Carbon::parse($validated['ends_at'])
+                : $newStart->copy()->addMinutes($originalDuration);
+            $appointment->starts_at = $newStart;
+            $appointment->ends_at = $newEnd;
+        }
 
         if (!empty($validated['status'])) {
             $appointment->status = $validated['status'];

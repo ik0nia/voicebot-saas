@@ -12,10 +12,16 @@
             <h1 class="text-2xl font-bold text-ink">Programări</h1>
             <p class="text-sm text-muted mt-1">Toate rezervările făcute de agentul AI sau direct prin widget.</p>
         </div>
-        <a href="{{ route('dashboard.bots.booking', $bot) }}"
-           class="text-xs font-medium text-muted hover:text-ink border border-line rounded-lg px-3 py-1.5 hover:bg-cream">
-            ⚙ Configurare servicii
-        </a>
+        <div class="flex flex-wrap gap-2">
+            <a href="{{ route('dashboard.bots.booking.appointments', ['bot' => $bot, 'view' => 'calendar']) }}"
+               class="text-xs font-medium text-coralh hover:text-coral border border-coral/30 bg-coralsoft rounded-lg px-3 py-1.5">
+                📅 Vedere calendar
+            </a>
+            <a href="{{ route('dashboard.bots.booking', $bot) }}"
+               class="text-xs font-medium text-muted hover:text-ink border border-line rounded-lg px-3 py-1.5 hover:bg-cream">
+                ⚙ Configurare servicii
+            </a>
+        </div>
     </div>
 
     @if(session('success'))

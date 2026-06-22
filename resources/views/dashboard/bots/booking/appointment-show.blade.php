@@ -167,10 +167,16 @@
         </div>
 
         {{-- Side: meta + actions --}}
-        <div class="space-y-6">
+        <div class="space-y-6" x-data="{ rescheduleOpen: false }">
             <div class="bg-white rounded-xl border border-line p-5">
                 <h3 class="text-xs font-semibold text-muted uppercase mb-3">Acțiuni rapide</h3>
                 <div class="space-y-2">
+                    @if($isActive)
+                        <button type="button" @click="rescheduleOpen = true"
+                                class="w-full block text-center rounded-lg border border-coral/30 bg-coralsoft px-3 py-2 text-sm text-coralh font-medium hover:bg-coral hover:text-white transition">
+                            🔄 Replanifică
+                        </button>
+                    @endif
                     @if($appointment->customer_phone)
                         <a href="tel:{{ $appointment->customer_phone }}"
                            class="block text-center rounded-lg border border-line bg-cream px-3 py-2 text-sm text-ink hover:bg-coralsoft hover:text-coralh transition">
@@ -189,6 +195,44 @@
                             💬 Vezi conversația
                         </a>
                     @endif
+                </div>
+            </div>
+
+            {{-- Reschedule modal --}}
+            <div x-show="rescheduleOpen" x-cloak @click.self="rescheduleOpen = false"
+                 class="fixed inset-0 z-50 bg-ink/40 flex items-center justify-center p-4">
+                <div class="bg-white rounded-2xl shadow-xl max-w-md w-full" @click.stop>
+                    <div class="px-5 py-4 border-b border-line flex items-center justify-between">
+                        <h3 class="text-base font-semibold text-ink">🔄 Replanifică</h3>
+                        <button @click="rescheduleOpen = false" class="text-muted hover:text-ink text-2xl leading-none">×</button>
+                    </div>
+                    <form method="POST" action="{{ route('dashboard.bots.booking.appointment.update', [$bot, $appointment]) }}" class="p-5 space-y-4">
+                        @csrf
+                        @method('PATCH')
+                        <p class="text-xs text-muted">
+                            Actual: <strong>{{ $appointment->starts_at->locale('ro')->translatedFormat('l, d M Y · H:i') }}</strong>
+                        </p>
+                        <div>
+                            <label class="block text-sm font-medium text-inkSoft mb-1">Începe la</label>
+                            <input type="datetime-local" name="starts_at" required
+                                   value="{{ $appointment->starts_at->format('Y-m-d\TH:i') }}"
+                                   class="w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm focus:border-coral focus:ring-2 focus:ring-coral/20 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-inkSoft mb-1">Se termină la <span class="text-muted text-xs">(opțional)</span></label>
+                            <input type="datetime-local" name="ends_at"
+                                   value="{{ $appointment->ends_at?->format('Y-m-d\TH:i') }}"
+                                   class="w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm">
+                            <p class="text-xs text-muted mt-1">Lasă gol pentru a păstra durata actuală.</p>
+                        </div>
+                        <input type="hidden" name="status" value="confirmed">
+                        <div class="flex justify-end gap-2 pt-2">
+                            <button type="button" @click="rescheduleOpen = false" class="text-sm text-muted hover:text-ink px-3 py-2">Renunță</button>
+                            <button type="submit" class="rounded-lg bg-coral text-white px-4 py-2 text-sm font-semibold hover:bg-coralh">
+                                Confirmă noua oră
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
 
