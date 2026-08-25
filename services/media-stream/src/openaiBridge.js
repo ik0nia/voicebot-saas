@@ -1,6 +1,7 @@
 import WebSocket from 'ws';
 import { logger } from './logger.js';
 import { getLaravelSink } from './laravelSink.js';
+import { isAudioDelta, isTranscriptDelta, isBenign } from './realtimeEvents.js';
 
 /*
  * Open and manage a WebSocket to OpenAI Realtime for one call.
@@ -18,27 +19,53 @@ import { getLaravelSink } from './laravelSink.js';
 
 const OPENAI_REALTIME_URL = 'wss://api.openai.com/v1/realtime';
 
+/*
+ * The call's whole personality — prompt, greeting, voice, tools — comes from
+ * this one request, and the fallback for losing it is a session with none of
+ * them: a phone call that connects and says nothing.
+ *
+ * That happened on 2026-08-25. The endpoint answers in ~130 ms normally, but
+ * a cold OPcache after a deploy pushed it past the 5 s budget once, and the
+ * only trace was a `warn`. Hence two attempts and a budget wide enough to
+ * cover a compile: the caller is listening to ringback the whole time, and
+ * three seconds of that beats a silent bot.
+ */
+const SESSION_CONFIG_TIMEOUT_MS = 12000;
+const SESSION_CONFIG_ATTEMPTS = 2;
+
 async function fetchSessionConfig(callId, config) {
     const url = process.env.LARAVEL_EVENTS_URL.replace(/\/events$/, '/session-config');
-    try {
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ call_id: callId }),
-            signal: AbortSignal.timeout(5000),
-        });
-        if (!res.ok) {
-            logger.error({ status: res.status, callId }, 'Laravel session-config returned non-2xx');
-            return null;
+
+    for (let attempt = 1; attempt <= SESSION_CONFIG_ATTEMPTS; attempt++) {
+        const startedAt = Date.now();
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ call_id: callId }),
+                signal: AbortSignal.timeout(SESSION_CONFIG_TIMEOUT_MS),
+            });
+
+            if (!res.ok) {
+                logger.error({ status: res.status, callId, attempt }, 'Laravel session-config returned non-2xx');
+                continue;
+            }
+
+            const body = await res.json();
+            logger.info({ callId, attempt, ms: Date.now() - startedAt }, 'session-config fetched');
+            return body;
+        } catch (err) {
+            logger.error(
+                { err: err.message, callId, attempt, ms: Date.now() - startedAt },
+                'Laravel session-config fetch failed',
+            );
         }
-        return await res.json();
-    } catch (err) {
-        logger.error({ err: err.message, callId }, 'Laravel session-config fetch failed');
-        return null;
     }
+
+    return null;
 }
 
 async function postInternal(path, body) {
@@ -71,6 +98,10 @@ export function connectOpenai(botCtx, twilioSink, config, callMeta = {}) {
     const callId = callMeta.callId ? parseInt(callMeta.callId, 10) : null;
     let assistantChunk = '';
 
+    // Unknown event types already warned about on this call — keeps the
+    // tripwire in the `default:` branch from flooding the log.
+    const unknownEventTypes = new Set();
+
     // Transfer state: when a transfer tool call is accepted, we remember
     // the attempt so that on the NEXT response.done (the one where the
     // agent finishes speaking "one moment please") we tell Laravel to
@@ -89,9 +120,40 @@ export function connectOpenai(botCtx, twilioSink, config, callMeta = {}) {
         },
     });
 
+    /*
+     * Started here rather than inside ws.on('open'): the socket takes ~650 ms
+     * to come up and the config another ~130 ms, and there is no reason for
+     * the caller to pay for both in series. Measured on call 139: 1,5 s from
+     * "Stream started" to "OpenAI Realtime connected".
+     *
+     * The rejection handler is attached immediately — an unhandled rejection
+     * on a promise nobody has awaited yet takes the process down.
+     */
+    const sessionConfigPromise = callId
+        ? fetchSessionConfig(callId, config).catch(() => null)
+        : Promise.resolve(null);
+
     let sessionReady = false;
     let receivedFirstFrame = false;
     let responseActive = false;
+
+    /*
+     * Barge-in is suppressed while the greeting is being spoken.
+     *
+     * `semantic_vad` false-fires on phone-line noise — the proof is
+     * `response_cancel_not_active` in the log of call 139, twice: VAD reported
+     * the caller speaking while no response was running. When one IS running,
+     * the cancel plus Twilio `clear` flushes queued audio and cuts the agent
+     * off mid-word, so the caller hears "Bună ziua, ați sunat la—" and then
+     * nothing. Nobody interrupts a greeting they have not heard yet; a caller
+     * who really does talk over it repeats themselves, which the model handles.
+     *
+     * The window closes on whichever comes first: the greeting's own
+     * response.done, or the ceiling below, so a greeting that never finishes
+     * cannot deafen the rest of the call.
+     */
+    let greetingGuardUntil = 0;
+    const GREETING_GUARD_CEILING_MS = 8000;
     const firstFrameTimer = setTimeout(() => {
         if (!receivedFirstFrame) {
             logger.warn({ botId: botCtx.botId }, 'OpenAI first-frame timeout');
@@ -121,16 +183,16 @@ export function connectOpenai(botCtx, twilioSink, config, callMeta = {}) {
         // just with the default system prompt.
         let sessionPayload = null;
         let greeting = null;
-        if (callId) {
-            const remote = await fetchSessionConfig(callId, config);
-            if (remote && remote.session_update) {
-                sessionPayload = remote.session_update;
-                greeting = remote.greeting;
-            }
+        const remote = await sessionConfigPromise;
+        if (remote && remote.session_update) {
+            sessionPayload = remote.session_update;
+            greeting = remote.greeting;
         }
 
         if (!sessionPayload) {
-            logger.warn({ botId: botCtx.botId, callId }, 'Falling back to minimal session config');
+            // error, not warn: this is the bot losing its prompt, greeting,
+            // voice and tools — the loudest thing in the log should be this.
+            logger.error({ botId: botCtx.botId, callId }, 'Falling back to minimal session config');
             // Format GA (post 2026-05-12): audio.input/output cu format obiect,
             // type:'realtime', output_modalities, transcription sub audio.input.
             sessionPayload = {
@@ -186,6 +248,24 @@ export function connectOpenai(botCtx, twilioSink, config, callMeta = {}) {
             return;
         }
 
+        // Audio + transcript deltas are matched against realtimeEvents.js
+        // rather than `case` labels, so the bridge and the probe share one
+        // source of truth and cannot drift apart when OpenAI renames an
+        // event. See realtimeEvents.js for why that matters.
+        if (isAudioDelta(event.type)) {
+            receivedFirstFrame = true;
+            clearTimeout(firstFrameTimer);
+            // Already g711_ulaw thanks to the session config — forward the
+            // base64 payload verbatim to Twilio, no transcoding.
+            twilioSink(event.delta, { type: 'audio' });
+            return;
+        }
+
+        if (isTranscriptDelta(event.type)) {
+            if (event.delta) assistantChunk += event.delta;
+            return;
+        }
+
         switch (event.type) {
             case 'session.created':
             case 'response.output_item.added':
@@ -212,26 +292,13 @@ export function connectOpenai(botCtx, twilioSink, config, callMeta = {}) {
                             },
                         }));
                         ws.send(JSON.stringify({ type: 'response.create' }));
+                        greetingGuardUntil = Date.now() + GREETING_GUARD_CEILING_MS;
                     } catch (_) {}
                 }
                 break;
 
             case 'response.created':
                 responseActive = true;
-                break;
-
-            case 'response.audio.delta': {
-                receivedFirstFrame = true;
-                clearTimeout(firstFrameTimer);
-                // Audio is already g711_ulaw thanks to the session
-                // config — forward the base64 payload verbatim to
-                // Twilio.
-                twilioSink(event.delta, { type: 'audio' });
-                break;
-            }
-
-            case 'response.audio_transcript.delta':
-                if (event.delta) assistantChunk += event.delta;
                 break;
 
             case 'conversation.item.input_audio_transcription.completed':
@@ -247,6 +314,12 @@ export function connectOpenai(botCtx, twilioSink, config, callMeta = {}) {
                 break;
 
             case 'input_audio_buffer.speech_started':
+                // Line noise during the greeting is not an interruption.
+                if (Date.now() < greetingGuardUntil) {
+                    logger.debug({ callId }, 'speech_started ignored during greeting');
+                    break;
+                }
+
                 // Only cancel if there's actually a response in flight;
                 // otherwise OpenAI logs response_cancel_not_active.
                 twilioSink(null, { type: 'user_interrupted' });
@@ -277,29 +350,51 @@ export function connectOpenai(botCtx, twilioSink, config, callMeta = {}) {
                     tool_name: toolName,
                     arguments: args,
                 }).then((resp) => {
-                    const speak = (resp && resp.speak) || 'Îmi pare rău, nu pot procesa cererea acum.';
                     if (resp && resp.success && resp.attempt_id && toolName === 'request_human_transfer') {
                         pendingTransferAttemptId = resp.attempt_id;
                     }
+
+                    // Laravel answers in one of two shapes:
+                    //
+                    //   { speak: "..." }  — say this line verbatim. Used by
+                    //     transfer (the wording matters, and the caller is
+                    //     about to be moved) and by error fallbacks.
+                    //
+                    //   { data: {...} }   — a lookup/write result. The model
+                    //     phrases it. Forcing verbatim here would make the
+                    //     agent read raw JSON aloud: "products colon open
+                    //     bracket…".
+                    //
+                    // Anything else means Laravel failed outright, so we fall
+                    // back to a spoken apology rather than leaving dead air.
+                    const speak = resp && typeof resp.speak === 'string' && resp.speak.trim()
+                        ? resp.speak
+                        : null;
+                    const data = resp && resp.data !== undefined ? resp.data : null;
+
                     try {
-                        // Feed the tool result back into the conversation
-                        // so the model speaks the confirmation line. The
-                        // response.create that follows triggers TTS.
                         ws.send(JSON.stringify({
                             type: 'conversation.item.create',
                             item: {
                                 type: 'function_call_output',
                                 call_id: callItemId,
-                                output: JSON.stringify({ message: speak }),
+                                output: JSON.stringify(
+                                    speak ? { message: speak }
+                                          : (data ?? { error: 'tool_unavailable' }),
+                                ),
                             },
                         }));
-                        ws.send(JSON.stringify({
-                            type: 'response.create',
-                            response: {
-                                output_modalities: ['audio'],
-                                instructions: `Spune exact: "${speak.replace(/"/g, '\\"')}". Nu adăuga altceva.`,
-                            },
-                        }));
+
+                        const response = { output_modalities: ['audio'] };
+                        if (speak) {
+                            response.instructions = `Spune exact: "${speak.replace(/"/g, '\\"')}". Nu adăuga altceva.`;
+                        } else if (!data) {
+                            response.instructions = 'Spune că nu ai putut procesa cererea acum și întreabă dacă poți ajuta altfel.';
+                        }
+                        // With `data` and no instructions the model composes
+                        // its own reply from the tool output, which is what we
+                        // want for menus, availability and order read-backs.
+                        ws.send(JSON.stringify({ type: 'response.create', response }));
                     } catch (err) {
                         logger.warn({ err: err.message }, 'tool-call response injection failed');
                     }
@@ -311,6 +406,9 @@ export function connectOpenai(botCtx, twilioSink, config, callMeta = {}) {
 
             case 'response.done':
                 responseActive = false;
+                // The greeting has finished playing; the caller may interrupt
+                // freely from here on.
+                greetingGuardUntil = 0;
                 flushAssistantTurn();
                 if (event.response && event.response.usage) {
                     logger.info({
@@ -347,7 +445,19 @@ export function connectOpenai(botCtx, twilioSink, config, callMeta = {}) {
                 break;
 
             default:
-                logger.debug({ type: event.type }, 'OpenAI event (unhandled)');
+                // Anything neither handled nor explicitly benign is a
+                // tripwire: it usually means OpenAI renamed or added an
+                // event we care about. Warn once per type per call —
+                // enough to notice, not enough to flood the log. This is
+                // the check that was missing when the GA rename landed.
+                if (!isBenign(event.type) && !unknownEventTypes.has(event.type)) {
+                    unknownEventTypes.add(event.type);
+                    logger.warn({
+                        type: event.type,
+                        botId: botCtx.botId,
+                        callId,
+                    }, 'OpenAI event not handled by bridge — possible API change');
+                }
         }
     });
 

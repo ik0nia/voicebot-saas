@@ -18,7 +18,15 @@ class WhisperHallucinationFilter
         if (!$text) return true;
 
         $t = trim($text);
-        if (mb_strlen($t) < 3) return true;
+
+        // "da", "nu" and "ok" are the whole answer to "confirmați comanda?" —
+        // the one two-letter utterance a transcript must never lose. Anything
+        // else this short is line noise.
+        if (mb_strlen($t) < 3) {
+            return !preg_match('/^(da|nu|ok)[.!?]*$/iu', $t);
+        }
+
+        if (self::isPromptEcho($t)) return true;
 
         // Normalize diacritics for easier matching
         $lower = mb_strtolower($t);
@@ -115,6 +123,43 @@ class WhisperHallucinationFilter
         // Note: We intentionally do NOT filter short 1-2 word fragments on the backend.
         // In voice calls, customers often say single product names ("polistiren", "șuruburi")
         // which are valid queries. The frontend demo has stricter filtering for UI purposes.
+
+        return false;
+    }
+
+    /**
+     * Our own transcription prompt, handed back as if the customer had said it.
+     *
+     * Whisper-family models are told what the audio is about to bias decoding,
+     * and on a silent or noisy opening they occasionally transcribe that hint
+     * instead of the audio. Call 139 opened with the customer apparently
+     * saying "Conversație telefonică în limba română despre produse și
+     * servicii…". It never reaches the Realtime model — that one hears the
+     * audio directly — but it pollutes the transcript an operator reads, the
+     * summary and the lead score.
+     *
+     * Matched on fragments unique to the prompts we send (see
+     * MediaStreamEventController::sessionConfig and
+     * RealtimeSession::buildSessionPayload) rather than on the whole string,
+     * because the model paraphrases and truncates what it echoes.
+     */
+    public static function isPromptEcho(string $text): bool
+    {
+        $lower = mb_strtolower(trim($text));
+        $lower = str_replace(
+            ['ă', 'â', 'î', 'ì', 'ș', 'ş', 'ț', 'ţ'],
+            ['a', 'a', 'i', 'i', 's', 's', 't', 't'],
+            $lower
+        );
+
+        foreach ([
+            'conversatie telefonica in limba',
+            'conversatie in limba',
+            'despre produse si servicii',
+            'nume proprii de produse',
+        ] as $fragment) {
+            if (str_contains($lower, $fragment)) return true;
+        }
 
         return false;
     }

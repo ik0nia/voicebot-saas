@@ -467,7 +467,20 @@ class TwilioService implements TelephonyProvider
             $xml .= '</Start>';
         }
 
-        $xml .= '<Say language="ro-RO">Bună ziua! Vă conectăm cu asistentul nostru virtual.</Say>';
+        /*
+         * No <Say> before <Connect>. There used to be a "Bună ziua! Vă
+         * conectăm cu asistentul nostru virtual." here and it cost three ways:
+         * Twilio blocks <Connect> until the <Say> finishes, so it added ~3s of
+         * dead time before the WebSocket even opened; it used Twilio's default
+         * TTS rather than a neural voice, so the caller's first impression was
+         * the most robotic audio on the call; and the bot's own greeting also
+         * opens with "Bună ziua", so callers heard it twice.
+         *
+         * The caller now hears ~2s of silence while the stream connects and
+         * the session config loads, then the bot greets them directly in its
+         * own voice. If that silence ever needs filling, fill it with <Play>
+         * on a ringback tone, not with speech that competes with the greeting.
+         */
         $xml .= '<Connect>';
         $xml .= '<Stream url="' . htmlspecialchars($wsUrl, ENT_XML1) . '">';
         $xml .= '<Parameter name="bot_id" value="' . htmlspecialchars($botId, ENT_XML1) . '"/>';
