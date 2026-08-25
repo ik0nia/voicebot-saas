@@ -173,6 +173,29 @@
                             <svg class="w-4 h-4 {{ request()->is('dashboard/callbacks*') ? 'text-coral' : '' }}" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                             Programări
                         </a>
+                        {{-- Comenzi — apare doar pentru conturile care au cel
+                             puțin un agent pe engine-ul hospitality, ca să nu
+                             încarce meniul tuturor. Badge-ul numără comenzile
+                             pe care localul le mai are de rezolvat. --}}
+                        @php
+                            // Both queries run through TenantScope, so they
+                            // follow super-admin impersonation and aggregate
+                            // mode the same way every other page does.
+                            $rHasVenue = \App\Models\Bot::where('engine_type', 'hospitality')->exists();
+                            $rActiveOrders = $rHasVenue
+                                ? \App\Models\RestaurantOrder::whereIn('status', ['placed', 'confirmed', 'preparing', 'out_for_delivery'])->count()
+                                : 0;
+                        @endphp
+                        @if($rHasVenue)
+                            <a href="{{ route('dashboard.restaurant.orders') }}"
+                               class="nav-item flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg {{ request()->is('dashboard/comenzi*') ? 'active' : 'text-inkSoft' }}">
+                                <svg class="w-4 h-4 {{ request()->is('dashboard/comenzi*') ? 'text-coral' : '' }}" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 2L7 6H4a1 1 0 00-1 1.1l1.5 12A2 2 0 006.5 21h11a2 2 0 002-1.9l1.5-12A1 1 0 0020 6h-3l-2-4M8 10v6M12 10v6M16 10v6"/></svg>
+                                Comenzi
+                                @if($rActiveOrders > 0)
+                                    <span class="ml-auto text-2xs px-1.5 py-0.5 rounded-full bg-coral text-white font-semibold">{{ $rActiveOrders }}</span>
+                                @endif
+                            </a>
+                        @endif
                         <a href="/dashboard/opportunities"
                            class="nav-item flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg {{ request()->is('dashboard/opportunities*') ? 'active' : 'text-inkSoft' }}">
                             <svg class="w-4 h-4 {{ request()->is('dashboard/opportunities*') ? 'text-coral' : '' }}" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>

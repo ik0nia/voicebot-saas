@@ -224,6 +224,37 @@
         </div>
     @endif
 
+    {{-- Restaurant callout — hospitality bots get menu, orders and the
+         delivery policy. Shown to every hospitality bot, not only those with
+         ordering already on, because switching it on is the point of the
+         link: an unconfigured venue answers "we don't take orders here". --}}
+    @if($bot->engine_type === 'hospitality')
+        @php $restaurantOrders = \App\Models\RestaurantOrder::where('bot_id', $bot->id)
+            ->whereIn('status', ['placed', 'confirmed', 'preparing', 'out_for_delivery'])->count(); @endphp
+        <div class="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-coral/30 bg-coralsoft px-4 py-3">
+            <div class="text-sm text-ink">
+                <span class="mr-1">🍽</span>
+                <strong>Meniu, comenzi și livrare</strong>
+                @if($restaurantOrders > 0)
+                    — <span class="font-semibold text-coralh">{{ $restaurantOrders }}</span>
+                    {{ $restaurantOrders === 1 ? 'comandă în lucru' : 'comenzi în lucru' }}.
+                @else
+                    — editează preparatele, prețurile și zonele de livrare.
+                @endif
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="{{ route('dashboard.bots.restaurant.menu', $bot) }}"
+                   class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg border border-line bg-white text-inkSoft hover:bg-cream whitespace-nowrap">
+                    Meniu
+                </a>
+                <a href="{{ route('dashboard.bots.restaurant.orders', $bot) }}"
+                   class="btn-coral inline-flex items-center gap-1 px-3 py-1.5 text-sm font-semibold rounded-lg whitespace-nowrap">
+                    Deschide Comenzi
+                </a>
+            </div>
+        </div>
+    @endif
+
     {{-- ============== SETUP COMPLETENESS CARD (Iter B 2026-06-21) ==============
          Vizibil când profilul nu e ≥ 80% complet. Lista compactă cu next
          actions, click → sare la tab + focusează câmp. Se ascunde după ce

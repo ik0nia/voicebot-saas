@@ -428,6 +428,39 @@ Route::middleware('auth')->prefix('dashboard/agenti/{bot}/produse')->group(funct
     Route::delete('/{product}',                  [\App\Http\Controllers\Dashboard\ProductController::class, 'destroy'])->name('dashboard.bots.products.destroy');
 });
 
+// Comenzi la nivel de cont — intrarea din meniul principal, peste toți boții
+// pe engine-ul hospitality. Detaliul unei comenzi rămâne pe ruta per-bot de
+// mai jos, ca să păstreze contextul agentului.
+Route::middleware('auth')->get('/dashboard/comenzi', [
+    \App\Http\Controllers\Dashboard\RestaurantAdminController::class, 'allOrders'
+])->name('dashboard.restaurant.orders');
+
+// Restaurant ordering admin — comenzi primite, meniu, politica de livrare.
+// Doar pentru boții pe engine-ul hospitality; controllerul verifică asta la
+// fiecare acțiune, aici gate-uim doar pe auth (ca la programări).
+Route::middleware('auth')->prefix('dashboard/agenti/{bot}/restaurant')->group(function () {
+    $c = \App\Http\Controllers\Dashboard\RestaurantAdminController::class;
+
+    Route::get('/',                          [$c, 'orders'])->name('dashboard.bots.restaurant.orders');
+    Route::get('/comenzi/{order}',           [$c, 'order'])->name('dashboard.bots.restaurant.order');
+    Route::patch('/comenzi/{order}/status',  [$c, 'updateOrderStatus'])->name('dashboard.bots.restaurant.order.status');
+
+    Route::get('/meniu',                     [$c, 'menu'])->name('dashboard.bots.restaurant.menu');
+    Route::post('/meniu/categorii',          [$c, 'storeCategory'])->name('dashboard.bots.restaurant.category.store');
+    Route::patch('/meniu/categorii/{category}',  [$c, 'updateCategory'])->name('dashboard.bots.restaurant.category.update');
+    Route::delete('/meniu/categorii/{category}', [$c, 'destroyCategory'])->name('dashboard.bots.restaurant.category.destroy');
+
+    Route::get('/meniu/preparate/nou',       [$c, 'createItem'])->name('dashboard.bots.restaurant.item.create');
+    Route::post('/meniu/preparate',          [$c, 'storeItem'])->name('dashboard.bots.restaurant.item.store');
+    Route::get('/meniu/preparate/{item}/edit',   [$c, 'editItem'])->name('dashboard.bots.restaurant.item.edit');
+    Route::patch('/meniu/preparate/{item}',      [$c, 'updateItem'])->name('dashboard.bots.restaurant.item.update');
+    Route::delete('/meniu/preparate/{item}',     [$c, 'destroyItem'])->name('dashboard.bots.restaurant.item.destroy');
+    Route::post('/meniu/preparate/{item}/toggle',[$c, 'toggleItem'])->name('dashboard.bots.restaurant.item.toggle');
+
+    Route::get('/setari',                    [$c, 'settings'])->name('dashboard.bots.restaurant.settings');
+    Route::put('/setari',                    [$c, 'updateSettings'])->name('dashboard.bots.restaurant.settings.update');
+});
+
 // Calls routes (dashboard). The list page (`/dashboard/apeluri`)
 // redirects to the unified Inbox with channel_type=voice — the dedicated
 // listing was retired once Inbox got date / bot / direction / status
