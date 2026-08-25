@@ -161,10 +161,18 @@ class InboxController extends Controller
 
     /**
      * Map a Conversation builder result into uniform inbox items.
+     *
+     * The `->toBase()` is load-bearing. Eloquent\Collection::map() downgrades
+     * itself to a base collection only when it finds an item that is not a
+     * Model — and on an EMPTY collection it finds nothing, so it stays an
+     * Eloquent\Collection. Merging call items (plain stdClass) into one then
+     * calls getKey() on them and fatals. That made the whole inbox 500 for
+     * any tenant with calls but no conversations, which is every brand-new
+     * phone-only account until its first chat.
      */
     private function fetchConversationItems($query): Collection
     {
-        return $query->limit(200)->get()->map(function (Conversation $c) {
+        return $query->limit(200)->get()->toBase()->map(function (Conversation $c) {
             $meta = $c->metadata ?? [];
             return (object) [
                 '_type' => 'conv',
@@ -229,7 +237,10 @@ class InboxController extends Controller
             return collect();
         }
 
-        return $q->limit(200)->get()->map(fn (Call $call) => (object) [
+        // Same reason as fetchConversationItems: an empty result would stay an
+        // Eloquent\Collection and poison whichever merge it ends up on the
+        // left of. Harmless in today's merge order, fatal if it ever changes.
+        return $q->limit(200)->get()->toBase()->map(fn (Call $call) => (object) [
             '_type' => 'call',
             'id' => $call->id,
             'route_name' => 'dashboard.calls.show',
