@@ -18,25 +18,37 @@ inventat, linii care colapsează, comentariul modelului pe bon, coș care nu
 unește liniile, plasare fără confirmare) sunt rezolvate și verificate cap-coadă
 pe botul 79. Detaliile sunt în secțiunea „Reparat" de la final.
 
-### 1.2 Bridge-ul vocal are trei fixuri scrise, dar nedeployate
+### 1.2 Un apel real de la un telefon adevărat
 
-`services/media-stream/src/openaiBridge.js` e modificat pe disc și **diferit de
-imaginea care rulează** (`md5sum` host vs `/app/src/` în container). Containerul
-e imagine construită, fără bind-mount, deci până la un redeploy Coolify apelurile
-merg pe codul vechi:
+Tot ce e mai jos a fost verificat prin cod și prin proba sintetică
+(`voice:probe`, 1415 ms, OK pe bridge-ul nou). **Nimeni n-a sunat încă la
++40373818767 după deploy.** Un apel de 90 de secunde care comandă două
+preparate cu modificări diferite, confirmă numele și numărul și plasează
+comanda ar valida dintr-o mișcare toate reparațiile de pe 25 august.
 
-- suprimarea întreruperii cât timp se rostește salutul (3.1);
-- timeout 12 s + o reîncercare la cererea de config, în loc de 5 s și tăcere (3.2);
-- deschiderea socketului OpenAI în paralel cu cererea de config (3.3).
+De urmărit la acel apel:
+- botul cere numele („pe ce nume notez comanda?") și confirmă numărul în
+  aceeași replică;
+- nu-l mai întrerupe zgomotul de linie în timpul salutului (`eagerness` e
+  înapoi pe `medium` de la deploy — dacă reapar întreruperi, aici se dă înapoi);
+- două preparate cu sosuri diferite intră ca două linii, nu una;
+- `place_order` refuză până citește comanda cu `review_order`.
 
-După redeploy, `eagerness` se poate întoarce de pe `low` pe `medium`/`auto` pe
-botul 79 — plasturele nu mai e necesar când bridge-ul ignoră zgomotul pe salut.
+### 1.3 Dashboard-ul n-a fost deschis într-un browser, dar a fost exersat integral
 
-### 1.3 Dashboard-ul tot n-a fost deschis într-un browser
+Toate cele 7 pagini întorc 200 cu date reale (referința `0002`, telefonul
+clientului, totalul), iar acțiunile care scriu funcționează: schimbarea de
+status a comenzii și toggle-ul de disponibilitate au fost rulate prin ruta
+reală și readuse la starea inițială.
 
-Cele 7 pagini randează și promptul se asamblează corect (verificate programatic),
-dar niciun clic real n-a fost dat și nicio comandă n-a fost modificată prin
-interfață.
+**De reținut:** paginile per-bot dau **404 pentru un super-admin care nu
+impersonează** tenantul. Cu `admin_as_tenant_id=95` în sesiune merge tot. E
+comportamentul așteptat al `TenantScope`, dar un 404 sec e o experiență proastă
+pentru cineva care a ajuns acolo dintr-un link — ar merita un mesaj explicit
+„intră în contul localului ca să vezi asta".
+
+Ce rămâne cu adevărat neverificat e clicul uman: cum arată paginile, dacă
+butoanele sunt unde trebuie, dacă formularul de setări e utilizabil.
 
 ### 1.4 Tenantul 95 n-are niciun cont de utilizator
 
@@ -45,7 +57,7 @@ conștient pe 2026-08-25 să rămână așa cât timp e bot de test.
 
 ---
 
-## 2. Calea vocală — ce rămâne după redeploy
+## 2. Calea vocală
 
 ### 2.1 Turele cu tool-uri sunt costul real
 
@@ -86,6 +98,10 @@ ca să nu adauge o tură în plus.
   sau card la livrare, doar înregistrată.
 - **Nu există UI de wizard** pentru activarea comenzilor; se face din
   `restaurant:configure-ordering`.
+- **`.env.dev` și `.env.production.bak` sunt urmărite în git** și deja pe
+  GitHub, cu ~50 de linii cu valoare fiecare. Nu le-am atins; dacă acolo sunt
+  chei reale, ele trebuie rotite și fișierele scoase din istoric, nu doar din
+  index.
 
 ---
 
@@ -150,3 +166,10 @@ Pentru context, ca să nu fie reinvestigate.
 Verificat pe botul 79 printr-o comandă de probă rulată cap-coadă (adăugare,
 unire, refuz de linie mixtă, poartă de confirmare, nume respins, plasare) și
 ștearsă după.
+
+**Deploy făcut în aceeași sesiune:** master împins pe GitHub (95 de commituri
+care așteptau, plus cele 6 de azi) și `sambla-media-stream` reconstruit din
+commitul `e102414`. Auto-deploy-ul pentru `sambla-app` a fost oprit pe durata
+push-ului și repus după, ca site-ul să nu se reconstruiască degeaba — codul PHP
+e oricum bind-mount, imaginea nu-l conține. Paritatea host ↔ container e
+verificată pe toate fișierele din `src/`.
