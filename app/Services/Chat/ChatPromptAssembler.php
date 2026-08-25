@@ -13,6 +13,7 @@ use App\Services\ConversationPolicyService;
 use App\Services\IntentDetectionService;
 use App\Services\KnowledgeSearchService;
 use App\Services\PromptGuardrails;
+use App\Services\Restaurant\OrderingPromptContext;
 use App\Services\StructuredPromptBuilder;
 use App\Services\Widget\UserStateResolver;
 use Illuminate\Support\Facades\Cache;
@@ -98,6 +99,33 @@ final class ChatPromptAssembler
 
         if ($extraContext !== '') {
             $systemPrompt .= $extraContext;
+        }
+
+        /*
+         * Restaurant ordering: the dishes the venue chose to suggest and the
+         * "anything else?" rule, both read from the database at turn time.
+         *
+         * Voice has had this since RealtimeSession::buildInstructions and chat
+         * had nothing — the same bot behaving differently depending on which
+         * door the customer came through, which is exactly the voice-only
+         * split this vertical is supposed to avoid.
+         *
+         * Deliberately outside cachedBasePrompt(): switching a dish off in the
+         * dashboard must drop it from the bot's mouth on the next message, not
+         * ten minutes later. A thrown exception here would cost the customer
+         * their whole reply, so it is logged and skipped.
+         */
+        try {
+            $ordering = app(OrderingPromptContext::class)->for($bot);
+
+            if ($ordering !== null) {
+                $systemPrompt .= "\n\n" . $ordering;
+            }
+        } catch (\Throwable $e) {
+            Log::warning('ChatPromptAssembler: ordering context failed', [
+                'bot_id' => $bot->id,
+                'error'  => $e->getMessage(),
+            ]);
         }
 
         if ($lastProduct !== null) {

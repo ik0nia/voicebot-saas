@@ -25,6 +25,13 @@ class AppServiceProvider extends ServiceProvider
         // partial, and widget all hit the same resolved values.
         $this->app->singleton(\App\Services\Analytics\AnalyticsConfig::class);
 
+        // ToolContext — who is on the other end of a tool call. Singleton so
+        // the dispatch site (chat controller / voice controller) and the
+        // handler, which resolve it independently, see the same object.
+        // Per-request under PHP-FPM, which is the intended lifetime: one chat
+        // turn or one voice tool-call webhook.
+        $this->app->singleton(\App\Services\ToolContext::class);
+
         // Anthropic client singleton — uses anthropic-ai/sdk directly
         $this->app->singleton(\Anthropic\Client::class, function () {
             $apiKey = config('services.anthropic.api_key', env('ANTHROPIC_API_KEY'));

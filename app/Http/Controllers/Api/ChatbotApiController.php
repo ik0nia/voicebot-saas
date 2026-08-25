@@ -1093,6 +1093,27 @@ class ChatbotApiController extends Controller
             );
         }
 
+        /*
+         * Bind the tool context for this turn, before anything can dispatch a
+         * tool. Tools that span turns — the food basket, principally — key
+         * their state on the conversation id, and ToolRegistry::execute()
+         * receives only (name, botId, params), so this is the only route by
+         * which a handler can learn which conversation it is serving.
+         *
+         * Bound here rather than in message()/messageStream() because both
+         * paths funnel through this method, and a tool that works in the
+         * non-streaming widget but not the streaming one would be a genuinely
+         * nasty bug to track down.
+         *
+         * Pre-chat details seed the customer fields so an order does not ask
+         * for a name the visitor already typed into the widget.
+         */
+        app(\App\Services\ToolContext::class)->forChat(
+            (int) $resolved->conversation->id,
+            $resolved->prechatPhone,
+            $resolved->prechatName,
+        );
+
         // Intent detection + retrieval + product search + page-context
         // injections all run through ChatOrchestrator. The caller just
         // copies results back into the preprocess return shape.

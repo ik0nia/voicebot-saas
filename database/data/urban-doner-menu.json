@@ -1,0 +1,333 @@
+{
+  "venue": "Urban Doner",
+  "currency": "RON",
+  "_note": "Ingredientele apar DOAR unde localul le-a confirmat. Unde lipsesc, lipsesc intenționat — botul trebuie să spună că nu are lista, nu să o deducă din denumire.",
+  "categories": [
+    {
+      "name": "Sandvișuri",
+      "items": [
+        {
+          "name": "Șnițel feta mare",
+          "aliases": ["șnițel feta", "snitel feta", "lipie șnițel feta", "baghetă șnițel feta"],
+          "portion": "380 g",
+          "price": "29,99",
+          "options": [
+            {"name": "Tip", "required": true, "max_choices": 1, "choices": [{"label": "Baghetă"}, {"label": "Lipie"}]}
+          ]
+        },
+        {
+          "name": "Crispy pui mare",
+          "aliases": ["crispy pui", "lipie crispy", "baghetă crispy"],
+          "portion": "380 g",
+          "price": "29,99",
+          "options": [
+            {"name": "Tip", "required": true, "max_choices": 1, "choices": [{"label": "Baghetă"}, {"label": "Lipie"}]}
+          ]
+        },
+        {
+          "name": "Caș pane mare",
+          "aliases": ["caș pane", "cas pane", "lipie caș pane", "baghetă caș pane"],
+          "portion": "380 g",
+          "price": "29,99",
+          "options": [
+            {"name": "Tip", "required": true, "max_choices": 1, "choices": [{"label": "Baghetă"}, {"label": "Lipie"}]}
+          ]
+        },
+        {
+          "name": "Falafel mare",
+          "aliases": ["falafel", "lipie falafel", "baghetă falafel"],
+          "portion": "380 g",
+          "price": "29,99",
+          "options": [
+            {"name": "Tip", "required": true, "max_choices": 1, "choices": [{"label": "Baghetă"}, {"label": "Lipie"}]}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Pachete",
+      "items": [
+        {
+          "name": "Family Chicken",
+          "aliases": ["family chicken", "pachet family", "găleată cu pui", "galeata cu pui"],
+          "portion": "1.350 g",
+          "price": "119,00",
+          "ingredients": [
+            "10 aripioare",
+            "8 bucăți crispy pui",
+            "2 porții de cartofi",
+            "8 sosuri",
+            "4 chifle",
+            "2 băuturi de 0,33 l"
+          ],
+          "options": [
+            {"name": "Băutură", "required": true, "max_choices": 1, "choices": [{"label": "Cola"}, {"label": "Fanta"}]}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Garnituri",
+      "items": [
+        {
+          "name": "Cartofi prăjiți",
+          "aliases": ["cartofi", "porție de cartofi"],
+          "portion": "200 g",
+          "price": "9,99",
+          "ingredients": ["cartofi prăjiți"]
+        },
+        {
+          "name": "Cartofi prăjiți Cheesy",
+          "aliases": ["cartofi cheesy", "cheesy fries"],
+          "portion": "230 g",
+          "price": "14,99",
+          "ingredients": ["cartofi prăjiți", "topping Cheesy"],
+          "description": "Compoziția toppingului Cheesy nu este precizată."
+        }
+      ]
+    },
+    {
+      "name": "Salate",
+      "items": [
+        {
+          "name": "Salată simplă",
+          "aliases": ["salată", "salata", "salată fără carne"],
+          "portion": "180 g",
+          "price": "14,99"
+        },
+        {
+          "name": "Salată cu carne",
+          "aliases": ["salată plus carne", "salată carne"],
+          "portion": "250 g",
+          "price": "29,99",
+          "ingredients": ["salată", "carne"],
+          "description": "Tipul cărnii nu este precizat."
+        }
+      ]
+    },
+    {
+      "name": "Gustări",
+      "items": [
+        {
+          "name": "Nuggets",
+          "aliases": ["nuggets", "porție nuggets"],
+          "portion": "160 g",
+          "price": "17,99"
+        }
+      ]
+    },
+    {
+      "name": "Farfurii",
+      "items": [
+        {
+          "name": "Carne cu cartofi",
+          "aliases": ["carne și cartofi", "porție carne cu cartofi"],
+          "portion": "300 g",
+          "price": "29,99",
+          "ingredients": ["carne", "cartofi"],
+          "description": "Tipul cărnii nu este precizat."
+        }
+      ]
+    },
+    {
+      "name": "Shaorma și kebab",
+      "items": [
+        {
+          "name": "Doner Kebab",
+          "aliases": ["doner", "kebab", "doner kebab", "döner"],
+          "portion": "410 g",
+          "price": "24,99",
+          "description": "Preț promoțional, redus de la 30,00 lei."
+        },
+        {
+          "name": "Shaorma mare la lipie",
+          "aliases": ["shaorma mare", "shaorma la lipie", "lipie mare", "saorma"],
+          "portion": "430 g",
+          "price": "24,99",
+          "ingredients": ["lipie"],
+          "description": "Preț promoțional, redus de la 30,00 lei. Restul ingredientelor nu sunt precizate."
+        }
+      ]
+    },
+    {
+      "name": "Burgeri",
+      "items": [
+        {
+          "name": "Burger pui",
+          "aliases": ["burger de pui", "chicken burger"],
+          "portion": "250 g",
+          "price": "21,90",
+          "ingredients": ["pui"],
+          "description": "Preț promoțional, redus de la 30,00 lei. Restul ingredientelor nu sunt precizate."
+        }
+      ]
+    },
+    {
+      "name": "Meniuri",
+      "items": [
+        {
+          "name": "Meniu Combo",
+          "aliases": ["combo", "burger cu cartofi și cola", "meniu burger"],
+          "portion": "450 g",
+          "price": "32,90",
+          "ingredients": ["burger", "cartofi", "Cola 0,33 l"],
+          "description": "Preț promoțional, redus de la 42,00 lei."
+        }
+      ]
+    },
+    {
+      "name": "Meniuri la farfurie",
+      "items": [
+        {
+          "name": "Shaorma la farfurie",
+          "aliases": ["farfurie shaorma", "meniu shaorma"],
+          "portion": "520 g",
+          "price": "34,99",
+          "ingredients": ["carne rotisată de pui", "cartofi", "salată", "2 sosuri", "chiflă"]
+        },
+        {
+          "name": "Meniu Crispy",
+          "aliases": ["crispy la farfurie", "farfurie crispy"],
+          "portion": "520 g",
+          "price": "34,99",
+          "ingredients": ["crispy pui", "cartofi", "salată", "2 sosuri", "chiflă"]
+        },
+        {
+          "name": "Meniu Șnițel",
+          "aliases": ["șnițel la farfurie", "farfurie șnițel"],
+          "portion": "520 g",
+          "price": "34,99",
+          "ingredients": ["șnițel de pui", "cartofi", "salată", "2 sosuri", "chiflă"]
+        },
+        {
+          "name": "Meniu Caș Pane",
+          "aliases": ["caș pane la farfurie", "farfurie caș pane"],
+          "portion": "490 g",
+          "price": "34,99",
+          "ingredients": ["caș pane", "cartofi", "salată", "2 sosuri", "chiflă"]
+        },
+        {
+          "name": "Meniu Aripioare",
+          "aliases": ["aripioare la farfurie", "farfurie aripioare", "aripioare"],
+          "portion": "520 g",
+          "price": "29,99",
+          "ingredients": ["4 aripioare", "cartofi", "salată", "chiflă", "2 sosuri"]
+        }
+      ]
+    },
+    {
+      "name": "Suplimente",
+      "items": [
+        {
+          "name": "Sos",
+          "aliases": ["sos", "sos suplimentar", "extra sos"],
+          "portion": "25 g",
+          "price": "4,99",
+          "description": "Tipul sosului nu este precizat."
+        },
+        {
+          "name": "Extra carne",
+          "aliases": ["carne suplimentară", "carne în plus"],
+          "portion": "80 g",
+          "price": "8,99",
+          "description": "Tipul cărnii nu este precizat."
+        },
+        {
+          "name": "Chiflă",
+          "aliases": ["chiflă suplimentară", "extra chiflă"],
+          "portion": "50 g",
+          "price": "2,50",
+          "ingredients": ["chiflă"]
+        },
+        {
+          "name": "Sos cheddar",
+          "aliases": ["cheddar", "extra cheddar"],
+          "portion": "50 g",
+          "price": "4,99",
+          "ingredients": ["sos cheddar"],
+          "description": "Se poate adăuga la orice produs."
+        },
+        {
+          "name": "Brânză feta",
+          "aliases": ["feta", "extra feta"],
+          "portion": "50 g",
+          "price": "4,99",
+          "ingredients": ["brânză feta"],
+          "description": "Se poate adăuga la orice produs."
+        },
+        {
+          "name": "Mozzarella",
+          "aliases": ["extra mozzarella", "mozzarella"],
+          "portion": "50 g",
+          "price": "4,99",
+          "ingredients": ["mozzarella"],
+          "description": "Se poate adăuga la orice produs."
+        }
+      ]
+    },
+    {
+      "name": "Băuturi",
+      "items": [
+        {
+          "name": "Apă plată sau minerală",
+          "aliases": ["apă", "apa", "apă plată", "apă minerală"],
+          "portion": "500 ml",
+          "price": "6,99",
+          "options": [
+            {"name": "Tip", "required": true, "max_choices": 1, "choices": [{"label": "Plată"}, {"label": "Minerală"}]}
+          ]
+        },
+        {
+          "name": "Coca-Cola",
+          "aliases": ["cola", "coca cola"],
+          "portion": "500 ml",
+          "price": "9,99"
+        },
+        {
+          "name": "Fanta",
+          "aliases": ["suc Fanta", "fanta"],
+          "portion": "500 ml",
+          "price": "9,99"
+        },
+        {
+          "name": "Sprite",
+          "aliases": ["suc Sprite", "sprite"],
+          "portion": "500 ml",
+          "price": "9,99"
+        },
+        {
+          "name": "Limonadă simplă",
+          "aliases": ["limonadă clasică", "limonada"],
+          "portion": "400 ml",
+          "price": "9,99",
+          "description": "Compoziția nu este precizată."
+        },
+        {
+          "name": "Limonadă cu arome",
+          "aliases": ["limonadă aromată"],
+          "portion": "400 ml",
+          "price": "12,99",
+          "description": "Aromele disponibile nu sunt precizate."
+        },
+        {
+          "name": "Timișoreana",
+          "aliases": ["bere Timișoreana", "bere", "timisoreana"],
+          "portion": "330 ml",
+          "price": "8,99",
+          "ingredients": ["bere"]
+        }
+      ]
+    },
+    {
+      "name": "Pizza",
+      "items": [
+        {
+          "name": "Pizza napolitană",
+          "aliases": ["pizza", "pizza napoletană"],
+          "available": false,
+          "description": "În curând. Sortimentele, ingredientele și prețul nu sunt încă stabilite."
+        }
+      ]
+    }
+  ]
+}

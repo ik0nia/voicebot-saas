@@ -177,7 +177,57 @@ class RealtimeSession
             ];
         }
 
-        return $tools;
+        return array_merge($tools, $this->engineTools());
+    }
+
+    /**
+     * Tools contributed by the bot's engine (booking, hospitality, …).
+     *
+     * Until now voice exposed `request_human_transfer` and nothing else,
+     * while chat had the full engine manifest — so a restaurant bot could
+     * reserve a table from the web widget but not over the phone, even
+     * though the tool and its handler existed and worked. Same bot, same
+     * niche, different answer depending on the channel.
+     *
+     * Engines already return the flat OpenAI function shape
+     * (type/name/description/parameters), which is exactly what Realtime GA
+     * expects, so the manifest transfers across unchanged.
+     *
+     * Wrapped defensively: a malformed niche config must degrade to "no
+     * extra tools" rather than abort the call. Losing a tool is recoverable;
+     * dropping a live phone call is not.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function engineTools(): array
+    {
+        // Per-bot escape hatch — lets a specific bot fall back to the old
+        // transfer-only behaviour without a deploy, if a tool misbehaves
+        // on the phone.
+        if (($this->bot->settings['voice']['disable_engine_tools'] ?? false) === true) {
+            return [];
+        }
+
+        try {
+            $defs = $this->bot->engine()->chatTools($this->bot);
+        } catch (\Throwable $e) {
+            Log::warning("RealtimeSession: engine tool manifest failed for bot {$this->bot->id}", [
+                'error' => $e->getMessage(),
+            ]);
+            return [];
+        }
+
+        if (!is_array($defs)) {
+            return [];
+        }
+
+        // Only well-formed function definitions reach OpenAI — the Realtime
+        // validator rejects the whole session.update on a single bad entry,
+        // which would silently strand the call with no tools at all.
+        return array_values(array_filter($defs, static fn ($def) => is_array($def)
+            && ($def['type'] ?? null) === 'function'
+            && !empty($def['name'])
+            && is_array($def['parameters'] ?? null)));
     }
 
     /**
@@ -258,6 +308,25 @@ class RealtimeSession
             $base .= $extra;
         } catch (\Throwable $e) {
             Log::warning("RealtimeSession: failed to load knowledge context for bot {$this->bot->id}", [
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        /*
+         * Restaurant ordering: the suggestions the venue chose and the
+         * upsell rule. Built here rather than written into the bot's prompt
+         * because both depend on what is on the menu and switched on right
+         * now — see OrderingPromptContext.
+         */
+        try {
+            $ordering = app(\App\Services\Restaurant\OrderingPromptContext::class)->for($this->bot);
+            if ($ordering !== null) {
+                $base .= "\n\n" . $ordering;
+            }
+        } catch (\Throwable $e) {
+            // A missing suggestion block costs the caller nothing; a thrown
+            // exception here would cost them the whole call.
+            Log::warning("RealtimeSession: ordering context failed for bot {$this->bot->id}", [
                 'error' => $e->getMessage(),
             ]);
         }

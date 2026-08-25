@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Call;
 use App\Models\CreditConsumption;
 use App\Models\Transcript;
+use App\Services\WhisperHallucinationFilter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -84,8 +85,22 @@ class MediaStreamEventController extends Controller
             $langLabel = $langLabelMap[$voiceLang] ?? 'română';
             $s['audio'] = $s['audio'] ?? ['input' => [], 'output' => []];
             $s['audio']['input'] = $s['audio']['input'] ?? [];
+            /*
+             * `gpt-4o-transcribe`, not the -mini variant. Measured 2026-08-25
+             * on synthetic Romanian pushed through 8 kHz μ-law to match what
+             * Twilio delivers: on "Aș mai vrea încă doi burgeri de pui și trei
+             * cola", mini returned "Ach my vra un ke daou burger depui ha tri
+             * cola" while the full model returned the sentence verbatim. Real
+             * calls showed the same signature ("Să porgărotors" for a burger).
+             *
+             * This is the logging channel, not the model's input — the
+             * Realtime model consumes the audio itself and is unaffected. It
+             * still matters: the transcript is what an operator reads when a
+             * customer disputes an order, and what every downstream summary
+             * and lead score is computed from.
+             */
             $s['audio']['input']['transcription'] = [
-                'model' => 'gpt-4o-mini-transcribe',
+                'model' => 'gpt-4o-transcribe',
                 'language' => $voiceLang,
                 'prompt' => "Conversație telefonică în limba {$langLabel} despre produse și servicii. Nume proprii de produse pot apărea.",
             ];
@@ -105,10 +120,15 @@ class MediaStreamEventController extends Controller
      * events here so the business logic stays in PHP (tenant scoping,
      * Twilio credentials, DB writes) rather than duplicated in Node.
      *
-     * Currently the only supported tool is `request_human_transfer`.
-     * Unknown tool names return 400 rather than silently succeeding —
-     * silent success would let a buggy prompt claim capabilities it
-     * doesn't have.
+     * `request_human_transfer` keeps a bespoke path (it orchestrates Twilio
+     * and must speak a fixed line first). Everything else is dispatched
+     * through ToolRegistry — the same registry the chat channel uses — so a
+     * tool written once serves both channels. Before this, voice was limited
+     * to the transfer tool alone, which meant a restaurant bot could book a
+     * table from the web widget but not over the phone.
+     *
+     * Tools outside the bot's own manifest are refused out loud rather than
+     * silently accepted; see dispatchEngineTool.
      */
     public function toolCall(Request $request)
     {
@@ -123,8 +143,13 @@ class MediaStreamEventController extends Controller
             return response()->json(['error' => 'call not found'], 404);
         }
 
+        // Everything except the transfer tool is dispatched through the same
+        // ToolRegistry the chat channel uses, so a tool written once works on
+        // both. Transfer keeps its own path because it is not a data lookup —
+        // it orchestrates Twilio and must speak a fixed line before the
+        // caller is moved.
         if ($validated['tool_name'] !== 'request_human_transfer') {
-            return response()->json(['error' => 'unknown_tool'], 400);
+            return $this->dispatchEngineTool($call, $validated['tool_name'], $validated['arguments'] ?? []);
         }
 
         $reason = (string) ($validated['arguments']['reason'] ?? '');
@@ -142,6 +167,102 @@ class MediaStreamEventController extends Controller
             'success'    => true,
             'speak'      => $result['speak'],
             'attempt_id' => $result['attempt_id'],
+        ]);
+    }
+
+    /**
+     * Execute a non-transfer tool for a voice call.
+     *
+     * The tool name is checked against the bot's own engine manifest rather
+     * than against the registry as a whole. The registry is global — it holds
+     * every tool any bot might use — so dispatching straight into it would
+     * let a hallucinated name reach a capability this bot was never granted.
+     * The manifest is the same list the model was offered, so anything else
+     * is by definition not something we advertised.
+     *
+     * Returns `data` (not `speak`): these are lookups and writes whose result
+     * the model should phrase itself. Forcing a verbatim line — the way the
+     * transfer path does — would have the agent read raw JSON aloud.
+     *
+     * @param  array<string, mixed>  $arguments
+     */
+    private function dispatchEngineTool(\App\Models\Call $call, string $toolName, array $arguments)
+    {
+        $bot = $call->bot;
+
+        try {
+            $manifest = $bot->engine()->chatTools($bot);
+        } catch (\Throwable $e) {
+            Log::error('MediaStream tool-call: engine manifest failed', [
+                'bot_id' => $bot->id,
+                'tool'   => $toolName,
+                'error'  => $e->getMessage(),
+            ]);
+            return response()->json(['error' => 'engine_unavailable'], 500);
+        }
+
+        $allowed = array_column(is_array($manifest) ? $manifest : [], 'name');
+        if (!in_array($toolName, $allowed, true)) {
+            // Logged loudly: on a live call this means the model invented a
+            // capability, which is a prompt or manifest problem worth seeing.
+            Log::warning('MediaStream tool-call: tool not in bot manifest', [
+                'bot_id'  => $bot->id,
+                'call_id' => $call->id,
+                'tool'    => $toolName,
+                'allowed' => $allowed,
+            ]);
+
+            // Answered as a spoken refusal rather than an HTTP error. The
+            // caller is mid-conversation: an error status makes the bridge
+            // fall back to generic dead-air handling, whereas feeding the
+            // refusal back into the session lets the agent say it plainly and
+            // offer something it can actually do. This is still not silent
+            // success — the model is told "no", explicitly.
+            return response()->json([
+                'success' => false,
+                'speak'   => 'Asta nu pot face din apel. Vă pot ajuta cu altceva?',
+            ]);
+        }
+
+        /*
+         * Bind who is calling before dispatching. Handlers that span turns —
+         * the food basket above all — key their state on this, and the
+         * caller's number comes from telephony rather than from the
+         * transcript, so it is worth far more than a number the model heard
+         * and repeated back.
+         *
+         * No conversation id: `calls` has no link to `conversations` — a
+         * phone call's transcript lives on the call itself. The session key
+         * is the call, which is what continuity needs.
+         */
+        app(\App\Services\ToolContext::class)->forVoice($call->id, $call->caller_number);
+
+        $result = app(\App\Services\ToolRegistry::class)->execute($toolName, $bot->id, $arguments);
+
+        // ToolRegistry reports handler failures as an `error` key rather than
+        // throwing. Surface it as a spoken apology so the caller hears
+        // something human instead of dead air while the model waits.
+        if (isset($result['error'])) {
+            Log::warning('MediaStream tool-call: tool returned error', [
+                'bot_id' => $bot->id,
+                'tool'   => $toolName,
+                'error'  => $result['error'],
+            ]);
+            return response()->json([
+                'success' => false,
+                'speak'   => 'Îmi pare rău, nu am putut verifica asta acum. Puteți repeta sau vă pot ajuta cu altceva?',
+            ]);
+        }
+
+        Log::info('MediaStream tool-call executed', [
+            'bot_id'  => $bot->id,
+            'call_id' => $call->id,
+            'tool'    => $toolName,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data'    => $result,
         ]);
     }
 
@@ -226,6 +347,25 @@ class MediaStreamEventController extends Controller
         }
         if (mb_strlen($content) > 20000) {
             $content = mb_substr($content, 0, 20000);
+        }
+
+        /*
+         * Our own transcription hint, echoed back as if the caller had said
+         * it — seen on call 139, opening with "Conversație telefonică în limba
+         * română despre produse și servicii…". Only the user side is checked:
+         * the assistant's text comes from the model, not from ASR.
+         *
+         * Dropped rather than stored, because everything downstream — the
+         * operator's read of a disputed order, the summary, the lead score —
+         * treats a transcript row as something the customer actually said.
+         */
+        if ($role === 'user' && WhisperHallucinationFilter::isPromptEcho($content)) {
+            Log::info('MediaStreamEvent: dropped transcription-prompt echo', [
+                'call_id' => $call->id,
+                'content' => mb_substr($content, 0, 120),
+            ]);
+
+            return;
         }
 
         Transcript::create([
