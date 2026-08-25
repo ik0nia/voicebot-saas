@@ -140,3 +140,21 @@ Schedule::command('social:ensure-drafts --target=10 --per-tick=2 --spacing=15')
 //     ->hourly()
 //     ->withoutOverlapping()
 //     ->between('6:00', '23:00');
+
+// ---------------------------------------------------------------------------
+// Voice liveness
+// ---------------------------------------------------------------------------
+// Synthetic check of the phone-call path. Added after voice was silently
+// broken for 96 days (2026-05-20 → 2026-08-24): a renamed OpenAI event and a
+// Traefik route with no backend, neither of which logged anything. Every other
+// scheduled job here watches business data; this one watches whether the
+// product still answers the phone.
+//
+// Calls the bridge through its public hostname, so one run covers DNS,
+// Traefik, TLS, the media-stream process, the OpenAI credential and the audio
+// pipeline. Alerts super_admins on the first failure, then hourly while it
+// lasts, plus once on recovery — see VoiceProbe for that state machine.
+Schedule::command('voice:probe')
+    ->everyFifteenMinutes()
+    ->withoutOverlapping()
+    ->onOneServer();
